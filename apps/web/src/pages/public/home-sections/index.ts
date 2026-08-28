@@ -1,0 +1,11 @@
+export { HeroSection } from './HeroSection';
+export { ProblemSection } from './ProblemSection';
+export { SolutionSection } from './SolutionSection';
+export { HowItWorksSection } from './HowItWorksSection';
+export { FeaturesSection } from './FeaturesSection';
+export { ExplainableAISection } from './ExplainableAISection';
+export { LongitudinalSection } from './LongitudinalSection';
+export { RealLifeSection } from './RealLifeSection';
+export { ResponsibleAISection } from './ResponsibleAISection';
+export { TeamPreviewSection } from './TeamPreviewSection';
+export { FinalCTASection } from './FinalCTASection';
