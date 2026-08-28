@@ -1,0 +1,12 @@
+Django>=5.0,<6.0
+djangorestframework>=3.14.0
+django-cors-headers>=4.3.0
+supabase>=2.3.0
+python-dotenv>=1.0.0
+pandas>=2.2.0
+numpy>=1.26.0
+scikit-learn>=1.4.0
+shap>=0.45.0
+opencv-python-headless>=4.9.0
+pytesseract>=0.3.10
+Pillow>=10.2.0
