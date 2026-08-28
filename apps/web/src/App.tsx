@@ -1,122 +1,68 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ROUTES } from './constants/routes';
+import { PublicLayout } from './layouts/PublicLayout';
+import { AppLayout } from './layouts/AppLayout';
 
-function App() {
-  const [count, setCount] = useState(0)
+// Public Pages
+import { Home } from './pages/public/Home';
+import { About } from './pages/public/About';
+import { HowItWorks } from './pages/public/HowItWorks';
+import { Features } from './pages/public/Features';
+import { Team } from './pages/public/Team';
+import { Contact } from './pages/public/Contact';
 
+// Auth Pages
+import { Login } from './pages/auth/Login';
+import { Register } from './pages/auth/Register';
+
+// App Placeholder Pages
+import {
+  DashboardPlaceholder,
+  ProfilePlaceholder,
+  CyclePlaceholder,
+  SymptomsPlaceholder,
+  ReportsPlaceholder,
+  AssessmentPlaceholder,
+  LifestylePlaceholder,
+  TimelinePlaceholder,
+  SettingsPlaceholder,
+} from './pages/app/PlaceholderPage';
+
+export function App() {
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <BrowserRouter>
+      <Routes>
+        {/* Public Marketing Website */}
+        <Route element={<PublicLayout />}>
+          <Route path={ROUTES.HOME} element={<Home />} />
+          <Route path={ROUTES.ABOUT} element={<About />} />
+          <Route path={ROUTES.HOW_IT_WORKS} element={<HowItWorks />} />
+          <Route path={ROUTES.FEATURES} element={<Features />} />
+          <Route path={ROUTES.TEAM} element={<Team />} />
+          <Route path={ROUTES.CONTACT} element={<Contact />} />
+          <Route path={ROUTES.LOGIN} element={<Login />} />
+          <Route path={ROUTES.REGISTER} element={<Register />} />
+        </Route>
 
-      <div className="ticks"></div>
+        {/* Future Authenticated App Shell Placeholders */}
+        <Route path={ROUTES.APP.ROOT} element={<AppLayout />}>
+          <Route index element={<Navigate to={ROUTES.APP.DASHBOARD} replace />} />
+          <Route path="dashboard" element={<DashboardPlaceholder />} />
+          <Route path="profile" element={<ProfilePlaceholder />} />
+          <Route path="cycle" element={<CyclePlaceholder />} />
+          <Route path="symptoms" element={<SymptomsPlaceholder />} />
+          <Route path="reports" element={<ReportsPlaceholder />} />
+          <Route path="assessment" element={<AssessmentPlaceholder />} />
+          <Route path="lifestyle" element={<LifestylePlaceholder />} />
+          <Route path="timeline" element={<TimelinePlaceholder />} />
+          <Route path="settings" element={<SettingsPlaceholder />} />
+        </Route>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+        {/* Catch-all Fallback */}
+        <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
