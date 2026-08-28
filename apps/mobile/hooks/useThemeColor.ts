@@ -1,10 +1,32 @@
 import { useColorScheme } from 'react-native';
 import { Colors, ColorTheme } from '../constants/Colors';
 
+export interface UseThemeResult {
+  theme: ColorTheme;
+  colorScheme: 'light' | 'dark';
+  isDark: boolean;
+}
+
 /**
- * Returns the current color scheme palette based on system preference or default dark theme.
+ * Returns the current active ColorTheme and scheme metadata.
+ * Can be called without arguments to get the entire theme, or with a specific ColorKey.
+ */
+export function useTheme(): UseThemeResult {
+  const systemScheme = useColorScheme();
+  const colorScheme = systemScheme === 'dark' ? 'dark' : 'light';
+  const theme = Colors[colorScheme];
+
+  return {
+    theme,
+    colorScheme,
+    isDark: colorScheme === 'dark',
+  };
+}
+
+/**
+ * Convenience hook returning the active ColorTheme directly.
  */
 export function useThemeColor(): ColorTheme {
-  const colorScheme = useColorScheme();
-  return colorScheme === 'light' ? Colors.light : Colors.dark;
+  const { theme } = useTheme();
+  return theme;
 }

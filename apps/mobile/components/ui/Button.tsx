@@ -1,107 +1,228 @@
 import React from 'react';
 import {
-  TouchableOpacity,
-  TouchableOpacityProps,
+  Pressable,
+  PressableProps,
   Text,
   StyleSheet,
   ActivityIndicator,
+  View,
+  ViewStyle,
+  TextStyle,
 } from 'react-native';
-import { BorderRadius, Spacing } from '../../constants/Layout';
+import Animated from 'react-native-reanimated';
+import { BorderRadius, Spacing, TouchTarget } from '../../constants/Layout';
 import { Typography as TypoTokens } from '../../constants/Typography';
 import { useThemeColor } from '../../hooks/useThemeColor';
+import { usePressAnimation } from '../../utils/animations';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
+export type ButtonVariant =
+  | 'primary'
+  | 'secondary'
+  | 'outline'
+  | 'ghost'
+  | 'destructive';
 
-export interface ButtonProps extends TouchableOpacityProps {
+export type ButtonSize = 'sm' | 'md' | 'lg';
+
+export interface ButtonProps extends Omit<PressableProps, 'style'> {
   label: string;
   variant?: ButtonVariant;
+  size?: ButtonSize;
   loading?: boolean;
+  disabled?: boolean;
+  fullWidth?: boolean;
+  iconLeft?: React.ReactNode;
+  iconRight?: React.ReactNode;
+  style?: ViewStyle;
+  textStyle?: TextStyle;
 }
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export const Button: React.FC<ButtonProps> = ({
   label,
   variant = 'primary',
+  size = 'md',
   loading = false,
-  disabled,
+  disabled = false,
+  fullWidth = false,
+  iconLeft,
+  iconRight,
   style,
+  textStyle,
+  onPress,
   ...props
 }) => {
   const theme = useThemeColor();
+  const { animatedStyle, onPressIn, onPressOut } = usePressAnimation(0.97, 0.9);
+  const isInteractive = !disabled && !loading;
 
-  const getContainerStyle = () => {
+  const getContainerStyle = (): ViewStyle => {
     switch (variant) {
       case 'secondary':
         return {
-          backgroundColor: theme.surfaceSubtle,
-          borderColor: theme.border,
+          backgroundColor: theme.primarySoft,
+          borderColor: 'transparent',
+          borderWidth: 1,
         };
       case 'outline':
         return {
           backgroundColor: 'transparent',
           borderColor: theme.primary,
-          borderWidth: 1,
+          borderWidth: 1.5,
         };
       case 'ghost':
         return {
           backgroundColor: 'transparent',
           borderColor: 'transparent',
+          borderWidth: 1.5,
+        };
+      case 'destructive':
+        return {
+          backgroundColor: theme.error,
+          borderColor: theme.error,
+          borderWidth: 1,
         };
       case 'primary':
       default:
         return {
           backgroundColor: theme.primary,
           borderColor: theme.primary,
+          borderWidth: 1,
         };
     }
   };
 
-  const getTextStyle = () => {
+  const getTextColor = (): string => {
+    if (disabled) return theme.textMuted;
     switch (variant) {
       case 'secondary':
-        return { color: theme.textPrimary };
+        return theme.primary;
       case 'outline':
-        return { color: theme.primaryLight };
+        return theme.primary;
       case 'ghost':
-        return { color: theme.textSecondary };
+        return theme.textPrimary;
+      case 'destructive':
+        return '#FFFFFF';
       case 'primary':
       default:
-        return { color: '#ffffff' };
+        return '#FFFFFF';
+    }
+  };
+
+  const getSizeStyle = (): ViewStyle => {
+    switch (size) {
+      case 'sm':
+        return {
+          minHeight: TouchTarget.min,
+          paddingVertical: Spacing.xs + 2,
+          paddingHorizontal: Spacing.md,
+          borderRadius: BorderRadius.md,
+        };
+      case 'lg':
+        return {
+          minHeight: 54,
+          paddingVertical: Spacing.md + 2,
+          paddingHorizontal: Spacing['2xl'],
+          borderRadius: BorderRadius.xl,
+        };
+      case 'md':
+      default:
+        return {
+          minHeight: TouchTarget.min + 4,
+          paddingVertical: Spacing.md,
+          paddingHorizontal: Spacing.xl,
+          borderRadius: BorderRadius.lg,
+        };
+    }
+  };
+
+  const getFontSize = (): number => {
+    switch (size) {
+      case 'sm':
+        return TypoTokens.fontSize.bodySmall;
+      case 'lg':
+        return TypoTokens.fontSize.base;
+      case 'md':
+      default:
+        return TypoTokens.fontSize.button;
     }
   };
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.8}
-      disabled={disabled || loading}
+    <AnimatedPressable
+      accessibilityRole="button"
+      accessibilityState={{ disabled: !isInteractive, busy: loading }}
+      accessibilityLabel={label}
+      disabled={!isInteractive}
+      onPress={isInteractive ? onPress : undefined}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
       style={[
-        styles.button,
+        styles.base,
+        getSizeStyle(),
         getContainerStyle(),
+        fullWidth && styles.fullWidth,
         (disabled || loading) && styles.disabled,
+        animatedStyle,
         style,
       ]}
       {...props}
     >
       {loading ? (
-        <ActivityIndicator color={getTextStyle().color} size="small" />
+        <ActivityIndicator
+          color={getTextColor()}
+          size={size === 'sm' ? 'small' : 'small'}
+          style={styles.spinner}
+        />
       ) : (
-        <Text style={[styles.text, getTextStyle()]}>{label}</Text>
+        <View style={styles.contentRow}>
+          {iconLeft ? <View style={styles.iconLeft}>{iconLeft}</View> : null}
+          <Text
+            style={[
+              styles.text,
+              {
+                color: getTextColor(),
+                fontSize: getFontSize(),
+              },
+              textStyle,
+            ]}
+          >
+            {label}
+          </Text>
+          {iconRight ? <View style={styles.iconRight}>{iconRight}</View> : null}
+        </View>
       )}
-    </TouchableOpacity>
+    </AnimatedPressable>
   );
 };
 
 const styles = StyleSheet.create({
-  button: {
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.xl,
-    borderRadius: BorderRadius.md,
+  base: {
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
   },
+  contentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fullWidth: {
+    width: '100%',
+  },
   text: {
-    fontSize: TypoTokens.fontSize.base,
     fontWeight: TypoTokens.fontWeight.semibold,
+    textAlign: 'center',
+  },
+  iconLeft: {
+    marginRight: Spacing.sm,
+  },
+  iconRight: {
+    marginLeft: Spacing.sm,
+  },
+  spinner: {
+    paddingVertical: 2,
   },
   disabled: {
     opacity: 0.5,
