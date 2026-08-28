@@ -74,7 +74,7 @@ function HormonalSignalingParticles({ count = 30 }: { count?: number }) {
     for (let i = 0; i < count; i++) {
       prog[i] = Math.random();
       spd[i] = 0.12 + Math.random() * 0.15;
-      pathChoice[i] = i % 2; // 0 = left ovary pathway, 1 = right ovary pathway
+      pathChoice[i] = i % 2;
     }
     return [pos, prog, spd, pathChoice];
   }, [count]);
@@ -89,9 +89,8 @@ function HormonalSignalingParticles({ count = 30 }: { count?: number }) {
         const p = progressArray[i];
         const isLeft = paths[i] === 0;
 
-        // Quadratic Bezier interpolation
-        const startX = isLeft ? -1.8 : 1.8;
-        const startY = 0.4;
+        const startX = isLeft ? -1.85 : 1.85;
+        const startY = 0.45;
         const ctrlX = isLeft ? -1.0 : 1.0;
         const ctrlY = 1.1;
         const endX = 0;
@@ -123,14 +122,77 @@ function HormonalSignalingParticles({ count = 30 }: { count?: number }) {
   );
 }
 
+// Emerging Health-Data Particles (Cycle, Symptoms, Reports, Lifestyle)
+function HealthDataOrbitParticles({ count = 24 }: { count?: number }) {
+  const pointsRef = useRef<THREE.Points>(null);
+
+  const [positions, radii, angles, speeds, verticalSpeeds] = useMemo(() => {
+    const pos = new Float32Array(count * 3);
+    const rad = new Float32Array(count);
+    const ang = new Float32Array(count);
+    const spd = new Float32Array(count);
+    const vSpd = new Float32Array(count);
+
+    for (let i = 0; i < count; i++) {
+      rad[i] = 1.4 + Math.random() * 1.5;
+      ang[i] = Math.random() * Math.PI * 2;
+      spd[i] = 0.2 + Math.random() * 0.3;
+      vSpd[i] = 0.3 + Math.random() * 0.4;
+
+      pos[i * 3] = rad[i] * Math.cos(ang[i]);
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 2;
+      pos[i * 3 + 2] = rad[i] * Math.sin(ang[i]);
+    }
+    return [pos, rad, ang, spd, vSpd];
+  }, [count]);
+
+  useFrame((state) => {
+    if (pointsRef.current) {
+      const posAttr = pointsRef.current.geometry.attributes.position;
+      const t = state.clock.getElapsedTime();
+
+      for (let i = 0; i < count; i++) {
+        const angle = angles[i] + t * speeds[i];
+        const r = radii[i] + Math.sin(t * 0.5 + i) * 0.2;
+        const y = Math.sin(t * verticalSpeeds[i] + i) * 1.2;
+
+        posAttr.setXYZ(i, r * Math.cos(angle), y, r * Math.sin(angle));
+      }
+      posAttr.needsUpdate = true;
+    }
+  });
+
+  return (
+    <points ref={pointsRef}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.09}
+        color="#C084FC"
+        transparent
+        opacity={0.8}
+        blending={THREE.AdditiveBlending}
+      />
+    </points>
+  );
+}
+
 // Complete 3D Female Reproductive System Mesh & Animation Controller
-function ReproductiveSystemModel({ onSettle }: { onSettle?: () => void }) {
+function ReproductiveSystemModel({
+  onSettle,
+  showDataNodes = true,
+}: {
+  onSettle?: () => void;
+  showDataNodes?: boolean;
+}) {
   const rootGroupRef = useRef<THREE.Group>(null);
   const uterusRef = useRef<THREE.Mesh>(null);
+  const cervixRef = useRef<THREE.Mesh>(null);
+  const vaginaRef = useRef<THREE.Mesh>(null);
   const leftOvaryRef = useRef<THREE.Mesh>(null);
   const rightOvaryRef = useRef<THREE.Mesh>(null);
 
-  // Entrance Approach Animation State
   useEffect(() => {
     const timer = setTimeout(() => {
       onSettle?.();
@@ -144,27 +206,33 @@ function ReproductiveSystemModel({ onSettle }: { onSettle?: () => void }) {
     const mouseY = state.pointer.y * 0.3;
 
     if (rootGroupRef.current) {
-      // Stage approach from z: -6 to z: 0
+      // Approach entrance from z: -5.5 to z: 0
       const currentZ = THREE.MathUtils.lerp(rootGroupRef.current.position.z, 0, 0.035);
       rootGroupRef.current.position.z = currentZ;
 
-      // Gentle interactive floating and breathing
+      // Gentle floating, rotation and cursor parallax
       rootGroupRef.current.rotation.y = THREE.MathUtils.lerp(
         rootGroupRef.current.rotation.y,
-        Math.sin(t * 0.4) * 0.2 + mouseX,
+        Math.sin(t * 0.35) * 0.18 + mouseX,
         0.04
       );
       rootGroupRef.current.rotation.x = THREE.MathUtils.lerp(
         rootGroupRef.current.rotation.x,
-        Math.sin(t * 0.25) * 0.08 - mouseY,
+        Math.sin(t * 0.22) * 0.07 - mouseY,
         0.04
       );
-      rootGroupRef.current.position.y = Math.sin(t * 0.7) * 0.08;
+      rootGroupRef.current.position.y = Math.sin(t * 0.65) * 0.08;
     }
 
     if (uterusRef.current) {
       const uPulse = 1 + Math.sin(t * 1.2) * 0.03;
       uterusRef.current.scale.set(1.05 * uPulse, 1.2 * uPulse, 0.75 * uPulse);
+    }
+
+    if (cervixRef.current && vaginaRef.current) {
+      const cPulse = 1 + Math.sin(t * 1.2 + 0.3) * 0.02;
+      cervixRef.current.scale.set(0.65 * cPulse, 0.9 * cPulse, 0.5 * cPulse);
+      vaginaRef.current.scale.set(0.55 * cPulse, 1.1 * cPulse, 0.45 * cPulse);
     }
 
     if (leftOvaryRef.current && rightOvaryRef.current) {
@@ -176,8 +244,8 @@ function ReproductiveSystemModel({ onSettle }: { onSettle?: () => void }) {
   return (
     <group ref={rootGroupRef} position={[0, 0, -4.5]}>
       <Float speed={1.1} rotationIntensity={0.2} floatIntensity={0.4}>
-        {/* 1. UTERUS (Stylized Central Reproductive Body) */}
-        <group position={[0, -0.15, 0]}>
+        {/* 1. UTERUS (Central Pear-Shaped Reproductive Body) */}
+        <group position={[0, 0.1, 0]}>
           <Sphere ref={uterusRef} args={[0.95, 64, 64]} scale={[1.05, 1.2, 0.75]}>
             <MeshDistortMaterial
               color="#6E2D8B"
@@ -192,18 +260,7 @@ function ReproductiveSystemModel({ onSettle }: { onSettle?: () => void }) {
             />
           </Sphere>
 
-          {/* Endometrial/Cervical Base Extension */}
-          <Sphere args={[0.42, 32, 32]} position={[0, -0.9, 0]} scale={[0.65, 1.1, 0.5]}>
-            <meshStandardMaterial
-              color="#4A154B"
-              emissive="#35144F"
-              roughness={0.25}
-              transparent
-              opacity={0.7}
-            />
-          </Sphere>
-
-          {/* Glowing Inner Uterine Cavity Core */}
+          {/* Glowing Inner Endometrial Core */}
           <Sphere args={[0.38, 32, 32]} position={[0, 0.1, 0]}>
             <meshStandardMaterial
               color="#E87084"
@@ -216,7 +273,41 @@ function ReproductiveSystemModel({ onSettle }: { onSettle?: () => void }) {
           </Sphere>
         </group>
 
-        {/* 2. LEFT OVARY (Bilateral Ovoid Structure with Follicles) */}
+        {/* 2. CERVIX (Cervical Canal Neck) */}
+        <Sphere
+          ref={cervixRef}
+          args={[0.42, 32, 32]}
+          position={[0, -0.75, 0]}
+          scale={[0.65, 0.9, 0.5]}
+        >
+          <meshStandardMaterial
+            color="#581C87"
+            emissive="#3B0764"
+            emissiveIntensity={0.6}
+            roughness={0.2}
+            transparent
+            opacity={0.8}
+          />
+        </Sphere>
+
+        {/* 3. VAGINA (Lower Vaginal Channel Extension) */}
+        <Sphere
+          ref={vaginaRef}
+          args={[0.38, 32, 32]}
+          position={[0, -1.35, 0]}
+          scale={[0.55, 1.1, 0.45]}
+        >
+          <meshStandardMaterial
+            color="#4A154B"
+            emissive="#2A0845"
+            emissiveIntensity={0.4}
+            roughness={0.25}
+            transparent
+            opacity={0.75}
+          />
+        </Sphere>
+
+        {/* 4. LEFT OVARY (Bilateral Ovoid Structure with Follicles) */}
         <group position={[-1.85, 0.45, 0]}>
           <Sphere ref={leftOvaryRef} args={[0.55, 48, 48]} scale={[1.15, 0.85, 0.8]}>
             <MeshDistortMaterial
@@ -239,7 +330,7 @@ function ReproductiveSystemModel({ onSettle }: { onSettle?: () => void }) {
           <OvaryFollicle position={[0, 0.32, -0.15]} color="#E87084" scale={0.09} pulseSpeed={1.7} />
         </group>
 
-        {/* 3. RIGHT OVARY (Bilateral Ovoid Structure with Follicles) */}
+        {/* 5. RIGHT OVARY (Bilateral Ovoid Structure with Follicles) */}
         <group position={[1.85, 0.45, 0]}>
           <Sphere ref={rightOvaryRef} args={[0.55, 48, 48]} scale={[1.15, 0.85, 0.8]}>
             <MeshDistortMaterial
@@ -262,34 +353,39 @@ function ReproductiveSystemModel({ onSettle }: { onSettle?: () => void }) {
           <OvaryFollicle position={[0, 0.32, -0.15]} color="#E87084" scale={0.09} pulseSpeed={2.0} />
         </group>
 
-        {/* 4. FALLOPIAN / TUBAL GUIDANCE CURVES */}
+        {/* 6. FALLOPIAN / TUBAL GUIDANCE CURVES */}
         <FallopianGuidanceCurve
-          start={[-0.8, 0.65, 0]}
-          control={[-1.35, 1.05, 0.15]}
+          start={[-0.8, 0.75, 0]}
+          control={[-1.35, 1.15, 0.15]}
           end={[-1.85, 0.55, 0]}
           color="#D8B4FE"
         />
         <FallopianGuidanceCurve
-          start={[0.8, 0.65, 0]}
-          control={[1.35, 1.05, 0.15]}
+          start={[0.8, 0.75, 0]}
+          control={[1.35, 1.15, 0.15]}
           end={[1.85, 0.55, 0]}
           color="#D8B4FE"
         />
 
-        {/* 5. HORMONAL SIGNALING TRAVELING PARTICLES */}
+        {/* 7. HORMONAL SIGNALING PARTICLES */}
         <HormonalSignalingParticles count={36} />
+
+        {/* 8. EMERGING HEALTH DATA ORBIT PARTICLES */}
+        {showDataNodes && <HealthDataOrbitParticles count={28} />}
       </Float>
     </group>
   );
 }
 
-// Stylized Fallback for non-WebGL devices
+// Stylized CSS/SVG Fallback
 function FallbackReproductiveSystem() {
   return (
     <div className="relative w-full h-full flex items-center justify-center pointer-events-none">
       <div className="w-80 h-80 rounded-full bg-gradient-to-tr from-[#6E2D8B]/40 via-[#8E3EAF]/30 to-[#E87084]/40 blur-3xl animate-pulse" />
       {/* Central Uterus abstraction */}
-      <div className="absolute w-44 h-52 rounded-[40%_40%_60%_60%/40%_40%_70%_70%] bg-gradient-to-b from-[#7E22CE]/85 to-[#4A154B]/90 border border-white/20 shadow-2xl backdrop-blur-xl" />
+      <div className="absolute w-44 h-48 rounded-[40%_40%_60%_60%/40%_40%_70%_70%] bg-gradient-to-b from-[#7E22CE]/85 to-[#4A154B]/90 border border-white/20 shadow-2xl backdrop-blur-xl" />
+      {/* Cervix & Vagina */}
+      <div className="absolute top-[60%] w-16 h-20 rounded-b-2xl bg-[#4A154B]/80 border-x border-b border-white/10" />
       {/* Bilateral Ovaries */}
       <div className="absolute -left-2 top-1/3 w-16 h-12 rounded-full bg-gradient-to-r from-[#A21CAF] to-[#E87084] shadow-lg border border-white/30 flex items-center justify-center">
         <div className="w-2.5 h-2.5 rounded-full bg-[#FB7185] animate-ping" />
@@ -304,7 +400,8 @@ function FallbackReproductiveSystem() {
 export const ReproductiveSystem3D: React.FC<{
   className?: string;
   onSettle?: () => void;
-}> = ({ className, onSettle }) => {
+  showDataNodes?: boolean;
+}> = ({ className, onSettle, showDataNodes = true }) => {
   const [hasWebGL, setHasWebGL] = useState(true);
 
   useEffect(() => {
@@ -335,7 +432,7 @@ export const ReproductiveSystem3D: React.FC<{
         <pointLight position={[-2, 1, 2]} color="#C084FC" intensity={2.5} />
         <pointLight position={[2, 1, 2]} color="#FDA4AF" intensity={2.5} />
 
-        <ReproductiveSystemModel onSettle={onSettle} />
+        <ReproductiveSystemModel onSettle={onSettle} showDataNodes={showDataNodes} />
       </Canvas>
     </div>
   );

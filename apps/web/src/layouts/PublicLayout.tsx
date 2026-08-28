@@ -7,7 +7,10 @@ import { ROUTES } from '../constants/routes';
 
 export const PublicLayout: React.FC = () => {
   const location = useLocation();
-  const hasDarkHero = location.pathname === ROUTES.HOME || location.pathname === ROUTES.ABOUT;
+  const hasDarkHero =
+    location.pathname === ROUTES.HOME ||
+    location.pathname === ROUTES.ABOUT ||
+    location.pathname === ROUTES.HOW_IT_WORKS;
 
   return (
     <div className="flex flex-col min-h-screen bg-[#10071A] text-[#1C1326]">
