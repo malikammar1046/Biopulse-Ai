@@ -8,7 +8,6 @@ import { Home } from './pages/public/Home';
 import { About } from './pages/public/About';
 import { HowItWorks } from './pages/public/HowItWorks';
 import { Features } from './pages/public/Features';
-import { Team } from './pages/public/Team';
 import { Contact } from './pages/public/Contact';
 
 // Auth Pages
@@ -38,7 +37,6 @@ export function App() {
           <Route path={ROUTES.ABOUT} element={<About />} />
           <Route path={ROUTES.HOW_IT_WORKS} element={<HowItWorks />} />
           <Route path={ROUTES.FEATURES} element={<Features />} />
-          <Route path={ROUTES.TEAM} element={<Team />} />
           <Route path={ROUTES.CONTACT} element={<Contact />} />
           <Route path={ROUTES.LOGIN} element={<Login />} />
           <Route path={ROUTES.REGISTER} element={<Register />} />

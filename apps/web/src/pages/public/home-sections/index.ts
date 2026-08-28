@@ -7,5 +7,4 @@ export { ExplainableAISection } from './ExplainableAISection';
 export { LongitudinalSection } from './LongitudinalSection';
 export { RealLifeSection } from './RealLifeSection';
 export { ResponsibleAISection } from './ResponsibleAISection';
-export { TeamPreviewSection } from './TeamPreviewSection';
 export { FinalCTASection } from './FinalCTASection';

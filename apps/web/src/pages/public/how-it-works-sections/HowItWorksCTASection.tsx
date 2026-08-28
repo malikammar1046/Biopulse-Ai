@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Sparkles, ShieldCheck, UserPlus, Users } from 'lucide-react';
+import { ArrowRight, Sparkles, ShieldCheck, UserPlus } from 'lucide-react';
 import { ROUTES } from '../../../constants/routes';
 import { Button } from '../../../components/ui/Button';
 import { Container } from '../../../components/ui/Container';
@@ -54,17 +54,6 @@ export const HowItWorksCTASection: React.FC = () => {
                     iconLeft={<UserPlus className="w-4 h-4" />}
                   >
                     Create an Account
-                  </Button>
-                </Link>
-
-                <Link to={ROUTES.TEAM}>
-                  <Button
-                    variant="ghost"
-                    size="lg"
-                    className="text-[#EDE4F7] hover:bg-white/10 hover:text-white"
-                    iconLeft={<Users className="w-4 h-4" />}
-                  >
-                    Meet Our Team
                   </Button>
                 </Link>
               </div>

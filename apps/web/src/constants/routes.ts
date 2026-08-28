@@ -4,7 +4,6 @@ export const ROUTES = {
   ABOUT: '/about',
   HOW_IT_WORKS: '/how-it-works',
   FEATURES: '/features',
-  TEAM: '/team',
   CONTACT: '/contact',
 
   // Authentication Routes

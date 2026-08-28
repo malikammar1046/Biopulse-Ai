@@ -8,6 +8,5 @@ export { WhyDifferentSection } from './WhyDifferentSection';
 export { FourPillarsSection } from './FourPillarsSection';
 export { LocalizedPakistanSection } from './LocalizedPakistanSection';
 export { AboutResponsibleAISection } from './AboutResponsibleAISection';
-export { ResearchFoundationSection } from './ResearchFoundationSection';
-export { AboutTeamSection } from './AboutTeamSection';
+export { ClinicalFoundationSection } from './ClinicalFoundationSection';
 export { AboutCTASection } from './AboutCTASection';

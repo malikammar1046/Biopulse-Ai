@@ -9,7 +9,6 @@ import {
   LongitudinalSection,
   RealLifeSection,
   ResponsibleAISection,
-  TeamPreviewSection,
   FinalCTASection,
 } from './home-sections';
 
@@ -37,16 +36,13 @@ export const Home: React.FC = () => {
       {/* 7. Longitudinal Monitoring: Multi-Month Journey Timeline */}
       <LongitudinalSection />
 
-      {/* 8. Built For Real Life: Localized Pakistani Context & Everyday Movement */}
+      {/* 8. Built For Real Life: Localized Context & Everyday Movement */}
       <RealLifeSection />
 
       {/* 9. Trust & Responsible AI: Privacy, Transparency & Clinical Oversight */}
       <ResponsibleAISection />
 
-      {/* 10. Team Preview: Research Group & Supervised Engineering */}
-      <TeamPreviewSection />
-
-      {/* 11. Final CTA: Biological Orb Finale */}
+      {/* 10. Final CTA: Biological Orb Finale */}
       <FinalCTASection />
     </div>
   );

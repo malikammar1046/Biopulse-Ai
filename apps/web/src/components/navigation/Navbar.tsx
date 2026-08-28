@@ -28,7 +28,6 @@ export const Navbar: React.FC = () => {
     { label: 'About', path: ROUTES.ABOUT },
     { label: 'How It Works', path: ROUTES.HOW_IT_WORKS },
     { label: 'Features', path: ROUTES.FEATURES },
-    { label: 'Team', path: ROUTES.TEAM },
     { label: 'Contact', path: ROUTES.CONTACT },
   ];
 

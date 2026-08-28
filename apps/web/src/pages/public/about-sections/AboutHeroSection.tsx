@@ -69,7 +69,7 @@ export const AboutHeroSection: React.FC = () => {
                   className="border-white/30 text-[#F6F2FA] hover:bg-white/10 backdrop-blur-sm"
                   iconRight={<BookOpen className="w-4 h-4" />}
                 >
-                  Our Research
+                  Platform Features
                 </Button>
               </Link>
             </div>
