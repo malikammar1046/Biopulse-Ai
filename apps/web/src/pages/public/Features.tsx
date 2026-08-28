@@ -15,6 +15,7 @@ import {
 import { Container } from '../../components/ui/Container';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
+import { HumanSymptomExperienceSection } from './features-sections/HumanSymptomExperienceSection';
 
 export const Features: React.FC = () => {
   const platformFeatures = [
@@ -151,7 +152,7 @@ export const Features: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-20 sm:space-y-28 pb-24">
+    <div className="space-y-16 sm:space-y-24 pb-24">
       {/* Header */}
       <section className="pt-6 sm:pt-12 text-center">
         <Container size="lg">
@@ -168,9 +169,24 @@ export const Features: React.FC = () => {
         </Container>
       </section>
 
-      {/* Feature Cards Grid */}
+      {/* Human-Centered Period Cramp Experience: "Patterns matter." */}
+      <HumanSymptomExperienceSection />
+
+      {/* Feature Capabilities Grid */}
       <section>
         <Container size="xl">
+          <div className="max-w-2xl mx-auto text-center mb-12 space-y-3">
+            <Badge variant="secondary" size="sm">
+              Architecture Overview
+            </Badge>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#1C1326] font-display">
+              The Complete 10-Feature Suite
+            </h2>
+            <p className="text-sm text-[#584B68]">
+              Explore the individual capabilities connecting daily observation to clinical discussion.
+            </p>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {platformFeatures.map((feat) => {
               const Icon = feat.icon;
