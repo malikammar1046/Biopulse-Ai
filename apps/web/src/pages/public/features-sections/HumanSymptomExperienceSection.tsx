@@ -71,7 +71,7 @@ export const HumanSymptomExperienceSection: React.FC = () => {
   return (
     <section
       id="symptom-experience"
-      className="relative py-24 sm:py-36 bg-gradient-to-b from-[#10071A] via-[#180A25] to-[#10071A] text-white overflow-hidden border-y border-white/10"
+      className="relative pt-28 sm:pt-36 pb-24 sm:pb-32 bg-gradient-to-b from-[#10071A] via-[#180A25] to-[#10071A] text-white overflow-hidden border-b border-white/10"
       aria-label="Human-centered biological symptom experience and data transformation"
     >
       {/* ── Ambient Radial Atmosphere ── */}
