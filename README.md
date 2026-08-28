@@ -38,6 +38,39 @@ PMOSense/
 
 ---
 
+## 🌿 Development & Git Workflow
+
+We follow a structured Git workflow to ensure clean incremental development:
+
+### 1. Branch Strategy
+- **`main`**: Protected integration and production-ready branch. **Direct commits and force-pushes to `main` are strictly prohibited.**
+- All development takes place on dedicated feature/task branches created off `main`.
+
+### 2. Branch Naming Conventions
+| Prefix | Purpose | Examples |
+| :--- | :--- | :--- |
+| `feature/` | New features or functional capabilities | `feature/mobile-onboarding`, `feature/cycle-tracking`, `feature/backend-auth`, `feature/report-upload`, `feature/ocr-processing` |
+| `fix/` | Bug fixes and patches | `fix/auth-token-refresh`, `fix/mobile-layout-overflow` |
+| `refactor/` | Code refactoring without behavior change | `refactor/api-serializers`, `refactor/web-theme-tokens` |
+| `docs/` | Documentation additions and updates | `docs/architecture-erd`, `docs/api-endpoints` |
+| `chore/` | Tooling, dependencies, and repo tasks | `chore/upgrade-expo-deps`, `chore/setup-linter` |
+
+### 3. Core Development Rules
+1. **Never develop directly on `main`**. Always branch off `main`: `git checkout -b feature/<feature-name>`.
+2. **Never force-push `main`** (`git push --force` is forbidden on protected branches).
+3. **One feature per branch**: Keep feature branches isolated and scoped to a single capability.
+4. **Merge via Pull Requests**: Open a PR to `main` and ensure CI checks pass before merging.
+5. **Small, meaningful commits**: Commit atomic changes with clear intent.
+6. **Conventional Commit Messages**: Follow conventional commits:
+   - `feat:` New feature implementation
+   - `fix:` Bug fix
+   - `chore:` Routine task, tooling, dependencies
+   - `refactor:` Code restructuring without functional change
+   - `docs:` Documentation changes only
+   - `test:` Adding or correcting unit/integration tests
+
+---
+
 ## 🔒 Security & Data Privacy Guidelines
 
 - Never commit real secrets, private keys, Supabase service-role keys, or database credentials.
