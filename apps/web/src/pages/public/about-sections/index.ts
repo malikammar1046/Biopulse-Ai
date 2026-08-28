@@ -1,0 +1,13 @@
+export { AboutHeroSection } from './AboutHeroSection';
+export { WhatIsPCOSSection } from './WhatIsPCOSSection';
+export { BiologicalChainSection } from './BiologicalChainSection';
+export { InteractiveBiologySection } from './InteractiveBiologySection';
+export { DisconnectedProblemSection } from './DisconnectedProblemSection';
+export { IntelligenceLayerSection } from './IntelligenceLayerSection';
+export { WhyDifferentSection } from './WhyDifferentSection';
+export { FourPillarsSection } from './FourPillarsSection';
+export { LocalizedPakistanSection } from './LocalizedPakistanSection';
+export { AboutResponsibleAISection } from './AboutResponsibleAISection';
+export { ResearchFoundationSection } from './ResearchFoundationSection';
+export { AboutTeamSection } from './AboutTeamSection';
+export { AboutCTASection } from './AboutCTASection';

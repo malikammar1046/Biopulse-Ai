@@ -7,13 +7,13 @@ import { ROUTES } from '../constants/routes';
 
 export const PublicLayout: React.FC = () => {
   const location = useLocation();
-  const isHome = location.pathname === ROUTES.HOME;
+  const hasDarkHero = location.pathname === ROUTES.HOME || location.pathname === ROUTES.ABOUT;
 
   return (
     <div className="flex flex-col min-h-screen bg-[#10071A] text-[#1C1326]">
       <ScrollToTop />
       <Navbar />
-      <main className={`flex-grow ${isHome ? 'pt-0' : 'pt-20 bg-[#F8F5FA]'}`}>
+      <main className={`flex-grow ${hasDarkHero ? 'pt-0' : 'pt-20 bg-[#F8F5FA]'}`}>
         <Outlet />
       </main>
       <Footer />
