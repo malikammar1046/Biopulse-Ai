@@ -9,7 +9,6 @@ import {
   BrainCircuit,
   History,
   CheckCircle2,
-  Sparkles,
   ArrowRight,
 } from 'lucide-react';
 import { Container } from '../../../components/ui/Container';
@@ -65,19 +64,21 @@ export const HowItWorksSection: React.FC = () => {
   ];
 
   return (
-    <section className="relative py-24 sm:py-32 bg-gradient-to-b from-[#4A154B] via-[#5C206E] to-[#6E2D8B] text-white overflow-hidden">
+    <section className="relative py-24 sm:py-32 bg-gradient-to-b from-[#EDE4F7] via-[#F8F5FA] to-[#EDE4F7] text-[#1C1326] overflow-hidden">
+      {/* Soft Ambient Biological Glows */}
+      <div className="absolute top-1/3 left-1/4 w-[600px] h-[600px] bg-[#D8B4FE]/30 rounded-full blur-[140px] pointer-events-none -z-10" />
+
       <Container size="xl">
         <div className="max-w-3xl mx-auto text-center space-y-5 mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-[#FDA4AF] backdrop-blur-md">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Interactive Process</span>
-          </div>
+          <Badge variant="primary" showDot size="md">
+            Biological Pathway
+          </Badge>
 
-          <h2 className="text-3xl sm:text-5xl font-extrabold font-display tracking-tight text-white leading-tight">
+          <h2 className="text-3xl sm:text-5xl font-extrabold font-display tracking-tight text-[#1C1326] leading-tight">
             How PMOSense Works
           </h2>
 
-          <p className="text-base sm:text-lg text-[#EDE4F7] leading-relaxed font-sans max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg text-[#584B68] leading-relaxed font-sans max-w-2xl mx-auto">
             A seamless, verified journey from daily symptom tracking to transparent machine learning and longitudinal monitoring.
           </p>
         </div>
@@ -95,14 +96,14 @@ export const HowItWorksSection: React.FC = () => {
                   onClick={() => setCurrentStep(idx)}
                   className={`w-full text-left p-4 rounded-2xl border transition-all duration-200 flex items-center justify-between cursor-pointer ${
                     isSelected
-                      ? 'bg-white text-[#1C1326] border-white shadow-xl shadow-purple-950/20 ring-2 ring-[#FB7185]'
-                      : 'bg-white/10 text-white border-white/10 hover:bg-white/15'
+                      ? 'bg-white text-[#1C1326] border-[#6E2D8B] shadow-xl shadow-purple-950/10 ring-2 ring-[#6E2D8B]'
+                      : 'bg-white/70 text-[#584B68] border-[#E7DFEF] hover:bg-white hover:border-[#D8B4FE]'
                   }`}
                 >
                   <div className="flex items-center gap-3.5">
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs ${
-                        isSelected ? 'bg-[#6E2D8B] text-white' : 'bg-white/15 text-white'
+                        isSelected ? 'bg-[#6E2D8B] text-white' : 'bg-[#EDE4F7] text-[#6E2D8B]'
                       }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -110,7 +111,7 @@ export const HowItWorksSection: React.FC = () => {
                     <div>
                       <span
                         className={`text-[10px] font-mono font-bold uppercase tracking-wider block ${
-                          isSelected ? 'text-[#8E3EAF]' : 'text-[#FDA4AF]'
+                          isSelected ? 'text-[#8E3EAF]' : 'text-[#8D7E9E]'
                         }`}
                       >
                         STEP {step.num}
@@ -121,7 +122,7 @@ export const HowItWorksSection: React.FC = () => {
 
                   <ArrowRight
                     className={`w-4 h-4 transition-transform ${
-                      isSelected ? 'text-[#6E2D8B] translate-x-1' : 'text-white/40'
+                      isSelected ? 'text-[#6E2D8B] translate-x-1' : 'text-[#8D7E9E]'
                     }`}
                   />
                 </button>
@@ -138,7 +139,7 @@ export const HowItWorksSection: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
-                className="rounded-3xl bg-white text-[#1C1326] p-8 sm:p-10 shadow-2xl border border-white/20 space-y-6"
+                className="rounded-3xl bg-white text-[#1C1326] p-8 sm:p-10 shadow-2xl border border-[#E7DFEF] space-y-6"
               >
                 <div className="flex items-center justify-between border-b border-[#E7DFEF] pb-4">
                   <div className="flex items-center gap-3">
