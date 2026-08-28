@@ -2,23 +2,28 @@ import React from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useColorScheme } from 'react-native';
 import { Colors } from '../constants/Colors';
 
 export default function RootLayout() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme !== 'light';
+  const theme = isDark ? Colors.dark : Colors.light;
+
   return (
     <SafeAreaProvider>
-      <StatusBar style="light" />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
           headerStyle: {
-            backgroundColor: Colors.dark.surface,
+            backgroundColor: theme.surface,
           },
-          headerTintColor: Colors.dark.textPrimary,
+          headerTintColor: theme.textPrimary,
           headerTitleStyle: {
             fontWeight: '600',
           },
           contentStyle: {
-            backgroundColor: Colors.dark.background,
+            backgroundColor: theme.background,
           },
         }}
       >
@@ -26,6 +31,14 @@ export default function RootLayout() {
           name="index"
           options={{
             headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="design-system"
+          options={{
+            headerShown: true,
+            title: 'PMOSense Design System',
+            headerBackTitle: 'Home',
           }}
         />
         <Stack.Screen

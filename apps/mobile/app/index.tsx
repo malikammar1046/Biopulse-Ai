@@ -1,40 +1,52 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
 import { ScreenContainer } from '../components/common/ScreenContainer';
-import { Typography } from '../components/ui/Typography';
-import { Card } from '../components/ui/Card';
+import { Typography, Card, Button, Badge } from '../components/ui';
 import { Spacing } from '../constants/Layout';
 import { useThemeColor } from '../hooks/useThemeColor';
 
 export default function EntryScreen() {
   const theme = useThemeColor();
+  const router = useRouter();
 
   return (
     <ScreenContainer contentContainerStyle={styles.container}>
       <View style={styles.content}>
         {/* Brand Badge */}
-        <View style={[styles.badge, { backgroundColor: theme.surfaceElevated, borderColor: theme.border }]}>
-          <View style={[styles.badgeDot, { backgroundColor: theme.teal }]} />
-          <Typography variant="caption" color={theme.textSecondary}>
-            Foundation Active
-          </Typography>
-        </View>
+        <Badge
+          label="Design System Ready"
+          variant="primary"
+          badgeStyle="soft"
+          showDot
+          style={styles.badge}
+        />
 
         {/* Title & Core Subtitle */}
-        <Typography variant="h1" color={theme.primaryLight} align="center" style={styles.title}>
+        <Typography variant="h1" color={theme.primary} align="center" style={styles.title}>
           PMOSense
         </Typography>
 
         <Typography variant="subtitle" color={theme.textSecondary} align="center" style={styles.subtitle}>
-          AI-assisted health information & monitoring
+          AI-assisted health information & longitudinal monitoring
         </Typography>
 
         {/* Platform Status Card */}
-        <Card elevated style={styles.statusCard}>
+        <Card variant="standard" style={styles.statusCard}>
           <Typography variant="caption" color={theme.textMuted} align="center">
-            Expo Router • React Native • TypeScript • Reanimated
+            Deep Orchid • Lavender • Berry • Blush • Accessible WCAG AA
           </Typography>
         </Card>
+
+        {/* Showcase Navigation Button */}
+        <Button
+          label="Explore Design System Showcase"
+          variant="primary"
+          size="lg"
+          fullWidth
+          onPress={() => router.push('/design-system')}
+          style={styles.actionButton}
+        />
       </View>
     </ScreenContainer>
   );
@@ -52,19 +64,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: Spacing.xs,
-    paddingHorizontal: Spacing.md,
-    borderRadius: 20,
-    borderWidth: 1,
     marginBottom: Spacing.xl,
-    gap: Spacing.xs,
-  },
-  badgeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
   },
   title: {
     marginBottom: Spacing.sm,
@@ -78,5 +78,9 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.xl,
+  },
+  actionButton: {
+    width: '100%',
   },
 });
