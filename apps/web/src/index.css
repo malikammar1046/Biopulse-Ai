@@ -70,6 +70,38 @@
   }
 }
 
+/* ── Hardware-Accelerated Lightweight Keyframe Animations ── */
+@keyframes bioPulse {
+  0% {
+    transform: scale(0.98) translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.03) translate3d(0, -4px, 0) rotate(1deg);
+  }
+  100% {
+    transform: scale(1.01) translate3d(0, 4px, 0) rotate(-1deg);
+  }
+}
+
+@keyframes bioHeartbeat {
+  0%, 100% {
+    transform: scale(0.96) translate3d(0, 0, 0);
+  }
+  50% {
+    transform: scale(1.06) translate3d(0, 0, 0);
+  }
+}
+
+/* Respect Prefers Reduced Motion Globally */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* Custom Utilities for subtle organic orbs and glows */
 .glow-orchid {
   box-shadow: 0 10px 40px -10px rgba(110, 45, 139, 0.25);

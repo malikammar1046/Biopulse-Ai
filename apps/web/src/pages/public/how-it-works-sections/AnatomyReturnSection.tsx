@@ -1,6 +1,6 @@
 import { Sparkles } from 'lucide-react';
 import { Container } from '../../../components/ui/Container';
-import { ReproductiveSystem3D } from '../../../components/3d/ReproductiveSystem3D';
+import { LazyReproductiveSystem3D } from '../../../components/3d/LazyReproductiveSystem3D';
 
 export const AnatomyReturnSection: React.FC = () => {
   return (
@@ -45,7 +45,7 @@ export const AnatomyReturnSection: React.FC = () => {
 
           {/* Right 3D Visual with Data Halo */}
           <div className="lg:col-span-6 relative flex items-center justify-center min-h-[420px] sm:min-h-[480px]">
-            <ReproductiveSystem3D className="w-full h-[420px] sm:h-[480px]" showDataNodes={true} />
+            <LazyReproductiveSystem3D className="w-full h-[420px] sm:h-[480px]" showDataNodes={true} />
           </div>
         </div>
       </Container>

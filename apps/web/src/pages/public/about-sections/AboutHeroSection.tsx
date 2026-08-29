@@ -5,7 +5,7 @@ import { ArrowRight, BookOpen, ShieldCheck } from 'lucide-react';
 import { ROUTES } from '../../../constants/routes';
 import { Button } from '../../../components/ui/Button';
 import { Container } from '../../../components/ui/Container';
-import { ReproductiveSystem3D } from '../../../components/3d/ReproductiveSystem3D';
+import { LazyReproductiveSystem3D } from '../../../components/3d/LazyReproductiveSystem3D';
 
 export const AboutHeroSection: React.FC = () => {
   const [labelsReady, setLabelsReady] = useState(false);
@@ -93,7 +93,7 @@ export const AboutHeroSection: React.FC = () => {
             className="lg:col-span-6 relative flex items-center justify-center min-h-[460px] sm:min-h-[540px]"
           >
             <div className="w-full h-full relative">
-              <ReproductiveSystem3D
+              <LazyReproductiveSystem3D
                 className="w-full h-[460px] sm:h-[540px]"
                 onSettle={() => setLabelsReady(true)}
               />
