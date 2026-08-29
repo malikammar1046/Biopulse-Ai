@@ -24,7 +24,7 @@ export const HowItWorksResponsibleAISection: React.FC = () => {
     },
     {
       title: 'Support',
-      desc: 'PMOSense facilitates informed dialogue with your gynecologist or endocrinologist rather than replacing clinical care.',
+      desc: 'OVASense facilitates informed dialogue with your gynecologist or endocrinologist rather than replacing clinical care.',
       icon: HeartHandshake,
       accent: '#E87084',
     },
@@ -78,7 +78,7 @@ export const HowItWorksResponsibleAISection: React.FC = () => {
         <div className="max-w-3xl mx-auto p-5 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3 text-xs text-[#B4A6C7]">
           <AlertCircle className="w-5 h-5 text-[#FDA4AF] shrink-0" />
           <p>
-            <strong>Medical Disclaimer:</strong> PMOSense is an AI-assisted health-information and longitudinal monitoring platform.
+            <strong>Medical Disclaimer:</strong> OVASense is an AI-assisted health-information and longitudinal monitoring platform.
             It does not diagnose conditions, prescribe medications, or replace professional medical advice from a qualified doctor.
           </p>
         </div>

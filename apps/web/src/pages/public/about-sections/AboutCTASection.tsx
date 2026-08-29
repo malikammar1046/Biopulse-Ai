@@ -31,7 +31,7 @@ export const AboutCTASection: React.FC = () => {
               </h2>
 
               <p className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans max-w-xl">
-                PMOSense is being built to help women turn scattered health information into something they can understand, monitor, and discuss with clinical professionals.
+                OVASense is being built to help women turn scattered health information into something they can understand, monitor, and discuss with clinical professionals.
               </p>
 
               <div className="flex flex-wrap items-center gap-4 pt-4">
@@ -42,7 +42,7 @@ export const AboutCTASection: React.FC = () => {
                     className="bg-gradient-to-r from-[#8E3EAF] via-[#A21CAF] to-[#E87084] text-white hover:brightness-110 shadow-lg shadow-purple-950/30"
                     iconRight={<ArrowRight className="w-4 h-4" />}
                   >
-                    Explore PMOSense
+                    Explore OVASense
                   </Button>
                 </Link>
 

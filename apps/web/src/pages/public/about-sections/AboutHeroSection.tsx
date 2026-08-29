@@ -101,7 +101,7 @@ export const AboutHeroSection: React.FC = () => {
             <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 backdrop-blur-md">
               <span className="w-2 h-2 rounded-full bg-[#FB7185] shadow-[0_0_8px_#FB7185] animate-pulse" />
               <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.2em] text-[#F6F2FA]">
-                About PMOSense
+                About OVASense
               </span>
             </div>
 
@@ -116,7 +116,7 @@ export const AboutHeroSection: React.FC = () => {
 
             {/* Supporting Copy */}
             <p className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed max-w-xl font-sans font-normal">
-              PMOSense brings cycle patterns, symptoms, medical reports, and lifestyle information together
+              OVASense brings cycle patterns, symptoms, medical reports, and lifestyle information together
               to help women understand their reproductive health patterns over time.
             </p>
 
@@ -212,7 +212,7 @@ export const AboutHeroSection: React.FC = () => {
                 {/* Anatomical Model Image with Smooth Vignette Edge Mask */}
                 <img
                   src="/anatomy-hero-model.jpg"
-                  alt="PMOSense 3D Female Reproductive System Cross-Section"
+                  alt="OVASense 3D Female Reproductive System Cross-Section"
                   className="w-full h-full object-contain object-center transition-transform duration-500 hover:scale-[1.02]"
                   style={{
                     maskImage: 'radial-gradient(ellipse at 50% 50%, black 60%, rgba(0,0,0,0.85) 75%, transparent 95%)',

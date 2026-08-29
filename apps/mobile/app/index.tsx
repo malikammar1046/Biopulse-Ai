@@ -3,6 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ScreenContainer } from '../components/common/ScreenContainer';
 import { Typography, Card, Button, Badge } from '../components/ui';
+import { Logo } from '../components/brand/Logo';
 import { Spacing } from '../constants/Layout';
 import { useThemeColor } from '../hooks/useThemeColor';
 
@@ -22,10 +23,13 @@ export default function EntryScreen() {
           style={styles.badge}
         />
 
-        {/* Title & Core Subtitle */}
-        <Typography variant="h1" color={theme.primary} align="center" style={styles.title}>
-          PMOSense
-        </Typography>
+        {/* Brand Logo & Title */}
+        <View style={styles.logoContainer}>
+          <Logo size="lg" showText={false} />
+          <Typography variant="h1" color={theme.primary} align="center" style={styles.title}>
+            OVASense
+          </Typography>
+        </View>
 
         <Typography variant="subtitle" color={theme.textSecondary} align="center" style={styles.subtitle}>
           AI-assisted health information & longitudinal monitoring
@@ -64,10 +68,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   badge: {
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    gap: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   title: {
-    marginBottom: Spacing.sm,
     letterSpacing: -0.5,
   },
   subtitle: {

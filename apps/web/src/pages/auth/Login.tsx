@@ -74,12 +74,12 @@ export const Login: React.FC = () => {
     <AuthShell
       headlineLine1="Understand your health."
       headlineLine2="One pattern at a time."
-      supportingCopy="PMOSense brings your health information, symptoms, reports and patterns together in one intelligent experience."
+      supportingCopy="OVASense brings your health information, symptoms, reports and patterns together in one intelligent experience."
       identityTag="AI-assisted women's health intelligence"
     >
       <AuthCard
         heading="Welcome back"
-        subheading="Sign in to continue your PMOSense journey."
+        subheading="Sign in to continue your OVASense journey."
         headerAccessory={
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EDE4F7]/10 border border-[#8E3EAF]/30 text-xs text-[#D8B4FE]">
             <Sparkles className="w-3.5 h-3.5 text-[#E87084]" />

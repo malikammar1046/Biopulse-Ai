@@ -16,7 +16,7 @@ export const Contact: React.FC = () => {
       {/* 2. MAIN CONTACT EXPERIENCE (TWO-COLUMN FORM & TOPICS) */}
       <ContactFormSection />
 
-      {/* 3. WHY CONTACT PMOSENSE */}
+      {/* 3. WHY CONTACT OVASENSE */}
       <ContactReasonsSection />
 
       {/* 4. FAQ SECTION */}

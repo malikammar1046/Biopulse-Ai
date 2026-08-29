@@ -20,7 +20,7 @@ export const HowItWorksCTASection: React.FC = () => {
             <div className="lg:col-span-7 space-y-6 text-left relative z-10">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-[#FB7185]">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Experience PMOSense</span>
+                <span>Experience OVASense</span>
               </div>
 
               <h2 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold font-display tracking-tight text-white leading-tight">
@@ -42,7 +42,7 @@ export const HowItWorksCTASection: React.FC = () => {
                     className="bg-gradient-to-r from-[#8E3EAF] via-[#A21CAF] to-[#E87084] text-white hover:brightness-110 shadow-lg shadow-purple-950/30"
                     iconRight={<ArrowRight className="w-4 h-4" />}
                   >
-                    Explore PMOSense
+                    Explore OVASense
                   </Button>
                 </Link>
 

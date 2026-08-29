@@ -31,7 +31,7 @@ export const HeroSection: React.FC = () => {
             transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
             className="lg:col-span-6 space-y-8 text-left"
           >
-            {/* Eyebrow with PMOSense Pulse */}
+            {/* Eyebrow with OVASense Pulse */}
             <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 backdrop-blur-md">
               <span className="w-2 h-2 rounded-full bg-[#FB7185] shadow-[0_0_8px_#FB7185] animate-pulse" />
               <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.2em] text-[#F6F2FA]">
@@ -50,7 +50,7 @@ export const HeroSection: React.FC = () => {
 
             {/* Supporting Copy */}
             <p className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed max-w-xl font-sans font-normal">
-              PMOSense brings together cycle patterns, symptoms, medical reports, and lifestyle information
+              OVASense brings together cycle patterns, symptoms, medical reports, and lifestyle information
               to help you understand your comprehensive health story over time.
             </p>
 
@@ -63,7 +63,7 @@ export const HeroSection: React.FC = () => {
                   className="bg-gradient-to-r from-[#8E3EAF] via-[#A21CAF] to-[#E87084] text-white hover:brightness-110 shadow-xl shadow-purple-950/30"
                   iconRight={<ArrowRight className="w-4 h-4" />}
                 >
-                  Explore PMOSense
+                  Explore OVASense
                 </Button>
               </Link>
 

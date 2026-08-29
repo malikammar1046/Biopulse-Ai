@@ -24,7 +24,7 @@ export const AnatomyReturnSection: React.FC = () => {
             </h2>
 
             <p className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans max-w-xl">
-              By connecting your internal biological reality with structured health records, explainable artificial intelligence, and longitudinal tracking, PMOSense turns fragmented health experiences into continuous clarity.
+              By connecting your internal biological reality with structured health records, explainable artificial intelligence, and longitudinal tracking, OVASense turns fragmented health experiences into continuous clarity.
             </p>
 
             <div className="grid grid-cols-3 gap-3 pt-2 text-center text-xs font-mono font-bold">

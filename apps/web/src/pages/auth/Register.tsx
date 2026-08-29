@@ -100,12 +100,12 @@ export const Register: React.FC = () => {
     <AuthShell
       headlineLine1="Your health story"
       headlineLine2="deserves context."
-      supportingCopy="Create your PMOSense account and begin building a clearer picture of your health patterns."
+      supportingCopy="Create your OVASense account and begin building a clearer picture of your health patterns."
       identityTag="AI-assisted women's health intelligence"
     >
       <AuthCard
         heading={!isSuccess ? 'Create your account' : undefined}
-        subheading={!isSuccess ? 'Start your PMOSense journey.' : undefined}
+        subheading={!isSuccess ? 'Start your OVASense journey.' : undefined}
         headerAccessory={
           !isSuccess ? (
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EDE4F7]/10 border border-[#8E3EAF]/30 text-xs text-[#D8B4FE]">
@@ -233,7 +233,7 @@ export const Register: React.FC = () => {
                       className="mt-0.5 w-4 h-4 rounded bg-[#140924] border border-[#8E3EAF]/50 text-[#8E3EAF] focus:ring-2 focus:ring-[#8E3EAF]/30 cursor-pointer accent-[#8E3EAF] shrink-0"
                     />
                     <span className="leading-relaxed">
-                      I understand that PMOSense provides AI-assisted health information and monitoring and does not replace professional medical care.
+                      I understand that OVASense provides AI-assisted health information and monitoring and does not replace professional medical care.
                     </span>
                   </label>
                 </div>
@@ -299,7 +299,7 @@ export const Register: React.FC = () => {
 
               <div className="space-y-2.5">
                 <h2 className="text-2xl sm:text-3xl font-bold font-display text-white tracking-tight">
-                  Welcome to PMOSense.
+                  Welcome to OVASense.
                 </h2>
                 <p className="text-sm sm:text-base text-[#EDE4F7] max-w-xs mx-auto leading-relaxed">
                   Your account is ready. Let's start building a clearer picture of your health.
@@ -325,7 +325,7 @@ export const Register: React.FC = () => {
                 onClick={() => navigate(ROUTES.APP.DASHBOARD)}
                 className="w-full min-h-[48px] px-6 py-3.5 rounded-2xl font-sans font-semibold text-sm text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#A21CAF] border border-[#8E3EAF]/40 hover:brightness-110 shadow-lg shadow-purple-950/40 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
               >
-                <span>Continue to PMOSense</span>
+                <span>Continue to OVASense</span>
                 <ArrowRight className="w-4 h-4" />
               </motion.button>
             </motion.div>

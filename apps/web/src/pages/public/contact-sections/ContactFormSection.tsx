@@ -112,7 +112,7 @@ export const ContactFormSection: React.FC = () => {
     setFormData((prev) => ({
       ...prev,
       reason,
-      subject: prev.subject ? prev.subject : `${reason} Inquiry - PMOSense`,
+      subject: prev.subject ? prev.subject : `${reason} Inquiry - OVASense`,
     }));
   };
 
@@ -148,7 +148,7 @@ export const ContactFormSection: React.FC = () => {
                 Direct Communication
               </span>
               <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight font-display">
-                Talk to PMOSense.
+                Talk to OVASense.
               </h2>
               <p className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans font-normal">
                 Have a question, idea, research opportunity, or partnership proposal? Choose what you're reaching out about and we'll route your message appropriately.
@@ -225,7 +225,7 @@ export const ContactFormSection: React.FC = () => {
                 <span>Built with research. Designed for real people.</span>
               </h3>
               <p className="text-xs text-[#B4A6C7] leading-relaxed font-sans">
-                PMOSense is being developed as a responsible health-information and monitoring platform. It is not a replacement for professional medical care.
+                OVASense is being developed as a responsible health-information and monitoring platform. It is not a replacement for professional medical care.
               </p>
             </div>
           </div>
@@ -283,7 +283,7 @@ export const ContactFormSection: React.FC = () => {
                         Message received.
                       </h3>
                       <p className="text-sm sm:text-base text-[#B4A6C7] leading-relaxed font-sans font-normal">
-                        Thank you for reaching out to PMOSense. We'll get back to you as soon as possible.
+                        Thank you for reaching out to OVASense. We'll get back to you as soon as possible.
                       </p>
 
                       {referenceId && (

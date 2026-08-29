@@ -1,5 +1,5 @@
 /**
- * PMOSense Authentication Service Layer
+ * OVASense Authentication Service Layer
  *
  * Clean decoupled service boundary for authentication operations.
  * Future integration with Django REST / Supabase Auth will replace

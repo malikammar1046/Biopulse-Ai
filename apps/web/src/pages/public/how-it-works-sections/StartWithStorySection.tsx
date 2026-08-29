@@ -61,7 +61,7 @@ export const StartWithStorySection: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="text-sm font-bold font-display text-[#1C1326]">Health Baseline Record</h3>
-                    <span className="text-[10px] text-[#8D7E9E] font-mono">ID: PMOS-LOG-2026</span>
+                    <span className="text-[10px] text-[#8D7E9E] font-mono">ID: OVA-LOG-2026</span>
                   </div>
                 </div>
                 <span className="px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#047857] text-[10px] font-bold">

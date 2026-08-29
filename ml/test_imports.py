@@ -1,5 +1,5 @@
 """
-Basic verification test for PMOSense AI/ML dependencies and core runtime imports.
+Basic verification test for OVASense AI/ML dependencies and core runtime imports.
 """
 
 def test_data_stack_imports():

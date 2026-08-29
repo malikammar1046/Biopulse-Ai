@@ -25,13 +25,13 @@ export const Home: React.FC = () => {
       {/* 3. The Problem: Fragmented Health Data */}
       <ProblemSection />
 
-      {/* 3. PMOSense Solution: Connecting The Pieces */}
+      {/* 3. OVASense Solution: Connecting The Pieces */}
       <SolutionSection />
 
       {/* 4. How It Works: Interactive Step-by-Step Workflow & OCR Verification */}
       <HowItWorksSection />
 
-      {/* 5. Core Features: 6 Pillars of PMOSense Ecosystem */}
+      {/* 5. Core Features: 6 Pillars of OVASense Ecosystem */}
       <FeaturesSection />
 
       {/* 6. Explainable AI: SHAP Feature Attribution Transparency */}

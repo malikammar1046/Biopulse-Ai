@@ -4,6 +4,7 @@ export const ROUTES = {
   ABOUT: '/about',
   HOW_IT_WORKS: '/how-it-works',
   FEATURES: '/features',
+  CARE_CIRCLE: '/care-circle',
   CONTACT: '/contact',
 
   // Authentication Routes

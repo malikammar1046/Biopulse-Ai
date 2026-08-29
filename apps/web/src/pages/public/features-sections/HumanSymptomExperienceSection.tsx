@@ -24,7 +24,7 @@ export const HumanSymptomExperienceSection: React.FC = () => {
       id: 1,
       badge: 'Stage 01 — Human Experience',
       title: 'IT STARTS WITH SOMETHING YOU FEEL.',
-      subtitle: 'PMOSense helps connect the signals.',
+      subtitle: 'OVASense helps connect the signals.',
       desc: 'Physical sensations—pelvic tension, menstrual cramps, subtle shifts in daily energy—are your body’s first biological signals.',
     },
     {
@@ -39,12 +39,12 @@ export const HumanSymptomExperienceSection: React.FC = () => {
       badge: 'Stage 03 — Structured Data Points',
       title: 'FROM PHYSICAL SENSATION TO STRUCTURED OBSERVATIONS.',
       subtitle: 'Multimodal data standardization',
-      desc: 'PMOSense captures subjective observations and organizes them alongside quantified biomarkers, sleep quality, and cycle duration.',
+      desc: 'OVASense captures subjective observations and organizes them alongside quantified biomarkers, sleep quality, and cycle duration.',
     },
     {
       id: 4,
       badge: 'Stage 04 — Multimodal Convergence',
-      title: 'THE PMOSENSE INTELLIGENCE CORE.',
+      title: 'THE OVASENSE INTELLIGENCE CORE.',
       subtitle: 'Unifying disparate health streams',
       desc: 'Symptoms, cycle chronologies, verified laboratory results, and lifestyle pacing converge into a unified health matrix.',
     },
@@ -91,7 +91,7 @@ export const HumanSymptomExperienceSection: React.FC = () => {
           </h2>
 
           <p className="text-base sm:text-lg text-[#EDE4F7] leading-relaxed font-sans max-w-2xl mx-auto font-normal">
-            PMOSense helps connect the signals—transforming lived physical experiences into structured, explainable health insights.
+            OVASense helps connect the signals—transforming lived physical experiences into structured, explainable health insights.
           </p>
 
           {/* Interactive Stage Stepper Indicator */}
@@ -285,7 +285,7 @@ export const HumanSymptomExperienceSection: React.FC = () => {
                     <ArrowDown className="w-3.5 h-3.5 text-white" />
                   </div>
                   <div className="p-3 rounded-2xl bg-white/15 border border-white/20 text-xs font-bold text-white">
-                    PMOSENSE INTELLIGENCE ENGINE
+                    OVASENSE INTELLIGENCE ENGINE
                   </div>
                   <div className="w-6 h-6 rounded-full bg-white/20 mx-auto flex items-center justify-center">
                     <ArrowDown className="w-3.5 h-3.5 text-white" />

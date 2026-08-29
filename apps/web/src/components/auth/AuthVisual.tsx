@@ -167,7 +167,7 @@ export const AuthVisual: React.FC<AuthVisualProps> = ({
         transition={{ duration: 0.6, delay: 0.3 }}
         className="relative z-10 hidden sm:flex items-center justify-between text-xs text-[#8D7E9E]"
       >
-        <span>PMOSense Intelligence Framework</span>
+        <span>OVASense Intelligence Framework</span>
         <span className="font-mono text-[11px] text-[#A21CAF]">v1.0.0-preview</span>
       </motion.div>
     </div>

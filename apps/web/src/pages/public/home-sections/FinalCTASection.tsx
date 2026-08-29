@@ -31,7 +31,7 @@ export const FinalCTASection: React.FC = () => {
               </h2>
 
               <p className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans max-w-xl">
-                Explore how PMOSense brings health information together into one thoughtful, explainable,
+                Explore how OVASense brings health information together into one thoughtful, explainable,
                 and longitudinal experience designed to assist you and your healthcare team.
               </p>
 
@@ -43,7 +43,7 @@ export const FinalCTASection: React.FC = () => {
                     className="bg-gradient-to-r from-[#8E3EAF] via-[#A21CAF] to-[#E87084] text-white hover:brightness-110 shadow-lg shadow-purple-950/30"
                     iconRight={<ArrowRight className="w-4 h-4" />}
                   >
-                    Explore PMOSense
+                    Explore OVASense
                   </Button>
                 </Link>
 

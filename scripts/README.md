@@ -1,4 +1,4 @@
-# PMOSense Automation & Helper Scripts
+# OVASense Automation & Helper Scripts
 
 Utility scripts for database migrations, local seed data generation, ML dataset validation, and environment verification.
 

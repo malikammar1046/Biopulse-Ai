@@ -67,7 +67,7 @@ export const LongitudinalStorySection: React.FC = () => {
           </h2>
 
           <p className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans max-w-2xl mx-auto">
-            Chronic endocrine patterns are never static. PMOSense connects your observations month by month
+            Chronic endocrine patterns are never static. OVASense connects your observations month by month
             into a dynamic trajectory so you and your doctor can observe genuine trends.
           </p>
         </div>

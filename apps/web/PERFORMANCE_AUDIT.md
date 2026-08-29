@@ -1,4 +1,4 @@
-# PMOSense Web — Performance & Bundle Audit
+# OVASense Web — Performance & Bundle Audit
 
 **Date:** August 29, 2026  
 **Audited Directory:** `apps/web`  

@@ -12,6 +12,7 @@ export const PublicLayout: React.FC = () => {
     location.pathname === ROUTES.ABOUT ||
     location.pathname === ROUTES.HOW_IT_WORKS ||
     location.pathname === ROUTES.FEATURES ||
+    location.pathname === ROUTES.CARE_CIRCLE ||
     location.pathname === ROUTES.CONTACT ||
     location.pathname === ROUTES.LOGIN ||
     location.pathname === ROUTES.REGISTER;

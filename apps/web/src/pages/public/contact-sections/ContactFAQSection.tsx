@@ -13,17 +13,17 @@ export const ContactFAQSection: React.FC = () => {
 
   const faqs: FAQItem[] = [
     {
-      question: 'What is PMOSense?',
+      question: 'What is OVASense?',
       answer:
-        'PMOSense is an AI-assisted health-information and longitudinal monitoring platform dedicated to women\'s hormonal health and PCOS/PMOS pattern recognition. It brings together cycle tracking, symptom logs, lifestyle metrics, and medical lab report digitization into structured, clinician-friendly summaries.',
+        'OVASense is an AI-assisted health-information and longitudinal monitoring platform dedicated to women\'s hormonal health and PCOS pattern recognition. It brings together cycle tracking, symptom logs, lifestyle metrics, and medical lab report digitization into structured, clinician-friendly summaries.',
     },
     {
-      question: 'Is PMOSense a medical diagnosis tool?',
+      question: 'Is OVASense a medical diagnosis tool?',
       answer:
-        'No. PMOSense is engineered strictly as a health-information and pattern-monitoring platform. It does not provide medical diagnoses or replace direct consultation with licensed medical doctors. All insights are designed to facilitate structured conversations with your healthcare provider.',
+        'No. OVASense is engineered strictly as a health-information and pattern-monitoring platform. It does not provide medical diagnoses or replace direct consultation with licensed medical doctors. All insights are designed to facilitate structured conversations with your healthcare provider.',
     },
     {
-      question: 'Can researchers collaborate with PMOSense?',
+      question: 'Can researchers collaborate with OVASense?',
       answer:
         'Yes. We actively invite academic, biomedical, and clinical researchers to collaborate with us on longitudinal PCOS patterns, Rotterdam criteria alignment studies, and ethical AI model validation.',
     },

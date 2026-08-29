@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, ArrowRight, Activity } from 'lucide-react';
+import { Menu, X, ArrowRight } from 'lucide-react';
 import { ROUTES } from '../../constants/routes';
 import { Button } from '../ui/Button';
 import { Container } from '../ui/Container';
+import { Logo } from '../brand/Logo';
 
 export const Navbar: React.FC = () => {
   const location = useLocation();
@@ -28,6 +29,7 @@ export const Navbar: React.FC = () => {
     { label: 'About', path: ROUTES.ABOUT },
     { label: 'How It Works', path: ROUTES.HOW_IT_WORKS },
     { label: 'Features', path: ROUTES.FEATURES },
+    { label: 'Care Circle', path: ROUTES.CARE_CIRCLE },
     { label: 'Contact', path: ROUTES.CONTACT },
   ];
 
@@ -43,23 +45,9 @@ export const Navbar: React.FC = () => {
     >
       <Container size="xl">
         <div className="flex items-center justify-between">
-          {/* Brand Logo with PMOSense Pulse Indicator */}
-          <Link to={ROUTES.HOME} className="flex items-center gap-3 group">
-            <div className="relative">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-brand flex items-center justify-center text-white shadow-lg shadow-purple-900/30 group-hover:scale-105 transition-transform duration-200">
-                <Activity className="w-5 h-5" />
-              </div>
-              {/* PMOSense Pulse Dot */}
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#FB7185] shadow-[0_0_8px_#FB7185] animate-pulse" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xl font-bold font-display tracking-tight text-white group-hover:text-[#E879F9] transition-colors">
-                PMOSense
-              </span>
-              <span className="text-[10px] uppercase font-semibold tracking-wider text-[#B4A6C7] -mt-1">
-                Health Intelligence
-              </span>
-            </div>
+          {/* Brand Logo with OVASense Pulse Indicator */}
+          <Link to={ROUTES.HOME} className="flex items-center">
+            <Logo size="md" />
           </Link>
 
           {/* Desktop Navigation Links */}

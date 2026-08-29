@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "PMOSense",
-    "slug": "pmosense",
+    "name": "OVASense",
+    "slug": "ovasense",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "pmosense",
+    "scheme": "ovasense",
     "userInterfaceStyle": "dark",
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -14,10 +14,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.pmosense.app"
+      "bundleIdentifier": "com.ovasense.app"
     },
     "android": {
-      "package": "com.pmosense.app",
+      "package": "com.ovasense.app",
       "adaptiveIcon": {
         "backgroundColor": "#090d16",
         "foregroundImage": "./assets/android-icon-foreground.png",

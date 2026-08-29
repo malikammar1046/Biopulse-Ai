@@ -22,7 +22,7 @@ export const ClinicalFoundationSection: React.FC = () => {
           </h2>
 
           <p className="text-base sm:text-lg text-[#EDE4F7] leading-relaxed font-sans max-w-2xl mx-auto">
-            PMOSense combines validated Rotterdam endocrine consensus criteria, advanced ensemble machine learning architectures,
+            OVASense combines validated Rotterdam endocrine consensus criteria, advanced ensemble machine learning architectures,
             SHAP mathematical explainability, and human-centered design for medical-grade transparency.
           </p>
         </div>

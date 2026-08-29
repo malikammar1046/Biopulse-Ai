@@ -18,7 +18,7 @@ export const AboutResponsibleAISection: React.FC = () => {
     },
     {
       title: 'We Respect Boundaries',
-      desc: 'PMOSense is an educational health information system, not a diagnostic medical device. It never replaces clinical consultations.',
+      desc: 'OVASense is an educational health information system, not a diagnostic medical device. It never replaces clinical consultations.',
       icon: ShieldAlert,
       accent: '#E87084',
     },

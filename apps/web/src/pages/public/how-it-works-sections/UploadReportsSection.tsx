@@ -75,7 +75,7 @@ export const UploadReportsSection: React.FC = () => {
 
             <p className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans">
               Upload hormone blood test reports and pelvic ultrasound summaries directly from your phone or computer.
-              PMOSense accepts standard PDFs, JPGs, and PNG document scans.
+              OVASense accepts standard PDFs, JPGs, and PNG document scans.
             </p>
 
             <div className="space-y-3 pt-2">

@@ -27,6 +27,9 @@ const HowItWorks = lazy(() =>
 const Features = lazy(() =>
   import('./pages/public/Features').then((m) => ({ default: m.Features }))
 );
+const CareCircle = lazy(() =>
+  import('./pages/public/CareCircle').then((m) => ({ default: m.CareCircle }))
+);
 const Contact = lazy(() =>
   import('./pages/public/Contact').then((m) => ({ default: m.Contact }))
 );
@@ -75,6 +78,7 @@ export function App() {
             <Route path={ROUTES.ABOUT} element={<About />} />
             <Route path={ROUTES.HOW_IT_WORKS} element={<HowItWorks />} />
             <Route path={ROUTES.FEATURES} element={<Features />} />
+            <Route path={ROUTES.CARE_CIRCLE} element={<CareCircle />} />
             <Route path={ROUTES.CONTACT} element={<Contact />} />
             <Route path={ROUTES.LOGIN} element={<Login />} />
             <Route path={ROUTES.REGISTER} element={<Register />} />

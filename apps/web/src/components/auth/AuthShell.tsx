@@ -1,9 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Activity } from 'lucide-react';
 import { ROUTES } from '../../constants/routes';
 import { AuthVisual } from './AuthVisual';
+import { Logo } from '../brand/Logo';
 
 export interface AuthShellProps {
   headlineLine1: string;
@@ -54,16 +54,8 @@ export const AuthShell: React.FC<AuthShellProps> = ({
 
           {/* ── Mobile Brand Header (< lg) ── */}
           <div className="lg:hidden flex flex-col items-center text-center space-y-3 pt-2 pb-2">
-            <Link to={ROUTES.HOME} className="inline-flex items-center gap-2.5 group">
-              <div className="relative">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-brand flex items-center justify-center text-white shadow-lg shadow-purple-900/30">
-                  <Activity className="w-5 h-5" />
-                </div>
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#FB7185] shadow-[0_0_8px_#FB7185] animate-pulse" />
-              </div>
-              <span className="text-2xl font-bold font-display text-white tracking-tight">
-                PMOSense
-              </span>
+            <Link to={ROUTES.HOME} className="inline-flex items-center">
+              <Logo size="md" />
             </Link>
 
             <div className="space-y-1 max-w-sm px-2">
