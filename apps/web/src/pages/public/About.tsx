@@ -10,14 +10,13 @@ import {
   FourPillarsSection,
   LocalizedPakistanSection,
   AboutResponsibleAISection,
-  ResearchFoundationSection,
-  AboutTeamSection,
+  ClinicalFoundationSection,
   AboutCTASection,
 } from './about-sections';
 
 export const About: React.FC = () => {
   return (
-    <div className="flex flex-col w-full overflow-hidden">
+    <div className="flex flex-col w-full overflow-hidden bg-[#10071A]">
       {/* 1. Hero: Understanding the Complexity with 3D Reproductive System */}
       <AboutHeroSection />
 
@@ -42,19 +41,16 @@ export const About: React.FC = () => {
       {/* 8. Four Core Distinctions: Connected, Explainable, Longitudinal, Human-Centered */}
       <FourPillarsSection />
 
-      {/* 9. Context-Aware: Designed for Real Lives in Pakistan */}
+      {/* 9. Context-Aware: Designed for Real Lives */}
       <LocalizedPakistanSection />
 
       {/* 10. Responsible AI: AI Should Explain, Not Pretend to Know Everything */}
       <AboutResponsibleAISection />
 
-      {/* 11. Academic Foundation: Built as a Research Project. Designed as a Real Product. */}
-      <ResearchFoundationSection />
+      {/* 11. Clinical & Technology Architecture */}
+      <ClinicalFoundationSection />
 
-      {/* 12. Team Preview: Verified Researcher Profiles */}
-      <AboutTeamSection />
-
-      {/* 13. Final CTA: Understand the Patterns. Understand the Bigger Picture. */}
+      {/* 12. Final CTA: Understand the Patterns. Understand the Bigger Picture. */}
       <AboutCTASection />
     </div>
   );

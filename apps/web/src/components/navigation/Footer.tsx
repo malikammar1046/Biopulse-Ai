@@ -25,7 +25,7 @@ export const Footer: React.FC = () => {
             </p>
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-[#E87084]">
               <Heart className="w-3.5 h-3.5 fill-current" />
-              <span>Academic FYP Research & Development</span>
+              <span>Advanced Health AI & Clinical Intelligence</span>
             </div>
           </div>
 
@@ -52,26 +52,21 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <Link to={ROUTES.ABOUT} className="hover:text-white transition-colors">
-                  About the Research
+                  About PMOSense
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Research & Project */}
+          {/* Company & Support */}
           <div className="space-y-3">
             <h4 className="text-xs uppercase font-bold tracking-wider text-[#F6F2FA]">
-              Project
+              Support & Access
             </h4>
             <ul className="space-y-2 text-sm text-[#B4A6C7]">
               <li>
-                <Link to={ROUTES.TEAM} className="hover:text-white transition-colors">
-                  Our Team
-                </Link>
-              </li>
-              <li>
                 <Link to={ROUTES.CONTACT} className="hover:text-white transition-colors">
-                  Contact & Feedback
+                  Contact & Support
                 </Link>
               </li>
               <li>

@@ -15,6 +15,7 @@ import {
 import { Container } from '../../components/ui/Container';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
+import { HumanSymptomExperienceSection } from './features-sections/HumanSymptomExperienceSection';
 
 export const Features: React.FC = () => {
   const platformFeatures = [
@@ -151,64 +152,65 @@ export const Features: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-20 sm:space-y-28 pb-24">
-      {/* Header */}
-      <section className="pt-6 sm:pt-12 text-center">
-        <Container size="lg">
-          <Badge variant="primary" showDot size="md" className="mb-4">
-            Platform Capabilities
-          </Badge>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-[#1C1326] font-display tracking-tight mb-6">
-            Comprehensive Platform Features
-          </h1>
-          <p className="text-lg sm:text-xl text-[#584B68] max-w-3xl mx-auto leading-relaxed font-sans">
-            Every feature in PMOSense is engineered to promote clinical transparency, data accuracy,
-            and longitudinal clarity for individuals and their healthcare providers.
-          </p>
-        </Container>
-      </section>
+    <div className="flex flex-col w-full overflow-hidden bg-[#10071A] text-white">
+      {/* 1. Top Cinematic Hero: "IT STARTS WITH SOMETHING YOU FEEL." (5-Stage Living Symptom Journey) */}
+      <HumanSymptomExperienceSection />
 
-      {/* Feature Cards Grid */}
-      <section>
+      {/* 2. Comprehensive 10-Feature Suite Overview */}
+      <section className="py-20 sm:py-28 bg-[#180A25] border-t border-white/10 text-white relative">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-[#6E2D8B]/15 rounded-full blur-[160px] pointer-events-none -z-10" />
+
         <Container size="xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="max-w-3xl mx-auto text-center mb-16 space-y-4">
+            <Badge variant="secondary" size="md" className="bg-white/10 text-[#C084FC] border-white/15">
+              Platform Suite
+            </Badge>
+            <h2 className="text-3xl sm:text-5xl font-extrabold text-white font-display tracking-tight">
+              The Complete 10-Feature Architecture
+            </h2>
+            <p className="text-base text-[#B4A6C7] max-w-2xl mx-auto">
+              Explore each dedicated capability connecting daily observation, laboratory digitization, explainable AI, and clinician collaboration.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
             {platformFeatures.map((feat) => {
               const Icon = feat.icon;
               return (
                 <Card
                   key={feat.id}
-                  variant="standard"
+                  variant="elevated"
                   hoverEffect
-                  className="p-8 sm:p-10 space-y-5 border-[#E7DFEF] flex flex-col justify-between"
+                  className="p-8 sm:p-10 space-y-5 bg-white/[0.04] border-white/15 backdrop-blur-xl flex flex-col justify-between text-white shadow-2xl"
                 >
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <div className="w-12 h-12 rounded-2xl bg-[#EDE4F7] text-[#6E2D8B] flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-2xl bg-white/10 text-[#FDA4AF] border border-white/15 flex items-center justify-center">
                         <Icon className="w-6 h-6" />
                       </div>
-                      <Badge variant="primary" size="sm">
+                      <span className="px-2.5 py-1 rounded-full bg-[#8E3EAF]/30 text-[#FDA4AF] border border-[#8E3EAF]/40 text-[10px] font-mono font-bold uppercase">
                         {feat.badge}
-                      </Badge>
+                      </span>
                     </div>
 
                     <div>
-                      <h3 className="text-2xl font-bold text-[#1C1326] font-display">
+                      <h3 className="text-2xl font-bold text-white font-display">
                         {feat.title}
                       </h3>
-                      <p className="text-xs font-semibold text-[#8E3EAF] mt-0.5">
+                      <p className="text-xs font-semibold text-[#E879F9] mt-0.5 font-mono">
                         {feat.subtitle}
                       </p>
                     </div>
 
-                    <p className="text-sm text-[#584B68] leading-relaxed">
+                    <p className="text-sm text-[#EDE4F7] leading-relaxed">
                       {feat.desc}
                     </p>
                   </div>
 
-                  <div className="pt-4 border-t border-[#E7DFEF] space-y-2">
+                  <div className="pt-4 border-t border-white/10 space-y-2">
                     {feat.bullets.map((bullet, bIdx) => (
-                      <div key={bIdx} className="flex items-start gap-2 text-xs text-[#1C1326]">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-[#047857] shrink-0 mt-0.5" />
+                      <div key={bIdx} className="flex items-start gap-2 text-xs text-[#EDE4F7]">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#34D399] shrink-0 mt-0.5" />
                         <span>{bullet}</span>
                       </div>
                     ))}

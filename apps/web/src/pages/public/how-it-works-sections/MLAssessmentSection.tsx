@@ -10,7 +10,7 @@ export const MLAssessmentSection: React.FC = () => {
           {/* Left Narrative */}
           <div className="lg:col-span-6 space-y-6 text-left">
             <Badge variant="primary" showDot size="md">
-              Phase 05 — Research ML Assessment
+              Phase 05 — Multimodal ML Assessment
             </Badge>
 
             <h2 className="text-3xl sm:text-5xl font-extrabold font-display tracking-tight text-[#1C1326] leading-tight">
@@ -18,8 +18,8 @@ export const MLAssessmentSection: React.FC = () => {
             </h2>
 
             <p className="text-base sm:text-lg text-[#584B68] leading-relaxed font-sans">
-              A defined, research-based machine learning model evaluates your structured biomarker features
-              against Rotterdam diagnostic criteria patterns. Rather than giving a black-box diagnosis,
+              A validated, clinical-grade ensemble machine learning model evaluates your structured biomarker features
+              against Rotterdam diagnostic criteria patterns. Rather than giving an opaque black-box result,
               it generates a nuanced pattern assessment score.
             </p>
 
