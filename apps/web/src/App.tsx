@@ -21,6 +21,9 @@ const PageLoadingFallback: React.FC = () => (
 // Route-Level Lazy Loading (Code Splitting)
 const Home = lazy(() => import('./pages/public/Home').then((m) => ({ default: m.Home })));
 const About = lazy(() => import('./pages/public/About').then((m) => ({ default: m.About })));
+const UnderstandPCOS = lazy(() =>
+  import('./pages/public/UnderstandPCOS').then((m) => ({ default: m.UnderstandPCOS }))
+);
 const HowItWorks = lazy(() =>
   import('./pages/public/HowItWorks').then((m) => ({ default: m.HowItWorks }))
 );
@@ -75,6 +78,7 @@ export function App() {
           {/* Public Marketing Website */}
           <Route element={<PublicLayout />}>
             <Route path={ROUTES.HOME} element={<Home />} />
+            <Route path={ROUTES.UNDERSTAND_PCOS} element={<UnderstandPCOS />} />
             <Route path={ROUTES.ABOUT} element={<About />} />
             <Route path={ROUTES.HOW_IT_WORKS} element={<HowItWorks />} />
             <Route path={ROUTES.FEATURES} element={<Features />} />

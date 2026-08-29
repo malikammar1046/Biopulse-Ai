@@ -37,6 +37,11 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
+                <Link to={ROUTES.UNDERSTAND_PCOS} className="hover:text-white transition-colors">
+                  Understand PCOS
+                </Link>
+              </li>
+              <li>
                 <Link to={ROUTES.HOW_IT_WORKS} className="hover:text-white transition-colors">
                   How It Works
                 </Link>

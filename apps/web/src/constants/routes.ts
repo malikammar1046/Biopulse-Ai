@@ -2,6 +2,7 @@ export const ROUTES = {
   // Public Marketing Routes
   HOME: '/',
   ABOUT: '/about',
+  UNDERSTAND_PCOS: '/understand-pcos',
   HOW_IT_WORKS: '/how-it-works',
   FEATURES: '/features',
   CARE_CIRCLE: '/care-circle',

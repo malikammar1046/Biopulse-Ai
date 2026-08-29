@@ -26,6 +26,7 @@ export const Navbar: React.FC = () => {
 
   const navLinks = [
     { label: 'Home', path: ROUTES.HOME },
+    { label: 'Understand PCOS', path: ROUTES.UNDERSTAND_PCOS },
     { label: 'About', path: ROUTES.ABOUT },
     { label: 'How It Works', path: ROUTES.HOW_IT_WORKS },
     { label: 'Features', path: ROUTES.FEATURES },
