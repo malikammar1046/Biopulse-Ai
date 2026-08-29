@@ -1,4 +1,5 @@
 export { HeroSection } from './HeroSection';
+export { AnatomyIntelligenceSection } from './AnatomyIntelligenceSection';
 export { ProblemSection } from './ProblemSection';
 export { SolutionSection } from './SolutionSection';
 export { HowItWorksSection } from './HowItWorksSection';
