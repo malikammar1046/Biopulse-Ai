@@ -12,7 +12,9 @@ export const PublicLayout: React.FC = () => {
     location.pathname === ROUTES.ABOUT ||
     location.pathname === ROUTES.HOW_IT_WORKS ||
     location.pathname === ROUTES.FEATURES ||
-    location.pathname === ROUTES.CONTACT;
+    location.pathname === ROUTES.CONTACT ||
+    location.pathname === ROUTES.LOGIN ||
+    location.pathname === ROUTES.REGISTER;
 
   return (
     <div className="flex flex-col min-h-screen bg-[#10071A] text-[#1C1326]">

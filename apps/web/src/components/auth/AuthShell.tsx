@@ -26,7 +26,7 @@ export const AuthShell: React.FC<AuthShellProps> = ({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="min-h-[calc(100vh-80px)] w-full bg-[#0D0518] text-[#F8F5FA] relative flex flex-col justify-center overflow-x-hidden"
+      className="min-h-screen w-full bg-[#0D0518] text-[#F8F5FA] relative flex flex-col justify-center overflow-x-hidden pt-24 sm:pt-28 pb-16 sm:pb-20"
     >
       {/* ── Global Background Ambient Glow Layer (Lightweight CSS) ── */}
       <div
@@ -40,7 +40,7 @@ export const AuthShell: React.FC<AuthShellProps> = ({
         aria-hidden="true"
       />
 
-      <div className="w-full max-w-7xl mx-auto flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      <div className="w-full max-w-7xl mx-auto flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           {/* ── Desktop Brand Experience (LEFT ~50%) ── */}
           <div className="hidden lg:block lg:col-span-6 rounded-[28px] overflow-hidden border border-[#8E3EAF]/20 shadow-2xl shadow-purple-950/60 bg-[#0C0515] h-full min-h-[620px]">
