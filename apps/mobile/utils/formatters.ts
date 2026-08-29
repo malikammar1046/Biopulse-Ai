@@ -1,5 +1,5 @@
 /**
- * PMOSense Date and string utility formatters.
+ * OVASense Date and string utility formatters.
  */
 
 export function formatDateToISO(date: Date = new Date()): string {

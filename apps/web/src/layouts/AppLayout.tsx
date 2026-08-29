@@ -1,7 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import {
-  Activity,
   LayoutDashboard,
   User,
   Calendar,
@@ -17,6 +16,7 @@ import {
 import { ROUTES } from '../constants/routes';
 import { Badge } from '../components/ui/Badge';
 import { ScrollToTop } from '../components/common/ScrollToTop';
+import { Logo } from '../components/brand/Logo';
 
 export const AppLayout: React.FC = () => {
   const location = useLocation();
@@ -42,18 +42,8 @@ export const AppLayout: React.FC = () => {
       <aside className="w-64 bg-white border-r border-[#E7DFEF] flex flex-col justify-between p-4 hidden md:flex shrink-0">
         <div>
           {/* Brand */}
-          <Link to={ROUTES.HOME} className="flex items-center gap-2.5 px-3 py-4 mb-4 group">
-            <div className="w-9 h-9 rounded-2xl bg-gradient-brand flex items-center justify-center text-white">
-              <Activity className="w-5 h-5" />
-            </div>
-            <div>
-              <span className="text-lg font-bold font-display text-[#1C1326] block">
-                PMOSense
-              </span>
-              <span className="text-[10px] uppercase font-semibold text-[#8D7E9E] -mt-1 block">
-                App Portal (Preview)
-              </span>
-            </div>
+          <Link to={ROUTES.HOME} className="flex items-center px-2 py-4 mb-3">
+            <Logo size="sm" theme="light" tagline="App Portal (Preview)" />
           </Link>
 
           {/* Navigation Items */}
@@ -106,10 +96,8 @@ export const AppLayout: React.FC = () => {
         {/* Top App Bar */}
         <header className="h-16 bg-white border-b border-[#E7DFEF] px-6 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <Link to={ROUTES.HOME} className="md:hidden flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-gradient-brand flex items-center justify-center text-white">
-                <Activity className="w-4 h-4" />
-              </div>
+            <Link to={ROUTES.HOME} className="md:hidden flex items-center">
+              <Logo size="xs" showText={false} />
             </Link>
             <Badge variant="primary" showDot size="sm">
               PHASE 2 APPLICATION SHELL

@@ -37,7 +37,7 @@ export default function RootLayout() {
           name="design-system"
           options={{
             headerShown: true,
-            title: 'PMOSense Design System',
+            title: 'OVASense Design System',
             headerBackTitle: 'Home',
           }}
         />

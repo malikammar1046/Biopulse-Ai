@@ -1,5 +1,5 @@
 /**
- * PMOSense Layout, Spacing, and Radius tokens.
+ * OVASense Layout, Spacing, and Radius tokens.
  *
  * Emphasizes organic, soft-curved geometry inspired by reproductive-health visual cues.
  */

@@ -75,7 +75,7 @@ export const HowItWorksSection: React.FC = () => {
           </Badge>
 
           <h2 className="text-3xl sm:text-5xl font-extrabold font-display tracking-tight text-[#1C1326] leading-tight">
-            How PMOSense Works
+            How OVASense Works
           </h2>
 
           <p className="text-base sm:text-lg text-[#584B68] leading-relaxed font-sans max-w-2xl mx-auto">

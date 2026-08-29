@@ -57,7 +57,7 @@ export const ExplainResultSection: React.FC = () => {
           </h2>
 
           <p className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans max-w-2xl mx-auto">
-            PMOSense implements SHAP (Shapley Additive exPlanations) game-theoretic mathematics
+            OVASense implements SHAP (Shapley Additive exPlanations) game-theoretic mathematics
             to quantify exactly how each biomarker influenced the assessment score.
           </p>
         </div>

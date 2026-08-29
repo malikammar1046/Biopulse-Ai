@@ -1,5 +1,5 @@
 /**
- * PMOSense Contrast Ratio Verification Script
+ * OVASense Contrast Ratio Verification Script
  *
  * Evaluates WCAG 2.1 relative luminance and contrast ratios between text/interactive foregrounds
  * and surface/background layers.
@@ -99,7 +99,7 @@ const pairs = [
 ];
 
 console.log('='.repeat(90));
-console.log('PMOSENSE DESIGN SYSTEM: PROGRAMMATIC WCAG 2.1 CONTRAST VERIFICATION');
+console.log('OVASENSE DESIGN SYSTEM: PROGRAMMATIC WCAG 2.1 CONTRAST VERIFICATION');
 console.log('='.repeat(90));
 
 let allPassed = true;

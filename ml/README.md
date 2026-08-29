@@ -1,8 +1,8 @@
-# PMOSense AI/ML Subsystem
+# OVASense AI/ML Subsystem
 
-This directory contains the machine learning pipelines, explainability models, and OCR processing modules for the **PMOSense** project.
+This directory contains the machine learning pipelines, explainability models, and OCR processing modules for the **OVASense** project.
 
-> **Disclaimer**: PMOSense is an AI-assisted health-information and longitudinal monitoring platform for PMOS/PCOS. It is **NOT** a diagnostic or treatment-prescription system.
+> **Disclaimer**: OVASense is an AI-assisted health-information and longitudinal monitoring platform for PCOS and ovarian health. It is **NOT** a diagnostic or treatment-prescription system.
 
 ---
 

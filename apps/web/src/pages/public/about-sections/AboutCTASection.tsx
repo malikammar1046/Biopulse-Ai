@@ -4,7 +4,7 @@ import { ArrowRight, Sparkles, ShieldCheck } from 'lucide-react';
 import { ROUTES } from '../../../constants/routes';
 import { Button } from '../../../components/ui/Button';
 import { Container } from '../../../components/ui/Container';
-import { VitalOrb } from '../../../components/3d/VitalOrb';
+import { BiologicalOrb } from '../../../components/biological/BiologicalOrb';
 
 export const AboutCTASection: React.FC = () => {
   return (
@@ -31,7 +31,7 @@ export const AboutCTASection: React.FC = () => {
               </h2>
 
               <p className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans max-w-xl">
-                PMOSense is being built to help women turn scattered health information into something they can understand, monitor, and discuss with clinical professionals.
+                OVASense is being built to help women turn scattered health information into something they can understand, monitor, and discuss with clinical professionals.
               </p>
 
               <div className="flex flex-wrap items-center gap-4 pt-4">
@@ -42,7 +42,7 @@ export const AboutCTASection: React.FC = () => {
                     className="bg-gradient-to-r from-[#8E3EAF] via-[#A21CAF] to-[#E87084] text-white hover:brightness-110 shadow-lg shadow-purple-950/30"
                     iconRight={<ArrowRight className="w-4 h-4" />}
                   >
-                    Explore PMOSense
+                    Explore OVASense
                   </Button>
                 </Link>
 
@@ -63,9 +63,9 @@ export const AboutCTASection: React.FC = () => {
               </div>
             </div>
 
-            {/* Right 3D Visual Finale */}
-            <div className="lg:col-span-5 relative flex items-center justify-center min-h-[300px] sm:min-h-[360px]">
-              <VitalOrb className="w-full h-[320px] sm:h-[380px]" />
+            {/* Right Lightweight Visual Finale */}
+            <div className="lg:col-span-5 relative flex items-center justify-center min-h-[280px] sm:min-h-[340px]">
+              <BiologicalOrb size="md" className="w-full h-[280px] sm:h-[340px]" />
             </div>
           </div>
         </div>

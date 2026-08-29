@@ -1,6 +1,6 @@
-# PMOSense Documentation
+# OVASense Documentation
 
-This directory contains technical specifications, architectural diagrams, API schemas, and clinical information disclaimers for the **PMOSense** platform.
+This directory contains technical specifications, architectural diagrams, API schemas, and clinical information disclaimers for the **OVASense** platform.
 
 ---
 
@@ -8,4 +8,4 @@ This directory contains technical specifications, architectural diagrams, API sc
 
 - `architecture/`: System design diagrams, data flow diagrams, and ERDs.
 - `api/`: OpenAPI / Swagger specifications and endpoint documentation.
-- `research/`: Literature review, reference datasets, and PMOS/PCOS health tracking methodologies.
+- `research/`: Literature review, reference datasets, and PCOS/ovarian health tracking methodologies.

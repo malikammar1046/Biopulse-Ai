@@ -1,5 +1,5 @@
 /**
- * PMOSense API client configuration placeholder.
+ * OVASense API client configuration placeholder.
  * Base configuration and headers contract for backend requests.
  */
 

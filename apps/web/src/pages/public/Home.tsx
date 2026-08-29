@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   HeroSection,
+  AnatomyIntelligenceSection,
   ProblemSection,
   SolutionSection,
   HowItWorksSection,
@@ -18,16 +19,19 @@ export const Home: React.FC = () => {
       {/* 1. Hero Section: Atmospheric Dark with 3D Vital Orb & Editorial Typography */}
       <HeroSection />
 
-      {/* 2. The Problem: Fragmented Health Data */}
+      {/* 2. Reproductive Anatomy & AI Correlation Section */}
+      <AnatomyIntelligenceSection />
+
+      {/* 3. The Problem: Fragmented Health Data */}
       <ProblemSection />
 
-      {/* 3. PMOSense Solution: Connecting The Pieces */}
+      {/* 3. OVASense Solution: Connecting The Pieces */}
       <SolutionSection />
 
       {/* 4. How It Works: Interactive Step-by-Step Workflow & OCR Verification */}
       <HowItWorksSection />
 
-      {/* 5. Core Features: 6 Pillars of PMOSense Ecosystem */}
+      {/* 5. Core Features: 6 Pillars of OVASense Ecosystem */}
       <FeaturesSection />
 
       {/* 6. Explainable AI: SHAP Feature Attribution Transparency */}

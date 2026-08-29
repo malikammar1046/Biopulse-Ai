@@ -62,7 +62,7 @@ export default function DesignSystemScreen() {
         {/* Header Section */}
         <View style={styles.header}>
           <Badge
-            label={`PMOSense UI Engine • ${colorScheme.toUpperCase()} MODE`}
+            label={`OVASense UI Engine • ${colorScheme.toUpperCase()} MODE`}
             variant="primary"
             badgeStyle="soft"
             showDot
@@ -494,7 +494,7 @@ export default function DesignSystemScreen() {
         {/* Footer Note */}
         <View style={styles.footer}>
           <Typography variant="caption" color={theme.textMuted} align="center">
-            PMOSense Mobile Design System v1.0.0 • Academic FYP
+            OVASense Mobile Design System v1.0.0 • Academic FYP
           </Typography>
           <Typography variant="caption" color={theme.textMuted} align="center" style={styles.mtXs}>
             Educational Health-Information Platform • Non-Diagnostic

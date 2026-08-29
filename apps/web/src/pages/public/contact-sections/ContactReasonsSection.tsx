@@ -33,7 +33,7 @@ export const ContactReasonsSection: React.FC = () => {
     {
       tag: 'FEEDBACK',
       title: 'Human-Centered Design',
-      description: 'Tell us what would make PMOSense genuinely useful in everyday life.',
+      description: 'Tell us what would make OVASense genuinely useful in everyday life.',
       icon: <Sparkles className="w-6 h-6 text-[#E879F9]" />,
       accentColor: 'from-[#E879F9] to-[#A21CAF]',
       glowColor: 'shadow-[0_0_25px_rgba(232,121,249,0.3)]',
@@ -78,7 +78,7 @@ export const ContactReasonsSection: React.FC = () => {
             transition={{ duration: 0.7, delay: 0.2 }}
             className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans font-normal"
           >
-            PMOSense is being built at the intersection of health, AI, research and human experience.
+            OVASense is being built at the intersection of health, AI, research and human experience.
           </motion.p>
         </div>
 

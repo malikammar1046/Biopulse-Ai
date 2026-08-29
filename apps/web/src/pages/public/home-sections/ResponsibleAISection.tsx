@@ -63,7 +63,7 @@ export const ResponsibleAISection: React.FC = () => {
               Human Clinical Oversight
             </h3>
             <p className="text-sm text-[#584B68] leading-relaxed">
-              PMOSense is an informative monitoring assistant, not a doctor replacement. It organizes data to empower
+              OVASense is an informative monitoring assistant, not a doctor replacement. It organizes data to empower
               better, more informed conversations with qualified physicians.
             </p>
           </div>

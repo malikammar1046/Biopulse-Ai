@@ -1,5 +1,5 @@
 /**
- * PMOSense Typography scale and font weight definitions.
+ * OVASense Typography scale and font weight definitions.
  *
  * Designed for clinical legibility, clear hierarchical scanning,
  * and high accessibility.

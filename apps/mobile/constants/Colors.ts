@@ -1,5 +1,5 @@
 /**
- * PMOSense Brand Palette & Semantic Theme Tokens
+ * OVASense Brand Palette & Semantic Theme Tokens
  *
  * Visual Identity:
  * - Deep Orchid / Sophisticated Purple (Primary Brand)

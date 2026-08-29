@@ -64,7 +64,7 @@ export const ExplainableAISection: React.FC = () => {
             </h2>
 
             <p className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans font-normal">
-              PMOSense is designed to help users understand the physiological factors behind an AI-assisted
+              OVASense is designed to help users understand the physiological factors behind an AI-assisted
               assessment rather than simply presenting an opaque risk percentage.
             </p>
 
@@ -156,7 +156,7 @@ export const ExplainableAISection: React.FC = () => {
               </div>
 
               <p className="text-[10px] text-[#B4A6C7] italic leading-tight text-center">
-                *Illustrative explanation. PMOSense outputs health-information pattern indices, not formal medical diagnoses.
+                *Illustrative explanation. OVASense outputs health-information pattern indices, not formal medical diagnoses.
               </p>
             </div>
           </div>

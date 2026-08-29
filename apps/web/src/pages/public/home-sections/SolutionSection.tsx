@@ -13,7 +13,7 @@ export const SolutionSection: React.FC = () => {
         <div className="max-w-3xl mx-auto text-center space-y-5 mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-[#E879F9] backdrop-blur-md">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>The Unified PMOSense Ecosystem</span>
+            <span>The Unified OVASense Ecosystem</span>
           </div>
 
           <h2 className="text-3xl sm:text-5xl font-extrabold font-display tracking-tight text-white leading-tight">
@@ -24,7 +24,7 @@ export const SolutionSection: React.FC = () => {
           </h2>
 
           <p className="text-base sm:text-lg text-[#EDE4F7] leading-relaxed font-sans max-w-2xl mx-auto">
-            PMOSense turns scattered health information into a structured, understandable picture that can be
+            OVASense turns scattered health information into a structured, understandable picture that can be
             monitored longitudinally and reviewed with healthcare professionals.
           </p>
         </div>
@@ -77,7 +77,7 @@ export const SolutionSection: React.FC = () => {
               </motion.div>
             </div>
 
-            {/* Central PMOSense Fusion Hub */}
+            {/* Central OVASense Fusion Hub */}
             <div className="text-center my-6 md:my-0 flex flex-col items-center">
               <div className="relative">
                 <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-[#8E3EAF] to-[#E87084] blur-xl opacity-60 animate-pulse" />
@@ -87,7 +87,7 @@ export const SolutionSection: React.FC = () => {
                     <Sparkles className="w-5 h-5 text-white" />
                   </div>
                   <span className="text-xs sm:text-sm font-extrabold tracking-wider font-display">
-                    PMOSENSE
+                    OVASENSE
                   </span>
                   <span className="text-[9px] uppercase tracking-widest text-purple-100 font-semibold">
                     Core Fusion

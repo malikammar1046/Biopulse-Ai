@@ -1,6 +1,6 @@
 import { Sparkles } from 'lucide-react';
 import { Container } from '../../../components/ui/Container';
-import { ReproductiveSystem3D } from '../../../components/3d/ReproductiveSystem3D';
+import { LazyReproductiveSystem3D } from '../../../components/3d/LazyReproductiveSystem3D';
 
 export const AnatomyReturnSection: React.FC = () => {
   return (
@@ -24,7 +24,7 @@ export const AnatomyReturnSection: React.FC = () => {
             </h2>
 
             <p className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans max-w-xl">
-              By connecting your internal biological reality with structured health records, explainable artificial intelligence, and longitudinal tracking, PMOSense turns fragmented health experiences into continuous clarity.
+              By connecting your internal biological reality with structured health records, explainable artificial intelligence, and longitudinal tracking, OVASense turns fragmented health experiences into continuous clarity.
             </p>
 
             <div className="grid grid-cols-3 gap-3 pt-2 text-center text-xs font-mono font-bold">
@@ -45,7 +45,7 @@ export const AnatomyReturnSection: React.FC = () => {
 
           {/* Right 3D Visual with Data Halo */}
           <div className="lg:col-span-6 relative flex items-center justify-center min-h-[420px] sm:min-h-[480px]">
-            <ReproductiveSystem3D className="w-full h-[420px] sm:h-[480px]" showDataNodes={true} />
+            <LazyReproductiveSystem3D className="w-full h-[420px] sm:h-[480px]" showDataNodes={true} />
           </div>
         </div>
       </Container>

@@ -6,31 +6,31 @@ export const WhyDifferentSection: React.FC = () => {
   const comparisonData = [
     {
       conventional: 'Single-purpose cycle tracking',
-      pmosense: 'Connected multimodal health information',
+      ovasense: 'Connected multimodal health information',
     },
     {
       conventional: 'Data remains fragmented across slips & apps',
-      pmosense: 'Unified, structured longitudinal record',
+      ovasense: 'Unified, structured longitudinal record',
     },
     {
       conventional: 'One-time isolated snapshot prediction',
-      pmosense: 'Multi-month longitudinal trend monitoring',
+      ovasense: 'Multi-month longitudinal trend monitoring',
     },
     {
       conventional: 'Opaque black-box AI risk percentages',
-      pmosense: 'Transparent SHAP feature attribution',
+      ovasense: 'Transparent SHAP feature attribution',
     },
     {
       conventional: 'Generic western lifestyle advice',
-      pmosense: 'Context-aware localized lifestyle guidance',
+      ovasense: 'Context-aware localized lifestyle guidance',
     },
     {
       conventional: 'Unfiltered technical information overload',
-      pmosense: 'Clear, patient-friendly biomarker context',
+      ovasense: 'Clear, patient-friendly biomarker context',
     },
     {
       conventional: 'Automated AI claims replacing doctors',
-      pmosense: 'Human-supervised physician discussion summaries',
+      ovasense: 'Human-supervised physician discussion summaries',
     },
   ];
 
@@ -58,7 +58,7 @@ export const WhyDifferentSection: React.FC = () => {
         <div className="max-w-4xl mx-auto rounded-3xl bg-white border border-[#E7DFEF] shadow-xl overflow-hidden">
           <div className="grid grid-cols-2 bg-[#EDE4F7]/60 border-b border-[#E7DFEF] p-5 font-display font-bold text-xs sm:text-sm">
             <span className="text-[#8D7E9E] uppercase tracking-wider">Conventional Digital Trackers</span>
-            <span className="text-[#6E2D8B] uppercase tracking-wider">The PMOSense Platform</span>
+            <span className="text-[#6E2D8B] uppercase tracking-wider">The OVASense Platform</span>
           </div>
 
           <div className="divide-y divide-[#E7DFEF]">
@@ -70,7 +70,7 @@ export const WhyDifferentSection: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2.5 text-[#1C1326] font-semibold pl-2">
                   <Check className="w-4 h-4 text-[#047857] shrink-0" />
-                  <span>{row.pmosense}</span>
+                  <span>{row.ovasense}</span>
                 </div>
               </div>
             ))}

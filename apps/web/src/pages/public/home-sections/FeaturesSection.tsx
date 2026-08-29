@@ -85,7 +85,7 @@ export const FeaturesSection: React.FC = () => {
           </Badge>
 
           <h2 className="text-3xl sm:text-5xl font-extrabold font-display tracking-tight text-[#1C1326] leading-tight">
-            Six Core Pillars of PMOSense
+            Six Core Pillars of OVASense
           </h2>
 
           <p className="text-base sm:text-lg text-[#584B68] leading-relaxed font-sans max-w-2xl mx-auto">

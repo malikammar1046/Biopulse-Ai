@@ -16,7 +16,7 @@ export const ReassessmentSection: React.FC = () => {
           </h2>
 
           <p className="text-base sm:text-lg text-[#EDE4F7] leading-relaxed font-sans max-w-2xl mx-auto">
-            When you log a new cycle interval or upload a repeat blood panel after 6 months, PMOSense updates your longitudinal record without discarding historical context.
+            When you log a new cycle interval or upload a repeat blood panel after 6 months, OVASense updates your longitudinal record without discarding historical context.
           </p>
         </div>
 

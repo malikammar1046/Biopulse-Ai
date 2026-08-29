@@ -5,7 +5,7 @@ import { ArrowRight, ShieldCheck } from 'lucide-react';
 import { ROUTES } from '../../../constants/routes';
 import { Button } from '../../../components/ui/Button';
 import { Container } from '../../../components/ui/Container';
-import { VitalOrb } from '../../../components/3d/VitalOrb';
+import { BiologicalOrb } from '../../../components/biological/BiologicalOrb';
 
 export const HeroSection: React.FC = () => {
   return (
@@ -31,7 +31,7 @@ export const HeroSection: React.FC = () => {
             transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
             className="lg:col-span-6 space-y-8 text-left"
           >
-            {/* Eyebrow with PMOSense Pulse */}
+            {/* Eyebrow with OVASense Pulse */}
             <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 backdrop-blur-md">
               <span className="w-2 h-2 rounded-full bg-[#FB7185] shadow-[0_0_8px_#FB7185] animate-pulse" />
               <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.2em] text-[#F6F2FA]">
@@ -50,7 +50,7 @@ export const HeroSection: React.FC = () => {
 
             {/* Supporting Copy */}
             <p className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed max-w-xl font-sans font-normal">
-              PMOSense brings together cycle patterns, symptoms, medical reports, and lifestyle information
+              OVASense brings together cycle patterns, symptoms, medical reports, and lifestyle information
               to help you understand your comprehensive health story over time.
             </p>
 
@@ -63,7 +63,7 @@ export const HeroSection: React.FC = () => {
                   className="bg-gradient-to-r from-[#8E3EAF] via-[#A21CAF] to-[#E87084] text-white hover:brightness-110 shadow-xl shadow-purple-950/30"
                   iconRight={<ArrowRight className="w-4 h-4" />}
                 >
-                  Explore PMOSense
+                  Explore OVASense
                 </Button>
               </Link>
 
@@ -91,92 +91,15 @@ export const HeroSection: React.FC = () => {
             </div>
           </motion.div>
 
-          {/* Right Column: Organic Intelligence Core (Extending Beyond Container with Scientific Annotations) */}
+          {/* Right Column: Lightweight GPU-Accelerated Organic Intelligence Core */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.9, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
             className="lg:col-span-6 relative flex items-center justify-center min-h-[460px] sm:min-h-[540px]"
           >
-            {/* 3D Scene */}
             <div className="w-full h-full relative">
-              <VitalOrb className="w-full h-[460px] sm:h-[540px]" />
-
-              {/* Scientific Annotation Label 1: Cycle Patterns (Top) */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.7, duration: 0.5 }}
-                className="absolute top-4 left-4 sm:-left-2 text-left"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#C084FC] shadow-[0_0_8px_#C084FC]" />
-                  <span className="text-xs font-mono font-bold tracking-wider uppercase text-white">
-                    Cycle Patterns
-                  </span>
-                </div>
-                <div className="w-24 sm:w-32 h-[1px] bg-gradient-to-r from-[#C084FC]/80 to-transparent mt-1" />
-                <span className="text-[10px] text-[#B4A6C7] font-sans block mt-0.5">
-                  Follicular & Luteal Rhythm
-                </span>
-              </motion.div>
-
-              {/* Scientific Annotation Label 2: Symptoms (Right) */}
-              <motion.div
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.85, duration: 0.5 }}
-                className="absolute top-1/4 right-0 sm:-right-4 text-right"
-              >
-                <div className="flex items-center justify-end gap-2">
-                  <span className="text-xs font-mono font-bold tracking-wider uppercase text-white">
-                    Symptoms
-                  </span>
-                  <span className="w-2 h-2 rounded-full bg-[#FB7185] shadow-[0_0_8px_#FB7185]" />
-                </div>
-                <div className="w-24 sm:w-32 h-[1px] bg-gradient-to-l from-[#FB7185]/80 to-transparent mt-1 ml-auto" />
-                <span className="text-[10px] text-[#B4A6C7] font-sans block mt-0.5">
-                  Multivariate Signal Logging
-                </span>
-              </motion.div>
-
-              {/* Scientific Annotation Label 3: Medical Reports (Left Bottom) */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.0, duration: 0.5 }}
-                className="absolute bottom-10 left-2 sm:-left-4 text-left"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#E879F9] shadow-[0_0_8px_#E879F9]" />
-                  <span className="text-xs font-mono font-bold tracking-wider uppercase text-white">
-                    Medical Reports
-                  </span>
-                </div>
-                <div className="w-24 sm:w-32 h-[1px] bg-gradient-to-r from-[#E879F9]/80 to-transparent mt-1" />
-                <span className="text-[10px] text-[#B4A6C7] font-sans block mt-0.5">
-                  Verified Hormone OCR
-                </span>
-              </motion.div>
-
-              {/* Scientific Annotation Label 4: Lifestyle (Bottom Right) */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.15, duration: 0.5 }}
-                className="absolute bottom-6 right-2 sm:right-0 text-right"
-              >
-                <div className="flex items-center justify-end gap-2">
-                  <span className="text-xs font-mono font-bold tracking-wider uppercase text-white">
-                    Lifestyle
-                  </span>
-                  <span className="w-2 h-2 rounded-full bg-[#34D399] shadow-[0_0_8px_#34D399]" />
-                </div>
-                <div className="w-24 sm:w-32 h-[1px] bg-gradient-to-l from-[#34D399]/80 to-transparent mt-1 ml-auto" />
-                <span className="text-[10px] text-[#B4A6C7] font-sans block mt-0.5">
-                  Diet & Movement Context
-                </span>
-              </motion.div>
+              <BiologicalOrb className="w-full h-[460px] sm:h-[540px]" showAnnotations={true} />
             </div>
           </motion.div>
         </div>

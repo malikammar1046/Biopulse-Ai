@@ -1,17 +1,17 @@
-# PMOSense
+# OVASense Ai Health Monitor
 
-**PMOSense** is an AI-assisted health-information and longitudinal monitoring platform focused on PMOS/PCOS.
+**OVASense** is an AI-assisted health-information and longitudinal monitoring platform focused on PCOS and ovarian health.
 
-> **Important Clinical & Regulatory Notice**: PMOSense is strictly an educational health-information and longitudinal monitoring platform. It is **NOT** a diagnostic tool and does **NOT** provide medical diagnosis or treatment prescriptions. Always consult qualified healthcare professionals for medical advice.
+> **Important Clinical & Regulatory Notice**: OVASense is strictly an educational health-information and longitudinal monitoring platform. It is **NOT** a diagnostic tool and does **NOT** provide medical diagnosis or treatment prescriptions. Always consult qualified healthcare professionals for medical advice.
 
 ---
 
 ## 🏗️ Repository Architecture
 
-PMOSense is organized as a lightweight, clean monorepo tailored for academic FYP development:
+OVASense is organized as a lightweight, clean monorepo tailored for academic FYP development:
 
 ```text
-PMOSense/
+OVASense/
 ├── apps/
 │   ├── mobile/          # Mobile Application (React Native, Expo, TypeScript, Expo Router, Reanimated)
 │   └── web/             # Web Dashboard (React, TypeScript, Vite, Tailwind CSS, Framer Motion, Three.js)
