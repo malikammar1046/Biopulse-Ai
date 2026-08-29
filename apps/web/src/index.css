@@ -58,8 +58,8 @@
 
 @layer base {
   body {
-    background-color: #F8F5FA;
-    color: #1C1326;
+    background-color: #10071A;
+    color: #FFFFFF;
     font-family: var(--font-sans);
     overflow-x: hidden;
   }
