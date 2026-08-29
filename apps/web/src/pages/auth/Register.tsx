@@ -322,10 +322,10 @@ export const Register: React.FC = () => {
                 type="button"
                 whileHover={{ y: -2, boxShadow: '0 10px 25px -5px rgba(162, 28, 175, 0.4)' }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => navigate(ROUTES.APP.DASHBOARD)}
+                onClick={() => navigate(ROUTES.ONBOARDING)}
                 className="w-full min-h-[48px] px-6 py-3.5 rounded-2xl font-sans font-semibold text-sm text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#A21CAF] border border-[#8E3EAF]/40 hover:brightness-110 shadow-lg shadow-purple-950/40 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
               >
-                <span>Continue to OVASense</span>
+                <span>Complete Health Profile</span>
                 <ArrowRight className="w-4 h-4" />
               </motion.button>
             </motion.div>
