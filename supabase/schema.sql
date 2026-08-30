@@ -222,3 +222,144 @@ CREATE POLICY "Users can delete own symptom records"
   TO authenticated
   USING (auth.uid() = user_id);
 
+-- ==============================================================================
+-- Table: public.medical_reports
+-- Description: Stores metadata for uploaded lab and ultrasound documents.
+-- ==============================================================================
+
+-- 15. Create medical_reports table
+CREATE TABLE IF NOT EXISTS public.medical_reports (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  report_type TEXT NOT NULL,
+  report_date DATE NOT NULL,
+  file_path TEXT NULL,
+  file_name TEXT NOT NULL,
+  file_size BIGINT NULL,
+  mime_type TEXT NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('processing', 'needs_verification', 'verified')),
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 16. Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_medical_reports_user_id ON public.medical_reports(user_id);
+CREATE INDEX IF NOT EXISTS idx_medical_reports_user_date ON public.medical_reports(user_id, report_date DESC);
+
+-- 17. Enable Row Level Security (RLS)
+ALTER TABLE public.medical_reports ENABLE ROW LEVEL SECURITY;
+
+-- 18. RLS Policies for medical_reports
+DROP POLICY IF EXISTS "Users can select own medical reports" ON public.medical_reports;
+CREATE POLICY "Users can select own medical reports"
+  ON public.medical_reports FOR SELECT
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert own medical reports" ON public.medical_reports;
+CREATE POLICY "Users can insert own medical reports"
+  ON public.medical_reports FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update own medical reports" ON public.medical_reports;
+CREATE POLICY "Users can update own medical reports"
+  ON public.medical_reports FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can delete own medical reports" ON public.medical_reports;
+CREATE POLICY "Users can delete own medical reports"
+  ON public.medical_reports FOR DELETE
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+-- ==============================================================================
+-- Table: public.report_results
+-- Description: Stores extracted and verified biomarker values from medical reports.
+-- ==============================================================================
+
+-- 19. Create report_results table
+CREATE TABLE IF NOT EXISTS public.report_results (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  report_id UUID NOT NULL REFERENCES public.medical_reports(id) ON DELETE CASCADE,
+  test_name TEXT NOT NULL,
+  result_value TEXT NOT NULL,
+  result_numeric NUMERIC NULL,
+  unit TEXT NOT NULL,
+  reference_range TEXT DEFAULT '',
+  reference_low NUMERIC NULL,
+  reference_high NUMERIC NULL,
+  status TEXT NOT NULL CHECK (status IN ('within_range', 'outside_range', 'needs_review', 'insufficient_info')),
+  ocr_confidence NUMERIC DEFAULT 0.95,
+  user_verified BOOLEAN DEFAULT true,
+  explanation TEXT DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 20. Indexes for report_results
+CREATE INDEX IF NOT EXISTS idx_report_results_report_id ON public.report_results(report_id);
+CREATE INDEX IF NOT EXISTS idx_report_results_test_name ON public.report_results(test_name);
+
+-- 21. Enable Row Level Security (RLS)
+ALTER TABLE public.report_results ENABLE ROW LEVEL SECURITY;
+
+-- 22. RLS Policies for report_results (joined via parent medical_reports user_id)
+DROP POLICY IF EXISTS "Users can select own report results" ON public.report_results;
+CREATE POLICY "Users can select own report results"
+  ON public.report_results FOR SELECT
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.medical_reports
+      WHERE medical_reports.id = report_results.report_id
+      AND medical_reports.user_id = auth.uid()
+    )
+  );
+
+DROP POLICY IF EXISTS "Users can insert own report results" ON public.report_results;
+CREATE POLICY "Users can insert own report results"
+  ON public.report_results FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.medical_reports
+      WHERE medical_reports.id = report_results.report_id
+      AND medical_reports.user_id = auth.uid()
+    )
+  );
+
+DROP POLICY IF EXISTS "Users can update own report results" ON public.report_results;
+CREATE POLICY "Users can update own report results"
+  ON public.report_results FOR UPDATE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.medical_reports
+      WHERE medical_reports.id = report_results.report_id
+      AND medical_reports.user_id = auth.uid()
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.medical_reports
+      WHERE medical_reports.id = report_results.report_id
+      AND medical_reports.user_id = auth.uid()
+    )
+  );
+
+DROP POLICY IF EXISTS "Users can delete own report results" ON public.report_results;
+CREATE POLICY "Users can delete own report results"
+  ON public.report_results FOR DELETE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.medical_reports
+      WHERE medical_reports.id = report_results.report_id
+      AND medical_reports.user_id = auth.uid()
+    )
+  );
+
+

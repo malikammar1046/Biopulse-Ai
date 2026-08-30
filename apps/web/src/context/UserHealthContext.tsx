@@ -5,7 +5,6 @@ import type {
   TodayReminder,
   NutritionData,
   FitnessData,
-  MedicalReportItem,
   CareCircleContact,
   DigitalTwinInsight,
 } from '../types/dashboard';
@@ -19,8 +18,12 @@ import type {
   SymptomRecordInput,
   SymptomSummaryStats,
 } from '../types/symptom';
+import type {
+  MedicalReport,
+  MedicalReportInput,
+  ReportSummaryStats,
+} from '../types/report';
 import {
-  DEFAULT_MEDICAL_REPORTS,
   DEFAULT_CARE_CIRCLE,
   deriveRemindersFromProfile,
   deriveNutritionFromProfile,
@@ -30,8 +33,10 @@ import {
 import { calculateCycleMetrics } from '../utils/profileCompletion';
 import { calculateCycleStats } from '../utils/cycleCalculations';
 import { calculateSymptomStats } from '../utils/symptomCalculations';
+import { calculateReportSummaryStats } from '../utils/reportCalculations';
 import { cycleService } from '../services/cycleService';
 import { symptomService } from '../services/symptomService';
+import { reportService } from '../services/reportService';
 import { useAuth } from './AuthContext';
 
 interface UserHealthContextType {
@@ -51,10 +56,15 @@ interface UserHealthContextType {
   updateSymptom: (id: string, input: Partial<SymptomRecordInput>) => Promise<{ success: boolean; error?: string }>;
   deleteSymptom: (id: string) => Promise<{ success: boolean; error?: string }>;
   refreshSymptomRecords: () => Promise<void>;
+  reports: MedicalReport[];
+  reportStats: ReportSummaryStats;
+  reportsLoading: boolean;
+  uploadReport: (input: MedicalReportInput) => Promise<{ success: boolean; error?: string }>;
+  deleteReport: (id: string) => Promise<{ success: boolean; error?: string }>;
+  refreshReports: () => Promise<void>;
   reminders: TodayReminder[];
   nutrition: NutritionData;
   fitness: FitnessData;
-  reports: MedicalReportItem[];
   careCircle: CareCircleContact[];
   digitalTwinInsight: DigitalTwinInsight;
   isAiChatOpen: boolean;
@@ -128,10 +138,33 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [userProfile?.id]);
 
+  // Medical Reports State
+  const [reports, setReports] = useState<MedicalReport[]>([]);
+  const [reportsLoading, setReportsLoading] = useState<boolean>(true);
+
+  // Fetch Medical Reports from Supabase / Service on User ID change
+  const refreshReports = useCallback(async () => {
+    if (!userProfile?.id) {
+      setReports([]);
+      setReportsLoading(false);
+      return;
+    }
+    setReportsLoading(true);
+    try {
+      const { reports: fetched } = await reportService.fetchMedicalReports(userProfile.id);
+      setReports(fetched || []);
+    } catch (err) {
+      console.warn('Error refreshing reports:', err);
+    } finally {
+      setReportsLoading(false);
+    }
+  }, [userProfile?.id]);
+
   useEffect(() => {
     refreshCycleRecords();
     refreshSymptomRecords();
-  }, [refreshCycleRecords, refreshSymptomRecords]);
+    refreshReports();
+  }, [refreshCycleRecords, refreshSymptomRecords, refreshReports]);
 
   // Pure mathematical cycle statistics derived from actual records
   const cycleStats: CycleSummaryStats = useMemo(() => {
@@ -309,6 +342,58 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     [userProfile?.id]
   );
 
+  const reportStats: ReportSummaryStats = useMemo(() => {
+    return calculateReportSummaryStats(reports);
+  }, [reports]);
+
+  // Upload and create a new medical report
+  const uploadReport = useCallback(
+    async (input: MedicalReportInput): Promise<{ success: boolean; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to save reports.' };
+      }
+      try {
+        const { report, error } = await reportService.createMedicalReport(userProfile.id, input);
+        if (error || !report) {
+          return { success: false, error: error || 'Failed to save report.' };
+        }
+
+        setReports((prev) => {
+          const next = [report, ...prev.filter((r) => r.id !== report.id)];
+          return next.sort(
+            (a, b) => new Date(b.reportDate).getTime() - new Date(a.reportDate).getTime()
+          );
+        });
+
+        return { success: true };
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Unexpected error saving report.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  // Delete a medical report
+  const deleteReport = useCallback(
+    async (id: string): Promise<{ success: boolean; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to delete a report.' };
+      }
+      try {
+        const { success, error } = await reportService.deleteMedicalReport(userProfile.id, id);
+        if (!success) {
+          return { success: false, error: error || 'Failed to delete report.' };
+        }
+
+        setReports((prev) => prev.filter((r) => r.id !== id));
+        return { success: true };
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Unexpected error deleting report.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
   const [reminders, setReminders] = useState<TodayReminder[]>(() => {
     try {
       const saved = localStorage.getItem(REMINDERS_KEY);
@@ -321,7 +406,6 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return deriveRemindersFromProfile(userProfile);
   });
 
-  const [reports] = useState<MedicalReportItem[]>(DEFAULT_MEDICAL_REPORTS);
   const [careCircle] = useState<CareCircleContact[]>(DEFAULT_CARE_CIRCLE);
 
   // Floating AI Assistant State
@@ -505,6 +589,11 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         nutrition,
         fitness,
         reports,
+        reportStats,
+        reportsLoading,
+        uploadReport,
+        deleteReport,
+        refreshReports,
         careCircle,
         digitalTwinInsight,
         isAiChatOpen,

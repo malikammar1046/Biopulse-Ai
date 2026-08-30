@@ -98,6 +98,38 @@ export const OVASENSE_TERMINOLOGY_GUIDE: Record<string, TermDefinition> = {
     exampleUsage: 'Log hair thinning.',
   },
 
+  // Medical Reports & Lab Testing
+  reference_interval: {
+    clinicalTerm: 'Reference Interval',
+    patientFriendlyTerm: 'Typical range shown by this lab',
+    simpleExplanation: 'The standard range of numbers printed by the testing laboratory for comparison.',
+    exampleUsage: 'Within the typical range shown by this lab.',
+  },
+  specimen: {
+    clinicalTerm: 'Specimen',
+    patientFriendlyTerm: 'Sample',
+    simpleExplanation: 'The blood or swab sample provided to the testing laboratory.',
+    exampleUsage: 'Blood sample collected on August 24.',
+  },
+  analyte: {
+    clinicalTerm: 'Analyte',
+    patientFriendlyTerm: 'Test',
+    simpleExplanation: 'The specific substance or biomarker measured in your body.',
+    exampleUsage: '12 tests recorded in this report.',
+  },
+  flagged_result: {
+    clinicalTerm: 'Flagged / Abnormal Result',
+    patientFriendlyTerm: 'Needs a closer look',
+    simpleExplanation: 'A value that is outside the standard reference range printed by this laboratory.',
+    exampleUsage: '1 number needs a closer look.',
+  },
+  interpretation: {
+    clinicalTerm: 'Clinical Interpretation',
+    patientFriendlyTerm: 'What this means',
+    simpleExplanation: 'An explanation of what the laboratory numbers represent in everyday words.',
+    exampleUsage: 'What this test means.',
+  },
+
   // AI & Technology
   explainable_ai: {
     clinicalTerm: 'Explainable AI (XAI / SHAP)',

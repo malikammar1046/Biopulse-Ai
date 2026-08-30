@@ -1,81 +1,132 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Upload } from 'lucide-react';
 import { useUserHealth } from '../../context/UserHealthContext';
+import { ReportHeroUpload } from '../../components/reports/ReportHeroUpload';
+import { ReportTimeline } from '../../components/reports/ReportTimeline';
+import { ReportTrendVisualizer } from '../../components/reports/ReportTrendVisualizer';
+import { ReportUploadModal } from '../../components/reports/ReportUploadModal';
+import { ReportDetailModal } from '../../components/reports/ReportDetailModal';
+import { ReportDeleteModal } from '../../components/reports/ReportDeleteModal';
+import type { MedicalReport, MedicalReportInput } from '../../types/report';
 
 export const ReportsPage: React.FC = () => {
-  const { reports, openAiChatWithPrompt } = useUserHealth();
+  const {
+    reports,
+    reportStats,
+    reportsLoading,
+    uploadReport,
+    deleteReport,
+  } = useUserHealth();
+
+  // Modal States
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [initialDroppedFile, setInitialDroppedFile] = useState<File | null>(null);
+
+  const [selectedReportForDetail, setSelectedReportForDetail] = useState<MedicalReport | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+  const [selectedReportForDelete, setSelectedReportForDelete] = useState<MedicalReport | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  const handleFileFromHero = (file: File) => {
+    setInitialDroppedFile(file);
+    setIsUploadModalOpen(true);
+  };
+
+  const handleOpenUploadWizard = () => {
+    setInitialDroppedFile(null);
+    setIsUploadModalOpen(true);
+  };
+
+  const handleViewDetail = (report: MedicalReport) => {
+    setSelectedReportForDetail(report);
+    setIsDetailModalOpen(true);
+  };
+
+  const handleDeleteTrigger = (report: MedicalReport) => {
+    setSelectedReportForDelete(report);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (selectedReportForDelete) {
+      await deleteReport(selectedReportForDelete.id);
+    }
+  };
+
+  const handleSaveReport = async (input: MedicalReportInput) => {
+    return await uploadReport(input);
+  };
+
+  if (reportsLoading && reports.length === 0) {
+    return (
+      <div className="py-24 flex flex-col items-center justify-center text-center space-y-3">
+        <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#6E2D8B] via-[#8E3EAF] to-[#FB7185] flex items-center justify-center animate-pulse">
+          <div className="w-3 h-3 rounded-full bg-white animate-ping" />
+        </div>
+        <p className="text-xs font-mono font-bold tracking-widest text-[#B4A6C7] uppercase">
+          Loading Your Health Reports...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-6xl mx-auto space-y-6 text-left select-none pb-12"
+      transition={{ duration: 0.2 }}
+      className="max-w-6xl mx-auto space-y-8 text-left select-none pb-16"
     >
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E7DFEF]">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-xl bg-[#EDE4F7] text-[#6E2D8B]">
-              <FileText className="w-5 h-5" />
-            </span>
-            <h1 className="text-2xl font-bold font-display text-[#1C1326]">
-              Lab Reports & Ultrasounds
-            </h1>
-          </div>
-          <p className="text-xs text-[#584B68] mt-1">
-            Scan and organize your blood tests, hormone panels, and ultrasound reports in one place.
-          </p>
-        </div>
+      {/* Hero Upload & Statistics Header */}
+      <ReportHeroUpload
+        stats={reportStats}
+        onFileSelected={handleFileFromHero}
+        onOpenUploadWizard={handleOpenUploadWizard}
+      />
 
-        <button
-          type="button"
-          onClick={() => openAiChatWithPrompt('I want to upload and understand a new lab or ultrasound report')}
-          className="flex items-center gap-2 px-4 py-2 rounded-2xl font-sans font-bold text-xs text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#E87084] hover:brightness-110 shadow-md transition-all cursor-pointer"
-        >
-          <Upload className="w-4 h-4" />
-          <span>Upload Lab Report</span>
-        </button>
-      </div>
+      {/* Historical Biomarker Trend Comparison Chart (if multi-report trends exist) */}
+      <ReportTrendVisualizer reports={reports} />
 
-      {/* Reports Repository List */}
-      <div className="p-6 sm:p-8 rounded-[32px] bg-white border border-[#E7DFEF] shadow-sm space-y-4">
-        <h2 className="text-base font-bold font-display text-[#1C1326]">
-          Your Uploaded Reports
-        </h2>
+      {/* Chronological Report Timeline & Category Filters */}
+      <ReportTimeline
+        reports={reports}
+        onViewDetail={handleViewDetail}
+        onDelete={handleDeleteTrigger}
+        onOpenUploadModal={handleOpenUploadWizard}
+      />
 
-        <div className="space-y-4">
-          {reports.map((rep) => (
-            <div
-              key={rep.id}
-              className="p-5 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-            >
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-[#1C1326]">{rep.title}</span>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#047857]">
-                    {rep.status}
-                  </span>
-                </div>
-                <p className="text-xs text-[#584B68]">{rep.summary}</p>
-                <span className="text-[10px] font-mono text-[#8E3EAF] font-bold block pt-0.5">
-                  Key Numbers: {rep.keyBiomarker}
-                </span>
-              </div>
+      {/* 4-Step OCR Verification & Upload Modal */}
+      <ReportUploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => {
+          setIsUploadModalOpen(false);
+          setInitialDroppedFile(null);
+        }}
+        onSaveReport={handleSaveReport}
+        initialFile={initialDroppedFile}
+      />
 
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => openAiChatWithPrompt(`Explain my ${rep.title} in simple patient-friendly terms`)}
-                  className="px-3.5 py-1.5 rounded-xl bg-white border border-[#E7DFEF] text-xs font-bold text-[#6E2D8B] hover:bg-[#EDE4F7] transition-colors cursor-pointer"
-                >
-                  Explain in Plain English
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Comprehensive Report Detail Modal */}
+      <ReportDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => {
+          setIsDetailModalOpen(false);
+          setSelectedReportForDetail(null);
+        }}
+        report={selectedReportForDetail}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ReportDeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setSelectedReportForDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        report={selectedReportForDelete}
+      />
     </motion.div>
   );
 };
