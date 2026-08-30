@@ -23,13 +23,13 @@ import { Step6HealthGoals } from '../../components/onboarding/Step6HealthGoals';
 import { Step7ProfileComplete } from '../../components/onboarding/Step7ProfileComplete';
 
 const ONBOARDING_STEPS = [
-  { number: '1', label: 'Personal' },
-  { number: '2', label: 'Safety' },
-  { number: '3', label: 'Medical' },
-  { number: '4', label: 'Women’s Health' },
-  { number: '5', label: 'Lifestyle' },
-  { number: '6', label: 'Goals' },
-  { number: '7', label: 'Complete' },
+  { number: '1', label: 'Basic Info' },
+  { number: '2', label: 'Safety Contact' },
+  { number: '3', label: 'Medical History' },
+  { number: '4', label: 'Period & Cycle' },
+  { number: '5', label: 'Daily Habits' },
+  { number: '6', label: 'Health Goals' },
+  { number: '7', label: 'All Done' },
 ];
 
 export const OnboardingFlow: React.FC = () => {

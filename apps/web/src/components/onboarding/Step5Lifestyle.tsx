@@ -33,10 +33,10 @@ export const Step5Lifestyle: React.FC<Step5Props> = ({ data, onChange }) => {
       {/* Header Info */}
       <div className="space-y-1">
         <h2 className="text-2xl sm:text-3xl font-bold font-display text-white">
-          Lifestyle, Nutrition & Movement.
+          Daily Habits, Food & Movement
         </h2>
         <p className="text-sm text-[#CDBDD8] font-sans">
-          These daily rhythms directly modulate cortisol, insulin sensitivity, and ovarian steroidogenesis.
+          Your daily sleep, food, water, and movement habits play an important role in how you feel and your overall hormone balance.
         </p>
       </div>
 

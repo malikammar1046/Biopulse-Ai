@@ -31,11 +31,11 @@ export const AppSidebar: React.FC = () => {
 
   const mainNavItems = [
     { label: 'Dashboard', path: ROUTES.APP.DASHBOARD, icon: LayoutDashboard },
-    { label: 'Cycle', path: ROUTES.APP.CYCLE, icon: Calendar },
+    { label: 'Your Cycle', path: ROUTES.APP.CYCLE, icon: Calendar },
     { label: 'Symptoms', path: ROUTES.APP.SYMPTOMS, icon: Activity },
-    { label: 'Nutrition', path: ROUTES.APP.DIET, icon: Utensils },
-    { label: 'Fitness', path: ROUTES.APP.FITNESS, icon: Dumbbell },
-    { label: 'Reports', path: ROUTES.APP.REPORTS, icon: FileText },
+    { label: 'Food & Meals', path: ROUTES.APP.DIET, icon: Utensils },
+    { label: 'Movement', path: ROUTES.APP.FITNESS, icon: Dumbbell },
+    { label: 'Lab Reports', path: ROUTES.APP.REPORTS, icon: FileText },
     { label: 'Medications', path: ROUTES.APP.MEDICATIONS, icon: Pill },
     { label: 'Care Circle', path: ROUTES.APP.CARE_CIRCLE, icon: Users },
   ];
@@ -93,20 +93,20 @@ export const AppSidebar: React.FC = () => {
         {/* Digital Twin AI Quick Launcher in Sidebar */}
         <div className="px-1">
           <div
-            onClick={() => openAiChatWithPrompt('Explain my latest follicular metrics')}
+            onClick={() => openAiChatWithPrompt('Explain what my current cycle day and logs mean')}
             className="p-3.5 rounded-2xl bg-gradient-to-b from-[#1C0D2E] to-[#12071F] border border-[#8E3EAF]/40 hover:border-[#FB7185] text-left cursor-pointer transition-all duration-200 group shadow-md"
           >
             <div className="flex items-center justify-between mb-1.5">
               <div className="flex items-center gap-2 text-xs font-bold text-white">
                 <Sparkles className="w-3.5 h-3.5 text-[#FB7185]" />
-                <span>OvaSense AI</span>
+                <span>AI That Explains</span>
               </div>
               <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-[#34D399]/20 text-[#34D399] font-bold">
                 Online
               </span>
             </div>
             <p className="text-[11px] text-[#A797BD] leading-tight group-hover:text-white transition-colors">
-              Day 14 Follicular Insights ready. Ask a question.
+              Your health insights are ready. Ask a question.
             </p>
           </div>
         </div>

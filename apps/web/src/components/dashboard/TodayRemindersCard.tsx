@@ -122,7 +122,7 @@ export const TodayRemindersCard: React.FC<RemindersCardProps> = ({
         </button>
 
         <span className="text-[10px] font-mono text-[#8D7E9E]">
-          Syncs with Care Circle
+          Personal daily checklist
         </span>
       </div>
     </div>

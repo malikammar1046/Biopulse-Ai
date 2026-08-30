@@ -8,9 +8,9 @@ export const MobileBottomNav: React.FC = () => {
 
   const navItems = [
     { label: 'Home', path: ROUTES.APP.DASHBOARD, icon: LayoutDashboard },
-    { label: 'Cycle', path: ROUTES.APP.CYCLE, icon: Calendar },
+    { label: 'Your Cycle', path: ROUTES.APP.CYCLE, icon: Calendar },
     { label: 'Symptoms', path: ROUTES.APP.SYMPTOMS, icon: Activity },
-    { label: 'Reports', path: ROUTES.APP.REPORTS, icon: FileText },
+    { label: 'Lab Reports', path: ROUTES.APP.REPORTS, icon: FileText },
     { label: 'Profile', path: ROUTES.APP.SETTINGS, icon: User },
   ];
 

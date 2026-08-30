@@ -20,14 +20,14 @@ export function getCyclePhase(
   if (day <= safePeriod) {
     return {
       key: 'menstrual',
-      name: 'Menstrual Phase',
-      displayName: 'Estimated Menstrual Phase',
+      name: 'Your Period',
+      displayName: 'Estimated Period (Menstrual Phase)',
       tag: 'Period',
       badgeColor: 'bg-[#FB7185] text-white',
       cardColor: 'bg-[#FDF2F8] border-[#FDA4AF]/40',
       textColor: 'text-[#FB7185]',
-      description: 'Uterine lining shedding with baseline estrogen and progesterone.',
-      guidance: 'Prioritize restorative rest, warmth, iron-rich nourishment, and gentle hydration.',
+      description: 'The days of your period when bleeding occurs and hormone levels are at baseline.',
+      guidance: 'Focus on restorative rest, warmth, iron-rich nourishment, and staying gently hydrated.',
     };
   }
 
@@ -35,13 +35,13 @@ export function getCyclePhase(
     return {
       key: 'follicular',
       name: 'Follicular Phase',
-      displayName: 'Estimated Follicular Phase',
+      displayName: 'Follicular Phase (when an egg develops)',
       tag: 'Follicular',
       badgeColor: 'bg-[#8E3EAF] text-white',
       cardColor: 'bg-[#EDE4F7] border-[#D8B4FE]/40',
       textColor: 'text-[#8E3EAF]',
-      description: 'Estrogen naturally rises to support follicle development.',
-      guidance: 'Favorable window for creative focus, progressive strength training, and insulin sensitivity.',
+      description: 'The part of your cycle when estrogen naturally rises as an egg matures.',
+      guidance: 'Your natural energy is rising. Ideal time for creative focus, progressive movement, and balanced meals.',
     };
   }
 
@@ -49,26 +49,26 @@ export function getCyclePhase(
     return {
       key: 'ovulation',
       name: 'Ovulation Window',
-      displayName: 'Estimated Ovulation Window',
+      displayName: 'Ovulation Window (when an egg is released)',
       tag: 'Peak Fertile',
       badgeColor: 'bg-[#A21CAF] text-white ring-2 ring-[#FB7185]',
       cardColor: 'bg-[#FAF5FF] border-[#C084FC]/40',
       textColor: 'text-[#A21CAF]',
-      description: 'Luteinizing hormone (LH) surge triggers mature follicle release.',
-      guidance: 'Estimated peak fertile window. High energy, social vitality, and metabolic efficiency.',
+      description: 'The estimated peak fertile window when an ovary releases a mature egg.',
+      guidance: 'Estimated fertile window. Peak physical energy, high vitality, and steady metabolic energy.',
     };
   }
 
   return {
     key: 'luteal',
     name: 'Luteal Phase',
-    displayName: 'Estimated Luteal Phase',
+    displayName: 'Luteal Phase (the days after ovulation)',
     tag: 'Luteal',
     badgeColor: 'bg-[#6E2D8B] text-white',
     cardColor: 'bg-[#F8F5FA] border-[#E7DFEF]',
     textColor: 'text-[#6E2D8B]',
-    description: 'Progesterone dominance prepares the uterine environment.',
-    guidance: 'Support hormone balance with complex carbohydrates, magnesium, and restorative evening routines.',
+    description: 'The days after ovulation when progesterone supports your body.',
+    guidance: 'Support steady energy with complex carbohydrates, magnesium, and calming evening routines.',
   };
 }
 

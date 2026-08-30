@@ -20,22 +20,24 @@ export const DashboardHeader: React.FC = () => {
   const notifications = [
     {
       id: 'n1',
-      title: `${snapshotMetrics.phaseName} Active`,
-      desc: `You are on Cycle Day ${snapshotMetrics.cycleDay} (${snapshotMetrics.totalCycleDays}-day rhythm).`,
+      title: snapshotMetrics.cycleDay > 0 ? `${snapshotMetrics.phaseName} Active` : 'Track Your Cycle',
+      desc: snapshotMetrics.cycleDay > 0
+        ? `You are on Cycle Day ${snapshotMetrics.cycleDay} (${snapshotMetrics.totalCycleDays}-day cycle).`
+        : 'Log your first period to activate live cycle day tracking.',
       time: 'Just now',
       unread: true,
     },
     {
       id: 'n2',
-      title: 'Hydration Target',
-      desc: `Daily goal set to ${((userProfile.lifestyle?.dailyWaterGlasses || 8) * 0.25).toFixed(1)}L.`,
+      title: 'Water Goal',
+      desc: `Your daily target is ${((userProfile.lifestyle?.dailyWaterGlasses || 8) * 0.25).toFixed(1)}L (${userProfile.lifestyle?.dailyWaterGlasses || 8} glasses).`,
       time: '2h ago',
       unread: true,
     },
     {
       id: 'n3',
-      title: 'Health Profile Active',
-      desc: 'Your personal health data is encrypted and synced.',
+      title: 'Health Records Private',
+      desc: 'Your personal health data is privately encrypted with Row Level Security (RLS).',
       time: 'Today',
       unread: false,
     },
@@ -51,7 +53,7 @@ export const DashboardHeader: React.FC = () => {
           </h1>
         </div>
         <p className="text-xs sm:text-sm text-[#584B68] font-sans">
-          Here’s your health picture today.
+          Here’s your health summary today.
         </p>
       </div>
 
@@ -67,7 +69,7 @@ export const DashboardHeader: React.FC = () => {
         <div className="hidden lg:flex items-center relative">
           <input
             type="text"
-            placeholder="Search symptoms, reports, vitals..."
+            placeholder="Search symptoms, lab reports, meals..."
             className="w-56 px-3.5 py-2 pl-9 rounded-2xl bg-white border border-[#E7DFEF] text-xs text-[#1C1326] placeholder-[#8D7E9E] focus:outline-none focus:ring-2 focus:ring-[#8E3EAF] transition-all"
           />
           <Search className="w-3.5 h-3.5 text-[#8D7E9E] absolute left-3 top-1/2 -translate-y-1/2" />
@@ -138,7 +140,7 @@ export const DashboardHeader: React.FC = () => {
             <div className="flex items-center justify-between pb-3 border-b border-[#F0EAF5]">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-[#8E3EAF]" />
-                <h3 className="text-sm font-bold font-display text-[#1C1326]">Quick Health Log</h3>
+                <h3 className="text-sm font-bold font-display text-[#1C1326]">Quick Daily Log</h3>
               </div>
               <button
                 type="button"
@@ -155,11 +157,11 @@ export const DashboardHeader: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-2.5">
               {[
-                { title: '🩸 Period Flow', desc: 'Light / Medium / Heavy' },
+                { title: '🩸 Period Flow', desc: 'Light, Medium, or Heavy' },
                 { title: '⚡ Symptoms', desc: 'Cramps, Acne, Bloating' },
-                { title: '🥗 Meal Log', desc: 'Breakfast, Lunch, Dinner' },
-                { title: '🏃 Movement', desc: 'Workout or Walking' },
-                { title: '💊 Medication', desc: 'Metformin, Inositol' },
+                { title: '🥗 Food & Meals', desc: 'Breakfast, Lunch, Dinner' },
+                { title: '🏃 Movement', desc: 'Walking or home exercise' },
+                { title: '💊 Medications', desc: 'Prescriptions & vitamins' },
                 { title: '💧 Water Intake', desc: '+1 Glass (250ml)' },
               ].map((item, i) => (
                 <button

@@ -13,7 +13,7 @@ export const ProblemSection: React.FC = () => {
         <div className="max-w-3xl mx-auto text-center space-y-5 mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-[#FB7185]">
             <AlertCircle className="w-3.5 h-3.5" />
-            <span>The Diagnostic & Monitoring Challenge</span>
+            <span>The Everyday Health Challenge</span>
           </div>
 
           <h2 className="text-3xl sm:text-5xl font-extrabold font-display tracking-tight text-white leading-tight">
@@ -24,8 +24,8 @@ export const ProblemSection: React.FC = () => {
           </h2>
 
           <p className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans font-normal max-w-2xl mx-auto">
-            Important health information frequently lives in isolated silos. When symptoms, lab reports,
-            and cycle shifts are tracked separately, recognizing longitudinal endocrine patterns becomes difficult.
+            When your period dates, blood test results, and daily symptoms live in different places,
+            it becomes difficult to see the full picture and know what to discuss with your doctor.
           </p>
         </div>
 
@@ -45,10 +45,10 @@ export const ProblemSection: React.FC = () => {
           >
             <div className="flex items-center gap-2.5 mb-1 text-[#C084FC]">
               <Calendar className="w-4 h-4" />
-              <span className="text-xs font-bold font-display">Cycle Tracker</span>
+              <span className="text-xs font-bold font-display">Period App</span>
             </div>
             <p className="text-[11px] text-[#B4A6C7] leading-tight">
-              Day 42 • Isolated app log without hormonal context.
+              Day 42 • Isolated period dates without hormone context.
             </p>
           </motion.div>
 
@@ -66,7 +66,7 @@ export const ProblemSection: React.FC = () => {
               <span className="text-xs font-bold font-display">Paper Lab Report</span>
             </div>
             <p className="text-[11px] text-[#B4A6C7] leading-tight">
-              LH/FSH blood tests sitting in a physical hospital folder.
+              Hormone blood tests sitting in a physical paper envelope.
             </p>
           </motion.div>
 
@@ -84,7 +84,7 @@ export const ProblemSection: React.FC = () => {
               <span className="text-xs font-bold font-display">Symptom Note</span>
             </div>
             <p className="text-[11px] text-[#B4A6C7] leading-tight">
-              Acne & fatigue notes scattered in phone memos.
+              Acne, mood, and fatigue notes scattered in phone memos.
             </p>
           </motion.div>
 
@@ -99,10 +99,10 @@ export const ProblemSection: React.FC = () => {
           >
             <div className="flex items-center gap-2.5 mb-1 text-[#34D399]">
               <HeartPulse className="w-4 h-4" />
-              <span className="text-xs font-bold font-display">Lifestyle Record</span>
+              <span className="text-xs font-bold font-display">Daily Routine</span>
             </div>
             <p className="text-[11px] text-[#B4A6C7] leading-tight">
-              Diet & sleep routines disconnected from cycle data.
+              Food, water, and sleep logs disconnected from health history.
             </p>
           </motion.div>
 
@@ -112,7 +112,7 @@ export const ProblemSection: React.FC = () => {
               <FileQuestion className="w-8 h-8 opacity-70" />
             </div>
             <span className="text-xs font-semibold text-[#B4A6C7] block uppercase tracking-widest">
-              Disconnected Health Data
+              Scattered Health Data
             </span>
           </div>
         </div>

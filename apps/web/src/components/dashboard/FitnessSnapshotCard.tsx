@@ -78,7 +78,7 @@ export const FitnessSnapshotCard: React.FC<FitnessProps> = ({ data }) => {
         </Link>
 
         <span className="text-[10px] font-mono text-[#8D7E9E]">
-          Cortisol-Conscious
+          Gentle & Low-Stress
         </span>
       </div>
     </div>

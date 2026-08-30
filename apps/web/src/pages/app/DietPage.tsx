@@ -20,21 +20,21 @@ export const DietPage: React.FC = () => {
               <Utensils className="w-5 h-5" />
             </span>
             <h1 className="text-2xl font-bold font-display text-[#1C1326]">
-              Nutrition & Glycemic Support
+              Food, Meals & Nourishment
             </h1>
           </div>
           <p className="text-xs text-[#584B68] mt-1">
-            Personalized meal guidance tailored to your {userProfile.lifestyle?.dietaryPreference || 'selected dietary'} baseline and hormonal rhythms.
+            Practical meal ideas tailored to your {userProfile.lifestyle?.dietaryPreference || 'eating preferences'} and cycle rhythm.
           </p>
         </div>
 
         <button
           type="button"
-          onClick={() => openAiChatWithPrompt(`Suggest a healthy meal aligned with ${userProfile.lifestyle?.dietaryPreference || 'my nutrition'}`)}
+          onClick={() => openAiChatWithPrompt(`Suggest a hormone-friendly Pakistani meal aligned with ${userProfile.lifestyle?.dietaryPreference || 'my nutrition'}`)}
           className="flex items-center gap-2 px-4 py-2 rounded-2xl font-sans font-bold text-xs text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#E87084] hover:brightness-110 shadow-md transition-all cursor-pointer"
         >
           <Sparkles className="w-4 h-4" />
-          <span>Ask Meal Advice</span>
+          <span>Ask for Meal Ideas</span>
         </button>
       </div>
 

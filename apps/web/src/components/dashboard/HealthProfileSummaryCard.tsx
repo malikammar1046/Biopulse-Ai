@@ -42,13 +42,13 @@ export const HealthProfileSummaryCard: React.FC = () => {
         <div className="space-y-1">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EDE4F7] text-[#6E2D8B] text-xs font-mono font-bold">
             <ShieldCheck className="w-3.5 h-3.5 text-[#8E3EAF]" />
-            <span>Personal Health Command Center</span>
+            <span>Your Health Record</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold font-display text-[#1C1326]">
             {userProfile.fullName || 'User'}'s Health Profile
           </h2>
           <p className="text-xs text-[#584B68] font-sans">
-            Continuous personal baseline recorded for longitudinal health intelligence.
+            Your health background, baseline numbers, and medical history in one secure place.
           </p>
         </div>
 
@@ -244,7 +244,7 @@ export const HealthProfileSummaryCard: React.FC = () => {
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold font-mono text-[#1C1326] uppercase flex items-center gap-1.5">
               <Pill className="w-3.5 h-3.5 text-[#34D399]" />
-              Active Regimen
+              Medications & Supplements
             </span>
             <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#047857]">
               {medications.length}
@@ -264,13 +264,13 @@ export const HealthProfileSummaryCard: React.FC = () => {
             </div>
           ) : (
             <div className="flex items-center justify-between text-xs text-[#8D7E9E] py-1">
-              <span>No medications added</span>
+              <span>No medications recorded</span>
               <button
                 type="button"
                 onClick={handleCompleteOrEdit}
                 className="text-[11px] text-[#047857] font-bold hover:underline"
               >
-                + Add Med
+                + Add
               </button>
             </div>
           )}
@@ -281,7 +281,7 @@ export const HealthProfileSummaryCard: React.FC = () => {
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold font-mono text-[#1C1326] uppercase flex items-center gap-1.5">
               <Stethoscope className="w-3.5 h-3.5 text-[#8E3EAF]" />
-              Recorded Conditions
+              Health Conditions
             </span>
             <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#EDE4F7] text-[#6E2D8B]">
               {conditions.length}

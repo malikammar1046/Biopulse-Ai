@@ -35,7 +35,7 @@ export const HeroSection: React.FC = () => {
             <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 backdrop-blur-md">
               <span className="w-2 h-2 rounded-full bg-[#FB7185] shadow-[0_0_8px_#FB7185] animate-pulse" />
               <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.2em] text-[#F6F2FA]">
-                Intelligent Women's Health
+                Thoughtful Health Intelligence
               </span>
             </div>
 
@@ -50,8 +50,7 @@ export const HeroSection: React.FC = () => {
 
             {/* Supporting Copy */}
             <p className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed max-w-xl font-sans font-normal">
-              OVASense brings together cycle patterns, symptoms, medical reports, and lifestyle information
-              to help you understand your comprehensive health story over time.
+              OvaSense connects your period rhythm, daily symptoms, lab reports, and lifestyle habits into clear, supportive insights over time.
             </p>
 
             {/* CTA Buttons */}
@@ -63,7 +62,7 @@ export const HeroSection: React.FC = () => {
                   className="bg-gradient-to-r from-[#8E3EAF] via-[#A21CAF] to-[#E87084] text-white hover:brightness-110 shadow-xl shadow-purple-950/30"
                   iconRight={<ArrowRight className="w-4 h-4" />}
                 >
-                  Explore OVASense
+                  Explore OvaSense
                 </Button>
               </Link>
 
@@ -82,12 +81,12 @@ export const HeroSection: React.FC = () => {
             <div className="pt-6 border-t border-white/10 flex flex-wrap items-center gap-5 text-[11px] font-bold tracking-wider uppercase text-[#B4A6C7]/80">
               <span className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-[#FB7185]" />
-                AI-Assisted
+                AI That Explains
               </span>
               <span className="w-1 h-1 rounded-full bg-white/20" />
-              <span>Longitudinal</span>
+              <span>Tracked Over Time</span>
               <span className="w-1 h-1 rounded-full bg-white/20" />
-              <span>Human-Centered</span>
+              <span>Private & Secure</span>
             </div>
           </motion.div>
 

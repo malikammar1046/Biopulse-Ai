@@ -32,13 +32,13 @@ export const Step4WomensHealth: React.FC<Step4Props> = ({ data, onChange }) => {
       <div className="space-y-1">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#6E2D8B]/20 border border-[#8E3EAF]/40 text-xs font-mono text-[#FDA4AF] mb-1">
           <Sparkles className="w-3.5 h-3.5 text-[#FB7185]" />
-          <span>Core Reproductive Health</span>
+          <span>Period & Cycle History</span>
         </div>
         <h2 className="text-2xl sm:text-3xl font-bold font-display text-white">
-          Women’s Health & Cycle Profile.
+          Your Period & Cycle Rhythm
         </h2>
         <p className="text-sm text-[#CDBDD8] font-sans">
-          This helps OvaSense identify your natural hormonal phases and highlight longitudinal patterns.
+          This helps OvaSense understand your normal cycle rhythm and calculate your cycle day.
         </p>
       </div>
 

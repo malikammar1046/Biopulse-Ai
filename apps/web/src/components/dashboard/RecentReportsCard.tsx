@@ -18,7 +18,7 @@ export const RecentReportsCard: React.FC<ReportsCardProps> = ({ reports }) => {
             <FileText className="w-4 h-4" />
           </span>
           <h3 className="text-base font-bold font-display text-[#1C1326]">
-            Recent Health Reports
+            Recent Lab Reports
           </h3>
         </div>
 
@@ -72,11 +72,11 @@ export const RecentReportsCard: React.FC<ReportsCardProps> = ({ reports }) => {
           className="inline-flex items-center gap-1.5 text-xs font-bold text-[#6E2D8B] hover:text-[#A21CAF] transition-colors group"
         >
           <Upload className="w-3.5 h-3.5" />
-          <span>Upload New Lab / Scan</span>
+          <span>Upload New Lab Report</span>
         </Link>
 
         <span className="text-[10px] font-mono text-[#8D7E9E]">
-          OCR Extraction Ready
+          Automatic text scanner
         </span>
       </div>
     </div>

@@ -22,13 +22,13 @@ export const DigitalTwinInsightCard: React.FC<DigitalTwinProps> = ({ insight, on
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-base font-bold font-display text-white">AI Twin Insight</h3>
+              <h3 className="text-base font-bold font-display text-white">Your Health Insights</h3>
               <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-[#8E3EAF]/30 text-[#D8B4FE] border border-[#8E3EAF]/40">
-                OvaSense AI
+                AI That Explains
               </span>
             </div>
             <span className="text-xs text-[#B4A6C7] font-sans">
-              Personalized health intelligence
+              Helpful patterns found from your logs
             </span>
           </div>
         </div>
@@ -61,11 +61,11 @@ export const DigitalTwinInsightCard: React.FC<DigitalTwinProps> = ({ insight, on
           className="w-full sm:w-auto px-5 py-2.5 rounded-2xl font-sans font-bold text-xs text-white bg-gradient-to-r from-[#8E3EAF] to-[#E87084] hover:brightness-110 shadow-lg shadow-purple-950/40 transition-all flex items-center justify-center gap-2 cursor-pointer group"
         >
           <Sparkles className="w-4 h-4 text-white" />
-          <span>Chat with OvaSense AI</span>
+          <span>Ask a Question</span>
           <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
         </button>
 
-        <span className="text-[11px] font-mono text-[#A797BD]">Non-diagnostic overview</span>
+        <span className="text-[11px] font-mono text-[#A797BD]">Informational (not a diagnosis)</span>
       </div>
     </div>
   );

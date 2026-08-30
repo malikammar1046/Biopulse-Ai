@@ -11,22 +11,22 @@ export const FitnessPage: React.FC = () => {
 
   const routines = [
     {
-      title: `${phase} Zone-2 Movement`,
+      title: `${phase} Gentle Walking & Movement`,
       duration: '30 min',
       intensity: userProfile.lifestyle?.activityLevel === 'sedentary' ? 'Gentle' : 'Moderate',
-      focus: 'Glucose Uptake & Aerobic Base',
+      focus: 'Blood Sugar Balance & Steady Energy',
     },
     {
-      title: 'Full-Body Resistance & Core',
+      title: 'Full-Body Home Strength',
       duration: '25 min',
       intensity: 'Low-Impact',
-      focus: 'Insulin Sensitivity & Muscle Tone',
+      focus: 'Gentle Strength & Hormone Support',
     },
     {
-      title: 'Nervous System Reset & Mobility',
+      title: 'Calming Stretch & Wind-Down',
       duration: '20 min',
       intensity: 'Restorative',
-      focus: 'Cortisol Reduction',
+      focus: 'Stress Relief & Relaxation',
     },
   ];
 
@@ -44,21 +44,21 @@ export const FitnessPage: React.FC = () => {
               <Dumbbell className="w-5 h-5" />
             </span>
             <h1 className="text-2xl font-bold font-display text-[#1C1326]">
-              Movement & Cortisol Balance
+              Movement & Gentle Exercise
             </h1>
           </div>
           <p className="text-xs text-[#584B68] mt-1">
-            Personalized workouts matched to your {userProfile.lifestyle?.activityLevel?.toLowerCase() || 'current'} baseline and preferred styles ({preferred}).
+            Low-stress movement routines matched to your daily energy level and cycle rhythm ({preferred}).
           </p>
         </div>
 
         <button
           type="button"
-          onClick={() => openAiChatWithPrompt(`What workout is ideal for my ${phase} phase today?`)}
+          onClick={() => openAiChatWithPrompt(`What gentle workout is ideal for my ${phase} phase today?`)}
           className="flex items-center gap-2 px-4 py-2 rounded-2xl font-sans font-bold text-xs text-white bg-gradient-to-r from-[#8E3EAF] to-[#FB7185] hover:brightness-110 shadow-md transition-all cursor-pointer"
         >
           <Sparkles className="w-4 h-4" />
-          <span>Ask Fitness Coach</span>
+          <span>Ask for Movement Ideas</span>
         </button>
       </div>
 

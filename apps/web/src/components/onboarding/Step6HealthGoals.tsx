@@ -11,18 +11,18 @@ interface Step6Props {
 const SUPPORT_OPTIONS = [
   {
     id: 'gentle_nudges',
-    label: 'Gentle Check-in Nudges',
-    desc: 'Unobtrusive reminders only when key cycle phase shifts or logs are due.',
+    label: 'Gentle Reminders',
+    desc: 'Quiet reminders only when your period or daily log is due.',
   },
   {
     id: 'structured_weekly',
-    label: 'Structured Weekly Summaries',
-    desc: 'Comprehensive executive health summary every Sunday with clinician insights.',
+    label: 'Weekly Health Summary',
+    desc: 'An easy-to-read summary of your week sent every Sunday.',
   },
   {
     id: 'daily_coaching',
-    label: 'Interactive Daily Companion',
-    desc: 'Contextual morning overview & daily tips from the OvaSense Digital Twin.',
+    label: 'Daily Health Companion',
+    desc: 'Helpful daily tips and morning check-ins from OvaSense.',
   },
 ];
 

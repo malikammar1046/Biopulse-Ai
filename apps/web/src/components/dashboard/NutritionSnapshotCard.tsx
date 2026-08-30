@@ -20,12 +20,12 @@ export const NutritionSnapshotCard: React.FC<NutritionProps> = ({ data }) => {
             <Utensils className="w-4 h-4" />
           </span>
           <h3 className="text-base font-bold font-display text-[#1C1326]">
-            Today’s Nutrition
+            Today’s Food & Meals
           </h3>
         </div>
 
         <span className="text-xs font-mono font-bold text-[#8E3EAF] bg-[#EDE4F7] px-2.5 py-1 rounded-full">
-          Low Glycemic PCOS Focus
+          Hormone-Friendly Meals
         </span>
       </div>
 

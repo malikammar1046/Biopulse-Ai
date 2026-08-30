@@ -25,7 +25,7 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
             <span className="p-1.5 rounded-xl bg-[#EDE4F7] text-[#6E2D8B]">
               <Calendar className="w-3.5 h-3.5" />
             </span>
-            <span>Cycle Day</span>
+            <span>Your Cycle Day</span>
           </div>
           <span className="text-[10px] font-mono text-[#8D7E9E] font-medium">
             {metrics.totalCycleDays}-day cycle
@@ -74,7 +74,7 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
             </span>
             <span>Next Period</span>
           </div>
-          <span className="text-[10px] font-mono text-[#8D7E9E] font-medium">Est. Window</span>
+          <span className="text-[10px] font-mono text-[#8D7E9E] font-medium">Estimated</span>
         </div>
 
         <div>
@@ -111,7 +111,7 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
             <span className="p-1.5 rounded-xl bg-[#FDF2F8] text-[#A21CAF]">
               <Activity className="w-3.5 h-3.5" />
             </span>
-            <span>Symptoms Logged</span>
+            <span>Today's Symptoms</span>
           </div>
           <span className="text-[10px] font-mono text-[#A21CAF] font-bold group-hover:underline">
             View all
@@ -123,12 +123,12 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
             <span className="text-3xl font-extrabold font-display text-[#1C1326] tracking-tight">
               {metrics.symptomsCountToday}
             </span>
-            <span className="text-xs text-[#584B68] font-medium">Recorded patterns</span>
+            <span className="text-xs text-[#584B68] font-medium">Logged today</span>
           </div>
           <span className="text-xs text-[#584B68] block mt-0.5 truncate font-sans">
             {metrics.symptomsList.length > 0
               ? metrics.symptomsList.map((s) => s.name).join(' • ')
-              : 'No symptoms recorded today'}
+              : 'No symptoms logged today'}
           </span>
         </div>
 
@@ -149,7 +149,7 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
             <span className="p-1.5 rounded-xl bg-[#ECFDF5] text-[#047857]">
               <Sparkles className="w-3.5 h-3.5" />
             </span>
-            <span>Wellness Score</span>
+            <span>Wellness Check</span>
           </div>
           <div className="flex items-center gap-1 text-[11px] font-mono font-bold text-[#047857] bg-[#ECFDF5] px-2 py-0.5 rounded-full">
             <TrendingUp className="w-3 h-3" />
@@ -162,7 +162,7 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
             {metrics.wellnessScore}%
           </span>
           <span className="text-xs text-[#584B68] block mt-0.5 font-medium">
-            Based on sleep, activity & logs
+            Based on sleep, activity & meals
           </span>
         </div>
 
@@ -178,7 +178,7 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
             />
             <circle cx="100" cy="2" r="3.5" fill="#047857" />
           </svg>
-          <span className="text-[10px] font-mono text-[#047857] font-semibold">Optimal Range</span>
+          <span className="text-[10px] font-mono text-[#047857] font-semibold">Feeling Balanced</span>
         </div>
       </div>
     </div>

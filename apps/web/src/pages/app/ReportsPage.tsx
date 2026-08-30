@@ -20,28 +20,28 @@ export const ReportsPage: React.FC = () => {
               <FileText className="w-5 h-5" />
             </span>
             <h1 className="text-2xl font-bold font-display text-[#1C1326]">
-              Medical & Ultrasound Reports
+              Lab Reports & Ultrasounds
             </h1>
           </div>
           <p className="text-xs text-[#584B68] mt-1">
-            OCR biometric extraction from hormone panels, glucose tests, and pelvic sonography.
+            Scan and organize your blood tests, hormone panels, and ultrasound reports in one place.
           </p>
         </div>
 
         <button
           type="button"
-          onClick={() => openAiChatWithPrompt('I want to upload and analyze a new ultrasound report')}
+          onClick={() => openAiChatWithPrompt('I want to upload and understand a new lab or ultrasound report')}
           className="flex items-center gap-2 px-4 py-2 rounded-2xl font-sans font-bold text-xs text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#E87084] hover:brightness-110 shadow-md transition-all cursor-pointer"
         >
           <Upload className="w-4 h-4" />
-          <span>Upload Lab or Scan</span>
+          <span>Upload Lab Report</span>
         </button>
       </div>
 
       {/* Reports Repository List */}
       <div className="p-6 sm:p-8 rounded-[32px] bg-white border border-[#E7DFEF] shadow-sm space-y-4">
         <h2 className="text-base font-bold font-display text-[#1C1326]">
-          Longitudinal Diagnostic Documents
+          Your Uploaded Reports
         </h2>
 
         <div className="space-y-4">
@@ -59,17 +59,17 @@ export const ReportsPage: React.FC = () => {
                 </div>
                 <p className="text-xs text-[#584B68]">{rep.summary}</p>
                 <span className="text-[10px] font-mono text-[#8E3EAF] font-bold block pt-0.5">
-                  Biomarkers: {rep.keyBiomarker}
+                  Key Numbers: {rep.keyBiomarker}
                 </span>
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
-                  onClick={() => openAiChatWithPrompt(`Explain my ${rep.title} in simple terms`)}
+                  onClick={() => openAiChatWithPrompt(`Explain my ${rep.title} in simple patient-friendly terms`)}
                   className="px-3.5 py-1.5 rounded-xl bg-white border border-[#E7DFEF] text-xs font-bold text-[#6E2D8B] hover:bg-[#EDE4F7] transition-colors cursor-pointer"
                 >
-                  Explain with AI
+                  Explain in Plain English
                 </button>
               </div>
             </div>

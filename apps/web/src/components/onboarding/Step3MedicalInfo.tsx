@@ -106,10 +106,10 @@ export const Step3MedicalInfo: React.FC<Step3Props> = ({ data, onChange }) => {
       {/* Header Info */}
       <div className="space-y-1">
         <h2 className="text-2xl sm:text-3xl font-bold font-display text-white">
-          Medical Background & History.
+          Medical History & Medications
         </h2>
         <p className="text-sm text-[#CDBDD8] font-sans">
-          All fields in this section are optional. Sharing your baseline helps OvaSense personalize symptom correlations and reminders.
+          All fields here are optional. Sharing your health background helps OvaSense personalize your reminders and insights.
         </p>
       </div>
 

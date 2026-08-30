@@ -126,40 +126,40 @@ export const CycleTimelineVisualizer: React.FC<CycleTimelineVisualizerProps> = (
         <div className="p-3.5 rounded-2xl bg-[#FDF2F8] border border-[#FDA4AF]/40 space-y-1">
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-[#FB7185]" />
-            <span className="font-bold text-[#FB7185]">1. Menstrual Phase</span>
+            <span className="font-bold text-[#FB7185]">1. Your Period (Menstrual Phase)</span>
           </div>
           <p className="text-[11px] text-[#584B68]">
-            Days 1–{periodDuration} • Uterine shedding, low baseline hormones
+            Days 1–{periodDuration} • Period flow and resting baseline hormone levels
           </p>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-[#EDE4F7] border border-[#D8B4FE]/40 space-y-1">
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-[#8E3EAF]" />
-            <span className="font-bold text-[#8E3EAF]">2. Follicular Phase</span>
+            <span className="font-bold text-[#8E3EAF]">2. Follicular Phase (egg develops)</span>
           </div>
           <p className="text-[11px] text-[#584B68]">
-            Days {periodDuration + 1}–{Math.floor(totalDays / 2) - 1} • Rising estrogen & energy
+            Days {periodDuration + 1}–{Math.floor(totalDays / 2) - 1} • An egg matures as natural estrogen rises
           </p>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-[#FAF5FF] border border-[#C084FC]/40 space-y-1">
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-[#A21CAF]" />
-            <span className="font-bold text-[#A21CAF]">3. Ovulation Window</span>
+            <span className="font-bold text-[#A21CAF]">3. Ovulation (egg released)</span>
           </div>
           <p className="text-[11px] text-[#584B68]">
-            Days {Math.floor(totalDays / 2)}–{Math.floor(totalDays / 2) + 1} • Estimated fertile window & LH peak
+            Days {Math.floor(totalDays / 2)}–{Math.floor(totalDays / 2) + 1} • Estimated peak fertile window
           </p>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] space-y-1">
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-[#6E2D8B]" />
-            <span className="font-bold text-[#6E2D8B]">4. Luteal Phase</span>
+            <span className="font-bold text-[#6E2D8B]">4. Luteal Phase (after ovulation)</span>
           </div>
           <p className="text-[11px] text-[#584B68]">
-            Days {Math.floor(totalDays / 2) + 2}–{totalDays} • Progesterone dominance
+            Days {Math.floor(totalDays / 2) + 2}–{totalDays} • Progesterone supports steady energy
           </p>
         </div>
       </div>
