@@ -14,7 +14,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isOnboarded: boolean;
   login: (payload: LoginPayload) => Promise<{ success: boolean; error?: string }>;
-  register: (payload: RegisterPayload) => Promise<{ success: boolean; error?: string }>;
+  register: (payload: RegisterPayload) => Promise<{ success: boolean; emailConfirmationRequired?: boolean; error?: string }>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   saveOnboardingProfile: (data: Partial<UserProfile>) => Promise<{ success: boolean; error?: string }>;
@@ -148,7 +148,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { success: true };
   };
 
-  const register = async (payload: RegisterPayload): Promise<{ success: boolean; error?: string }> => {
+  const register = async (
+    payload: RegisterPayload
+  ): Promise<{ success: boolean; emailConfirmationRequired?: boolean; error?: string }> => {
     const res = await authService.register(payload);
     if (!res.success) {
       return { success: false, error: res.error };
@@ -166,16 +168,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       setUserProfile(newProfile);
       await profileService.upsertUserProfile(newProfile, res.session.user.id);
-    } else if (res.user && !isSupabaseConfigured()) {
-      // Mock registration handling
-      const newProfile = createEmptyUserProfile({
-        id: res.user.id,
-        email: payload.email,
-        fullName: payload.fullName,
-        dateOfBirth: payload.dateOfBirth || '',
-        isOnboarded: false,
-      });
-      setUserProfile(newProfile);
+      return { success: true, emailConfirmationRequired: false };
+    } else if (res.user) {
+      if (!isSupabaseConfigured()) {
+        const newProfile = createEmptyUserProfile({
+          id: res.user.id,
+          email: payload.email,
+          fullName: payload.fullName,
+          dateOfBirth: payload.dateOfBirth || '',
+          isOnboarded: false,
+        });
+        setUserProfile(newProfile);
+        return { success: true, emailConfirmationRequired: false };
+      }
+      return { success: true, emailConfirmationRequired: true };
     }
 
     return { success: true };
