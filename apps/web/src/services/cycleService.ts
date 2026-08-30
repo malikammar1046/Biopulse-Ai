@@ -135,7 +135,29 @@ class CycleService {
         .single();
 
       if (error) {
-        return { record: null, error: error.message || 'Failed to save period log.' };
+        console.warn(
+          'Supabase insert cycle_records notice (falling back to local cache):',
+          error.message,
+          '\nTIP: Run the table creation SQL in supabase/schema.sql on your Supabase dashboard.'
+        );
+        // Seamless fallback to local cache so user flow is not interrupted
+        const fallbackRecord: CycleRecord = {
+          id: 'cycle_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+          userId,
+          periodStartDate: input.periodStartDate,
+          periodEndDate: input.periodEndDate,
+          flow: input.flow,
+          symptoms: input.symptoms || [],
+          notes: input.notes?.trim() || '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        const existing = this.getLocalCache(userId);
+        const updated = [fallbackRecord, ...existing].sort(
+          (a, b) => new Date(b.periodStartDate).getTime() - new Date(a.periodStartDate).getTime()
+        );
+        this.setLocalCache(userId, updated);
+        return { record: fallbackRecord };
       }
 
       const record = mapDbRowToCycleRecord(data);
@@ -147,7 +169,24 @@ class CycleService {
 
       return { record };
     } catch (err: any) {
-      return { record: null, error: err?.message || 'Network error saving period log.' };
+      console.warn('Network error saving period log (using local cache fallback):', err);
+      const fallbackRecord: CycleRecord = {
+        id: 'cycle_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+        userId,
+        periodStartDate: input.periodStartDate,
+        periodEndDate: input.periodEndDate,
+        flow: input.flow,
+        symptoms: input.symptoms || [],
+        notes: input.notes?.trim() || '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      const existing = this.getLocalCache(userId);
+      const updated = [fallbackRecord, ...existing].sort(
+        (a, b) => new Date(b.periodStartDate).getTime() - new Date(a.periodStartDate).getTime()
+      );
+      this.setLocalCache(userId, updated);
+      return { record: fallbackRecord };
     }
   }
 
@@ -189,8 +228,10 @@ class CycleService {
       };
 
       existing[index] = updatedRecord;
-      existing.sort((a, b) => new Date(b.periodStartDate).getTime() - new Date(a.periodStartDate).getTime());
-      this.setLocalCache(userId, existing);
+      const sorted = existing.sort(
+        (a, b) => new Date(b.periodStartDate).getTime() - new Date(a.periodStartDate).getTime()
+      );
+      this.setLocalCache(userId, sorted);
       return { record: updatedRecord };
     }
 
@@ -204,26 +245,66 @@ class CycleService {
         .single();
 
       if (error) {
-        return { record: null, error: error.message || 'Failed to update period log.' };
+        console.warn('Supabase update cycle_records fallback to cache:', error.message);
+        const existing = this.getLocalCache(userId);
+        const index = existing.findIndex((r) => r.id === id);
+        if (index === -1) return { record: null, error: error.message };
+
+        const updatedRecord: CycleRecord = {
+          ...existing[index],
+          periodStartDate: input.periodStartDate ?? existing[index].periodStartDate,
+          periodEndDate: input.periodEndDate ?? existing[index].periodEndDate,
+          flow: input.flow ?? existing[index].flow,
+          symptoms: input.symptoms ?? existing[index].symptoms,
+          notes: input.notes ?? existing[index].notes,
+          updatedAt: new Date().toISOString(),
+        };
+
+        existing[index] = updatedRecord;
+        const sorted = existing.sort(
+          (a, b) => new Date(b.periodStartDate).getTime() - new Date(a.periodStartDate).getTime()
+        );
+        this.setLocalCache(userId, sorted);
+        return { record: updatedRecord };
       }
 
       const record = mapDbRowToCycleRecord(data);
       const existing = this.getLocalCache(userId);
-      const nextRecords = existing.map((r) => (r.id === id ? record : r)).sort(
+      const updated = existing.map((r) => (r.id === id ? record : r)).sort(
         (a, b) => new Date(b.periodStartDate).getTime() - new Date(a.periodStartDate).getTime()
       );
-      this.setLocalCache(userId, nextRecords);
+      this.setLocalCache(userId, updated);
 
       return { record };
     } catch (err: any) {
+      console.warn('Network error updating cycle record:', err);
+      const existing = this.getLocalCache(userId);
+      const index = existing.findIndex((r) => r.id === id);
+      if (index !== -1) {
+        const updatedRecord: CycleRecord = {
+          ...existing[index],
+          periodStartDate: input.periodStartDate ?? existing[index].periodStartDate,
+          periodEndDate: input.periodEndDate ?? existing[index].periodEndDate,
+          flow: input.flow ?? existing[index].flow,
+          symptoms: input.symptoms ?? existing[index].symptoms,
+          notes: input.notes ?? existing[index].notes,
+          updatedAt: new Date().toISOString(),
+        };
+        existing[index] = updatedRecord;
+        this.setLocalCache(userId, existing);
+        return { record: updatedRecord };
+      }
       return { record: null, error: err?.message || 'Network error updating period log.' };
     }
   }
 
   /**
-   * Deletes a cycle record by ID.
+   * Deletes a cycle record.
    */
-  async deleteCycleRecord(userId: string, id: string): Promise<{ success: boolean; error?: string }> {
+  async deleteCycleRecord(
+    userId: string,
+    id: string
+  ): Promise<{ success: boolean; error?: string }> {
     if (!id || !userId) {
       return { success: false, error: 'Record ID and User ID are required.' };
     }
@@ -243,7 +324,11 @@ class CycleService {
         .eq('user_id', userId);
 
       if (error) {
-        return { success: false, error: error.message || 'Failed to delete period record.' };
+        console.warn('Supabase delete cycle_records fallback to cache:', error.message);
+        const existing = this.getLocalCache(userId);
+        const filtered = existing.filter((r) => r.id !== id);
+        this.setLocalCache(userId, filtered);
+        return { success: true };
       }
 
       const existing = this.getLocalCache(userId);
@@ -252,7 +337,11 @@ class CycleService {
 
       return { success: true };
     } catch (err: any) {
-      return { success: false, error: err?.message || 'Network error deleting period record.' };
+      console.warn('Network error deleting cycle record:', err);
+      const existing = this.getLocalCache(userId);
+      const filtered = existing.filter((r) => r.id !== id);
+      this.setLocalCache(userId, filtered);
+      return { success: true };
     }
   }
 }

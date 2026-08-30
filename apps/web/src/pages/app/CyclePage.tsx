@@ -77,11 +77,11 @@ export const CyclePage: React.FC = () => {
               <Calendar className="w-5 h-5" />
             </span>
             <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-[#1C1326] tracking-tight">
-              Cycle Intelligence & Rhythm
+              Your Cycle & Period Tracker
             </h1>
           </div>
           <p className="text-xs text-[#584B68]">
-            Longitudinal tracking of menstrual periods, estimated biological phases, and cycle regularity.
+            Track your period dates, see your estimated cycle phases, and understand your natural rhythm.
           </p>
         </div>
 
@@ -98,9 +98,9 @@ export const CyclePage: React.FC = () => {
           <button
             type="button"
             onClick={handleOpenLogModal}
-            className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-2xl font-sans font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#E87084] hover:brightness-110 shadow-md transition-all cursor-pointer"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl font-sans font-bold text-xs text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#E87084] hover:brightness-110 shadow-md shadow-purple-950/20 transition-all cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>Log Period</span>
           </button>
         </div>

@@ -152,10 +152,10 @@ export const PeriodLogModal: React.FC<PeriodLogModalProps> = ({
               </span>
               <div>
                 <h2 className="text-xl font-bold font-display text-[#1C1326]">
-                  {isEditing ? 'Edit Period Record' : 'Log Menstrual Period'}
+                  {isEditing ? 'Edit Period Entry' : 'Log Your Period'}
                 </h2>
                 <p className="text-xs text-[#584B68]">
-                  Record your start date, duration, and flow intensity.
+                  Record your period start date, end date, and flow intensity.
                 </p>
               </div>
             </div>
@@ -233,13 +233,13 @@ export const PeriodLogModal: React.FC<PeriodLogModalProps> = ({
             {/* Menstrual Flow Intensity Selector */}
             <div className="space-y-2">
               <label className="text-xs font-bold text-[#1C1326] block">
-                Menstrual Flow Intensity <span className="text-[#FB7185]">*</span>
+                Period Flow Intensity <span className="text-[#FB7185]">*</span>
               </label>
               <div className="grid grid-cols-3 gap-3">
                 {[
                   { value: 'light', label: 'Light', desc: 'Minimal bleeding / Spotting', iconCount: 1 },
                   { value: 'medium', label: 'Medium', desc: 'Standard regular flow', iconCount: 2 },
-                  { value: 'heavy', label: 'Heavy', desc: 'Intense flow requiring frequent changes', iconCount: 3 },
+                  { value: 'heavy', label: 'Heavy', desc: 'Heavy flow requiring frequent changes', iconCount: 3 },
                 ].map((option) => {
                   const isSelected = flow === option.value;
                   return (
