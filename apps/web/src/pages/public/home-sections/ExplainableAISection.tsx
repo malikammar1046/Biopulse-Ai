@@ -9,36 +9,36 @@ export const ExplainableAISection: React.FC = () => {
 
   const shapFactors = [
     {
-      name: 'LH / FSH Ratio (2.35)',
+      name: 'LH / FSH Hormone Ratio (2.35)',
       impact: '+0.36',
       percentage: '84%',
       positive: true,
       color: '#8E3EAF',
-      explanation: 'An elevated LH/FSH ratio is a classic biochemical endocrine marker associated with altered follicular development.',
+      explanation: 'An elevated ratio of LH to FSH hormones can be a natural indicator of altered egg follicle development.',
     },
     {
-      name: 'Ovarian Follicle Count (>12 / ovary)',
+      name: 'Developing Egg Follicles on Scan (>12 / ovary)',
       impact: '+0.28',
       percentage: '68%',
       positive: true,
       color: '#A21CAF',
-      explanation: 'Ultrasound follicle count aligns with Rotterdam morphology criteria for polycystic ovarian patterns.',
+      explanation: 'Ultrasound scan shows several developing egg follicles around the ovary lining.',
     },
     {
-      name: 'Menstrual Cycle Length (42 days)',
+      name: 'Your Cycle Length (42 days)',
       impact: '+0.22',
       percentage: '54%',
       positive: true,
       color: '#E87084',
-      explanation: 'Oligomenorrhea or prolonged cycle intervals indicate irregular follicular maturation cycles.',
+      explanation: 'Longer cycle intervals indicate that ovulation may be taking longer to occur.',
     },
     {
-      name: 'Fasting Blood Glucose (Normal)',
+      name: 'Fasting Blood Sugar (Normal)',
       impact: '-0.15',
       percentage: '35%',
       positive: false,
       color: '#047857',
-      explanation: 'Normal glycemic parameters provide a mitigating metabolic factor in the multi-parametric score.',
+      explanation: 'Healthy blood sugar levels provide a positive, protective balance in your overall health score.',
     },
   ];
 
@@ -53,7 +53,7 @@ export const ExplainableAISection: React.FC = () => {
           <div className="lg:col-span-6 space-y-6">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-[#E879F9]">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Algorithmic Transparency</span>
+              <span>AI That Explains</span>
             </div>
 
             <h2 className="text-3xl sm:text-5xl font-extrabold font-display tracking-tight text-white leading-tight">
@@ -64,24 +64,23 @@ export const ExplainableAISection: React.FC = () => {
             </h2>
 
             <p className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans font-normal">
-              OVASense is designed to help users understand the physiological factors behind an AI-assisted
-              assessment rather than simply presenting an opaque risk percentage.
+              OvaSense shows you exactly which of your entries and test results influenced each pattern assessment—in clear everyday English.
             </p>
 
             <div className="space-y-3 pt-2">
               <div className="flex items-start gap-3 p-4 rounded-2xl bg-white/5 border border-white/10">
                 <CheckCircle2 className="w-5 h-5 text-[#34D399] shrink-0 mt-0.5" />
                 <div className="text-xs sm:text-sm text-[#EDE4F7]">
-                  <strong className="text-white block mb-0.5">SHAP Feature Attribution:</strong>
-                  Mathematical quantification of each biomarker's contribution to the pattern score.
+                  <strong className="text-white block mb-0.5">Clear Factor Breakdown:</strong>
+                  See visual bars showing how each lab number or symptom influenced your overall pattern.
                 </div>
               </div>
 
               <div className="flex items-start gap-3 p-4 rounded-2xl bg-white/5 border border-white/10">
                 <CheckCircle2 className="w-5 h-5 text-[#34D399] shrink-0 mt-0.5" />
                 <div className="text-xs sm:text-sm text-[#EDE4F7]">
-                  <strong className="text-white block mb-0.5">Clinician-Ready Clarity:</strong>
-                  Equips users and doctors with specific indicators to prioritize in clinical discussions.
+                  <strong className="text-white block mb-0.5">Doctor-Ready Conversations:</strong>
+                  Gives you clear, specific topics and numbers to discuss comfortably with your physician.
                 </div>
               </div>
             </div>

@@ -3,6 +3,11 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ROUTES } from './constants/routes';
 import { PublicLayout } from './layouts/PublicLayout';
 import { AppLayout } from './layouts/AppLayout';
+import { AuthProvider } from './context/AuthContext';
+import { UserHealthProvider } from './context/UserHealthContext';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { OnboardingRoute } from './components/auth/OnboardingRoute';
+import { PublicOnlyRoute } from './components/auth/PublicOnlyRoute';
 
 // Lightweight Page Loading Skeleton / Fallback
 const PageLoadingFallback: React.FC = () => (
@@ -37,77 +42,81 @@ const Contact = lazy(() =>
   import('./pages/public/Contact').then((m) => ({ default: m.Contact }))
 );
 
-// Auth Pages (Lazy-Loaded)
+// Auth & Onboarding Pages (Lazy-Loaded)
 const Login = lazy(() => import('./pages/auth/Login').then((m) => ({ default: m.Login })));
 const Register = lazy(() => import('./pages/auth/Register').then((m) => ({ default: m.Register })));
+const OnboardingFlow = lazy(() => import('./pages/onboarding/OnboardingFlow').then((m) => ({ default: m.OnboardingFlow })));
 
-// Authenticated App Shell Placeholders (Lazy-Loaded)
-const DashboardPlaceholder = lazy(() =>
-  import('./pages/app/PlaceholderPage').then((m) => ({ default: m.DashboardPlaceholder }))
-);
-const ProfilePlaceholder = lazy(() =>
-  import('./pages/app/PlaceholderPage').then((m) => ({ default: m.ProfilePlaceholder }))
-);
-const CyclePlaceholder = lazy(() =>
-  import('./pages/app/PlaceholderPage').then((m) => ({ default: m.CyclePlaceholder }))
-);
-const SymptomsPlaceholder = lazy(() =>
-  import('./pages/app/PlaceholderPage').then((m) => ({ default: m.SymptomsPlaceholder }))
-);
-const ReportsPlaceholder = lazy(() =>
-  import('./pages/app/PlaceholderPage').then((m) => ({ default: m.ReportsPlaceholder }))
-);
-const AssessmentPlaceholder = lazy(() =>
-  import('./pages/app/PlaceholderPage').then((m) => ({ default: m.AssessmentPlaceholder }))
-);
-const LifestylePlaceholder = lazy(() =>
-  import('./pages/app/PlaceholderPage').then((m) => ({ default: m.LifestylePlaceholder }))
-);
-const TimelinePlaceholder = lazy(() =>
-  import('./pages/app/PlaceholderPage').then((m) => ({ default: m.TimelinePlaceholder }))
-);
-const SettingsPlaceholder = lazy(() =>
-  import('./pages/app/PlaceholderPage').then((m) => ({ default: m.SettingsPlaceholder }))
-);
+// Authenticated Health App Pages (Lazy-Loaded)
+const Dashboard = lazy(() => import('./pages/app/Dashboard').then((m) => ({ default: m.Dashboard })));
+const CyclePage = lazy(() => import('./pages/app/CyclePage').then((m) => ({ default: m.CyclePage })));
+const SymptomsPage = lazy(() => import('./pages/app/SymptomsPage').then((m) => ({ default: m.SymptomsPage })));
+const DietPage = lazy(() => import('./pages/app/DietPage').then((m) => ({ default: m.DietPage })));
+const FitnessPage = lazy(() => import('./pages/app/FitnessPage').then((m) => ({ default: m.FitnessPage })));
+const ReportsPage = lazy(() => import('./pages/app/ReportsPage').then((m) => ({ default: m.ReportsPage })));
+const MedicationsPage = lazy(() => import('./pages/app/MedicationsPage').then((m) => ({ default: m.MedicationsPage })));
+const CareCirclePage = lazy(() => import('./pages/app/CareCirclePage').then((m) => ({ default: m.CareCirclePage })));
+const SettingsPage = lazy(() => import('./pages/app/SettingsPage').then((m) => ({ default: m.SettingsPage })));
 
 export function App() {
   return (
-    <BrowserRouter>
-      <Suspense fallback={<PageLoadingFallback />}>
-        <Routes>
-          {/* Public Marketing Website */}
-          <Route element={<PublicLayout />}>
-            <Route path={ROUTES.HOME} element={<Home />} />
-            <Route path={ROUTES.UNDERSTAND_PCOS} element={<UnderstandPCOS />} />
-            <Route path={ROUTES.ABOUT} element={<About />} />
-            <Route path={ROUTES.HOW_IT_WORKS} element={<HowItWorks />} />
-            <Route path={ROUTES.FEATURES} element={<Features />} />
-            <Route path={ROUTES.CARE_CIRCLE} element={<CareCircle />} />
-            <Route path={ROUTES.CONTACT} element={<Contact />} />
-            <Route path={ROUTES.LOGIN} element={<Login />} />
-            <Route path={ROUTES.REGISTER} element={<Register />} />
-          </Route>
+    <AuthProvider>
+      <UserHealthProvider>
+        <BrowserRouter>
+          <Suspense fallback={<PageLoadingFallback />}>
+            <Routes>
+              {/* Public Marketing Website */}
+              <Route element={<PublicLayout />}>
+                <Route path={ROUTES.HOME} element={<Home />} />
+                <Route path={ROUTES.UNDERSTAND_PCOS} element={<UnderstandPCOS />} />
+                <Route path={ROUTES.ABOUT} element={<About />} />
+                <Route path={ROUTES.HOW_IT_WORKS} element={<HowItWorks />} />
+                <Route path={ROUTES.FEATURES} element={<Features />} />
+                <Route path={ROUTES.CARE_CIRCLE} element={<CareCircle />} />
+                <Route path={ROUTES.CONTACT} element={<Contact />} />
 
-          {/* Authenticated App Shell Placeholders */}
-          <Route path={ROUTES.APP.ROOT} element={<AppLayout />}>
-            <Route index element={<Navigate to={ROUTES.APP.DASHBOARD} replace />} />
-            <Route path="dashboard" element={<DashboardPlaceholder />} />
-            <Route path="profile" element={<ProfilePlaceholder />} />
-            <Route path="cycle" element={<CyclePlaceholder />} />
-            <Route path="symptoms" element={<SymptomsPlaceholder />} />
-            <Route path="reports" element={<ReportsPlaceholder />} />
-            <Route path="assessment" element={<AssessmentPlaceholder />} />
-            <Route path="lifestyle" element={<LifestylePlaceholder />} />
-            <Route path="timeline" element={<TimelinePlaceholder />} />
-            <Route path="settings" element={<SettingsPlaceholder />} />
-          </Route>
+                {/* Public Only Auth Pages */}
+                <Route element={<PublicOnlyRoute />}>
+                  <Route path={ROUTES.LOGIN} element={<Login />} />
+                  <Route path={ROUTES.REGISTER} element={<Register />} />
+                </Route>
+              </Route>
 
-          {/* Catch-all Fallback */}
-          <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
-        </Routes>
-      </Suspense>
-    </BrowserRouter>
+              {/* 7-Step Onboarding Flow (Guarded) */}
+              <Route element={<OnboardingRoute />}>
+                <Route path={ROUTES.ONBOARDING} element={<OnboardingFlow />} />
+              </Route>
+
+              {/* Authenticated OvaSense Health Application (Protected) */}
+              <Route element={<ProtectedRoute />}>
+                <Route path={ROUTES.APP.ROOT} element={<AppLayout />}>
+                  <Route index element={<Navigate to={ROUTES.APP.DASHBOARD} replace />} />
+                  <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="cycle" element={<CyclePage />} />
+                  <Route path="symptoms" element={<SymptomsPage />} />
+                  <Route path="diet" element={<DietPage />} />
+                  <Route path="fitness" element={<FitnessPage />} />
+                  <Route path="reports" element={<ReportsPage />} />
+                  <Route path="medications" element={<MedicationsPage />} />
+                  <Route path="care-circle" element={<CareCirclePage />} />
+                  <Route path="settings" element={<SettingsPage />} />
+                  {/* Backward compatibility aliases */}
+                  <Route path="profile" element={<Navigate to={ROUTES.APP.SETTINGS} replace />} />
+                  <Route path="lifestyle" element={<Navigate to={ROUTES.APP.DIET} replace />} />
+                  <Route path="assessment" element={<Navigate to={ROUTES.APP.DASHBOARD} replace />} />
+                  <Route path="timeline" element={<Navigate to={ROUTES.APP.CYCLE} replace />} />
+                </Route>
+              </Route>
+
+              {/* Catch-all Fallback */}
+              <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </UserHealthProvider>
+    </AuthProvider>
   );
 }
 
 export default App;
+

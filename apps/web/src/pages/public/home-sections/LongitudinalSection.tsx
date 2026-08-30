@@ -8,45 +8,45 @@ export const LongitudinalSection: React.FC = () => {
   const timelineMilestones = [
     {
       month: 'JAN',
-      title: 'Baseline Intake',
-      desc: 'Initial health profile established. Baseline cycle length recorded at 44 days with elevated acne severity.',
-      tag: 'Baseline Log',
+      title: 'Your Starting Baseline',
+      desc: 'Initial health record set up. Baseline cycle length recorded at 44 days with notes on daily acne.',
+      tag: 'Starting Log',
       metric: 'Cycle: 44d',
     },
     {
       month: 'FEB',
-      title: 'Lab Report Digitization',
-      desc: 'Hormonal blood panel uploaded & OCR verified: LH 9.1 mIU/mL, FSH 4.8 mIU/mL.',
+      title: 'Lab Report Scanned',
+      desc: 'Blood test report scanned and confirmed: LH and FSH hormone numbers saved safely.',
       tag: 'Verified Lab',
-      metric: 'LH/FSH: 1.89',
+      metric: 'Hormones Logged',
     },
     {
       month: 'MAR',
-      title: 'AI Pattern Assessment',
-      desc: 'First multimodal pattern evaluation generated with SHAP feature breakdown highlighting androgen & cycle markers.',
-      tag: 'SHAP Insight',
-      metric: 'Assessment #1',
+      title: 'First AI Insights',
+      desc: 'First AI health pattern insight generated, explaining in plain English which factors mattered most.',
+      tag: 'AI Insight',
+      metric: 'Pattern Check #1',
     },
     {
       month: 'APR',
-      title: 'Lifestyle Optimization',
-      desc: 'Adopted localized low-glycemic dietary adjustments and physical activity pacing for insulin sensitivity.',
-      tag: 'Lifestyle Shift',
-      metric: 'Nutrition Routine',
+      title: 'Gentle Lifestyle Habits',
+      desc: 'Enjoying hormone-friendly Pakistani meals and adding realistic 20-minute daily walks.',
+      tag: 'Daily Habits',
+      metric: 'Balanced Meals',
     },
     {
       month: 'MAY',
-      title: 'Cycle Regularization Log',
-      desc: 'Observed cycle shortened to 36 days. Mild reduction in self-reported pelvic discomfort and fatigue.',
-      tag: 'Trend Progress',
+      title: 'Cycle Rhythm Progress',
+      desc: 'Observed cycle shortened to 36 days. Noticeable improvement in daily energy and pelvic comfort.',
+      tag: 'Your Progress',
       metric: 'Cycle: 36d',
     },
     {
       month: 'JUN',
-      title: 'Clinician Review Summary',
-      desc: 'Generated 6-month consolidated PDF summary for gynecologist consultation and reassessment.',
+      title: 'Doctor Visit Summary',
+      desc: 'Generated a private 1-page summary to share with your gynecologist during your check-up.',
       tag: 'Doctor Summary',
-      metric: 'Follow-up Ready',
+      metric: 'Ready for Visit',
     },
   ];
 
@@ -58,7 +58,7 @@ export const LongitudinalSection: React.FC = () => {
       <Container size="xl">
         <div className="max-w-3xl mx-auto text-center space-y-5 mb-16">
           <Badge variant="primary" showDot size="md">
-            Continuous Trajectory
+            Tracking Over Time
           </Badge>
 
           <h2 className="text-3xl sm:text-5xl font-extrabold font-display tracking-tight text-[#1C1326] leading-tight">

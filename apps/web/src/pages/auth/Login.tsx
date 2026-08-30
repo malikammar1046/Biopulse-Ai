@@ -7,10 +7,11 @@ import { AuthShell } from '../../components/auth/AuthShell';
 import { AuthCard } from '../../components/auth/AuthCard';
 import { AuthField } from '../../components/auth/AuthField';
 import { PasswordInput } from '../../components/auth/PasswordInput';
-import { authService } from '../../services/authService';
+import { useAuth } from '../../context/AuthContext';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -43,7 +44,7 @@ export const Login: React.FC = () => {
     setErrors({});
 
     try {
-      const response = await authService.login({
+      const response = await login({
         email: email.trim(),
         password,
         rememberMe,
@@ -52,7 +53,7 @@ export const Login: React.FC = () => {
       if (response.success) {
         navigate(ROUTES.APP.DASHBOARD);
       } else {
-        setErrors({ general: response.error || 'Authentication failed. Please try again.' });
+        setErrors({ general: response.error || 'Authentication failed. Please check your credentials.' });
       }
     } catch {
       setErrors({ general: 'A connection error occurred. Please try again.' });

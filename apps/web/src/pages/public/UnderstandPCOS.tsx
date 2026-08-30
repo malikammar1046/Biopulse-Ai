@@ -15,17 +15,17 @@ import {
 } from './understand-pcos-sections';
 
 const CHAPTERS = [
-  { id: 'hero', label: 'Human Body' },
-  { id: 'look-beneath-surface', label: 'Internal Biology' },
-  { id: 'the-ovary', label: 'The Ovary' },
-  { id: 'pcos-patterns', label: 'Signal Network' },
-  { id: 'what-can-change', label: 'Domains' },
-  { id: 'dont-ignore', label: 'Clarity' },
-  { id: 'long-term-awareness', label: 'Endometrial Health' },
-  { id: 'awareness-timeline', label: 'Awareness' },
-  { id: 'ovaserse-solution', label: 'OvaSense' },
-  { id: 'digital-twin', label: 'Digital Twin' },
-  { id: 'climax-cta', label: 'Resolution' },
+  { id: 'hero', label: 'Your Body' },
+  { id: 'look-beneath-surface', label: 'Inside the Body' },
+  { id: 'the-ovary', label: 'How Ovaries Work' },
+  { id: 'pcos-patterns', label: 'Hormone Signals' },
+  { id: 'what-can-change', label: 'What Changes' },
+  { id: 'dont-ignore', label: 'Why It Matters' },
+  { id: 'long-term-awareness', label: 'Uterine Lining' },
+  { id: 'awareness-timeline', label: 'Your Health Journey' },
+  { id: 'ovaserse-solution', label: 'How OvaSense Helps' },
+  { id: 'digital-twin', label: 'AI That Explains' },
+  { id: 'climax-cta', label: 'Get Started' },
 ];
 
 export const UnderstandPCOS: React.FC = () => {

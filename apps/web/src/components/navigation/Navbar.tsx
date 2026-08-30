@@ -6,9 +6,11 @@ import { ROUTES } from '../../constants/routes';
 import { Button } from '../ui/Button';
 import { Container } from '../ui/Container';
 import { Logo } from '../brand/Logo';
+import { useAuth } from '../../context/AuthContext';
 
 export const Navbar: React.FC = () => {
   const location = useLocation();
+  const { isAuthenticated, userProfile } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -80,25 +82,40 @@ export const Navbar: React.FC = () => {
 
           {/* Right Action Buttons */}
           <div className="hidden lg:flex items-center gap-3">
-            <Link to={ROUTES.LOGIN}>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-[#EDE4F7] hover:bg-white/10 hover:text-white"
-              >
-                Log In
-              </Button>
-            </Link>
-            <Link to={ROUTES.APP.DASHBOARD}>
-              <Button
-                variant="primary"
-                size="sm"
-                className="bg-gradient-to-r from-[#8E3EAF] via-[#A21CAF] to-[#E87084] text-white hover:brightness-110 shadow-md shadow-purple-950/20"
-                iconRight={<ArrowRight className="w-3.5 h-3.5" />}
-              >
-                Explore App
-              </Button>
-            </Link>
+            {isAuthenticated ? (
+              <Link to={ROUTES.APP.DASHBOARD}>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="bg-gradient-to-r from-[#8E3EAF] via-[#A21CAF] to-[#E87084] text-white hover:brightness-110 shadow-md shadow-purple-950/20"
+                  iconRight={<ArrowRight className="w-3.5 h-3.5" />}
+                >
+                  {userProfile.fullName ? `${userProfile.fullName.split(' ')[0]}'s Dashboard` : 'Dashboard'}
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link to={ROUTES.LOGIN}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-[#EDE4F7] hover:bg-white/10 hover:text-white"
+                  >
+                    Log In
+                  </Button>
+                </Link>
+                <Link to={ROUTES.REGISTER}>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="bg-gradient-to-r from-[#8E3EAF] via-[#A21CAF] to-[#E87084] text-white hover:brightness-110 shadow-md shadow-purple-950/20"
+                    iconRight={<ArrowRight className="w-3.5 h-3.5" />}
+                  >
+                    Get Started
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Hamburger Button */}

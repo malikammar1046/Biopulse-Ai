@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, User, Calendar, ArrowRight, CheckCircle2, ShieldAlert, Sparkles, Loader2 } from 'lucide-react';
+import { Mail, User, Calendar, ArrowRight, CheckCircle2, ShieldCheck, Sparkles, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ROUTES } from '../../constants/routes';
 import { AuthShell } from '../../components/auth/AuthShell';
 import { AuthCard } from '../../components/auth/AuthCard';
 import { AuthField } from '../../components/auth/AuthField';
 import { PasswordInput } from '../../components/auth/PasswordInput';
-import { authService } from '../../services/authService';
+import { useAuth } from '../../context/AuthContext';
 
 export const Register: React.FC = () => {
   const navigate = useNavigate();
+  const { register } = useAuth();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,6 +21,7 @@ export const Register: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [emailConfirmReq, setEmailConfirmReq] = useState(false);
   const [errors, setErrors] = useState<{
     fullName?: string;
     email?: string;
@@ -76,7 +78,7 @@ export const Register: React.FC = () => {
     setErrors({});
 
     try {
-      const response = await authService.register({
+      const response = await register({
         fullName: fullName.trim(),
         email: email.trim(),
         password,
@@ -85,6 +87,7 @@ export const Register: React.FC = () => {
       });
 
       if (response.success) {
+        setEmailConfirmReq(Boolean(response.emailConfirmationRequired));
         setIsSuccess(true);
       } else {
         setErrors({ general: response.error || 'Account creation failed. Please try again.' });
@@ -299,35 +302,50 @@ export const Register: React.FC = () => {
 
               <div className="space-y-2.5">
                 <h2 className="text-2xl sm:text-3xl font-bold font-display text-white tracking-tight">
-                  Welcome to OVASense.
+                  {emailConfirmReq ? 'Confirm your email.' : 'Welcome to OVASense.'}
                 </h2>
                 <p className="text-sm sm:text-base text-[#EDE4F7] max-w-xs mx-auto leading-relaxed">
-                  Your account is ready. Let's start building a clearer picture of your health.
+                  {emailConfirmReq
+                    ? `We sent a confirmation link to ${email}. Please check your inbox and verify your email to log in.`
+                    : "Your account is ready. Let's start building a clearer picture of your health."}
                 </p>
               </div>
 
               {/* Informative Micro Badges */}
               <div className="p-4 rounded-2xl bg-[#12071F]/80 border border-[#8E3EAF]/30 text-left space-y-2 text-xs text-[#B4A6C7]">
                 <div className="flex items-center gap-2 text-[#EDE4F7] font-semibold">
-                  <ShieldAlert className="w-4 h-4 text-[#8E3EAF]" />
-                  <span>Phase 1 Architecture Ready</span>
+                  <ShieldCheck className="w-4 h-4 text-[#34D399]" />
+                  <span>Secure Profile Initialized</span>
                 </div>
                 <p className="text-[11px] leading-relaxed">
-                  Your secure profile has been created in preview mode. You can now access the interactive longitudinal health intelligence portal.
+                  Your encrypted health record has been provisioned in Supabase with Row Level Security (RLS).
                 </p>
               </div>
 
               {/* Continue CTA */}
-              <motion.button
-                type="button"
-                whileHover={{ y: -2, boxShadow: '0 10px 25px -5px rgba(162, 28, 175, 0.4)' }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => navigate(ROUTES.APP.DASHBOARD)}
-                className="w-full min-h-[48px] px-6 py-3.5 rounded-2xl font-sans font-semibold text-sm text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#A21CAF] border border-[#8E3EAF]/40 hover:brightness-110 shadow-lg shadow-purple-950/40 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>Continue to OVASense</span>
-                <ArrowRight className="w-4 h-4" />
-              </motion.button>
+              {emailConfirmReq ? (
+                <motion.button
+                  type="button"
+                  whileHover={{ y: -2, boxShadow: '0 10px 25px -5px rgba(162, 28, 175, 0.4)' }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => navigate(ROUTES.LOGIN)}
+                  className="w-full min-h-[48px] px-6 py-3.5 rounded-2xl font-sans font-semibold text-sm text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#A21CAF] border border-[#8E3EAF]/40 hover:brightness-110 shadow-lg shadow-purple-950/40 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <span>Proceed to Log In</span>
+                  <ArrowRight className="w-4 h-4" />
+                </motion.button>
+              ) : (
+                <motion.button
+                  type="button"
+                  whileHover={{ y: -2, boxShadow: '0 10px 25px -5px rgba(162, 28, 175, 0.4)' }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => navigate(ROUTES.ONBOARDING)}
+                  className="w-full min-h-[48px] px-6 py-3.5 rounded-2xl font-sans font-semibold text-sm text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#A21CAF] border border-[#8E3EAF]/40 hover:brightness-110 shadow-lg shadow-purple-950/40 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <span>Complete Health Profile</span>
+                  <ArrowRight className="w-4 h-4" />
+                </motion.button>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

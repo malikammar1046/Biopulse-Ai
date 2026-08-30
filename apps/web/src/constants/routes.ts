@@ -8,18 +8,23 @@ export const ROUTES = {
   CARE_CIRCLE: '/care-circle',
   CONTACT: '/contact',
 
-  // Authentication Routes
+  // Authentication & Onboarding Routes
   LOGIN: '/login',
   REGISTER: '/register',
+  ONBOARDING: '/onboarding',
 
-  // Future Authenticated App Routes
+  // Authenticated App Routes
   APP: {
     ROOT: '/app',
     DASHBOARD: '/app/dashboard',
     PROFILE: '/app/profile',
     CYCLE: '/app/cycle',
     SYMPTOMS: '/app/symptoms',
+    DIET: '/app/diet',
+    FITNESS: '/app/fitness',
     REPORTS: '/app/reports',
+    MEDICATIONS: '/app/medications',
+    CARE_CIRCLE: '/app/care-circle',
     ASSESSMENT: '/app/assessment',
     LIFESTYLE: '/app/lifestyle',
     TIMELINE: '/app/timeline',
