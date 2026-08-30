@@ -14,6 +14,11 @@ import type {
   CycleRecordInput,
   CycleSummaryStats,
 } from '../types/cycle';
+import type {
+  SymptomRecord,
+  SymptomRecordInput,
+  SymptomSummaryStats,
+} from '../types/symptom';
 import {
   DEFAULT_MEDICAL_REPORTS,
   DEFAULT_CARE_CIRCLE,
@@ -24,7 +29,9 @@ import {
 } from '../data/mockDashboardData';
 import { calculateCycleMetrics } from '../utils/profileCompletion';
 import { calculateCycleStats } from '../utils/cycleCalculations';
+import { calculateSymptomStats } from '../utils/symptomCalculations';
 import { cycleService } from '../services/cycleService';
+import { symptomService } from '../services/symptomService';
 import { useAuth } from './AuthContext';
 
 interface UserHealthContextType {
@@ -37,6 +44,13 @@ interface UserHealthContextType {
   updatePeriod: (id: string, input: Partial<CycleRecordInput>) => Promise<{ success: boolean; error?: string }>;
   deletePeriod: (id: string) => Promise<{ success: boolean; error?: string }>;
   refreshCycleRecords: () => Promise<void>;
+  symptomRecords: SymptomRecord[];
+  symptomStats: SymptomSummaryStats;
+  symptomsLoading: boolean;
+  logSymptom: (input: SymptomRecordInput) => Promise<{ success: boolean; error?: string }>;
+  updateSymptom: (id: string, input: Partial<SymptomRecordInput>) => Promise<{ success: boolean; error?: string }>;
+  deleteSymptom: (id: string) => Promise<{ success: boolean; error?: string }>;
+  refreshSymptomRecords: () => Promise<void>;
   reminders: TodayReminder[];
   nutrition: NutritionData;
   fitness: FitnessData;
@@ -92,9 +106,32 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [userProfile?.id]);
 
+  // Symptom Records State
+  const [symptomRecords, setSymptomRecords] = useState<SymptomRecord[]>([]);
+  const [symptomsLoading, setSymptomsLoading] = useState<boolean>(true);
+
+  // Fetch Symptom Records from Supabase / Service on User ID change
+  const refreshSymptomRecords = useCallback(async () => {
+    if (!userProfile?.id) {
+      setSymptomRecords([]);
+      setSymptomsLoading(false);
+      return;
+    }
+    setSymptomsLoading(true);
+    try {
+      const { records } = await symptomService.fetchSymptomRecords(userProfile.id);
+      setSymptomRecords(records || []);
+    } catch (err) {
+      console.warn('Error refreshing symptom records:', err);
+    } finally {
+      setSymptomsLoading(false);
+    }
+  }, [userProfile?.id]);
+
   useEffect(() => {
     refreshCycleRecords();
-  }, [refreshCycleRecords]);
+    refreshSymptomRecords();
+  }, [refreshCycleRecords, refreshSymptomRecords]);
 
   // Pure mathematical cycle statistics derived from actual records
   const cycleStats: CycleSummaryStats = useMemo(() => {
@@ -104,6 +141,11 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       lastPeriodDate: userProfile.womensHealth?.lastPeriodDate,
     });
   }, [cycleRecords, userProfile.womensHealth]);
+
+  // Pure mathematical symptom statistics derived from actual records
+  const symptomStats: SymptomSummaryStats = useMemo(() => {
+    return calculateSymptomStats(symptomRecords);
+  }, [symptomRecords]);
 
   // Log a new period entry
   const logPeriod = useCallback(
@@ -192,6 +234,81 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     [userProfile?.id]
   );
 
+  // Log a new symptom
+  const logSymptom = useCallback(
+    async (input: SymptomRecordInput): Promise<{ success: boolean; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to log a symptom.' };
+      }
+      try {
+        const { record, error } = await symptomService.createSymptomRecord(userProfile.id, input);
+        if (error || !record) {
+          return { success: false, error: error || 'Failed to save symptom record.' };
+        }
+
+        setSymptomRecords((prev) => {
+          const next = [record, ...prev.filter((r) => r.id !== record.id)];
+          return next.sort(
+            (a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime()
+          );
+        });
+
+        return { success: true };
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Unexpected error saving symptom.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  // Update an existing symptom
+  const updateSymptom = useCallback(
+    async (id: string, input: Partial<SymptomRecordInput>): Promise<{ success: boolean; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to update a symptom.' };
+      }
+      try {
+        const { record, error } = await symptomService.updateSymptomRecord(userProfile.id, id, input);
+        if (error || !record) {
+          return { success: false, error: error || 'Failed to update symptom record.' };
+        }
+
+        setSymptomRecords((prev) => {
+          const next = prev.map((r) => (r.id === id ? record : r));
+          return next.sort(
+            (a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime()
+          );
+        });
+
+        return { success: true };
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Unexpected error updating symptom.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  // Delete a symptom
+  const deleteSymptom = useCallback(
+    async (id: string): Promise<{ success: boolean; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to delete a symptom.' };
+      }
+      try {
+        const { success, error } = await symptomService.deleteSymptomRecord(userProfile.id, id);
+        if (!success) {
+          return { success: false, error: error || 'Failed to delete symptom record.' };
+        }
+
+        setSymptomRecords((prev) => prev.filter((r) => r.id !== id));
+        return { success: true };
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Unexpected error deleting symptom.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
   const [reminders, setReminders] = useState<TodayReminder[]>(() => {
     try {
       const saved = localStorage.getItem(REMINDERS_KEY);
@@ -248,12 +365,14 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     userProfile.womensHealth?.periodDuration,
   ]);
 
-  // Dynamically derive snapshot metrics strictly from actual cycle calculations
+  // Dynamically derive snapshot metrics strictly from actual cycle calculations & real symptom logs
   const snapshotMetrics: HealthSnapshotMetrics = useMemo(() => {
-    const rawSymptoms = userProfile.womensHealth?.commonSymptoms || [];
-    const symptomsList = rawSymptoms.map((sym) => ({
-      name: sym,
-      severity: 'mild' as const,
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todaySymptoms = symptomRecords.filter((s) => s.occurredAt === todayStr);
+
+    const symptomsList = todaySymptoms.map((sym) => ({
+      name: sym.symptomType,
+      severity: sym.severity,
     }));
 
     // Dynamic Wellness Score based on sleep, water, and recorded symptoms
@@ -261,7 +380,7 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const waterTarget = userProfile.lifestyle?.dailyWaterGlasses || 8;
     const sleepScore = Math.min(100, (sleepTarget / 8) * 100);
     const waterScore = Math.min(100, (waterTarget / 8) * 100);
-    const symptomsDeduction = Math.min(25, rawSymptoms.length * 5);
+    const symptomsDeduction = Math.min(25, todaySymptoms.length * 5);
     const wellnessScore = Math.max(
       50,
       Math.min(100, Math.round(sleepScore * 0.45 + waterScore * 0.45 + 10 - symptomsDeduction))
@@ -282,7 +401,7 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       wellnessScore,
       wellnessScoreChange: 6,
     };
-  }, [userProfile, cycleStats]);
+  }, [userProfile, cycleStats, symptomRecords]);
 
   // Dynamically derive nutrition
   const nutrition: NutritionData = useMemo(() => {
@@ -375,6 +494,13 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         updatePeriod,
         deletePeriod,
         refreshCycleRecords,
+        symptomRecords,
+        symptomStats,
+        symptomsLoading,
+        logSymptom,
+        updateSymptom,
+        deleteSymptom,
+        refreshSymptomRecords,
         reminders,
         nutrition,
         fitness,

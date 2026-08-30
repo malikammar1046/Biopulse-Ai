@@ -1,99 +1,160 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Activity, Plus } from 'lucide-react';
+import { Activity, Plus, RefreshCw } from 'lucide-react';
 import { useUserHealth } from '../../context/UserHealthContext';
+import { TodayCheckInCard } from '../../components/symptoms/TodayCheckInCard';
+import { SymptomPatternSection } from '../../components/symptoms/SymptomPatternSection';
+import { SymptomCycleTimeline } from '../../components/symptoms/SymptomCycleTimeline';
+import { SymptomRecentList } from '../../components/symptoms/SymptomRecentList';
+import { SymptomLogModal } from '../../components/symptoms/SymptomLogModal';
+import { DeleteSymptomConfirmationModal } from '../../components/symptoms/DeleteSymptomConfirmationModal';
+import type {
+  SymptomRecord,
+  SymptomRecordInput,
+  SymptomDefinition,
+} from '../../types/symptom';
 
 export const SymptomsPage: React.FC = () => {
-  const { userProfile, snapshotMetrics, openAiChatWithPrompt } = useUserHealth();
-  const recordedSymptoms = userProfile.womensHealth?.commonSymptoms || [];
+  const {
+    symptomRecords,
+    symptomStats,
+    symptomsLoading,
+    cycleRecords,
+    cycleStats,
+    logSymptom,
+    updateSymptom,
+    deleteSymptom,
+    refreshSymptomRecords,
+  } = useUserHealth();
 
-  const dynamicLogs = recordedSymptoms.map((sym, idx) => ({
-    id: `sym_${idx}`,
-    symptom: sym,
-    severity: 'Mild',
-    phase: snapshotMetrics.phaseName.replace(' Phase', ''),
-    date: 'Active baseline',
-    notes: 'Recorded in personal health profile.',
-  }));
+  // Modal States
+  const [isLogModalOpen, setIsLogModalOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<SymptomRecord | null>(null);
+  const [preselectedSymptom, setPreselectedSymptom] = useState<SymptomDefinition | null>(null);
+  const [deletingRecord, setDeletingRecord] = useState<SymptomRecord | null>(null);
 
-  const displayLogs =
-    dynamicLogs.length > 0
-      ? dynamicLogs
-      : [
-          {
-            id: '1',
-            symptom: 'No active symptom flares recorded',
-            severity: 'Baseline',
-            phase: snapshotMetrics.phaseName.replace(' Phase', ''),
-            date: 'Today',
-            notes: 'Record symptoms to identify longitudinal correlations.',
-          },
-        ];
+  const handleOpenGeneralModal = () => {
+    setEditingRecord(null);
+    setPreselectedSymptom(null);
+    setIsLogModalOpen(true);
+  };
+
+  const handleSelectQuickSymptom = (symptom: SymptomDefinition) => {
+    setEditingRecord(null);
+    setPreselectedSymptom(symptom);
+    setIsLogModalOpen(true);
+  };
+
+  const handleOpenEditModal = (record: SymptomRecord) => {
+    setPreselectedSymptom(null);
+    setEditingRecord(record);
+    setIsLogModalOpen(true);
+  };
+
+  const handleOpenDeleteModal = (record: SymptomRecord) => {
+    setDeletingRecord(record);
+  };
+
+  const handleSaveSymptom = async (input: SymptomRecordInput) => {
+    if (editingRecord) {
+      return await updateSymptom(editingRecord.id, input);
+    }
+    return await logSymptom(input);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deletingRecord) {
+      await deleteSymptom(deletingRecord.id);
+    }
+  };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-6xl mx-auto space-y-6 text-left select-none pb-12"
+      transition={{ duration: 0.3 }}
+      className="max-w-6xl mx-auto space-y-6 sm:space-y-8 text-left select-none pb-16"
     >
-      {/* Header */}
+      {/* ── 1. Page Header Bar ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E7DFEF]">
-        <div>
+        <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="p-1.5 rounded-xl bg-[#FDF2F8] text-[#FB7185]">
               <Activity className="w-5 h-5" />
             </span>
-            <h1 className="text-2xl font-bold font-display text-[#1C1326]">
-              Your Symptoms & Body Journal
+            <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-[#1C1326] tracking-tight">
+              Symptoms & Body Journal
             </h1>
           </div>
-          <p className="text-xs text-[#584B68] mt-1">
-            Track how you feel each day and notice patterns with your cycle rhythm.
+          <p className="text-xs text-[#584B68]">
+            Track how your body feels, connect symptoms to your cycle rhythm, and uncover patterns over time.
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => openAiChatWithPrompt('Log a new symptom for today')}
-          className="flex items-center gap-2 px-4 py-2 rounded-2xl font-sans font-bold text-xs text-white bg-gradient-to-r from-[#8E3EAF] to-[#FB7185] hover:brightness-110 shadow-md transition-all cursor-pointer"
-        >
-          <Plus className="w-4 h-4 stroke-[2.5]" />
-          <span>Log Symptoms</span>
-        </button>
-      </div>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => refreshSymptomRecords()}
+            className="p-2.5 rounded-2xl bg-white border border-[#E7DFEF] text-[#584B68] hover:text-[#6E2D8B] hover:bg-[#F8F5FA] transition-colors cursor-pointer"
+            title="Refresh symptom logs"
+          >
+            <RefreshCw className={`w-4 h-4 ${symptomsLoading ? 'animate-spin' : ''}`} />
+          </button>
 
-      {/* Symptom History List */}
-      <div className="p-6 sm:p-8 rounded-[32px] bg-white border border-[#E7DFEF] shadow-sm space-y-4">
-        <h2 className="text-base font-bold font-display text-[#1C1326]">
-          Recent Symptom Logs
-        </h2>
-
-        <div className="space-y-3">
-          {displayLogs.map((log) => (
-            <div
-              key={log.id}
-              className="p-4 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-            >
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-[#1C1326]">{log.symptom}</span>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#EDE4F7] text-[#6E2D8B]">
-                    {log.severity}
-                  </span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white text-[#8D7E9E]">
-                    {log.phase} Phase
-                  </span>
-                </div>
-                <p className="text-xs text-[#584B68]">{log.notes}</p>
-              </div>
-
-              <span className="text-[11px] font-mono text-[#8D7E9E] shrink-0">
-                {log.date}
-              </span>
-            </div>
-          ))}
+          <button
+            type="button"
+            onClick={handleOpenGeneralModal}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl font-sans font-bold text-xs text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#E87084] hover:brightness-110 shadow-md shadow-purple-950/20 transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span>Log a Symptom</span>
+          </button>
         </div>
       </div>
+
+      {/* ── 2. Today's Hero Check-In Card ── */}
+      <TodayCheckInCard
+        onSelectSymptom={handleSelectQuickSymptom}
+        onOpenGeneralModal={handleOpenGeneralModal}
+        loggedTodayCount={symptomStats.loggedTodayCount}
+      />
+
+      {/* ── 3. Pattern Observations Section ── */}
+      <SymptomPatternSection
+        observations={symptomStats.patternObservations}
+        totalLoggedCount={symptomStats.totalLoggedCount}
+      />
+
+      {/* ── 4. Cycle Day Scatter Timeline ── */}
+      <SymptomCycleTimeline
+        records={symptomRecords}
+        cycleLength={cycleStats.totalCycleDays || 28}
+      />
+
+      {/* ── 5. Chronological Recent Logs List ── */}
+      <SymptomRecentList
+        records={symptomRecords}
+        onEdit={handleOpenEditModal}
+        onDelete={handleOpenDeleteModal}
+        onOpenLogModal={handleOpenGeneralModal}
+      />
+
+      {/* ── 6. Modals ── */}
+      <SymptomLogModal
+        isOpen={isLogModalOpen}
+        onClose={() => setIsLogModalOpen(false)}
+        onSave={handleSaveSymptom}
+        initialData={editingRecord}
+        preselectedSymptom={preselectedSymptom}
+        cycleRecords={cycleRecords}
+      />
+
+      <DeleteSymptomConfirmationModal
+        isOpen={Boolean(deletingRecord)}
+        onClose={() => setDeletingRecord(null)}
+        onConfirm={handleConfirmDelete}
+        symptom={deletingRecord}
+      />
     </motion.div>
   );
 };

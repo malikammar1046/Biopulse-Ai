@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { DashboardHeader } from '../../components/dashboard/DashboardHeader';
 import { HealthProfileSummaryCard } from '../../components/dashboard/HealthProfileSummaryCard';
@@ -15,6 +16,7 @@ import { HealthPatternsChart } from '../../components/dashboard/HealthPatternsCh
 import { WeeklyHealthSummary } from '../../components/dashboard/WeeklyHealthSummary';
 
 export const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const {
     snapshotMetrics,
     reminders,
@@ -43,8 +45,8 @@ export const Dashboard: React.FC = () => {
       {/* ── 3. Top Metric Snapshot Cards (4 Columns) ── */}
       <HealthSnapshotCard
         metrics={snapshotMetrics}
-        onViewSymptoms={() => openAiChatWithPrompt('Show me symptom frequency trends')}
-        onViewCycle={() => openAiChatWithPrompt('Explain my current cycle day and window')}
+        onViewSymptoms={() => navigate('/app/symptoms')}
+        onViewCycle={() => navigate('/app/cycle')}
       />
 
       {/* ── 3. Central Core Health Triad (Cycle, AI Twin, Reminders) ── */}

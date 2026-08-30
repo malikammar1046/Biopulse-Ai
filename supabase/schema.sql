@@ -170,3 +170,55 @@ CREATE POLICY "Users can delete own cycle records"
   TO authenticated
   USING (auth.uid() = user_id);
 
+-- ==============================================================================
+-- Table: public.symptom_records
+-- Description: Stores authenticated user's logged symptoms and severity observations.
+-- ==============================================================================
+
+-- 11. Create symptom_records table
+CREATE TABLE IF NOT EXISTS public.symptom_records (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  symptom_type TEXT NOT NULL,
+  category TEXT NOT NULL,
+  severity TEXT NOT NULL CHECK (severity IN ('mild', 'moderate', 'severe')),
+  occurred_at DATE NOT NULL,
+  cycle_day INTEGER NULL,
+  notes TEXT DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 12. Indexes for performance on user lookup and chronological sorting
+CREATE INDEX IF NOT EXISTS idx_symptom_records_user_id ON public.symptom_records(user_id);
+CREATE INDEX IF NOT EXISTS idx_symptom_records_user_occurred_at ON public.symptom_records(user_id, occurred_at DESC);
+
+-- 13. Enable Row Level Security (RLS)
+ALTER TABLE public.symptom_records ENABLE ROW LEVEL SECURITY;
+
+-- 14. RLS Policies: Authenticated users can ONLY SELECT, INSERT, UPDATE, and DELETE their own records
+DROP POLICY IF EXISTS "Users can select own symptom records" ON public.symptom_records;
+CREATE POLICY "Users can select own symptom records"
+  ON public.symptom_records FOR SELECT
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert own symptom records" ON public.symptom_records;
+CREATE POLICY "Users can insert own symptom records"
+  ON public.symptom_records FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update own symptom records" ON public.symptom_records;
+CREATE POLICY "Users can update own symptom records"
+  ON public.symptom_records FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can delete own symptom records" ON public.symptom_records;
+CREATE POLICY "Users can delete own symptom records"
+  ON public.symptom_records FOR DELETE
+  TO authenticated
+  USING (auth.uid() = user_id);
+
