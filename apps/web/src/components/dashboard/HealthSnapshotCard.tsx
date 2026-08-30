@@ -123,10 +123,12 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
             <span className="text-3xl font-extrabold font-display text-[#1C1326] tracking-tight">
               {metrics.symptomsCountToday}
             </span>
-            <span className="text-xs text-[#584B68] font-medium">Recorded today</span>
+            <span className="text-xs text-[#584B68] font-medium">Recorded patterns</span>
           </div>
           <span className="text-xs text-[#584B68] block mt-0.5 truncate font-sans">
-            {metrics.symptomsList.map((s) => s.name).join(' • ')}
+            {metrics.symptomsList.length > 0
+              ? metrics.symptomsList.map((s) => s.name).join(' • ')
+              : 'No symptoms recorded today'}
           </span>
         </div>
 

@@ -20,6 +20,22 @@ export const CycleProgressDial: React.FC<CycleDialProps> = ({
   const progressRatio = Math.min(Math.max(currentDay / totalDays, 0), 1);
   const strokeDashoffset = circumference - progressRatio * circumference;
 
+  const getPhaseGuidance = () => {
+    const lower = phaseName.toLowerCase();
+    if (lower.includes('period') || lower.includes('menstruat')) {
+      return 'Focus on restorative rest, warmth, iron-rich nourishment, and gentle stretching.';
+    }
+    if (lower.includes('ovulat')) {
+      return 'Peak energy window. Ideal for high-output work, social connection, and strength training.';
+    }
+    if (lower.includes('luteal')) {
+      return 'Support progesterone with magnesium, complex carbohydrates, and calming evening routines.';
+    }
+    return 'This is a great phase for building energy, progressive workouts, and focused creative work as estrogen naturally rises.';
+  };
+
+  const mid = Math.floor(totalDays / 2);
+
   return (
     <div className="p-6 sm:p-7 rounded-[32px] bg-white border border-[#E7DFEF] shadow-sm flex flex-col justify-between select-none text-left space-y-6">
       {/* Header */}
@@ -101,7 +117,7 @@ export const CycleProgressDial: React.FC<CycleDialProps> = ({
           </div>
 
           <p className="text-xs text-[#584B68] leading-relaxed font-sans">
-            This is a great phase for building energy, progressive workouts, and focused creative work as estrogen naturally rises.
+            {getPhaseGuidance()}
           </p>
 
           <Link
@@ -122,15 +138,15 @@ export const CycleProgressDial: React.FC<CycleDialProps> = ({
         </div>
         <div className="flex items-center gap-1.5 text-[#584B68]">
           <span className="w-2.5 h-2.5 rounded-full bg-[#8E3EAF]" />
-          <span>Follicular (6–13)</span>
+          <span>Follicular (6–{mid - 1})</span>
         </div>
         <div className="flex items-center gap-1.5 text-[#584B68]">
           <span className="w-2.5 h-2.5 rounded-full bg-[#A21CAF]" />
-          <span>Ovulation (14)</span>
+          <span>Ovulation ({mid})</span>
         </div>
         <div className="flex items-center gap-1.5 text-[#584B68]">
           <span className="w-2.5 h-2.5 rounded-full bg-[#C084FC]" />
-          <span>Luteal (15–28)</span>
+          <span>Luteal ({mid + 1}–{totalDays})</span>
         </div>
       </div>
     </div>

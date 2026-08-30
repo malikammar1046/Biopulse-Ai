@@ -6,16 +6,49 @@ import type { UserProfile } from '../../types/onboarding';
 interface Step7Props {
   profile: UserProfile;
   onEnterApp: () => void;
+  isSubmitting?: boolean;
+  saveError?: string;
 }
 
-export const Step7ProfileComplete: React.FC<Step7Props> = ({ profile, onEnterApp }) => {
+export const Step7ProfileComplete: React.FC<Step7Props> = ({
+  profile,
+  onEnterApp,
+  isSubmitting = false,
+  saveError,
+}) => {
+  const allergyCount = profile.medical?.allergies?.filter((a) => a !== 'None').length || 0;
+  const conditionCount = profile.medical?.conditions?.filter((c) => c !== 'None').length || 0;
+  const medCount = profile.medical?.medications?.length || 0;
+  const primaryName = profile.emergencyContacts?.[0]?.name;
+
   const summaryChecks = [
     { label: 'Personal Information', val: profile.fullName || 'Registered' },
-    { label: 'Emergency & Safety', val: `${profile.emergencyContacts[0]?.name || 'Primary Contact'} configured` },
-    { label: 'Medical History', val: `${profile.medical.allergies.length} allergies, ${profile.medical.conditions.length} conditions` },
-    { label: 'Women’s Health Profile', val: `${typeof profile.womensHealth.cycleLength === 'number' ? profile.womensHealth.cycleLength + ' Day Cycle' : 'Variable Cycle'}` },
-    { label: 'Lifestyle & Movement', val: `${profile.lifestyle.dietaryPreference}` },
-    { label: 'Health Goals', val: `${profile.goals.selectedGoals.length} Focus Areas Selected` },
+    {
+      label: 'Emergency & Safety',
+      val: primaryName ? `${primaryName} (${profile.emergencyContacts[0]?.relationship})` : 'Not added yet',
+    },
+    {
+      label: 'Medical History',
+      val:
+        allergyCount === 0 && conditionCount === 0 && medCount === 0
+          ? 'No active conditions or allergies recorded'
+          : `${allergyCount} allergies • ${conditionCount} conditions • ${medCount} meds`,
+    },
+    {
+      label: 'Women’s Health Profile',
+      val:
+        typeof profile.womensHealth?.cycleLength === 'number'
+          ? `${profile.womensHealth.cycleLength}-Day Cycle (${profile.womensHealth.periodRegularity?.replace('_', ' ') || 'standard'})`
+          : 'Variable / Irregular Rhythm',
+    },
+    {
+      label: 'Lifestyle & Movement',
+      val: `${profile.lifestyle?.dietaryPreference || 'Balanced'} • ${profile.lifestyle?.dailyWaterGlasses || 8} Glasses Water`,
+    },
+    {
+      label: 'Health Goals',
+      val: `${profile.goals?.selectedGoals?.length || 1} Focus Areas Selected`,
+    },
   ];
 
   return (
@@ -64,6 +97,13 @@ export const Step7ProfileComplete: React.FC<Step7Props> = ({ profile, onEnterApp
         </motion.p>
       </div>
 
+      {/* ── Error Banner if Save Failed ── */}
+      {saveError && (
+        <div className="max-w-md mx-auto p-4 rounded-2xl bg-[#E87084]/20 border border-[#E87084]/50 text-xs text-[#FDA4AF] text-left">
+          {saveError}
+        </div>
+      )}
+
       {/* ── Completed Modules Checklist Card ── */}
       <motion.div
         initial={{ opacity: 0, scale: 0.96 }}
@@ -107,10 +147,20 @@ export const Step7ProfileComplete: React.FC<Step7Props> = ({ profile, onEnterApp
         <button
           type="button"
           onClick={onEnterApp}
-          className="w-full py-4 px-8 rounded-2xl font-sans font-bold text-base text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#E87084] hover:brightness-110 shadow-2xl shadow-purple-950/60 transition-all duration-300 flex items-center justify-center gap-2.5 cursor-pointer transform hover:scale-[1.02] active:scale-[0.98]"
+          disabled={isSubmitting}
+          className="w-full py-4 px-8 rounded-2xl font-sans font-bold text-base text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#E87084] hover:brightness-110 shadow-2xl shadow-purple-950/60 transition-all duration-300 flex items-center justify-center gap-2.5 cursor-pointer transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
         >
-          <span>ENTER OVASENSE</span>
-          <ArrowRight className="w-5 h-5" />
+          {isSubmitting ? (
+            <>
+              <div className="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+              <span>Saving Health Profile...</span>
+            </>
+          ) : (
+            <>
+              <span>ENTER OVASENSE</span>
+              <ArrowRight className="w-5 h-5" />
+            </>
+          )}
         </button>
 
         <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-[#A797BD] font-mono">

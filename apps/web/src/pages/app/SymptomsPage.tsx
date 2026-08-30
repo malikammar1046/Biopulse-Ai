@@ -4,14 +4,31 @@ import { Activity, Plus } from 'lucide-react';
 import { useUserHealth } from '../../context/UserHealthContext';
 
 export const SymptomsPage: React.FC = () => {
-  const { openAiChatWithPrompt } = useUserHealth();
+  const { userProfile, snapshotMetrics, openAiChatWithPrompt } = useUserHealth();
+  const recordedSymptoms = userProfile.womensHealth?.commonSymptoms || [];
 
-  const symptomLogs = [
-    { id: '1', symptom: 'Pelvic Cramping', severity: 'Mild (2/10)', phase: 'Follicular', date: 'Today, 9:30 AM', notes: 'Mild left lower quadrant twinges.' },
-    { id: '2', symptom: 'Digestive Bloating', severity: 'Mild (3/10)', phase: 'Follicular', date: 'Today, 8:00 AM', notes: 'Felt fuller after breakfast.' },
-    { id: '3', symptom: 'Jawline Acne', severity: 'Resolved', phase: 'Follicular', date: 'Yesterday', notes: 'Clear skin reported.' },
-    { id: '4', symptom: 'Afternoon Fatigue', severity: 'Moderate (4/10)', phase: 'Follicular', date: 'May 18, 2025', notes: 'Energy dip around 3 PM.' },
-  ];
+  const dynamicLogs = recordedSymptoms.map((sym, idx) => ({
+    id: `sym_${idx}`,
+    symptom: sym,
+    severity: 'Mild',
+    phase: snapshotMetrics.phaseName.replace(' Phase', ''),
+    date: 'Active baseline',
+    notes: 'Recorded in personal health profile.',
+  }));
+
+  const displayLogs =
+    dynamicLogs.length > 0
+      ? dynamicLogs
+      : [
+          {
+            id: '1',
+            symptom: 'No active symptom flares recorded',
+            severity: 'Baseline',
+            phase: snapshotMetrics.phaseName.replace(' Phase', ''),
+            date: 'Today',
+            notes: 'Record symptoms to identify longitudinal correlations.',
+          },
+        ];
 
   return (
     <motion.div
@@ -52,7 +69,7 @@ export const SymptomsPage: React.FC = () => {
         </h2>
 
         <div className="space-y-3">
-          {symptomLogs.map((log) => (
+          {displayLogs.map((log) => (
             <div
               key={log.id}
               className="p-4 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] flex flex-col sm:flex-row sm:items-center justify-between gap-3"

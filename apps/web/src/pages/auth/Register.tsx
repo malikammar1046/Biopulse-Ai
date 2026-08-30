@@ -7,10 +7,11 @@ import { AuthShell } from '../../components/auth/AuthShell';
 import { AuthCard } from '../../components/auth/AuthCard';
 import { AuthField } from '../../components/auth/AuthField';
 import { PasswordInput } from '../../components/auth/PasswordInput';
-import { authService } from '../../services/authService';
+import { useAuth } from '../../context/AuthContext';
 
 export const Register: React.FC = () => {
   const navigate = useNavigate();
+  const { register } = useAuth();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -76,7 +77,7 @@ export const Register: React.FC = () => {
     setErrors({});
 
     try {
-      const response = await authService.register({
+      const response = await register({
         fullName: fullName.trim(),
         email: email.trim(),
         password,

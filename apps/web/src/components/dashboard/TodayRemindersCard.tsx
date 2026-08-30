@@ -49,50 +49,65 @@ export const TodayRemindersCard: React.FC<RemindersCardProps> = ({
 
       {/* Interactive Reminders Checklist */}
       <div className="space-y-2.5 flex-1">
-        {reminders.map((rem) => {
-          const isDone = rem.completed;
-          return (
-            <div
-              key={rem.id}
-              onClick={() => onToggle(rem.id)}
-              className={`p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 ${
-                isDone
-                  ? 'bg-[#F8F5FA] border-[#E7DFEF] opacity-65'
-                  : 'bg-white hover:bg-[#FDF2F8]/40 border-[#E7DFEF] hover:border-[#FB7185]/40 shadow-xs'
-              }`}
+        {reminders.length === 0 ? (
+          <div className="p-6 rounded-2xl bg-[#F8F5FA] border border-dashed border-[#E7DFEF] text-center space-y-2">
+            <p className="text-xs font-semibold text-[#584B68]">
+              No active health reminders scheduled for today.
+            </p>
+            <button
+              type="button"
+              onClick={onAddReminder}
+              className="text-xs text-[#6E2D8B] font-bold hover:underline"
             >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="p-2 rounded-xl bg-[#F2ECF7] shrink-0">
-                  {getCategoryIcon(rem.category)}
-                </div>
-                <div className="min-w-0">
-                  <span
-                    className={`text-xs font-bold block truncate ${
-                      isDone ? 'line-through text-[#8D7E9E]' : 'text-[#1C1326]'
-                    }`}
-                  >
-                    {rem.title}
-                  </span>
-                  <span className="text-[10px] font-mono text-[#8D7E9E]">
-                    {rem.time}
-                  </span>
-                </div>
-              </div>
-
-              {/* Checkbox Trigger */}
-              <button
-                type="button"
-                className="shrink-0 p-1 text-[#8E3EAF] hover:scale-110 transition-transform cursor-pointer"
+              + Add first reminder
+            </button>
+          </div>
+        ) : (
+          reminders.map((rem) => {
+            const isDone = rem.completed;
+            return (
+              <div
+                key={rem.id}
+                onClick={() => onToggle(rem.id)}
+                className={`p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 ${
+                  isDone
+                    ? 'bg-[#F8F5FA] border-[#E7DFEF] opacity-65'
+                    : 'bg-white hover:bg-[#FDF2F8]/40 border-[#E7DFEF] hover:border-[#FB7185]/40 shadow-xs'
+                }`}
               >
-                {isDone ? (
-                  <CheckCircle2 className="w-5 h-5 text-[#34D399] fill-[#ECFDF5]" />
-                ) : (
-                  <Circle className="w-5 h-5 text-[#D8B4FE]" />
-                )}
-              </button>
-            </div>
-          );
-        })}
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="p-2 rounded-xl bg-[#F2ECF7] shrink-0">
+                    {getCategoryIcon(rem.category)}
+                  </div>
+                  <div className="min-w-0">
+                    <span
+                      className={`text-xs font-bold block truncate ${
+                        isDone ? 'line-through text-[#8D7E9E]' : 'text-[#1C1326]'
+                      }`}
+                    >
+                      {rem.title}
+                    </span>
+                    <span className="text-[10px] font-mono text-[#8D7E9E]">
+                      {rem.time}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Checkbox Trigger */}
+                <button
+                  type="button"
+                  className="shrink-0 p-1 text-[#8E3EAF] hover:scale-110 transition-transform cursor-pointer"
+                >
+                  {isDone ? (
+                    <CheckCircle2 className="w-5 h-5 text-[#34D399] fill-[#ECFDF5]" />
+                  ) : (
+                    <Circle className="w-5 h-5 text-[#D8B4FE]" />
+                  )}
+                </button>
+              </div>
+            );
+          })
+        )}
       </div>
 
       {/* Footer Add/View Action */}

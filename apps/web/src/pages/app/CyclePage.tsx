@@ -6,14 +6,21 @@ import { useUserHealth } from '../../context/UserHealthContext';
 export const CyclePage: React.FC = () => {
   const { snapshotMetrics, openAiChatWithPrompt } = useUserHealth();
 
-  const cycleDays = Array.from({ length: 28 }, (_, i) => i + 1);
+  const totalDays = snapshotMetrics.totalCycleDays || 28;
+  const cycleDays = Array.from({ length: totalDays }, (_, i) => i + 1);
+  const midpoint = Math.floor(totalDays / 2);
 
   const getDayPhase = (day: number) => {
     if (day <= 5) return { name: 'Menstruation', color: 'bg-[#FB7185] text-white', tag: 'Period' };
-    if (day <= 13) return { name: 'Follicular', color: 'bg-[#8E3EAF] text-white', tag: 'Follicular' };
-    if (day === 14) return { name: 'Ovulation', color: 'bg-[#A21CAF] text-white font-bold ring-2 ring-[#FB7185]', tag: 'Peak Fertile' };
+    if (day < midpoint) return { name: 'Follicular', color: 'bg-[#8E3EAF] text-white', tag: 'Follicular' };
+    if (day >= midpoint && day <= midpoint + 1) return { name: 'Ovulation', color: 'bg-[#A21CAF] text-white font-bold ring-2 ring-[#FB7185]', tag: 'Peak Fertile' };
     return { name: 'Luteal', color: 'bg-[#EDE4F7] text-[#6E2D8B]', tag: 'Luteal' };
   };
+
+  const currentMonthYear = new Intl.DateTimeFormat('en-US', {
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date());
 
   return (
     <motion.div
@@ -48,13 +55,13 @@ export const CyclePage: React.FC = () => {
       <div className="p-6 sm:p-8 rounded-[32px] bg-white border border-[#E7DFEF] shadow-sm space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-bold font-display text-[#1C1326]">
-            May – June 2025 Cycle Window
+            {currentMonthYear} Active Cycle Window
           </h2>
           <div className="flex items-center gap-2">
             <button className="p-2 rounded-xl bg-[#F8F5FA] hover:bg-[#EDE4F7] text-[#6E2D8B]">
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-xs font-mono font-bold text-[#1C1326]">Cycle 4</span>
+            <span className="text-xs font-mono font-bold text-[#1C1326]">{totalDays}-Day Cycle</span>
             <button className="p-2 rounded-xl bg-[#F8F5FA] hover:bg-[#EDE4F7] text-[#6E2D8B]">
               <ChevronRight className="w-4 h-4" />
             </button>

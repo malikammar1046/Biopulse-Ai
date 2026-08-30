@@ -38,6 +38,8 @@ export const OnboardingFlow: React.FC = () => {
 
   const [currentStep, setCurrentStep] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [saveError, setSaveError] = useState<string | undefined>(undefined);
 
   // Local editable draft profile state
   const [draftProfile, setDraftProfile] = useState<UserProfile>(() => ({
@@ -83,9 +85,21 @@ export const OnboardingFlow: React.FC = () => {
     }
   };
 
-  const handleEnterApp = () => {
-    completeOnboarding(draftProfile);
-    navigate(ROUTES.APP.DASHBOARD);
+  const handleEnterApp = async () => {
+    setIsSubmitting(true);
+    setSaveError(undefined);
+    try {
+      const res = await completeOnboarding(draftProfile);
+      if (res.success) {
+        navigate(ROUTES.APP.DASHBOARD);
+      } else {
+        setSaveError(res.error || 'Failed to save health profile to database. Please try again.');
+        setIsSubmitting(false);
+      }
+    } catch {
+      setSaveError('A connection error occurred while saving your profile. Please try again.');
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -183,7 +197,12 @@ export const OnboardingFlow: React.FC = () => {
               )}
 
               {currentStep === 7 && (
-                <Step7ProfileComplete profile={draftProfile} onEnterApp={handleEnterApp} />
+                <Step7ProfileComplete
+                  profile={draftProfile}
+                  onEnterApp={handleEnterApp}
+                  isSubmitting={isSubmitting}
+                  saveError={saveError}
+                />
               )}
             </motion.div>
           </AnimatePresence>

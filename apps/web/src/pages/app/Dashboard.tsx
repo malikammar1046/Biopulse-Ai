@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { DashboardHeader } from '../../components/dashboard/DashboardHeader';
+import { HealthProfileSummaryCard } from '../../components/dashboard/HealthProfileSummaryCard';
 import { HealthSnapshotCard } from '../../components/dashboard/HealthSnapshotCard';
 import { CycleProgressDial } from '../../components/dashboard/CycleProgressDial';
 import { DigitalTwinInsightCard } from '../../components/dashboard/DigitalTwinInsightCard';
@@ -36,7 +37,10 @@ export const Dashboard: React.FC = () => {
       {/* ── 1. Top Header Bar ── */}
       <DashboardHeader />
 
-      {/* ── 2. Top Metric Snapshot Cards (4 Columns) ── */}
+      {/* ── 2. User Health Profile Summary & Completion Center ── */}
+      <HealthProfileSummaryCard />
+
+      {/* ── 3. Top Metric Snapshot Cards (4 Columns) ── */}
       <HealthSnapshotCard
         metrics={snapshotMetrics}
         onViewSymptoms={() => openAiChatWithPrompt('Show me symptom frequency trends')}

@@ -4,12 +4,30 @@ import { Dumbbell, Sparkles, Play, Clock } from 'lucide-react';
 import { useUserHealth } from '../../context/UserHealthContext';
 
 export const FitnessPage: React.FC = () => {
-  const { openAiChatWithPrompt } = useUserHealth();
+  const { userProfile, snapshotMetrics, openAiChatWithPrompt } = useUserHealth();
+
+  const phase = snapshotMetrics.phaseName.replace(' Phase', '');
+  const preferred = userProfile.lifestyle?.exercisePreferences?.join(', ') || 'Low-Impact Movement';
 
   const routines = [
-    { title: 'Follicular Zone-2 Power Walk', duration: '30 min', intensity: 'Low-Impact', focus: 'Glucose Uptake & Aerobic Base' },
-    { title: 'Full-Body Resistance & Core', duration: '25 min', intensity: 'Moderate', focus: 'Insulin Sensitivity & Muscle Mass' },
-    { title: 'Nervous System Reset Pilates', duration: '20 min', intensity: 'Restorative', focus: 'Cortisol Reduction' },
+    {
+      title: `${phase} Zone-2 Movement`,
+      duration: '30 min',
+      intensity: userProfile.lifestyle?.activityLevel === 'sedentary' ? 'Gentle' : 'Moderate',
+      focus: 'Glucose Uptake & Aerobic Base',
+    },
+    {
+      title: 'Full-Body Resistance & Core',
+      duration: '25 min',
+      intensity: 'Low-Impact',
+      focus: 'Insulin Sensitivity & Muscle Tone',
+    },
+    {
+      title: 'Nervous System Reset & Mobility',
+      duration: '20 min',
+      intensity: 'Restorative',
+      focus: 'Cortisol Reduction',
+    },
   ];
 
   return (
@@ -30,13 +48,13 @@ export const FitnessPage: React.FC = () => {
             </h1>
           </div>
           <p className="text-xs text-[#584B68] mt-1">
-            Phase-matched workouts engineered to optimize glucose sensitivity without elevating adrenal stress.
+            Personalized workouts matched to your {userProfile.lifestyle?.activityLevel?.toLowerCase() || 'current'} baseline and preferred styles ({preferred}).
           </p>
         </div>
 
         <button
           type="button"
-          onClick={() => openAiChatWithPrompt('What workout is ideal for my follicular phase today?')}
+          onClick={() => openAiChatWithPrompt(`What workout is ideal for my ${phase} phase today?`)}
           className="flex items-center gap-2 px-4 py-2 rounded-2xl font-sans font-bold text-xs text-white bg-gradient-to-r from-[#8E3EAF] to-[#FB7185] hover:brightness-110 shadow-md transition-all cursor-pointer"
         >
           <Sparkles className="w-4 h-4" />
@@ -47,7 +65,7 @@ export const FitnessPage: React.FC = () => {
       {/* Routine Cards */}
       <div className="p-6 sm:p-8 rounded-[32px] bg-white border border-[#E7DFEF] shadow-sm space-y-4">
         <h2 className="text-base font-bold font-display text-[#1C1326]">
-          Suggested Routines for Today
+          Suggested Routines for {snapshotMetrics.phaseName}
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

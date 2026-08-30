@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Calendar,
@@ -16,10 +16,18 @@ import {
 import { ROUTES } from '../../constants/routes';
 import { Logo } from '../brand/Logo';
 import { useUserHealth } from '../../context/UserHealthContext';
+import { useAuth } from '../../context/AuthContext';
 
 export const AppSidebar: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { userProfile, openAiChatWithPrompt } = useUserHealth();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate(ROUTES.LOGIN);
+  };
 
   const mainNavItems = [
     { label: 'Dashboard', path: ROUTES.APP.DASHBOARD, icon: LayoutDashboard },
@@ -149,13 +157,14 @@ export const AppSidebar: React.FC = () => {
             </div>
           </div>
 
-          <Link
-            to={ROUTES.HOME}
-            title="Public Website"
+          <button
+            type="button"
+            onClick={handleLogout}
+            title="Sign Out"
             className="p-1.5 rounded-lg text-[#A797BD] hover:text-[#FB7185] hover:bg-white/10 transition-colors cursor-pointer shrink-0"
           >
             <LogOut className="w-4 h-4" />
-          </Link>
+          </button>
         </div>
       </div>
     </aside>

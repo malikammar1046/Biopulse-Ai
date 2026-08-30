@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Search, Bell, Plus, Calendar as CalendarIcon, Sparkles } from 'lucide-react';
 import { useUserHealth } from '../../context/UserHealthContext';
+import { getTimeBasedGreeting } from '../../utils/profileCompletion';
 
 export const DashboardHeader: React.FC = () => {
-  const { userProfile, openAiChatWithPrompt } = useUserHealth();
+  const { userProfile, snapshotMetrics, openAiChatWithPrompt } = useUserHealth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showQuickLogModal, setShowQuickLogModal] = useState(false);
 
@@ -14,10 +15,30 @@ export const DashboardHeader: React.FC = () => {
     year: 'numeric',
   }).format(new Date());
 
+  const greeting = getTimeBasedGreeting(userProfile.fullName);
+
   const notifications = [
-    { id: 'n1', title: 'Cycle Phase Shift', desc: 'You entered the mid-follicular window.', time: '1h ago', unread: true },
-    { id: 'n2', title: 'Dr. Sara Malik Update', desc: 'Appointment confirmed for May 28 at 11:00 AM.', time: '3h ago', unread: true },
-    { id: 'n3', title: 'Hydration Reminder', desc: 'You are 0.6L away from your daily goal.', time: '5h ago', unread: false },
+    {
+      id: 'n1',
+      title: `${snapshotMetrics.phaseName} Active`,
+      desc: `You are on Cycle Day ${snapshotMetrics.cycleDay} (${snapshotMetrics.totalCycleDays}-day rhythm).`,
+      time: 'Just now',
+      unread: true,
+    },
+    {
+      id: 'n2',
+      title: 'Hydration Target',
+      desc: `Daily goal set to ${((userProfile.lifestyle?.dailyWaterGlasses || 8) * 0.25).toFixed(1)}L.`,
+      time: '2h ago',
+      unread: true,
+    },
+    {
+      id: 'n3',
+      title: 'Health Profile Active',
+      desc: 'Your personal health data is encrypted and synced.',
+      time: 'Today',
+      unread: false,
+    },
   ];
 
   return (
@@ -26,7 +47,7 @@ export const DashboardHeader: React.FC = () => {
       <div className="space-y-1 text-left">
         <div className="flex items-center gap-2">
           <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-[#1C1326] tracking-tight">
-            Good morning, {userProfile.fullName.split(' ')[0] || 'Ayesha'} <span className="inline-block animate-bounce">👋</span>
+            {greeting} <span className="inline-block animate-bounce">👋</span>
           </h1>
         </div>
         <p className="text-xs sm:text-sm text-[#584B68] font-sans">

@@ -3,7 +3,11 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ROUTES } from './constants/routes';
 import { PublicLayout } from './layouts/PublicLayout';
 import { AppLayout } from './layouts/AppLayout';
+import { AuthProvider } from './context/AuthContext';
 import { UserHealthProvider } from './context/UserHealthContext';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { OnboardingRoute } from './components/auth/OnboardingRoute';
+import { PublicOnlyRoute } from './components/auth/PublicOnlyRoute';
 
 // Lightweight Page Loading Skeleton / Fallback
 const PageLoadingFallback: React.FC = () => (
@@ -56,51 +60,61 @@ const SettingsPage = lazy(() => import('./pages/app/SettingsPage').then((m) => (
 
 export function App() {
   return (
-    <UserHealthProvider>
-      <BrowserRouter>
-        <Suspense fallback={<PageLoadingFallback />}>
-          <Routes>
-            {/* Public Marketing Website */}
-            <Route element={<PublicLayout />}>
-              <Route path={ROUTES.HOME} element={<Home />} />
-              <Route path={ROUTES.UNDERSTAND_PCOS} element={<UnderstandPCOS />} />
-              <Route path={ROUTES.ABOUT} element={<About />} />
-              <Route path={ROUTES.HOW_IT_WORKS} element={<HowItWorks />} />
-              <Route path={ROUTES.FEATURES} element={<Features />} />
-              <Route path={ROUTES.CARE_CIRCLE} element={<CareCircle />} />
-              <Route path={ROUTES.CONTACT} element={<Contact />} />
-              <Route path={ROUTES.LOGIN} element={<Login />} />
-              <Route path={ROUTES.REGISTER} element={<Register />} />
-            </Route>
+    <AuthProvider>
+      <UserHealthProvider>
+        <BrowserRouter>
+          <Suspense fallback={<PageLoadingFallback />}>
+            <Routes>
+              {/* Public Marketing Website */}
+              <Route element={<PublicLayout />}>
+                <Route path={ROUTES.HOME} element={<Home />} />
+                <Route path={ROUTES.UNDERSTAND_PCOS} element={<UnderstandPCOS />} />
+                <Route path={ROUTES.ABOUT} element={<About />} />
+                <Route path={ROUTES.HOW_IT_WORKS} element={<HowItWorks />} />
+                <Route path={ROUTES.FEATURES} element={<Features />} />
+                <Route path={ROUTES.CARE_CIRCLE} element={<CareCircle />} />
+                <Route path={ROUTES.CONTACT} element={<Contact />} />
 
-            {/* 7-Step Onboarding Flow */}
-            <Route path={ROUTES.ONBOARDING} element={<OnboardingFlow />} />
+                {/* Public Only Auth Pages */}
+                <Route element={<PublicOnlyRoute />}>
+                  <Route path={ROUTES.LOGIN} element={<Login />} />
+                  <Route path={ROUTES.REGISTER} element={<Register />} />
+                </Route>
+              </Route>
 
-            {/* Authenticated OvaSense Health Application */}
-            <Route path={ROUTES.APP.ROOT} element={<AppLayout />}>
-              <Route index element={<Navigate to={ROUTES.APP.DASHBOARD} replace />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="cycle" element={<CyclePage />} />
-              <Route path="symptoms" element={<SymptomsPage />} />
-              <Route path="diet" element={<DietPage />} />
-              <Route path="fitness" element={<FitnessPage />} />
-              <Route path="reports" element={<ReportsPage />} />
-              <Route path="medications" element={<MedicationsPage />} />
-              <Route path="care-circle" element={<CareCirclePage />} />
-              <Route path="settings" element={<SettingsPage />} />
-              {/* Backward compatibility aliases */}
-              <Route path="profile" element={<Navigate to={ROUTES.APP.SETTINGS} replace />} />
-              <Route path="lifestyle" element={<Navigate to={ROUTES.APP.DIET} replace />} />
-              <Route path="assessment" element={<Navigate to={ROUTES.APP.DASHBOARD} replace />} />
-              <Route path="timeline" element={<Navigate to={ROUTES.APP.CYCLE} replace />} />
-            </Route>
+              {/* 7-Step Onboarding Flow (Guarded) */}
+              <Route element={<OnboardingRoute />}>
+                <Route path={ROUTES.ONBOARDING} element={<OnboardingFlow />} />
+              </Route>
 
-            {/* Catch-all Fallback */}
-            <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
-    </UserHealthProvider>
+              {/* Authenticated OvaSense Health Application (Protected) */}
+              <Route element={<ProtectedRoute />}>
+                <Route path={ROUTES.APP.ROOT} element={<AppLayout />}>
+                  <Route index element={<Navigate to={ROUTES.APP.DASHBOARD} replace />} />
+                  <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="cycle" element={<CyclePage />} />
+                  <Route path="symptoms" element={<SymptomsPage />} />
+                  <Route path="diet" element={<DietPage />} />
+                  <Route path="fitness" element={<FitnessPage />} />
+                  <Route path="reports" element={<ReportsPage />} />
+                  <Route path="medications" element={<MedicationsPage />} />
+                  <Route path="care-circle" element={<CareCirclePage />} />
+                  <Route path="settings" element={<SettingsPage />} />
+                  {/* Backward compatibility aliases */}
+                  <Route path="profile" element={<Navigate to={ROUTES.APP.SETTINGS} replace />} />
+                  <Route path="lifestyle" element={<Navigate to={ROUTES.APP.DIET} replace />} />
+                  <Route path="assessment" element={<Navigate to={ROUTES.APP.DASHBOARD} replace />} />
+                  <Route path="timeline" element={<Navigate to={ROUTES.APP.CYCLE} replace />} />
+                </Route>
+              </Route>
+
+              {/* Catch-all Fallback */}
+              <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </UserHealthProvider>
+    </AuthProvider>
   );
 }
 

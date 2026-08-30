@@ -44,28 +44,43 @@ export const MedicationsPage: React.FC = () => {
           Current Daily Regimen
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {userProfile.medical.medications.map((med) => (
-            <div
-              key={med.id}
-              className="p-5 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] flex items-center justify-between gap-3"
-            >
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-[#1C1326]">{med.name}</span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#EDE4F7] text-[#6E2D8B] font-bold">
-                    {med.dosage}
-                  </span>
+        {userProfile.medical?.medications && userProfile.medical.medications.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {userProfile.medical.medications.map((med) => (
+              <div
+                key={med.id}
+                className="p-5 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] flex items-center justify-between gap-3"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-[#1C1326]">{med.name}</span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#EDE4F7] text-[#6E2D8B] font-bold">
+                      {med.dosage}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#584B68]">{med.frequency} • {med.timeOfDay || 'Morning'}</p>
                 </div>
-                <p className="text-xs text-[#584B68]">{med.frequency} • {med.timeOfDay || 'Morning'}</p>
-              </div>
 
-              <span className="text-xs font-mono font-bold text-[#047857] bg-[#ECFDF5] px-2.5 py-1 rounded-full">
-                Active
-              </span>
-            </div>
-          ))}
-        </div>
+                <span className="text-xs font-mono font-bold text-[#047857] bg-[#ECFDF5] px-2.5 py-1 rounded-full">
+                  Active
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-8 rounded-2xl bg-[#F8F5FA] border border-dashed border-[#E7DFEF] text-center space-y-3">
+            <p className="text-sm font-semibold text-[#584B68]">
+              No medications or supplements currently recorded in your profile.
+            </p>
+            <button
+              type="button"
+              onClick={() => openAiChatWithPrompt('Help me add a medication or supplement to my regimen')}
+              className="px-4 py-2 rounded-2xl bg-[#6E2D8B] text-white text-xs font-bold shadow-xs hover:bg-[#8E3EAF] transition-colors cursor-pointer"
+            >
+              + Add Medication or Supplement
+            </button>
+          </div>
+        )}
       </div>
     </motion.div>
   );

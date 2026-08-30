@@ -4,7 +4,7 @@ import { Utensils, Sparkles } from 'lucide-react';
 import { useUserHealth } from '../../context/UserHealthContext';
 
 export const DietPage: React.FC = () => {
-  const { nutrition, openAiChatWithPrompt } = useUserHealth();
+  const { userProfile, snapshotMetrics, nutrition, openAiChatWithPrompt } = useUserHealth();
 
   return (
     <motion.div
@@ -24,13 +24,13 @@ export const DietPage: React.FC = () => {
             </h1>
           </div>
           <p className="text-xs text-[#584B68] mt-1">
-            Personalized, culturally grounded meals engineered to stabilize insulin and support liver estrogen clearance.
+            Personalized meal guidance tailored to your {userProfile.lifestyle?.dietaryPreference || 'selected dietary'} baseline and hormonal rhythms.
           </p>
         </div>
 
         <button
           type="button"
-          onClick={() => openAiChatWithPrompt('Suggest a healthy low-GI dinner with roti or daal')}
+          onClick={() => openAiChatWithPrompt(`Suggest a healthy meal aligned with ${userProfile.lifestyle?.dietaryPreference || 'my nutrition'}`)}
           className="flex items-center gap-2 px-4 py-2 rounded-2xl font-sans font-bold text-xs text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#E87084] hover:brightness-110 shadow-md transition-all cursor-pointer"
         >
           <Sparkles className="w-4 h-4" />
@@ -70,9 +70,14 @@ export const DietPage: React.FC = () => {
 
       {/* Suggested Hormone Phase Meals */}
       <div className="p-6 sm:p-8 rounded-[32px] bg-white border border-[#E7DFEF] shadow-sm space-y-4">
-        <h2 className="text-base font-bold font-display text-[#1C1326]">
-          Suggested for Follicular Phase
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-bold font-display text-[#1C1326]">
+            Suggested for {snapshotMetrics.phaseName}
+          </h2>
+          <span className="text-xs font-mono font-bold text-[#6E2D8B] bg-[#EDE4F7] px-3 py-1 rounded-full">
+            {userProfile.lifestyle?.dietaryPreference}
+          </span>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {nutrition.suggestedMeals.map((sug, idx) => (

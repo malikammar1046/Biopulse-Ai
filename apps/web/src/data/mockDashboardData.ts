@@ -293,3 +293,226 @@ export const MOCK_HEALTH_PATTERNS_3M: HealthPatternPoint[] = [
   { date: 'April', dayLabel: 'Apr', cyclePhase: 'follicular', symptomScore: 4, activityMinutes: 38, sleepHours: 7.4, nutritionAdherence: 82 },
   { date: 'May', dayLabel: 'May', cyclePhase: 'follicular', symptomScore: 2, activityMinutes: 44, sleepHours: 7.6, nutritionAdherence: 88 },
 ];
+
+/**
+ * Creates a clean, unpopulated UserProfile for fresh user registrations
+ */
+export function createEmptyUserProfile(overrides: Partial<UserProfile> = {}): UserProfile {
+  return {
+    id: 'usr_' + Math.random().toString(36).substring(2, 9),
+    fullName: '',
+    email: '',
+    phone: '',
+    dateOfBirth: '',
+    heightCm: null,
+    weightKg: null,
+    isOnboarded: false,
+    createdAt: new Date().toISOString(),
+    emergencyContacts: [],
+    medical: {
+      bloodType: '',
+      allergies: [],
+      medications: [],
+      conditions: [],
+      surgeries: [],
+      familyHistory: [],
+    },
+    womensHealth: {
+      cycleLength: 28,
+      lastPeriodDate: '',
+      periodRegularity: 'mostly_regular',
+      periodDuration: 5,
+      commonSymptoms: [],
+      currentCycleDay: 1,
+      currentPhase: 'follicular',
+    },
+    lifestyle: {
+      dietaryPreference: 'Non-Vegetarian / Halal',
+      dailyWaterGlasses: 8,
+      activityLevel: 'moderate',
+      exercisePreferences: ['Walking'],
+      sleepHours: 7.5,
+    },
+    goals: {
+      selectedGoals: ['Track cycle & predict ovulation'],
+      supportPreference: 'structured_weekly',
+    },
+    ...overrides,
+  };
+}
+
+/**
+ * Dynamically derives checkable reminders from the user's active profile
+ */
+export function deriveRemindersFromProfile(profile: UserProfile): TodayReminder[] {
+  const list: TodayReminder[] = [];
+
+  // 1. Medication & Supplement Reminders
+  if (profile.medical?.medications && profile.medical.medications.length > 0) {
+    profile.medical.medications.forEach((med, idx) => {
+      list.push({
+        id: `rem_med_${med.id || idx}`,
+        title: `Take ${med.name} ${med.dosage ? `(${med.dosage})` : ''}`.trim(),
+        time: med.timeOfDay || (idx === 0 ? '8:00 AM' : '8:00 PM'),
+        category: 'medication',
+        completed: Boolean(med.takenToday),
+      });
+    });
+  }
+
+  // 2. Hydration Reminder based on exact daily water glasses
+  const waterTargetL = ((profile.lifestyle?.dailyWaterGlasses || 8) * 0.25).toFixed(1);
+  list.push({
+    id: 'rem_hydration_daily',
+    title: `Hydration Goal (${waterTargetL}L target)`,
+    time: 'All Day',
+    category: 'hydration',
+    completed: false,
+  });
+
+  // 3. Movement / Fitness Routine based on user's preferred exercise
+  const exerciseStyle = profile.lifestyle?.exercisePreferences?.[0] || 'Movement';
+  list.push({
+    id: 'rem_movement_routine',
+    title: `${exerciseStyle} Session (30 min)`,
+    time: '6:00 PM',
+    category: 'fitness',
+    completed: false,
+  });
+
+  // 4. Evening Cycle & Symptom Check-in
+  list.push({
+    id: 'rem_cycle_checkin',
+    title: 'Daily Symptom & Hormone Check-in',
+    time: '9:30 PM',
+    category: 'cycle',
+    completed: false,
+  });
+
+  return list;
+}
+
+/**
+ * Dynamically derives customized nutrition targets and suggestions matching user's dietary preference
+ */
+export function deriveNutritionFromProfile(profile: UserProfile): NutritionData {
+  const diet = profile.lifestyle?.dietaryPreference || 'Non-Vegetarian / Halal';
+  const waterTargetL = Number(((profile.lifestyle?.dailyWaterGlasses || 8) * 0.25).toFixed(1));
+
+  let suggestedMeals = DEFAULT_NUTRITION_DATA.suggestedMeals;
+
+  if (diet.toLowerCase().includes('vegetarian') || diet.toLowerCase().includes('vegan')) {
+    suggestedMeals = [
+      {
+        name: 'Spiced Lentil Moong Daal with Roasted Greens',
+        desc: 'Rich in plant-based folate, prebiotics, and low-GI complex carbohydrates.',
+        calories: 380,
+        benefits: 'Supports steady liver metabolism and post-meal glucose stabilization.',
+        culturalTag: 'Plant-Based & PCOS-Friendly',
+      },
+      {
+        name: 'Tofu & Chickpea Stir-fry with Sesame Greens',
+        desc: 'Complete amino acid profile with anti-inflammatory magnesium and fiber.',
+        calories: 410,
+        benefits: 'Promotes muscle glucose uptake without insulin spike.',
+        culturalTag: 'High Plant Protein',
+      },
+    ];
+  } else if (diet.toLowerCase().includes('gluten')) {
+    suggestedMeals = [
+      {
+        name: 'Quinoa Bowl with Spiced Grilled Chicken & Herbs',
+        desc: '100% naturally gluten-free complex grain with lean poultry and leafy greens.',
+        calories: 450,
+        benefits: 'Lowers systemic inflammation and gut permeability markers.',
+        culturalTag: 'Gluten-Free Anti-Inflammatory',
+      },
+      {
+        name: 'Millet Roti with Stewed Mixed Lentils & Spinach',
+        desc: 'Ancient millet grain with slow carbohydrate breakdown.',
+        calories: 390,
+        benefits: 'Gentle on gut microbiome and prevents blood sugar swings.',
+        culturalTag: 'Gluten-Free Traditional',
+      },
+    ];
+  }
+
+  return {
+    caloriesLogged: 1450,
+    caloriesTarget: 1800,
+    proteinGrams: 76,
+    proteinTarget: 100,
+    carbsGrams: 160,
+    carbsTarget: 250,
+    fatGrams: 40,
+    fatTarget: 60,
+    waterIntakeLiters: Math.min(waterTargetL, 1.8),
+    waterTargetLiters: waterTargetL,
+    meals: DEFAULT_NUTRITION_DATA.meals,
+    suggestedMeals,
+  };
+}
+
+/**
+ * Dynamically derives fitness data matching user's activity level & preferred exercises
+ */
+export function deriveFitnessFromProfile(profile: UserProfile, phaseName = 'Follicular Phase'): FitnessData {
+  const activityLevel = profile.lifestyle?.activityLevel || 'moderate';
+  const exerciseStyle = profile.lifestyle?.exercisePreferences?.[0] || 'Strength Training';
+
+  let weeklyGoal = 4;
+  if (activityLevel === 'sedentary') weeklyGoal = 3;
+  if (activityLevel === 'very_active') weeklyGoal = 5;
+
+  return {
+    workoutsThisWeek: Math.min(weeklyGoal, 3),
+    weeklyGoal,
+    activeMinutesToday: 40,
+    walkingMinutes: 25,
+    strengthMinutes: 15,
+    caloriesBurned: 230,
+    suggestedMovement: {
+      title: `${phaseName} ${exerciseStyle}`,
+      duration: '25 min',
+      intensity: activityLevel === 'very_active' ? 'moderate' : 'low',
+      reason: `Aligned with your ${phaseName.toLowerCase()} and preference for ${exerciseStyle.toLowerCase()} to encourage glucose uptake without elevating cortisol.`,
+      phaseAlignment: `${phaseName} Optimized`,
+    },
+  };
+}
+
+/**
+ * Derives personalized Digital Twin narrative for the dashboard
+ */
+export function deriveInsightFromProfile(profile: UserProfile, phaseName = 'Follicular Phase'): DigitalTwinInsight {
+  const firstName = profile.fullName?.trim() ? profile.fullName.trim().split(' ')[0] : 'there';
+  const hasMed = profile.medical?.medications && profile.medical.medications.length > 0;
+  const medName = hasMed ? profile.medical.medications[0].name : '';
+  const symptomsLogged = profile.womensHealth?.commonSymptoms || [];
+
+  const headline = `Hello ${firstName}, your health picture is coming together.`;
+  const summary = `You are currently in your ${phaseName}. Your daily baseline is set to ${profile.lifestyle?.dailyWaterGlasses || 8} glasses of water and ${profile.lifestyle?.sleepHours || 7.5} hours of sleep.${hasMed ? ` Routine tracking for ${medName} is active.` : ''}`;
+
+  const highlights = [
+    `${phaseName} baseline: Ideal for steady movement consistency and nutrient-dense meals.`,
+    `Hydration target set to ${((profile.lifestyle?.dailyWaterGlasses || 8) * 0.25).toFixed(1)}L per day.`,
+  ];
+
+  if (symptomsLogged.length > 0) {
+    highlights.push(`Monitoring recorded patterns for: ${symptomsLogged.slice(0, 2).join(', ')}.`);
+  }
+
+  const detectedPatterns = [
+    'Pattern detected: Consistent hydration correlates with steady afternoon energy.',
+    `Pattern detected: ${profile.lifestyle?.dietaryPreference || 'Current nutrition'} supports stable glucose release.`,
+  ];
+
+  return {
+    headline,
+    summary,
+    highlights,
+    detectedPatterns,
+    suggestedChatPrompt: `What habits are most beneficial during my ${phaseName.toLowerCase()}?`,
+  };
+}
+

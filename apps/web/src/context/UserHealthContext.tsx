@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import type { UserProfile } from '../types/onboarding';
 import type {
   HealthSnapshotMetrics,
@@ -10,15 +10,15 @@ import type {
   DigitalTwinInsight,
 } from '../types/dashboard';
 import {
-  DEFAULT_USER_PROFILE,
-  DEFAULT_SNAPSHOT_METRICS,
-  DEFAULT_TODAY_REMINDERS,
-  DEFAULT_NUTRITION_DATA,
-  DEFAULT_FITNESS_DATA,
   DEFAULT_MEDICAL_REPORTS,
   DEFAULT_CARE_CIRCLE,
-  DEFAULT_DIGITAL_TWIN_INSIGHT,
+  deriveRemindersFromProfile,
+  deriveNutritionFromProfile,
+  deriveFitnessFromProfile,
+  deriveInsightFromProfile,
 } from '../data/mockDashboardData';
+import { calculateCycleMetrics } from '../utils/profileCompletion';
+import { useAuth } from './AuthContext';
 
 interface UserHealthContextType {
   userProfile: UserProfile;
@@ -36,28 +36,25 @@ interface UserHealthContextType {
   closeAiChat: () => void;
   toggleReminder: (reminderId: string) => void;
   addReminder: (title: string, time: string, category: TodayReminder['category']) => void;
-  completeOnboarding: (data: Partial<UserProfile>) => void;
-  updateUserProfile: (data: Partial<UserProfile>) => void;
+  registerUser: (data: { fullName: string; email: string; dateOfBirth?: string }) => void;
+  completeOnboarding: (data: Partial<UserProfile>) => Promise<{ success: boolean; error?: string }>;
+  updateUserProfile: (data: Partial<UserProfile>) => Promise<{ success: boolean; error?: string }>;
   resetToDefaultProfile: () => void;
+  clearUserData: () => void;
 }
 
-const STORAGE_KEY = 'ovasense_user_profile_v1';
 const REMINDERS_KEY = 'ovasense_user_reminders_v1';
 
 const UserHealthContext = createContext<UserHealthContextType | undefined>(undefined);
 
 export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [userProfile, setUserProfile] = useState<UserProfile>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch {
-      // Fallback
-    }
-    return DEFAULT_USER_PROFILE;
-  });
+  const {
+    userProfile,
+    saveOnboardingProfile,
+    updateUserProfile: authUpdateProfile,
+    resetToDefaultProfile,
+    logout,
+  } = useAuth();
 
   const [reminders, setReminders] = useState<TodayReminder[]>(() => {
     try {
@@ -68,28 +65,30 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     } catch {
       // Fallback
     }
-    return DEFAULT_TODAY_REMINDERS;
+    return deriveRemindersFromProfile(userProfile);
   });
 
-  const [snapshotMetrics, setSnapshotMetrics] = useState<HealthSnapshotMetrics>(DEFAULT_SNAPSHOT_METRICS);
-  const [nutrition] = useState<NutritionData>(DEFAULT_NUTRITION_DATA);
-  const [fitness] = useState<FitnessData>(DEFAULT_FITNESS_DATA);
   const [reports] = useState<MedicalReportItem[]>(DEFAULT_MEDICAL_REPORTS);
   const [careCircle] = useState<CareCircleContact[]>(DEFAULT_CARE_CIRCLE);
-  const [digitalTwinInsight] = useState<DigitalTwinInsight>(DEFAULT_DIGITAL_TWIN_INSIGHT);
 
   // Floating AI Assistant State
   const [isAiChatOpen, setIsAiChatOpen] = useState(false);
   const [activeAiPrompt, setActiveAiPrompt] = useState<string | undefined>(undefined);
 
-  // Persist Profile changes
+  // Re-sync reminders whenever medications or hydration targets change in profile
   useEffect(() => {
+    const freshReminders = deriveRemindersFromProfile(userProfile);
+    setReminders(freshReminders);
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(userProfile));
+      localStorage.setItem(REMINDERS_KEY, JSON.stringify(freshReminders));
     } catch {
       // ignore
     }
-  }, [userProfile]);
+  }, [
+    userProfile.medical?.medications,
+    userProfile.lifestyle?.dailyWaterGlasses,
+    userProfile.lifestyle?.exercisePreferences,
+  ]);
 
   // Persist Reminders changes
   useEffect(() => {
@@ -100,58 +99,116 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [reminders]);
 
-  // Synchronize snapshot metrics if userProfile changes
-  useEffect(() => {
-    if (userProfile.womensHealth) {
-      setSnapshotMetrics((prev) => ({
-        ...prev,
-        cycleDay: userProfile.womensHealth.currentCycleDay || 14,
-        totalCycleDays: typeof userProfile.womensHealth.cycleLength === 'number' ? userProfile.womensHealth.cycleLength : 28,
-        phaseName: userProfile.womensHealth.currentPhase
-          ? `${userProfile.womensHealth.currentPhase.charAt(0).toUpperCase() + userProfile.womensHealth.currentPhase.slice(1)} Phase`
-          : 'Follicular Phase',
-      }));
-    }
+  // Dynamically compute cycle metrics
+  const cycleMetrics = useMemo(() => {
+    return calculateCycleMetrics(
+      userProfile.womensHealth?.lastPeriodDate,
+      userProfile.womensHealth?.cycleLength,
+      userProfile.womensHealth?.periodDuration
+    );
+  }, [
+    userProfile.womensHealth?.lastPeriodDate,
+    userProfile.womensHealth?.cycleLength,
+    userProfile.womensHealth?.periodDuration,
+  ]);
+
+  // Dynamically derive snapshot metrics
+  const snapshotMetrics: HealthSnapshotMetrics = useMemo(() => {
+    const rawSymptoms = userProfile.womensHealth?.commonSymptoms || [];
+    const symptomsList = rawSymptoms.map((sym) => ({
+      name: sym,
+      severity: 'mild' as const,
+    }));
+
+    // Dynamic Wellness Score based on sleep, water, and recorded symptoms
+    const sleepTarget = userProfile.lifestyle?.sleepHours || 7.5;
+    const waterTarget = userProfile.lifestyle?.dailyWaterGlasses || 8;
+    const sleepScore = Math.min(100, (sleepTarget / 8) * 100);
+    const waterScore = Math.min(100, (waterTarget / 8) * 100);
+    const symptomsDeduction = Math.min(25, rawSymptoms.length * 5);
+    const wellnessScore = Math.max(
+      50,
+      Math.min(100, Math.round(sleepScore * 0.45 + waterScore * 0.45 + 10 - symptomsDeduction))
+    );
+
+    return {
+      cycleDay: cycleMetrics.cycleDay,
+      totalCycleDays: cycleMetrics.totalCycleDays,
+      phaseName: cycleMetrics.phaseName,
+      nextPeriodDays: cycleMetrics.nextPeriodDays,
+      nextPeriodDate: cycleMetrics.nextPeriodDate,
+      symptomsCountToday: symptomsList.length,
+      symptomsList,
+      wellnessScore,
+      wellnessScoreChange: 6,
+    };
+  }, [userProfile, cycleMetrics]);
+
+  // Dynamically derive nutrition
+  const nutrition: NutritionData = useMemo(() => {
+    return deriveNutritionFromProfile(userProfile);
   }, [userProfile]);
 
-  const toggleReminder = (id: string) => {
+  // Dynamically derive fitness
+  const fitness: FitnessData = useMemo(() => {
+    return deriveFitnessFromProfile(userProfile, cycleMetrics.phaseName);
+  }, [userProfile, cycleMetrics.phaseName]);
+
+  // Dynamically derive Digital Twin insight
+  const digitalTwinInsight: DigitalTwinInsight = useMemo(() => {
+    return deriveInsightFromProfile(userProfile, cycleMetrics.phaseName);
+  }, [userProfile, cycleMetrics.phaseName]);
+
+  const toggleReminder = useCallback((id: string) => {
     setReminders((prev) =>
       prev.map((r) => (r.id === id ? { ...r, completed: !r.completed } : r))
     );
-  };
+  }, []);
 
-  const addReminder = (title: string, time: string, category: TodayReminder['category']) => {
-    const newRem: TodayReminder = {
-      id: `rem_${Date.now()}`,
-      title,
-      time,
-      category,
-      completed: false,
-    };
-    setReminders((prev) => [newRem, ...prev]);
-  };
-
-  const completeOnboarding = (data: Partial<UserProfile>) => {
-    setUserProfile((prev) => {
-      const updated: UserProfile = {
-        ...prev,
-        ...data,
-        isOnboarded: true,
+  const addReminder = useCallback(
+    (title: string, time: string, category: TodayReminder['category']) => {
+      const newRem: TodayReminder = {
+        id: `rem_${Date.now()}`,
+        title,
+        time,
+        category,
+        completed: false,
       };
-      return updated;
-    });
-  };
+      setReminders((prev) => [newRem, ...prev]);
+    },
+    []
+  );
 
-  const updateUserProfile = (data: Partial<UserProfile>) => {
-    setUserProfile((prev) => ({ ...prev, ...data }));
-  };
+  const registerUser = useCallback(
+    (_data: { fullName: string; email: string; dateOfBirth?: string }) => {
+      // Registration is handled directly in Register component via useAuth().register
+    },
+    []
+  );
 
-  const resetToDefaultProfile = () => {
-    setUserProfile(DEFAULT_USER_PROFILE);
-    setReminders(DEFAULT_TODAY_REMINDERS);
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(REMINDERS_KEY);
-  };
+  /**
+   * Completes onboarding and persists full profile into Supabase.
+   */
+  const completeOnboarding = useCallback(
+    async (data: Partial<UserProfile>): Promise<{ success: boolean; error?: string }> => {
+      return await saveOnboardingProfile(data);
+    },
+    [saveOnboardingProfile]
+  );
+
+  /**
+   * Deep updates user profile fields and updates Supabase.
+   */
+  const updateUserProfile = useCallback(
+    async (data: Partial<UserProfile>): Promise<{ success: boolean; error?: string }> => {
+      return await authUpdateProfile(data);
+    },
+    [authUpdateProfile]
+  );
+
+  const clearUserData = useCallback(() => {
+    logout();
+  }, [logout]);
 
   const toggleAiChat = () => setIsAiChatOpen((prev) => !prev);
   const openAiChatWithPrompt = (prompt?: string) => {
@@ -178,9 +235,11 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         closeAiChat,
         toggleReminder,
         addReminder,
+        registerUser,
         completeOnboarding,
         updateUserProfile,
         resetToDefaultProfile,
+        clearUserData,
       }}
     >
       {children}

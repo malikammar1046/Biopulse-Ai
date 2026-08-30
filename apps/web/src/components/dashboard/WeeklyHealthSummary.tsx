@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
 import { Sparkles, FileDown, CheckCircle2 } from 'lucide-react';
+import { useUserHealth } from '../../context/UserHealthContext';
 
 export const WeeklyHealthSummary: React.FC = () => {
+  const { userProfile, snapshotMetrics, careCircle } = useUserHealth();
   const [downloading, setDownloading] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
+
+  const doctor = careCircle.find((c) => c.role === 'doctor');
+  const sleepHours = userProfile.lifestyle?.sleepHours || 7.5;
+  const symptomsCount = snapshotMetrics.symptomsCountToday;
 
   const handleExportSummary = () => {
     setDownloading(true);
@@ -38,22 +44,30 @@ export const WeeklyHealthSummary: React.FC = () => {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
           <div className="p-3 rounded-2xl bg-white/[0.05] border border-white/10">
             <span className="text-[10px] font-mono text-[#A797BD] uppercase block">Cycle Phase</span>
-            <span className="text-sm font-bold text-white font-display">Day 14 • Follicular</span>
+            <span className="text-sm font-bold text-white font-display truncate block">
+              Day {snapshotMetrics.cycleDay} • {snapshotMetrics.phaseName.replace(' Phase', '')}
+            </span>
           </div>
 
           <div className="p-3 rounded-2xl bg-white/[0.05] border border-white/10">
             <span className="text-[10px] font-mono text-[#A797BD] uppercase block">Logged Symptoms</span>
-            <span className="text-sm font-bold text-[#FB7185] font-display">4 Entries</span>
+            <span className="text-sm font-bold text-[#FB7185] font-display">
+              {symptomsCount} {symptomsCount === 1 ? 'Entry' : 'Entries'}
+            </span>
           </div>
 
           <div className="p-3 rounded-2xl bg-white/[0.05] border border-white/10">
-            <span className="text-[10px] font-mono text-[#A797BD] uppercase block">Nutrition Adherence</span>
-            <span className="text-sm font-bold text-[#34D399] font-display">6 / 7 Days</span>
+            <span className="text-[10px] font-mono text-[#A797BD] uppercase block">Hydration Goal</span>
+            <span className="text-sm font-bold text-[#34D399] font-display">
+              {((userProfile.lifestyle?.dailyWaterGlasses || 8) * 0.25).toFixed(1)}L / day
+            </span>
           </div>
 
           <div className="p-3 rounded-2xl bg-white/[0.05] border border-white/10">
             <span className="text-[10px] font-mono text-[#A797BD] uppercase block">Average Sleep</span>
-            <span className="text-sm font-bold text-[#C084FC] font-display">7h 18m / night</span>
+            <span className="text-sm font-bold text-[#C084FC] font-display">
+              {sleepHours}h / night
+            </span>
           </div>
         </div>
       </div>
@@ -85,7 +99,7 @@ export const WeeklyHealthSummary: React.FC = () => {
         </button>
 
         <span className="text-[10px] font-mono text-[#A797BD] text-center md:text-right block mt-2">
-          Prepared for Dr. Sara Malik
+          {doctor ? `Prepared for ${doctor.name}` : 'Prepared for Clinical Consultation'}
         </span>
       </div>
     </div>

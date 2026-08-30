@@ -8,8 +8,10 @@ interface Step1Props {
     phone: string;
     dateOfBirth: string;
     avatarUrl?: string;
+    heightCm?: number | null;
+    weightKg?: number | null;
   };
-  onChange: (field: string, value: string) => void;
+  onChange: (field: string, value: any) => void;
   errors: Record<string, string>;
 }
 
@@ -167,6 +169,41 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
             <Mail className="w-4 h-4 text-[#A797BD] absolute left-3.5 top-1/2 -translate-y-1/2" />
           </div>
           {errors.email && <p className="text-xs text-[#FB7185] font-medium">{errors.email}</p>}
+        </div>
+
+        {/* Height (Optional) */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold font-mono text-[#EDE4F7] uppercase tracking-wider flex items-center justify-between">
+            <span>Height (cm)</span>
+            <span className="text-[10px] text-[#A797BD] font-normal lowercase">optional</span>
+          </label>
+          <input
+            type="number"
+            placeholder="e.g. 165"
+            min="100"
+            max="250"
+            value={data.heightCm ?? ''}
+            onChange={(e) => onChange('heightCm', e.target.value ? parseFloat(e.target.value) : null)}
+            className="w-full px-4 py-3 rounded-2xl bg-[#140924] border border-white/15 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#8E3EAF] transition-all"
+          />
+        </div>
+
+        {/* Weight (Optional) */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold font-mono text-[#EDE4F7] uppercase tracking-wider flex items-center justify-between">
+            <span>Weight (kg)</span>
+            <span className="text-[10px] text-[#A797BD] font-normal lowercase">optional</span>
+          </label>
+          <input
+            type="number"
+            placeholder="e.g. 62"
+            min="30"
+            max="300"
+            step="0.5"
+            value={data.weightKg ?? ''}
+            onChange={(e) => onChange('weightKg', e.target.value ? parseFloat(e.target.value) : null)}
+            className="w-full px-4 py-3 rounded-2xl bg-[#140924] border border-white/15 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#8E3EAF] transition-all"
+          />
         </div>
       </div>
 
