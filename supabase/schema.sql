@@ -118,3 +118,55 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- ==============================================================================
+-- Table: public.cycle_records
+-- Description: Stores authenticated user's menstrual period and cycle entries.
+-- ==============================================================================
+
+-- 7. Create cycle_records table
+CREATE TABLE IF NOT EXISTS public.cycle_records (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  period_start_date DATE NOT NULL,
+  period_end_date DATE NOT NULL,
+  flow TEXT NOT NULL CHECK (flow IN ('light', 'medium', 'heavy')),
+  symptoms JSONB DEFAULT '[]'::jsonb,
+  notes TEXT DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 8. Indexes for performance on user lookup and chronological sorting
+CREATE INDEX IF NOT EXISTS idx_cycle_records_user_id ON public.cycle_records(user_id);
+CREATE INDEX IF NOT EXISTS idx_cycle_records_user_start_date ON public.cycle_records(user_id, period_start_date DESC);
+
+-- 9. Enable Row Level Security (RLS)
+ALTER TABLE public.cycle_records ENABLE ROW LEVEL SECURITY;
+
+-- 10. RLS Policies: Authenticated users can ONLY SELECT, INSERT, UPDATE, and DELETE their own records
+DROP POLICY IF EXISTS "Users can select own cycle records" ON public.cycle_records;
+CREATE POLICY "Users can select own cycle records"
+  ON public.cycle_records FOR SELECT
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert own cycle records" ON public.cycle_records;
+CREATE POLICY "Users can insert own cycle records"
+  ON public.cycle_records FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update own cycle records" ON public.cycle_records;
+CREATE POLICY "Users can update own cycle records"
+  ON public.cycle_records FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can delete own cycle records" ON public.cycle_records;
+CREATE POLICY "Users can delete own cycle records"
+  ON public.cycle_records FOR DELETE
+  TO authenticated
+  USING (auth.uid() = user_id);
+

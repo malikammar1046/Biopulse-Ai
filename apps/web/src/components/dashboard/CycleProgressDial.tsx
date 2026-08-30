@@ -10,28 +10,33 @@ interface CycleDialProps {
 }
 
 export const CycleProgressDial: React.FC<CycleDialProps> = ({
-  currentDay = 14,
+  currentDay = 0,
   totalDays = 28,
-  phaseName = 'Follicular Phase',
+  phaseName = 'Start tracking your cycle',
 }) => {
+  const hasLogged = currentDay > 0 && !phaseName.toLowerCase().includes('start tracking');
+
   // SVG calculations for circular progress arc
   const radius = 64;
   const circumference = 2 * Math.PI * radius;
-  const progressRatio = Math.min(Math.max(currentDay / totalDays, 0), 1);
+  const progressRatio = hasLogged ? Math.min(Math.max(currentDay / totalDays, 0), 1) : 0;
   const strokeDashoffset = circumference - progressRatio * circumference;
 
   const getPhaseGuidance = () => {
+    if (!hasLogged) {
+      return 'Log your first period to activate real-time cycle day calculations, biological phase estimates, and personalized rhythm tracking.';
+    }
     const lower = phaseName.toLowerCase();
     if (lower.includes('period') || lower.includes('menstruat')) {
       return 'Focus on restorative rest, warmth, iron-rich nourishment, and gentle stretching.';
     }
     if (lower.includes('ovulat')) {
-      return 'Peak energy window. Ideal for high-output work, social connection, and strength training.';
+      return 'Estimated peak energy window. Ideal for high-output focus, social connection, and strength training.';
     }
     if (lower.includes('luteal')) {
       return 'Support progesterone with magnesium, complex carbohydrates, and calming evening routines.';
     }
-    return 'This is a great phase for building energy, progressive workouts, and focused creative work as estrogen naturally rises.';
+    return 'Rising estrogen supports increasing energy, progressive workouts, and creative focus.';
   };
 
   const mid = Math.floor(totalDays / 2);
@@ -93,15 +98,28 @@ export const CycleProgressDial: React.FC<CycleDialProps> = ({
 
           {/* Inner Content */}
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-            <span className="text-xs font-mono text-[#8D7E9E] uppercase tracking-wider font-semibold">
-              Day
-            </span>
-            <span className="text-3xl font-extrabold font-display text-[#1C1326] leading-none">
-              {currentDay}
-            </span>
-            <span className="text-[11px] font-mono text-[#584B68] mt-0.5">
-              of {totalDays}
-            </span>
+            {hasLogged ? (
+              <>
+                <span className="text-xs font-mono text-[#8D7E9E] uppercase tracking-wider font-semibold">
+                  Day
+                </span>
+                <span className="text-3xl font-extrabold font-display text-[#1C1326] leading-none">
+                  {currentDay}
+                </span>
+                <span className="text-[11px] font-mono text-[#584B68] mt-0.5">
+                  of {totalDays}
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="text-2xl font-extrabold font-display text-[#8D7E9E] leading-none">
+                  —
+                </span>
+                <span className="text-[10px] font-mono text-[#8D7E9E] mt-1 font-semibold">
+                  No log yet
+                </span>
+              </>
+            )}
           </div>
         </div>
 
@@ -109,9 +127,9 @@ export const CycleProgressDial: React.FC<CycleDialProps> = ({
         <div className="space-y-3 flex-1 text-center sm:text-left">
           <div>
             <span className="text-xs font-mono uppercase text-[#8D7E9E] tracking-wider block">
-              Current Phase
+              {hasLogged ? 'Current Phase' : 'Rhythm Status'}
             </span>
-            <h4 className="text-xl font-bold font-display text-[#8E3EAF]">
+            <h4 className="text-lg sm:text-xl font-bold font-display text-[#8E3EAF]">
               {phaseName}
             </h4>
           </div>
@@ -124,11 +142,12 @@ export const CycleProgressDial: React.FC<CycleDialProps> = ({
             to={ROUTES.APP.CYCLE}
             className="inline-flex items-center gap-1.5 text-xs font-bold text-[#6E2D8B] hover:text-[#A21CAF] transition-colors group"
           >
-            <span>View Cycle Calendar</span>
+            <span>{hasLogged ? 'View Cycle Calendar' : 'Start Tracking Your Cycle'}</span>
             <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
       </div>
+
 
       {/* Segment Legend */}
       <div className="pt-4 border-t border-[#F0EAF5] flex flex-wrap items-center justify-between gap-2 text-xs font-sans">

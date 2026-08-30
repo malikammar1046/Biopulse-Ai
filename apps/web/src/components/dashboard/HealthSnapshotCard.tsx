@@ -35,7 +35,7 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
         <div>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-extrabold font-display text-[#1C1326] tracking-tight">
-              Day {metrics.cycleDay}
+              {metrics.cycleDay > 0 ? `Day ${metrics.cycleDay}` : 'Day —'}
             </span>
           </div>
           <span className="text-xs font-semibold text-[#FB7185] flex items-center gap-1.5 mt-0.5">
@@ -79,7 +79,7 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
 
         <div>
           <span className="text-3xl font-extrabold font-display text-[#1C1326] tracking-tight">
-            In {metrics.nextPeriodDays} days
+            {metrics.nextPeriodDays > 0 ? `In ${metrics.nextPeriodDays} days` : 'Not recorded'}
           </span>
           <span className="text-xs text-[#584B68] block mt-0.5 font-medium">
             {metrics.nextPeriodDate}

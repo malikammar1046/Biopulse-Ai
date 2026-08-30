@@ -139,6 +139,12 @@ class AuthService {
       });
 
       if (error) {
+        if (error.message.toLowerCase().includes('rate limit')) {
+          return {
+            success: false,
+            error: 'Supabase email rate limit exceeded (max 3 confirmation emails/hr). Please disable "Confirm email" in your Supabase Dashboard (Authentication -> Providers -> Email -> toggle off "Confirm email") to allow unlimited instant signups.',
+          };
+        }
         return {
           success: false,
           error: error.message || 'Account registration failed. Please try again.',
