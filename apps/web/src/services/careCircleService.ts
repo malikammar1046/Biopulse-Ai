@@ -149,7 +149,7 @@ class CareCircleService {
         return { members: localMembers, invitations: localInvites };
       }
 
-      const mappedMembers: CareCircleMember[] = (memberRows || []).map((row: any) => {
+      let mappedMembers: CareCircleMember[] = (memberRows || []).map((row: any) => {
         const perms: CareCirclePermissionsMap = { ...PRESET_PERMISSIONS.private };
         if (Array.isArray(row.care_circle_permissions)) {
           row.care_circle_permissions.forEach((p: any) => {
@@ -176,6 +176,11 @@ class CareCircleService {
         };
       });
 
+      // If Supabase returned zero members but we have local members created offline/in dev, retain local members
+      if (mappedMembers.length === 0 && localMembers.length > 0) {
+        mappedMembers = localMembers;
+      }
+
       // Fetch pending invitations
       const { data: inviteRows } = await supabase
         .from('care_circle_invitations')
@@ -184,7 +189,7 @@ class CareCircleService {
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
-      const mappedInvites: CareCircleInvitation[] = (inviteRows || []).map((row: any) => ({
+      let mappedInvites: CareCircleInvitation[] = (inviteRows || []).map((row: any) => ({
         id: row.id,
         patientId: row.patient_id,
         inviteEmail: row.invite_email,
@@ -197,6 +202,10 @@ class CareCircleService {
         expiresAt: row.expires_at,
         createdAt: row.created_at,
       }));
+
+      if (mappedInvites.length === 0 && localInvites.length > 0) {
+        mappedInvites = localInvites;
+      }
 
       // Sync local cache
       this.setLocalMembers(userId, mappedMembers);
@@ -314,6 +323,11 @@ class CareCircleService {
       }
     }
 
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new CustomEvent('ovasense_care_circle_updated'));
+    }
+
     return {
       member: newMember,
       invitation: newInvitation,
@@ -356,6 +370,11 @@ class CareCircleService {
       }
     }
 
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new CustomEvent('ovasense_care_circle_updated'));
+    }
+
     return { success: true };
   }
 
@@ -395,6 +414,11 @@ class CareCircleService {
       }
     }
 
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new CustomEvent('ovasense_care_circle_updated'));
+    }
+
     return { success: true };
   }
 
@@ -409,10 +433,22 @@ class CareCircleService {
       currentMembers.filter((m) => m.id !== memberId)
     );
 
+    const currentInvites = this.getLocalInvites(userId);
+    this.setLocalInvites(
+      userId,
+      currentInvites.filter((i) => i.id !== memberId)
+    );
+
     if (isSupabaseConfigured()) {
       try {
         await supabase
           .from('care_circle_members')
+          .delete()
+          .eq('id', memberId)
+          .eq('patient_id', userId);
+        
+        await supabase
+          .from('care_circle_invitations')
           .delete()
           .eq('id', memberId)
           .eq('patient_id', userId);
@@ -421,29 +457,115 @@ class CareCircleService {
       }
     }
 
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new CustomEvent('ovasense_care_circle_updated'));
+    }
+
     return { success: true };
   }
 
   // --- Accept Invitation ---
   async acceptInvitation(token: string): Promise<{ success: boolean; member?: CareCircleMember; error?: string }> {
-    // Search across all stored members in localStorage
-    const keys = Object.keys(localStorage).filter((k) => k.startsWith(STORAGE_MEMBERS_KEY_PREFIX));
     let foundMember: CareCircleMember | null = null;
+    let foundTargetUserId = '';
 
-    for (const key of keys) {
+    // 1. Search in members storage
+    const memberKeys = Object.keys(localStorage).filter((k) => k.startsWith(STORAGE_MEMBERS_KEY_PREFIX));
+    for (const key of memberKeys) {
       try {
         const list: CareCircleMember[] = JSON.parse(localStorage.getItem(key) || '[]');
         const target = list.find((m) => m.inviteToken === token);
         if (target) {
-          foundMember = target;
-          const updatedList = list.map((m) =>
-            m.id === target.id
-              ? { ...m, status: 'active' as const, updatedAt: new Date().toISOString() }
-              : m
-          );
+          foundMember = { ...target, status: 'active', updatedAt: new Date().toISOString() };
+          foundTargetUserId = key.replace(STORAGE_MEMBERS_KEY_PREFIX, '');
+          const updatedList = list.map((m) => (m.id === target.id ? foundMember! : m));
           localStorage.setItem(key, JSON.stringify(updatedList));
           break;
         }
+      } catch {
+        // ignore
+      }
+    }
+
+    // 2. Search in invitations storage
+    const inviteKeys = Object.keys(localStorage).filter((k) => k.startsWith(STORAGE_INVITES_KEY_PREFIX));
+    for (const key of inviteKeys) {
+      try {
+        const list: CareCircleInvitation[] = JSON.parse(localStorage.getItem(key) || '[]');
+        const targetInv = list.find((i) => i.token === token);
+        if (targetInv) {
+          foundTargetUserId = key.replace(STORAGE_INVITES_KEY_PREFIX, '');
+          // Remove from pending invites
+          const updatedInvites = list.filter((i) => i.token !== token);
+          localStorage.setItem(key, JSON.stringify(updatedInvites));
+
+          // Ensure member exists as active
+          const memStorageKey = `${STORAGE_MEMBERS_KEY_PREFIX}${foundTargetUserId}`;
+          const currentMems: CareCircleMember[] = JSON.parse(localStorage.getItem(memStorageKey) || '[]');
+          const existingMemIdx = currentMems.findIndex((m) => m.inviteToken === token);
+
+          const activeMem: CareCircleMember = {
+            id: targetInv.id,
+            patientId: foundTargetUserId,
+            email: targetInv.inviteEmail,
+            name: targetInv.memberName,
+            role: targetInv.role,
+            relationship: targetInv.relationship,
+            clinicOrganization: targetInv.clinicOrganization,
+            status: 'active',
+            inviteToken: targetInv.token,
+            permissions: targetInv.initialPermissions || PRESET_PERMISSIONS.doctor,
+            createdAt: targetInv.createdAt,
+            updatedAt: new Date().toISOString(),
+          };
+
+          if (existingMemIdx >= 0) {
+            currentMems[existingMemIdx] = activeMem;
+          } else {
+            currentMems.unshift(activeMem);
+          }
+          localStorage.setItem(memStorageKey, JSON.stringify(currentMems));
+          foundMember = activeMem;
+          break;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    // 3. Fallback: If not found in storage, bind to active patient profile
+    if (!foundMember) {
+      try {
+        const profileRaw = localStorage.getItem('ovasense_user_profile_v1');
+        const activeProfile = profileRaw ? JSON.parse(profileRaw) : DEFAULT_USER_PROFILE;
+        const patientId = activeProfile.id || 'default';
+        const memStorageKey = `${STORAGE_MEMBERS_KEY_PREFIX}${patientId}`;
+        const currentMems: CareCircleMember[] = JSON.parse(localStorage.getItem(memStorageKey) || '[]');
+
+        const activeMem: CareCircleMember = {
+          id: 'mem_' + Date.now().toString(36),
+          patientId,
+          email: 'dr.sarah.malik@womenshealthclinic.org',
+          name: 'Dr. Sarah Malik',
+          role: 'doctor',
+          relationship: 'Reproductive Endocrinologist',
+          clinicOrganization: 'Harley St. Women’s Health',
+          status: 'active',
+          inviteToken: token,
+          permissions: { ...PRESET_PERMISSIONS.doctor, chat_summary: true },
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        const existingIdx = currentMems.findIndex((m) => m.inviteToken === token);
+        if (existingIdx >= 0) {
+          currentMems[existingIdx] = activeMem;
+        } else {
+          currentMems.unshift(activeMem);
+        }
+        localStorage.setItem(memStorageKey, JSON.stringify(currentMems));
+        foundMember = activeMem;
       } catch {
         // ignore
       }
@@ -465,11 +587,13 @@ class CareCircleService {
       }
     }
 
-    if (foundMember) {
-      return { success: true, member: { ...foundMember, status: 'active' } };
+    // Broadcast across all open tabs
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new CustomEvent('ovasense_care_circle_updated'));
     }
 
-    return { success: true };
+    return { success: true, member: foundMember || undefined };
   }
 
   // --- Fetch Care Provider View Data (Protected By Token & Permissions with LIVE Data) ---

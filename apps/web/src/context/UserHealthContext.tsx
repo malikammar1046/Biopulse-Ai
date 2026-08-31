@@ -449,6 +449,24 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   useEffect(() => {
     refreshCareCircle();
+
+    const handleUpdate = () => {
+      refreshCareCircle();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', handleUpdate);
+      window.addEventListener('ovasense_care_circle_updated', handleUpdate);
+      window.addEventListener('focus', handleUpdate);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('storage', handleUpdate);
+        window.removeEventListener('ovasense_care_circle_updated', handleUpdate);
+        window.removeEventListener('focus', handleUpdate);
+      }
+    };
   }, [refreshCareCircle]);
 
   // Add Care Member
