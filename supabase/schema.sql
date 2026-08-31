@@ -639,3 +639,106 @@ CREATE POLICY "Care circle members can select permitted weekly summaries"
   USING (
     public.has_care_circle_permission(patient_id, 'weekly_summary')
   );
+
+-- ==============================================================================
+-- Module: Diet & Nutrition (food_logs, water_logs, meal_plans)
+-- ==============================================================================
+
+-- 45. Food Logs Table
+CREATE TABLE IF NOT EXISTS public.food_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  meal_type TEXT NOT NULL CHECK (meal_type IN ('breakfast', 'morning_snack', 'lunch', 'afternoon_snack', 'dinner')),
+  food_name TEXT NOT NULL,
+  serving TEXT NOT NULL DEFAULT '1 serving',
+  calories INTEGER NOT NULL DEFAULT 0,
+  protein_g NUMERIC NOT NULL DEFAULT 0,
+  carbs_g NUMERIC NOT NULL DEFAULT 0,
+  fat_g NUMERIC NOT NULL DEFAULT 0,
+  fiber_g NUMERIC NOT NULL DEFAULT 0,
+  logged_at DATE NOT NULL DEFAULT CURRENT_DATE,
+  notes TEXT DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 46. Water Logs Table
+CREATE TABLE IF NOT EXISTS public.water_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  date DATE NOT NULL DEFAULT CURRENT_DATE,
+  glasses INTEGER NOT NULL DEFAULT 0,
+  target_glasses INTEGER NOT NULL DEFAULT 8,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  UNIQUE(user_id, date)
+);
+
+-- 47. Meal Plans Table
+CREATE TABLE IF NOT EXISTS public.meal_plans (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  date DATE NOT NULL DEFAULT CURRENT_DATE,
+  meal_type TEXT NOT NULL,
+  meal_name TEXT NOT NULL,
+  meal_data JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 48. Indexes for Food, Water & Meal Plans
+CREATE INDEX IF NOT EXISTS idx_food_logs_user_date ON public.food_logs(user_id, logged_at);
+CREATE INDEX IF NOT EXISTS idx_water_logs_user_date ON public.water_logs(user_id, date);
+CREATE INDEX IF NOT EXISTS idx_meal_plans_user_date ON public.meal_plans(user_id, date);
+
+-- 49. Enable RLS on Diet Tables
+ALTER TABLE public.food_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.water_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.meal_plans ENABLE ROW LEVEL SECURITY;
+
+-- 50. RLS Policies: food_logs
+DROP POLICY IF EXISTS "Users can manage own food logs" ON public.food_logs;
+CREATE POLICY "Users can manage own food logs"
+  ON public.food_logs FOR ALL
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Care circle members can select permitted food logs" ON public.food_logs;
+CREATE POLICY "Care circle members can select permitted food logs"
+  ON public.food_logs FOR SELECT
+  TO authenticated
+  USING (
+    public.has_care_circle_permission(user_id, 'diet')
+  );
+
+-- 51. RLS Policies: water_logs
+DROP POLICY IF EXISTS "Users can manage own water logs" ON public.water_logs;
+CREATE POLICY "Users can manage own water logs"
+  ON public.water_logs FOR ALL
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Care circle members can select permitted water logs" ON public.water_logs;
+CREATE POLICY "Care circle members can select permitted water logs"
+  ON public.water_logs FOR SELECT
+  TO authenticated
+  USING (
+    public.has_care_circle_permission(user_id, 'diet')
+  );
+
+-- 52. RLS Policies: meal_plans
+DROP POLICY IF EXISTS "Users can manage own meal plans" ON public.meal_plans;
+CREATE POLICY "Users can manage own meal plans"
+  ON public.meal_plans FOR ALL
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Care circle members can select permitted meal plans" ON public.meal_plans;
+CREATE POLICY "Care circle members can select permitted meal plans"
+  ON public.meal_plans FOR SELECT
+  TO authenticated
+  USING (
+    public.has_care_circle_permission(user_id, 'diet')
+  );
+

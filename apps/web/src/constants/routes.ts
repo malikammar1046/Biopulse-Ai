@@ -22,6 +22,7 @@ export const ROUTES = {
     CYCLE: '/app/cycle',
     SYMPTOMS: '/app/symptoms',
     DIET: '/app/diet',
+    DIET_WEEK: '/app/diet/week',
     FITNESS: '/app/fitness',
     REPORTS: '/app/reports',
     MEDICATIONS: '/app/medications',

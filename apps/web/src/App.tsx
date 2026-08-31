@@ -101,6 +101,7 @@ export function App() {
                   <Route path="cycle" element={<CyclePage />} />
                   <Route path="symptoms" element={<SymptomsPage />} />
                   <Route path="diet" element={<DietPage />} />
+                  <Route path="diet/week" element={<DietPage />} />
                   <Route path="fitness" element={<FitnessPage />} />
                   <Route path="reports" element={<ReportsPage />} />
                   <Route path="medications" element={<MedicationsPage />} />

@@ -38,6 +38,7 @@ import { cycleService } from '../services/cycleService';
 import { symptomService } from '../services/symptomService';
 import { reportService } from '../services/reportService';
 import { careCircleService } from '../services/careCircleService';
+import { dietService } from '../services/dietService';
 import type {
   CareCircleMember,
   CareCircleInvitation,
@@ -45,6 +46,13 @@ import type {
   CareCirclePermissionsMap,
   WeeklyHealthSummaryData,
 } from '../types/careCircle';
+import type {
+  FoodLogEntry,
+  FoodLogInput,
+  WaterLogEntry,
+  DailyNutritionTargets,
+  DailyMealPlan,
+} from '../types/diet';
 import { useAuth } from './AuthContext';
 
 interface UserHealthContextType {
@@ -72,6 +80,16 @@ interface UserHealthContextType {
   refreshReports: () => Promise<void>;
   reminders: TodayReminder[];
   nutrition: NutritionData;
+  foodLogs: FoodLogEntry[];
+  waterLog: WaterLogEntry;
+  dailyNutritionTargets: DailyNutritionTargets;
+  dailyMealPlan: DailyMealPlan;
+  dietLoading: boolean;
+  logFoodItem: (input: FoodLogInput) => Promise<{ success: boolean; entry?: FoodLogEntry; error?: string }>;
+  deleteFoodLogItem: (id: string) => Promise<{ success: boolean; error?: string }>;
+  incrementWater: () => Promise<void>;
+  decrementWater: () => Promise<void>;
+  refreshDietData: () => Promise<void>;
   fitness: FitnessData;
   careCircle: CareCircleContact[];
   careCircleMembers: CareCircleMember[];
@@ -423,6 +441,131 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return deriveRemindersFromProfile(userProfile);
   });
 
+  // --- Diet & Nutrition Live State & Handlers ---
+  const [foodLogs, setFoodLogs] = useState<FoodLogEntry[]>([]);
+  const [waterLog, setWaterLog] = useState<WaterLogEntry>({
+    userId: userProfile?.id || 'default',
+    date: new Date().toISOString().split('T')[0],
+    glasses: 5,
+    targetGlasses: userProfile?.lifestyle?.dailyWaterGlasses || 8,
+    updatedAt: new Date().toISOString(),
+  });
+  const [dietLoading, setDietLoading] = useState<boolean>(true);
+
+  // Dynamic calculated targets
+  const dailyNutritionTargets: DailyNutritionTargets = useMemo(() => {
+    return dietService.calculateNutritionTargets(userProfile);
+  }, [userProfile]);
+
+  // Dynamic planned meals with allergy & cycle awareness
+  const dailyMealPlan: DailyMealPlan = useMemo(() => {
+    const recentSyms = symptomRecords.map((s) => s.symptomType);
+    const activePhase = cycleStats.hasData && cycleStats.estimatedPhase
+      ? cycleStats.estimatedPhase.name
+      : undefined;
+    return dietService.generateDailyMealPlan(userProfile, activePhase, recentSyms);
+  }, [userProfile, cycleStats, symptomRecords]);
+
+  const refreshDietData = useCallback(async (silent = false) => {
+    if (!userProfile?.id) {
+      setDietLoading(false);
+      return;
+    }
+    if (!silent) {
+      setDietLoading(true);
+    }
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const [foodRes, waterRes] = await Promise.all([
+        dietService.fetchFoodLogs(userProfile.id, today),
+        dietService.fetchWaterLog(userProfile.id, today),
+      ]);
+      setFoodLogs(foodRes.logs || []);
+      setWaterLog(waterRes.entry);
+    } catch (err) {
+      console.warn('Error refreshing diet data:', err);
+    } finally {
+      if (!silent) {
+        setDietLoading(false);
+      }
+    }
+  }, [userProfile?.id]);
+
+  useEffect(() => {
+    refreshDietData(false);
+
+    let dietTimer: any = null;
+    const handleDietUpdate = () => {
+      clearTimeout(dietTimer);
+      dietTimer = setTimeout(() => {
+        refreshDietData(true);
+      }, 150);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('ovasense_diet_updated', handleDietUpdate);
+    }
+
+    return () => {
+      clearTimeout(dietTimer);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('ovasense_diet_updated', handleDietUpdate);
+      }
+    };
+  }, [refreshDietData]);
+
+  const logFoodItem = useCallback(
+    async (input: FoodLogInput): Promise<{ success: boolean; entry?: FoodLogEntry; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to log food.' };
+      }
+      try {
+        const res = await dietService.logFood(userProfile.id, input);
+        if (res.success && res.entry) {
+          setFoodLogs((prev) => [...prev, res.entry!]);
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to log food.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const deleteFoodLogItem = useCallback(
+    async (id: string): Promise<{ success: boolean; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to delete food log.' };
+      }
+      try {
+        const res = await dietService.deleteFoodLog(userProfile.id, id);
+        if (res.success) {
+          setFoodLogs((prev) => prev.filter((l) => l.id !== id));
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to delete food log.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const incrementWater = useCallback(async () => {
+    if (!userProfile?.id) return;
+    const nextGlasses = Math.min(24, waterLog.glasses + 1);
+    const target = userProfile.lifestyle?.dailyWaterGlasses || 8;
+    setWaterLog((prev) => ({ ...prev, glasses: nextGlasses }));
+    await dietService.updateWaterGlasses(userProfile.id, nextGlasses, target, waterLog.date);
+  }, [userProfile?.id, userProfile?.lifestyle?.dailyWaterGlasses, waterLog.glasses, waterLog.date]);
+
+  const decrementWater = useCallback(async () => {
+    if (!userProfile?.id) return;
+    const nextGlasses = Math.max(0, waterLog.glasses - 1);
+    const target = userProfile.lifestyle?.dailyWaterGlasses || 8;
+    setWaterLog((prev) => ({ ...prev, glasses: nextGlasses }));
+    await dietService.updateWaterGlasses(userProfile.id, nextGlasses, target, waterLog.date);
+  }, [userProfile?.id, userProfile?.lifestyle?.dailyWaterGlasses, waterLog.glasses, waterLog.date]);
+
   // Care Circle State & Live Management
   const [careCircleMembers, setCareCircleMembers] = useState<CareCircleMember[]>([]);
   const [careCircleInvitations, setCareCircleInvitations] = useState<CareCircleInvitation[]>([]);
@@ -678,10 +821,52 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     };
   }, [userProfile, cycleStats, symptomRecords]);
 
-  // Dynamically derive nutrition
+  // Dynamically derive nutrition snapshot object for Dashboard and widgets from LIVE food logs & water
   const nutrition: NutritionData = useMemo(() => {
-    return deriveNutritionFromProfile(userProfile);
-  }, [userProfile]);
+    const totalCalories = foodLogs.reduce((sum, l) => sum + (l.calories || 0), 0);
+    const totalProtein = foodLogs.reduce((sum, l) => sum + (l.proteinG || 0), 0);
+    const totalCarbs = foodLogs.reduce((sum, l) => sum + (l.carbsG || 0), 0);
+    const totalFat = foodLogs.reduce((sum, l) => sum + (l.fatG || 0), 0);
+
+    const loggedMeals = foodLogs.map((l) => ({
+      type: (l.mealType === 'morning_snack' || l.mealType === 'afternoon_snack' ? 'snack' : l.mealType) as 'breakfast' | 'lunch' | 'dinner' | 'snack',
+      name: l.foodName,
+      calories: l.calories,
+      tags: [l.serving, `${l.proteinG}g Protein`],
+    }));
+
+    const suggested = [
+      {
+        name: dailyMealPlan.meals.lunch.title,
+        desc: dailyMealPlan.meals.lunch.whyItWorks,
+        calories: dailyMealPlan.meals.lunch.calories,
+        benefits: 'High fiber and protein for steady metabolic energy',
+        culturalTag: 'Pakistani Nutrition',
+      },
+      {
+        name: dailyMealPlan.meals.dinner.title,
+        desc: dailyMealPlan.meals.dinner.whyItWorks,
+        calories: dailyMealPlan.meals.dinner.calories,
+        benefits: 'Lean protein and restorative evening minerals',
+        culturalTag: 'Traditional Balanced',
+      },
+    ];
+
+    return {
+      caloriesLogged: totalCalories,
+      caloriesTarget: dailyNutritionTargets.calories,
+      proteinGrams: Math.round(totalProtein),
+      proteinTarget: dailyNutritionTargets.proteinG,
+      carbsGrams: Math.round(totalCarbs),
+      carbsTarget: dailyNutritionTargets.carbsG,
+      fatGrams: Math.round(totalFat),
+      fatTarget: dailyNutritionTargets.fatG,
+      waterIntakeLiters: Math.round(waterLog.glasses * 0.25 * 10) / 10,
+      waterTargetLiters: Math.round(dailyNutritionTargets.waterGlasses * 0.25 * 10) / 10,
+      meals: loggedMeals.length > 0 ? loggedMeals : deriveNutritionFromProfile(userProfile).meals,
+      suggestedMeals: suggested,
+    };
+  }, [foodLogs, dailyNutritionTargets, dailyMealPlan, waterLog.glasses, userProfile]);
 
   // Dynamically derive fitness
   const fitness: FitnessData = useMemo(() => {
@@ -778,6 +963,16 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         refreshSymptomRecords,
         reminders,
         nutrition,
+        foodLogs,
+        waterLog,
+        dailyNutritionTargets,
+        dailyMealPlan,
+        dietLoading,
+        logFoodItem,
+        deleteFoodLogItem,
+        incrementWater,
+        decrementWater,
+        refreshDietData,
         fitness,
         reports,
         reportStats,
