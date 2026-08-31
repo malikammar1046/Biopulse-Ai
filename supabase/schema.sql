@@ -742,3 +742,45 @@ CREATE POLICY "Care circle members can select permitted meal plans"
     public.has_care_circle_permission(user_id, 'diet')
   );
 
+-- ==============================================================================
+-- Module: Fitness & Movement (fitness_logs)
+-- ==============================================================================
+
+-- 53. Fitness Logs Table
+CREATE TABLE IF NOT EXISTS public.fitness_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  activity_type TEXT NOT NULL CHECK (activity_type IN ('walking', 'strength', 'yoga', 'stretching', 'cycling', 'low_impact_cardio', 'mobility', 'rest_recovery', 'other')),
+  activity_name TEXT NOT NULL,
+  duration_minutes INTEGER NOT NULL CHECK (duration_minutes > 0),
+  energy_level TEXT CHECK (energy_level IN ('low_energy', 'okay', 'good', 'great')),
+  notes TEXT DEFAULT '',
+  occurred_at DATE NOT NULL DEFAULT CURRENT_DATE,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 54. Indexes for Fitness Logs
+CREATE INDEX IF NOT EXISTS idx_fitness_logs_user_occurred ON public.fitness_logs(user_id, occurred_at DESC);
+CREATE INDEX IF NOT EXISTS idx_fitness_logs_activity_type ON public.fitness_logs(user_id, activity_type);
+
+-- 55. Enable RLS on fitness_logs
+ALTER TABLE public.fitness_logs ENABLE ROW LEVEL SECURITY;
+
+-- 56. RLS Policies: fitness_logs
+DROP POLICY IF EXISTS "Users can manage own fitness logs" ON public.fitness_logs;
+CREATE POLICY "Users can manage own fitness logs"
+  ON public.fitness_logs FOR ALL
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Care circle members can select permitted fitness logs" ON public.fitness_logs;
+CREATE POLICY "Care circle members can select permitted fitness logs"
+  ON public.fitness_logs FOR SELECT
+  TO authenticated
+  USING (
+    public.has_care_circle_permission(user_id, 'fitness')
+  );
+
+

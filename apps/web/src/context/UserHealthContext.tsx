@@ -27,7 +27,6 @@ import {
   DEFAULT_CARE_CIRCLE,
   deriveRemindersFromProfile,
   deriveNutritionFromProfile,
-  deriveFitnessFromProfile,
   deriveInsightFromProfile,
 } from '../data/mockDashboardData';
 import { calculateCycleMetrics } from '../utils/profileCompletion';
@@ -39,6 +38,7 @@ import { symptomService } from '../services/symptomService';
 import { reportService } from '../services/reportService';
 import { careCircleService } from '../services/careCircleService';
 import { dietService } from '../services/dietService';
+import { fitnessService } from '../services/fitnessService';
 import type {
   CareCircleMember,
   CareCircleInvitation,
@@ -53,6 +53,12 @@ import type {
   DailyNutritionTargets,
   DailyMealPlan,
 } from '../types/diet';
+import type {
+  FitnessLogEntry,
+  FitnessLogInput,
+  SuggestedMovementRoutine,
+  WeeklyFitnessStats,
+} from '../types/fitness';
 import { useAuth } from './AuthContext';
 
 interface UserHealthContextType {
@@ -91,6 +97,16 @@ interface UserHealthContextType {
   decrementWater: () => Promise<void>;
   refreshDietData: () => Promise<void>;
   fitness: FitnessData;
+  fitnessLogs: FitnessLogEntry[];
+  fitnessLoading: boolean;
+  todayFitnessMinutes: number;
+  todayFitnessActivities: FitnessLogEntry[];
+  weeklyFitnessStats: WeeklyFitnessStats;
+  suggestedFitnessRoutines: SuggestedMovementRoutine[];
+  logFitnessActivity: (input: FitnessLogInput) => Promise<{ success: boolean; entry?: FitnessLogEntry; error?: string }>;
+  updateFitnessActivity: (id: string, input: Partial<FitnessLogInput>) => Promise<{ success: boolean; entry?: FitnessLogEntry; error?: string }>;
+  deleteFitnessActivity: (id: string) => Promise<{ success: boolean; error?: string }>;
+  refreshFitnessData: () => Promise<void>;
   careCircle: CareCircleContact[];
   careCircleMembers: CareCircleMember[];
   careCircleInvitations: CareCircleInvitation[];
@@ -566,6 +582,129 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     await dietService.updateWaterGlasses(userProfile.id, nextGlasses, target, waterLog.date);
   }, [userProfile?.id, userProfile?.lifestyle?.dailyWaterGlasses, waterLog.glasses, waterLog.date]);
 
+  // --- Fitness & Movement Live State & Handlers ---
+  const [fitnessLogs, setFitnessLogs] = useState<FitnessLogEntry[]>([]);
+  const [fitnessLoading, setFitnessLoading] = useState<boolean>(true);
+
+  const refreshFitnessData = useCallback(async (silent = false) => {
+    if (!userProfile?.id) {
+      setFitnessLoading(false);
+      return;
+    }
+    if (!silent) {
+      setFitnessLoading(true);
+    }
+    try {
+      const res = await fitnessService.fetchFitnessLogs(userProfile.id);
+      setFitnessLogs(res.logs || []);
+    } catch (err) {
+      console.warn('Error refreshing fitness data:', err);
+    } finally {
+      if (!silent) {
+        setFitnessLoading(false);
+      }
+    }
+  }, [userProfile?.id]);
+
+  useEffect(() => {
+    refreshFitnessData(false);
+
+    let fitnessTimer: any = null;
+    const handleFitnessUpdate = () => {
+      clearTimeout(fitnessTimer);
+      fitnessTimer = setTimeout(() => {
+        refreshFitnessData(true);
+      }, 150);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('ovasense_fitness_updated', handleFitnessUpdate);
+    }
+
+    return () => {
+      clearTimeout(fitnessTimer);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('ovasense_fitness_updated', handleFitnessUpdate);
+      }
+    };
+  }, [refreshFitnessData]);
+
+  const logFitnessActivity = useCallback(
+    async (input: FitnessLogInput): Promise<{ success: boolean; entry?: FitnessLogEntry; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to log activity.' };
+      }
+      try {
+        const res = await fitnessService.createFitnessLog(userProfile.id, input);
+        if (res.success && res.entry) {
+          setFitnessLogs((prev) => [res.entry!, ...prev]);
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to log fitness activity.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const updateFitnessActivity = useCallback(
+    async (id: string, input: Partial<FitnessLogInput>): Promise<{ success: boolean; entry?: FitnessLogEntry; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to update activity.' };
+      }
+      try {
+        const res = await fitnessService.updateFitnessLog(userProfile.id, id, input);
+        if (res.success && res.entry) {
+          setFitnessLogs((prev) => prev.map((l) => (l.id === id ? res.entry! : l)));
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to update activity.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const deleteFitnessActivity = useCallback(
+    async (id: string): Promise<{ success: boolean; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to delete activity.' };
+      }
+      try {
+        const res = await fitnessService.deleteFitnessLog(userProfile.id, id);
+        if (res.success) {
+          setFitnessLogs((prev) => prev.filter((l) => l.id !== id));
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to delete activity.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  // Derived Today & Weekly Fitness Statistics
+  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+
+  const todayFitnessActivities = useMemo(() => {
+    return fitnessLogs.filter((l) => l.occurredAt === todayStr);
+  }, [fitnessLogs, todayStr]);
+
+  const todayFitnessMinutes = useMemo(() => {
+    return todayFitnessActivities.reduce((sum, a) => sum + (a.durationMinutes || 0), 0);
+  }, [todayFitnessActivities]);
+
+  const weeklyFitnessStats = useMemo(() => {
+    return fitnessService.calculateWeeklyStats(fitnessLogs, 150);
+  }, [fitnessLogs]);
+
+  const suggestedFitnessRoutines = useMemo(() => {
+    const activePhaseName = cycleStats.hasData && cycleStats.estimatedPhase
+      ? cycleStats.estimatedPhase.name
+      : userProfile.womensHealth?.currentPhase || 'Follicular Phase';
+    return fitnessService.generateSuggestedRoutines(userProfile, activePhaseName, todayFitnessActivities);
+  }, [userProfile, cycleStats, todayFitnessActivities]);
+
   // Care Circle State & Live Management
   const [careCircleMembers, setCareCircleMembers] = useState<CareCircleMember[]>([]);
   const [careCircleInvitations, setCareCircleInvitations] = useState<CareCircleInvitation[]>([]);
@@ -868,13 +1007,46 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     };
   }, [foodLogs, dailyNutritionTargets, dailyMealPlan, waterLog.glasses, userProfile]);
 
-  // Dynamically derive fitness
+  // Dynamically derive fitness snapshot object for Dashboard from LIVE fitness logs & suggestions
   const fitness: FitnessData = useMemo(() => {
-    const activePhaseName = cycleStats.hasData && cycleStats.estimatedPhase
-      ? cycleStats.estimatedPhase.name
-      : cycleMetrics.phaseName;
-    return deriveFitnessFromProfile(userProfile, activePhaseName);
-  }, [userProfile, cycleStats, cycleMetrics.phaseName]);
+    const todayWalkingMins = todayFitnessActivities
+      .filter((a) => a.activityType === 'walking')
+      .reduce((sum, a) => sum + a.durationMinutes, 0);
+
+    const todayStrengthMins = todayFitnessActivities
+      .filter((a) => a.activityType === 'strength')
+      .reduce((sum, a) => sum + a.durationMinutes, 0);
+
+    const topSuggestion = suggestedFitnessRoutines[0] || {
+      title: 'Gentle Sunshine Walk',
+      durationMinutes: 20,
+      intensity: 'Gentle',
+      focus: 'Blood Sugar Balance',
+      whyThisPhase: 'Gentle movement supports steady glucose and mood.',
+    };
+
+    return {
+      workoutsThisWeek: weeklyFitnessStats.totalActivitiesCount,
+      weeklyGoal: 5,
+      activeMinutesToday: todayFitnessMinutes,
+      walkingMinutes: todayWalkingMins || (todayFitnessMinutes > 0 ? 0 : 20),
+      strengthMinutes: todayStrengthMins || 0,
+      caloriesBurned: Math.round(todayFitnessMinutes * 4.5),
+      suggestedMovement: {
+        title: topSuggestion.title,
+        duration: `${topSuggestion.durationMinutes} min`,
+        intensity: (topSuggestion.intensity.toLowerCase() === 'moderate'
+          ? 'moderate'
+          : topSuggestion.intensity.toLowerCase() === 'restorative'
+          ? 'restorative'
+          : 'low') as 'low' | 'moderate' | 'restorative',
+        reason: topSuggestion.whyThisPhase,
+        phaseAlignment: cycleStats.hasData && cycleStats.estimatedPhase
+          ? cycleStats.estimatedPhase.name
+          : cycleMetrics.phaseName,
+      },
+    };
+  }, [todayFitnessActivities, weeklyFitnessStats.totalActivitiesCount, todayFitnessMinutes, suggestedFitnessRoutines, cycleStats, cycleMetrics.phaseName]);
 
   // Dynamically derive Digital Twin insight
   const digitalTwinInsight: DigitalTwinInsight = useMemo(() => {
@@ -974,6 +1146,16 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         decrementWater,
         refreshDietData,
         fitness,
+        fitnessLogs,
+        fitnessLoading,
+        todayFitnessMinutes,
+        todayFitnessActivities,
+        weeklyFitnessStats,
+        suggestedFitnessRoutines,
+        logFitnessActivity,
+        updateFitnessActivity,
+        deleteFitnessActivity,
+        refreshFitnessData,
         reports,
         reportStats,
         reportsLoading,

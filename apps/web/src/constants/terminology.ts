@@ -149,6 +149,32 @@ export const OVASENSE_TERMINOLOGY_GUIDE: Record<string, TermDefinition> = {
     simpleExplanation: 'Informational analysis of health patterns (never a replacement for a doctor).',
     exampleUsage: 'Your AI Health Insights.',
   },
+
+  // Fitness & Movement
+  physical_activity_adherence: {
+    clinicalTerm: 'Physical Activity Adherence',
+    patientFriendlyTerm: 'Your Movement This Week',
+    simpleExplanation: 'Gentle and steady activity tracking that honors your energy and cycle.',
+    exampleUsage: 'Your movement this week: 145 minutes completed.',
+  },
+  cardiorespiratory_exercise: {
+    clinicalTerm: 'Cardiorespiratory Exercise',
+    patientFriendlyTerm: 'Cardio / Aerobic Movement',
+    simpleExplanation: 'Activities like brisk walking or cycling that gently raise your heart rate.',
+    exampleUsage: '20-minute low-impact cardio.',
+  },
+  low_intensity_movement: {
+    clinicalTerm: 'Low-Intensity Physical Activity',
+    patientFriendlyTerm: 'Gentle Movement',
+    simpleExplanation: 'Low-stress movement like walking, stretching, or yoga that supports blood flow without raising cortisol.',
+    exampleUsage: 'Suggested for today: 20 minutes of gentle movement.',
+  },
+  recovery_protocol: {
+    clinicalTerm: 'Recovery Protocol',
+    patientFriendlyTerm: 'Rest & Recovery Movement',
+    simpleExplanation: 'Restorative stretching or mindful resting to let muscles and adrenal pathways recover.',
+    exampleUsage: 'Rest and recovery movement today.',
+  },
 };
 
 /**
