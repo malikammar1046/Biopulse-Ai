@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   AlertCircle,
   ArrowLeft,
+  Calendar,
 } from 'lucide-react';
 import { careCircleService } from '../../services/careCircleService';
 import type { CareProviderViewData } from '../../types/careCircle';
@@ -483,6 +484,46 @@ export const CareProviderPortalPage: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* ── 3.5. UPCOMING APPOINTMENT & CONSULTATION LOGISTICS ── */}
+        {perms.appointments && (
+          <div className="p-6 sm:p-8 rounded-[36px] bg-white border border-[#E7DFEF] shadow-sm space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-xl bg-[#EDE4F7] text-[#6E2D8B]">
+                <Calendar className="w-4 h-4" />
+              </span>
+              <h2 className="text-base font-bold font-display text-[#1C1326]">
+                Upcoming Appointment & Consultation
+              </h2>
+            </div>
+
+            {summary?.nextAppointmentDate ? (
+              <div className="p-5 rounded-2xl bg-[#FAF5FF] border border-[#D8B4FE]/60 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#E7DFEF] pb-3">
+                  <div>
+                    <span className="text-sm font-bold text-[#1C1326] block">
+                      {summary.nextAppointmentTitle || 'Clinical Consultation & Longitudinal Review'}
+                    </span>
+                    <span className="text-xs text-[#6E2D8B] font-semibold block mt-0.5">
+                      Scheduled for {summary.nextAppointmentDate}
+                    </span>
+                  </div>
+                  <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#ECFDF5] text-[#047857] w-fit">
+                    Active Appointment
+                  </span>
+                </div>
+
+                <p className="text-xs text-[#584B68]">
+                  Longitudinal patient metrics (Cycle Day {summary.cycleDay}, {summary.symptomsCount} logged symptoms, and medication adherence) are synthesized for discussion during this visit.
+                </p>
+              </div>
+            ) : (
+              <div className="p-6 rounded-2xl bg-[#F8F5FA] border border-dashed border-[#E7DFEF] text-center">
+                <p className="text-xs text-[#584B68]">No upcoming appointment scheduled with this provider.</p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── 4. HEALTH TOPICS SUMMARY (AI CHAT SYNTHESIS) ── */}
         {perms.chat_summary && summary?.chatTopicsSummary && (

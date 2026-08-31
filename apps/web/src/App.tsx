@@ -59,6 +59,7 @@ const FitnessPage = lazy(() => import('./pages/app/FitnessPage').then((m) => ({ 
 const ReportsPage = lazy(() => import('./pages/app/ReportsPage').then((m) => ({ default: m.ReportsPage })));
 const MedicationsPage = lazy(() => import('./pages/app/MedicationsPage').then((m) => ({ default: m.MedicationsPage })));
 const CareCirclePage = lazy(() => import('./pages/app/CareCirclePage').then((m) => ({ default: m.CareCirclePage })));
+const AppointmentsPage = lazy(() => import('./pages/app/AppointmentsPage').then((m) => ({ default: m.AppointmentsPage })));
 const SettingsPage = lazy(() => import('./pages/app/SettingsPage').then((m) => ({ default: m.SettingsPage })));
 
 export function App() {
@@ -106,6 +107,7 @@ export function App() {
                   <Route path="reports" element={<ReportsPage />} />
                   <Route path="medications" element={<MedicationsPage />} />
                   <Route path="care-circle" element={<CareCirclePage />} />
+                  <Route path="appointments" element={<AppointmentsPage />} />
                   <Route path="settings" element={<SettingsPage />} />
                   {/* Backward compatibility aliases */}
                   <Route path="profile" element={<Navigate to={ROUTES.APP.SETTINGS} replace />} />

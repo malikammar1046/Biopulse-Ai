@@ -207,6 +207,26 @@ export const OVASENSE_TERMINOLOGY_GUIDE: Record<string, TermDefinition> = {
     simpleExplanation: 'Supplements or prescribed medicines you take to support your PCOS balance.',
     exampleUsage: 'Your medicines and daily supplements.',
   },
+
+  // Appointments & Consultations
+  clinical_consultation: {
+    clinicalTerm: 'Clinical Consultation',
+    patientFriendlyTerm: 'Doctor Visit / Consultation',
+    simpleExplanation: 'A scheduled discussion with your healthcare professional to review your health and symptoms.',
+    exampleUsage: 'Upcoming doctor visit with Dr. Sarah Malik.',
+  },
+  pre_consultation_prep: {
+    clinicalTerm: 'Pre-Consultation Clinical Synthesis',
+    patientFriendlyTerm: 'Prepare for Your Visit',
+    simpleExplanation: 'A patient summary of your cycle, symptoms, reports, and questions to help you have an informed talk with your doctor.',
+    exampleUsage: 'Prepare for your visit: Review your health summary and questions.',
+  },
+  consultation_brief: {
+    clinicalTerm: 'Clinical Consultation Brief',
+    patientFriendlyTerm: 'Your Health Summary for Doctor',
+    simpleExplanation: 'A 1-page overview summarizing your logged metrics for discussion during your appointment.',
+    exampleUsage: 'View your health summary brief for your doctor.',
+  },
 };
 
 /**

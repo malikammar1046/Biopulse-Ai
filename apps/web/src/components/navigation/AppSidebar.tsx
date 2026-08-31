@@ -9,6 +9,7 @@ import {
   FileText,
   Pill,
   Users,
+  Stethoscope,
   Settings,
   LogOut,
   Sparkles,
@@ -38,6 +39,7 @@ export const AppSidebar: React.FC = () => {
     { label: 'Lab Reports', path: ROUTES.APP.REPORTS, icon: FileText },
     { label: 'Medications', path: ROUTES.APP.MEDICATIONS, icon: Pill },
     { label: 'Care Circle', path: ROUTES.APP.CARE_CIRCLE, icon: Users },
+    { label: 'Appointments', path: ROUTES.APP.APPOINTMENTS, icon: Stethoscope },
   ];
 
   const bottomNavItems = [

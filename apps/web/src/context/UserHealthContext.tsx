@@ -39,6 +39,7 @@ import { careCircleService } from '../services/careCircleService';
 import { dietService } from '../services/dietService';
 import { fitnessService } from '../services/fitnessService';
 import { medicationService } from '../services/medicationService';
+import { appointmentService } from '../services/appointmentService';
 import type {
   CareCircleMember,
   CareCircleInvitation,
@@ -67,6 +68,14 @@ import type {
   TodayMedicationProgress,
   WeeklyAdherenceStats,
 } from '../types/medication';
+import type {
+  AppointmentItem,
+  AppointmentInput,
+  AppointmentStatus,
+  ConsultationQuestion,
+  HealthSummarySnapshot,
+  ConsultationBrief,
+} from '../types/appointment';
 import { useAuth } from './AuthContext';
 
 interface UserHealthContextType {
@@ -126,6 +135,20 @@ interface UserHealthContextType {
   logMedicationDose: (input: MedicationLogInput) => Promise<{ success: boolean; log?: MedicationLogEntry; error?: string }>;
   deleteMedicationDose: (medicationId: string, scheduledFor: string, scheduledTime: string) => Promise<{ success: boolean }>;
   refreshMedications: () => Promise<void>;
+  appointments: AppointmentItem[];
+  upcomingAppointment: AppointmentItem | null;
+  appointmentsLoading: boolean;
+  bookAppointment: (input: AppointmentInput) => Promise<{ success: boolean; appointment?: AppointmentItem; error?: string }>;
+  updateAppointment: (id: string, input: Partial<AppointmentInput> & { status?: AppointmentStatus; providerNotes?: string }) => Promise<{ success: boolean; appointment?: AppointmentItem; error?: string }>;
+  cancelAppointment: (id: string, reason?: string) => Promise<{ success: boolean; error?: string }>;
+  completeAppointment: (id: string, notes?: string) => Promise<{ success: boolean; error?: string }>;
+  deleteAppointment: (id: string) => Promise<{ success: boolean; error?: string }>;
+  addDoctorQuestion: (appointmentId: string, question: string) => Promise<{ success: boolean; question?: ConsultationQuestion; error?: string }>;
+  toggleDoctorQuestion: (appointmentId: string, questionId: string) => Promise<{ success: boolean }>;
+  deleteDoctorQuestion: (appointmentId: string, questionId: string) => Promise<{ success: boolean }>;
+  getPreConsultationSnapshot: () => HealthSummarySnapshot;
+  getConsultationBrief: (appointment: AppointmentItem) => ConsultationBrief;
+  refreshAppointments: () => Promise<void>;
   careCircle: CareCircleContact[];
   careCircleMembers: CareCircleMember[];
   careCircleInvitations: CareCircleInvitation[];
@@ -888,6 +911,224 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return medicationService.calculateWeeklyAdherence(medications, medicationLogs, 7);
   }, [medications, medicationLogs]);
 
+  // --- Appointments & Consultations Live State & Handlers ---
+  const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
+  const [appointmentsLoading, setAppointmentsLoading] = useState<boolean>(true);
+
+  const refreshAppointments = useCallback(async (silent = false) => {
+    if (!userProfile?.id) {
+      setAppointmentsLoading(false);
+      return;
+    }
+    if (!silent) {
+      setAppointmentsLoading(true);
+    }
+    try {
+      const res = await appointmentService.fetchAppointments(userProfile.id);
+      setAppointments(res.appointments || []);
+    } catch (err) {
+      console.warn('Error refreshing appointments:', err);
+    } finally {
+      if (!silent) {
+        setAppointmentsLoading(false);
+      }
+    }
+  }, [userProfile?.id]);
+
+  useEffect(() => {
+    refreshAppointments(false);
+
+    let apptTimer: any = null;
+    const handleApptUpdate = () => {
+      clearTimeout(apptTimer);
+      apptTimer = setTimeout(() => {
+        refreshAppointments(true);
+      }, 150);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('ovasense_appointments_updated', handleApptUpdate);
+    }
+
+    return () => {
+      clearTimeout(apptTimer);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('ovasense_appointments_updated', handleApptUpdate);
+      }
+    };
+  }, [refreshAppointments]);
+
+  const bookAppointment = useCallback(
+    async (input: AppointmentInput): Promise<{ success: boolean; appointment?: AppointmentItem; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to book appointment.' };
+      }
+      try {
+        const res = await appointmentService.createAppointment(userProfile.id, input);
+        if (res.success && res.appointment) {
+          setAppointments((prev) => [res.appointment!, ...prev]);
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to book appointment.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const updateAppointment = useCallback(
+    async (
+      id: string,
+      input: Partial<AppointmentInput> & { status?: AppointmentStatus; providerNotes?: string }
+    ): Promise<{ success: boolean; appointment?: AppointmentItem; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to update appointment.' };
+      }
+      try {
+        const res = await appointmentService.updateAppointment(userProfile.id, id, input);
+        if (res.success && res.appointment) {
+          setAppointments((prev) => prev.map((a) => (a.id === id ? res.appointment! : a)));
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to update appointment.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const cancelAppointment = useCallback(
+    async (id: string, reason?: string): Promise<{ success: boolean; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to cancel appointment.' };
+      }
+      try {
+        const res = await appointmentService.cancelAppointment(userProfile.id, id, reason);
+        if (res.success && res.appointment) {
+          setAppointments((prev) => prev.map((a) => (a.id === id ? res.appointment! : a)));
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to cancel appointment.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const completeAppointment = useCallback(
+    async (id: string, notes?: string): Promise<{ success: boolean; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to complete appointment.' };
+      }
+      try {
+        const res = await appointmentService.completeAppointment(userProfile.id, id, notes);
+        if (res.success && res.appointment) {
+          setAppointments((prev) => prev.map((a) => (a.id === id ? res.appointment! : a)));
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to complete appointment.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const deleteAppointment = useCallback(
+    async (id: string): Promise<{ success: boolean; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to delete appointment.' };
+      }
+      try {
+        const res = await appointmentService.deleteAppointment(userProfile.id, id);
+        if (res.success) {
+          setAppointments((prev) => prev.filter((a) => a.id !== id));
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to delete appointment.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const addDoctorQuestion = useCallback(
+    async (appointmentId: string, question: string): Promise<{ success: boolean; question?: ConsultationQuestion; error?: string }> => {
+      if (!userProfile?.id) return { success: false, error: 'Not signed in' };
+      const res = await appointmentService.addConsultationQuestion(userProfile.id, appointmentId, question);
+      if (res.success) {
+        await refreshAppointments(true);
+      }
+      return res;
+    },
+    [userProfile?.id, refreshAppointments]
+  );
+
+  const toggleDoctorQuestion = useCallback(
+    async (appointmentId: string, questionId: string): Promise<{ success: boolean }> => {
+      if (!userProfile?.id) return { success: false };
+      const res = await appointmentService.toggleQuestionDiscussed(userProfile.id, appointmentId, questionId);
+      if (res.success) {
+        await refreshAppointments(true);
+      }
+      return res;
+    },
+    [userProfile?.id, refreshAppointments]
+  );
+
+  const deleteDoctorQuestion = useCallback(
+    async (appointmentId: string, questionId: string): Promise<{ success: boolean }> => {
+      if (!userProfile?.id) return { success: false };
+      const res = await appointmentService.deleteConsultationQuestion(userProfile.id, appointmentId, questionId);
+      if (res.success) {
+        await refreshAppointments(true);
+      }
+      return res;
+    },
+    [userProfile?.id, refreshAppointments]
+  );
+
+  // Derived Upcoming Appointment
+  const upcomingAppointment: AppointmentItem | null = useMemo(() => {
+    const scheduled = appointments.filter((a) => a.status === 'scheduled');
+    if (scheduled.length === 0) return null;
+    return scheduled[0];
+  }, [appointments]);
+
+  // Generate Pre-Consultation Snapshot from real live data
+  const getPreConsultationSnapshot = useCallback((): HealthSummarySnapshot => {
+    return appointmentService.generatePreConsultationSnapshot(
+      userProfile,
+      cycleStats,
+      cycleRecords,
+      symptomRecords,
+      reports,
+      foodLogs,
+      waterLog,
+      fitnessLogs,
+      medications,
+      medicationLogs
+    );
+  }, [
+    userProfile,
+    cycleStats,
+    cycleRecords,
+    symptomRecords,
+    reports,
+    foodLogs,
+    waterLog,
+    fitnessLogs,
+    medications,
+    medicationLogs,
+  ]);
+
+  const getConsultationBrief = useCallback(
+    (appointment: AppointmentItem): ConsultationBrief => {
+      const snapshot = getPreConsultationSnapshot();
+      return appointmentService.generateConsultationBrief(appointment, userProfile, snapshot);
+    },
+    [getPreConsultationSnapshot, userProfile]
+  );
+
   // Care Circle State & Live Management
   const [careCircleMembers, setCareCircleMembers] = useState<CareCircleMember[]>([]);
   const [careCircleInvitations, setCareCircleInvitations] = useState<CareCircleInvitation[]>([]);
@@ -1100,13 +1341,24 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       completed: todayFitnessMinutes >= 20,
     });
 
-    // 4. Custom Reminders
+    // 4. Upcoming Appointment Reminder
+    if (upcomingAppointment) {
+      list.push({
+        id: `rem_appt_${upcomingAppointment.id}`,
+        title: `Appointment: ${upcomingAppointment.providerName} (${upcomingAppointment.scheduledTime})`,
+        time: upcomingAppointment.scheduledDate,
+        category: 'appointment',
+        completed: false,
+      });
+    }
+
+    // 5. Custom Reminders
     customReminders.forEach((r) => {
       list.push(r);
     });
 
     return list;
-  }, [todayMedicationProgress.doses, waterLog.glasses, userProfile.lifestyle?.dailyWaterGlasses, todayFitnessMinutes, customReminders]);
+  }, [todayMedicationProgress.doses, waterLog.glasses, userProfile.lifestyle?.dailyWaterGlasses, todayFitnessMinutes, upcomingAppointment, customReminders]);
 
   const toggleReminder = useCallback(
     async (id: string) => {
@@ -1424,6 +1676,20 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         logMedicationDose,
         deleteMedicationDose,
         refreshMedications,
+        appointments,
+        upcomingAppointment,
+        appointmentsLoading,
+        bookAppointment,
+        updateAppointment,
+        cancelAppointment,
+        completeAppointment,
+        deleteAppointment,
+        addDoctorQuestion,
+        toggleDoctorQuestion,
+        deleteDoctorQuestion,
+        getPreConsultationSnapshot,
+        getConsultationBrief,
+        refreshAppointments,
         reports,
         reportStats,
         reportsLoading,

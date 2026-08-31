@@ -27,6 +27,7 @@ export const ROUTES = {
     REPORTS: '/app/reports',
     MEDICATIONS: '/app/medications',
     CARE_CIRCLE: '/app/care-circle',
+    APPOINTMENTS: '/app/appointments',
     ASSESSMENT: '/app/assessment',
     LIFESTYLE: '/app/lifestyle',
     TIMELINE: '/app/timeline',

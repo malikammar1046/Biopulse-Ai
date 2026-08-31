@@ -859,5 +859,59 @@ CREATE POLICY "Care circle members can select permitted medication logs"
     public.has_care_circle_permission(user_id, 'medications')
   );
 
+-- ==============================================================================
+-- Module: Doctor Appointments & Consultations (appointments)
+-- ==============================================================================
+
+-- 63. Appointments Table
+CREATE TABLE IF NOT EXISTS public.appointments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  patient_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  provider_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  care_circle_member_id UUID REFERENCES public.care_circle_members(id) ON DELETE SET NULL,
+  provider_name TEXT NOT NULL,
+  provider_specialty TEXT DEFAULT 'Gynecology / Endocrinology',
+  title TEXT NOT NULL,
+  appointment_type TEXT NOT NULL CHECK (appointment_type IN ('consultation', 'follow_up', 'lab_review', 'routine_check', 'other')),
+  scheduled_at TIMESTAMPTZ NOT NULL,
+  scheduled_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  scheduled_time TEXT NOT NULL DEFAULT '15:30',
+  duration_minutes INTEGER NOT NULL DEFAULT 30 CHECK (duration_minutes > 0),
+  status TEXT NOT NULL DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'completed', 'cancelled', 'rescheduled')),
+  location TEXT NOT NULL DEFAULT 'Clinic Consultation',
+  meeting_url TEXT DEFAULT '',
+  reason TEXT DEFAULT '',
+  patient_notes TEXT DEFAULT '',
+  provider_notes TEXT DEFAULT '',
+  doctor_questions JSONB DEFAULT '[]'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 64. Indexes for Appointments
+CREATE INDEX IF NOT EXISTS idx_appointments_patient ON public.appointments(patient_id, scheduled_at DESC);
+CREATE INDEX IF NOT EXISTS idx_appointments_status ON public.appointments(patient_id, status);
+CREATE INDEX IF NOT EXISTS idx_appointments_care_circle ON public.appointments(care_circle_member_id);
+
+-- 65. Enable RLS on appointments
+ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
+
+-- 66. RLS Policies: appointments
+DROP POLICY IF EXISTS "Patients can manage own appointments" ON public.appointments;
+CREATE POLICY "Patients can manage own appointments"
+  ON public.appointments FOR ALL
+  TO authenticated
+  USING (auth.uid() = patient_id)
+  WITH CHECK (auth.uid() = patient_id);
+
+DROP POLICY IF EXISTS "Care circle members can select permitted appointments" ON public.appointments;
+CREATE POLICY "Care circle members can select permitted appointments"
+  ON public.appointments FOR SELECT
+  TO authenticated
+  USING (
+    public.has_care_circle_permission(patient_id, 'appointments')
+  );
+
+
 
 

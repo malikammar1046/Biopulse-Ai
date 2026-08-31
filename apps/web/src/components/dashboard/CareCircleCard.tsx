@@ -13,7 +13,7 @@ interface CareCircleProps {
 export const CareCircleCard: React.FC<CareCircleProps> = ({
   onPrepareAppointment,
 }) => {
-  const { userProfile, careCircleMembers } = useUserHealth();
+  const { userProfile, careCircleMembers, upcomingAppointment } = useUserHealth();
   const activeMembers = careCircleMembers.filter((m) => m.status === 'active');
   const doctor = activeMembers.find((c) => c.role === 'doctor');
   const emergencyContacts = userProfile.emergencyContacts || [];
@@ -95,16 +95,29 @@ export const CareCircleCard: React.FC<CareCircleProps> = ({
               <div className="flex items-center justify-between pt-2 border-t border-[#E7DFEF]/60 text-xs">
                 <div className="flex items-center gap-1.5 text-[#6E2D8B] font-semibold">
                   <Calendar className="w-3.5 h-3.5" />
-                  <span>Next Clinical Review: Sep 8</span>
+                  <span>
+                    {upcomingAppointment
+                      ? `Visit: ${upcomingAppointment.scheduledDate}`
+                      : 'Next Visit: Sep 8'}
+                  </span>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={onPrepareAppointment}
-                  className="px-3 py-1 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF] hover:brightness-110 shadow-xs transition-all cursor-pointer"
-                >
-                  Prepare Summary
-                </button>
+                {onPrepareAppointment ? (
+                  <button
+                    type="button"
+                    onClick={onPrepareAppointment}
+                    className="px-3 py-1 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF] hover:brightness-110 shadow-xs transition-all cursor-pointer"
+                  >
+                    Prepare Summary
+                  </button>
+                ) : (
+                  <Link
+                    to={ROUTES.APP.APPOINTMENTS}
+                    className="px-3 py-1 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF] hover:brightness-110 shadow-xs transition-all"
+                  >
+                    Prepare Summary
+                  </Link>
+                )}
               </div>
             </div>
           ) : null}
