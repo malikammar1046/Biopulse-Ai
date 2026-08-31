@@ -142,7 +142,7 @@ export const CareCirclePage: React.FC = () => {
           </button>
         </div>
 
-        {careCircleLoading ? (
+        {careCircleLoading && careCircleMembers.length === 0 ? (
           <div className="p-12 rounded-[32px] bg-white border border-[#E7DFEF] text-center space-y-3">
             <div className="w-8 h-8 rounded-full border-2 border-[#6E2D8B] border-t-transparent animate-spin mx-auto" />
             <span className="text-xs font-mono text-[#8D7E9E] block">

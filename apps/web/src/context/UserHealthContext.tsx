@@ -428,14 +428,16 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [careCircleInvitations, setCareCircleInvitations] = useState<CareCircleInvitation[]>([]);
   const [careCircleLoading, setCareCircleLoading] = useState<boolean>(true);
 
-  const refreshCareCircle = useCallback(async () => {
+  const refreshCareCircle = useCallback(async (silent = false) => {
     if (!userProfile?.id) {
       setCareCircleMembers([]);
       setCareCircleInvitations([]);
       setCareCircleLoading(false);
       return;
     }
-    setCareCircleLoading(true);
+    if (!silent) {
+      setCareCircleLoading(true);
+    }
     try {
       const { members, invitations } = await careCircleService.fetchCareCircleMembers(userProfile.id);
       setCareCircleMembers(members || []);
@@ -443,28 +445,34 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     } catch (err) {
       console.warn('Error refreshing care circle:', err);
     } finally {
-      setCareCircleLoading(false);
+      if (!silent) {
+        setCareCircleLoading(false);
+      }
     }
   }, [userProfile?.id]);
 
   useEffect(() => {
-    refreshCareCircle();
+    // Initial fetch on profile load
+    refreshCareCircle(false);
 
+    let debounceTimer: any = null;
     const handleUpdate = () => {
-      refreshCareCircle();
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        refreshCareCircle(true); // Silent update without spinner
+      }, 150);
     };
 
     if (typeof window !== 'undefined') {
       window.addEventListener('storage', handleUpdate);
       window.addEventListener('ovasense_care_circle_updated', handleUpdate);
-      window.addEventListener('focus', handleUpdate);
     }
 
     return () => {
+      clearTimeout(debounceTimer);
       if (typeof window !== 'undefined') {
         window.removeEventListener('storage', handleUpdate);
         window.removeEventListener('ovasense_care_circle_updated', handleUpdate);
-        window.removeEventListener('focus', handleUpdate);
       }
     };
   }, [refreshCareCircle]);
