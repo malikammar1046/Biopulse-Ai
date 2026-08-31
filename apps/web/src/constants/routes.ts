@@ -6,6 +6,7 @@ export const ROUTES = {
   HOW_IT_WORKS: '/how-it-works',
   FEATURES: '/features',
   CARE_CIRCLE: '/care-circle',
+  CARE_PROVIDER_PORTAL: '/care-provider/:token',
   CONTACT: '/contact',
 
   // Authentication & Onboarding Routes

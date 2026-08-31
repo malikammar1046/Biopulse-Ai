@@ -41,6 +41,9 @@ const CareCircle = lazy(() =>
 const Contact = lazy(() =>
   import('./pages/public/Contact').then((m) => ({ default: m.Contact }))
 );
+const CareProviderPortalPage = lazy(() =>
+  import('./pages/public/CareProviderPortalPage').then((m) => ({ default: m.CareProviderPortalPage }))
+);
 
 // Auth & Onboarding Pages (Lazy-Loaded)
 const Login = lazy(() => import('./pages/auth/Login').then((m) => ({ default: m.Login })));
@@ -81,6 +84,9 @@ export function App() {
                   <Route path={ROUTES.REGISTER} element={<Register />} />
                 </Route>
               </Route>
+
+              {/* Protected Care Provider Portal (Token-Authorized) */}
+              <Route path={ROUTES.CARE_PROVIDER_PORTAL} element={<CareProviderPortalPage />} />
 
               {/* 7-Step Onboarding Flow (Guarded) */}
               <Route element={<OnboardingRoute />}>

@@ -361,5 +361,281 @@ CREATE POLICY "Users can delete own report results"
       AND medical_reports.user_id = auth.uid()
     )
   );
+-- ==============================================================================
+-- Table: public.care_circle_members
+-- Description: Stores invited and connected care circle members (doctors, family, trusted persons)
+-- ==============================================================================
 
+-- 23. Create care_circle_members table
+CREATE TABLE IF NOT EXISTS public.care_circle_members (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  patient_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  member_email TEXT NOT NULL,
+  member_name TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('doctor', 'family', 'trusted_person')),
+  relationship TEXT NOT NULL DEFAULT '',
+  clinic_organization TEXT DEFAULT '',
+  status TEXT NOT NULL CHECK (status IN ('pending', 'active', 'revoked')) DEFAULT 'pending',
+  invite_token TEXT UNIQUE DEFAULT encode(gen_random_bytes(16), 'hex'),
+  last_viewed_at TIMESTAMPTZ NULL,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
 
+-- 24. Indexes for care_circle_members
+CREATE INDEX IF NOT EXISTS idx_care_circle_members_patient_id ON public.care_circle_members(patient_id);
+CREATE INDEX IF NOT EXISTS idx_care_circle_members_email ON public.care_circle_members(member_email);
+CREATE INDEX IF NOT EXISTS idx_care_circle_members_token ON public.care_circle_members(invite_token);
+CREATE INDEX IF NOT EXISTS idx_care_circle_members_status ON public.care_circle_members(patient_id, status);
+
+-- 25. Enable Row Level Security (RLS)
+ALTER TABLE public.care_circle_members ENABLE ROW LEVEL SECURITY;
+
+-- 26. RLS Policies for care_circle_members (Patient full control)
+DROP POLICY IF EXISTS "Patients can select own care circle members" ON public.care_circle_members;
+CREATE POLICY "Patients can select own care circle members"
+  ON public.care_circle_members FOR SELECT
+  TO authenticated
+  USING (auth.uid() = patient_id);
+
+DROP POLICY IF EXISTS "Patients can insert own care circle members" ON public.care_circle_members;
+CREATE POLICY "Patients can insert own care circle members"
+  ON public.care_circle_members FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = patient_id);
+
+DROP POLICY IF EXISTS "Patients can update own care circle members" ON public.care_circle_members;
+CREATE POLICY "Patients can update own care circle members"
+  ON public.care_circle_members FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = patient_id)
+  WITH CHECK (auth.uid() = patient_id);
+
+DROP POLICY IF EXISTS "Patients can delete own care circle members" ON public.care_circle_members;
+CREATE POLICY "Patients can delete own care circle members"
+  ON public.care_circle_members FOR DELETE
+  TO authenticated
+  USING (auth.uid() = patient_id);
+
+-- ==============================================================================
+-- Table: public.care_circle_permissions
+-- Description: Stores granular permission flags granted to a specific care circle member
+-- ==============================================================================
+
+-- 27. Create care_circle_permissions table
+CREATE TABLE IF NOT EXISTS public.care_circle_permissions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  member_id UUID NOT NULL REFERENCES public.care_circle_members(id) ON DELETE CASCADE,
+  permission_key TEXT NOT NULL,
+  enabled BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  UNIQUE(member_id, permission_key)
+);
+
+-- 28. Indexes for care_circle_permissions
+CREATE INDEX IF NOT EXISTS idx_care_circle_permissions_member ON public.care_circle_permissions(member_id);
+CREATE INDEX IF NOT EXISTS idx_care_circle_permissions_key ON public.care_circle_permissions(member_id, permission_key);
+
+-- 29. Enable Row Level Security (RLS)
+ALTER TABLE public.care_circle_permissions ENABLE ROW LEVEL SECURITY;
+
+-- 30. RLS Policies for care_circle_permissions
+DROP POLICY IF EXISTS "Patients can manage own care circle permissions" ON public.care_circle_permissions;
+CREATE POLICY "Patients can manage own care circle permissions"
+  ON public.care_circle_permissions FOR ALL
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.care_circle_members
+      WHERE care_circle_members.id = care_circle_permissions.member_id
+      AND care_circle_members.patient_id = auth.uid()
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.care_circle_members
+      WHERE care_circle_members.id = care_circle_permissions.member_id
+      AND care_circle_members.patient_id = auth.uid()
+    )
+  );
+
+-- ==============================================================================
+-- Table: public.care_circle_invitations
+-- Description: Stores pending invitations for doctors and family members
+-- ==============================================================================
+
+-- 31. Create care_circle_invitations table
+CREATE TABLE IF NOT EXISTS public.care_circle_invitations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  patient_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  invite_email TEXT NOT NULL,
+  member_name TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('doctor', 'family', 'trusted_person')),
+  relationship TEXT DEFAULT '',
+  token TEXT UNIQUE NOT NULL DEFAULT encode(gen_random_bytes(24), 'hex'),
+  status TEXT NOT NULL CHECK (status IN ('pending', 'accepted', 'declined', 'expired')) DEFAULT 'pending',
+  expires_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now() + interval '30 days') NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 32. Indexes for care_circle_invitations
+CREATE INDEX IF NOT EXISTS idx_care_invitations_patient_id ON public.care_circle_invitations(patient_id);
+CREATE INDEX IF NOT EXISTS idx_care_invitations_token ON public.care_circle_invitations(token);
+CREATE INDEX IF NOT EXISTS idx_care_invitations_email ON public.care_circle_invitations(invite_email);
+
+-- 33. Enable Row Level Security (RLS)
+ALTER TABLE public.care_circle_invitations ENABLE ROW LEVEL SECURITY;
+
+-- 34. RLS Policies for care_circle_invitations
+DROP POLICY IF EXISTS "Patients can select own invitations" ON public.care_circle_invitations;
+CREATE POLICY "Patients can select own invitations"
+  ON public.care_circle_invitations FOR SELECT
+  TO authenticated
+  USING (auth.uid() = patient_id);
+
+DROP POLICY IF EXISTS "Patients can insert own invitations" ON public.care_circle_invitations;
+CREATE POLICY "Patients can insert own invitations"
+  ON public.care_circle_invitations FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = patient_id);
+
+DROP POLICY IF EXISTS "Patients can update own invitations" ON public.care_circle_invitations;
+CREATE POLICY "Patients can update own invitations"
+  ON public.care_circle_invitations FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = patient_id)
+  WITH CHECK (auth.uid() = patient_id);
+
+DROP POLICY IF EXISTS "Patients can delete own invitations" ON public.care_circle_invitations;
+CREATE POLICY "Patients can delete own invitations"
+  ON public.care_circle_invitations FOR DELETE
+  TO authenticated
+  USING (auth.uid() = patient_id);
+
+-- ==============================================================================
+-- Table: public.weekly_health_summaries
+-- Description: Stores automatically synthesized weekly health overviews for care review
+-- ==============================================================================
+
+-- 35. Create weekly_health_summaries table
+CREATE TABLE IF NOT EXISTS public.weekly_health_summaries (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  patient_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  week_start DATE NOT NULL,
+  week_end DATE NOT NULL,
+  summary_data JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  UNIQUE(patient_id, week_start, week_end)
+);
+
+-- 36. Indexes for weekly_health_summaries
+CREATE INDEX IF NOT EXISTS idx_weekly_summaries_patient ON public.weekly_health_summaries(patient_id);
+CREATE INDEX IF NOT EXISTS idx_weekly_summaries_dates ON public.weekly_health_summaries(patient_id, week_start DESC);
+
+-- 37. Enable Row Level Security (RLS)
+ALTER TABLE public.weekly_health_summaries ENABLE ROW LEVEL SECURITY;
+
+-- 38. RLS Policies for weekly_health_summaries
+DROP POLICY IF EXISTS "Patients can select own weekly summaries" ON public.weekly_health_summaries;
+CREATE POLICY "Patients can select own weekly summaries"
+  ON public.weekly_health_summaries FOR SELECT
+  TO authenticated
+  USING (auth.uid() = patient_id);
+
+DROP POLICY IF EXISTS "Patients can insert own weekly summaries" ON public.weekly_health_summaries;
+CREATE POLICY "Patients can insert own weekly summaries"
+  ON public.weekly_health_summaries FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = patient_id);
+
+DROP POLICY IF EXISTS "Patients can update own weekly summaries" ON public.weekly_health_summaries;
+CREATE POLICY "Patients can update own weekly summaries"
+  ON public.weekly_health_summaries FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = patient_id)
+  WITH CHECK (auth.uid() = patient_id);
+
+-- ==============================================================================
+-- Security Helper Functions & Granular Care Provider RLS Access
+-- ==============================================================================
+
+-- 39. Function to verify if a given email/user has active permission for a patient
+CREATE OR REPLACE FUNCTION public.has_care_circle_permission(
+  p_patient_id UUID,
+  p_permission_key TEXT
+)
+RETURNS BOOLEAN AS $$
+DECLARE
+  v_user_email TEXT;
+  v_has_access BOOLEAN;
+BEGIN
+  -- Get current authenticated user's email from JWT
+  v_user_email := auth.jwt()->>'email';
+  IF v_user_email IS NULL OR v_user_email = '' THEN
+    RETURN FALSE;
+  END IF;
+
+  SELECT EXISTS (
+    SELECT 1 
+    FROM public.care_circle_members m
+    JOIN public.care_circle_permissions p ON p.member_id = m.id
+    WHERE m.patient_id = p_patient_id
+      AND LOWER(m.member_email) = LOWER(v_user_email)
+      AND m.status = 'active'
+      AND p.permission_key = p_permission_key
+      AND p.enabled = TRUE
+  ) INTO v_has_access;
+
+  RETURN COALESCE(v_has_access, FALSE);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 40. Care Provider SELECT policy for cycle_records (when 'cycle' permission enabled)
+DROP POLICY IF EXISTS "Care circle members can select permitted cycle records" ON public.cycle_records;
+CREATE POLICY "Care circle members can select permitted cycle records"
+  ON public.cycle_records FOR SELECT
+  TO authenticated
+  USING (
+    public.has_care_circle_permission(user_id, 'cycle')
+  );
+
+-- 41. Care Provider SELECT policy for symptom_records (when 'symptoms' permission enabled)
+DROP POLICY IF EXISTS "Care circle members can select permitted symptom records" ON public.symptom_records;
+CREATE POLICY "Care circle members can select permitted symptom records"
+  ON public.symptom_records FOR SELECT
+  TO authenticated
+  USING (
+    public.has_care_circle_permission(user_id, 'symptoms')
+  );
+
+-- 42. Care Provider SELECT policy for medical_reports (when 'reports' permission enabled)
+DROP POLICY IF EXISTS "Care circle members can select permitted medical reports" ON public.medical_reports;
+CREATE POLICY "Care circle members can select permitted medical reports"
+  ON public.medical_reports FOR SELECT
+  TO authenticated
+  USING (
+    public.has_care_circle_permission(user_id, 'reports')
+  );
+
+-- 43. Care Provider SELECT policy for report_results (when 'reports' permission enabled)
+DROP POLICY IF EXISTS "Care circle members can select permitted report results" ON public.report_results;
+CREATE POLICY "Care circle members can select permitted report results"
+  ON public.report_results FOR SELECT
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.medical_reports mr
+      WHERE mr.id = report_results.report_id
+      AND public.has_care_circle_permission(mr.user_id, 'reports')
+    )
+  );
+
+-- 44. Care Provider SELECT policy for weekly_health_summaries (when 'weekly_summary' permission enabled)
+DROP POLICY IF EXISTS "Care circle members can select permitted weekly summaries" ON public.weekly_health_summaries;
+CREATE POLICY "Care circle members can select permitted weekly summaries"
+  ON public.weekly_health_summaries FOR SELECT
+  TO authenticated
+  USING (
+    public.has_care_circle_permission(patient_id, 'weekly_summary')
+  );

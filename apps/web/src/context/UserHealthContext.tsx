@@ -37,6 +37,14 @@ import { calculateReportSummaryStats } from '../utils/reportCalculations';
 import { cycleService } from '../services/cycleService';
 import { symptomService } from '../services/symptomService';
 import { reportService } from '../services/reportService';
+import { careCircleService } from '../services/careCircleService';
+import type {
+  CareCircleMember,
+  CareCircleInvitation,
+  CareCircleInviteInput,
+  CareCirclePermissionsMap,
+  WeeklyHealthSummaryData,
+} from '../types/careCircle';
 import { useAuth } from './AuthContext';
 
 interface UserHealthContextType {
@@ -66,6 +74,15 @@ interface UserHealthContextType {
   nutrition: NutritionData;
   fitness: FitnessData;
   careCircle: CareCircleContact[];
+  careCircleMembers: CareCircleMember[];
+  careCircleInvitations: CareCircleInvitation[];
+  careCircleLoading: boolean;
+  addCareMember: (input: CareCircleInviteInput) => Promise<{ success: boolean; inviteLink?: string; error?: string }>;
+  updateMemberPermissions: (memberId: string, perms: CareCirclePermissionsMap) => Promise<{ success: boolean; error?: string }>;
+  revokeMemberAccess: (memberId: string) => Promise<{ success: boolean; error?: string }>;
+  deleteCareMember: (memberId: string) => Promise<{ success: boolean; error?: string }>;
+  refreshCareCircle: () => Promise<void>;
+  weeklySummary: WeeklyHealthSummaryData;
   digitalTwinInsight: DigitalTwinInsight;
   isAiChatOpen: boolean;
   activeAiPrompt?: string;
@@ -406,7 +423,155 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return deriveRemindersFromProfile(userProfile);
   });
 
-  const [careCircle] = useState<CareCircleContact[]>(DEFAULT_CARE_CIRCLE);
+  // Care Circle State & Live Management
+  const [careCircleMembers, setCareCircleMembers] = useState<CareCircleMember[]>([]);
+  const [careCircleInvitations, setCareCircleInvitations] = useState<CareCircleInvitation[]>([]);
+  const [careCircleLoading, setCareCircleLoading] = useState<boolean>(true);
+
+  const refreshCareCircle = useCallback(async () => {
+    if (!userProfile?.id) {
+      setCareCircleMembers([]);
+      setCareCircleInvitations([]);
+      setCareCircleLoading(false);
+      return;
+    }
+    setCareCircleLoading(true);
+    try {
+      const { members, invitations } = await careCircleService.fetchCareCircleMembers(userProfile.id);
+      setCareCircleMembers(members || []);
+      setCareCircleInvitations(invitations || []);
+    } catch (err) {
+      console.warn('Error refreshing care circle:', err);
+    } finally {
+      setCareCircleLoading(false);
+    }
+  }, [userProfile?.id]);
+
+  useEffect(() => {
+    refreshCareCircle();
+  }, [refreshCareCircle]);
+
+  // Add Care Member
+  const addCareMember = useCallback(
+    async (input: CareCircleInviteInput): Promise<{ success: boolean; inviteLink?: string; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to invite care members.' };
+      }
+      try {
+        const res = await careCircleService.addCareCircleMember(userProfile.id, input);
+        if (res.error) {
+          return { success: false, error: res.error };
+        }
+        if (res.member) {
+          setCareCircleMembers((prev) => [res.member!, ...prev]);
+        }
+        if (res.invitation) {
+          setCareCircleInvitations((prev) => [res.invitation!, ...prev]);
+        }
+        return { success: true, inviteLink: res.inviteLink };
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to add care member.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  // Update Member Permissions
+  const updateMemberPermissions = useCallback(
+    async (memberId: string, perms: CareCirclePermissionsMap): Promise<{ success: boolean; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to modify permissions.' };
+      }
+      try {
+        const res = await careCircleService.updateMemberPermissions(userProfile.id, memberId, perms);
+        if (res.success) {
+          setCareCircleMembers((prev) =>
+            prev.map((m) => (m.id === memberId ? { ...m, permissions: { ...perms } } : m))
+          );
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to update permissions.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  // Revoke Member Access
+  const revokeMemberAccess = useCallback(
+    async (memberId: string): Promise<{ success: boolean; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to revoke access.' };
+      }
+      try {
+        const res = await careCircleService.revokeMemberAccess(userProfile.id, memberId);
+        if (res.success) {
+          setCareCircleMembers((prev) =>
+            prev.map((m) => (m.id === memberId ? { ...m, status: 'revoked' as const } : m))
+          );
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to revoke access.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  // Delete Member
+  const deleteCareMember = useCallback(
+    async (memberId: string): Promise<{ success: boolean; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to delete care member.' };
+      }
+      try {
+        const res = await careCircleService.deleteMember(userProfile.id, memberId);
+        if (res.success) {
+          setCareCircleMembers((prev) => prev.filter((m) => m.id !== memberId));
+          setCareCircleInvitations((prev) => prev.filter((i) => i.id !== memberId));
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to delete care member.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  // Backward compatible CareCircleContact list dynamically derived from careCircleMembers
+  const careCircle: CareCircleContact[] = useMemo(() => {
+    const active = careCircleMembers.filter((m) => m.status === 'active');
+    if (active.length === 0) {
+      return DEFAULT_CARE_CIRCLE;
+    }
+    return active.map((m) => ({
+      id: m.id,
+      name: m.name,
+      role: m.role === 'doctor' ? 'doctor' : m.role === 'family' ? 'family' : 'caregiver',
+      specialty: m.relationship || m.clinicOrganization || (m.role === 'doctor' ? 'Healthcare Professional' : 'Trusted Contact'),
+      accessLevel: m.permissions.reports && m.permissions.cycle && m.permissions.symptoms ? 'full' : 'limited',
+      nextAppointment: m.role === 'doctor' ? 'September 8, 2026' : undefined,
+      permissions: {
+        symptoms: m.permissions.symptoms,
+        reports: m.permissions.reports,
+        medications: m.permissions.medications,
+        dietFitness: m.permissions.diet || m.permissions.fitness,
+        privateNotes: false,
+      },
+    }));
+  }, [careCircleMembers]);
+
+  // Derived longitudinal Weekly Health Summary
+  const weeklySummary: WeeklyHealthSummaryData = useMemo(() => {
+    return careCircleService.generateWeeklyHealthSummary(
+      userProfile?.id || 'default',
+      cycleRecords,
+      symptomRecords,
+      reports,
+      userProfile,
+      reminders
+    );
+  }, [userProfile, cycleRecords, symptomRecords, reports, reminders]);
 
   // Floating AI Assistant State
   const [isAiChatOpen, setIsAiChatOpen] = useState(false);
@@ -595,6 +760,15 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         deleteReport,
         refreshReports,
         careCircle,
+        careCircleMembers,
+        careCircleInvitations,
+        careCircleLoading,
+        addCareMember,
+        updateMemberPermissions,
+        revokeMemberAccess,
+        deleteCareMember,
+        refreshCareCircle,
+        weeklySummary,
         digitalTwinInsight,
         isAiChatOpen,
         activeAiPrompt,
