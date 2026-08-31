@@ -783,4 +783,81 @@ CREATE POLICY "Care circle members can select permitted fitness logs"
     public.has_care_circle_permission(user_id, 'fitness')
   );
 
+-- ==============================================================================
+-- Module: Medications & Adherence (medications & medication_logs)
+-- ==============================================================================
+
+-- 57. Medications Table
+CREATE TABLE IF NOT EXISTS public.medications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  dose TEXT NOT NULL,
+  unit TEXT NOT NULL DEFAULT 'mg',
+  frequency TEXT NOT NULL CHECK (frequency IN ('once_daily', 'twice_daily', 'three_times_daily', 'every_other_day', 'as_needed')),
+  scheduled_times JSONB NOT NULL DEFAULT '["08:00"]'::jsonb,
+  start_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  end_date DATE,
+  notes TEXT DEFAULT '',
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 58. Medication Logs Table (Daily Doses Tracked)
+CREATE TABLE IF NOT EXISTS public.medication_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  medication_id UUID NOT NULL REFERENCES public.medications(id) ON DELETE CASCADE,
+  scheduled_for DATE NOT NULL DEFAULT CURRENT_DATE,
+  scheduled_time TEXT NOT NULL DEFAULT '08:00',
+  status TEXT NOT NULL CHECK (status IN ('taken', 'skipped', 'missed', 'pending')),
+  taken_at TIMESTAMPTZ,
+  notes TEXT DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 59. Indexes for Medications & Logs
+CREATE INDEX IF NOT EXISTS idx_medications_user_active ON public.medications(user_id, is_active);
+CREATE INDEX IF NOT EXISTS idx_medication_logs_user_date ON public.medication_logs(user_id, scheduled_for DESC);
+CREATE INDEX IF NOT EXISTS idx_medication_logs_medication_id ON public.medication_logs(medication_id);
+
+-- 60. Enable RLS on medications and medication_logs
+ALTER TABLE public.medications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.medication_logs ENABLE ROW LEVEL SECURITY;
+
+-- 61. RLS Policies: medications
+DROP POLICY IF EXISTS "Users can manage own medications" ON public.medications;
+CREATE POLICY "Users can manage own medications"
+  ON public.medications FOR ALL
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Care circle members can select permitted medications" ON public.medications;
+CREATE POLICY "Care circle members can select permitted medications"
+  ON public.medications FOR SELECT
+  TO authenticated
+  USING (
+    public.has_care_circle_permission(user_id, 'medications')
+  );
+
+-- 62. RLS Policies: medication_logs
+DROP POLICY IF EXISTS "Users can manage own medication logs" ON public.medication_logs;
+CREATE POLICY "Users can manage own medication logs"
+  ON public.medication_logs FOR ALL
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Care circle members can select permitted medication logs" ON public.medication_logs;
+CREATE POLICY "Care circle members can select permitted medication logs"
+  ON public.medication_logs FOR SELECT
+  TO authenticated
+  USING (
+    public.has_care_circle_permission(user_id, 'medications')
+  );
+
+
 

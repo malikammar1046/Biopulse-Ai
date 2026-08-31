@@ -25,7 +25,6 @@ import type {
 } from '../types/report';
 import {
   DEFAULT_CARE_CIRCLE,
-  deriveRemindersFromProfile,
   deriveNutritionFromProfile,
   deriveInsightFromProfile,
 } from '../data/mockDashboardData';
@@ -39,6 +38,7 @@ import { reportService } from '../services/reportService';
 import { careCircleService } from '../services/careCircleService';
 import { dietService } from '../services/dietService';
 import { fitnessService } from '../services/fitnessService';
+import { medicationService } from '../services/medicationService';
 import type {
   CareCircleMember,
   CareCircleInvitation,
@@ -59,6 +59,14 @@ import type {
   SuggestedMovementRoutine,
   WeeklyFitnessStats,
 } from '../types/fitness';
+import type {
+  MedicationItem,
+  MedicationInput,
+  MedicationLogEntry,
+  MedicationLogInput,
+  TodayMedicationProgress,
+  WeeklyAdherenceStats,
+} from '../types/medication';
 import { useAuth } from './AuthContext';
 
 interface UserHealthContextType {
@@ -107,6 +115,17 @@ interface UserHealthContextType {
   updateFitnessActivity: (id: string, input: Partial<FitnessLogInput>) => Promise<{ success: boolean; entry?: FitnessLogEntry; error?: string }>;
   deleteFitnessActivity: (id: string) => Promise<{ success: boolean; error?: string }>;
   refreshFitnessData: () => Promise<void>;
+  medications: MedicationItem[];
+  medicationLogs: MedicationLogEntry[];
+  medicationsLoading: boolean;
+  todayMedicationProgress: TodayMedicationProgress;
+  weeklyMedicationStats: WeeklyAdherenceStats;
+  addMedication: (input: MedicationInput) => Promise<{ success: boolean; medication?: MedicationItem; error?: string }>;
+  updateMedication: (id: string, input: Partial<MedicationInput>) => Promise<{ success: boolean; medication?: MedicationItem; error?: string }>;
+  deleteMedication: (id: string) => Promise<{ success: boolean; error?: string }>;
+  logMedicationDose: (input: MedicationLogInput) => Promise<{ success: boolean; log?: MedicationLogEntry; error?: string }>;
+  deleteMedicationDose: (medicationId: string, scheduledFor: string, scheduledTime: string) => Promise<{ success: boolean }>;
+  refreshMedications: () => Promise<void>;
   careCircle: CareCircleContact[];
   careCircleMembers: CareCircleMember[];
   careCircleInvitations: CareCircleInvitation[];
@@ -445,18 +464,6 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     [userProfile?.id]
   );
 
-  const [reminders, setReminders] = useState<TodayReminder[]>(() => {
-    try {
-      const saved = localStorage.getItem(REMINDERS_KEY);
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch {
-      // Fallback
-    }
-    return deriveRemindersFromProfile(userProfile);
-  });
-
   // --- Diet & Nutrition Live State & Handlers ---
   const [foodLogs, setFoodLogs] = useState<FoodLogEntry[]>([]);
   const [waterLog, setWaterLog] = useState<WaterLogEntry>({
@@ -705,6 +712,182 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return fitnessService.generateSuggestedRoutines(userProfile, activePhaseName, todayFitnessActivities);
   }, [userProfile, cycleStats, todayFitnessActivities]);
 
+  // --- Medications & Adherence Live State & Handlers ---
+  const [medications, setMedications] = useState<MedicationItem[]>([]);
+  const [medicationLogs, setMedicationLogs] = useState<MedicationLogEntry[]>([]);
+  const [medicationsLoading, setMedicationsLoading] = useState<boolean>(true);
+
+  const refreshMedications = useCallback(async (silent = false) => {
+    if (!userProfile?.id) {
+      setMedicationsLoading(false);
+      return;
+    }
+    if (!silent) {
+      setMedicationsLoading(true);
+    }
+    try {
+      const [medsRes, logsRes] = await Promise.all([
+        medicationService.fetchMedications(userProfile.id),
+        medicationService.fetchMedicationLogs(userProfile.id),
+      ]);
+      setMedications(medsRes.medications || []);
+      setMedicationLogs(logsRes.logs || []);
+    } catch (err) {
+      console.warn('Error refreshing medications:', err);
+    } finally {
+      if (!silent) {
+        setMedicationsLoading(false);
+      }
+    }
+  }, [userProfile?.id]);
+
+  useEffect(() => {
+    refreshMedications(false);
+
+    let medTimer: any = null;
+    const handleMedUpdate = () => {
+      clearTimeout(medTimer);
+      medTimer = setTimeout(() => {
+        refreshMedications(true);
+      }, 150);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('ovasense_medications_updated', handleMedUpdate);
+    }
+
+    return () => {
+      clearTimeout(medTimer);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('ovasense_medications_updated', handleMedUpdate);
+      }
+    };
+  }, [refreshMedications]);
+
+  const addMedication = useCallback(
+    async (input: MedicationInput): Promise<{ success: boolean; medication?: MedicationItem; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to add medicine.' };
+      }
+      try {
+        const res = await medicationService.createMedication(userProfile.id, input);
+        if (res.success && res.medication) {
+          setMedications((prev) => [res.medication!, ...prev]);
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to add medicine.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const updateMedication = useCallback(
+    async (id: string, input: Partial<MedicationInput>): Promise<{ success: boolean; medication?: MedicationItem; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to update medicine.' };
+      }
+      try {
+        const res = await medicationService.updateMedication(userProfile.id, id, input);
+        if (res.success && res.medication) {
+          setMedications((prev) => prev.map((m) => (m.id === id ? res.medication! : m)));
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to update medicine.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const deleteMedication = useCallback(
+    async (id: string): Promise<{ success: boolean; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to delete medicine.' };
+      }
+      try {
+        const res = await medicationService.deleteMedication(userProfile.id, id);
+        if (res.success) {
+          setMedications((prev) => prev.filter((m) => m.id !== id));
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to delete medicine.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const logMedicationDose = useCallback(
+    async (input: MedicationLogInput): Promise<{ success: boolean; log?: MedicationLogEntry; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to log dose.' };
+      }
+      try {
+        const res = await medicationService.logMedicationDose(userProfile.id, input);
+        if (res.success && res.log) {
+          setMedicationLogs((prev) => {
+            const idx = prev.findIndex(
+              (l) =>
+                l.medicationId === input.medicationId &&
+                l.scheduledFor === input.scheduledFor &&
+                l.scheduledTime === input.scheduledTime
+            );
+            if (idx >= 0) {
+              const updated = [...prev];
+              updated[idx] = res.log!;
+              return updated;
+            }
+            return [res.log!, ...prev];
+          });
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to log dose.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const deleteMedicationDose = useCallback(
+    async (medicationId: string, scheduledFor: string, scheduledTime: string): Promise<{ success: boolean }> => {
+      if (!userProfile?.id) return { success: false };
+      try {
+        const res = await medicationService.deleteMedicationDoseLog(
+          userProfile.id,
+          medicationId,
+          scheduledFor,
+          scheduledTime
+        );
+        if (res.success) {
+          setMedicationLogs((prev) =>
+            prev.filter(
+              (l) =>
+                !(
+                  l.medicationId === medicationId &&
+                  l.scheduledFor === scheduledFor &&
+                  l.scheduledTime === scheduledTime
+                )
+            )
+          );
+        }
+        return res;
+      } catch {
+        return { success: false };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  // Derived Today & Weekly Medication Progress & Adherence
+  const todayMedicationProgress: TodayMedicationProgress = useMemo(() => {
+    return medicationService.generateTodayProgress(medications, medicationLogs);
+  }, [medications, medicationLogs]);
+
+  const weeklyMedicationStats: WeeklyAdherenceStats = useMemo(() => {
+    return medicationService.calculateWeeklyAdherence(medications, medicationLogs, 7);
+  }, [medications, medicationLogs]);
+
   // Care Circle State & Live Management
   const [careCircleMembers, setCareCircleMembers] = useState<CareCircleMember[]>([]);
   const [careCircleInvitations, setCareCircleInvitations] = useState<CareCircleInvitation[]>([]);
@@ -869,6 +1052,128 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }));
   }, [careCircleMembers]);
 
+  // Floating AI Assistant State
+  const [isAiChatOpen, setIsAiChatOpen] = useState<boolean>(false);
+  const [activeAiPrompt, setActiveAiPrompt] = useState<string | undefined>(undefined);
+
+  // Custom user reminders list stored locally
+  const [customReminders, setCustomReminders] = useState<TodayReminder[]>(() => {
+    try {
+      const raw = localStorage.getItem(REMINDERS_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Dynamically synthesize all today reminders from live Medications, Hydration, Fitness, and Custom list
+  const reminders: TodayReminder[] = useMemo(() => {
+    const list: TodayReminder[] = [];
+
+    // 1. Live Medication Doses
+    todayMedicationProgress.doses.forEach((dose) => {
+      list.push({
+        id: `rem_med_${dose.medicationId}_${dose.scheduledTime}`,
+        title: `${dose.medicationName} ${dose.dose}${dose.unit}`,
+        time: dose.timeDisplay,
+        category: 'medication',
+        completed: dose.status === 'taken',
+      });
+    });
+
+    // 2. Hydration Target
+    const waterTargetGlasses = userProfile.lifestyle?.dailyWaterGlasses || 8;
+    list.push({
+      id: 'rem_hydration_daily',
+      title: `Hydration: ${waterLog.glasses} / ${waterTargetGlasses} glasses`,
+      time: 'Daily Goal',
+      category: 'hydration',
+      completed: waterLog.glasses >= waterTargetGlasses,
+    });
+
+    // 3. Movement Target
+    list.push({
+      id: 'rem_fitness_daily',
+      title: todayFitnessMinutes >= 20 ? '✓ Daily Movement Completed' : '20 min Gentle Movement',
+      time: 'Afternoon',
+      category: 'fitness',
+      completed: todayFitnessMinutes >= 20,
+    });
+
+    // 4. Custom Reminders
+    customReminders.forEach((r) => {
+      list.push(r);
+    });
+
+    return list;
+  }, [todayMedicationProgress.doses, waterLog.glasses, userProfile.lifestyle?.dailyWaterGlasses, todayFitnessMinutes, customReminders]);
+
+  const toggleReminder = useCallback(
+    async (id: string) => {
+      const today = new Date().toISOString().split('T')[0];
+
+      if (id.startsWith('rem_med_')) {
+        const parts = id.replace('rem_med_', '').split('_');
+        const medicationId = parts[0];
+        const scheduledTime = parts[1] || '08:00';
+        const dose = todayMedicationProgress.doses.find(
+          (d) => d.medicationId === medicationId && d.scheduledTime === scheduledTime
+        );
+
+        if (dose?.status === 'taken') {
+          await deleteMedicationDose(medicationId, today, scheduledTime);
+        } else {
+          await logMedicationDose({
+            medicationId,
+            scheduledFor: today,
+            scheduledTime,
+            status: 'taken',
+            takenAt: new Date().toISOString(),
+          });
+        }
+        return;
+      }
+
+      if (id === 'rem_hydration_daily') {
+        await incrementWater();
+        return;
+      }
+
+      setCustomReminders((prev) => {
+        const updated = prev.map((r) => (r.id === id ? { ...r, completed: !r.completed } : r));
+        try {
+          localStorage.setItem(REMINDERS_KEY, JSON.stringify(updated));
+        } catch {
+          // ignore
+        }
+        return updated;
+      });
+    },
+    [todayMedicationProgress.doses, deleteMedicationDose, logMedicationDose, incrementWater]
+  );
+
+  const addReminder = useCallback(
+    (title: string, time: string, category: TodayReminder['category']) => {
+      const newRem: TodayReminder = {
+        id: `rem_cust_${Date.now()}`,
+        title,
+        time,
+        category,
+        completed: false,
+      };
+      setCustomReminders((prev) => {
+        const updated = [newRem, ...prev];
+        try {
+          localStorage.setItem(REMINDERS_KEY, JSON.stringify(updated));
+        } catch {
+          // ignore
+        }
+        return updated;
+      });
+    },
+    []
+  );
+
   // Derived longitudinal Weekly Health Summary
   const weeklySummary: WeeklyHealthSummaryData = useMemo(() => {
     return careCircleService.generateWeeklyHealthSummary(
@@ -880,34 +1185,6 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       reminders
     );
   }, [userProfile, cycleRecords, symptomRecords, reports, reminders]);
-
-  // Floating AI Assistant State
-  const [isAiChatOpen, setIsAiChatOpen] = useState(false);
-  const [activeAiPrompt, setActiveAiPrompt] = useState<string | undefined>(undefined);
-
-  // Re-sync reminders whenever medications or hydration targets change in profile
-  useEffect(() => {
-    const freshReminders = deriveRemindersFromProfile(userProfile);
-    setReminders(freshReminders);
-    try {
-      localStorage.setItem(REMINDERS_KEY, JSON.stringify(freshReminders));
-    } catch {
-      // ignore
-    }
-  }, [
-    userProfile.medical?.medications,
-    userProfile.lifestyle?.dailyWaterGlasses,
-    userProfile.lifestyle?.exercisePreferences,
-  ]);
-
-  // Persist Reminders changes
-  useEffect(() => {
-    try {
-      localStorage.setItem(REMINDERS_KEY, JSON.stringify(reminders));
-    } catch {
-      // ignore
-    }
-  }, [reminders]);
 
   // Dynamically compute legacy cycle metrics for backwards compatibility / fallback
   const cycleMetrics = useMemo(() => {
@@ -1056,26 +1333,6 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return deriveInsightFromProfile(userProfile, activePhaseName);
   }, [userProfile, cycleStats, cycleMetrics.phaseName]);
 
-  const toggleReminder = useCallback((id: string) => {
-    setReminders((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, completed: !r.completed } : r))
-    );
-  }, []);
-
-  const addReminder = useCallback(
-    (title: string, time: string, category: TodayReminder['category']) => {
-      const newRem: TodayReminder = {
-        id: `rem_${Date.now()}`,
-        title,
-        time,
-        category,
-        completed: false,
-      };
-      setReminders((prev) => [newRem, ...prev]);
-    },
-    []
-  );
-
   const registerUser = useCallback(
     (_data: { fullName: string; email: string; dateOfBirth?: string }) => {
       // Registration handled in Register component via useAuth().register
@@ -1156,6 +1413,17 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         updateFitnessActivity,
         deleteFitnessActivity,
         refreshFitnessData,
+        medications,
+        medicationLogs,
+        medicationsLoading,
+        todayMedicationProgress,
+        weeklyMedicationStats,
+        addMedication,
+        updateMedication,
+        deleteMedication,
+        logMedicationDose,
+        deleteMedicationDose,
+        refreshMedications,
         reports,
         reportStats,
         reportsLoading,

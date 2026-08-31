@@ -1,6 +1,8 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { CheckCircle2, Circle, Clock, Pill, Droplets, Footprints, Calendar, Plus } from 'lucide-react';
 import type { TodayReminder } from '../../types/dashboard';
+import { ROUTES } from '../../constants/routes';
 
 interface RemindersCardProps {
   reminders: TodayReminder[];
@@ -112,18 +114,21 @@ export const TodayRemindersCard: React.FC<RemindersCardProps> = ({
 
       {/* Footer Add/View Action */}
       <div className="pt-3 border-t border-[#F0EAF5] flex items-center justify-between">
+        <Link
+          to={ROUTES.APP.MEDICATIONS}
+          className="inline-flex items-center gap-1 text-xs font-bold text-[#6E2D8B] hover:text-[#A21CAF] transition-colors"
+        >
+          <span>Manage Medicines →</span>
+        </Link>
+
         <button
           type="button"
           onClick={onAddReminder}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-[#6E2D8B] hover:text-[#A21CAF] transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1 text-xs font-bold text-[#8D7E9E] hover:text-[#1C1326] transition-colors cursor-pointer"
         >
           <Plus className="w-3.5 h-3.5" />
-          <span>Add Custom Reminder</span>
+          <span>+ Custom</span>
         </button>
-
-        <span className="text-[10px] font-mono text-[#8D7E9E]">
-          Personal daily checklist
-        </span>
       </div>
     </div>
   );

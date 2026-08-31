@@ -175,6 +175,38 @@ export const OVASENSE_TERMINOLOGY_GUIDE: Record<string, TermDefinition> = {
     simpleExplanation: 'Restorative stretching or mindful resting to let muscles and adrenal pathways recover.',
     exampleUsage: 'Rest and recovery movement today.',
   },
+
+  // Medications & Adherence
+  medication_adherence: {
+    clinicalTerm: 'Medication Adherence Rate',
+    patientFriendlyTerm: 'How regularly you took your medicine',
+    simpleExplanation: 'A friendly percentage showing how consistently you took your scheduled doses this week.',
+    exampleUsage: 'How regularly you took your medicine: 86% this week.',
+  },
+  dosage: {
+    clinicalTerm: 'Dosage / Posology',
+    patientFriendlyTerm: 'Dose',
+    simpleExplanation: 'The exact strength and amount of medicine to take (e.g. 500 mg).',
+    exampleUsage: 'Dose: 500 mg.',
+  },
+  regimen: {
+    clinicalTerm: 'Therapeutic Regimen',
+    patientFriendlyTerm: 'Medicine Schedule',
+    simpleExplanation: 'Your personalized timetable of daily supplements and prescribed medicines.',
+    exampleUsage: 'Your daily medicine schedule.',
+  },
+  non_adherent: {
+    clinicalTerm: 'Non-Adherent / Missed Dose',
+    patientFriendlyTerm: 'Not taken / Skipped',
+    simpleExplanation: 'When a scheduled dose was missed or skipped.',
+    exampleUsage: 'Status: Skipped for today.',
+  },
+  pharmacological_therapy: {
+    clinicalTerm: 'Pharmacological Therapy',
+    patientFriendlyTerm: 'Medicine & Supplements',
+    simpleExplanation: 'Supplements or prescribed medicines you take to support your PCOS balance.',
+    exampleUsage: 'Your medicines and daily supplements.',
+  },
 };
 
 /**
