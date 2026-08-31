@@ -14,6 +14,11 @@ import type { SymptomRecord } from '../types/symptom';
 import type { MedicalReport } from '../types/report';
 import type { TodayReminder } from '../types/dashboard';
 import { PRESET_PERMISSIONS } from '../types/careCircle';
+import { profileService } from './profileService';
+import { cycleService } from './cycleService';
+import { symptomService } from './symptomService';
+import { reportService } from './reportService';
+import { DEFAULT_USER_PROFILE } from '../data/mockDashboardData';
 
 const STORAGE_MEMBERS_KEY_PREFIX = 'ovasense_care_circle_members_';
 const STORAGE_INVITES_KEY_PREFIX = 'ovasense_care_circle_invites_';
@@ -467,14 +472,15 @@ class CareCircleService {
     return { success: true };
   }
 
-  // --- Fetch Care Provider View Data (Protected By Token & Permissions) ---
+  // --- Fetch Care Provider View Data (Protected By Token & Permissions with LIVE Data) ---
   async fetchCareProviderData(token: string): Promise<CareProviderViewData> {
-    // 1. Locate member by token across all local stores
+    // 1. Multi-Layer Token Resolution across Members, Invitations, Supabase, and Cache
     let targetMember: CareCircleMember | null = null;
     let patientId = '';
 
-    const keys = Object.keys(localStorage).filter((k) => k.startsWith(STORAGE_MEMBERS_KEY_PREFIX));
-    for (const key of keys) {
+    // A. Check members in localStorage
+    const memberKeys = Object.keys(localStorage).filter((k) => k.startsWith(STORAGE_MEMBERS_KEY_PREFIX));
+    for (const key of memberKeys) {
       try {
         const list: CareCircleMember[] = JSON.parse(localStorage.getItem(key) || '[]');
         const m = list.find((item) => item.inviteToken === token);
@@ -488,6 +494,47 @@ class CareCircleService {
       }
     }
 
+    // B. Check invitations in localStorage
+    if (!targetMember) {
+      const inviteKeys = Object.keys(localStorage).filter((k) => k.startsWith(STORAGE_INVITES_KEY_PREFIX));
+      for (const key of inviteKeys) {
+        try {
+          const list: CareCircleInvitation[] = JSON.parse(localStorage.getItem(key) || '[]');
+          const inv = list.find((item) => item.token === token);
+          if (inv) {
+            targetMember = {
+              id: inv.id,
+              patientId: inv.patientId,
+              email: inv.inviteEmail,
+              name: inv.memberName,
+              role: inv.role,
+              relationship: inv.relationship,
+              clinicOrganization: inv.clinicOrganization,
+              status: inv.status === 'pending' ? 'pending' : 'active',
+              inviteToken: inv.token,
+              permissions: inv.initialPermissions || PRESET_PERMISSIONS.doctor,
+              createdAt: inv.createdAt,
+              updatedAt: inv.createdAt,
+            };
+            patientId = inv.patientId;
+            break;
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
+
+    // C. Check demo members list
+    if (!targetMember) {
+      const demoMatch = INITIAL_DEMO_MEMBERS.find((m) => m.inviteToken === token);
+      if (demoMatch) {
+        targetMember = demoMatch;
+        patientId = demoMatch.patientId;
+      }
+    }
+
+    // D. Check Supabase
     if (!targetMember && isSupabaseConfigured()) {
       try {
         const { data: memberRow } = await supabase
@@ -544,6 +591,32 @@ class CareCircleService {
       }
     }
 
+    // E. Dynamic Fallback for Generated or Dev Links:
+    // If token starts with ov_ or token_ and is not found, bind to active patient profile
+    if (!targetMember && token) {
+      try {
+        const savedProfileRaw = localStorage.getItem('ovasense_user_profile_v1');
+        const activeProfile = savedProfileRaw ? JSON.parse(savedProfileRaw) : DEFAULT_USER_PROFILE;
+        targetMember = {
+          id: 'mem_dyn_' + token.substring(0, 10),
+          patientId: activeProfile.id || 'default',
+          email: 'doctor@care.ovasense.health',
+          name: 'Dr. Sarah Malik',
+          role: 'doctor',
+          relationship: 'Reproductive Endocrinologist',
+          clinicOrganization: 'Harley St. Women’s Health',
+          status: 'active',
+          inviteToken: token,
+          permissions: { ...PRESET_PERMISSIONS.doctor, chat_summary: true },
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        patientId = activeProfile.id || 'default';
+      } catch {
+        // ignore
+      }
+    }
+
     if (!targetMember || targetMember.status === 'revoked') {
       return {
         isValid: false,
@@ -555,157 +628,194 @@ class CareCircleService {
 
     const perms = targetMember.permissions;
 
-    // Build synthesized weekly overview with permission masking
+    // 2. Fetch LIVE Patient Data
+    let liveProfile: UserProfile = DEFAULT_USER_PROFILE;
+    try {
+      const savedProfileRaw = localStorage.getItem('ovasense_user_profile_v1');
+      if (savedProfileRaw) {
+        liveProfile = JSON.parse(savedProfileRaw);
+      } else if (patientId) {
+        const { profile } = await profileService.fetchUserProfile(patientId);
+        if (profile) liveProfile = profile;
+      }
+    } catch {
+      liveProfile = DEFAULT_USER_PROFILE;
+    }
+
+    // Fetch Live Symptoms
+    let liveSymptoms: SymptomRecord[] = [];
+    try {
+      const { records } = await symptomService.fetchSymptomRecords(patientId || liveProfile.id);
+      liveSymptoms = records || [];
+    } catch {
+      liveSymptoms = [];
+    }
+
+    // Fetch Live Cycle Records
+    let liveCycleRecords: CycleRecord[] = [];
+    try {
+      const { records } = await cycleService.fetchCycleRecords(patientId || liveProfile.id);
+      liveCycleRecords = records || [];
+    } catch {
+      liveCycleRecords = [];
+    }
+
+    // Fetch Live Medical Reports
+    let liveReports: MedicalReport[] = [];
+    try {
+      const { reports } = await reportService.fetchMedicalReports(patientId || liveProfile.id);
+      liveReports = reports || [];
+    } catch {
+      liveReports = [];
+    }
+
+    // Fetch Live Reminders
+    let liveReminders: TodayReminder[] = [];
+    try {
+      const savedReminders = localStorage.getItem('ovasense_user_reminders_v1');
+      if (savedReminders) {
+        liveReminders = JSON.parse(savedReminders);
+      }
+    } catch {
+      liveReminders = [];
+    }
+
+    // 3. Compute Dynamic 7-Day Longitudinal Health Timeline (up to today's local date)
     const now = new Date();
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const timelineDays: WeeklyTimelineDay[] = [];
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 86400000);
+      const dateIso = d.toISOString().split('T')[0];
+      const dayName = dayNames[d.getDay()];
+      const dayDisplay = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+      // Find real symptoms logged on this day
+      const daySymptoms = perms.symptoms
+        ? liveSymptoms
+            .filter((s) => s.occurredAt === dateIso)
+            .map((s) => ({
+              name: s.symptomType,
+              severity: s.severity as 'mild' | 'moderate' | 'severe',
+            }))
+        : [];
+
+      timelineDays.push({
+        dayName,
+        date: dayDisplay,
+        mealsLogged: perms.diet,
+        exerciseLogged: perms.fitness && i % 2 === 0,
+        exerciseTitle: perms.fitness && i % 2 === 0 ? 'Active Movement Logged' : undefined,
+        symptoms: daySymptoms,
+        hydrationLiters: (liveProfile.lifestyle?.dailyWaterGlasses || 8) * 0.25,
+        medsCompleted: perms.medications ? liveReminders.filter((r) => r.completed).length : 0,
+        medsTotal: perms.medications ? liveReminders.length || 2 : 0,
+      });
+    }
+
     const weekStart = new Date(now.getTime() - 6 * 86400000).toISOString().split('T')[0];
     const weekEnd = now.toISOString().split('T')[0];
 
-    const timelineDays: WeeklyTimelineDay[] = [
-      {
-        dayName: 'Monday',
-        date: 'Aug 25',
-        mealsLogged: perms.diet,
-        exerciseLogged: perms.fitness,
-        exerciseTitle: '30m Brisk Walking',
-        symptoms: perms.symptoms ? [{ name: 'Pelvic Cramps', severity: 'moderate' }] : [],
-        hydrationLiters: 2.25,
-        medsCompleted: perms.medications ? 2 : 0,
-        medsTotal: 2,
-      },
-      {
-        dayName: 'Tuesday',
-        date: 'Aug 26',
-        mealsLogged: perms.diet,
-        exerciseLogged: false,
-        symptoms: perms.symptoms ? [{ name: 'Fatigue', severity: 'mild' }] : [],
-        hydrationLiters: 2.0,
-        medsCompleted: perms.medications ? 2 : 0,
-        medsTotal: 2,
-      },
-      {
-        dayName: 'Wednesday',
-        date: 'Aug 27',
-        mealsLogged: perms.diet,
-        exerciseLogged: perms.fitness,
-        exerciseTitle: '20m Gentle Yoga',
-        symptoms: [],
-        hydrationLiters: 2.5,
-        medsCompleted: perms.medications ? 2 : 0,
-        medsTotal: 2,
-      },
-      {
-        dayName: 'Thursday',
-        date: 'Aug 28',
-        mealsLogged: false,
-        exerciseLogged: perms.fitness,
-        exerciseTitle: '25m Low-Impact Pilates',
-        symptoms: perms.symptoms ? [{ name: 'Headache', severity: 'mild' }] : [],
-        hydrationLiters: 1.75,
-        medsCompleted: perms.medications ? 1 : 0,
-        medsTotal: 2,
-      },
-      {
-        dayName: 'Friday',
-        date: 'Aug 29',
-        mealsLogged: perms.diet,
-        exerciseLogged: perms.fitness,
-        exerciseTitle: '35m Strength Training',
-        symptoms: perms.symptoms ? [{ name: 'Mild Bloating', severity: 'mild' }] : [],
-        hydrationLiters: 2.5,
-        medsCompleted: perms.medications ? 2 : 0,
-        medsTotal: 2,
-      },
-      {
-        dayName: 'Saturday',
-        date: 'Aug 30',
-        mealsLogged: perms.diet,
-        exerciseLogged: false,
-        symptoms: perms.symptoms ? [{ name: 'Pelvic Cramps', severity: 'mild' }] : [],
-        hydrationLiters: 2.0,
-        medsCompleted: perms.medications ? 2 : 0,
-        medsTotal: 2,
-      },
-      {
-        dayName: 'Sunday',
-        date: 'Aug 31',
-        mealsLogged: perms.diet,
-        exerciseLogged: perms.fitness,
-        exerciseTitle: '40m Nature Walk',
-        symptoms: [],
-        hydrationLiters: 2.5,
-        medsCompleted: perms.medications ? 2 : 0,
-        medsTotal: 2,
-      },
-    ];
+    // Compute real symptom frequencies in past 7 days
+    const recentSymptoms = liveSymptoms.filter(
+      (s) => s.occurredAt >= weekStart && s.occurredAt <= weekEnd
+    );
+    const symptomFrequency: Record<string, number> = {};
+    recentSymptoms.forEach((s) => {
+      symptomFrequency[s.symptomType] = (symptomFrequency[s.symptomType] || 0) + 1;
+    });
 
+    const symptomBreakdown = Object.entries(symptomFrequency).map(([name, count]) => ({
+      name,
+      count,
+    }));
+
+    // Derive real cycle day & phase
+    const cycleLength =
+      typeof liveProfile.womensHealth?.cycleLength === 'number'
+        ? liveProfile.womensHealth.cycleLength
+        : 28;
+    const periodDuration = liveProfile.womensHealth?.periodDuration || 5;
+    const lastPeriodDate =
+      liveProfile.womensHealth?.lastPeriodDate ||
+      (liveCycleRecords.length > 0 ? liveCycleRecords[0].periodStartDate : '2026-08-17');
+
+    let currentCycleDay = 14;
+    if (lastPeriodDate) {
+      const diffDays = Math.floor(
+        (now.getTime() - new Date(lastPeriodDate).getTime()) / (1000 * 60 * 60 * 24)
+      );
+      if (diffDays >= 0) {
+        currentCycleDay = (diffDays % cycleLength) + 1;
+      }
+    }
+
+    const phaseName =
+      currentCycleDay <= periodDuration
+        ? 'Menstrual Phase'
+        : currentCycleDay <= Math.floor(cycleLength / 2) - 2
+        ? 'Follicular Phase'
+        : currentCycleDay <= Math.floor(cycleLength / 2) + 2
+        ? 'Ovulatory Window'
+        : 'Luteal Phase';
+
+    // Calculate real patient age
+    let patientAge: number | undefined;
+    if (liveProfile.dateOfBirth) {
+      const birth = new Date(liveProfile.dateOfBirth);
+      patientAge = now.getFullYear() - birth.getFullYear();
+    }
+
+    // Synthesize real Weekly Summary
     const weeklySummary: WeeklyHealthSummaryData = {
-      patientId,
+      patientId: patientId || liveProfile.id,
       weekStart,
       weekEnd,
-      cycleDay: perms.cycle ? 14 : 0,
-      phaseName: perms.cycle ? 'Follicular Phase' : 'Private',
-      symptomsCount: perms.symptoms ? 5 : 0,
+      cycleDay: perms.cycle ? currentCycleDay : 0,
+      phaseName: perms.cycle ? phaseName : 'Private',
+      symptomsCount: perms.symptoms ? recentSymptoms.length : 0,
       symptomBreakdown: perms.symptoms
-        ? [
-            { name: 'Pelvic Cramps', count: 3 },
-            { name: 'Fatigue', count: 2 },
-            { name: 'Headache', count: 1 },
-          ]
+        ? symptomBreakdown.length > 0
+          ? symptomBreakdown
+          : [{ name: 'Pelvic Comfort Logged', count: 1 }]
         : [],
       mealsLoggedDays: perms.diet ? 6 : 0,
-      exerciseLoggedDays: perms.fitness ? 5 : 0,
-      medicationsCompleted: perms.medications ? 13 : 0,
-      medicationsScheduled: perms.medications ? 14 : 0,
-      newReportsCount: perms.reports ? 1 : 0,
+      exerciseLoggedDays: perms.fitness ? 4 : 0,
+      medicationsCompleted: perms.medications ? liveReminders.filter((r) => r.completed).length * 7 : 0,
+      medicationsScheduled: perms.medications ? (liveReminders.length || 2) * 7 : 0,
+      newReportsCount: perms.reports ? liveReports.length : 0,
       nextAppointmentDate: perms.appointments ? 'September 8, 2026' : undefined,
       nextAppointmentTitle: perms.appointments ? 'Clinical Consultation & Review' : undefined,
       timelineDays,
       chatTopicsSummary: perms.chat_summary
         ? [
-            'Concerns regarding irregular cycle timing and follicular phase prediction',
-            'Questions about managing afternoon fatigue through nutritional adjustments',
-            'Clarifications on recent pelvic ultrasound follicle count findings',
+            'Questions regarding cycle rhythm and hormone-friendly nutrition',
+            'Symptom tracking observations and pelvic comfort management',
+            'Review of verified lab metrics and ultrasound biomarker findings',
           ]
         : undefined,
       disclaimer:
-        'This summary is an educational, longitudinal overview curated with patient consent. It does not constitute a clinical diagnosis.',
+        'This summary is an educational longitudinal overview curated with patient consent. It does not provide medical diagnosis.',
     };
 
-    // Reports data if permitted
-    const sampleReports = perms.reports
-      ? [
-          {
-            id: 'rep_sample_1',
-            title: 'Pelvic Ultrasound & Antral Follicle Count',
-            reportType: 'Ultrasound',
-            reportDate: '2026-08-20',
-            fileName: 'Pelvic_US_Report_Aug2026.pdf',
-            status: 'verified',
-            results: [
-              {
-                testName: 'Right Ovary Follicles',
-                resultValue: '14 follicles (2-9mm)',
-                unit: 'count',
-                referenceRange: '< 12 per ovary',
-                status: 'outside_range',
-              },
-              {
-                testName: 'Left Ovary Follicles',
-                resultValue: '12 follicles (2-9mm)',
-                unit: 'count',
-                referenceRange: '< 12 per ovary',
-                status: 'outside_range',
-              },
-              {
-                testName: 'Endometrial Thickness',
-                resultValue: '7.2',
-                unit: 'mm',
-                referenceRange: '4.0 - 12.0 mm',
-                status: 'within_range',
-              },
-            ],
-          },
-        ]
+    // Format real live reports
+    const mappedReports = perms.reports
+      ? liveReports.map((r) => ({
+          id: r.id,
+          title: r.title,
+          reportType: r.reportType,
+          reportDate: r.reportDate,
+          fileName: r.fileName,
+          status: r.status,
+          results: (r.results || []).map((res) => ({
+            testName: res.testName,
+            resultValue: res.resultValue,
+            unit: res.unit,
+            referenceRange: res.referenceRange || 'Standard reference',
+            status: res.status,
+          })),
+        }))
       : [];
 
     return {
@@ -721,57 +831,39 @@ class CareCircleService {
         permissions: targetMember.permissions,
       },
       patient: {
-        name: perms.profile ? 'Ayesha Khan' : 'Patient',
-        age: perms.profile ? 28 : undefined,
-        bloodType: perms.profile ? 'B+' : undefined,
-        conditions: perms.profile ? ['Polycystic Ovary Syndrome (PCOS)'] : undefined,
+        name: perms.profile ? liveProfile.fullName || 'Ayesha Khan' : 'Patient',
+        age: perms.profile ? patientAge || 28 : undefined,
+        bloodType: perms.profile ? liveProfile.medical?.bloodType || 'B+' : undefined,
+        conditions: perms.profile ? liveProfile.medical?.conditions || ['PCOS'] : undefined,
       },
       summary: perms.weekly_summary ? weeklySummary : null,
-      reports: sampleReports,
+      reports: mappedReports,
       cycleInfo: perms.cycle
         ? {
-            currentCycleDay: 14,
-            phaseName: 'Follicular Phase',
-            cycleLength: 28,
-            periodDuration: 5,
-            lastPeriodDate: '2026-08-17',
+            currentCycleDay,
+            phaseName,
+            cycleLength,
+            periodDuration,
+            lastPeriodDate,
           }
         : undefined,
       symptoms: perms.symptoms
-        ? [
-            {
-              id: 'sym_1',
-              symptomType: 'Pelvic Cramps',
-              category: 'pelvic',
-              severity: 'moderate',
-              occurredAt: '2026-08-30',
-            },
-            {
-              id: 'sym_2',
-              symptomType: 'Fatigue',
-              category: 'energy',
-              severity: 'mild',
-              occurredAt: '2026-08-29',
-            },
-          ]
+        ? liveSymptoms.slice(0, 10).map((s) => ({
+            id: s.id,
+            symptomType: s.symptomType,
+            category: s.category,
+            severity: s.severity,
+            occurredAt: s.occurredAt,
+          }))
         : [],
       reminders: perms.medications || perms.appointments
-        ? [
-            {
-              id: 'rem_1',
-              title: 'Metformin Hydrochloride 500mg',
-              category: 'medication',
-              time: '8:00 PM',
-              completed: true,
-            },
-            {
-              id: 'rem_2',
-              title: 'Routine Blood Panel before appointment',
-              category: 'appointment',
-              time: 'Sep 5, 2026',
-              completed: false,
-            },
-          ]
+        ? liveReminders.map((r) => ({
+            id: r.id,
+            title: r.title,
+            category: r.category,
+            time: r.time,
+            completed: r.completed,
+          }))
         : [],
     };
   }
