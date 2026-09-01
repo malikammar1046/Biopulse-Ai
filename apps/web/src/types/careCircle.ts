@@ -300,4 +300,32 @@ export interface CareProviderViewData {
     time: string;
     completed: boolean;
   }>;
+  upcomingAppointment?: {
+    id: string;
+    title: string;
+    providerName: string;
+    appointmentType: string;
+    scheduledDate: string;
+    scheduledTime: string;
+    durationMinutes: number;
+    location: string;
+    meetingUrl?: string;
+    reason?: string;
+    doctorQuestions?: Array<{ id: string; question: string; isDiscussed: boolean }>;
+  };
+  appointments?: Array<{
+    id: string;
+    title: string;
+    providerName: string;
+    appointmentType: string;
+    scheduledDate: string;
+    scheduledTime: string;
+    durationMinutes: number;
+    status: string;
+    location: string;
+    meetingUrl?: string;
+    reason?: string;
+    doctorQuestions?: Array<{ id: string; question: string; isDiscussed: boolean }>;
+  }>;
 }
+

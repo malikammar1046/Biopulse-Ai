@@ -45,7 +45,7 @@ export const HealthProfileSummaryCard: React.FC = () => {
             <span>Your Health Record</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold font-display text-[#1C1326]">
-            {userProfile.fullName || 'User'}'s Health Profile
+            {userProfile.fullName || 'User'}&apos;s Health Profile
           </h2>
           <p className="text-xs text-[#584B68] font-sans">
             Your health background, baseline numbers, and medical history in one secure place.
@@ -111,7 +111,7 @@ export const HealthProfileSummaryCard: React.FC = () => {
               <span className="text-xs font-semibold text-[#8D7E9E] block">Not recorded</span>
               <button
                 onClick={handleCompleteOrEdit}
-                className="text-[10px] text-[#6E2D8B] font-bold hover:underline"
+                className="text-[10px] text-[#6E2D8B] font-bold hover:underline cursor-pointer"
               >
                 + Add DOB
               </button>
@@ -137,7 +137,7 @@ export const HealthProfileSummaryCard: React.FC = () => {
               <span className="text-xs font-semibold text-[#8D7E9E] block">Not added yet</span>
               <button
                 onClick={handleCompleteOrEdit}
-                className="text-[10px] text-[#FB7185] font-bold hover:underline"
+                className="text-[10px] text-[#FB7185] font-bold hover:underline cursor-pointer"
               >
                 + Add Blood Type
               </button>
@@ -163,7 +163,7 @@ export const HealthProfileSummaryCard: React.FC = () => {
               <span className="text-xs font-semibold text-[#8D7E9E] block">Not recorded</span>
               <button
                 onClick={handleCompleteOrEdit}
-                className="text-[10px] text-[#8E3EAF] font-bold hover:underline"
+                className="text-[10px] text-[#8E3EAF] font-bold hover:underline cursor-pointer"
               >
                 + Add Measurements
               </button>
@@ -191,7 +191,7 @@ export const HealthProfileSummaryCard: React.FC = () => {
               <span className="text-xs font-semibold text-[#FB7185] block">Not added</span>
               <button
                 onClick={handleCompleteOrEdit}
-                className="text-[10px] text-[#FB7185] font-bold hover:underline"
+                className="text-[10px] text-[#FB7185] font-bold hover:underline cursor-pointer"
               >
                 + Add Emergency Contact
               </button>
@@ -231,7 +231,7 @@ export const HealthProfileSummaryCard: React.FC = () => {
               <button
                 type="button"
                 onClick={handleCompleteOrEdit}
-                className="text-[11px] text-[#6E2D8B] font-bold hover:underline"
+                className="text-[11px] text-[#6E2D8B] font-bold hover:underline cursor-pointer"
               >
                 + Add
               </button>
@@ -268,7 +268,7 @@ export const HealthProfileSummaryCard: React.FC = () => {
               <button
                 type="button"
                 onClick={handleCompleteOrEdit}
-                className="text-[11px] text-[#047857] font-bold hover:underline"
+                className="text-[11px] text-[#047857] font-bold hover:underline cursor-pointer"
               >
                 + Add
               </button>
@@ -305,7 +305,7 @@ export const HealthProfileSummaryCard: React.FC = () => {
               <button
                 type="button"
                 onClick={handleCompleteOrEdit}
-                className="text-[11px] text-[#8E3EAF] font-bold hover:underline"
+                className="text-[11px] text-[#8E3EAF] font-bold hover:underline cursor-pointer"
               >
                 + Add
               </button>

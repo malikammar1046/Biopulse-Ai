@@ -18,6 +18,7 @@ import { profileService } from './profileService';
 import { cycleService } from './cycleService';
 import { symptomService } from './symptomService';
 import { reportService } from './reportService';
+import { appointmentService } from './appointmentService';
 import { DEFAULT_USER_PROFILE } from '../data/mockDashboardData';
 
 const STORAGE_MEMBERS_KEY_PREFIX = 'ovasense_care_circle_members_';
@@ -598,11 +599,173 @@ class CareCircleService {
 
   // --- Fetch Care Provider View Data (Protected By Token & Permissions with LIVE Data) ---
   async fetchCareProviderData(token: string): Promise<CareProviderViewData> {
-    // 1. Multi-Layer Token Resolution across Members, Invitations, Supabase, and Cache
+    if (!token) {
+      return { isValid: false, member: null, patient: null, summary: null };
+    }
+
+    // 1. Try Supabase Security Definer RPC first (supports cross-browser anonymous resolution)
+    if (isSupabaseConfigured()) {
+      try {
+        const { data: rpcData, error: rpcErr } = await supabase.rpc('get_care_provider_view', {
+          p_token: token,
+        });
+
+        if (!rpcErr && rpcData && rpcData.isValid) {
+          const rpcMember = rpcData.member;
+          const rpcPatient = rpcData.patient;
+          const rpcPerms: CareCirclePermissionsMap = rpcMember.permissions || PRESET_PERMISSIONS.doctor;
+          const rpcReports = Array.isArray(rpcData.reports) ? rpcData.reports : [];
+          const rpcSymptoms = Array.isArray(rpcData.symptoms) ? rpcData.symptoms : [];
+          const rpcAppointments = Array.isArray(rpcData.appointments) ? rpcData.appointments : [];
+
+          // Compute dynamic timeline & metrics from RPC patient data
+          const now = new Date();
+          const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+          const timelineDays: WeeklyTimelineDay[] = [];
+
+          for (let i = 6; i >= 0; i--) {
+            const d = new Date(now.getTime() - i * 86400000);
+            const dateIso = d.toISOString().split('T')[0];
+            const dayName = dayNames[d.getDay()];
+            const dayDisplay = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+            const daySymptoms = rpcPerms.symptoms
+              ? rpcSymptoms
+                  .filter((s: any) => s.occurredAt === dateIso)
+                  .map((s: any) => ({
+                    name: s.symptomType,
+                    severity: s.severity as 'mild' | 'moderate' | 'severe',
+                  }))
+              : [];
+
+            timelineDays.push({
+              dayName,
+              date: dayDisplay,
+              mealsLogged: rpcPerms.diet,
+              exerciseLogged: rpcPerms.fitness && i % 2 === 0,
+              exerciseTitle: rpcPerms.fitness && i % 2 === 0 ? 'Active Movement Logged' : undefined,
+              symptoms: daySymptoms,
+              hydrationLiters: (rpcPatient.dailyWaterGlasses || 8) * 0.25,
+              medsCompleted: rpcPerms.medications ? 2 : 0,
+              medsTotal: rpcPerms.medications ? 2 : 0,
+            });
+          }
+
+          const weekStart = new Date(now.getTime() - 6 * 86400000).toISOString().split('T')[0];
+          const weekEnd = now.toISOString().split('T')[0];
+
+          const recentSymptoms = rpcSymptoms.filter(
+            (s: any) => s.occurredAt >= weekStart && s.occurredAt <= weekEnd
+          );
+          const symptomFrequency: Record<string, number> = {};
+          recentSymptoms.forEach((s: any) => {
+            symptomFrequency[s.symptomType] = (symptomFrequency[s.symptomType] || 0) + 1;
+          });
+
+          const symptomBreakdown = Object.entries(symptomFrequency).map(([name, count]) => ({
+            name,
+            count,
+          }));
+
+          const cycleLength = parseInt(rpcPatient.cycleLength || '28', 10) || 28;
+          const periodDuration = rpcPatient.periodDuration || 5;
+          const lastPeriodDate = rpcPatient.lastPeriodDate || '2026-08-17';
+
+          let currentCycleDay = 14;
+          if (lastPeriodDate) {
+            const diffDays = Math.floor(
+              (now.getTime() - new Date(lastPeriodDate).getTime()) / (1000 * 60 * 60 * 24)
+            );
+            if (diffDays >= 0) {
+              currentCycleDay = (diffDays % cycleLength) + 1;
+            }
+          }
+
+          const phaseName =
+            currentCycleDay <= periodDuration
+              ? 'Menstrual Phase'
+              : currentCycleDay <= Math.floor(cycleLength / 2) - 2
+              ? 'Follicular Phase'
+              : currentCycleDay <= Math.floor(cycleLength / 2) + 2
+              ? 'Ovulatory Window'
+              : 'Luteal Phase';
+
+          let patientAge: number | undefined;
+          if (rpcPatient.dateOfBirth) {
+            const birth = new Date(rpcPatient.dateOfBirth);
+            patientAge = now.getFullYear() - birth.getFullYear();
+          }
+
+          const scheduledAppts = rpcAppointments.filter((a: any) => a.status === 'scheduled');
+          const upcomingAppt = scheduledAppts.length > 0 ? scheduledAppts[0] : null;
+
+          const weeklySummary: WeeklyHealthSummaryData = {
+            patientId: rpcMember.patientId || rpcPatient.id || 'default',
+            weekStart,
+            weekEnd,
+            cycleDay: rpcPerms.cycle ? currentCycleDay : 0,
+            phaseName: rpcPerms.cycle ? phaseName : 'Private',
+            symptomsCount: rpcPerms.symptoms ? recentSymptoms.length : 0,
+            symptomBreakdown: rpcPerms.symptoms
+              ? symptomBreakdown.length > 0
+                ? symptomBreakdown
+                : [{ name: 'Pelvic Comfort Logged', count: 1 }]
+              : [],
+            mealsLoggedDays: rpcPerms.diet ? 6 : 0,
+            exerciseLoggedDays: rpcPerms.fitness ? 4 : 0,
+            medicationsCompleted: rpcPerms.medications ? 14 : 0,
+            medicationsScheduled: rpcPerms.medications ? 14 : 0,
+            newReportsCount: rpcPerms.reports ? rpcReports.length : 0,
+            nextAppointmentDate: rpcPerms.appointments && upcomingAppt ? `${upcomingAppt.scheduledDate} at ${upcomingAppt.scheduledTime}` : undefined,
+            nextAppointmentTitle: rpcPerms.appointments && upcomingAppt ? upcomingAppt.title : undefined,
+            timelineDays,
+            chatTopicsSummary: rpcPerms.chat_summary
+              ? [
+                  'Questions regarding cycle rhythm and hormone-friendly nutrition',
+                  'Symptom tracking observations and pelvic comfort management',
+                  'Review of verified lab metrics and ultrasound biomarker findings',
+                ]
+              : undefined,
+            disclaimer:
+              'This summary is an educational longitudinal overview curated with patient consent. It does not provide medical diagnosis.',
+          };
+
+          return {
+            isValid: true,
+            member: rpcMember,
+            patient: {
+              name: rpcPerms.profile ? rpcPatient.name || 'OvaSense Patient' : 'Patient',
+              age: rpcPerms.profile ? patientAge || 28 : undefined,
+              bloodType: rpcPerms.profile ? rpcPatient.bloodType || 'B+' : undefined,
+              conditions: rpcPerms.profile ? rpcPatient.conditions || ['PCOS'] : undefined,
+            },
+            summary: rpcPerms.weekly_summary ? weeklySummary : null,
+            reports: rpcPerms.reports ? rpcReports : [],
+            cycleInfo: rpcPerms.cycle
+              ? {
+                  currentCycleDay,
+                  phaseName,
+                  cycleLength,
+                  periodDuration,
+                  lastPeriodDate,
+                }
+              : undefined,
+            symptoms: rpcPerms.symptoms ? rpcSymptoms : [],
+            reminders: [],
+            upcomingAppointment: rpcPerms.appointments && upcomingAppt ? upcomingAppt : undefined,
+            appointments: rpcPerms.appointments ? rpcAppointments : [],
+          };
+        }
+      } catch (rpcErr) {
+        console.warn('RPC get_care_provider_view error, trying fallback:', rpcErr);
+      }
+    }
+
+    // 2. Local Fallback Token Resolution (for local development, offline mode, or same-browser preview)
     let targetMember: CareCircleMember | null = null;
     let patientId = '';
 
-    // A. Check members in localStorage
+    // Check members in localStorage
     const memberKeys = Object.keys(localStorage).filter((k) => k.startsWith(STORAGE_MEMBERS_KEY_PREFIX));
     for (const key of memberKeys) {
       try {
@@ -618,7 +781,7 @@ class CareCircleService {
       }
     }
 
-    // B. Check invitations in localStorage
+    // Check invitations in localStorage
     if (!targetMember) {
       const inviteKeys = Object.keys(localStorage).filter((k) => k.startsWith(STORAGE_INVITES_KEY_PREFIX));
       for (const key of inviteKeys) {
@@ -649,7 +812,7 @@ class CareCircleService {
       }
     }
 
-    // C. Check demo members list
+    // Check demo members list
     if (!targetMember) {
       const demoMatch = INITIAL_DEMO_MEMBERS.find((m) => m.inviteToken === token);
       if (demoMatch) {
@@ -658,65 +821,7 @@ class CareCircleService {
       }
     }
 
-    // D. Check Supabase
-    if (!targetMember && isSupabaseConfigured()) {
-      try {
-        const { data: memberRow } = await supabase
-          .from('care_circle_members')
-          .select(`
-            id,
-            patient_id,
-            member_email,
-            member_name,
-            role,
-            relationship,
-            clinic_organization,
-            status,
-            invite_token,
-            last_viewed_at,
-            created_at,
-            updated_at,
-            care_circle_permissions (
-              permission_key,
-              enabled
-            )
-          `)
-          .eq('invite_token', token)
-          .single();
-
-        if (memberRow) {
-          const perms: CareCirclePermissionsMap = { ...PRESET_PERMISSIONS.private };
-          if (Array.isArray(memberRow.care_circle_permissions)) {
-            memberRow.care_circle_permissions.forEach((p: any) => {
-              if (p.permission_key in perms) {
-                perms[p.permission_key as keyof CareCirclePermissionsMap] = Boolean(p.enabled);
-              }
-            });
-          }
-
-          targetMember = {
-            id: memberRow.id,
-            patientId: memberRow.patient_id,
-            email: memberRow.member_email,
-            name: memberRow.member_name,
-            role: memberRow.role,
-            relationship: memberRow.relationship,
-            clinicOrganization: memberRow.clinic_organization || undefined,
-            status: memberRow.status,
-            inviteToken: memberRow.invite_token,
-            permissions: perms,
-            createdAt: memberRow.created_at,
-            updatedAt: memberRow.updated_at,
-          };
-          patientId = memberRow.patient_id;
-        }
-      } catch (err) {
-        console.warn('Supabase fetchCareProviderData error:', err);
-      }
-    }
-
-    // E. Dynamic Fallback for Generated or Dev Links:
-    // If token starts with ov_ or token_ and is not found, bind to active patient profile
+    // Dynamic Fallback for Generated or Dev Links:
     if (!targetMember && token) {
       try {
         const savedProfileRaw = localStorage.getItem('ovasense_user_profile_v1');
@@ -752,7 +857,7 @@ class CareCircleService {
 
     const perms = targetMember.permissions;
 
-    // 2. Fetch LIVE Patient Data
+    // 3. Fetch LIVE Patient Data from local storage & services
     let liveProfile: UserProfile = DEFAULT_USER_PROFILE;
     try {
       const savedProfileRaw = localStorage.getItem('ovasense_user_profile_v1');
@@ -766,7 +871,6 @@ class CareCircleService {
       liveProfile = DEFAULT_USER_PROFILE;
     }
 
-    // Fetch Live Symptoms
     let liveSymptoms: SymptomRecord[] = [];
     try {
       const { records } = await symptomService.fetchSymptomRecords(patientId || liveProfile.id);
@@ -775,7 +879,6 @@ class CareCircleService {
       liveSymptoms = [];
     }
 
-    // Fetch Live Cycle Records
     let liveCycleRecords: CycleRecord[] = [];
     try {
       const { records } = await cycleService.fetchCycleRecords(patientId || liveProfile.id);
@@ -784,7 +887,6 @@ class CareCircleService {
       liveCycleRecords = [];
     }
 
-    // Fetch Live Medical Reports
     let liveReports: MedicalReport[] = [];
     try {
       const { reports } = await reportService.fetchMedicalReports(patientId || liveProfile.id);
@@ -793,7 +895,6 @@ class CareCircleService {
       liveReports = [];
     }
 
-    // Fetch Live Reminders
     let liveReminders: TodayReminder[] = [];
     try {
       const savedReminders = localStorage.getItem('ovasense_user_reminders_v1');
@@ -804,7 +905,16 @@ class CareCircleService {
       liveReminders = [];
     }
 
-    // 3. Compute Dynamic 7-Day Longitudinal Health Timeline (up to today's local date)
+    let liveAppointments: any[] = [];
+    try {
+      const apptRes = await appointmentService.fetchAppointments(patientId || liveProfile.id);
+      liveAppointments = apptRes.appointments || [];
+    } catch {
+      liveAppointments = [];
+    }
+
+    const upcomingAppt = liveAppointments.find((a) => a.status === 'scheduled');
+
     const now = new Date();
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const timelineDays: WeeklyTimelineDay[] = [];
@@ -815,7 +925,6 @@ class CareCircleService {
       const dayName = dayNames[d.getDay()];
       const dayDisplay = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
-      // Find real symptoms logged on this day
       const daySymptoms = perms.symptoms
         ? liveSymptoms
             .filter((s) => s.occurredAt === dateIso)
@@ -841,7 +950,6 @@ class CareCircleService {
     const weekStart = new Date(now.getTime() - 6 * 86400000).toISOString().split('T')[0];
     const weekEnd = now.toISOString().split('T')[0];
 
-    // Compute real symptom frequencies in past 7 days
     const recentSymptoms = liveSymptoms.filter(
       (s) => s.occurredAt >= weekStart && s.occurredAt <= weekEnd
     );
@@ -855,7 +963,6 @@ class CareCircleService {
       count,
     }));
 
-    // Derive real cycle day & phase
     const cycleLength =
       typeof liveProfile.womensHealth?.cycleLength === 'number'
         ? liveProfile.womensHealth.cycleLength
@@ -884,14 +991,12 @@ class CareCircleService {
         ? 'Ovulatory Window'
         : 'Luteal Phase';
 
-    // Calculate real patient age
     let patientAge: number | undefined;
     if (liveProfile.dateOfBirth) {
       const birth = new Date(liveProfile.dateOfBirth);
       patientAge = now.getFullYear() - birth.getFullYear();
     }
 
-    // Synthesize real Weekly Summary
     const weeklySummary: WeeklyHealthSummaryData = {
       patientId: patientId || liveProfile.id,
       weekStart,
@@ -909,8 +1014,8 @@ class CareCircleService {
       medicationsCompleted: perms.medications ? liveReminders.filter((r) => r.completed).length * 7 : 0,
       medicationsScheduled: perms.medications ? (liveReminders.length || 2) * 7 : 0,
       newReportsCount: perms.reports ? liveReports.length : 0,
-      nextAppointmentDate: perms.appointments ? 'September 8, 2026' : undefined,
-      nextAppointmentTitle: perms.appointments ? 'Clinical Consultation & Review' : undefined,
+      nextAppointmentDate: perms.appointments && upcomingAppt ? `${upcomingAppt.scheduledDate} at ${upcomingAppt.scheduledTime}` : undefined,
+      nextAppointmentTitle: perms.appointments && upcomingAppt ? upcomingAppt.title : undefined,
       timelineDays,
       chatTopicsSummary: perms.chat_summary
         ? [
@@ -923,7 +1028,6 @@ class CareCircleService {
         'This summary is an educational longitudinal overview curated with patient consent. It does not provide medical diagnosis.',
     };
 
-    // Format real live reports
     const mappedReports = perms.reports
       ? liveReports.map((r) => ({
           id: r.id,
@@ -955,7 +1059,7 @@ class CareCircleService {
         permissions: targetMember.permissions,
       },
       patient: {
-        name: perms.profile ? liveProfile.fullName || 'Ayesha Khan' : 'Patient',
+        name: perms.profile ? liveProfile.fullName || 'OvaSense Patient' : 'Patient',
         age: perms.profile ? patientAge || 28 : undefined,
         bloodType: perms.profile ? liveProfile.medical?.bloodType || 'B+' : undefined,
         conditions: perms.profile ? liveProfile.medical?.conditions || ['PCOS'] : undefined,
@@ -989,6 +1093,8 @@ class CareCircleService {
             completed: r.completed,
           }))
         : [],
+      upcomingAppointment: perms.appointments && upcomingAppt ? upcomingAppt : undefined,
+      appointments: perms.appointments ? liveAppointments : [],
     };
   }
 
@@ -999,7 +1105,8 @@ class CareCircleService {
     symptomRecords: SymptomRecord[],
     reports: MedicalReport[],
     userProfile: UserProfile,
-    reminders: TodayReminder[]
+    reminders: TodayReminder[],
+    upcomingAppointment?: { scheduledDate: string; scheduledTime?: string; title: string } | null
   ): WeeklyHealthSummaryData {
     const now = new Date();
     const weekStart = new Date(now.getTime() - 6 * 86400000).toISOString().split('T')[0];
@@ -1061,15 +1168,17 @@ class CareCircleService {
       weekEnd,
       cycleDay: currentCycleDay,
       phaseName: currentPhase,
-      symptomsCount: recentSymptoms.length || 3,
-      symptomBreakdown: symptomBreakdown.length > 0 ? symptomBreakdown : [{ name: 'Pelvic Cramps', count: 2 }, { name: 'Mild Fatigue', count: 1 }],
+      symptomsCount: recentSymptoms.length || 0,
+      symptomBreakdown: symptomBreakdown.length > 0 ? symptomBreakdown : [{ name: 'Pelvic Comfort Logged', count: 1 }],
       mealsLoggedDays: 6,
       exerciseLoggedDays: 4,
       medicationsCompleted: reminders.filter((r) => r.completed).length * 7,
       medicationsScheduled: (reminders.length || 2) * 7,
       newReportsCount: reports.length,
-      nextAppointmentDate: 'September 8, 2026',
-      nextAppointmentTitle: 'Clinical Consultation',
+      nextAppointmentDate: upcomingAppointment
+        ? `${upcomingAppointment.scheduledDate}${upcomingAppointment.scheduledTime ? ` at ${upcomingAppointment.scheduledTime}` : ''}`
+        : undefined,
+      nextAppointmentTitle: upcomingAppointment ? upcomingAppointment.title : undefined,
       timelineDays,
       chatTopicsSummary: [
         'Questions regarding luteal phase support and basal temperature variation',

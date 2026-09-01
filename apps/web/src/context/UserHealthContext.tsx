@@ -1282,7 +1282,7 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       role: m.role === 'doctor' ? 'doctor' : m.role === 'family' ? 'family' : 'caregiver',
       specialty: m.relationship || m.clinicOrganization || (m.role === 'doctor' ? 'Healthcare Professional' : 'Trusted Contact'),
       accessLevel: m.permissions.reports && m.permissions.cycle && m.permissions.symptoms ? 'full' : 'limited',
-      nextAppointment: m.role === 'doctor' ? 'September 8, 2026' : undefined,
+      nextAppointment: m.role === 'doctor' && upcomingAppointment ? upcomingAppointment.scheduledDate : undefined,
       permissions: {
         symptoms: m.permissions.symptoms,
         reports: m.permissions.reports,
@@ -1291,7 +1291,7 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         privateNotes: false,
       },
     }));
-  }, [careCircleMembers]);
+  }, [careCircleMembers, upcomingAppointment]);
 
   // Floating AI Assistant State
   const [isAiChatOpen, setIsAiChatOpen] = useState<boolean>(false);
@@ -1434,9 +1434,10 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       symptomRecords,
       reports,
       userProfile,
-      reminders
+      reminders,
+      upcomingAppointment
     );
-  }, [userProfile, cycleRecords, symptomRecords, reports, reminders]);
+  }, [userProfile, cycleRecords, symptomRecords, reports, reminders, upcomingAppointment]);
 
   // Dynamically compute legacy cycle metrics for backwards compatibility / fallback
   const cycleMetrics = useMemo(() => {

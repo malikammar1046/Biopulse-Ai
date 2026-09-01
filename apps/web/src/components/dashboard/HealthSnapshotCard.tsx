@@ -86,7 +86,7 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
           </span>
         </div>
 
-        {/* Mini 28-dot phase tracker bar */}
+        {/* Mini 14-dot phase tracker bar */}
         <div className="pt-2 flex items-center gap-1">
           {Array.from({ length: 14 }).map((_, i) => (
             <span
@@ -111,7 +111,7 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
             <span className="p-1.5 rounded-xl bg-[#FDF2F8] text-[#A21CAF]">
               <Activity className="w-3.5 h-3.5" />
             </span>
-            <span>Today's Symptoms</span>
+            <span>Today&apos;s Symptoms</span>
           </div>
           <span className="text-[10px] font-mono text-[#A21CAF] font-bold group-hover:underline">
             View all

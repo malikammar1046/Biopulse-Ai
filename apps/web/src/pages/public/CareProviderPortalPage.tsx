@@ -497,15 +497,15 @@ export const CareProviderPortalPage: React.FC = () => {
               </h2>
             </div>
 
-            {summary?.nextAppointmentDate ? (
-              <div className="p-5 rounded-2xl bg-[#FAF5FF] border border-[#D8B4FE]/60 space-y-3">
+            {data.upcomingAppointment || summary?.nextAppointmentDate ? (
+              <div className="p-5 rounded-2xl bg-[#FAF5FF] border border-[#D8B4FE]/60 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#E7DFEF] pb-3">
                   <div>
                     <span className="text-sm font-bold text-[#1C1326] block">
-                      {summary.nextAppointmentTitle || 'Clinical Consultation & Longitudinal Review'}
+                      {data.upcomingAppointment?.title || summary?.nextAppointmentTitle || 'Clinical Consultation & Longitudinal Review'}
                     </span>
                     <span className="text-xs text-[#6E2D8B] font-semibold block mt-0.5">
-                      Scheduled for {summary.nextAppointmentDate}
+                      Scheduled for {data.upcomingAppointment ? `${data.upcomingAppointment.scheduledDate} at ${data.upcomingAppointment.scheduledTime}` : summary?.nextAppointmentDate}
                     </span>
                   </div>
                   <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#ECFDF5] text-[#047857] w-fit">
@@ -513,8 +513,52 @@ export const CareProviderPortalPage: React.FC = () => {
                   </span>
                 </div>
 
+                {data.upcomingAppointment?.reason && (
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-mono text-[#8D7E9E] uppercase font-bold block">
+                      Reason for Consultation
+                    </span>
+                    <p className="text-xs text-[#1C1326] bg-white p-3 rounded-xl border border-[#E7DFEF]">
+                      {data.upcomingAppointment.reason}
+                    </p>
+                  </div>
+                )}
+
+                {data.upcomingAppointment?.location && (
+                  <div className="flex items-center justify-between gap-2 text-xs text-[#584B68]">
+                    <span>Location: {data.upcomingAppointment.location}</span>
+                    {data.upcomingAppointment.meetingUrl && (
+                      <a
+                        href={data.upcomingAppointment.meetingUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs font-bold text-[#047857] hover:underline"
+                      >
+                        Join Video Meeting →
+                      </a>
+                    )}
+                  </div>
+                )}
+
+                {/* Patient-Prepared Questions for Doctor */}
+                {data.upcomingAppointment?.doctorQuestions && data.upcomingAppointment.doctorQuestions.length > 0 && (
+                  <div className="p-3.5 rounded-xl bg-white border border-[#E7DFEF] space-y-2">
+                    <span className="text-[10px] font-mono text-[#6E2D8B] uppercase font-bold block">
+                      Patient Questions for this Visit ({data.upcomingAppointment.doctorQuestions.length})
+                    </span>
+                    <div className="space-y-1.5 text-xs">
+                      {data.upcomingAppointment.doctorQuestions.map((q, qIdx) => (
+                        <div key={qIdx} className="flex items-start gap-2 text-[#1C1326]">
+                          <span className="text-[#6E2D8B] font-bold">•</span>
+                          <span className={q.isDiscussed ? 'line-through text-[#8D7E9E]' : ''}>{q.question}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <p className="text-xs text-[#584B68]">
-                  Longitudinal patient metrics (Cycle Day {summary.cycleDay}, {summary.symptomsCount} logged symptoms, and medication adherence) are synthesized for discussion during this visit.
+                  Longitudinal patient metrics (Cycle Day {summary?.cycleDay || 14}, {summary?.symptomsCount || 0} logged symptoms, and medication adherence) are synthesized for discussion during this visit.
                 </p>
               </div>
             ) : (

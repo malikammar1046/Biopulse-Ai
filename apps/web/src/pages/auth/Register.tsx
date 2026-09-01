@@ -1,17 +1,27 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, User, Calendar, ArrowRight, CheckCircle2, ShieldCheck, Sparkles, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ROUTES } from '../../constants/routes';
+import { Mail, User, ArrowRight, Loader2, Sparkles, CheckCircle2, ShieldCheck, Calendar } from 'lucide-react';
 import { AuthShell } from '../../components/auth/AuthShell';
 import { AuthCard } from '../../components/auth/AuthCard';
 import { AuthField } from '../../components/auth/AuthField';
 import { PasswordInput } from '../../components/auth/PasswordInput';
 import { useAuth } from '../../context/AuthContext';
+import { ROUTES } from '../../constants/routes';
+
+interface FormErrors {
+  fullName?: string;
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+  consent?: string;
+  general?: string;
+}
 
 export const Register: React.FC = () => {
   const navigate = useNavigate();
   const { register } = useAuth();
+
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,65 +30,50 @@ export const Register: React.FC = () => {
   const [consent, setConsent] = useState(false);
 
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
   const [isSuccess, setIsSuccess] = useState(false);
   const [emailConfirmReq, setEmailConfirmReq] = useState(false);
-  const [errors, setErrors] = useState<{
-    fullName?: string;
-    email?: string;
-    password?: string;
-    confirmPassword?: string;
-    consent?: string;
-    general?: string;
-  }>({});
 
   const validateForm = (): boolean => {
-    const newErrors: {
-      fullName?: string;
-      email?: string;
-      password?: string;
-      confirmPassword?: string;
-      consent?: string;
-    } = {};
+    const nextErrors: FormErrors = {};
 
     if (!fullName.trim()) {
-      newErrors.fullName = 'Full name is required.';
+      nextErrors.fullName = 'Please enter your full name.';
     }
 
     if (!email.trim()) {
-      newErrors.email = 'Email address is required.';
+      nextErrors.email = 'Please enter your email address.';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      newErrors.email = 'Please enter a valid email format.';
+      nextErrors.email = 'Please enter a valid email address.';
     }
 
     if (!password) {
-      newErrors.password = 'Password is required.';
+      nextErrors.password = 'Please create a password.';
     } else if (password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters long.';
+      nextErrors.password = 'Password must be at least 8 characters long.';
     }
 
-    if (!confirmPassword) {
-      newErrors.confirmPassword = 'Confirmation password is required.';
-    } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match.';
+    if (password !== confirmPassword) {
+      nextErrors.confirmPassword = 'Passwords do not match.';
     }
 
     if (!consent) {
-      newErrors.consent = 'You must acknowledge the clinical notice to create an account.';
+      nextErrors.consent = 'Please acknowledge that OVASense provides health guidance and does not replace medical advice.';
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
+
     if (!validateForm()) return;
 
     setLoading(true);
-    setErrors({});
-
     try {
-      const response = await register({
+      const res = await register({
         fullName: fullName.trim(),
         email: email.trim(),
         password,
@@ -86,14 +81,19 @@ export const Register: React.FC = () => {
         consent,
       });
 
-      if (response.success) {
-        setEmailConfirmReq(Boolean(response.emailConfirmationRequired));
-        setIsSuccess(true);
-      } else {
-        setErrors({ general: response.error || 'Account creation failed. Please try again.' });
+      if (!res.success) {
+        setErrors({ general: res.error || 'Registration failed. Please try again.' });
+        return;
       }
-    } catch {
-      setErrors({ general: 'A connection error occurred. Please try again.' });
+
+      setIsSuccess(true);
+      if (res.emailConfirmationRequired) {
+        setEmailConfirmReq(true);
+      }
+    } catch (err: any) {
+      setErrors({
+        general: err?.message || 'Registration could not be completed. Please try again.',
+      });
     } finally {
       setLoading(false);
     }
@@ -101,10 +101,10 @@ export const Register: React.FC = () => {
 
   return (
     <AuthShell
-      headlineLine1="Your health story"
-      headlineLine2="deserves context."
-      supportingCopy="Create your OVASense account and begin building a clearer picture of your health patterns."
-      identityTag="AI-assisted women's health intelligence"
+      headlineLine1="A new standard for"
+      headlineLine2="women's hormonal health."
+      supportingCopy="Create your private, clinically grounded health record. Track cycles, log symptoms, and understand biological trends."
+      identityTag="Personal Health Intelligence"
     >
       <AuthCard
         heading={!isSuccess ? 'Create your account' : undefined}

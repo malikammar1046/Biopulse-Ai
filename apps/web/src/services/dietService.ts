@@ -274,7 +274,7 @@ class DietService {
         .select('*')
         .eq('user_id', userId)
         .eq('date', today)
-        .single();
+        .maybeSingle();
 
       if (error || !data) {
         return { entry: local };

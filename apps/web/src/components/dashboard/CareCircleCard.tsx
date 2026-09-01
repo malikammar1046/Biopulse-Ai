@@ -98,24 +98,33 @@ export const CareCircleCard: React.FC<CareCircleProps> = ({
                   <span>
                     {upcomingAppointment
                       ? `Visit: ${upcomingAppointment.scheduledDate}`
-                      : 'Next Visit: Sep 8'}
+                      : 'No visit scheduled'}
                   </span>
                 </div>
 
-                {onPrepareAppointment ? (
-                  <button
-                    type="button"
-                    onClick={onPrepareAppointment}
-                    className="px-3 py-1 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF] hover:brightness-110 shadow-xs transition-all cursor-pointer"
-                  >
-                    Prepare Summary
-                  </button>
+                {upcomingAppointment ? (
+                  onPrepareAppointment ? (
+                    <button
+                      type="button"
+                      onClick={onPrepareAppointment}
+                      className="px-3 py-1 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF] hover:brightness-110 shadow-xs transition-all cursor-pointer"
+                    >
+                      Prepare Summary
+                    </button>
+                  ) : (
+                    <Link
+                      to={ROUTES.APP.APPOINTMENTS}
+                      className="px-3 py-1 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF] hover:brightness-110 shadow-xs transition-all"
+                    >
+                      Prepare Summary
+                    </Link>
+                  )
                 ) : (
                   <Link
                     to={ROUTES.APP.APPOINTMENTS}
-                    className="px-3 py-1 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF] hover:brightness-110 shadow-xs transition-all"
+                    className="px-3 py-1 rounded-xl text-xs font-bold text-[#6E2D8B] bg-[#EDE4F7] hover:bg-[#E5D4F5] transition-all"
                   >
-                    Prepare Summary
+                    + Book Visit
                   </Link>
                 )}
               </div>

@@ -148,7 +148,6 @@ export const CycleProgressDial: React.FC<CycleDialProps> = ({
         </div>
       </div>
 
-
       {/* Segment Legend */}
       <div className="pt-4 border-t border-[#F0EAF5] flex flex-wrap items-center justify-between gap-2 text-xs font-sans">
         <div className="flex items-center gap-1.5 text-[#584B68]">

@@ -1,10 +1,10 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ROUTES } from './constants/routes';
 import { PublicLayout } from './layouts/PublicLayout';
 import { AppLayout } from './layouts/AppLayout';
 import { AuthProvider } from './context/AuthContext';
-import { UserHealthProvider } from './context/UserHealthContext';
+import { UserHealthProvider, useUserHealth } from './context/UserHealthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { OnboardingRoute } from './components/auth/OnboardingRoute';
 import { PublicOnlyRoute } from './components/auth/PublicOnlyRoute';
@@ -60,7 +60,17 @@ const ReportsPage = lazy(() => import('./pages/app/ReportsPage').then((m) => ({ 
 const MedicationsPage = lazy(() => import('./pages/app/MedicationsPage').then((m) => ({ default: m.MedicationsPage })));
 const CareCirclePage = lazy(() => import('./pages/app/CareCirclePage').then((m) => ({ default: m.CareCirclePage })));
 const AppointmentsPage = lazy(() => import('./pages/app/AppointmentsPage').then((m) => ({ default: m.AppointmentsPage })));
+const TimelinePage = lazy(() => import('./pages/app/TimelinePage').then((m) => ({ default: m.TimelinePage })));
 const SettingsPage = lazy(() => import('./pages/app/SettingsPage').then((m) => ({ default: m.SettingsPage })));
+
+// Helper route component to open AI Twin upon navigating to /app/ai-twin or /app/chat
+const AiTwinRedirectRoute: React.FC = () => {
+  const { openAiChatWithPrompt } = useUserHealth();
+  useEffect(() => {
+    openAiChatWithPrompt('Hello! How can you assist me with my health tracking today?');
+  }, [openAiChatWithPrompt]);
+  return <Navigate to={ROUTES.APP.DASHBOARD} replace />;
+};
 
 export function App() {
   return (
@@ -99,6 +109,10 @@ export function App() {
                 <Route path={ROUTES.APP.ROOT} element={<AppLayout />}>
                   <Route index element={<Navigate to={ROUTES.APP.DASHBOARD} replace />} />
                   <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="ai-twin" element={<AiTwinRedirectRoute />} />
+                  <Route path="chat" element={<AiTwinRedirectRoute />} />
+                  <Route path="ai" element={<AiTwinRedirectRoute />} />
+                  <Route path="assistant" element={<AiTwinRedirectRoute />} />
                   <Route path="cycle" element={<CyclePage />} />
                   <Route path="symptoms" element={<SymptomsPage />} />
                   <Route path="diet" element={<DietPage />} />
@@ -108,12 +122,12 @@ export function App() {
                   <Route path="medications" element={<MedicationsPage />} />
                   <Route path="care-circle" element={<CareCirclePage />} />
                   <Route path="appointments" element={<AppointmentsPage />} />
+                  <Route path="timeline" element={<TimelinePage />} />
                   <Route path="settings" element={<SettingsPage />} />
                   {/* Backward compatibility aliases */}
                   <Route path="profile" element={<Navigate to={ROUTES.APP.SETTINGS} replace />} />
                   <Route path="lifestyle" element={<Navigate to={ROUTES.APP.DIET} replace />} />
                   <Route path="assessment" element={<Navigate to={ROUTES.APP.DASHBOARD} replace />} />
-                  <Route path="timeline" element={<Navigate to={ROUTES.APP.CYCLE} replace />} />
                 </Route>
               </Route>
 
@@ -128,4 +142,3 @@ export function App() {
 }
 
 export default App;
-

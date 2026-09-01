@@ -912,6 +912,192 @@ CREATE POLICY "Care circle members can select permitted appointments"
     public.has_care_circle_permission(patient_id, 'appointments')
   );
 
+-- ==============================================================================
+-- 67. Secure Provider Token Verification & Live Data Retrieval Function (SECURITY DEFINER)
+-- Allows authorized healthcare providers or contacts with a valid invite token to fetch permitted patient records
+-- ==============================================================================
+CREATE OR REPLACE FUNCTION public.get_care_provider_view(p_token TEXT)
+RETURNS JSONB AS $$
+DECLARE
+  v_member RECORD;
+  v_patient RECORD;
+  v_perms JSONB;
+  v_result JSONB;
+  v_reports JSONB := '[]'::jsonb;
+  v_symptoms JSONB := '[]'::jsonb;
+  v_appointments JSONB := '[]'::jsonb;
+BEGIN
+  IF p_token IS NULL OR length(trim(p_token)) = 0 THEN
+    RETURN jsonb_build_object('isValid', false, 'error', 'Invalid token');
+  END IF;
+
+  -- 1. Find member by invite_token
+  SELECT id, patient_id, member_email, member_name, role, relationship, clinic_organization, status, invite_token, created_at, updated_at
+  INTO v_member
+  FROM public.care_circle_members
+  WHERE invite_token = p_token;
+
+  IF NOT FOUND THEN
+    -- Check pending invitations
+    SELECT id, patient_id, invite_email AS member_email, member_name, role, relationship, '' AS clinic_organization, status, token AS invite_token, created_at, created_at AS updated_at
+    INTO v_member
+    FROM public.care_circle_invitations
+    WHERE token = p_token;
+  END IF;
+
+  IF v_member.id IS NULL OR v_member.status = 'revoked' THEN
+    RETURN jsonb_build_object('isValid', false, 'error', 'Token not found or access revoked');
+  END IF;
+
+  -- Update last_viewed_at
+  UPDATE public.care_circle_members
+  SET last_viewed_at = now()
+  WHERE invite_token = p_token;
+
+  -- 2. Build permissions map
+  SELECT jsonb_object_agg(permission_key, enabled)
+  INTO v_perms
+  FROM public.care_circle_permissions
+  WHERE member_id = v_member.id;
+
+  IF v_perms IS NULL THEN
+    v_perms := jsonb_build_object(
+      'profile', true,
+      'cycle', true,
+      'symptoms', true,
+      'reports', true,
+      'medications', true,
+      'diet', true,
+      'fitness', true,
+      'appointments', true,
+      'weekly_summary', true,
+      'chat_summary', true
+    );
+  END IF;
+
+  -- 3. Fetch Patient Profile
+  SELECT id, full_name, date_of_birth, blood_type, conditions, cycle_length, period_duration, last_period_date, dietary_preference, daily_water_glasses, activity_level, sleep_hours
+  INTO v_patient
+  FROM public.profiles
+  WHERE id = v_member.patient_id;
+
+  -- 4. Fetch Medical Reports if permitted
+  IF COALESCE((v_perms->>'reports')::boolean, false) THEN
+    SELECT jsonb_agg(
+      jsonb_build_object(
+        'id', r.id,
+        'title', r.title,
+        'reportType', r.report_type,
+        'reportDate', r.report_date,
+        'fileName', r.file_name,
+        'status', r.status,
+        'results', (
+          SELECT jsonb_agg(
+            jsonb_build_object(
+              'testName', res.test_name,
+              'resultValue', res.result_value,
+              'unit', res.unit,
+              'referenceRange', res.reference_range,
+              'status', res.status
+            )
+          )
+          FROM public.report_results res
+          WHERE res.report_id = r.id
+        )
+      )
+    )
+    INTO v_reports
+    FROM (
+      SELECT * FROM public.medical_reports
+      WHERE user_id = v_member.patient_id
+      ORDER BY report_date DESC
+      LIMIT 10
+    ) r;
+  END IF;
+
+  -- 5. Fetch Symptoms if permitted
+  IF COALESCE((v_perms->>'symptoms')::boolean, false) THEN
+    SELECT jsonb_agg(
+      jsonb_build_object(
+        'id', s.id,
+        'symptomType', s.symptom_type,
+        'category', s.category,
+        'severity', s.severity,
+        'occurredAt', s.occurred_at
+      )
+    )
+    INTO v_symptoms
+    FROM (
+      SELECT * FROM public.symptom_records
+      WHERE user_id = v_member.patient_id
+      ORDER BY occurred_at DESC
+      LIMIT 20
+    ) s;
+  END IF;
+
+  -- 6. Fetch Appointments if permitted
+  IF COALESCE((v_perms->>'appointments')::boolean, false) THEN
+    SELECT jsonb_agg(
+      jsonb_build_object(
+        'id', a.id,
+        'title', a.title,
+        'providerName', a.provider_name,
+        'providerSpecialty', a.provider_specialty,
+        'appointmentType', a.appointment_type,
+        'scheduledAt', a.scheduled_at,
+        'scheduledDate', a.scheduled_date,
+        'scheduledTime', a.scheduled_time,
+        'durationMinutes', a.duration_minutes,
+        'status', a.status,
+        'location', a.location,
+        'meetingUrl', a.meeting_url,
+        'reason', a.reason,
+        'doctorQuestions', a.doctor_questions
+      )
+    )
+    INTO v_appointments
+    FROM (
+      SELECT * FROM public.appointments
+      WHERE patient_id = v_member.patient_id
+        AND (care_circle_member_id IS NULL OR care_circle_member_id = v_member.id)
+      ORDER BY scheduled_at ASC
+    ) a;
+  END IF;
+
+  -- Return complete bundle
+  v_result := jsonb_build_object(
+    'isValid', true,
+    'member', jsonb_build_object(
+      'id', v_member.id,
+      'name', v_member.member_name,
+      'email', v_member.member_email,
+      'role', v_member.role,
+      'relationship', v_member.relationship,
+      'clinicOrganization', v_member.clinic_organization,
+      'status', v_member.status,
+      'permissions', v_perms
+    ),
+    'patient', jsonb_build_object(
+      'id', v_patient.id,
+      'name', CASE WHEN COALESCE((v_perms->>'profile')::boolean, false) THEN v_patient.full_name ELSE 'Patient' END,
+      'bloodType', CASE WHEN COALESCE((v_perms->>'profile')::boolean, false) THEN v_patient.blood_type ELSE NULL END,
+      'conditions', CASE WHEN COALESCE((v_perms->>'profile')::boolean, false) THEN v_patient.conditions ELSE NULL END,
+      'dateOfBirth', CASE WHEN COALESCE((v_perms->>'profile')::boolean, false) THEN v_patient.date_of_birth ELSE NULL END,
+      'cycleLength', v_patient.cycle_length,
+      'periodDuration', v_patient.period_duration,
+      'lastPeriodDate', v_patient.last_period_date,
+      'dailyWaterGlasses', v_patient.daily_water_glasses
+    ),
+    'reports', COALESCE(v_reports, '[]'::jsonb),
+    'symptoms', COALESCE(v_symptoms, '[]'::jsonb),
+    'appointments', COALESCE(v_appointments, '[]'::jsonb)
+  );
+
+  RETURN v_result;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
 
 
 

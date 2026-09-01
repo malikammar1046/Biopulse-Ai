@@ -23,6 +23,8 @@ export const TodayRemindersCard: React.FC<RemindersCardProps> = ({
         return <Droplets className="w-3.5 h-3.5 text-[#38BDF8]" />;
       case 'fitness':
         return <Footprints className="w-3.5 h-3.5 text-[#34D399]" />;
+      case 'appointment':
+        return <Calendar className="w-3.5 h-3.5 text-[#6E2D8B]" />;
       case 'cycle':
       default:
         return <Calendar className="w-3.5 h-3.5 text-[#8E3EAF]" />;
@@ -59,7 +61,7 @@ export const TodayRemindersCard: React.FC<RemindersCardProps> = ({
             <button
               type="button"
               onClick={onAddReminder}
-              className="text-xs text-[#6E2D8B] font-bold hover:underline"
+              className="text-xs text-[#6E2D8B] font-bold hover:underline cursor-pointer"
             >
               + Add first reminder
             </button>
