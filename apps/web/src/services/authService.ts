@@ -95,6 +95,43 @@ class AuthService {
   }
 
   /**
+   * Initiate Google OAuth flow via Supabase.
+   */
+  async loginWithGoogle(redirectTo?: string): Promise<{ success: boolean; error?: string }> {
+    if (!isSupabaseConfigured()) {
+      return { success: true };
+    }
+
+    try {
+      const targetRedirect = redirectTo || `${window.location.origin}/login`;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: targetRedirect,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+
+      if (error) {
+        return {
+          success: false,
+          error: error.message || 'Unable to initiate Google sign-in. Please try again.',
+        };
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      return {
+        success: false,
+        error: err?.message || 'A network error occurred while connecting to Google.',
+      };
+    }
+  }
+
+  /**
    * Register a new user via Supabase Auth.
    */
   async register(payload: RegisterPayload): Promise<AuthResponse> {

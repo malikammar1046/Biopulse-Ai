@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, ArrowRight, Loader2, Sparkles } from 'lucide-react';
@@ -6,6 +6,7 @@ import { AuthShell } from '../../components/auth/AuthShell';
 import { AuthCard } from '../../components/auth/AuthCard';
 import { AuthField } from '../../components/auth/AuthField';
 import { PasswordInput } from '../../components/auth/PasswordInput';
+import { GoogleAuthButton } from '../../components/auth/GoogleAuthButton';
 import { useAuth } from '../../context/AuthContext';
 import { ROUTES } from '../../constants/routes';
 
@@ -18,13 +19,39 @@ interface FormErrors {
 export const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+
+  // Check URL search or hash for OAuth callback errors (e.g. user cancelled Google OAuth)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const hashParams = new URLSearchParams(location.hash.replace(/^#/, ''));
+
+    const errorParam = params.get('error') || hashParams.get('error');
+    const errorDesc = params.get('error_description') || hashParams.get('error_description');
+
+    if (errorParam || errorDesc) {
+      if (
+        errorParam === 'access_denied' ||
+        errorDesc?.toLowerCase().includes('cancel') ||
+        errorDesc?.toLowerCase().includes('denied')
+      ) {
+        setErrors({
+          general: 'Google sign-in was cancelled. You can sign in using email & password or try Google again.',
+        });
+      } else {
+        setErrors({
+          general: 'Google sign-in could not be completed. Please try again or use your password.',
+        });
+      }
+    }
+  }, [location]);
 
   // Validate form client-side
   const validateForm = (): boolean => {
@@ -46,6 +73,7 @@ export const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading || googleLoading) return;
     setErrors({});
 
     if (!validateForm()) return;
@@ -69,6 +97,30 @@ export const Login: React.FC = () => {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    if (loading || googleLoading) return;
+
+    setGoogleLoading(true);
+    setErrors({});
+
+    try {
+      const res = await loginWithGoogle();
+      if (!res.success) {
+        setErrors({ general: res.error || 'Unable to connect to Google. Please try again.' });
+        setGoogleLoading(false);
+        return;
+      }
+      // In demo/mock mode without redirect, navigate to destination
+      const from = (location.state as { from?: { pathname?: string } })?.from?.pathname || ROUTES.APP.DASHBOARD;
+      navigate(from, { replace: true });
+    } catch (err: any) {
+      setErrors({
+        general: err?.message || 'Google sign-in could not be completed. Please try again.',
+      });
+      setGoogleLoading(false);
+    }
+  };
+
   return (
     <AuthShell
       headlineLine1="Understand your rhythm,"
@@ -89,7 +141,7 @@ export const Login: React.FC = () => {
         <form onSubmit={handleSubmit} noValidate className="space-y-4">
           {/* General Error Banner */}
           {errors.general && (
-            <div className="p-3 rounded-2xl bg-[#E87084]/15 border border-[#E87084]/40 text-xs text-[#F48498]">
+            <div className="p-3 rounded-2xl bg-[#E87084]/15 border border-[#E87084]/40 text-xs text-[#F48498] leading-relaxed">
               {errors.general}
             </div>
           )}
@@ -103,6 +155,7 @@ export const Login: React.FC = () => {
             inputMode="email"
             placeholder="name@domain.com"
             required
+            disabled={loading || googleLoading}
             value={email}
             errorText={errors.email}
             onChange={(e) => {
@@ -119,6 +172,7 @@ export const Login: React.FC = () => {
             autoComplete="current-password"
             placeholder="Enter your password"
             required
+            disabled={loading || googleLoading}
             value={password}
             errorText={errors.password}
             onChange={(e) => {
@@ -133,6 +187,7 @@ export const Login: React.FC = () => {
               <input
                 type="checkbox"
                 checked={rememberMe}
+                disabled={loading || googleLoading}
                 onChange={(e) => setRememberMe(e.target.checked)}
                 className="w-4 h-4 rounded-md bg-[#140924] border border-[#8E3EAF]/40 text-[#8E3EAF] focus:ring-2 focus:ring-[#8E3EAF]/30 cursor-pointer accent-[#8E3EAF]"
               />
@@ -148,12 +203,12 @@ export const Login: React.FC = () => {
           </div>
 
           {/* Primary CTA Button */}
-          <div className="pt-3">
+          <div className="pt-2">
             <motion.button
               type="submit"
-              disabled={loading}
-              whileHover={!loading ? { y: -2, boxShadow: '0 10px 25px -5px rgba(162, 28, 175, 0.4)' } : undefined}
-              whileTap={!loading ? { scale: 0.98 } : undefined}
+              disabled={loading || googleLoading}
+              whileHover={!loading && !googleLoading ? { y: -2, boxShadow: '0 10px 25px -5px rgba(162, 28, 175, 0.4)' } : undefined}
+              whileTap={!loading && !googleLoading ? { scale: 0.98 } : undefined}
               className="w-full min-h-[48px] px-6 py-3 rounded-2xl font-sans font-semibold text-sm text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#A21CAF] border border-[#8E3EAF]/40 hover:brightness-110 shadow-lg shadow-purple-950/40 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {loading ? (
@@ -168,6 +223,25 @@ export const Login: React.FC = () => {
                 </>
               )}
             </motion.button>
+          </div>
+
+          {/* Visual Divider: ──────── OR ──────── */}
+          <div className="relative my-5 flex items-center justify-center">
+            <div className="w-full border-t border-[#8E3EAF]/25" />
+            <span className="absolute bg-[#180A26] px-3 text-[11px] font-semibold text-[#B4A6C7] tracking-wider uppercase">
+              OR
+            </span>
+          </div>
+
+          {/* Google OAuth Button */}
+          <div>
+            <GoogleAuthButton
+              onClick={handleGoogleSignIn}
+              loading={googleLoading}
+              disabled={loading || googleLoading}
+              text="Continue with Google"
+              loadingText="Connecting to Google..."
+            />
           </div>
         </form>
 
@@ -185,3 +259,4 @@ export const Login: React.FC = () => {
     </AuthShell>
   );
 };
+
