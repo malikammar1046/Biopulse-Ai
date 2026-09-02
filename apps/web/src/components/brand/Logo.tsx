@@ -50,64 +50,22 @@ export const Logo: React.FC<LogoProps> = ({
       {/* ── Brand Emblem Mark ── */}
       <div className="relative shrink-0">
         <motion.div
-          whileHover={animated ? { scale: 1.06, rotate: 2 } : undefined}
+          whileHover={animated ? { scale: 1.08, rotate: 1 } : undefined}
           transition={{ duration: 0.25, ease: 'easeOut' }}
-          className={`relative flex items-center justify-center p-0.5 ${sizeConfig.radius} overflow-hidden shadow-lg shadow-purple-950/40 bg-gradient-to-br from-[#2D0C4E] via-[#140624] to-[#090212] border border-white/15`}
-          style={{ width: sizeConfig.box, height: sizeConfig.box }}
+          className={`relative flex items-center justify-center ${sizeConfig.radius} overflow-hidden shadow-lg ${
+            isLight
+              ? 'bg-gradient-to-br from-pink-50 via-white to-purple-50/60 border border-pink-200/60 shadow-pink-900/10'
+              : 'bg-gradient-to-br from-[#270D3E] via-[#160628] to-[#0A0214] border border-pink-500/25 shadow-purple-950/50'
+          }`}
+          style={{ width: sizeConfig.box, height: sizeConfig.box, padding: typeof size === 'string' && (size === 'xs' || size === 'sm') ? 2 : 4 }}
         >
-          {/* SVG Vector Biological Loop Emblem */}
-          <svg
-            viewBox="0 0 120 120"
-            fill="none"
-            className="w-full h-full"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <defs>
-              <linearGradient id={`ovaLogoGrad1-${size}`} x1="15%" y1="10%" x2="85%" y2="90%">
-                <stop offset="0%" stopColor="#8E3EAF" />
-                <stop offset="50%" stopColor="#A21CAF" />
-                <stop offset="100%" stopColor="#C026D3" />
-              </linearGradient>
-
-              <linearGradient id={`ovaLogoGrad2-${size}`} x1="85%" y1="10%" x2="15%" y2="90%">
-                <stop offset="0%" stopColor="#FB7185" />
-                <stop offset="50%" stopColor="#E87084" />
-                <stop offset="100%" stopColor="#D946EF" />
-              </linearGradient>
-
-              <radialGradient id={`ovaLogoNucleus-${size}`} cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#FFFFFF" />
-                <stop offset="35%" stopColor="#FDA4AF" />
-                <stop offset="70%" stopColor="#FB7185" stopOpacity="0.8" />
-                <stop offset="100%" stopColor="#8E3EAF" stopOpacity="0" />
-              </radialGradient>
-            </defs>
-
-            {/* Left Intertwined Ovarian Petal Loop */}
-            <path
-              d="M 60 22 C 38 22, 24 38, 24 60 C 24 82, 38 98, 60 98 C 76 98, 86 88, 88 74 C 89 66, 82 60, 75 60 C 67 60, 62 67, 56 78 C 50 88, 40 85, 36 78 C 32 70, 32 50, 36 42 C 40 35, 50 32, 56 42 C 62 53, 67 60, 75 60 C 82 60, 89 54, 88 46 C 86 32, 76 22, 60 22 Z"
-              fill={`url(#ovaLogoGrad1-${size})`}
-              opacity="0.95"
-            />
-
-            {/* Right Intertwined Vitality Loop */}
-            <path
-              d="M 60 22 C 76 22, 96 36, 96 60 C 96 84, 76 98, 60 98 C 44 98, 34 88, 32 74 C 31 66, 38 60, 45 60 C 53 60, 58 67, 64 78 C 70 88, 80 85, 84 78 C 88 70, 88 50, 84 42 C 80 35, 70 32, 64 42 C 58 53, 53 60, 45 60 C 38 60, 31 54, 32 46 C 34 32, 44 22, 60 22 Z"
-              fill={`url(#ovaLogoGrad2-${size})`}
-              opacity="0.9"
-              style={{ mixBlendMode: 'screen' }}
-            />
-
-            {/* Central Luminous Follicle Spark */}
-            <circle cx="60" cy="60" r="14" fill={`url(#ovaLogoNucleus-${size})`} />
-            <circle cx="60" cy="60" r="5" fill="#FFFFFF" />
-
-            {/* Micro Orbit Nodes */}
-            <circle cx="60" cy="22" r="3.5" fill="#FB7185" />
-            <circle cx="60" cy="22" r="1.5" fill="#FFFFFF" />
-            <circle cx="60" cy="98" r="3.5" fill="#C084FC" />
-            <circle cx="60" cy="98" r="1.5" fill="#FFFFFF" />
-          </svg>
+          {/* New Official Brand Logo Image */}
+          <img
+            src="/logo.png"
+            alt="OVASense Logo"
+            className="w-full h-full object-contain filter drop-shadow-sm transition-transform duration-300 group-hover:scale-105"
+            loading="eager"
+          />
         </motion.div>
 
         {/* Ambient Top Pulse Indicator */}

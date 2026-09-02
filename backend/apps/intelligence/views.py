@@ -8,6 +8,8 @@ Endpoints:
 """
 
 import logging
+import time
+import uuid
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -142,3 +144,152 @@ class IntelligenceAssessmentView(APIView):
                 {"error": "Response serialization error.", "details": serializer.errors},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+import time
+import uuid
+from apps.intelligence.serializers import (
+    ChatMessageRequestSerializer,
+    ChatMessageResponseSerializer,
+)
+from apps.intelligence.services.health_context_builder import HealthContextBuilder
+from apps.intelligence.services.llm_provider import get_llm_provider, LLMProviderError
+from apps.intelligence.services.safety_guardrails import SafetyGuardrails
+
+
+class IntelligenceChatView(APIView):
+    """
+    POST /api/v1/intelligence/chat/
+
+    Authenticated conversational intelligence endpoint powered by MedGemma.
+    Derives patient UUID strictly from the verified Supabase JWT (request.user.id).
+    Runs safety checks, aggregates patient context across trust tiers,
+    and returns a structured, non-diagnostic response.
+    Never silently falls back to offline mock on production failure.
+    """
+    authentication_classes = [SupabaseAuthentication]
+
+    def post(self, request):
+        patient_uuid = str(request.user.id)
+        auth_token = getattr(request.user, "raw_token", None)
+
+        req_serializer = ChatMessageRequestSerializer(data=request.data)
+        if not req_serializer.is_valid():
+            return Response(req_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        user_message = req_serializer.validated_data["message"]
+        conversation_id = req_serializer.validated_data.get("conversation_id") or str(uuid.uuid4())
+        conversation_history = req_serializer.validated_data.get("conversation_history", [])
+        client_telemetry = req_serializer.validated_data.get("client_telemetry", {})
+
+        t0 = time.perf_counter()
+
+        # 1. Immediate emergency red-flag escalation
+        emergency_advisory = SafetyGuardrails.check_emergency(user_message)
+        if emergency_advisory:
+            logger.info("Chat: Emergency red flag triggered for patient %s", patient_uuid[:8] + "***")
+            resp_data = {
+                "success": True,
+                "message": emergency_advisory,
+                "conversation_id": conversation_id,
+                "context_used": {
+                    "profile": False,
+                    "cycle": False,
+                    "symptoms": True,
+                    "reports": False,
+                    "diet": False,
+                    "fitness": False,
+                    "medications": False,
+                    "digital_twin": False,
+                    "ml_screening": False,
+                },
+                "safety_level": "urgent",
+                "needs_clinician": True,
+                "model": "safety-escalation-guard",
+            }
+            return Response(ChatMessageResponseSerializer(resp_data).data, status=status.HTTP_200_OK)
+
+        # 2. Prompt injection defense
+        injection_refusal = SafetyGuardrails.check_prompt_injection(user_message)
+        if injection_refusal:
+            logger.info("Chat: Prompt injection attempt repelled for patient %s", patient_uuid[:8] + "***")
+            resp_data = {
+                "success": True,
+                "message": injection_refusal,
+                "conversation_id": conversation_id,
+                "context_used": {
+                    "profile": False,
+                    "cycle": False,
+                    "symptoms": False,
+                    "reports": False,
+                    "diet": False,
+                    "fitness": False,
+                    "medications": False,
+                    "digital_twin": False,
+                    "ml_screening": False,
+                },
+                "safety_level": "caution",
+                "needs_clinician": False,
+                "model": "safety-injection-guard",
+            }
+            return Response(ChatMessageResponseSerializer(resp_data).data, status=status.HTTP_200_OK)
+
+        # 3. Assemble selective health context (minimal, privacy-preserved)
+        system_prompt, health_context, context_used = HealthContextBuilder.build_context(
+            patient_uuid=patient_uuid,
+            user_message=user_message,
+            auth_token=auth_token,
+            client_telemetry=client_telemetry,
+        )
+
+        # 4. Generate response via configured LLM provider (MedGemma primary)
+        provider = get_llm_provider()
+        try:
+            llm_resp = provider.generate_chat_response(
+                system_instruction=system_prompt,
+                user_message=user_message,
+                health_context=health_context,
+                conversation_history=conversation_history,
+            )
+        except LLMProviderError as exc:
+            logger.error("LLM Provider failure for patient %s: %s", patient_uuid[:8] + "***", exc)
+            # Strict rule: NEVER silently replace MedGemma with OfflineDeterministicProvider
+            error_data = {
+                "success": False,
+                "message": (
+                    "OvaSense AI (MedGemma) is currently offline or unreachable. "
+                    "Please ensure the local inference server is active, or try again shortly. "
+                    "Your Digital Twin physiological status and medical records remain fully accessible."
+                ),
+                "conversation_id": conversation_id,
+                "context_used": context_used,
+                "safety_level": "normal",
+                "needs_clinician": False,
+                "model": getattr(provider, "model_name", "medgemma"),
+            }
+            return Response(ChatMessageResponseSerializer(error_data).data, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        # 5. Sanitize output against non-diagnostic constraints and response hierarchy
+        clean_text, safety_level = SafetyGuardrails.sanitize_llm_response(llm_resp.answer)
+
+        elapsed = time.perf_counter() - t0
+        logger.info(
+            "Chat response completed for patient %s in %.2fs (provider: %s, safety: %s)",
+            patient_uuid[:8] + "***",
+            elapsed,
+            llm_resp.model_name,
+            safety_level,
+        )
+
+        resp_data = {
+            "success": True,
+            "message": clean_text,
+            "conversation_id": conversation_id,
+            "context_used": context_used,
+            "safety_level": safety_level,
+            "needs_clinician": llm_resp.needs_clinician,
+            "model": llm_resp.model_name,
+        }
+
+        serializer = ChatMessageResponseSerializer(resp_data)
+        return Response(serializer.data, status=status.HTTP_200_OK)

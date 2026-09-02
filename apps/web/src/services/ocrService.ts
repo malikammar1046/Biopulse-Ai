@@ -1,3 +1,4 @@
+import { supabase } from '../lib/supabase';
 import type { ReportResultInput, ReportType } from '../types/report';
 import { findTestKnowledge } from '../utils/reportKnowledge';
 import { evaluateResultStatus, parseNumericValue } from '../utils/reportCalculations';
@@ -9,13 +10,21 @@ export interface ExtractedReportData {
   extractedResults: ReportResultInput[];
   rawTextSnippet?: string;
   ocrConfidenceAvg: number;
+  engine?: string;
+  hasSelectableText?: boolean;
+  extractionMethod: 'paddleocr' | 'selectable_text' | 'fallback';
+  requiresReview: boolean;
+  disclaimer?: string;
 }
 
+const BACKEND_API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://127.0.0.1:8000/api';
+const OCR_ENDPOINT = `${BACKEND_API_URL}/v1/health/ocr/`;
+
 /**
- * Standard Lab Templates for simulated intelligent document parsing
- * (used during development / client parsing when backend OCR is not active).
+ * Standard Lab Templates for local offline fallback only.
+ * When used, extractionMethod is strictly marked as 'fallback'.
  */
-const TEMPLATE_EXTRACTIONS: Record<ReportType, ReportResultInput[]> = {
+const FALLBACK_TEMPLATES: Record<ReportType, ReportResultInput[]> = {
   hormone_test: [
     {
       testName: 'Total Testosterone',
@@ -27,7 +36,9 @@ const TEMPLATE_EXTRACTIONS: Record<ReportType, ReportResultInput[]> = {
       referenceHigh: 70,
       status: 'within_range',
       ocrConfidence: 0.96,
-      userVerified: true,
+      userVerified: false,
+      requiresReview: false,
+      extractionMethod: 'fallback',
       explanation: 'Natural androgen hormone made by ovaries and adrenal glands.',
       timelineConnection: 'Connects with skin changes and cycle patterns in your timeline.',
     },
@@ -41,7 +52,9 @@ const TEMPLATE_EXTRACTIONS: Record<ReportType, ReportResultInput[]> = {
       referenceHigh: 12.6,
       status: 'within_range',
       ocrConfidence: 0.94,
-      userVerified: true,
+      userVerified: false,
+      requiresReview: false,
+      extractionMethod: 'fallback',
       explanation: 'Key hormone trigger that promotes ovulation.',
       timelineConnection: 'Signals peak fertile window in your period cycle.',
     },
@@ -55,26 +68,47 @@ const TEMPLATE_EXTRACTIONS: Record<ReportType, ReportResultInput[]> = {
       referenceHigh: 12.5,
       status: 'within_range',
       ocrConfidence: 0.92,
-      userVerified: true,
+      userVerified: false,
+      requiresReview: false,
+      extractionMethod: 'fallback',
       explanation: 'Stimulates egg follicles in your ovaries to mature.',
       timelineConnection: 'Evaluated together with LH on Day 2–3 of your cycle.',
     },
+  ],
+  blood_test: [
     {
-      testName: 'DHEA-S',
-      resultValue: '310.0',
-      resultNumeric: 310.0,
-      unit: 'μg/dL',
-      referenceRange: '65 – 380 μg/dL',
-      referenceLow: 65,
-      referenceHigh: 380,
+      testName: 'Fasting Blood Glucose',
+      resultValue: '92.0',
+      resultNumeric: 92.0,
+      unit: 'mg/dL',
+      referenceRange: '70 – 99 mg/dL',
+      referenceLow: 70,
+      referenceHigh: 99,
       status: 'within_range',
-      ocrConfidence: 0.89,
-      userVerified: true,
-      explanation: 'Adrenal hormone linked to energy and natural stress response.',
-      timelineConnection: 'Connects to your daily stress and vitality check-ins.',
+      ocrConfidence: 0.97,
+      userVerified: false,
+      requiresReview: false,
+      extractionMethod: 'fallback',
+      explanation: 'Measures blood sugar level after fasting.',
     },
   ],
-
+  ultrasound: [
+    {
+      testName: 'Right Ovary Follicle Count',
+      resultValue: '14',
+      resultNumeric: 14,
+      unit: 'follicles',
+      referenceRange: '< 12 per ovary',
+      referenceLow: 0,
+      referenceHigh: 12,
+      status: 'outside_range',
+      ocrConfidence: 0.91,
+      userVerified: false,
+      requiresReview: true,
+      extractionMethod: 'fallback',
+      explanation: 'Number of small antral follicles visible via pelvic ultrasound.',
+    },
+  ],
   thyroid_test: [
     {
       testName: 'TSH (Thyroid Stimulating Hormone)',
@@ -86,223 +120,78 @@ const TEMPLATE_EXTRACTIONS: Record<ReportType, ReportResultInput[]> = {
       referenceHigh: 4.5,
       status: 'within_range',
       ocrConfidence: 0.98,
-      userVerified: true,
+      userVerified: false,
+      requiresReview: false,
+      extractionMethod: 'fallback',
       explanation: 'Master regulatory hormone for thyroid energy output.',
-      timelineConnection: 'Directly influences daily energy and cycle regularity.',
-    },
-    {
-      testName: 'Free T4',
-      resultValue: '1.28',
-      resultNumeric: 1.28,
-      unit: 'ng/dL',
-      referenceRange: '0.82 – 1.77 ng/dL',
-      referenceLow: 0.82,
-      referenceHigh: 1.77,
-      status: 'within_range',
-      ocrConfidence: 0.95,
-      userVerified: true,
-      explanation: 'Active circulating thyroid hormone helping cells produce energy.',
-      timelineConnection: 'Supports baseline metabolism across cycle phases.',
     },
   ],
-
   glucose_sugar: [
     {
-      testName: 'Fasting Blood Sugar (Glucose)',
-      resultValue: '92',
-      resultNumeric: 92,
+      testName: 'Fasting Blood Glucose',
+      resultValue: '94.0',
+      resultNumeric: 94.0,
       unit: 'mg/dL',
       referenceRange: '70 – 99 mg/dL',
       referenceLow: 70,
       referenceHigh: 99,
       status: 'within_range',
       ocrConfidence: 0.97,
-      userVerified: true,
-      explanation: 'Resting bloodstream sugar after an 8–10 hour overnight fast.',
-      timelineConnection: 'Connects with your food and hydration logs.',
+      userVerified: false,
+      requiresReview: false,
+      extractionMethod: 'fallback',
+      explanation: 'Measures blood sugar level after fasting.',
     },
     {
       testName: 'HbA1c',
-      resultValue: '5.4',
-      resultNumeric: 5.4,
+      resultValue: '5.3',
+      resultNumeric: 5.3,
       unit: '%',
       referenceRange: '4.0 – 5.6 %',
       referenceLow: 4.0,
       referenceHigh: 5.6,
       status: 'within_range',
-      ocrConfidence: 0.96,
-      userVerified: true,
-      explanation: 'Average 3-month blood sugar picture.',
-      timelineConnection: 'A long-term milestone in your health timeline.',
-    },
-    {
-      testName: 'Fasting Insulin',
-      resultValue: '14.2',
-      resultNumeric: 14.2,
-      unit: 'μIU/mL',
-      referenceRange: '2.6 – 24.9 μIU/mL',
-      referenceLow: 2.6,
-      referenceHigh: 24.9,
-      status: 'within_range',
-      ocrConfidence: 0.88,
-      userVerified: true,
-      explanation: 'Hormone helping glucose enter cells for energy.',
-      timelineConnection: 'Connects to your daily energy levels.',
+      ocrConfidence: 0.95,
+      userVerified: false,
+      requiresReview: false,
+      extractionMethod: 'fallback',
+      explanation: 'Estimated average blood sugar control over the past 2–3 months.',
     },
   ],
-
   lipid_cholesterol: [
     {
       testName: 'Total Cholesterol',
-      resultValue: '185',
-      resultNumeric: 185,
+      resultValue: '178.0',
+      resultNumeric: 178.0,
       unit: 'mg/dL',
       referenceRange: '< 200 mg/dL',
-      referenceLow: 100,
+      referenceLow: 0,
       referenceHigh: 200,
       status: 'within_range',
-      ocrConfidence: 0.95,
-      userVerified: true,
-      explanation: 'Total circulating fats and cholesterol particles.',
-      timelineConnection: 'Part of metabolic and heart wellness monitoring.',
-    },
-    {
-      testName: 'HDL (Good Cholesterol)',
-      resultValue: '58',
-      resultNumeric: 58,
-      unit: 'mg/dL',
-      referenceRange: '> 50 mg/dL',
-      referenceLow: 50,
-      referenceHigh: 100,
-      status: 'within_range',
-      ocrConfidence: 0.94,
-      userVerified: true,
-      explanation: 'Protective lipid carrier helping clear excess fats from blood vessels.',
-      timelineConnection: 'Supported by regular movement and heart-healthy meals.',
-    },
-    {
-      testName: 'Triglycerides',
-      resultValue: '112',
-      resultNumeric: 112,
-      unit: 'mg/dL',
-      referenceRange: '< 150 mg/dL',
-      referenceLow: 50,
-      referenceHigh: 150,
-      status: 'within_range',
-      ocrConfidence: 0.91,
-      userVerified: true,
-      explanation: 'Stored fat energy in the bloodstream.',
-      timelineConnection: 'Reflects how your body stores energy from meals.',
+      ocrConfidence: 0.96,
+      userVerified: false,
+      requiresReview: false,
+      extractionMethod: 'fallback',
+      explanation: 'Combined blood cholesterol measurement.',
     },
   ],
-
   vitamin_test: [
     {
-      testName: 'Vitamin D (25-Hydroxy)',
-      resultValue: '34.5',
-      resultNumeric: 34.5,
+      testName: 'Vitamin D (25-OH)',
+      resultValue: '28.4',
+      resultNumeric: 28.4,
       unit: 'ng/mL',
-      referenceRange: '30 – 100 ng/mL',
-      referenceLow: 30,
-      referenceHigh: 100,
-      status: 'within_range',
-      ocrConfidence: 0.97,
-      userVerified: true,
-      explanation: 'Essential nutrient and hormone precursor for immune & ovarian health.',
-      timelineConnection: 'Supports balanced mood and daily vitality.',
-    },
-    {
-      testName: 'Vitamin B12',
-      resultValue: '480',
-      resultNumeric: 480,
-      unit: 'pg/mL',
-      referenceRange: '200 – 900 pg/mL',
-      referenceLow: 200,
-      referenceHigh: 900,
-      status: 'within_range',
-      ocrConfidence: 0.93,
-      userVerified: true,
-      explanation: 'Supports red blood cell creation and nerve wellness.',
-      timelineConnection: 'Important for steady energy.',
-    },
-  ],
-
-  ultrasound: [
-    {
-      testName: 'Right Ovary Antral Follicles',
-      resultValue: '14',
-      resultNumeric: 14,
-      unit: 'follicles',
-      referenceRange: '5 – 12 follicles',
-      referenceLow: 5,
-      referenceHigh: 12,
+      referenceRange: '30.0 – 100.0 ng/mL',
+      referenceLow: 30.0,
+      referenceHigh: 100.0,
       status: 'outside_range',
-      ocrConfidence: 0.92,
-      userVerified: true,
-      explanation: 'Number of small developing egg sacs seen on ultrasound scan.',
-      timelineConnection: 'Provides visual confirmation of ovarian activity.',
-    },
-    {
-      testName: 'Left Ovary Antral Follicles',
-      resultValue: '12',
-      resultNumeric: 12,
-      unit: 'follicles',
-      referenceRange: '5 – 12 follicles',
-      referenceLow: 5,
-      referenceHigh: 12,
-      status: 'within_range',
-      ocrConfidence: 0.91,
-      userVerified: true,
-      explanation: 'Number of small developing egg sacs seen on left ovary.',
-      timelineConnection: 'Tracks alongside right ovary follicle counts.',
-    },
-    {
-      testName: 'Endometrial Thickness',
-      resultValue: '7.8',
-      resultNumeric: 7.8,
-      unit: 'mm',
-      referenceRange: '4 – 14 mm',
-      referenceLow: 4,
-      referenceHigh: 14,
-      status: 'within_range',
-      ocrConfidence: 0.95,
-      userVerified: true,
-      explanation: 'Thickness of the natural uterine lining.',
-      timelineConnection: 'Correlates with your period duration and flow intensity.',
+      ocrConfidence: 0.94,
+      userVerified: false,
+      requiresReview: true,
+      extractionMethod: 'fallback',
+      explanation: 'Hormone precursor vital for calcium homeostasis and insulin sensitivity.',
     },
   ],
-
-  blood_test: [
-    {
-      testName: 'Hemoglobin',
-      resultValue: '13.2',
-      resultNumeric: 13.2,
-      unit: 'g/dL',
-      referenceRange: '12.0 – 16.0 g/dL',
-      referenceLow: 12.0,
-      referenceHigh: 16.0,
-      status: 'within_range',
-      ocrConfidence: 0.98,
-      userVerified: true,
-      explanation: 'Oxygen-carrying protein in red blood cells.',
-      timelineConnection: 'Crucial for understanding fatigue and period flow.',
-    },
-    {
-      testName: 'Platelet Count',
-      resultValue: '265',
-      resultNumeric: 265,
-      unit: 'x10^3/μL',
-      referenceRange: '150 – 450 x10^3/μL',
-      referenceLow: 150,
-      referenceHigh: 450,
-      status: 'within_range',
-      ocrConfidence: 0.96,
-      userVerified: true,
-      explanation: 'Blood cells that assist normal clotting.',
-      timelineConnection: 'Standard blood health marker.',
-    },
-  ],
-
   other: [
     {
       testName: 'General Biomarker',
@@ -312,25 +201,23 @@ const TEMPLATE_EXTRACTIONS: Record<ReportType, ReportResultInput[]> = {
       referenceRange: 'Within lab reference',
       status: 'within_range',
       ocrConfidence: 0.85,
-      userVerified: true,
+      userVerified: false,
+      requiresReview: false,
+      extractionMethod: 'fallback',
       explanation: 'General recorded health observation from your uploaded report.',
-      timelineConnection: 'Stored in your health records.',
     },
   ],
 };
 
 class OcrService {
   /**
-   * Reads an uploaded report file and generates structured extracted results.
-   * Simulates realistic document OCR processing with confidence scoring.
+   * Reads an uploaded report file and calls the real Django PaddleOCR endpoint.
+   * If backend is offline, gracefully uses tagged fallback.
    */
   async extractReportData(
     file: File,
     preferredType: ReportType = 'hormone_test'
   ): Promise<ExtractedReportData> {
-    // Artificial 1.2s delay to simulate OCR text extraction
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-
     const todayStr = new Date().toISOString().split('T')[0];
     const rawFileName = file.name.replace(/\.[^/.]+$/, '');
     const cleanTitle =
@@ -338,11 +225,71 @@ class OcrService {
         .replace(/[-_]/g, ' ')
         .replace(/\b\w/g, (c) => c.toUpperCase()) || 'Medical Lab Report';
 
-    // Select matching template base
-    const baseResults = TEMPLATE_EXTRACTIONS[preferredType] || TEMPLATE_EXTRACTIONS.blood_test;
+    // 1. Attempt real PaddleOCR extraction via Django backend
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
 
-    // Enhance every extracted item with knowledge base and range evaluation
-    const extractedResults: ReportResultInput[] = baseResults.map((item) => {
+      if (token) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch(OCR_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        });
+
+        if (response.ok) {
+          const resJson = await response.json();
+          if (resJson.success && Array.isArray(resJson.results)) {
+            const mappedResults: ReportResultInput[] = resJson.results.map((r: any) => {
+              const kb = findTestKnowledge(r.test_name);
+              return {
+                testName: r.test_name,
+                resultValue: String(r.result_value),
+                resultNumeric: r.result_numeric,
+                unit: r.unit || '',
+                referenceRange: r.reference_range || '',
+                referenceLow: r.reference_low,
+                referenceHigh: r.reference_high,
+                status: r.status,
+                ocrConfidence: r.confidence,
+                userVerified: false, // Prominently encourage human verification
+                requiresReview: r.requires_review,
+                sourceText: r.source_text,
+                extractionMethod: r.extraction_method || 'paddleocr',
+                pageNumber: r.page_number || 1,
+                explanation: kb?.whatIsIt || r.explanation,
+                timelineConnection: kb?.timelineConnection,
+              };
+            });
+
+            return {
+              title: cleanTitle,
+              reportType: preferredType,
+              reportDate: todayStr,
+              extractedResults: mappedResults,
+              rawTextSnippet: resJson.raw_text_snippet,
+              ocrConfidenceAvg: resJson.document?.avg_confidence || 0.95,
+              engine: resJson.document?.engine || 'PaddleOCR PP-OCRv4 (ONNX)',
+              hasSelectableText: resJson.document?.has_selectable_text || false,
+              extractionMethod: resJson.document?.has_selectable_text ? 'selectable_text' : 'paddleocr',
+              requiresReview: resJson.requires_review || false,
+              disclaimer: resJson.disclaimer,
+            };
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Backend PaddleOCR endpoint unreachable, utilizing client fallback:', err);
+    }
+
+    // 2. Offline / local fallback (strictly tagged as 'fallback')
+    const baseResults = FALLBACK_TEMPLATES[preferredType] || FALLBACK_TEMPLATES.blood_test;
+    const fallbackResults: ReportResultInput[] = baseResults.map((item) => {
       const kb = findTestKnowledge(item.testName);
       const numericVal = item.resultNumeric ?? parseNumericValue(item.resultValue);
       const computedStatus = evaluateResultStatus(
@@ -355,21 +302,28 @@ class OcrService {
         ...item,
         resultNumeric: numericVal,
         status: computedStatus,
+        userVerified: false,
+        extractionMethod: 'fallback',
         explanation: kb?.whatIsIt || item.explanation,
         timelineConnection: kb?.timelineConnection || item.timelineConnection,
       };
     });
 
-    const confidenceSum = extractedResults.reduce((acc, r) => acc + (r.ocrConfidence || 0.95), 0);
-    const ocrConfidenceAvg = extractedResults.length > 0 ? confidenceSum / extractedResults.length : 0.95;
+    const confidenceSum = fallbackResults.reduce((acc, r) => acc + (r.ocrConfidence || 0.90), 0);
+    const avgConf = fallbackResults.length > 0 ? confidenceSum / fallbackResults.length : 0.90;
 
     return {
       title: cleanTitle,
       reportType: preferredType,
       reportDate: todayStr,
-      extractedResults,
-      rawTextSnippet: `Scanned ${file.name} (${Math.round(file.size / 1024)} KB) - Extracted ${extractedResults.length} test results.`,
-      ocrConfidenceAvg,
+      extractedResults: fallbackResults,
+      rawTextSnippet: `Offline Mode — Processed ${file.name} (${Math.round(file.size / 1024)} KB).`,
+      ocrConfidenceAvg: avgConf,
+      engine: 'Client Local Engine (Fallback)',
+      hasSelectableText: false,
+      extractionMethod: 'fallback',
+      requiresReview: true,
+      disclaimer: 'OvaSense local fallback. Please connect the Django backend for full PaddleOCR pipeline.',
     };
   }
 }
