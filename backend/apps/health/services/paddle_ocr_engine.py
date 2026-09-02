@@ -16,10 +16,18 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, List, Optional, Tuple
 
-import fitz  # PyMuPDF
+try:
+    import fitz  # PyMuPDF
+except ImportError:
+    fitz = None
+
 import numpy as np
 from PIL import Image
-from rapidocr_onnxruntime import RapidOCR
+
+try:
+    from rapidocr_onnxruntime import RapidOCR
+except ImportError:
+    RapidOCR = None
 
 logger = logging.getLogger(__name__)
 
@@ -69,8 +77,9 @@ class PaddleOcrEngine:
     def _ensure_loaded(self) -> None:
         if not self._initialized:
             with self._lock:
-                if not self._initialized:
                     try:
+                        if RapidOCR is None:
+                            raise RuntimeError("rapidocr_onnxruntime is not installed. Please install rapidocr-onnxruntime.")
                         logger.info("Initializing PaddleOCR (RapidOCR ONNX engine)...")
                         self._engine = RapidOCR()
                         self._initialized = True
@@ -181,6 +190,8 @@ class PaddleOcrEngine:
         2. If digital text layer is rich, extracts text blocks directly.
         3. If scanned / image-based, renders pages at 300 DPI and runs PaddleOCR.
         """
+        if fitz is None:
+            raise RuntimeError("PyMuPDF (fitz) is not installed. Please install pymupdf to enable PDF OCR extraction.")
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
         total_pages = len(doc)
         all_blocks: List[OcrTextBlock] = []

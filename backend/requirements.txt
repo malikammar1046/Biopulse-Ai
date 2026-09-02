@@ -10,3 +10,7 @@ shap>=0.45.0
 opencv-python-headless>=4.9.0
 pytesseract>=0.3.10
 Pillow>=10.2.0
+PyJWT>=2.8.0
+pymupdf>=1.23.8
+pypdf>=3.17.0
+rapidocr-onnxruntime>=1.2.0
