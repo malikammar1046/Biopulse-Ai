@@ -1,10 +1,12 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Sparkles,
   ArrowRight,
   AlertCircle,
   Loader2,
   RefreshCw,
+  ClipboardCheck,
 } from 'lucide-react';
 import type { DigitalTwinInsight } from '../../types/dashboard';
 import { useUserHealth } from '../../context/UserHealthContext';
@@ -25,6 +27,7 @@ export const DigitalTwinInsightCard: React.FC<DigitalTwinProps> = ({
   insight,
   onOpenChat,
 }) => {
+  const navigate = useNavigate();
   const {
     mlAssessment,
     mlAssessmentLoading,
@@ -257,15 +260,26 @@ export const DigitalTwinInsightCard: React.FC<DigitalTwinProps> = ({
 
       {/* ── 11. Action Button & Clinical Non-Diagnostic Disclaimer ────────── */}
       <div className="relative z-10 pt-4 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={() => onOpenChat(insight.suggestedChatPrompt || 'Explain my PCOS screening assessment and key factors')}
-          className="w-full sm:w-auto px-5 py-2.5 rounded-2xl font-sans font-bold text-xs text-white bg-gradient-to-r from-[#8E3EAF] to-[#E87084] hover:brightness-110 shadow-lg shadow-purple-950/40 transition-all flex items-center justify-center gap-2 cursor-pointer group"
-        >
-          <Sparkles className="w-4 h-4 text-white" />
-          <span>Discuss with AI Twin</span>
-          <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+          <button
+            type="button"
+            onClick={() => onOpenChat(insight.suggestedChatPrompt || 'Explain my PCOS screening assessment and key factors')}
+            className="px-5 py-2.5 rounded-2xl font-sans font-bold text-xs text-white bg-gradient-to-r from-[#8E3EAF] to-[#E87084] hover:brightness-110 shadow-lg shadow-purple-950/40 transition-all flex items-center justify-center gap-2 cursor-pointer group"
+          >
+            <Sparkles className="w-4 h-4 text-white" />
+            <span>Discuss with OvaSense AI</span>
+            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate('/app/assessment')}
+            className="px-4 py-2.5 rounded-2xl font-sans font-bold text-xs text-[#E3D5EE] hover:text-white bg-white/10 hover:bg-white/15 border border-white/10 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <ClipboardCheck className="w-4 h-4 text-[#FDA4AF]" />
+            <span>Update Questionnaire</span>
+          </button>
+        </div>
 
         <span className="text-[10px] font-mono text-[#A797BD] text-center sm:text-right max-w-[220px]">
           {isML ? 'Trained ML Screening · Non-Diagnostic' : 'Clinical Screening Aid · Non-Diagnostic'}

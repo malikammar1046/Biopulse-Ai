@@ -15,6 +15,7 @@ import {
   Settings,
   LogOut,
   Sparkles,
+  ClipboardCheck,
 } from 'lucide-react';
 import { ROUTES } from '../../constants/routes';
 import { Logo } from '../brand/Logo';
@@ -35,7 +36,8 @@ export const AppSidebar: React.FC = () => {
   const mainNavItems = [
     { label: 'Overview', path: ROUTES.APP.DASHBOARD, icon: LayoutDashboard },
     { label: 'Master Health Hub', path: ROUTES.APP.HUB, icon: LayoutGrid },
-    { label: 'AI Twin', path: ROUTES.APP.AI_TWIN, icon: Sparkles },
+    { label: 'OvaSense AI', path: ROUTES.APP.CHAT, icon: Sparkles },
+    { label: 'Assessment', path: ROUTES.APP.ASSESSMENT, icon: ClipboardCheck },
     { label: 'Health Timeline', path: ROUTES.APP.TIMELINE, icon: GitBranch },
     { label: 'Your Cycle', path: ROUTES.APP.CYCLE, icon: Calendar },
     { label: 'Symptoms', path: ROUTES.APP.SYMPTOMS, icon: Activity },

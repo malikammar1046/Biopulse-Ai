@@ -2,9 +2,21 @@
 OvaSense — LLM Provider Abstraction Layer.
 
 Defines the abstract interface and concrete implementations for conversational
-intelligence providers (Google Gemini, Groq, OpenAI, and OfflineDeterministicProvider).
-Keeps provider configuration strictly in backend environment variables with zero
-vendor lock-in.
+intelligence providers:
+  - MedGemmaProvider (Primary: local/self-hosted MedGemma 4B inference for privacy & zero cloud cost)
+  - GeminiProvider (Optional cloud: Google Gemini)
+  - GroqProvider (Optional cloud: Llama 3.3 via Groq)
+  - OpenAIProvider (Optional cloud: GPT-4o-mini)
+  - OfflineDeterministicProvider (Permitted ONLY for automated tests & offline dev)
+
+STRICT ARCHITECTURAL INVARIANTS:
+1. MedGemma is the primary provider, running locally to keep patient health data on our infrastructure.
+2. OfflineDeterministicProvider must NEVER be presented to the patient as real AI and must NEVER
+   silently replace a failed production LLM request.
+3. OvaSense AI and Digital Twin are separate systems. OvaSense AI is the conversational interface
+   that explains information; the Digital Twin is the structured rule-based representation.
+4. The LLM is NOT the medical source of truth. Verified records, calculations, ML outputs, and
+   Digital Twin observations remain authoritative.
 """
 
 from __future__ import annotations
@@ -21,6 +33,11 @@ from typing import Any, List, Optional
 logger = logging.getLogger(__name__)
 
 
+class LLMProviderError(Exception):
+    """Raised when an LLM provider request fails, times out, or cannot be fulfilled."""
+    pass
+
+
 @dataclass
 class LLMResponse:
     """Structured response returned by any LLM provider."""
@@ -29,7 +46,7 @@ class LLMResponse:
     used_context: List[str] = field(default_factory=list)
     needs_clinician: bool = False
     safety_level: str = "normal"  # "normal" | "caution" | "urgent"
-    model_name: str = "offline-fallback"
+    model_name: str = "medgemma:4b"
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -50,12 +67,157 @@ class LLMProvider(ABC):
         raise NotImplementedError
 
 
+class MedGemmaProvider(LLMProvider):
+    """
+    Primary Provider: Local/Self-Hosted MedGemma Conversational Intelligence.
+
+    Connects to a local inference runtime (e.g. Ollama or vLLM running medgemma:4b or
+    google/medgemma-4b-it via an OpenAI-compatible REST interface).
+
+    Privacy & Cost Guarantees:
+      - 100% on-premise / local inference: patient health context never leaves the host.
+      - Zero recurring per-token cloud costs.
+      - Grounded in Google DeepMind's specialized MedGemma medical foundation model.
+    """
+
+    def __init__(
+        self,
+        base_url: str = "http://127.0.0.1:11434/v1",
+        model_name: str = "medgemma:4b",
+        api_key: str = "local",
+        timeout: int = 25,
+    ) -> None:
+        self.base_url = base_url.rstrip("/")
+        self.model_name = model_name
+        self.api_key = api_key
+        self.timeout = timeout
+
+    def generate_chat_response(
+        self,
+        system_instruction: str,
+        user_message: str,
+        health_context: str,
+        conversation_history: Optional[List[dict[str, str]]] = None,
+    ) -> LLMResponse:
+        url = f"{self.base_url}/chat/completions"
+
+        format_prompt = (
+            f"{system_instruction}\n\n"
+            "CRITICAL OUTPUT REQUIREMENT:\n"
+            "You must respond strictly with a valid JSON object matching this schema:\n"
+            "{\n"
+            '  "answer": "string containing your conversational explanation",\n'
+            '  "confidence": "high" | "moderate" | "limited",\n'
+            '  "used_context": ["profile", "cycle", "symptoms", "reports", "digital_twin", "ml_screening"],\n'
+            '  "needs_clinician": boolean,\n'
+            '  "safety_level": "normal" | "caution" | "urgent"\n'
+            "}"
+        )
+
+        messages: List[dict[str, str]] = [
+            {"role": "system", "content": format_prompt}
+        ]
+
+        if conversation_history:
+            for item in conversation_history[-6:]:
+                role = "user" if item.get("sender") == "user" else "assistant"
+                messages.append({"role": role, "content": item.get("text", "")})
+
+        prompt_with_context = (
+            f"--- MINIMAL PATIENT HEALTH CONTEXT ---\n{health_context}\n\n"
+            f"--- PATIENT'S QUESTION ---\n{user_message}"
+        )
+        messages.append({"role": "user", "content": prompt_with_context})
+
+        request_body = {
+            "model": self.model_name,
+            "messages": messages,
+            "temperature": 0.2,
+            "max_tokens": 850,
+            "response_format": {"type": "json_object"},
+        }
+
+        try:
+            req_data = json.dumps(request_body).encode("utf-8")
+            req = urllib.request.Request(
+                url,
+                data=req_data,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {self.api_key}",
+                },
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                resp_json = json.loads(resp.read().decode("utf-8"))
+
+            choices = resp_json.get("choices", [])
+            if not choices:
+                raise LLMProviderError("MedGemma local engine returned an empty response choices list.")
+
+            content = choices[0].get("message", {}).get("content", "").strip()
+            if not content:
+                raise LLMProviderError("MedGemma local engine returned empty message content.")
+
+            # Parse JSON output from model
+            parsed = self._safe_parse_json(content)
+            return LLMResponse(
+                answer=parsed.get("answer", content),
+                confidence=parsed.get("confidence", "high"),
+                used_context=parsed.get("used_context", []),
+                needs_clinician=bool(parsed.get("needs_clinician", False)),
+                safety_level=parsed.get("safety_level", "normal"),
+                model_name=self.model_name,
+            )
+
+        except urllib.error.URLError as exc:
+            logger.error("MedGemma local inference server connection error: %s", exc)
+            raise LLMProviderError(
+                f"MedGemma local inference server is unreachable at {self.base_url}. "
+                "Ensure Ollama/vLLM is running locally."
+            ) from exc
+        except json.JSONDecodeError as exc:
+            logger.error("Failed to decode response from MedGemma server: %s", exc)
+            raise LLMProviderError("Invalid JSON received from MedGemma local engine.") from exc
+        except LLMProviderError:
+            raise
+        except Exception as exc:
+            logger.error("Unexpected failure in MedGemma provider: %s", exc, exc_info=True)
+            raise LLMProviderError(f"MedGemma provider encountered an error: {exc}") from exc
+
+    def _safe_parse_json(self, content: str) -> dict[str, Any]:
+        """Tolerant parser that extracts JSON if wrapped in markdown code blocks."""
+        cleaned = content.strip()
+        if cleaned.startswith("```"):
+            lines = cleaned.splitlines()
+            if lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines and lines[-1].strip() == "```":
+                lines = lines[:-1]
+            cleaned = "\n".join(lines).strip()
+
+        try:
+            return json.loads(cleaned)
+        except Exception:
+            # Fallback wrapper if model output raw text
+            return {
+                "answer": content,
+                "confidence": "moderate",
+                "used_context": [],
+                "needs_clinician": False,
+                "safety_level": "normal",
+            }
+
+
 class OfflineDeterministicProvider(LLMProvider):
     """
-    Offline deterministic provider used when no external API key is set,
-    in air-gapped deployments, or during automated test suites.
-    Never fabricates data or diagnoses diseases; uses patient context and
-    verified lab values strictly.
+    Offline Deterministic Provider.
+
+    STRICT CONSTRAINTS:
+    - Permitted ONLY for automated test suites and air-gapped development environments.
+    - Must NEVER be presented to the patient as real AI.
+    - Must NEVER silently replace a failed production LLM request.
+    - Generates canned rule-based responses strictly adhering to safety tiers.
     """
 
     def generate_chat_response(
@@ -85,7 +247,7 @@ class OfflineDeterministicProvider(LLMProvider):
                 used_context=used,
                 needs_clinician=True,
                 safety_level="normal",
-                model_name="offline-deterministic",
+                model_name="offline-deterministic-testing",
             )
 
         # 2. Screening, Risk score, or TreeSHAP factors
@@ -106,7 +268,7 @@ class OfflineDeterministicProvider(LLMProvider):
                 used_context=used,
                 needs_clinician=False,
                 safety_level="normal",
-                model_name="offline-deterministic",
+                model_name="offline-deterministic-testing",
             )
 
         # 3. Medical report / lab tests / Vitamin D / LH / Testosterone
@@ -138,7 +300,7 @@ class OfflineDeterministicProvider(LLMProvider):
                 used_context=used,
                 needs_clinician=True,
                 safety_level="normal",
-                model_name="offline-deterministic",
+                model_name="offline-deterministic-testing",
             )
 
         # 4. Cycle and Period questions
@@ -156,7 +318,7 @@ class OfflineDeterministicProvider(LLMProvider):
                 used_context=used,
                 needs_clinician=False,
                 safety_level="normal",
-                model_name="offline-deterministic",
+                model_name="offline-deterministic-testing",
             )
 
         # 5. Symptoms & trend questions
@@ -173,29 +335,29 @@ class OfflineDeterministicProvider(LLMProvider):
                 used_context=used,
                 needs_clinician=False,
                 safety_level="normal",
-                model_name="offline-deterministic",
+                model_name="offline-deterministic-testing",
             )
 
         # Default helpful assistant response
         used.extend(["profile", "cycle"])
         return LLMResponse(
             answer=(
-                "I am your OvaSense AI Digital Twin assistant. I can help explain your cycle phases, interpret your logged symptoms, "
-                "summarize verified laboratory report findings against stated lab ranges, and help prepare questions for your healthcare provider. "
-                "What would you like to explore today?"
+                "I am OvaSense AI, your educational health companion. (Running in offline deterministic test mode). "
+                "I can explain your cycle phases, interpret logged symptoms, summarize verified laboratory report findings "
+                "against stated lab ranges, and help prepare questions for your healthcare provider."
             ),
             confidence="moderate",
             used_context=used,
             needs_clinician=False,
             safety_level="normal",
-            model_name="offline-deterministic",
+            model_name="offline-deterministic-testing",
         )
 
 
 class GeminiProvider(LLMProvider):
-    """Google Gemini LLM provider using direct REST API."""
+    """Google Gemini LLM provider using direct REST API (Optional Cloud Fallback)."""
 
-    def __init__(self, api_key: str, model_name: str = "gemini-1.5-flash") -> None:
+    def __init__(self, api_key: str, model_name: str = "gemini-2.5-flash") -> None:
         self.api_key = api_key
         self.model_name = model_name
 
@@ -211,16 +373,13 @@ class GeminiProvider(LLMProvider):
             f"?key={self.api_key}"
         )
 
-        # Build contents payload
         contents: List[dict[str, Any]] = []
 
-        # Add recent conversation history if provided
         if conversation_history:
             for item in conversation_history[-6:]:
                 role = "user" if item.get("sender") == "user" else "model"
                 contents.append({"role": role, "parts": [{"text": item.get("text", "")}]})
 
-        # Final prompt combines health context and current user message
         prompt_with_context = (
             f"--- RELEVANT PATIENT HEALTH CONTEXT ---\n{health_context}\n\n"
             f"--- PATIENT'S QUESTION ---\n{user_message}"
@@ -245,7 +404,7 @@ class GeminiProvider(LLMProvider):
                 headers={"Content-Type": "application/json"},
                 method="POST",
             )
-            with urllib.request.urlopen(req, timeout=12) as resp:
+            with urllib.request.urlopen(req, timeout=15) as resp:
                 resp_json = json.loads(resp.read().decode("utf-8"))
 
             candidates = resp_json.get("candidates", [])
@@ -260,17 +419,14 @@ class GeminiProvider(LLMProvider):
                     safety_level=parsed.get("safety_level", "normal"),
                     model_name=self.model_name,
                 )
+            raise LLMProviderError("Empty candidates list returned by Gemini.")
         except Exception as exc:
-            logger.warning("Gemini LLM call failed: %s; falling back to deterministic provider", exc)
-
-        # Graceful fallback
-        return OfflineDeterministicProvider().generate_chat_response(
-            system_instruction, user_message, health_context, conversation_history
-        )
+            logger.error("Gemini LLM call failed: %s", exc)
+            raise LLMProviderError(f"Gemini LLM provider error: {exc}") from exc
 
 
 class GroqProvider(LLMProvider):
-    """Groq Cloud LLM provider (OpenAI-compatible REST interface)."""
+    """Groq Cloud LLM provider (Optional Cloud Fallback)."""
 
     def __init__(self, api_key: str, model_name: str = "llama-3.3-70b-versatile") -> None:
         self.api_key = api_key
@@ -319,7 +475,7 @@ class GroqProvider(LLMProvider):
                 },
                 method="POST",
             )
-            with urllib.request.urlopen(req, timeout=12) as resp:
+            with urllib.request.urlopen(req, timeout=15) as resp:
                 resp_json = json.loads(resp.read().decode("utf-8"))
 
             choices = resp_json.get("choices", [])
@@ -334,16 +490,14 @@ class GroqProvider(LLMProvider):
                     safety_level=parsed.get("safety_level", "normal"),
                     model_name=self.model_name,
                 )
+            raise LLMProviderError("Empty choices list returned by Groq.")
         except Exception as exc:
-            logger.warning("Groq LLM call failed: %s; falling back to deterministic provider", exc)
-
-        return OfflineDeterministicProvider().generate_chat_response(
-            system_instruction, user_message, health_context, conversation_history
-        )
+            logger.error("Groq LLM call failed: %s", exc)
+            raise LLMProviderError(f"Groq LLM provider error: {exc}") from exc
 
 
 class OpenAIProvider(LLMProvider):
-    """OpenAI / OpenRouter compatible provider."""
+    """OpenAI / OpenRouter provider (Optional Cloud Fallback)."""
 
     def __init__(self, api_key: str, model_name: str = "gpt-4o-mini") -> None:
         self.api_key = api_key
@@ -392,7 +546,7 @@ class OpenAIProvider(LLMProvider):
                 },
                 method="POST",
             )
-            with urllib.request.urlopen(req, timeout=12) as resp:
+            with urllib.request.urlopen(req, timeout=15) as resp:
                 resp_json = json.loads(resp.read().decode("utf-8"))
 
             choices = resp_json.get("choices", [])
@@ -407,49 +561,60 @@ class OpenAIProvider(LLMProvider):
                     safety_level=parsed.get("safety_level", "normal"),
                     model_name=self.model_name,
                 )
+            raise LLMProviderError("Empty choices returned by OpenAI.")
         except Exception as exc:
-            logger.warning("OpenAI LLM call failed: %s; falling back to deterministic provider", exc)
-
-        return OfflineDeterministicProvider().generate_chat_response(
-            system_instruction, user_message, health_context, conversation_history
-        )
+            logger.error("OpenAI LLM call failed: %s", exc)
+            raise LLMProviderError(f"OpenAI LLM provider error: {exc}") from exc
 
 
 def get_llm_provider() -> LLMProvider:
     """
-    Factory function: returns the configured LLM provider according to
-    environment variables. Defaults to OfflineDeterministicProvider if no key is set.
+    Factory function: returns the configured LLM provider according to environment variables.
+
+    Defaults to MedGemmaProvider (local self-hosted inference) to guarantee patient privacy
+    and minimize recurring API costs.
+
+    OfflineDeterministicProvider is returned ONLY when LLM_PROVIDER is explicitly set to 'offline'.
+    It must NEVER silently replace MedGemma or cloud providers.
     """
-    provider_name = os.environ.get("LLM_PROVIDER", "").lower().strip()
-    api_key = os.environ.get("LLM_API_KEY", "").strip()
+    provider_name = os.environ.get("LLM_PROVIDER", "medgemma").lower().strip()
 
-    if not api_key:
-        # Check specific provider keys if LLM_API_KEY is not set
-        if provider_name == "gemini" or not provider_name:
-            api_key = os.environ.get("GEMINI_API_KEY", "").strip()
-            if api_key:
-                provider_name = "gemini"
-
-        if not api_key and (provider_name == "groq" or not provider_name):
-            api_key = os.environ.get("GROQ_API_KEY", "").strip()
-            if api_key:
-                provider_name = "groq"
-
-        if not api_key and (provider_name == "openai" or not provider_name):
-            api_key = os.environ.get("OPENAI_API_KEY", "").strip()
-            if api_key:
-                provider_name = "openai"
-
-    if not api_key:
+    # 1. Offline Deterministic (Strictly for automated tests and offline sandbox dev)
+    if provider_name == "offline":
         return OfflineDeterministicProvider()
 
+    # 2. MedGemma (Primary Self-Hosted Provider)
+    if provider_name == "medgemma" or not provider_name:
+        base_url = os.environ.get("MEDGEMMA_BASE_URL", "http://127.0.0.1:11434/v1").strip()
+        model_name = os.environ.get("MEDGEMMA_MODEL", "medgemma:4b").strip()
+        api_key = os.environ.get("MEDGEMMA_API_KEY", "local").strip()
+        timeout = int(os.environ.get("MEDGEMMA_TIMEOUT_SECONDS", "25"))
+        return MedGemmaProvider(
+            base_url=base_url,
+            model_name=model_name,
+            api_key=api_key,
+            timeout=timeout,
+        )
+
+    # 3. Optional Cloud Providers (Preserved behind LLMProvider abstraction)
     model_name = os.environ.get("LLM_MODEL", "").strip()
 
-    if provider_name == "groq":
-        return GroqProvider(api_key, model_name=model_name or "llama-3.3-70b-versatile")
-    elif provider_name == "openai":
-        return OpenAIProvider(api_key, model_name=model_name or "gpt-4o-mini")
-    elif provider_name == "gemini" or not provider_name:
-        return GeminiProvider(api_key, model_name=model_name or "gemini-1.5-flash")
+    if provider_name == "gemini":
+        api_key = os.environ.get("LLM_API_KEY") or os.environ.get("GEMINI_API_KEY", "").strip()
+        if not api_key:
+            raise LLMProviderError("LLM_PROVIDER is set to 'gemini' but no GEMINI_API_KEY is configured.")
+        return GeminiProvider(api_key, model_name=model_name or "gemini-2.5-flash")
 
-    return OfflineDeterministicProvider()
+    if provider_name == "groq":
+        api_key = os.environ.get("LLM_API_KEY") or os.environ.get("GROQ_API_KEY", "").strip()
+        if not api_key:
+            raise LLMProviderError("LLM_PROVIDER is set to 'groq' but no GROQ_API_KEY is configured.")
+        return GroqProvider(api_key, model_name=model_name or "llama-3.3-70b-versatile")
+
+    if provider_name == "openai":
+        api_key = os.environ.get("LLM_API_KEY") or os.environ.get("OPENAI_API_KEY", "").strip()
+        if not api_key:
+            raise LLMProviderError("LLM_PROVIDER is set to 'openai' but no OPENAI_API_KEY is configured.")
+        return OpenAIProvider(api_key, model_name=model_name or "gpt-4o-mini")
+
+    raise LLMProviderError(f"Unsupported LLM_PROVIDER configured: '{provider_name}'.")

@@ -202,6 +202,7 @@ export interface ChatContextUsage {
   diet: boolean;
   fitness: boolean;
   medications: boolean;
+  digital_twin?: boolean;
   ml_screening: boolean;
 }
 
@@ -212,6 +213,14 @@ export interface ChatMessagePayload {
     sender: 'user' | 'ai';
     text: string;
   }>;
+  client_telemetry?: Record<string, any>;
+}
+
+export type ChatSafetyLevel = 'normal' | 'caution' | 'urgent';
+
+export interface ChatMessage {
+  sender: 'user' | 'ai';
+  text: string;
 }
 
 export interface ChatResponsePayload {
@@ -219,7 +228,7 @@ export interface ChatResponsePayload {
   message: string;
   conversation_id: string;
   context_used: ChatContextUsage;
-  safety_level: 'normal' | 'caution' | 'urgent';
+  safety_level: ChatSafetyLevel;
   needs_clinician: boolean;
   model?: string;
 }

@@ -3,6 +3,8 @@ OvaSense — Conversational Medical Safety & Guardrails.
 
 Enforces emergency symptom escalation, prompt injection prevention,
 and strict non-diagnostic communication boundaries.
+Prevents speculative OCR extraction or ML screening probabilities from being
+treated as confirmed clinical diagnoses.
 """
 
 from __future__ import annotations
@@ -77,12 +79,13 @@ class SafetyGuardrails:
     @staticmethod
     def sanitize_llm_response(text: str) -> Tuple[str, str]:
         """
-        Sanitizes the generated response to eliminate any inadvertent diagnostic pronouncements
-        or medication adjustments. Returns (cleaned_text, safety_level).
+        Sanitizes the generated response to eliminate any inadvertent diagnostic pronouncements,
+        medication adjustments, or equating ML screening / speculative OCR with confirmed diagnoses.
+        Returns (cleaned_text, safety_level).
         """
         cleaned = text
 
-        # Reframe assertive diagnostic claims
+        # 1. Reframe assertive diagnostic claims
         cleaned = re.sub(
             r"\byou\s+(?:definitely|certainly)\s+have\s+pcos\b",
             "some of your recorded features can be associated with PCOS patterns",
@@ -96,7 +99,23 @@ class SafetyGuardrails:
             flags=re.IGNORECASE,
         )
 
-        # Block any suggestions to alter medication dosage
+        # 2. Prevent treating ML screening probability or model output as confirmed diagnosis
+        cleaned = re.sub(
+            r"\b(?:the\s+model|the\s+screening\s+score|your\s+score)\s+(?:confirms|diagnoses|proves)\s+(?:that\s+you\s+have\s+)?pcos\b",
+            "the OvaSense screening model identifies statistical risk indicators for discussion with your doctor",
+            cleaned,
+            flags=re.IGNORECASE,
+        )
+
+        # 3. Prevent treating speculative OCR extraction as verified clinical fact
+        cleaned = re.sub(
+            r"\b(?:the\s+scanned\s+report|the\s+ocr\s+result)\s+(?:confirms|proves)\b",
+            "the scanned document shows potential values awaiting your verification",
+            cleaned,
+            flags=re.IGNORECASE,
+        )
+
+        # 4. Block any suggestions to alter medication dosage
         cleaned = re.sub(
             r"\b(?:increase|decrease|stop|change)\s+your\s+(?:medication|dosage|dose|prescription)\b",
             "discuss any adjustments to your medication or dosage with your prescribing physician",

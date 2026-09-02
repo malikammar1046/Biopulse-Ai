@@ -32,10 +32,10 @@ export const FloatingOvaSenseAI: React.FC = () => {
     typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `conv_${Date.now()}`
   );
 
-  const initialGreeting = `Hello ${userProfile.fullName ? userProfile.fullName.split(' ')[0] : 'there'}! I'm your OvaSense AI Digital Twin. ${
+  const initialGreeting = `Hello ${userProfile.fullName ? userProfile.fullName.split(' ')[0] : 'there'}! I'm OvaSense AI, your health companion. ${
     snapshotMetrics.cycleDay > 0
-      ? `You are currently on Day ${snapshotMetrics.cycleDay} (${snapshotMetrics.phaseName}).`
-      : 'I am here to help you understand your cycle, symptoms, verified lab reports, and ML health assessments.'
+      ? `Observations from your Digital Twin indicate you are currently on Day ${snapshotMetrics.cycleDay} (${snapshotMetrics.phaseName}).`
+      : 'I am here to help you understand your cycle, symptoms, verified lab reports, and ML screening patterns based on observations from your Digital Twin.'
   } How can I assist you today?`;
 
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -91,7 +91,8 @@ export const FloatingOvaSenseAI: React.FC = () => {
       const resp = await sendChatMessage(
         text.trim(),
         conversationId.current,
-        historyPayload
+        historyPayload,
+        snapshotMetrics
       );
 
       if (resp && resp.success) {
@@ -107,6 +108,17 @@ export const FloatingOvaSenseAI: React.FC = () => {
           needsClinician: resp.needs_clinician,
         };
         setMessages((prev) => [...prev, aiMsg]);
+      } else if (resp && resp.message) {
+        // Structured error notification from server (e.g. MedGemma offline 503)
+        const offlineMsg: ChatMessage = {
+          id: `ai_${Date.now()}`,
+          sender: 'ai',
+          text: resp.message,
+          timestamp: 'Just now',
+          safetyLevel: 'caution',
+          needsClinician: false,
+        };
+        setMessages((prev) => [...prev, offlineMsg]);
       } else {
         const errorMsg: ChatMessage = {
           id: `err_${Date.now()}`,

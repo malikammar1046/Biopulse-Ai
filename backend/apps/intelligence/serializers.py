@@ -65,6 +65,10 @@ class ChatMessageRequestSerializer(serializers.Serializer):
         default=list,
         allow_empty=True,
     )
+    client_telemetry = serializers.DictField(
+        required=False,
+        default=dict,
+    )
 
 
 class ChatMessageResponseSerializer(serializers.Serializer):

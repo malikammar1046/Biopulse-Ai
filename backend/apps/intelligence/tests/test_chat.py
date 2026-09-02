@@ -12,6 +12,8 @@ import json
 import unittest
 from unittest.mock import MagicMock, patch
 
+import os
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework.test import APIClient
@@ -19,6 +21,7 @@ from rest_framework.test import APIClient
 from apps.intelligence.services.health_context_builder import HealthContextBuilder
 from apps.intelligence.services.llm_provider import (
     LLMResponse,
+    LLMProviderError,
     OfflineDeterministicProvider,
     get_llm_provider,
 )
@@ -37,6 +40,14 @@ class ChatApiTests(TestCase):
             id=999888,
         )
         self.patient_uuid = "00000000-0000-0000-0000-000000000001"
+        self.prev_provider = os.environ.get("LLM_PROVIDER")
+        os.environ["LLM_PROVIDER"] = "offline"
+
+    def tearDown(self):
+        if self.prev_provider is not None:
+            os.environ["LLM_PROVIDER"] = self.prev_provider
+        else:
+            os.environ.pop("LLM_PROVIDER", None)
 
     # 1. Authenticated chat works
     def test_authenticated_chat_success(self):
@@ -269,3 +280,25 @@ class ChatApiTests(TestCase):
         self.assertNotIn("api_key", raw_str)
         self.assertNotIn("secret", raw_str)
         self.assertNotIn("bearer", raw_str)
+
+    # 18. LLM provider failure returns 503 and never silently falls back to offline provider
+    def test_llm_failure_returns_503_without_silent_fallback(self):
+        self.client.force_authenticate(user=self.test_user)
+        with patch("apps.intelligence.views.get_llm_provider") as mock_get_provider:
+            mock_provider = MagicMock()
+            mock_provider.model_name = "medgemma:4b"
+            mock_provider.generate_chat_response.side_effect = LLMProviderError(
+                "MedGemma local inference server is unreachable at http://127.0.0.1:11434/v1"
+            )
+            mock_get_provider.return_value = mock_provider
+
+            response = self.client.post(
+                "/api/v1/intelligence/chat/",
+                {"message": "What does my lab report mean?"},
+                format="json",
+            )
+            self.assertEqual(response.status_code, 503)
+            data = response.json()
+            self.assertFalse(data["success"])
+            self.assertIn("offline or unreachable", data["message"])
+            self.assertEqual(data["model"], "medgemma:4b")

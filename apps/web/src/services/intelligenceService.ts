@@ -374,7 +374,8 @@ export function getCompletenessColor(pct: number): string {
 export async function sendChatMessage(
   message: string,
   conversationId?: string,
-  conversationHistory?: Array<{ sender: 'user' | 'ai'; text: string }>
+  conversationHistory?: Array<{ sender: 'user' | 'ai'; text: string }>,
+  clientTelemetry?: Record<string, any>
 ): Promise<import('../types/intelligence').ChatResponsePayload | null> {
   const token = await getAccessToken();
   if (!token) {
@@ -386,6 +387,7 @@ export async function sendChatMessage(
     message,
     conversation_id: conversationId || '',
     conversation_history: conversationHistory || [],
+    client_telemetry: clientTelemetry || {},
   };
 
   try {
@@ -399,15 +401,20 @@ export async function sendChatMessage(
         },
         body: JSON.stringify(payload),
       },
-      18000
+      25000
     );
 
-    if (!response.ok) {
-      console.warn(`sendChatMessage failed with status ${response.status}`);
-      return null;
+    // If 200 OK or 503 Service Unavailable with a structured payload, parse JSON
+    if (response.ok || response.status === 503) {
+      try {
+        return (await response.json()) as import('../types/intelligence').ChatResponsePayload;
+      } catch {
+        // Continue to fallback
+      }
     }
 
-    return (await response.json()) as import('../types/intelligence').ChatResponsePayload;
+    console.warn(`sendChatMessage failed with status ${response.status}`);
+    return null;
   } catch (err) {
     console.error('sendChatMessage network error:', err);
     return null;

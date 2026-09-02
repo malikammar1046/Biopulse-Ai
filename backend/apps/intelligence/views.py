@@ -8,6 +8,8 @@ Endpoints:
 """
 
 import logging
+import time
+import uuid
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -151,7 +153,7 @@ from apps.intelligence.serializers import (
     ChatMessageResponseSerializer,
 )
 from apps.intelligence.services.health_context_builder import HealthContextBuilder
-from apps.intelligence.services.llm_provider import get_llm_provider
+from apps.intelligence.services.llm_provider import get_llm_provider, LLMProviderError
 from apps.intelligence.services.safety_guardrails import SafetyGuardrails
 
 
@@ -159,10 +161,11 @@ class IntelligenceChatView(APIView):
     """
     POST /api/v1/intelligence/chat/
 
-    Authenticated conversational intelligence endpoint.
+    Authenticated conversational intelligence endpoint powered by MedGemma.
     Derives patient UUID strictly from the verified Supabase JWT (request.user.id).
     Runs safety checks, aggregates patient context across trust tiers,
     and returns a structured, non-diagnostic response.
+    Never silently falls back to offline mock on production failure.
     """
     authentication_classes = [SupabaseAuthentication]
 
@@ -177,6 +180,7 @@ class IntelligenceChatView(APIView):
         user_message = req_serializer.validated_data["message"]
         conversation_id = req_serializer.validated_data.get("conversation_id") or str(uuid.uuid4())
         conversation_history = req_serializer.validated_data.get("conversation_history", [])
+        client_telemetry = req_serializer.validated_data.get("client_telemetry", {})
 
         t0 = time.perf_counter()
 
@@ -196,6 +200,7 @@ class IntelligenceChatView(APIView):
                     "diet": False,
                     "fitness": False,
                     "medications": False,
+                    "digital_twin": False,
                     "ml_screening": False,
                 },
                 "safety_level": "urgent",
@@ -220,6 +225,7 @@ class IntelligenceChatView(APIView):
                     "diet": False,
                     "fitness": False,
                     "medications": False,
+                    "digital_twin": False,
                     "ml_screening": False,
                 },
                 "safety_level": "caution",
@@ -228,23 +234,42 @@ class IntelligenceChatView(APIView):
             }
             return Response(ChatMessageResponseSerializer(resp_data).data, status=status.HTTP_200_OK)
 
-        # 3. Assemble selective health context
+        # 3. Assemble selective health context (minimal, privacy-preserved)
         system_prompt, health_context, context_used = HealthContextBuilder.build_context(
             patient_uuid=patient_uuid,
             user_message=user_message,
             auth_token=auth_token,
+            client_telemetry=client_telemetry,
         )
 
-        # 4. Generate response via configured LLM provider
+        # 4. Generate response via configured LLM provider (MedGemma primary)
         provider = get_llm_provider()
-        llm_resp = provider.generate_chat_response(
-            system_instruction=system_prompt,
-            user_message=user_message,
-            health_context=health_context,
-            conversation_history=conversation_history,
-        )
+        try:
+            llm_resp = provider.generate_chat_response(
+                system_instruction=system_prompt,
+                user_message=user_message,
+                health_context=health_context,
+                conversation_history=conversation_history,
+            )
+        except LLMProviderError as exc:
+            logger.error("LLM Provider failure for patient %s: %s", patient_uuid[:8] + "***", exc)
+            # Strict rule: NEVER silently replace MedGemma with OfflineDeterministicProvider
+            error_data = {
+                "success": False,
+                "message": (
+                    "OvaSense AI (MedGemma) is currently offline or unreachable. "
+                    "Please ensure the local inference server is active, or try again shortly. "
+                    "Your Digital Twin physiological status and medical records remain fully accessible."
+                ),
+                "conversation_id": conversation_id,
+                "context_used": context_used,
+                "safety_level": "normal",
+                "needs_clinician": False,
+                "model": getattr(provider, "model_name", "medgemma"),
+            }
+            return Response(ChatMessageResponseSerializer(error_data).data, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
-        # 5. Sanitize output against non-diagnostic constraints
+        # 5. Sanitize output against non-diagnostic constraints and response hierarchy
         clean_text, safety_level = SafetyGuardrails.sanitize_llm_response(llm_resp.answer)
 
         elapsed = time.perf_counter() - t0

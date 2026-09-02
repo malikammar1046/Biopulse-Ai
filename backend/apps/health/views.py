@@ -20,8 +20,10 @@ from rest_framework.views import APIView
 
 from apps.authentication.supabase_auth import SupabaseAuthentication
 from apps.health.serializers import OcrResponseSerializer
+from apps.health.services.digital_twin_service import DigitalTwinService
 from apps.health.services.medical_report_parser import medical_report_parser
 from apps.health.services.paddle_ocr_engine import paddle_ocr_engine
+from apps.health.services.supabase_health_service import health_service
 
 logger = logging.getLogger(__name__)
 
@@ -151,3 +153,29 @@ class MedicalReportOcrView(APIView):
                     os.remove(temp_path)
                 except Exception:
                     pass
+
+
+class DigitalTwinView(APIView):
+    """
+    GET /api/v1/health/digital-twin/
+
+    Retrieves the structured Digital Twin representation of patient physiology
+    from verified Supabase health records. Non-diagnostic, strictly read-only.
+    """
+    authentication_classes = [SupabaseAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        patient_uuid = str(request.user.id)
+        auth_token = getattr(request, "auth", None)
+        try:
+            health_data = health_service.fetch_all(patient_uuid=patient_uuid, auth_token=auth_token)
+            twin_data = DigitalTwinService.build_digital_twin(health_data)
+            return Response(twin_data, status=status.HTTP_200_OK)
+        except Exception as exc:
+            logger.error("Digital Twin assembly error for patient %s: %s", patient_uuid[:8] + "***", exc)
+            return Response(
+                {"error": "Failed to assemble Digital Twin state."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
