@@ -79,7 +79,7 @@ We follow a structured Git workflow to ensure clean incremental development:
 
 ---
 
-## 🛠️ Getting Started
+## 🛠️ Getting Started & Quickstart
 
 ### 1. Prerequisites
 - **Node.js**: v18+ (tested on v20+)
@@ -87,39 +87,57 @@ We follow a structured Git workflow to ensure clean incremental development:
 - **Python**: v3.10+
 - **Git**
 
-### 2. Environment Configuration
-Copy `.env.example` to `.env` in the required packages:
+---
+
+### 2. Initial Setup (One-time)
+
+#### A. Configure Environment
 ```bash
 cp .env.example .env
 ```
 
-### 3. Backend Setup
+#### B. Install Python Environment & Dependencies
 ```bash
-cd backend
-python -m venv venv
-# Windows:
-venv\Scripts\activate
-# macOS/Linux:
-source venv/bin/activate
+# Create virtual environment in backend/venv
+python -m venv backend/venv
 
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py runserver
+# Install all Python & ML dependencies (Windows)
+backend\venv\Scripts\pip install -r requirements.txt
+
+# Or on macOS / Linux:
+source backend/venv/bin/activate && pip install -r requirements.txt
 ```
 
-### 4. Web Dashboard Setup
+#### C. Install Node Dependencies
 ```bash
-cd apps/web
-npm install
+npm run install:all
+```
+
+---
+
+### 3. Run Everything in 1 Command 🚀
+
+From the project root:
+```bash
 npm run dev
 ```
 
-### 5. Mobile App Setup
-```bash
-cd apps/mobile
-npm install
-npx expo start
-```
+This launches concurrently in a single terminal:
+- **`[WEB]`** Frontend Vite server at `http://localhost:5173`
+- **`[BACKEND]`** Django REST API & OvaSense ML Engine at `http://127.0.0.1:8000`
+
+---
+
+### 4. Useful NPM Scripts
+
+| Command | Description |
+| :--- | :--- |
+| `npm run dev` | Runs both Web frontend and ML backend together in one terminal |
+| `npm run dev:web` | Runs only the React/Vite web frontend |
+| `npm run dev:backend` | Runs only the Django & ML API server |
+| `npm run install:all` | Installs dependencies across root and web app |
+| `npm run train:ml` | Retrains the ML RandomForestClassifier & generates artifacts |
+| `npm run test:backend` | Executes automated backend intelligence tests |
 
 ---
 

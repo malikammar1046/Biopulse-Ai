@@ -126,36 +126,17 @@ export const DEFAULT_TODAY_REMINDERS: TodayReminder[] = [
 ];
 
 export const DEFAULT_NUTRITION_DATA: NutritionData = {
-  caloriesLogged: 1450,
+  caloriesLogged: 0,
   caloriesTarget: 1800,
-  proteinGrams: 76,
+  proteinGrams: 0,
   proteinTarget: 100,
-  carbsGrams: 160,
+  carbsGrams: 0,
   carbsTarget: 250,
-  fatGrams: 40,
+  fatGrams: 0,
   fatTarget: 60,
-  waterIntakeLiters: 1.8,
+  waterIntakeLiters: 0,
   waterTargetLiters: 2.4,
-  meals: [
-    {
-      type: 'breakfast',
-      name: '2 Eggs with Spinach, Multigrain Roti & Cardamom Chai',
-      calories: 380,
-      tags: ['High Protein', 'Low Glycemic'],
-    },
-    {
-      type: 'lunch',
-      name: 'Brown Rice with Yellow Moong Daal & Grilled Chicken Breast',
-      calories: 580,
-      tags: ['Balanced Fiber', 'Steady Energy'],
-    },
-    {
-      type: 'dinner',
-      name: 'Steamed Mixed Greens with Spiced Chickpeas (Chana Salad)',
-      calories: 490,
-      tags: ['Micronutrient Rich', 'Low Carb'],
-    },
-  ],
+  meals: [],
   suggestedMeals: [
     {
       name: 'Palak Paneer with Whole Wheat Roti',
@@ -175,12 +156,12 @@ export const DEFAULT_NUTRITION_DATA: NutritionData = {
 };
 
 export const DEFAULT_FITNESS_DATA: FitnessData = {
-  workoutsThisWeek: 3,
-  weeklyGoal: 5,
-  activeMinutesToday: 42,
-  walkingMinutes: 25,
-  strengthMinutes: 17,
-  caloriesBurned: 240,
+  workoutsThisWeek: 0,
+  weeklyGoal: 4,
+  activeMinutesToday: 0,
+  walkingMinutes: 0,
+  strengthMinutes: 0,
+  caloriesBurned: 0,
   suggestedMovement: {
     title: 'Low-Impact Strength & Mobility',
     duration: '25 min',
@@ -325,17 +306,23 @@ export function createEmptyUserProfile(overrides: Partial<UserProfile> = {}): Us
       commonSymptoms: [],
       currentCycleDay: 1,
       currentPhase: 'follicular',
+      maritalStatus: 'unmarried',
+      marriageYears: 0,
+      isPregnant: false,
+      abortionsCount: 0,
     },
     lifestyle: {
-      dietaryPreference: 'Non-Vegetarian / Halal',
+      dietaryPreference: '',
       dailyWaterGlasses: 8,
       activityLevel: 'moderate',
-      exercisePreferences: ['Walking'],
+      exercisePreferences: [],
       sleepHours: 7.5,
+      fastFoodIntake: 'occasional',
+      regularExercise: true,
     },
     goals: {
-      selectedGoals: ['Track cycle & predict ovulation'],
-      supportPreference: 'structured_weekly',
+      selectedGoals: [],
+      supportPreference: 'gentle_nudges',
     },
     ...overrides,
   };
@@ -438,17 +425,17 @@ export function deriveNutritionFromProfile(profile: UserProfile): NutritionData 
   }
 
   return {
-    caloriesLogged: 1450,
+    caloriesLogged: 0,
     caloriesTarget: 1800,
-    proteinGrams: 76,
+    proteinGrams: 0,
     proteinTarget: 100,
-    carbsGrams: 160,
+    carbsGrams: 0,
     carbsTarget: 250,
-    fatGrams: 40,
+    fatGrams: 0,
     fatTarget: 60,
-    waterIntakeLiters: Math.min(waterTargetL, 1.8),
+    waterIntakeLiters: 0,
     waterTargetLiters: waterTargetL,
-    meals: DEFAULT_NUTRITION_DATA.meals,
+    meals: [],
     suggestedMeals,
   };
 }
@@ -465,12 +452,12 @@ export function deriveFitnessFromProfile(profile: UserProfile, phaseName = 'Foll
   if (activityLevel === 'very_active') weeklyGoal = 5;
 
   return {
-    workoutsThisWeek: Math.min(weeklyGoal, 3),
+    workoutsThisWeek: 0,
     weeklyGoal,
-    activeMinutesToday: 40,
-    walkingMinutes: 25,
-    strengthMinutes: 15,
-    caloriesBurned: 230,
+    activeMinutesToday: 0,
+    walkingMinutes: 0,
+    strengthMinutes: 0,
+    caloriesBurned: 0,
     suggestedMovement: {
       title: `${phaseName} ${exerciseStyle}`,
       duration: '25 min',

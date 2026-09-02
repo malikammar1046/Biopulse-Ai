@@ -1,5 +1,5 @@
 import React from 'react';
-import { Utensils, Droplets, Dumbbell, Moon, Check } from 'lucide-react';
+import { Utensils, Droplets, Dumbbell, Moon, Check, Pizza } from 'lucide-react';
 import type { LifestyleProfile } from '../../types/onboarding';
 import {
   DIETARY_PREFERENCE_OPTIONS,
@@ -18,15 +18,23 @@ const ACTIVITY_LEVELS = [
   { id: 'very_active', label: 'Very Active', desc: '5+ intense sessions per week' },
 ];
 
+const FAST_FOOD_OPTIONS = [
+  { id: 'frequent', label: 'Frequent (3+ times/week)', desc: 'Regular takeout, processed snacks, or fried items' },
+  { id: 'occasional', label: 'Occasional (1–2 times/week)', desc: 'Balanced with home-cooked meals' },
+  { id: 'rare_never', label: 'Rare / Never', desc: 'Almost exclusively whole home-prepared foods' },
+];
+
 export const Step5Lifestyle: React.FC<Step5Props> = ({ data, onChange }) => {
   const toggleExercise = (label: string) => {
-    const list = [...data.exercisePreferences];
+    const list = [...(data.exercisePreferences || [])];
     if (list.includes(label)) {
       onChange({ ...data, exercisePreferences: list.filter((e) => e !== label) });
     } else {
       onChange({ ...data, exercisePreferences: [...list, label] });
     }
   };
+
+  const fastFoodIntake = data.fastFoodIntake || 'occasional';
 
   return (
     <div className="space-y-6 text-left">
@@ -74,7 +82,41 @@ export const Step5Lifestyle: React.FC<Step5Props> = ({ data, onChange }) => {
         </div>
       </div>
 
-      {/* 2. Water Intake & Sleep */}
+      {/* 2. Fast Food / Processed Intake (Used by ML Model) */}
+      <div className="p-5 rounded-3xl bg-white/[0.04] border border-white/10 space-y-3">
+        <div className="flex items-center gap-2">
+          <Pizza className="w-4 h-4 text-[#FB7185]" />
+          <span className="text-xs font-bold font-mono text-[#EDE4F7] uppercase tracking-wider">
+            Fast-Food & Processed Intake (Evaluated by ML Model)
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          {FAST_FOOD_OPTIONS.map((opt) => {
+            const isSelected = fastFoodIntake === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => onChange({ ...data, fastFoodIntake: opt.id as any })}
+                className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                  isSelected
+                    ? 'bg-[#1C0D2E] border-[#FB7185] text-white shadow-sm scale-[1.02]'
+                    : 'bg-[#140924] border-white/10 text-[#CDBDD8] hover:border-white/20'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-1">
+                  <span className="text-xs font-bold block">{opt.label}</span>
+                  {isSelected && <Check className="w-3.5 h-3.5 text-[#FB7185] shrink-0" />}
+                </div>
+                <span className="text-[10px] text-[#A797BD] mt-1.5">{opt.desc}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 3. Water Intake & Sleep */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Water */}
         <div className="p-5 rounded-3xl bg-white/[0.04] border border-white/10 space-y-3">
@@ -132,7 +174,7 @@ export const Step5Lifestyle: React.FC<Step5Props> = ({ data, onChange }) => {
         </div>
       </div>
 
-      {/* 3. Physical Activity Level */}
+      {/* 4. Physical Activity Level */}
       <div className="p-5 rounded-3xl bg-white/[0.04] border border-white/10 space-y-3">
         <div className="flex items-center gap-2">
           <Dumbbell className="w-4 h-4 text-[#FDA4AF]" />
@@ -152,6 +194,7 @@ export const Step5Lifestyle: React.FC<Step5Props> = ({ data, onChange }) => {
                   onChange({
                     ...data,
                     activityLevel: lvl.id as LifestyleProfile['activityLevel'],
+                    regularExercise: lvl.id === 'moderate' || lvl.id === 'very_active',
                   })
                 }
                 className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
@@ -168,7 +211,7 @@ export const Step5Lifestyle: React.FC<Step5Props> = ({ data, onChange }) => {
         </div>
       </div>
 
-      {/* 4. Exercise Preferences */}
+      {/* 5. Exercise Preferences */}
       <div className="p-5 rounded-3xl bg-white/[0.04] border border-white/10 space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold font-mono text-[#EDE4F7] uppercase tracking-wider">
@@ -179,7 +222,7 @@ export const Step5Lifestyle: React.FC<Step5Props> = ({ data, onChange }) => {
 
         <div className="flex flex-wrap gap-2">
           {EXERCISE_PREFERENCE_OPTIONS.map((ex) => {
-            const isSelected = data.exercisePreferences.includes(ex.label);
+            const isSelected = (data.exercisePreferences || []).includes(ex.label);
             return (
               <button
                 key={ex.id}

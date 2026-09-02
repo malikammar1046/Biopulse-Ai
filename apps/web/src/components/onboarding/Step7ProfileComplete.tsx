@@ -16,38 +16,25 @@ export const Step7ProfileComplete: React.FC<Step7Props> = ({
   isSubmitting = false,
   saveError,
 }) => {
-  const allergyCount = profile.medical?.allergies?.filter((a) => a !== 'None').length || 0;
-  const conditionCount = profile.medical?.conditions?.filter((c) => c !== 'None').length || 0;
-  const medCount = profile.medical?.medications?.length || 0;
-  const primaryName = profile.emergencyContacts?.[0]?.name;
-
   const summaryChecks = [
-    { label: 'Personal Information', val: profile.fullName || 'Registered' },
     {
-      label: 'Emergency & Safety',
-      val: primaryName ? `${primaryName} (${profile.emergencyContacts[0]?.relationship})` : 'Not added yet',
+      label: 'Personal & Biometrics',
+      val: `${profile.fullName || 'User'} • ${profile.heightCm ? `${profile.heightCm} cm` : 'Height set'} / ${profile.weightKg ? `${profile.weightKg} kg` : 'Weight set'}`,
     },
     {
-      label: 'Medical History',
+      label: 'Medical Baseline',
       val:
-        allergyCount === 0 && conditionCount === 0 && medCount === 0
-          ? 'No active conditions or allergies recorded'
-          : `${allergyCount} allergies • ${conditionCount} conditions • ${medCount} meds`,
+        (profile.medical?.conditions?.length || 0) + (profile.medical?.allergies?.length || 0) === 0
+          ? 'No active conditions / allergies reported'
+          : `${profile.medical?.conditions?.length || 0} conditions • ${profile.medical?.allergies?.length || 0} allergies`,
     },
     {
-      label: 'Women’s Health Profile',
-      val:
-        typeof profile.womensHealth?.cycleLength === 'number'
-          ? `${profile.womensHealth.cycleLength}-Day Cycle (${profile.womensHealth.periodRegularity?.replace('_', ' ') || 'standard'})`
-          : 'Variable / Irregular Rhythm',
+      label: 'Reproductive & Period Profile',
+      val: `${typeof profile.womensHealth?.cycleLength === 'number' ? `${profile.womensHealth.cycleLength}-day cycle` : 'Cycle recorded'} • ${profile.womensHealth?.maritalStatus === 'married' ? `Married (${profile.womensHealth?.marriageYears ?? 0}y)` : 'Single'}`,
     },
     {
-      label: 'Lifestyle & Movement',
-      val: `${profile.lifestyle?.dietaryPreference || 'Balanced'} • ${profile.lifestyle?.dailyWaterGlasses || 8} Glasses Water`,
-    },
-    {
-      label: 'Health Goals',
-      val: `${profile.goals?.selectedGoals?.length || 1} Focus Areas Selected`,
+      label: 'AI Screening Model Status',
+      val: 'Profile Ready • Instant ML analysis enabled',
     },
   ];
 

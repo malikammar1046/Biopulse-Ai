@@ -52,6 +52,7 @@ const OnboardingFlow = lazy(() => import('./pages/onboarding/OnboardingFlow').th
 
 // Authenticated Health App Pages (Lazy-Loaded)
 const Dashboard = lazy(() => import('./pages/app/Dashboard').then((m) => ({ default: m.Dashboard })));
+const MasterHealthHub = lazy(() => import('./pages/app/MasterHealthHub').then((m) => ({ default: m.MasterHealthHub })));
 const CyclePage = lazy(() => import('./pages/app/CyclePage').then((m) => ({ default: m.CyclePage })));
 const SymptomsPage = lazy(() => import('./pages/app/SymptomsPage').then((m) => ({ default: m.SymptomsPage })));
 const DietPage = lazy(() => import('./pages/app/DietPage').then((m) => ({ default: m.DietPage })));
@@ -109,6 +110,8 @@ export function App() {
                 <Route path={ROUTES.APP.ROOT} element={<AppLayout />}>
                   <Route index element={<Navigate to={ROUTES.APP.DASHBOARD} replace />} />
                   <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="hub" element={<MasterHealthHub />} />
+                  <Route path="master-hub" element={<MasterHealthHub />} />
                   <Route path="ai-twin" element={<AiTwinRedirectRoute />} />
                   <Route path="chat" element={<AiTwinRedirectRoute />} />
                   <Route path="ai" element={<AiTwinRedirectRoute />} />

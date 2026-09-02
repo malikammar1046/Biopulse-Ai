@@ -11,50 +11,6 @@ import type {
 
 const STORAGE_FITNESS_LOGS_PREFIX = 'ovasense_fitness_logs_';
 
-// Initial demo fitness activities for realistic demonstration on initial load
-const INITIAL_DEMO_FITNESS_LOGS: Omit<FitnessLogEntry, 'id' | 'userId'>[] = [
-  {
-    activityType: 'walking',
-    activityName: 'Morning Sunshine Walk',
-    durationMinutes: 25,
-    energyLevel: 'good',
-    notes: 'Gentle outdoor walk in morning air',
-    occurredAt: new Date().toISOString().split('T')[0],
-    createdAt: new Date(Date.now() - 3600000 * 4).toISOString(),
-    updatedAt: new Date(Date.now() - 3600000 * 4).toISOString(),
-  },
-  {
-    activityType: 'stretching',
-    activityName: 'Post-Desk Calming Stretch',
-    durationMinutes: 15,
-    energyLevel: 'great',
-    notes: 'Shoulder, hip and hamstring release',
-    occurredAt: new Date(Date.now() - 86400000 * 1).toISOString().split('T')[0],
-    createdAt: new Date(Date.now() - 86400000 * 1).toISOString(),
-    updatedAt: new Date(Date.now() - 86400000 * 1).toISOString(),
-  },
-  {
-    activityType: 'yoga',
-    activityName: 'Hormone Balance Hatha Flow',
-    durationMinutes: 30,
-    energyLevel: 'good',
-    notes: 'Gentle twists and pelvic floor opening',
-    occurredAt: new Date(Date.now() - 86400000 * 3).toISOString().split('T')[0],
-    createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
-    updatedAt: new Date(Date.now() - 86400000 * 3).toISOString(),
-  },
-  {
-    activityType: 'strength',
-    activityName: 'Full-Body Bodyweight Strength',
-    durationMinutes: 25,
-    energyLevel: 'good',
-    notes: 'Squats, lunges, and glute bridges with rest',
-    occurredAt: new Date(Date.now() - 86400000 * 5).toISOString().split('T')[0],
-    createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
-    updatedAt: new Date(Date.now() - 86400000 * 5).toISOString(),
-  },
-];
-
 class FitnessService {
   private getStorageKey(userId: string): string {
     return `${STORAGE_FITNESS_LOGS_PREFIX}${userId}`;
@@ -65,13 +21,7 @@ class FitnessService {
     try {
       const raw = localStorage.getItem(this.getStorageKey(userId));
       if (raw) return JSON.parse(raw);
-      const initial: FitnessLogEntry[] = INITIAL_DEMO_FITNESS_LOGS.map((f, idx) => ({
-        ...f,
-        id: `fit_demo_${idx}_${Date.now().toString(36)}`,
-        userId,
-      }));
-      this.setLocalLogs(userId, initial);
-      return initial;
+      return [];
     } catch {
       return [];
     }

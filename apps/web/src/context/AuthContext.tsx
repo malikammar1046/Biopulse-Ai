@@ -42,7 +42,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {
       // Fallback
     }
-    return DEFAULT_USER_PROFILE;
+    return createEmptyUserProfile();
   });
 
   const loadProfile = useCallback(async (activeUser: SupabaseUser) => {

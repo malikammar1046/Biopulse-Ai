@@ -77,13 +77,18 @@ class AssessmentResult:
 import time
 
 
-def run_assessment(patient_uuid: str, auth_token: str | None = None) -> AssessmentResult:
+def run_assessment(
+    patient_uuid: str,
+    auth_token: str | None = None,
+    client_health_data: dict | None = None,
+) -> AssessmentResult:
     """
     Execute the full intelligence pipeline for the authenticated patient.
 
     Args:
-        patient_uuid: Verified Supabase user UUID from the JWT (never from request body)
+        patient_uuid: Verified Supabase user UUID from the JWT
         auth_token: Optional Supabase JWT for authenticated RLS database reads
+        client_health_data: Optional client-side health state payload for fallback/sync
 
     Returns:
         AssessmentResult — always returns successfully; errors degrade gracefully
@@ -93,7 +98,17 @@ def run_assessment(patient_uuid: str, auth_token: str | None = None) -> Assessme
     # ── Step 1: Fetch all patient health data ─────────────────────────────
     logger.info("Intelligence pipeline: fetching data for patient %s", patient_uuid[:8] + "***")
     t0 = time.perf_counter()
-    health_data = health_service.fetch_all(patient_uuid, auth_token=auth_token)
+    if client_health_data:
+        health_data = health_service.fetch_all(
+            patient_uuid,
+            auth_token=auth_token,
+            client_health_data=client_health_data,
+        )
+    else:
+        health_data = health_service.fetch_all(
+            patient_uuid,
+            auth_token=auth_token,
+        )
     t_fetch = time.perf_counter() - t0
     logger.info("[OvaSense Timing] Supabase fetch completed in %.3fs", t_fetch)
 

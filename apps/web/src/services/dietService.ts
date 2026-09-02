@@ -17,49 +17,6 @@ import { DEFAULT_PLANNED_MEALS } from '../data/pakistaniFoodDatabase';
 const STORAGE_FOOD_LOGS_PREFIX = 'ovasense_food_logs_';
 const STORAGE_WATER_LOGS_PREFIX = 'ovasense_water_logs_';
 
-// Initial realistic food logs for baseline demonstration
-const INITIAL_DEMO_FOOD_LOGS: Omit<FoodLogEntry, 'id' | 'userId'>[] = [
-  {
-    mealType: 'breakfast',
-    foodName: 'Desi Vegetable Omelette with Whole Wheat Roti',
-    serving: '2 eggs + 1 roti',
-    calories: 365,
-    proteinG: 17,
-    carbsG: 26,
-    fatG: 14,
-    fiberG: 4.5,
-    loggedAt: new Date().toISOString().split('T')[0],
-    notes: 'Breakfast with cardamom green tea',
-    createdAt: new Date(Date.now() - 3600000 * 5).toISOString(),
-  },
-  {
-    mealType: 'morning_snack',
-    foodName: 'Soaked Almonds & Crisp Guava',
-    serving: '6 almonds + 1 guava',
-    calories: 195,
-    proteinG: 6,
-    carbsG: 19,
-    fatG: 12,
-    fiberG: 8.5,
-    loggedAt: new Date().toISOString().split('T')[0],
-    notes: 'Mid-morning snack',
-    createdAt: new Date(Date.now() - 3600000 * 3).toISOString(),
-  },
-  {
-    mealType: 'lunch',
-    foodName: 'Yellow Moong Daal with Basmati Rice & Kachumber Salad',
-    serving: '1 bowl daal + 1 cup rice + salad',
-    calories: 420,
-    proteinG: 16,
-    carbsG: 68,
-    fatG: 7,
-    fiberG: 10,
-    loggedAt: new Date().toISOString().split('T')[0],
-    notes: 'Traditional lunch',
-    createdAt: new Date(Date.now() - 3600000 * 1).toISOString(),
-  },
-];
-
 class DietService {
   private getFoodStorageKey(userId: string): string {
     return `${STORAGE_FOOD_LOGS_PREFIX}${userId}`;
@@ -74,14 +31,7 @@ class DietService {
     try {
       const raw = localStorage.getItem(this.getFoodStorageKey(userId));
       if (raw) return JSON.parse(raw);
-      // Initialize with demo entries adapted for this user id
-      const initial: FoodLogEntry[] = INITIAL_DEMO_FOOD_LOGS.map((f, idx) => ({
-        ...f,
-        id: `flog_demo_${idx}_${Date.now().toString(36)}`,
-        userId,
-      }));
-      this.setLocalFoodLogs(userId, initial);
-      return initial;
+      return [];
     } catch {
       return [];
     }
@@ -102,14 +52,14 @@ class DietService {
       const initial: WaterLogEntry = {
         userId,
         date,
-        glasses: 5,
+        glasses: 0,
         targetGlasses: 8,
         updatedAt: new Date().toISOString(),
       };
       this.setLocalWaterLog(userId, initial);
       return initial;
     } catch {
-      return { userId, date, glasses: 5, targetGlasses: 8, updatedAt: new Date().toISOString() };
+      return { userId, date, glasses: 0, targetGlasses: 8, updatedAt: new Date().toISOString() };
     }
   }
 

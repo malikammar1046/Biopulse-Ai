@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
+  LayoutGrid,
   Calendar,
   Activity,
   Utensils,
@@ -32,7 +33,8 @@ export const AppSidebar: React.FC = () => {
   };
 
   const mainNavItems = [
-    { label: 'Dashboard', path: ROUTES.APP.DASHBOARD, icon: LayoutDashboard },
+    { label: 'Overview', path: ROUTES.APP.DASHBOARD, icon: LayoutDashboard },
+    { label: 'Master Health Hub', path: ROUTES.APP.HUB, icon: LayoutGrid },
     { label: 'AI Twin', path: ROUTES.APP.AI_TWIN, icon: Sparkles },
     { label: 'Health Timeline', path: ROUTES.APP.TIMELINE, icon: GitBranch },
     { label: 'Your Cycle', path: ROUTES.APP.CYCLE, icon: Calendar },

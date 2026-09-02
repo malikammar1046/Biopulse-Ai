@@ -28,15 +28,21 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   surgeries JSONB DEFAULT '[]'::jsonb,
   family_history JSONB DEFAULT '[]'::jsonb,
   
-  -- Women's Health & Cycle Rhythm
+  -- Women's Health & Reproductive Health (ML Indicators)
   cycle_length TEXT DEFAULT '28', -- supports number or 'irregular'
   period_duration INTEGER DEFAULT 5,
   last_period_date DATE,
   period_regularity TEXT DEFAULT 'mostly_regular',
   common_symptoms JSONB DEFAULT '[]'::jsonb,
+  marital_status TEXT DEFAULT 'unmarried',
+  marriage_years NUMERIC DEFAULT 0,
+  is_pregnant BOOLEAN DEFAULT FALSE,
+  abortions_count INTEGER DEFAULT 0,
   
-  -- Lifestyle & Nutrition
+  -- Lifestyle & Nutrition (ML Indicators)
   dietary_preference TEXT DEFAULT 'Balanced',
+  fast_food_intake TEXT DEFAULT 'occasional',
+  regular_exercise BOOLEAN DEFAULT TRUE,
   daily_water_glasses INTEGER DEFAULT 8,
   activity_level TEXT DEFAULT 'moderate',
   exercise_preferences JSONB DEFAULT '[]'::jsonb,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Sparkles, CheckCircle2, Clock, Check } from 'lucide-react';
+import { Sparkles, CheckCircle2, Check, Heart, Baby } from 'lucide-react';
 import type { WomensHealthProfile } from '../../types/onboarding';
 import { DEFAULT_SYMPTOM_OPTIONS } from '../../data/mockOnboardingData';
 
@@ -18,7 +18,7 @@ const REGULARITY_OPTIONS = [
 
 export const Step4WomensHealth: React.FC<Step4Props> = ({ data, onChange }) => {
   const toggleSymptom = (symptomLabel: string) => {
-    const list = [...data.commonSymptoms];
+    const list = [...(data.commonSymptoms || [])];
     if (list.includes(symptomLabel)) {
       onChange({ ...data, commonSymptoms: list.filter((s) => s !== symptomLabel) });
     } else {
@@ -26,19 +26,24 @@ export const Step4WomensHealth: React.FC<Step4Props> = ({ data, onChange }) => {
     }
   };
 
+  const maritalStatus = data.maritalStatus || 'unmarried';
+  const marriageYears = data.marriageYears ?? 0;
+  const isPregnant = data.isPregnant ?? false;
+  const abortionsCount = data.abortionsCount ?? 0;
+
   return (
     <div className="space-y-7 text-left">
       {/* Header Info */}
       <div className="space-y-1">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#6E2D8B]/20 border border-[#8E3EAF]/40 text-xs font-mono text-[#FDA4AF] mb-1">
           <Sparkles className="w-3.5 h-3.5 text-[#FB7185]" />
-          <span>Period & Cycle History</span>
+          <span>Period & Reproductive Health</span>
         </div>
         <h2 className="text-2xl sm:text-3xl font-bold font-display text-white">
-          Your Period & Cycle Rhythm
+          Your Menstrual Cycle & Reproductive Profile
         </h2>
         <p className="text-sm text-[#CDBDD8] font-sans">
-          This helps OvaSense understand your normal cycle rhythm and calculate your cycle day.
+          These clinical factors provide real data to the AI screening model without relying on statistical estimates.
         </p>
       </div>
 
@@ -75,7 +80,7 @@ export const Step4WomensHealth: React.FC<Step4Props> = ({ data, onChange }) => {
             <span>45+ Days (Longer)</span>
           </div>
 
-          <div className="pt-1 flex gap-2">
+          <div className="pt-1 flex gap-2 flex-wrap">
             <button
               type="button"
               onClick={() => onChange({ ...data, cycleLength: 28 })}
@@ -102,47 +107,7 @@ export const Step4WomensHealth: React.FC<Step4Props> = ({ data, onChange }) => {
         </div>
       </div>
 
-      {/* 2. Last Period Date & Duration */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Last Period */}
-        <div className="p-5 rounded-3xl bg-white/[0.04] border border-white/10 space-y-2">
-          <label className="text-xs font-bold font-mono text-[#EDE4F7] uppercase tracking-wider block">
-            Last Menstrual Period Start
-          </label>
-          <div className="relative">
-            <input
-              type="date"
-              value={data.lastPeriodDate}
-              onChange={(e) => onChange({ ...data, lastPeriodDate: e.target.value })}
-              className="w-full px-4 py-3 pl-10 rounded-2xl bg-[#140924] border border-white/15 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#8E3EAF]"
-            />
-            <Calendar className="w-4 h-4 text-[#A797BD] absolute left-3.5 top-1/2 -translate-y-1/2" />
-          </div>
-        </div>
-
-        {/* Typical Duration */}
-        <div className="p-5 rounded-3xl bg-white/[0.04] border border-white/10 space-y-2">
-          <label className="text-xs font-bold font-mono text-[#EDE4F7] uppercase tracking-wider block">
-            Typical Bleeding Duration
-          </label>
-          <div className="relative">
-            <select
-              value={data.periodDuration}
-              onChange={(e) => onChange({ ...data, periodDuration: parseInt(e.target.value, 10) })}
-              className="w-full px-4 py-3 pl-10 rounded-2xl bg-[#140924] border border-white/15 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#8E3EAF] cursor-pointer"
-            >
-              {[3, 4, 5, 6, 7, 8].map((days) => (
-                <option key={days} value={days} className="bg-[#180A26] text-white">
-                  {days} Days
-                </option>
-              ))}
-            </select>
-            <Clock className="w-4 h-4 text-[#A797BD] absolute left-3.5 top-1/2 -translate-y-1/2" />
-          </div>
-        </div>
-      </div>
-
-      {/* 3. Period Regularity Cards */}
+      {/* 2. Period Regularity Cards */}
       <div className="p-5 rounded-3xl bg-white/[0.04] border border-white/10 space-y-3">
         <label className="text-xs font-bold font-mono text-[#EDE4F7] uppercase tracking-wider block">
           How regular are your cycles?
@@ -184,18 +149,138 @@ export const Step4WomensHealth: React.FC<Step4Props> = ({ data, onChange }) => {
         </div>
       </div>
 
+      {/* 3. Reproductive & Clinical ML Status (Marital Status, Pregnancy, Pregnancy Loss) */}
+      <div className="p-5 rounded-3xl bg-white/[0.04] border border-white/10 space-y-5">
+        <div className="flex items-center gap-2">
+          <Heart className="w-4 h-4 text-[#FB7185]" />
+          <span className="text-xs font-bold font-mono text-[#EDE4F7] uppercase tracking-wider">
+            Reproductive & Clinical Factors (Used by ML Model)
+          </span>
+        </div>
+
+        {/* Marital Status & Years */}
+        <div className="space-y-3">
+          <label className="text-xs font-semibold text-white/90 block">
+            Marital Status
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => onChange({ ...data, maritalStatus: 'unmarried', marriageYears: 0 })}
+              className={`p-3 rounded-2xl border text-center transition-all cursor-pointer font-sans text-xs font-bold ${
+                maritalStatus === 'unmarried'
+                  ? 'bg-[#1C0D2E] border-[#FB7185] text-white shadow'
+                  : 'bg-[#140924] border-white/10 text-[#CDBDD8] hover:border-white/20'
+              }`}
+            >
+              Single / Unmarried
+            </button>
+            <button
+              type="button"
+              onClick={() => onChange({ ...data, maritalStatus: 'married', marriageYears: marriageYears || 1 })}
+              className={`p-3 rounded-2xl border text-center transition-all cursor-pointer font-sans text-xs font-bold ${
+                maritalStatus === 'married'
+                  ? 'bg-[#1C0D2E] border-[#FB7185] text-white shadow'
+                  : 'bg-[#140924] border-white/10 text-[#CDBDD8] hover:border-white/20'
+              }`}
+            >
+              Married
+            </button>
+          </div>
+
+          {maritalStatus === 'married' && (
+            <div className="pt-2 p-3.5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-2 animate-in slide-in-from-top-1 duration-200">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-[#CDBDD8]">Years of Marriage:</span>
+                <span className="text-xs font-mono font-bold text-white px-3 py-1 rounded-xl bg-[#6E2D8B]">
+                  {marriageYears} {marriageYears === 1 ? 'Year' : 'Years'}
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="30"
+                step="1"
+                value={marriageYears}
+                onChange={(e) => onChange({ ...data, marriageYears: parseInt(e.target.value, 10) })}
+                className="w-full h-2 bg-[#140924] rounded-lg appearance-none cursor-pointer accent-[#FB7185]"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Current Pregnancy & Pregnancy Loss Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+          {/* Currently Pregnant */}
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-white/90 flex items-center gap-1.5">
+              <Baby className="w-3.5 h-3.5 text-[#38BDF8]" />
+              <span>Currently Pregnant?</span>
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => onChange({ ...data, isPregnant: false })}
+                className={`py-2.5 px-3 rounded-2xl border text-center transition-all cursor-pointer text-xs font-bold ${
+                  !isPregnant
+                    ? 'bg-[#1C0D2E] border-[#38BDF8] text-white'
+                    : 'bg-[#140924] border-white/10 text-[#CDBDD8]'
+                }`}
+              >
+                No
+              </button>
+              <button
+                type="button"
+                onClick={() => onChange({ ...data, isPregnant: true })}
+                className={`py-2.5 px-3 rounded-2xl border text-center transition-all cursor-pointer text-xs font-bold ${
+                  isPregnant
+                    ? 'bg-[#1C0D2E] border-[#38BDF8] text-white'
+                    : 'bg-[#140924] border-white/10 text-[#CDBDD8]'
+                }`}
+              >
+                Yes
+              </button>
+            </div>
+          </div>
+
+          {/* Prior Miscarriages / Abortions / Pregnancy Loss */}
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-white/90 flex items-center justify-between">
+              <span>Prior Pregnancy Loss / Miscarriages</span>
+              <span className="text-xs font-mono font-bold text-white">{abortionsCount}</span>
+            </label>
+            <div className="flex items-center gap-2">
+              {[0, 1, 2, 3].map((num) => (
+                <button
+                  key={num}
+                  type="button"
+                  onClick={() => onChange({ ...data, abortionsCount: num })}
+                  className={`flex-1 py-2 rounded-2xl border text-center transition-all cursor-pointer text-xs font-bold font-mono ${
+                    abortionsCount === num
+                      ? 'bg-[#1C0D2E] border-[#FB7185] text-white'
+                      : 'bg-[#140924] border-white/10 text-[#CDBDD8]'
+                  }`}
+                >
+                  {num === 3 ? '3+' : num}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* 4. Common Symptoms Multi-Select */}
       <div className="p-5 rounded-3xl bg-white/[0.04] border border-white/10 space-y-3">
         <div className="flex items-center justify-between">
           <label className="text-xs font-bold font-mono text-[#EDE4F7] uppercase tracking-wider block">
-            Common Symptoms You Experience
+            Common Signs & Symptoms (Evaluated by Model)
           </label>
           <span className="text-[10px] font-mono text-[#A797BD]">Select all that apply</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           {DEFAULT_SYMPTOM_OPTIONS.map((sym) => {
-            const isSelected = data.commonSymptoms.includes(sym.label);
+            const isSelected = (data.commonSymptoms || []).includes(sym.label);
             return (
               <button
                 key={sym.id}

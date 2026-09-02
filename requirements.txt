@@ -1,0 +1,35 @@
+# ==============================================================================
+# PMOSense / OvaSense - Global Python Requirements
+# ==============================================================================
+# Install all dependencies into your virtual environment:
+#   python -m venv backend/venv
+#   .\backend\venv\Scripts\pip install -r requirements.txt   (Windows)
+#   source backend/venv/bin/activate && pip install -r requirements.txt (macOS/Linux)
+# ==============================================================================
+
+# Core Backend Framework & API
+Django>=5.0,<6.0
+djangorestframework>=3.14.0
+django-cors-headers>=4.3.0
+python-dotenv>=1.0.0
+
+# Supabase & Cloud Database
+supabase>=2.3.0
+
+# Machine Learning & Feature Engineering
+pandas>=2.2.0
+numpy>=1.26.0
+scipy>=1.10.0
+scikit-learn>=1.4.0
+openpyxl>=3.1.0
+
+# Model Explainability (TreeSHAP)
+shap>=0.45.0
+
+# Computer Vision & Medical Lab Report OCR
+opencv-python-headless>=4.9.0
+pytesseract>=0.3.10
+Pillow>=10.2.0
+
+# Testing & Code Quality
+pytest>=8.0.0

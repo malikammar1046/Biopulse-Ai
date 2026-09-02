@@ -92,10 +92,19 @@ class IntelligenceAssessmentView(APIView):
     def post(self, request):
         patient_uuid = str(request.user.id)
         auth_token = getattr(request.user, "raw_token", None)
-        logger.info("Assessment requested for authenticated patient %s", patient_uuid[:8] + "***")
+        client_payload = request.data if isinstance(request.data, dict) else {}
+        logger.info(
+            "Assessment requested for authenticated patient %s (client payload keys: %s)",
+            patient_uuid[:8] + "***",
+            list(client_payload.keys()),
+        )
 
         try:
-            result = run_assessment(patient_uuid, auth_token=auth_token)
+            result = run_assessment(
+                patient_uuid,
+                auth_token=auth_token,
+                client_health_data=client_payload,
+            )
         except Exception as exc:
             logger.error("Assessment pipeline failed: %s", exc, exc_info=True)
             return Response(
