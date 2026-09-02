@@ -6,6 +6,7 @@ import { AuthShell } from '../../components/auth/AuthShell';
 import { AuthCard } from '../../components/auth/AuthCard';
 import { AuthField } from '../../components/auth/AuthField';
 import { PasswordInput } from '../../components/auth/PasswordInput';
+import { GoogleAuthButton } from '../../components/auth/GoogleAuthButton';
 import { useAuth } from '../../context/AuthContext';
 import { ROUTES } from '../../constants/routes';
 
@@ -20,7 +21,7 @@ interface FormErrors {
 
 export const Register: React.FC = () => {
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -30,6 +31,7 @@ export const Register: React.FC = () => {
   const [consent, setConsent] = useState(false);
 
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSuccess, setIsSuccess] = useState(false);
   const [emailConfirmReq, setEmailConfirmReq] = useState(false);
@@ -96,6 +98,28 @@ export const Register: React.FC = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    if (loading || googleLoading) return;
+
+    setGoogleLoading(true);
+    setErrors({});
+
+    try {
+      const res = await loginWithGoogle();
+      if (!res.success) {
+        setErrors({ general: res.error || 'Unable to connect to Google. Please try again.' });
+        setGoogleLoading(false);
+        return;
+      }
+      navigate(ROUTES.ONBOARDING, { replace: true });
+    } catch (err: any) {
+      setErrors({
+        general: err?.message || 'Google registration could not be completed. Please try again.',
+      });
+      setGoogleLoading(false);
     }
   };
 
@@ -251,9 +275,9 @@ export const Register: React.FC = () => {
               <div className="pt-2">
                 <motion.button
                   type="submit"
-                  disabled={loading}
-                  whileHover={!loading ? { y: -2, boxShadow: '0 10px 25px -5px rgba(162, 28, 175, 0.4)' } : undefined}
-                  whileTap={!loading ? { scale: 0.98 } : undefined}
+                  disabled={loading || googleLoading}
+                  whileHover={!loading && !googleLoading ? { y: -2, boxShadow: '0 10px 25px -5px rgba(162, 28, 175, 0.4)' } : undefined}
+                  whileTap={!loading && !googleLoading ? { scale: 0.98 } : undefined}
                   className="w-full min-h-[48px] px-6 py-3 rounded-2xl font-sans font-semibold text-sm text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#A21CAF] border border-[#8E3EAF]/40 hover:brightness-110 shadow-lg shadow-purple-950/40 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {loading ? (
@@ -268,6 +292,25 @@ export const Register: React.FC = () => {
                     </>
                   )}
                 </motion.button>
+              </div>
+
+              {/* Visual Divider: ──────── OR ──────── */}
+              <div className="relative my-5 flex items-center justify-center">
+                <div className="w-full border-t border-[#8E3EAF]/25" />
+                <span className="absolute bg-[#180A26] px-3 text-[11px] font-semibold text-[#B4A6C7] tracking-wider uppercase">
+                  OR
+                </span>
+              </div>
+
+              {/* Google OAuth Button */}
+              <div>
+                <GoogleAuthButton
+                  onClick={handleGoogleSignIn}
+                  loading={googleLoading}
+                  disabled={loading || googleLoading}
+                  text="Sign up with Google"
+                  loadingText="Connecting to Google..."
+                />
               </div>
 
               {/* Bottom Link: Sign in */}

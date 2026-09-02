@@ -14,6 +14,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isOnboarded: boolean;
   login: (payload: LoginPayload) => Promise<{ success: boolean; error?: string }>;
+  loginWithGoogle: (redirectTo?: string) => Promise<{ success: boolean; error?: string }>;
   register: (payload: RegisterPayload) => Promise<{ success: boolean; emailConfirmationRequired?: boolean; error?: string }>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -45,11 +46,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   const loadProfile = useCallback(async (activeUser: SupabaseUser) => {
+    const userMeta = activeUser.user_metadata || {};
+    const metaFullName =
+      userMeta.full_name ||
+      userMeta.name ||
+      userMeta.user_name ||
+      (activeUser.email ? activeUser.email.split('@')[0] : '');
+    const metaAvatarUrl = userMeta.avatar_url || userMeta.picture || '';
+
     const { profile } = await profileService.fetchUserProfile(activeUser.id);
     if (profile) {
-      setUserProfile(profile);
+      const updatedProfile: UserProfile = {
+        ...profile,
+        avatarUrl: profile.avatarUrl || (metaAvatarUrl ? metaAvatarUrl : undefined),
+        fullName: profile.fullName || metaFullName,
+      };
+      setUserProfile(updatedProfile);
       try {
-        localStorage.setItem(STORAGE_PROFILE_KEY, JSON.stringify(profile));
+        localStorage.setItem(STORAGE_PROFILE_KEY, JSON.stringify(updatedProfile));
       } catch {
         // ignore
       }
@@ -58,8 +72,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const initial = createEmptyUserProfile({
         id: activeUser.id,
         email: activeUser.email || '',
-        fullName: activeUser.user_metadata?.full_name || activeUser.email?.split('@')[0] || '',
-        dateOfBirth: activeUser.user_metadata?.date_of_birth || '',
+        fullName: metaFullName,
+        avatarUrl: metaAvatarUrl || undefined,
+        dateOfBirth: userMeta.date_of_birth || '',
         isOnboarded: false,
       });
       setUserProfile(initial);
@@ -67,6 +82,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem(STORAGE_PROFILE_KEY, JSON.stringify(initial));
       } catch {
         // ignore
+      }
+
+      if (isSupabaseConfigured()) {
+        await profileService.upsertUserProfile(initial, activeUser.id);
       }
     }
   }, []);
@@ -143,6 +162,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         fullName: res.user.fullName || userProfile.fullName,
       };
       setUserProfile(demoProfile);
+    }
+
+    return { success: true };
+  };
+
+  const loginWithGoogle = async (
+    redirectTo?: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    const res = await authService.loginWithGoogle(redirectTo);
+    if (!res.success) {
+      return { success: false, error: res.error };
+    }
+
+    if (!isSupabaseConfigured()) {
+      // Mock login handling for demo mode
+      const demoProfile: UserProfile = {
+        ...userProfile,
+        id: 'demo-google-user-001',
+        email: 'google.user@example.com',
+        fullName: 'Google User',
+        isOnboarded: true,
+      };
+      setUserProfile(demoProfile);
+      try {
+        localStorage.setItem(STORAGE_PROFILE_KEY, JSON.stringify(demoProfile));
+      } catch {
+        // ignore
+      }
     }
 
     return { success: true };
@@ -278,6 +325,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated,
         isOnboarded,
         login,
+        loginWithGoogle,
         register,
         logout,
         refreshProfile,
