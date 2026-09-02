@@ -29,6 +29,7 @@ const BACKEND_API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://127.0.0.
 const ASSESSMENT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/assessment/`;
 const HEALTH_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/health/`;
 const STATUS_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/status/`;
+const CHAT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/chat/`;
 
 /** Timeout in milliseconds for backend requests */
 const REQUEST_TIMEOUT_MS = 12000;
@@ -364,4 +365,51 @@ export function getCompletenessColor(pct: number): string {
   if (pct >= 70) return '#34D399';
   if (pct >= 40) return '#FBBF24';
   return '#FB7185';
+}
+
+// ---------------------------------------------------------------------------
+// Real OvaSense Conversational Intelligence API
+// ---------------------------------------------------------------------------
+
+export async function sendChatMessage(
+  message: string,
+  conversationId?: string,
+  conversationHistory?: Array<{ sender: 'user' | 'ai'; text: string }>
+): Promise<import('../types/intelligence').ChatResponsePayload | null> {
+  const token = await getAccessToken();
+  if (!token) {
+    console.warn('sendChatMessage: No access token available (user not authenticated).');
+    return null;
+  }
+
+  const payload = {
+    message,
+    conversation_id: conversationId || '',
+    conversation_history: conversationHistory || [],
+  };
+
+  try {
+    const response = await fetchWithTimeout(
+      CHAT_ENDPOINT,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      },
+      18000
+    );
+
+    if (!response.ok) {
+      console.warn(`sendChatMessage failed with status ${response.status}`);
+      return null;
+    }
+
+    return (await response.json()) as import('../types/intelligence').ChatResponsePayload;
+  } catch (err) {
+    console.error('sendChatMessage network error:', err);
+    return null;
+  }
 }

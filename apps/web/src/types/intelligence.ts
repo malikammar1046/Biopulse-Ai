@@ -190,3 +190,36 @@ export interface IntelligenceState {
   error: string | null;
   lastFetchedAt: string | null;
 }
+
+// ---------------------------------------------------------------------------
+// Conversational Intelligence Types (POST /api/v1/intelligence/chat/)
+// ---------------------------------------------------------------------------
+export interface ChatContextUsage {
+  profile: boolean;
+  cycle: boolean;
+  symptoms: boolean;
+  reports: boolean;
+  diet: boolean;
+  fitness: boolean;
+  medications: boolean;
+  ml_screening: boolean;
+}
+
+export interface ChatMessagePayload {
+  message: string;
+  conversation_id?: string;
+  conversation_history?: Array<{
+    sender: 'user' | 'ai';
+    text: string;
+  }>;
+}
+
+export interface ChatResponsePayload {
+  success: boolean;
+  message: string;
+  conversation_id: string;
+  context_used: ChatContextUsage;
+  safety_level: 'normal' | 'caution' | 'urgent';
+  needs_clinician: boolean;
+  model?: string;
+}

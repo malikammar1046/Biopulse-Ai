@@ -52,8 +52,27 @@ class AssessmentSerializer(serializers.Serializer):
     def to_representation(self, instance):
         ret = super().to_representation(instance)
         # Ensure backwards compatibility aliases match risk_category
-        if "risk_pattern" not in ret or not ret["risk_pattern"]:
-            ret["risk_pattern"] = ret.get("risk_category")
-        if "risk_pattern_description" not in ret or not ret["risk_pattern_description"]:
-            ret["risk_pattern_description"] = ret.get("risk_category_description")
         return ret
+
+
+class ChatMessageRequestSerializer(serializers.Serializer):
+    """Validates the incoming user chat message payload."""
+    message = serializers.CharField(max_length=2000, required=True, trim_whitespace=True)
+    conversation_id = serializers.CharField(max_length=128, required=False, allow_blank=True, default="")
+    conversation_history = serializers.ListField(
+        child=serializers.DictField(),
+        required=False,
+        default=list,
+        allow_empty=True,
+    )
+
+
+class ChatMessageResponseSerializer(serializers.Serializer):
+    """Formats the conversational intelligence API response."""
+    success = serializers.BooleanField(default=True)
+    message = serializers.CharField()
+    conversation_id = serializers.CharField()
+    context_used = serializers.DictField(child=serializers.BooleanField())
+    safety_level = serializers.CharField()
+    needs_clinician = serializers.BooleanField(default=False)
+    model = serializers.CharField(required=False, default="")

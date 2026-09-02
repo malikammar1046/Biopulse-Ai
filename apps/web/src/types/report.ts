@@ -55,6 +55,10 @@ export interface ReportResultInput {
   explanation?: string;
   timelineConnection?: string;
   timelineCorrelation?: string;
+  sourceText?: string;
+  extractionMethod?: string;
+  pageNumber?: number;
+  requiresReview?: boolean;
 }
 
 export interface MedicalReport {
