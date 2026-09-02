@@ -24,42 +24,6 @@ import { DEFAULT_USER_PROFILE } from '../data/mockDashboardData';
 const STORAGE_MEMBERS_KEY_PREFIX = 'ovasense_care_circle_members_';
 const STORAGE_INVITES_KEY_PREFIX = 'ovasense_care_circle_invites_';
 
-// Initial realistic baseline connection for preview
-const INITIAL_DEMO_MEMBERS: CareCircleMember[] = [
-  {
-    id: 'mem_dr_sarah',
-    patientId: 'default',
-    email: 'dr.sarah.malik@womenshealthclinic.org',
-    name: 'Dr. Sarah Malik',
-    role: 'doctor',
-    relationship: 'Reproductive Endocrinologist',
-    clinicOrganization: 'Harley St. Women’s Health',
-    status: 'active',
-    inviteToken: 'token_demo_dr_sarah_101',
-    lastViewedAt: new Date(Date.now() - 3600000 * 4).toISOString(), // 4 hours ago
-    permissions: {
-      ...PRESET_PERMISSIONS.doctor,
-      chat_summary: true,
-    },
-    createdAt: '2026-08-01T10:00:00Z',
-    updatedAt: '2026-08-25T14:30:00Z',
-  },
-  {
-    id: 'mem_mariam_sister',
-    patientId: 'default',
-    email: 'mariam.khan@example.com',
-    name: 'Mariam Khan',
-    role: 'family',
-    relationship: 'Sister',
-    status: 'active',
-    inviteToken: 'token_demo_mariam_102',
-    lastViewedAt: new Date(Date.now() - 3600000 * 28).toISOString(),
-    permissions: PRESET_PERMISSIONS.support,
-    createdAt: '2026-08-10T12:00:00Z',
-    updatedAt: '2026-08-10T12:00:00Z',
-  },
-];
-
 class CareCircleService {
   private getMembersStorageKey(userId: string): string {
     return `${STORAGE_MEMBERS_KEY_PREFIX}${userId}`;
@@ -74,10 +38,7 @@ class CareCircleService {
     try {
       const raw = localStorage.getItem(this.getMembersStorageKey(userId));
       if (raw) return JSON.parse(raw);
-      // Initialize with demo members adapted for this user id
-      const initial = INITIAL_DEMO_MEMBERS.map((m) => ({ ...m, patientId: userId }));
-      this.setLocalMembers(userId, initial);
-      return initial;
+      return [];
     } catch {
       return [];
     }
@@ -809,15 +770,6 @@ class CareCircleService {
         } catch {
           // ignore
         }
-      }
-    }
-
-    // Check demo members list
-    if (!targetMember) {
-      const demoMatch = INITIAL_DEMO_MEMBERS.find((m) => m.inviteToken === token);
-      if (demoMatch) {
-        targetMember = demoMatch;
-        patientId = demoMatch.patientId;
       }
     }
 

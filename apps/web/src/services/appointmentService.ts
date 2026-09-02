@@ -17,65 +17,6 @@ import type {
 
 const STORAGE_APPOINTMENTS_PREFIX = 'ovasense_appointments_';
 
-// Initial realistic default appointments seeded for realistic demonstration
-const INITIAL_DEMO_APPOINTMENTS: Omit<AppointmentItem, 'id' | 'patientId'>[] = [
-  {
-    providerName: 'Dr. Sarah Malik',
-    providerSpecialty: 'Specialist Gynecologist & PCOS Consultant',
-    title: 'Comprehensive PCOS & Cycle Review',
-    appointmentType: 'consultation',
-    scheduledAt: '2026-09-08T15:30:00.000Z',
-    scheduledDate: '2026-09-08',
-    scheduledTime: '15:30',
-    durationMinutes: 30,
-    status: 'scheduled',
-    location: 'Lahore Women’s Health Clinic & Online Telehealth',
-    meetingUrl: 'https://meet.ovasense.health/dr-sarah-malik',
-    reason: 'Follow-up on ultrasound follicle scan results, inositol protocol adherence, and follicular phase cycle regularity.',
-    patientNotes: 'Review lab results from Chughtai Lab (LH/FSH ratio) and discuss mild luteal phase bloating.',
-    doctorQuestions: [
-      {
-        id: 'q_1',
-        question: 'My follicular phase has shortened by 3 days this month. Is this a normal variation with inositol?',
-        isDiscussed: false,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: 'q_2',
-        question: 'Should I adjust my Metformin dose with meals to prevent evening energy dips?',
-        isDiscussed: false,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: 'q_3',
-        question: 'What repeat blood markers should we check at our next 6-month interval?',
-        isDiscussed: false,
-        createdAt: new Date().toISOString(),
-      },
-    ],
-    createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    providerName: 'Dr. Sarah Malik',
-    providerSpecialty: 'Specialist Gynecologist & PCOS Consultant',
-    title: 'Initial Ultrasound Review & Biomarker Baseline',
-    appointmentType: 'lab_review',
-    scheduledAt: '2026-06-12T11:00:00.000Z',
-    scheduledDate: '2026-06-12',
-    scheduledTime: '11:00',
-    durationMinutes: 30,
-    status: 'completed',
-    location: 'Lahore Women’s Health Clinic',
-    reason: 'Initial consultation to review bilateral ovary follicle volume and establish daily tracking routine.',
-    patientNotes: 'Discussed high LH/FSH ratio of 2.4 and started Metformin 500mg + Myo-Inositol.',
-    providerNotes: 'Patient initiated on lifestyle nutrition triad and 40:1 inositol. Follow-up scheduled in 3 months.',
-    doctorQuestions: [],
-    createdAt: new Date(Date.now() - 86400000 * 80).toISOString(),
-    updatedAt: new Date(Date.now() - 86400000 * 79).toISOString(),
-  },
-];
-
 class AppointmentService {
   private getStorageKey(patientId: string): string {
     return `${STORAGE_APPOINTMENTS_PREFIX}${patientId}`;
@@ -86,13 +27,7 @@ class AppointmentService {
     try {
       const raw = localStorage.getItem(this.getStorageKey(patientId));
       if (raw) return JSON.parse(raw);
-      const initial: AppointmentItem[] = INITIAL_DEMO_APPOINTMENTS.map((a, idx) => ({
-        ...a,
-        id: `apt_demo_${idx}_${Date.now().toString(36)}`,
-        patientId,
-      }));
-      this.setLocalAppointments(patientId, initial);
-      return initial;
+      return [];
     } catch {
       return [];
     }

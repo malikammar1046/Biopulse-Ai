@@ -31,14 +31,14 @@ export const DEFAULT_FAMILY_HISTORY_OPTIONS = [
 ];
 
 export const DEFAULT_SYMPTOM_OPTIONS = [
-  { id: 'pelvic_cramps', label: 'Pelvic Cramps', icon: 'Sparkles', desc: 'Lower stomach or period cramps' },
-  { id: 'cystic_acne', label: 'Acne & Breakouts', icon: 'Flame', desc: 'Jawline, chin, or facial flare-ups' },
-  { id: 'hirsutism', label: 'Unwanted Hair Growth', icon: 'Activity', desc: 'Darker facial or body hair' },
-  { id: 'fatigue', label: 'Daily Fatigue', icon: 'Moon', desc: 'Feeling tired or low on energy during the day' },
-  { id: 'bloating', label: 'Bloating & Fullness', icon: 'Droplets', desc: 'Water retention or stomach fullness' },
-  { id: 'mood_shifts', label: 'Mood Changes', icon: 'Heart', desc: 'Irritability or feeling down around cycle days' },
-  { id: 'sleep_changes', label: 'Sleep Changes', icon: 'Clock', desc: 'Difficulty falling or staying asleep' },
-  { id: 'brain_fog', label: 'Brain Fog', icon: 'Brain', desc: 'Temporary dips in memory or focus' },
+  { id: 'acne', label: 'Acne & Skin Breakouts (Pimples)', icon: 'Flame', desc: 'Facial, chin, jawline or body acne flares' },
+  { id: 'hirsutism', label: 'Excess Facial / Body Hair (Hirsutism)', icon: 'Activity', desc: 'Noticeable hair on chin, upper lip, chest, or abdomen' },
+  { id: 'skin_darkening', label: 'Skin Darkening (Acanthosis Nigricans)', icon: 'Sparkles', desc: 'Dark velvety patches on neck creases, underarms, or groin' },
+  { id: 'hair_loss', label: 'Hair Thinning / Hair Fall (Alopecia)', icon: 'Flame', desc: 'Excessive hair shedding or widening part line' },
+  { id: 'weight_gain', label: 'Recent Weight Gain / Rapid Changes', icon: 'Activity', desc: 'Unexplained weight increase or difficulty losing weight' },
+  { id: 'pelvic_cramps', label: 'Pelvic & Period Cramps', icon: 'Sparkles', desc: 'Lower abdominal pain or heavy period cramps' },
+  { id: 'fatigue', label: 'Daily Fatigue & Energy Crashes', icon: 'Moon', desc: 'Persistent tiredness throughout the day' },
+  { id: 'mood_shifts', label: 'Mood Shifts & Irritability', icon: 'Heart', desc: 'Heightened anxiety or emotional swings during cycle' },
 ];
 
 export const DIETARY_PREFERENCE_OPTIONS = [

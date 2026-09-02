@@ -1,0 +1,17 @@
+{
+  "name": "pmosense",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PMOSense Fullstack Application",
+  "scripts": {
+    "dev": "concurrently -n \"WEB,BACKEND\" -c \"cyan.bold,magenta.bold\" --kill-others-on-fail \"npm run dev:web\" \"npm run dev:backend\"",
+    "dev:web": "npm run dev --prefix apps/web",
+    "dev:backend": "backend\\venv\\Scripts\\python.exe -u backend\\manage.py runserver 127.0.0.1:8000",
+    "install:all": "npm install && npm install --prefix apps/web",
+    "train:ml": "backend\\venv\\Scripts\\python.exe -m ml.training.train_pipeline",
+    "test:backend": "backend\\venv\\Scripts\\python.exe backend\\manage.py test apps.intelligence"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

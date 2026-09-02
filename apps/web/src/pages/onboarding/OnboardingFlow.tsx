@@ -6,30 +6,21 @@ import { ROUTES } from '../../constants/routes';
 import { useUserHealth } from '../../context/UserHealthContext';
 import type {
   UserProfile,
-  EmergencyContact,
   MedicalProfile,
   WomensHealthProfile,
-  LifestyleProfile,
-  HealthGoals,
 } from '../../types/onboarding';
 import { Logo } from '../../components/brand/Logo';
 import { OnboardingProgressBar } from '../../components/onboarding/OnboardingProgressBar';
 import { Step1PersonalInfo } from '../../components/onboarding/Step1PersonalInfo';
-import { Step2EmergencySafety } from '../../components/onboarding/Step2EmergencySafety';
 import { Step3MedicalInfo } from '../../components/onboarding/Step3MedicalInfo';
 import { Step4WomensHealth } from '../../components/onboarding/Step4WomensHealth';
-import { Step5Lifestyle } from '../../components/onboarding/Step5Lifestyle';
-import { Step6HealthGoals } from '../../components/onboarding/Step6HealthGoals';
 import { Step7ProfileComplete } from '../../components/onboarding/Step7ProfileComplete';
 
 const ONBOARDING_STEPS = [
   { number: '1', label: 'Basic Info' },
-  { number: '2', label: 'Safety Contact' },
-  { number: '3', label: 'Medical History' },
-  { number: '4', label: 'Period & Cycle' },
-  { number: '5', label: 'Daily Habits' },
-  { number: '6', label: 'Health Goals' },
-  { number: '7', label: 'All Done' },
+  { number: '2', label: 'Medical History' },
+  { number: '3', label: 'Period & Cycle' },
+  { number: '4', label: 'All Done' },
 ];
 
 export const OnboardingFlow: React.FC = () => {
@@ -58,12 +49,6 @@ export const OnboardingFlow: React.FC = () => {
       if (!draftProfile.dateOfBirth) errs.dateOfBirth = 'Date of Birth is required';
       if (!draftProfile.phone.trim()) errs.phone = 'Phone Number is required';
       if (!draftProfile.email.trim()) errs.email = 'Email Address is required';
-    }
-
-    if (step === 2) {
-      const primary = draftProfile.emergencyContacts[0];
-      if (!primary?.name?.trim()) errs.primaryName = 'Primary contact name is required';
-      if (!primary?.phone?.trim()) errs.primaryPhone = 'Primary contact phone is required';
     }
 
     setErrors(errs);
@@ -151,16 +136,6 @@ export const OnboardingFlow: React.FC = () => {
               )}
 
               {currentStep === 2 && (
-                <Step2EmergencySafety
-                  contacts={draftProfile.emergencyContacts}
-                  onChange={(contacts: EmergencyContact[]) =>
-                    setDraftProfile((prev) => ({ ...prev, emergencyContacts: contacts }))
-                  }
-                  errors={errors}
-                />
-              )}
-
-              {currentStep === 3 && (
                 <Step3MedicalInfo
                   data={draftProfile.medical}
                   onChange={(med: MedicalProfile) =>
@@ -169,7 +144,7 @@ export const OnboardingFlow: React.FC = () => {
                 />
               )}
 
-              {currentStep === 4 && (
+              {currentStep === 3 && (
                 <Step4WomensHealth
                   data={draftProfile.womensHealth}
                   onChange={(wh: WomensHealthProfile) =>
@@ -178,25 +153,7 @@ export const OnboardingFlow: React.FC = () => {
                 />
               )}
 
-              {currentStep === 5 && (
-                <Step5Lifestyle
-                  data={draftProfile.lifestyle}
-                  onChange={(ls: LifestyleProfile) =>
-                    setDraftProfile((prev) => ({ ...prev, lifestyle: ls }))
-                  }
-                />
-              )}
-
-              {currentStep === 6 && (
-                <Step6HealthGoals
-                  data={draftProfile.goals}
-                  onChange={(g: HealthGoals) =>
-                    setDraftProfile((prev) => ({ ...prev, goals: g }))
-                  }
-                />
-              )}
-
-              {currentStep === 7 && (
+              {currentStep === 4 && (
                 <Step7ProfileComplete
                   profile={draftProfile}
                   onEnterApp={handleEnterApp}
@@ -207,8 +164,8 @@ export const OnboardingFlow: React.FC = () => {
             </motion.div>
           </AnimatePresence>
 
-          {/* Navigation Controls (Steps 1 to 6) */}
-          {currentStep < 7 && (
+          {/* Navigation Controls (Steps 1 to 3) */}
+          {currentStep < 4 && (
             <div className="mt-8 pt-6 border-t border-white/10 flex items-center justify-between gap-4">
               <button
                 type="button"
@@ -230,7 +187,7 @@ export const OnboardingFlow: React.FC = () => {
                   onClick={handleNext}
                   className="px-7 py-3 rounded-2xl font-sans font-bold text-xs sm:text-sm uppercase tracking-wider text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#E87084] hover:brightness-110 shadow-lg shadow-purple-950/40 transition-all flex items-center gap-2 cursor-pointer"
                 >
-                  <span>{currentStep === 6 ? 'Complete Profile' : 'Continue'}</span>
+                  <span>{currentStep === 3 ? 'Review Profile' : 'Continue'}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>

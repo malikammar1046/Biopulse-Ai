@@ -13,46 +13,6 @@ import type {
 const STORAGE_MEDICATIONS_PREFIX = 'ovasense_medications_';
 const STORAGE_MEDICATION_LOGS_PREFIX = 'ovasense_medication_logs_';
 
-// Initial realistic medications seeded for demonstration on initial load
-const INITIAL_DEMO_MEDICATIONS: Omit<MedicationItem, 'id' | 'userId'>[] = [
-  {
-    name: 'Metformin Hydrochloride',
-    dose: '500',
-    unit: 'mg',
-    frequency: 'twice_daily',
-    scheduledTimes: ['08:00', '20:00'],
-    startDate: '2026-01-15',
-    notes: 'Take with meals to support steady insulin sensitivity',
-    isActive: true,
-    createdAt: new Date(Date.now() - 86400000 * 30).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    name: 'Myo-Inositol & D-Chiro Inositol (40:1)',
-    dose: '2000',
-    unit: 'mg',
-    frequency: 'once_daily',
-    scheduledTimes: ['08:30'],
-    startDate: '2026-02-01',
-    notes: 'Dissolve in water in morning for ovarian follicle health',
-    isActive: true,
-    createdAt: new Date(Date.now() - 86400000 * 20).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    name: 'Vitamin D3 & K2 Drop',
-    dose: '2000',
-    unit: 'IU',
-    frequency: 'once_daily',
-    scheduledTimes: ['13:00'],
-    startDate: '2026-02-10',
-    notes: 'Take with lunch containing healthy fats for optimal absorption',
-    isActive: true,
-    createdAt: new Date(Date.now() - 86400000 * 15).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
-
 class MedicationService {
   private getMedsKey(userId: string): string {
     return `${STORAGE_MEDICATIONS_PREFIX}${userId}`;
@@ -67,13 +27,7 @@ class MedicationService {
     try {
       const raw = localStorage.getItem(this.getMedsKey(userId));
       if (raw) return JSON.parse(raw);
-      const initial: MedicationItem[] = INITIAL_DEMO_MEDICATIONS.map((m, idx) => ({
-        ...m,
-        id: `med_demo_${idx}_${Date.now().toString(36)}`,
-        userId,
-      }));
-      this.setLocalMedications(userId, initial);
-      return initial;
+      return [];
     } catch {
       return [];
     }
@@ -91,56 +45,7 @@ class MedicationService {
     try {
       const raw = localStorage.getItem(this.getLogsKey(userId));
       if (raw) return JSON.parse(raw);
-
-      // Generate realistic demo logs for the past 7 days
-      const demoLogs: MedicationLogEntry[] = [];
-      const meds = this.getLocalMedications(userId);
-      const now = new Date();
-
-      for (let i = 6; i >= 1; i--) {
-        const d = new Date(now.getTime() - i * 86400000);
-        const dateIso = d.toISOString().split('T')[0];
-
-        meds.forEach((med) => {
-          med.scheduledTimes.forEach((time) => {
-            // 85% taken, 15% skipped for realism
-            const isTaken = (i + med.name.length) % 5 !== 0;
-            demoLogs.push({
-              id: `log_demo_${dateIso}_${med.id}_${time}`,
-              userId,
-              medicationId: med.id,
-              medicationName: med.name,
-              scheduledFor: dateIso,
-              scheduledTime: time,
-              status: isTaken ? 'taken' : 'skipped',
-              takenAt: isTaken ? `${dateIso}T${time}:12.000Z` : undefined,
-              notes: isTaken ? '' : 'Forgot during travel',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            });
-          });
-        });
-      }
-
-      // Add 1 taken log for today
-      if (meds.length > 0) {
-        const todayIso = now.toISOString().split('T')[0];
-        demoLogs.push({
-          id: `log_demo_${todayIso}_${meds[0].id}_08:00`,
-          userId,
-          medicationId: meds[0].id,
-          medicationName: meds[0].name,
-          scheduledFor: todayIso,
-          scheduledTime: '08:00',
-          status: 'taken',
-          takenAt: `${todayIso}T08:14:00.000Z`,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        });
-      }
-
-      this.setLocalLogs(userId, demoLogs);
-      return demoLogs;
+      return [];
     } catch {
       return [];
     }

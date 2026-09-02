@@ -311,15 +311,22 @@ class OvaSenseMLBridge:
         food_logs = health_data.food_logs
 
         raw_dict: dict[str, Any] = {}
-
         # 1. Age (yrs)
         if profile.date_of_birth:
-            try:
-                dob = datetime.strptime(str(profile.date_of_birth)[:10], "%Y-%m-%d").replace(tzinfo=timezone.utc)
-                age = (datetime.now(timezone.utc) - dob).days / 365.25
-                raw_dict[" Age (yrs)"] = round(float(age), 1) if age > 0 else np.nan
-            except Exception:
-                raw_dict[" Age (yrs)"] = np.nan
+            dob_str = str(profile.date_of_birth).strip()
+            if dob_str.replace(".", "", 1).isdigit():
+                try:
+                    val = float(dob_str)
+                    raw_dict[" Age (yrs)"] = val if (10 <= val <= 100) else np.nan
+                except Exception:
+                    raw_dict[" Age (yrs)"] = np.nan
+            else:
+                try:
+                    dob = datetime.strptime(dob_str[:10], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+                    age = (datetime.now(timezone.utc) - dob).days / 365.25
+                    raw_dict[" Age (yrs)"] = round(float(age), 1) if age > 0 else np.nan
+                except Exception:
+                    raw_dict[" Age (yrs)"] = np.nan
         else:
             raw_dict[" Age (yrs)"] = np.nan
 
@@ -346,13 +353,12 @@ class OvaSenseMLBridge:
         cycle_ri = np.nan
         if profile.period_regularity:
             reg = str(profile.period_regularity).lower()
-            if reg in ("very_regular", "mostly_regular", "regular"):
-                cycle_ri = 2.0
-            elif reg in ("sometimes_irregular", "often_irregular", "irregular", "very_irregular"):
+            if "irregular" in reg or reg in ("sometimes_irregular", "often_irregular", "very_irregular"):
                 cycle_ri = 4.0
+            elif reg in ("regular", "very_regular", "mostly_regular"):
+                cycle_ri = 2.0
 
         if np.isnan(cycle_ri) and len(cycle_records) >= 2:
-            # Derive regularity from variance of logged cycle lengths
             try:
                 sorted_starts = sorted([
                     datetime.strptime(r.period_start_date[:10], "%Y-%m-%d")
@@ -387,24 +393,40 @@ class OvaSenseMLBridge:
         raw_dict["Cycle length(days)"] = cycle_len
 
         # 7. Marriage Status (Yrs)
-        raw_dict["Marraige Status (Yrs)"] = np.nan
+        if getattr(profile, "marriage_years", None) is not None:
+            try:
+                raw_dict["Marraige Status (Yrs)"] = float(profile.marriage_years)
+            except Exception:
+                raw_dict["Marraige Status (Yrs)"] = 0.0
+        elif getattr(profile, "marital_status", None):
+            ms = str(profile.marital_status).lower()
+            raw_dict["Marraige Status (Yrs)"] = 0.0 if ("single" in ms or "unmarried" in ms) else 1.0
+        else:
+            raw_dict["Marraige Status (Yrs)"] = np.nan
 
         # 8. Pregnant(Y/N)
-        raw_dict["Pregnant(Y/N)"] = np.nan
+        if getattr(profile, "is_pregnant", None) is not None:
+            raw_dict["Pregnant(Y/N)"] = 1.0 if profile.is_pregnant else 0.0
+        else:
+            raw_dict["Pregnant(Y/N)"] = np.nan
 
         # 9. No. of abortions
-        raw_dict["No. of aborptions"] = np.nan
+        if getattr(profile, "abortions_count", None) is not None:
+            try:
+                raw_dict["No. of aborptions"] = float(profile.abortions_count)
+            except Exception:
+                raw_dict["No. of aborptions"] = 0.0
+        else:
+            raw_dict["No. of aborptions"] = np.nan
 
         # 10–14. Symptom Features (Weight gain, hair growth, skin darkening, hair loss, pimples)
-        # Check active symptoms in profile and logged symptom records
-        common_symptoms = [s.lower() for s in (profile.common_symptoms or [])]
-        logged_symptom_types = [s.symptom_type.lower() for s in symptom_records if s.symptom_type]
+        common_symptoms = [str(s).lower() for s in (profile.common_symptoms or [])]
+        logged_symptom_types = [str(s.symptom_type).lower() for s in symptom_records if s.symptom_type]
         all_symptom_tags = set(common_symptoms + logged_symptom_types)
-
-        has_symptom_history = bool(profile.common_symptoms or symptom_records)
+        has_symptom_history = bool(profile.common_symptoms is not None and len(profile.common_symptoms) > 0 or symptom_records)
 
         # Weight gain(Y/N)
-        if any("weight" in s or "weight_gain" in s for s in all_symptom_tags):
+        if any(k in s for s in all_symptom_tags for k in ("weight", "weight_gain", "bloating", "gain")):
             raw_dict["Weight gain(Y/N)"] = 1.0
         elif has_symptom_history:
             raw_dict["Weight gain(Y/N)"] = 0.0
@@ -412,7 +434,7 @@ class OvaSenseMLBridge:
             raw_dict["Weight gain(Y/N)"] = np.nan
 
         # hair growth(Y/N) (Hirsutism)
-        if any("hirsutism" in s or "unwanted_hair" in s or "facial" in s for s in all_symptom_tags):
+        if any(k in s for s in all_symptom_tags for k in ("hirsutism", "unwanted_hair", "facial", "chin", "body hair", "hair growth")):
             raw_dict["hair growth(Y/N)"] = 1.0
         elif has_symptom_history:
             raw_dict["hair growth(Y/N)"] = 0.0
@@ -420,7 +442,7 @@ class OvaSenseMLBridge:
             raw_dict["hair growth(Y/N)"] = np.nan
 
         # Skin darkening(Y/N) (Acanthosis nigricans)
-        if any("skin_darkening" in s or "acanthosis" in s or "darkening" in s for s in all_symptom_tags):
+        if any(k in s for s in all_symptom_tags for k in ("skin_darkening", "acanthosis", "darkening", "neck", "pigmentation")):
             raw_dict["Skin darkening (Y/N)"] = 1.0
         elif has_symptom_history:
             raw_dict["Skin darkening (Y/N)"] = 0.0
@@ -428,7 +450,7 @@ class OvaSenseMLBridge:
             raw_dict["Skin darkening (Y/N)"] = np.nan
 
         # Hair loss(Y/N) (Alopecia)
-        if any("hair_thinning" in s or "hair_loss" in s or "alopecia" in s for s in all_symptom_tags):
+        if any(k in s for s in all_symptom_tags for k in ("hair_thinning", "hair_loss", "alopecia", "hair fall", "thinning", "shedding")):
             raw_dict["Hair loss(Y/N)"] = 1.0
         elif has_symptom_history:
             raw_dict["Hair loss(Y/N)"] = 0.0
@@ -436,7 +458,7 @@ class OvaSenseMLBridge:
             raw_dict["Hair loss(Y/N)"] = np.nan
 
         # Pimples(Y/N) (Acne)
-        if any("acne" in s or "cystic_acne" in s or "pimples" in s for s in all_symptom_tags):
+        if any(k in s for s in all_symptom_tags for k in ("acne", "cystic_acne", "pimples", "breakout", "flare", "zits", "spot")):
             raw_dict["Pimples(Y/N)"] = 1.0
         elif has_symptom_history:
             raw_dict["Pimples(Y/N)"] = 0.0
@@ -444,23 +466,32 @@ class OvaSenseMLBridge:
             raw_dict["Pimples(Y/N)"] = np.nan
 
         # 15. Fast food (Y/N)
-        if food_logs:
-            has_fast_food = any("fast" in f.food_name.lower() or "burger" in f.food_name.lower() for f in food_logs if f.food_name)
+        if getattr(profile, "fast_food_intake", None):
+            ffi = str(profile.fast_food_intake).lower()
+            raw_dict["Fast food (Y/N)"] = 1.0 if ffi == "frequent" else 0.0
+        elif profile.dietary_preference:
+            pref = str(profile.dietary_preference).lower()
+            if any(k in pref for k in ("fast_food", "junk", "processed", "restaurant")):
+                raw_dict["Fast food (Y/N)"] = 1.0
+            else:
+                raw_dict["Fast food (Y/N)"] = 0.0
+        elif food_logs:
+            has_fast_food = any("fast" in f.food_name.lower() or "burger" in f.food_name.lower() or "pizza" in f.food_name.lower() for f in food_logs if f.food_name)
             raw_dict["Fast food (Y/N)"] = 1.0 if has_fast_food else 0.0
         else:
             raw_dict["Fast food (Y/N)"] = np.nan
 
         # 16. Reg.Exercise(Y/N)
-        if profile.activity_level:
+        if getattr(profile, "regular_exercise", None) is not None:
+            raw_dict["Reg.Exercise(Y/N)"] = 1.0 if profile.regular_exercise else 0.0
+        elif profile.activity_level:
             act = str(profile.activity_level).lower()
-            if act in ("moderate", "very_active", "active", "high"):
+            if any(k in act for k in ("moderate", "very_active", "active", "high")):
                 raw_dict["Reg.Exercise(Y/N)"] = 1.0
-            elif act in ("sedentary", "light", "low"):
-                raw_dict["Reg.Exercise(Y/N)"] = 0.0
             else:
-                raw_dict["Reg.Exercise(Y/N)"] = np.nan
+                raw_dict["Reg.Exercise(Y/N)"] = 0.0
         elif fitness_logs:
-            raw_dict["Reg.Exercise(Y/N)"] = 1.0 if len(fitness_logs) >= 3 else 0.0
+            raw_dict["Reg.Exercise(Y/N)"] = 1.0 if len(fitness_logs) >= 2 else 0.0
         else:
             raw_dict["Reg.Exercise(Y/N)"] = np.nan
 

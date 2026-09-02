@@ -18,6 +18,7 @@ export const ROUTES = {
   APP: {
     ROOT: '/app',
     DASHBOARD: '/app/dashboard',
+    HUB: '/app/hub',
     AI_TWIN: '/app/ai-twin',
     CHAT: '/app/chat',
     PROFILE: '/app/profile',

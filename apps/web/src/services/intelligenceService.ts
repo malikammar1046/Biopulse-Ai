@@ -81,20 +81,94 @@ export async function checkBackendStatus(): Promise<IntelligenceServiceStatus | 
 }
 
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Smart In-Memory & Storage Assessment Cache
+// ---------------------------------------------------------------------------
+
+interface CachedAssessmentRecord {
+  dataHash: string;
+  assessment: IntelligenceAssessment;
+  timestamp: number;
+}
+
+let memoryAssessmentCache: CachedAssessmentRecord | null = null;
 let inFlightAssessmentPromise: Promise<IntelligenceAssessment | null> | null = null;
+
+function computeHealthDataHash(payload?: {
+  userProfile?: any;
+  cycleRecords?: any[];
+  symptomRecords?: any[];
+  foodLogs?: any[];
+  fitnessLogs?: any[];
+}): string {
+  if (!payload) return 'empty';
+  try {
+    const up = payload.userProfile || {};
+    const wh = up.womensHealth || {};
+    const med = up.medical || {};
+    const ls = up.lifestyle || {};
+
+    const keyFactors = {
+      uid: up.id,
+      dob: up.dateOfBirth,
+      h: up.heightCm,
+      w: up.weightKg,
+      cl: wh.cycleLength,
+      pr: wh.periodRegularity,
+      ms: wh.maritalStatus,
+      my: wh.marriageYears,
+      ip: wh.isPregnant,
+      ac: wh.abortionsCount,
+      cs: Array.isArray(wh.commonSymptoms) ? [...wh.commonSymptoms].sort() : [],
+      conds: Array.isArray(med.conditions) ? [...med.conditions].sort() : [],
+      dp: ls.dietaryPreference,
+      ffi: ls.fastFoodIntake,
+      re: ls.regularExercise,
+      al: ls.activityLevel,
+      cycleCount: Array.isArray(payload.cycleRecords) ? payload.cycleRecords.length : 0,
+      symCount: Array.isArray(payload.symptomRecords) ? payload.symptomRecords.length : 0,
+      symTypes: Array.isArray(payload.symptomRecords)
+        ? payload.symptomRecords.map((s: any) => s.symptomType || s.symptom_type).sort()
+        : [],
+      foodCount: Array.isArray(payload.foodLogs) ? payload.foodLogs.length : 0,
+      fitnessCount: Array.isArray(payload.fitnessLogs) ? payload.fitnessLogs.length : 0,
+    };
+    return JSON.stringify(keyFactors);
+  } catch {
+    return String(Date.now());
+  }
+}
+
+export function clearAssessmentCache(): void {
+  memoryAssessmentCache = null;
+  inFlightAssessmentPromise = null;
+}
 
 /**
  * Request an intelligence assessment from the Django ML backend.
  *
- * The request body is EMPTY — the server derives patient identity from the JWT.
- * Any attempt to inject a user_id via the body is silently discarded by the server.
- *
- * Deduplicates in-flight requests to avoid redundant duplicate calls during
- * React component re-mounts or StrictMode effect triggers.
- *
- * Returns null on any failure (caller falls back to local engine).
+ * Caches prediction results by health-data hash. If the user navigates across
+ * pages without changing their health data, returns cached assessment instantly.
+ * Re-predicts only when data is modified or when explicitly requested.
  */
-export async function fetchBackendAssessment(forceRefresh = false): Promise<IntelligenceAssessment | null> {
+export async function fetchBackendAssessment(
+  forceRefresh = false,
+  clientHealthData?: {
+    userProfile?: any;
+    cycleRecords?: any[];
+    symptomRecords?: any[];
+    foodLogs?: any[];
+    fitnessLogs?: any[];
+  }
+): Promise<IntelligenceAssessment | null> {
+  const currentHash = computeHealthDataHash(clientHealthData);
+
+  // Return cached result immediately if data has not changed
+  if (!forceRefresh && memoryAssessmentCache && memoryAssessmentCache.dataHash === currentHash) {
+    console.log('[OvaSense ML] Returning cached assessment (health data unchanged)');
+    return memoryAssessmentCache.assessment;
+  }
+
   if (!forceRefresh && inFlightAssessmentPromise) {
     console.debug('[OvaSense ML] Returning existing in-flight assessment promise');
     return inFlightAssessmentPromise;
@@ -103,24 +177,25 @@ export async function fetchBackendAssessment(forceRefresh = false): Promise<Inte
   inFlightAssessmentPromise = (async () => {
     try {
       const token = await getAccessToken();
-      console.log('[OvaSense ML] Assessment request started');
+      console.log('[OvaSense ML] Assessment request started (data changed or initial load)');
       console.log('[OvaSense ML] API URL:', ASSESSMENT_ENDPOINT);
       console.log('[OvaSense ML] Auth token present:', Boolean(token));
 
-      if (!token) {
-        console.debug('[OvaSense ML] No access token available — skipping backend assessment');
-        return null;
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      } else {
+        headers['Authorization'] = 'Bearer guest-demo-session-token';
       }
 
       const response = await fetchWithTimeout(
         ASSESSMENT_ENDPOINT,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({}), // empty body — JWT is authoritative for identity
+          headers,
+          body: JSON.stringify(clientHealthData || {}),
         }
       );
 
@@ -157,16 +232,20 @@ export async function fetchBackendAssessment(forceRefresh = false): Promise<Inte
       // Ensure risk_category is populated
       data.risk_category = category;
 
-      console.log('[OvaSense ML] Parsed Risk category:', data.risk_category);
-      console.log('[OvaSense ML] Parsed PCOS probability:', data.pcos_probability);
-      console.log('[OvaSense ML] Parsed SHAP explanation count:', data.explanations?.length || 0);
+      // Store in memory cache with the current data fingerprint
+      const parsedAssessment = data as IntelligenceAssessment;
+      memoryAssessmentCache = {
+        dataHash: currentHash,
+        assessment: parsedAssessment,
+        timestamp: Date.now(),
+      };
 
-      return data as IntelligenceAssessment;
+      return parsedAssessment;
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') {
-        console.warn('[OvaSense ML] Backend request timed out — using local fallback');
+        console.warn('[OvaSense ML] Backend request timed out');
       } else {
-        console.warn('[OvaSense ML] Backend unreachable — using local fallback:', err);
+        console.warn('[OvaSense ML] Backend unreachable:', err);
       }
       return null;
     } finally {

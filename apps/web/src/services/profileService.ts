@@ -89,6 +89,10 @@ export function mapDbRowToUserProfile(
       commonSymptoms: Array.isArray(row.common_symptoms) ? row.common_symptoms : base.womensHealth.commonSymptoms,
       currentCycleDay: base.womensHealth.currentCycleDay,
       currentPhase: base.womensHealth.currentPhase,
+      maritalStatus: (row as any).marital_status ?? base.womensHealth.maritalStatus ?? 'unmarried',
+      marriageYears: (row as any).marriage_years ?? base.womensHealth.marriageYears ?? 0,
+      isPregnant: (row as any).is_pregnant ?? base.womensHealth.isPregnant ?? false,
+      abortionsCount: (row as any).abortions_count ?? base.womensHealth.abortionsCount ?? 0,
     },
     lifestyle: {
       dietaryPreference: row.dietary_preference ?? base.lifestyle.dietaryPreference,
@@ -99,6 +103,8 @@ export function mapDbRowToUserProfile(
         : base.lifestyle.exercisePreferences,
       sleepHours: row.sleep_hours ?? base.lifestyle.sleepHours,
       workLifestyle: row.work_lifestyle ?? base.lifestyle.workLifestyle,
+      fastFoodIntake: (row as any).fast_food_intake ?? base.lifestyle.fastFoodIntake ?? 'occasional',
+      regularExercise: (row as any).regular_exercise ?? base.lifestyle.regularExercise ?? true,
     },
     goals: {
       selectedGoals: Array.isArray(row.selected_goals) ? row.selected_goals : base.goals.selectedGoals,
@@ -111,7 +117,7 @@ export function mapDbRowToUserProfile(
  * Maps a camelCase UserProfile object to snake_case for Supabase insertion/updating.
  */
 export function mapUserProfileToDbRow(profile: UserProfile, userId: string): Record<string, any> {
-  return {
+  const row: Record<string, any> = {
     id: userId || profile.id,
     full_name: profile.fullName || '',
     email: profile.email || '',
@@ -135,7 +141,13 @@ export function mapUserProfileToDbRow(profile: UserProfile, userId: string): Rec
     last_period_date: profile.womensHealth?.lastPeriodDate || null,
     period_regularity: profile.womensHealth?.periodRegularity || 'mostly_regular',
     common_symptoms: profile.womensHealth?.commonSymptoms || [],
+    marital_status: profile.womensHealth?.maritalStatus || 'unmarried',
+    marriage_years: profile.womensHealth?.marriageYears ?? 0,
+    is_pregnant: profile.womensHealth?.isPregnant ?? false,
+    abortions_count: profile.womensHealth?.abortionsCount ?? 0,
     dietary_preference: profile.lifestyle?.dietaryPreference || 'Balanced',
+    fast_food_intake: profile.lifestyle?.fastFoodIntake || 'occasional',
+    regular_exercise: profile.lifestyle?.regularExercise ?? true,
     daily_water_glasses: profile.lifestyle?.dailyWaterGlasses ?? 8,
     activity_level: profile.lifestyle?.activityLevel || 'moderate',
     exercise_preferences: profile.lifestyle?.exercisePreferences || [],
@@ -146,6 +158,7 @@ export function mapUserProfileToDbRow(profile: UserProfile, userId: string): Rec
     is_onboarded: profile.isOnboarded ?? false,
     updated_at: new Date().toISOString(),
   };
+  return row;
 }
 
 class ProfileService {

@@ -25,7 +25,6 @@ import type {
 } from '../types/report';
 import {
   DEFAULT_CARE_CIRCLE,
-  deriveNutritionFromProfile,
   deriveInsightFromProfile,
 } from '../data/mockDashboardData';
 import { calculateCycleMetrics } from '../utils/profileCompletion';
@@ -76,6 +75,8 @@ import type {
   HealthSummarySnapshot,
   ConsultationBrief,
 } from '../types/appointment';
+import type { IntelligenceAssessment } from '../types/intelligence';
+import { fetchBackendAssessment, clearAssessmentCache } from '../services/intelligenceService';
 import { useAuth } from './AuthContext';
 
 interface UserHealthContextType {
@@ -160,6 +161,10 @@ interface UserHealthContextType {
   refreshCareCircle: () => Promise<void>;
   weeklySummary: WeeklyHealthSummaryData;
   digitalTwinInsight: DigitalTwinInsight;
+  mlAssessment: IntelligenceAssessment | null;
+  mlAssessmentLoading: boolean;
+  mlAssessmentError: boolean;
+  refreshMlAssessment: (force?: boolean) => Promise<void>;
   isAiChatOpen: boolean;
   activeAiPrompt?: string;
   toggleAiChat: () => void;
@@ -1532,10 +1537,10 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       fatTarget: dailyNutritionTargets.fatG,
       waterIntakeLiters: Math.round(waterLog.glasses * 0.25 * 10) / 10,
       waterTargetLiters: Math.round(dailyNutritionTargets.waterGlasses * 0.25 * 10) / 10,
-      meals: loggedMeals.length > 0 ? loggedMeals : deriveNutritionFromProfile(userProfile).meals,
+      meals: loggedMeals,
       suggestedMeals: suggested,
     };
-  }, [foodLogs, dailyNutritionTargets, dailyMealPlan, waterLog.glasses, userProfile]);
+  }, [foodLogs, dailyNutritionTargets, dailyMealPlan, waterLog.glasses]);
 
   // Dynamically derive fitness snapshot object for Dashboard from LIVE fitness logs & suggestions
   const fitness: FitnessData = useMemo(() => {
@@ -1559,8 +1564,8 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       workoutsThisWeek: weeklyFitnessStats.totalActivitiesCount,
       weeklyGoal: 5,
       activeMinutesToday: todayFitnessMinutes,
-      walkingMinutes: todayWalkingMins || (todayFitnessMinutes > 0 ? 0 : 20),
-      strengthMinutes: todayStrengthMins || 0,
+      walkingMinutes: todayWalkingMins,
+      strengthMinutes: todayStrengthMins,
       caloriesBurned: Math.round(todayFitnessMinutes * 4.5),
       suggestedMovement: {
         title: topSuggestion.title,
@@ -1586,6 +1591,47 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return deriveInsightFromProfile(userProfile, activePhaseName);
   }, [userProfile, cycleStats, cycleMetrics.phaseName]);
 
+  // ML Intelligence Assessment State
+  const [mlAssessment, setMlAssessment] = useState<IntelligenceAssessment | null>(null);
+  const [mlAssessmentLoading, setMlAssessmentLoading] = useState<boolean>(false);
+  const [mlAssessmentError, setMlAssessmentError] = useState<boolean>(false);
+
+  const refreshMlAssessment = useCallback(
+    async (force = false) => {
+      if (!userProfile?.id) return;
+      setMlAssessmentLoading(true);
+      setMlAssessmentError(false);
+      try {
+        const clientPayload = {
+          userProfile,
+          cycleRecords,
+          symptomRecords,
+          foodLogs,
+          fitnessLogs,
+        };
+        const result = await fetchBackendAssessment(force, clientPayload);
+        if (result) {
+          setMlAssessment(result);
+        } else {
+          setMlAssessmentError(true);
+        }
+      } catch (err) {
+        console.warn('[OvaSense ML Context] Assessment error:', err);
+        setMlAssessmentError(true);
+      } finally {
+        setMlAssessmentLoading(false);
+      }
+    },
+    [userProfile, cycleRecords, symptomRecords, foodLogs, fitnessLogs]
+  );
+
+  // Automatically trigger assessment on profile load or when health factors change
+  useEffect(() => {
+    if (userProfile?.id) {
+      refreshMlAssessment(false);
+    }
+  }, [refreshMlAssessment, userProfile?.id]);
+
   const registerUser = useCallback(
     (_data: { fullName: string; email: string; dateOfBirth?: string }) => {
       // Registration handled in Register component via useAuth().register
@@ -1598,9 +1644,14 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
    */
   const completeOnboarding = useCallback(
     async (data: Partial<UserProfile>): Promise<{ success: boolean; error?: string }> => {
-      return await saveOnboardingProfile(data);
+      const res = await saveOnboardingProfile(data);
+      if (res.success) {
+        // Force refresh assessment upon completing onboarding with new data
+        setTimeout(() => refreshMlAssessment(true), 100);
+      }
+      return res;
     },
-    [saveOnboardingProfile]
+    [saveOnboardingProfile, refreshMlAssessment]
   );
 
   /**
@@ -1608,12 +1659,18 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
    */
   const updateUserProfile = useCallback(
     async (data: Partial<UserProfile>): Promise<{ success: boolean; error?: string }> => {
-      return await authUpdateProfile(data);
+      const res = await authUpdateProfile(data);
+      if (res.success) {
+        setTimeout(() => refreshMlAssessment(true), 100);
+      }
+      return res;
     },
-    [authUpdateProfile]
+    [authUpdateProfile, refreshMlAssessment]
   );
 
   const clearUserData = useCallback(() => {
+    clearAssessmentCache();
+    setMlAssessment(null);
     logout();
   }, [logout]);
 
@@ -1708,6 +1765,10 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         refreshCareCircle,
         weeklySummary,
         digitalTwinInsight,
+        mlAssessment,
+        mlAssessmentLoading,
+        mlAssessmentError,
+        refreshMlAssessment,
         isAiChatOpen,
         activeAiPrompt,
         toggleAiChat,

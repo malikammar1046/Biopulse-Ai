@@ -29,9 +29,14 @@ export interface WomensHealthProfile {
   lastPeriodDate: string; // REQUIRED / OPTIONAL (YYYY-MM-DD)
   periodRegularity: 'very_regular' | 'mostly_regular' | 'sometimes_irregular' | 'often_irregular' | 'not_sure'; // REQUIRED
   periodDuration: number; // REQUIRED (e.g. 5 days)
-  commonSymptoms: string[]; // OPTIONAL
+  commonSymptoms: string[]; // OPTIONAL (e.g. 'Acne & Facial Breakouts', 'Excess Facial / Body Hair', 'Skin Darkening', 'Hair Thinning / Loss', 'Recent Weight Gain')
   currentCycleDay: number; // CALCULATED / STORED
   currentPhase: 'period' | 'follicular' | 'ovulation' | 'luteal'; // CALCULATED / STORED
+  // ML Model Clinical & Reproductive Indicators
+  maritalStatus?: 'unmarried' | 'married' | 'prefer_not_to_say'; // REQUIRED for ML (default: 'unmarried')
+  marriageYears?: number; // REQUIRED for ML (0 if unmarried, or years married)
+  isPregnant?: boolean; // REQUIRED for ML (true / false)
+  abortionsCount?: number; // REQUIRED for ML (0, 1, 2... prior pregnancy losses)
 }
 
 export interface LifestyleProfile {
@@ -41,6 +46,9 @@ export interface LifestyleProfile {
   exercisePreferences: string[]; // OPTIONAL
   sleepHours: number; // REQUIRED (e.g. 7.5)
   workLifestyle?: string; // OPTIONAL
+  // ML Model Lifestyle Indicators
+  fastFoodIntake?: 'frequent' | 'occasional' | 'rare_never'; // REQUIRED for ML
+  regularExercise?: boolean; // REQUIRED for ML (true / false)
 }
 
 export interface HealthGoals {
