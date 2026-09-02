@@ -24,9 +24,11 @@ export const NutritionSnapshotCard: React.FC<NutritionProps> = ({ data }) => {
           </h3>
         </div>
 
-        <span className="text-xs font-mono font-bold text-[#8E3EAF] bg-[#EDE4F7] px-2.5 py-1 rounded-full">
-          Hormone-Friendly Meals
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-mono font-bold text-[#0284C7] bg-[#E0F2FE] px-2.5 py-1 rounded-full">
+            💧 {data.waterIntakeLiters}L / {data.waterTargetLiters}L
+          </span>
+        </div>
       </div>
 
       {/* Calorie & Macros Split */}

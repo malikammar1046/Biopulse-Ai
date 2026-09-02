@@ -361,5 +361,743 @@ CREATE POLICY "Users can delete own report results"
       AND medical_reports.user_id = auth.uid()
     )
   );
+-- ==============================================================================
+-- Table: public.care_circle_members
+-- Description: Stores invited and connected care circle members (doctors, family, trusted persons)
+-- ==============================================================================
+
+-- 23. Create care_circle_members table
+CREATE TABLE IF NOT EXISTS public.care_circle_members (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  patient_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  member_email TEXT NOT NULL,
+  member_name TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('doctor', 'family', 'trusted_person')),
+  relationship TEXT NOT NULL DEFAULT '',
+  clinic_organization TEXT DEFAULT '',
+  status TEXT NOT NULL CHECK (status IN ('pending', 'active', 'revoked')) DEFAULT 'pending',
+  invite_token TEXT UNIQUE DEFAULT encode(gen_random_bytes(16), 'hex'),
+  last_viewed_at TIMESTAMPTZ NULL,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 24. Indexes for care_circle_members
+CREATE INDEX IF NOT EXISTS idx_care_circle_members_patient_id ON public.care_circle_members(patient_id);
+CREATE INDEX IF NOT EXISTS idx_care_circle_members_email ON public.care_circle_members(member_email);
+CREATE INDEX IF NOT EXISTS idx_care_circle_members_token ON public.care_circle_members(invite_token);
+CREATE INDEX IF NOT EXISTS idx_care_circle_members_status ON public.care_circle_members(patient_id, status);
+
+-- 25. Enable Row Level Security (RLS)
+ALTER TABLE public.care_circle_members ENABLE ROW LEVEL SECURITY;
+
+-- 26. RLS Policies for care_circle_members (Patient full control)
+DROP POLICY IF EXISTS "Patients can select own care circle members" ON public.care_circle_members;
+CREATE POLICY "Patients can select own care circle members"
+  ON public.care_circle_members FOR SELECT
+  TO authenticated
+  USING (auth.uid() = patient_id);
+
+DROP POLICY IF EXISTS "Patients can insert own care circle members" ON public.care_circle_members;
+CREATE POLICY "Patients can insert own care circle members"
+  ON public.care_circle_members FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = patient_id);
+
+DROP POLICY IF EXISTS "Patients can update own care circle members" ON public.care_circle_members;
+CREATE POLICY "Patients can update own care circle members"
+  ON public.care_circle_members FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = patient_id)
+  WITH CHECK (auth.uid() = patient_id);
+
+DROP POLICY IF EXISTS "Patients can delete own care circle members" ON public.care_circle_members;
+CREATE POLICY "Patients can delete own care circle members"
+  ON public.care_circle_members FOR DELETE
+  TO authenticated
+  USING (auth.uid() = patient_id);
+
+-- ==============================================================================
+-- Table: public.care_circle_permissions
+-- Description: Stores granular permission flags granted to a specific care circle member
+-- ==============================================================================
+
+-- 27. Create care_circle_permissions table
+CREATE TABLE IF NOT EXISTS public.care_circle_permissions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  member_id UUID NOT NULL REFERENCES public.care_circle_members(id) ON DELETE CASCADE,
+  permission_key TEXT NOT NULL,
+  enabled BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  UNIQUE(member_id, permission_key)
+);
+
+-- 28. Indexes for care_circle_permissions
+CREATE INDEX IF NOT EXISTS idx_care_circle_permissions_member ON public.care_circle_permissions(member_id);
+CREATE INDEX IF NOT EXISTS idx_care_circle_permissions_key ON public.care_circle_permissions(member_id, permission_key);
+
+-- 29. Enable Row Level Security (RLS)
+ALTER TABLE public.care_circle_permissions ENABLE ROW LEVEL SECURITY;
+
+-- 30. RLS Policies for care_circle_permissions
+DROP POLICY IF EXISTS "Patients can manage own care circle permissions" ON public.care_circle_permissions;
+CREATE POLICY "Patients can manage own care circle permissions"
+  ON public.care_circle_permissions FOR ALL
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.care_circle_members
+      WHERE care_circle_members.id = care_circle_permissions.member_id
+      AND care_circle_members.patient_id = auth.uid()
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.care_circle_members
+      WHERE care_circle_members.id = care_circle_permissions.member_id
+      AND care_circle_members.patient_id = auth.uid()
+    )
+  );
+
+-- ==============================================================================
+-- Table: public.care_circle_invitations
+-- Description: Stores pending invitations for doctors and family members
+-- ==============================================================================
+
+-- 31. Create care_circle_invitations table
+CREATE TABLE IF NOT EXISTS public.care_circle_invitations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  patient_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  invite_email TEXT NOT NULL,
+  member_name TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('doctor', 'family', 'trusted_person')),
+  relationship TEXT DEFAULT '',
+  token TEXT UNIQUE NOT NULL DEFAULT encode(gen_random_bytes(24), 'hex'),
+  status TEXT NOT NULL CHECK (status IN ('pending', 'accepted', 'declined', 'expired')) DEFAULT 'pending',
+  expires_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now() + interval '30 days') NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 32. Indexes for care_circle_invitations
+CREATE INDEX IF NOT EXISTS idx_care_invitations_patient_id ON public.care_circle_invitations(patient_id);
+CREATE INDEX IF NOT EXISTS idx_care_invitations_token ON public.care_circle_invitations(token);
+CREATE INDEX IF NOT EXISTS idx_care_invitations_email ON public.care_circle_invitations(invite_email);
+
+-- 33. Enable Row Level Security (RLS)
+ALTER TABLE public.care_circle_invitations ENABLE ROW LEVEL SECURITY;
+
+-- 34. RLS Policies for care_circle_invitations
+DROP POLICY IF EXISTS "Patients can select own invitations" ON public.care_circle_invitations;
+CREATE POLICY "Patients can select own invitations"
+  ON public.care_circle_invitations FOR SELECT
+  TO authenticated
+  USING (auth.uid() = patient_id);
+
+DROP POLICY IF EXISTS "Patients can insert own invitations" ON public.care_circle_invitations;
+CREATE POLICY "Patients can insert own invitations"
+  ON public.care_circle_invitations FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = patient_id);
+
+DROP POLICY IF EXISTS "Patients can update own invitations" ON public.care_circle_invitations;
+CREATE POLICY "Patients can update own invitations"
+  ON public.care_circle_invitations FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = patient_id)
+  WITH CHECK (auth.uid() = patient_id);
+
+DROP POLICY IF EXISTS "Patients can delete own invitations" ON public.care_circle_invitations;
+CREATE POLICY "Patients can delete own invitations"
+  ON public.care_circle_invitations FOR DELETE
+  TO authenticated
+  USING (auth.uid() = patient_id);
+
+-- ==============================================================================
+-- Table: public.weekly_health_summaries
+-- Description: Stores automatically synthesized weekly health overviews for care review
+-- ==============================================================================
+
+-- 35. Create weekly_health_summaries table
+CREATE TABLE IF NOT EXISTS public.weekly_health_summaries (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  patient_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  week_start DATE NOT NULL,
+  week_end DATE NOT NULL,
+  summary_data JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  UNIQUE(patient_id, week_start, week_end)
+);
+
+-- 36. Indexes for weekly_health_summaries
+CREATE INDEX IF NOT EXISTS idx_weekly_summaries_patient ON public.weekly_health_summaries(patient_id);
+CREATE INDEX IF NOT EXISTS idx_weekly_summaries_dates ON public.weekly_health_summaries(patient_id, week_start DESC);
+
+-- 37. Enable Row Level Security (RLS)
+ALTER TABLE public.weekly_health_summaries ENABLE ROW LEVEL SECURITY;
+
+-- 38. RLS Policies for weekly_health_summaries
+DROP POLICY IF EXISTS "Patients can select own weekly summaries" ON public.weekly_health_summaries;
+CREATE POLICY "Patients can select own weekly summaries"
+  ON public.weekly_health_summaries FOR SELECT
+  TO authenticated
+  USING (auth.uid() = patient_id);
+
+DROP POLICY IF EXISTS "Patients can insert own weekly summaries" ON public.weekly_health_summaries;
+CREATE POLICY "Patients can insert own weekly summaries"
+  ON public.weekly_health_summaries FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = patient_id);
+
+DROP POLICY IF EXISTS "Patients can update own weekly summaries" ON public.weekly_health_summaries;
+CREATE POLICY "Patients can update own weekly summaries"
+  ON public.weekly_health_summaries FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = patient_id)
+  WITH CHECK (auth.uid() = patient_id);
+
+-- ==============================================================================
+-- Security Helper Functions & Granular Care Provider RLS Access
+-- ==============================================================================
+
+-- 39. Function to verify if a given email/user has active permission for a patient
+CREATE OR REPLACE FUNCTION public.has_care_circle_permission(
+  p_patient_id UUID,
+  p_permission_key TEXT
+)
+RETURNS BOOLEAN AS $$
+DECLARE
+  v_user_email TEXT;
+  v_has_access BOOLEAN;
+BEGIN
+  -- Get current authenticated user's email from JWT
+  v_user_email := auth.jwt()->>'email';
+  IF v_user_email IS NULL OR v_user_email = '' THEN
+    RETURN FALSE;
+  END IF;
+
+  SELECT EXISTS (
+    SELECT 1 
+    FROM public.care_circle_members m
+    JOIN public.care_circle_permissions p ON p.member_id = m.id
+    WHERE m.patient_id = p_patient_id
+      AND LOWER(m.member_email) = LOWER(v_user_email)
+      AND m.status = 'active'
+      AND p.permission_key = p_permission_key
+      AND p.enabled = TRUE
+  ) INTO v_has_access;
+
+  RETURN COALESCE(v_has_access, FALSE);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 40. Care Provider SELECT policy for cycle_records (when 'cycle' permission enabled)
+DROP POLICY IF EXISTS "Care circle members can select permitted cycle records" ON public.cycle_records;
+CREATE POLICY "Care circle members can select permitted cycle records"
+  ON public.cycle_records FOR SELECT
+  TO authenticated
+  USING (
+    public.has_care_circle_permission(user_id, 'cycle')
+  );
+
+-- 41. Care Provider SELECT policy for symptom_records (when 'symptoms' permission enabled)
+DROP POLICY IF EXISTS "Care circle members can select permitted symptom records" ON public.symptom_records;
+CREATE POLICY "Care circle members can select permitted symptom records"
+  ON public.symptom_records FOR SELECT
+  TO authenticated
+  USING (
+    public.has_care_circle_permission(user_id, 'symptoms')
+  );
+
+-- 42. Care Provider SELECT policy for medical_reports (when 'reports' permission enabled)
+DROP POLICY IF EXISTS "Care circle members can select permitted medical reports" ON public.medical_reports;
+CREATE POLICY "Care circle members can select permitted medical reports"
+  ON public.medical_reports FOR SELECT
+  TO authenticated
+  USING (
+    public.has_care_circle_permission(user_id, 'reports')
+  );
+
+-- 43. Care Provider SELECT policy for report_results (when 'reports' permission enabled)
+DROP POLICY IF EXISTS "Care circle members can select permitted report results" ON public.report_results;
+CREATE POLICY "Care circle members can select permitted report results"
+  ON public.report_results FOR SELECT
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.medical_reports mr
+      WHERE mr.id = report_results.report_id
+      AND public.has_care_circle_permission(mr.user_id, 'reports')
+    )
+  );
+
+-- 44. Care Provider SELECT policy for weekly_health_summaries (when 'weekly_summary' permission enabled)
+DROP POLICY IF EXISTS "Care circle members can select permitted weekly summaries" ON public.weekly_health_summaries;
+CREATE POLICY "Care circle members can select permitted weekly summaries"
+  ON public.weekly_health_summaries FOR SELECT
+  TO authenticated
+  USING (
+    public.has_care_circle_permission(patient_id, 'weekly_summary')
+  );
+
+-- ==============================================================================
+-- Module: Diet & Nutrition (food_logs, water_logs, meal_plans)
+-- ==============================================================================
+
+-- 45. Food Logs Table
+CREATE TABLE IF NOT EXISTS public.food_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  meal_type TEXT NOT NULL CHECK (meal_type IN ('breakfast', 'morning_snack', 'lunch', 'afternoon_snack', 'dinner')),
+  food_name TEXT NOT NULL,
+  serving TEXT NOT NULL DEFAULT '1 serving',
+  calories INTEGER NOT NULL DEFAULT 0,
+  protein_g NUMERIC NOT NULL DEFAULT 0,
+  carbs_g NUMERIC NOT NULL DEFAULT 0,
+  fat_g NUMERIC NOT NULL DEFAULT 0,
+  fiber_g NUMERIC NOT NULL DEFAULT 0,
+  logged_at DATE NOT NULL DEFAULT CURRENT_DATE,
+  notes TEXT DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 46. Water Logs Table
+CREATE TABLE IF NOT EXISTS public.water_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  date DATE NOT NULL DEFAULT CURRENT_DATE,
+  glasses INTEGER NOT NULL DEFAULT 0,
+  target_glasses INTEGER NOT NULL DEFAULT 8,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  UNIQUE(user_id, date)
+);
+
+-- 47. Meal Plans Table
+CREATE TABLE IF NOT EXISTS public.meal_plans (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  date DATE NOT NULL DEFAULT CURRENT_DATE,
+  meal_type TEXT NOT NULL,
+  meal_name TEXT NOT NULL,
+  meal_data JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 48. Indexes for Food, Water & Meal Plans
+CREATE INDEX IF NOT EXISTS idx_food_logs_user_date ON public.food_logs(user_id, logged_at);
+CREATE INDEX IF NOT EXISTS idx_water_logs_user_date ON public.water_logs(user_id, date);
+CREATE INDEX IF NOT EXISTS idx_meal_plans_user_date ON public.meal_plans(user_id, date);
+
+-- 49. Enable RLS on Diet Tables
+ALTER TABLE public.food_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.water_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.meal_plans ENABLE ROW LEVEL SECURITY;
+
+-- 50. RLS Policies: food_logs
+DROP POLICY IF EXISTS "Users can manage own food logs" ON public.food_logs;
+CREATE POLICY "Users can manage own food logs"
+  ON public.food_logs FOR ALL
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Care circle members can select permitted food logs" ON public.food_logs;
+CREATE POLICY "Care circle members can select permitted food logs"
+  ON public.food_logs FOR SELECT
+  TO authenticated
+  USING (
+    public.has_care_circle_permission(user_id, 'diet')
+  );
+
+-- 51. RLS Policies: water_logs
+DROP POLICY IF EXISTS "Users can manage own water logs" ON public.water_logs;
+CREATE POLICY "Users can manage own water logs"
+  ON public.water_logs FOR ALL
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Care circle members can select permitted water logs" ON public.water_logs;
+CREATE POLICY "Care circle members can select permitted water logs"
+  ON public.water_logs FOR SELECT
+  TO authenticated
+  USING (
+    public.has_care_circle_permission(user_id, 'diet')
+  );
+
+-- 52. RLS Policies: meal_plans
+DROP POLICY IF EXISTS "Users can manage own meal plans" ON public.meal_plans;
+CREATE POLICY "Users can manage own meal plans"
+  ON public.meal_plans FOR ALL
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Care circle members can select permitted meal plans" ON public.meal_plans;
+CREATE POLICY "Care circle members can select permitted meal plans"
+  ON public.meal_plans FOR SELECT
+  TO authenticated
+  USING (
+    public.has_care_circle_permission(user_id, 'diet')
+  );
+
+-- ==============================================================================
+-- Module: Fitness & Movement (fitness_logs)
+-- ==============================================================================
+
+-- 53. Fitness Logs Table
+CREATE TABLE IF NOT EXISTS public.fitness_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  activity_type TEXT NOT NULL CHECK (activity_type IN ('walking', 'strength', 'yoga', 'stretching', 'cycling', 'low_impact_cardio', 'mobility', 'rest_recovery', 'other')),
+  activity_name TEXT NOT NULL,
+  duration_minutes INTEGER NOT NULL CHECK (duration_minutes > 0),
+  energy_level TEXT CHECK (energy_level IN ('low_energy', 'okay', 'good', 'great')),
+  notes TEXT DEFAULT '',
+  occurred_at DATE NOT NULL DEFAULT CURRENT_DATE,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 54. Indexes for Fitness Logs
+CREATE INDEX IF NOT EXISTS idx_fitness_logs_user_occurred ON public.fitness_logs(user_id, occurred_at DESC);
+CREATE INDEX IF NOT EXISTS idx_fitness_logs_activity_type ON public.fitness_logs(user_id, activity_type);
+
+-- 55. Enable RLS on fitness_logs
+ALTER TABLE public.fitness_logs ENABLE ROW LEVEL SECURITY;
+
+-- 56. RLS Policies: fitness_logs
+DROP POLICY IF EXISTS "Users can manage own fitness logs" ON public.fitness_logs;
+CREATE POLICY "Users can manage own fitness logs"
+  ON public.fitness_logs FOR ALL
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Care circle members can select permitted fitness logs" ON public.fitness_logs;
+CREATE POLICY "Care circle members can select permitted fitness logs"
+  ON public.fitness_logs FOR SELECT
+  TO authenticated
+  USING (
+    public.has_care_circle_permission(user_id, 'fitness')
+  );
+
+-- ==============================================================================
+-- Module: Medications & Adherence (medications & medication_logs)
+-- ==============================================================================
+
+-- 57. Medications Table
+CREATE TABLE IF NOT EXISTS public.medications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  dose TEXT NOT NULL,
+  unit TEXT NOT NULL DEFAULT 'mg',
+  frequency TEXT NOT NULL CHECK (frequency IN ('once_daily', 'twice_daily', 'three_times_daily', 'every_other_day', 'as_needed')),
+  scheduled_times JSONB NOT NULL DEFAULT '["08:00"]'::jsonb,
+  start_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  end_date DATE,
+  notes TEXT DEFAULT '',
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 58. Medication Logs Table (Daily Doses Tracked)
+CREATE TABLE IF NOT EXISTS public.medication_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  medication_id UUID NOT NULL REFERENCES public.medications(id) ON DELETE CASCADE,
+  scheduled_for DATE NOT NULL DEFAULT CURRENT_DATE,
+  scheduled_time TEXT NOT NULL DEFAULT '08:00',
+  status TEXT NOT NULL CHECK (status IN ('taken', 'skipped', 'missed', 'pending')),
+  taken_at TIMESTAMPTZ,
+  notes TEXT DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 59. Indexes for Medications & Logs
+CREATE INDEX IF NOT EXISTS idx_medications_user_active ON public.medications(user_id, is_active);
+CREATE INDEX IF NOT EXISTS idx_medication_logs_user_date ON public.medication_logs(user_id, scheduled_for DESC);
+CREATE INDEX IF NOT EXISTS idx_medication_logs_medication_id ON public.medication_logs(medication_id);
+
+-- 60. Enable RLS on medications and medication_logs
+ALTER TABLE public.medications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.medication_logs ENABLE ROW LEVEL SECURITY;
+
+-- 61. RLS Policies: medications
+DROP POLICY IF EXISTS "Users can manage own medications" ON public.medications;
+CREATE POLICY "Users can manage own medications"
+  ON public.medications FOR ALL
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Care circle members can select permitted medications" ON public.medications;
+CREATE POLICY "Care circle members can select permitted medications"
+  ON public.medications FOR SELECT
+  TO authenticated
+  USING (
+    public.has_care_circle_permission(user_id, 'medications')
+  );
+
+-- 62. RLS Policies: medication_logs
+DROP POLICY IF EXISTS "Users can manage own medication logs" ON public.medication_logs;
+CREATE POLICY "Users can manage own medication logs"
+  ON public.medication_logs FOR ALL
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Care circle members can select permitted medication logs" ON public.medication_logs;
+CREATE POLICY "Care circle members can select permitted medication logs"
+  ON public.medication_logs FOR SELECT
+  TO authenticated
+  USING (
+    public.has_care_circle_permission(user_id, 'medications')
+  );
+
+-- ==============================================================================
+-- Module: Doctor Appointments & Consultations (appointments)
+-- ==============================================================================
+
+-- 63. Appointments Table
+CREATE TABLE IF NOT EXISTS public.appointments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  patient_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  provider_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  care_circle_member_id UUID REFERENCES public.care_circle_members(id) ON DELETE SET NULL,
+  provider_name TEXT NOT NULL,
+  provider_specialty TEXT DEFAULT 'Gynecology / Endocrinology',
+  title TEXT NOT NULL,
+  appointment_type TEXT NOT NULL CHECK (appointment_type IN ('consultation', 'follow_up', 'lab_review', 'routine_check', 'other')),
+  scheduled_at TIMESTAMPTZ NOT NULL,
+  scheduled_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  scheduled_time TEXT NOT NULL DEFAULT '15:30',
+  duration_minutes INTEGER NOT NULL DEFAULT 30 CHECK (duration_minutes > 0),
+  status TEXT NOT NULL DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'completed', 'cancelled', 'rescheduled')),
+  location TEXT NOT NULL DEFAULT 'Clinic Consultation',
+  meeting_url TEXT DEFAULT '',
+  reason TEXT DEFAULT '',
+  patient_notes TEXT DEFAULT '',
+  provider_notes TEXT DEFAULT '',
+  doctor_questions JSONB DEFAULT '[]'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 64. Indexes for Appointments
+CREATE INDEX IF NOT EXISTS idx_appointments_patient ON public.appointments(patient_id, scheduled_at DESC);
+CREATE INDEX IF NOT EXISTS idx_appointments_status ON public.appointments(patient_id, status);
+CREATE INDEX IF NOT EXISTS idx_appointments_care_circle ON public.appointments(care_circle_member_id);
+
+-- 65. Enable RLS on appointments
+ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
+
+-- 66. RLS Policies: appointments
+DROP POLICY IF EXISTS "Patients can manage own appointments" ON public.appointments;
+CREATE POLICY "Patients can manage own appointments"
+  ON public.appointments FOR ALL
+  TO authenticated
+  USING (auth.uid() = patient_id)
+  WITH CHECK (auth.uid() = patient_id);
+
+DROP POLICY IF EXISTS "Care circle members can select permitted appointments" ON public.appointments;
+CREATE POLICY "Care circle members can select permitted appointments"
+  ON public.appointments FOR SELECT
+  TO authenticated
+  USING (
+    public.has_care_circle_permission(patient_id, 'appointments')
+  );
+
+-- ==============================================================================
+-- 67. Secure Provider Token Verification & Live Data Retrieval Function (SECURITY DEFINER)
+-- Allows authorized healthcare providers or contacts with a valid invite token to fetch permitted patient records
+-- ==============================================================================
+CREATE OR REPLACE FUNCTION public.get_care_provider_view(p_token TEXT)
+RETURNS JSONB AS $$
+DECLARE
+  v_member RECORD;
+  v_patient RECORD;
+  v_perms JSONB;
+  v_result JSONB;
+  v_reports JSONB := '[]'::jsonb;
+  v_symptoms JSONB := '[]'::jsonb;
+  v_appointments JSONB := '[]'::jsonb;
+BEGIN
+  IF p_token IS NULL OR length(trim(p_token)) = 0 THEN
+    RETURN jsonb_build_object('isValid', false, 'error', 'Invalid token');
+  END IF;
+
+  -- 1. Find member by invite_token
+  SELECT id, patient_id, member_email, member_name, role, relationship, clinic_organization, status, invite_token, created_at, updated_at
+  INTO v_member
+  FROM public.care_circle_members
+  WHERE invite_token = p_token;
+
+  IF NOT FOUND THEN
+    -- Check pending invitations
+    SELECT id, patient_id, invite_email AS member_email, member_name, role, relationship, '' AS clinic_organization, status, token AS invite_token, created_at, created_at AS updated_at
+    INTO v_member
+    FROM public.care_circle_invitations
+    WHERE token = p_token;
+  END IF;
+
+  IF v_member.id IS NULL OR v_member.status = 'revoked' THEN
+    RETURN jsonb_build_object('isValid', false, 'error', 'Token not found or access revoked');
+  END IF;
+
+  -- Update last_viewed_at
+  UPDATE public.care_circle_members
+  SET last_viewed_at = now()
+  WHERE invite_token = p_token;
+
+  -- 2. Build permissions map
+  SELECT jsonb_object_agg(permission_key, enabled)
+  INTO v_perms
+  FROM public.care_circle_permissions
+  WHERE member_id = v_member.id;
+
+  IF v_perms IS NULL THEN
+    v_perms := jsonb_build_object(
+      'profile', true,
+      'cycle', true,
+      'symptoms', true,
+      'reports', true,
+      'medications', true,
+      'diet', true,
+      'fitness', true,
+      'appointments', true,
+      'weekly_summary', true,
+      'chat_summary', true
+    );
+  END IF;
+
+  -- 3. Fetch Patient Profile
+  SELECT id, full_name, date_of_birth, blood_type, conditions, cycle_length, period_duration, last_period_date, dietary_preference, daily_water_glasses, activity_level, sleep_hours
+  INTO v_patient
+  FROM public.profiles
+  WHERE id = v_member.patient_id;
+
+  -- 4. Fetch Medical Reports if permitted
+  IF COALESCE((v_perms->>'reports')::boolean, false) THEN
+    SELECT jsonb_agg(
+      jsonb_build_object(
+        'id', r.id,
+        'title', r.title,
+        'reportType', r.report_type,
+        'reportDate', r.report_date,
+        'fileName', r.file_name,
+        'status', r.status,
+        'results', (
+          SELECT jsonb_agg(
+            jsonb_build_object(
+              'testName', res.test_name,
+              'resultValue', res.result_value,
+              'unit', res.unit,
+              'referenceRange', res.reference_range,
+              'status', res.status
+            )
+          )
+          FROM public.report_results res
+          WHERE res.report_id = r.id
+        )
+      )
+    )
+    INTO v_reports
+    FROM (
+      SELECT * FROM public.medical_reports
+      WHERE user_id = v_member.patient_id
+      ORDER BY report_date DESC
+      LIMIT 10
+    ) r;
+  END IF;
+
+  -- 5. Fetch Symptoms if permitted
+  IF COALESCE((v_perms->>'symptoms')::boolean, false) THEN
+    SELECT jsonb_agg(
+      jsonb_build_object(
+        'id', s.id,
+        'symptomType', s.symptom_type,
+        'category', s.category,
+        'severity', s.severity,
+        'occurredAt', s.occurred_at
+      )
+    )
+    INTO v_symptoms
+    FROM (
+      SELECT * FROM public.symptom_records
+      WHERE user_id = v_member.patient_id
+      ORDER BY occurred_at DESC
+      LIMIT 20
+    ) s;
+  END IF;
+
+  -- 6. Fetch Appointments if permitted
+  IF COALESCE((v_perms->>'appointments')::boolean, false) THEN
+    SELECT jsonb_agg(
+      jsonb_build_object(
+        'id', a.id,
+        'title', a.title,
+        'providerName', a.provider_name,
+        'providerSpecialty', a.provider_specialty,
+        'appointmentType', a.appointment_type,
+        'scheduledAt', a.scheduled_at,
+        'scheduledDate', a.scheduled_date,
+        'scheduledTime', a.scheduled_time,
+        'durationMinutes', a.duration_minutes,
+        'status', a.status,
+        'location', a.location,
+        'meetingUrl', a.meeting_url,
+        'reason', a.reason,
+        'doctorQuestions', a.doctor_questions
+      )
+    )
+    INTO v_appointments
+    FROM (
+      SELECT * FROM public.appointments
+      WHERE patient_id = v_member.patient_id
+        AND (care_circle_member_id IS NULL OR care_circle_member_id = v_member.id)
+      ORDER BY scheduled_at ASC
+    ) a;
+  END IF;
+
+  -- Return complete bundle
+  v_result := jsonb_build_object(
+    'isValid', true,
+    'member', jsonb_build_object(
+      'id', v_member.id,
+      'name', v_member.member_name,
+      'email', v_member.member_email,
+      'role', v_member.role,
+      'relationship', v_member.relationship,
+      'clinicOrganization', v_member.clinic_organization,
+      'status', v_member.status,
+      'permissions', v_perms
+    ),
+    'patient', jsonb_build_object(
+      'id', v_patient.id,
+      'name', CASE WHEN COALESCE((v_perms->>'profile')::boolean, false) THEN v_patient.full_name ELSE 'Patient' END,
+      'bloodType', CASE WHEN COALESCE((v_perms->>'profile')::boolean, false) THEN v_patient.blood_type ELSE NULL END,
+      'conditions', CASE WHEN COALESCE((v_perms->>'profile')::boolean, false) THEN v_patient.conditions ELSE NULL END,
+      'dateOfBirth', CASE WHEN COALESCE((v_perms->>'profile')::boolean, false) THEN v_patient.date_of_birth ELSE NULL END,
+      'cycleLength', v_patient.cycle_length,
+      'periodDuration', v_patient.period_duration,
+      'lastPeriodDate', v_patient.last_period_date,
+      'dailyWaterGlasses', v_patient.daily_water_glasses
+    ),
+    'reports', COALESCE(v_reports, '[]'::jsonb),
+    'symptoms', COALESCE(v_symptoms, '[]'::jsonb),
+    'appointments', COALESCE(v_appointments, '[]'::jsonb)
+  );
+
+  RETURN v_result;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
+
 
 

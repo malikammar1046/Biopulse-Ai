@@ -145,7 +145,7 @@ export const DashboardHeader: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowQuickLogModal(false)}
-                className="text-xs text-[#8D7E9E] hover:text-[#1C1326]"
+                className="text-xs text-[#8D7E9E] hover:text-[#1C1326] cursor-pointer"
               >
                 Close
               </button>

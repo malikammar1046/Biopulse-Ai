@@ -1,82 +1,80 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Mail, ArrowRight, ShieldCheck, Sparkles, Loader2 } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ROUTES } from '../../constants/routes';
+import { Mail, ArrowRight, Loader2, Sparkles } from 'lucide-react';
 import { AuthShell } from '../../components/auth/AuthShell';
 import { AuthCard } from '../../components/auth/AuthCard';
 import { AuthField } from '../../components/auth/AuthField';
 import { PasswordInput } from '../../components/auth/PasswordInput';
 import { useAuth } from '../../context/AuthContext';
+import { ROUTES } from '../../constants/routes';
+
+interface FormErrors {
+  email?: string;
+  password?: string;
+  general?: string;
+}
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
-  const [forgotSent, setForgotSent] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
 
+  // Validate form client-side
   const validateForm = (): boolean => {
-    const newErrors: { email?: string; password?: string } = {};
+    const nextErrors: FormErrors = {};
 
     if (!email.trim()) {
-      newErrors.email = 'Email address is required.';
+      nextErrors.email = 'Please enter your email address.';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      newErrors.email = 'Please enter a valid email format.';
+      nextErrors.email = 'Please enter a valid email address.';
     }
 
     if (!password) {
-      newErrors.password = 'Password is required.';
+      nextErrors.password = 'Please enter your password.';
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
+
     if (!validateForm()) return;
 
     setLoading(true);
-    setErrors({});
-
     try {
-      const response = await login({
-        email: email.trim(),
-        password,
-        rememberMe,
-      });
-
-      if (response.success) {
-        navigate(ROUTES.APP.DASHBOARD);
-      } else {
-        setErrors({ general: response.error || 'Authentication failed. Please check your credentials.' });
+      const res = await login({ email: email.trim(), password });
+      if (!res.success) {
+        setErrors({ general: res.error || 'Invalid email or password. Please try again.' });
+        return;
       }
-    } catch {
-      setErrors({ general: 'A connection error occurred. Please try again.' });
+      // Route to destination or default dashboard
+      const from = (location.state as { from?: { pathname?: string } })?.from?.pathname || ROUTES.APP.DASHBOARD;
+      navigate(from, { replace: true });
+    } catch (err: any) {
+      setErrors({
+        general: err?.message || 'Invalid email or password. Please try again.',
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleForgotPassword = () => {
-    if (!email.trim()) {
-      setErrors({ email: 'Enter your email address to receive a recovery link.' });
-      return;
-    }
-    setForgotSent(true);
-    setTimeout(() => setForgotSent(false), 4000);
-  };
-
   return (
     <AuthShell
-      headlineLine1="Understand your health."
-      headlineLine2="One pattern at a time."
-      supportingCopy="OVASense brings your health information, symptoms, reports and patterns together in one intelligent experience."
-      identityTag="AI-assisted women's health intelligence"
+      headlineLine1="Understand your rhythm,"
+      headlineLine2="every single day."
+      supportingCopy="Log in to access your continuous health timeline, personalized cycle guidance, and secure clinical records."
+      identityTag="Longitudinal Health Intelligence"
     >
       <AuthCard
         heading="Welcome back"
@@ -93,14 +91,6 @@ export const Login: React.FC = () => {
           {errors.general && (
             <div className="p-3 rounded-2xl bg-[#E87084]/15 border border-[#E87084]/40 text-xs text-[#F48498]">
               {errors.general}
-            </div>
-          )}
-
-          {/* Forgot Password Confirmation Banner */}
-          {forgotSent && (
-            <div className="p-3 rounded-2xl bg-[#047857]/20 border border-[#A7F3D0]/30 text-xs text-[#A7F3D0] flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-[#34D399] shrink-0" />
-              <span>Password reset instructions dispatched to your email.</span>
             </div>
           )}
 
@@ -149,13 +139,12 @@ export const Login: React.FC = () => {
               <span>Remember me</span>
             </label>
 
-            <button
-              type="button"
-              onClick={handleForgotPassword}
+            <Link
+              to={ROUTES.CONTACT}
               className="text-xs font-semibold text-[#D8B4FE] hover:text-[#E87084] transition-colors focus:outline-none focus:underline"
             >
               Forgot password?
-            </button>
+            </Link>
           </div>
 
           {/* Primary CTA Button */}
@@ -184,7 +173,7 @@ export const Login: React.FC = () => {
 
         {/* Bottom Link: Create an account */}
         <div className="mt-6 pt-6 border-t border-white/10 text-center text-xs text-[#B4A6C7]">
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <Link
             to={ROUTES.REGISTER}
             className="text-[#D8B4FE] hover:text-[#E87084] font-semibold transition-colors focus:outline-none focus:underline ml-1"

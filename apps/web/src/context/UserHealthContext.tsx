@@ -25,9 +25,7 @@ import type {
 } from '../types/report';
 import {
   DEFAULT_CARE_CIRCLE,
-  deriveRemindersFromProfile,
   deriveNutritionFromProfile,
-  deriveFitnessFromProfile,
   deriveInsightFromProfile,
 } from '../data/mockDashboardData';
 import { calculateCycleMetrics } from '../utils/profileCompletion';
@@ -37,6 +35,47 @@ import { calculateReportSummaryStats } from '../utils/reportCalculations';
 import { cycleService } from '../services/cycleService';
 import { symptomService } from '../services/symptomService';
 import { reportService } from '../services/reportService';
+import { careCircleService } from '../services/careCircleService';
+import { dietService } from '../services/dietService';
+import { fitnessService } from '../services/fitnessService';
+import { medicationService } from '../services/medicationService';
+import { appointmentService } from '../services/appointmentService';
+import type {
+  CareCircleMember,
+  CareCircleInvitation,
+  CareCircleInviteInput,
+  CareCirclePermissionsMap,
+  WeeklyHealthSummaryData,
+} from '../types/careCircle';
+import type {
+  FoodLogEntry,
+  FoodLogInput,
+  WaterLogEntry,
+  DailyNutritionTargets,
+  DailyMealPlan,
+} from '../types/diet';
+import type {
+  FitnessLogEntry,
+  FitnessLogInput,
+  SuggestedMovementRoutine,
+  WeeklyFitnessStats,
+} from '../types/fitness';
+import type {
+  MedicationItem,
+  MedicationInput,
+  MedicationLogEntry,
+  MedicationLogInput,
+  TodayMedicationProgress,
+  WeeklyAdherenceStats,
+} from '../types/medication';
+import type {
+  AppointmentItem,
+  AppointmentInput,
+  AppointmentStatus,
+  ConsultationQuestion,
+  HealthSummarySnapshot,
+  ConsultationBrief,
+} from '../types/appointment';
 import { useAuth } from './AuthContext';
 
 interface UserHealthContextType {
@@ -64,8 +103,62 @@ interface UserHealthContextType {
   refreshReports: () => Promise<void>;
   reminders: TodayReminder[];
   nutrition: NutritionData;
+  foodLogs: FoodLogEntry[];
+  waterLog: WaterLogEntry;
+  dailyNutritionTargets: DailyNutritionTargets;
+  dailyMealPlan: DailyMealPlan;
+  dietLoading: boolean;
+  logFoodItem: (input: FoodLogInput) => Promise<{ success: boolean; entry?: FoodLogEntry; error?: string }>;
+  deleteFoodLogItem: (id: string) => Promise<{ success: boolean; error?: string }>;
+  incrementWater: () => Promise<void>;
+  decrementWater: () => Promise<void>;
+  refreshDietData: () => Promise<void>;
   fitness: FitnessData;
+  fitnessLogs: FitnessLogEntry[];
+  fitnessLoading: boolean;
+  todayFitnessMinutes: number;
+  todayFitnessActivities: FitnessLogEntry[];
+  weeklyFitnessStats: WeeklyFitnessStats;
+  suggestedFitnessRoutines: SuggestedMovementRoutine[];
+  logFitnessActivity: (input: FitnessLogInput) => Promise<{ success: boolean; entry?: FitnessLogEntry; error?: string }>;
+  updateFitnessActivity: (id: string, input: Partial<FitnessLogInput>) => Promise<{ success: boolean; entry?: FitnessLogEntry; error?: string }>;
+  deleteFitnessActivity: (id: string) => Promise<{ success: boolean; error?: string }>;
+  refreshFitnessData: () => Promise<void>;
+  medications: MedicationItem[];
+  medicationLogs: MedicationLogEntry[];
+  medicationsLoading: boolean;
+  todayMedicationProgress: TodayMedicationProgress;
+  weeklyMedicationStats: WeeklyAdherenceStats;
+  addMedication: (input: MedicationInput) => Promise<{ success: boolean; medication?: MedicationItem; error?: string }>;
+  updateMedication: (id: string, input: Partial<MedicationInput>) => Promise<{ success: boolean; medication?: MedicationItem; error?: string }>;
+  deleteMedication: (id: string) => Promise<{ success: boolean; error?: string }>;
+  logMedicationDose: (input: MedicationLogInput) => Promise<{ success: boolean; log?: MedicationLogEntry; error?: string }>;
+  deleteMedicationDose: (medicationId: string, scheduledFor: string, scheduledTime: string) => Promise<{ success: boolean }>;
+  refreshMedications: () => Promise<void>;
+  appointments: AppointmentItem[];
+  upcomingAppointment: AppointmentItem | null;
+  appointmentsLoading: boolean;
+  bookAppointment: (input: AppointmentInput) => Promise<{ success: boolean; appointment?: AppointmentItem; error?: string }>;
+  updateAppointment: (id: string, input: Partial<AppointmentInput> & { status?: AppointmentStatus; providerNotes?: string }) => Promise<{ success: boolean; appointment?: AppointmentItem; error?: string }>;
+  cancelAppointment: (id: string, reason?: string) => Promise<{ success: boolean; error?: string }>;
+  completeAppointment: (id: string, notes?: string) => Promise<{ success: boolean; error?: string }>;
+  deleteAppointment: (id: string) => Promise<{ success: boolean; error?: string }>;
+  addDoctorQuestion: (appointmentId: string, question: string) => Promise<{ success: boolean; question?: ConsultationQuestion; error?: string }>;
+  toggleDoctorQuestion: (appointmentId: string, questionId: string) => Promise<{ success: boolean }>;
+  deleteDoctorQuestion: (appointmentId: string, questionId: string) => Promise<{ success: boolean }>;
+  getPreConsultationSnapshot: () => HealthSummarySnapshot;
+  getConsultationBrief: (appointment: AppointmentItem) => ConsultationBrief;
+  refreshAppointments: () => Promise<void>;
   careCircle: CareCircleContact[];
+  careCircleMembers: CareCircleMember[];
+  careCircleInvitations: CareCircleInvitation[];
+  careCircleLoading: boolean;
+  addCareMember: (input: CareCircleInviteInput) => Promise<{ success: boolean; inviteLink?: string; error?: string }>;
+  updateMemberPermissions: (memberId: string, perms: CareCirclePermissionsMap) => Promise<{ success: boolean; error?: string }>;
+  revokeMemberAccess: (memberId: string) => Promise<{ success: boolean; error?: string }>;
+  deleteCareMember: (memberId: string) => Promise<{ success: boolean; error?: string }>;
+  refreshCareCircle: () => Promise<void>;
+  weeklySummary: WeeklyHealthSummaryData;
   digitalTwinInsight: DigitalTwinInsight;
   isAiChatOpen: boolean;
   activeAiPrompt?: string;
@@ -394,47 +487,957 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     [userProfile?.id]
   );
 
-  const [reminders, setReminders] = useState<TodayReminder[]>(() => {
-    try {
-      const saved = localStorage.getItem(REMINDERS_KEY);
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch {
-      // Fallback
-    }
-    return deriveRemindersFromProfile(userProfile);
+  // --- Diet & Nutrition Live State & Handlers ---
+  const [foodLogs, setFoodLogs] = useState<FoodLogEntry[]>([]);
+  const [waterLog, setWaterLog] = useState<WaterLogEntry>({
+    userId: userProfile?.id || 'default',
+    date: new Date().toISOString().split('T')[0],
+    glasses: 5,
+    targetGlasses: userProfile?.lifestyle?.dailyWaterGlasses || 8,
+    updatedAt: new Date().toISOString(),
   });
+  const [dietLoading, setDietLoading] = useState<boolean>(true);
 
-  const [careCircle] = useState<CareCircleContact[]>(DEFAULT_CARE_CIRCLE);
+  // Dynamic calculated targets
+  const dailyNutritionTargets: DailyNutritionTargets = useMemo(() => {
+    return dietService.calculateNutritionTargets(userProfile);
+  }, [userProfile]);
 
-  // Floating AI Assistant State
-  const [isAiChatOpen, setIsAiChatOpen] = useState(false);
-  const [activeAiPrompt, setActiveAiPrompt] = useState<string | undefined>(undefined);
+  // Dynamic planned meals with allergy & cycle awareness
+  const dailyMealPlan: DailyMealPlan = useMemo(() => {
+    const recentSyms = symptomRecords.map((s) => s.symptomType);
+    const activePhase = cycleStats.hasData && cycleStats.estimatedPhase
+      ? cycleStats.estimatedPhase.name
+      : undefined;
+    return dietService.generateDailyMealPlan(userProfile, activePhase, recentSyms);
+  }, [userProfile, cycleStats, symptomRecords]);
 
-  // Re-sync reminders whenever medications or hydration targets change in profile
-  useEffect(() => {
-    const freshReminders = deriveRemindersFromProfile(userProfile);
-    setReminders(freshReminders);
-    try {
-      localStorage.setItem(REMINDERS_KEY, JSON.stringify(freshReminders));
-    } catch {
-      // ignore
+  const refreshDietData = useCallback(async (silent = false) => {
+    if (!userProfile?.id) {
+      setDietLoading(false);
+      return;
     }
+    if (!silent) {
+      setDietLoading(true);
+    }
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const [foodRes, waterRes] = await Promise.all([
+        dietService.fetchFoodLogs(userProfile.id, today),
+        dietService.fetchWaterLog(userProfile.id, today),
+      ]);
+      setFoodLogs(foodRes.logs || []);
+      setWaterLog(waterRes.entry);
+    } catch (err) {
+      console.warn('Error refreshing diet data:', err);
+    } finally {
+      if (!silent) {
+        setDietLoading(false);
+      }
+    }
+  }, [userProfile?.id]);
+
+  useEffect(() => {
+    refreshDietData(false);
+
+    let dietTimer: any = null;
+    const handleDietUpdate = () => {
+      clearTimeout(dietTimer);
+      dietTimer = setTimeout(() => {
+        refreshDietData(true);
+      }, 150);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('ovasense_diet_updated', handleDietUpdate);
+    }
+
+    return () => {
+      clearTimeout(dietTimer);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('ovasense_diet_updated', handleDietUpdate);
+      }
+    };
+  }, [refreshDietData]);
+
+  const logFoodItem = useCallback(
+    async (input: FoodLogInput): Promise<{ success: boolean; entry?: FoodLogEntry; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to log food.' };
+      }
+      try {
+        const res = await dietService.logFood(userProfile.id, input);
+        if (res.success && res.entry) {
+          setFoodLogs((prev) => [...prev, res.entry!]);
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to log food.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const deleteFoodLogItem = useCallback(
+    async (id: string): Promise<{ success: boolean; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to delete food log.' };
+      }
+      try {
+        const res = await dietService.deleteFoodLog(userProfile.id, id);
+        if (res.success) {
+          setFoodLogs((prev) => prev.filter((l) => l.id !== id));
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to delete food log.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const incrementWater = useCallback(async () => {
+    if (!userProfile?.id) return;
+    const nextGlasses = Math.min(24, waterLog.glasses + 1);
+    const target = userProfile.lifestyle?.dailyWaterGlasses || 8;
+    setWaterLog((prev) => ({ ...prev, glasses: nextGlasses }));
+    await dietService.updateWaterGlasses(userProfile.id, nextGlasses, target, waterLog.date);
+  }, [userProfile?.id, userProfile?.lifestyle?.dailyWaterGlasses, waterLog.glasses, waterLog.date]);
+
+  const decrementWater = useCallback(async () => {
+    if (!userProfile?.id) return;
+    const nextGlasses = Math.max(0, waterLog.glasses - 1);
+    const target = userProfile.lifestyle?.dailyWaterGlasses || 8;
+    setWaterLog((prev) => ({ ...prev, glasses: nextGlasses }));
+    await dietService.updateWaterGlasses(userProfile.id, nextGlasses, target, waterLog.date);
+  }, [userProfile?.id, userProfile?.lifestyle?.dailyWaterGlasses, waterLog.glasses, waterLog.date]);
+
+  // --- Fitness & Movement Live State & Handlers ---
+  const [fitnessLogs, setFitnessLogs] = useState<FitnessLogEntry[]>([]);
+  const [fitnessLoading, setFitnessLoading] = useState<boolean>(true);
+
+  const refreshFitnessData = useCallback(async (silent = false) => {
+    if (!userProfile?.id) {
+      setFitnessLoading(false);
+      return;
+    }
+    if (!silent) {
+      setFitnessLoading(true);
+    }
+    try {
+      const res = await fitnessService.fetchFitnessLogs(userProfile.id);
+      setFitnessLogs(res.logs || []);
+    } catch (err) {
+      console.warn('Error refreshing fitness data:', err);
+    } finally {
+      if (!silent) {
+        setFitnessLoading(false);
+      }
+    }
+  }, [userProfile?.id]);
+
+  useEffect(() => {
+    refreshFitnessData(false);
+
+    let fitnessTimer: any = null;
+    const handleFitnessUpdate = () => {
+      clearTimeout(fitnessTimer);
+      fitnessTimer = setTimeout(() => {
+        refreshFitnessData(true);
+      }, 150);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('ovasense_fitness_updated', handleFitnessUpdate);
+    }
+
+    return () => {
+      clearTimeout(fitnessTimer);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('ovasense_fitness_updated', handleFitnessUpdate);
+      }
+    };
+  }, [refreshFitnessData]);
+
+  const logFitnessActivity = useCallback(
+    async (input: FitnessLogInput): Promise<{ success: boolean; entry?: FitnessLogEntry; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to log activity.' };
+      }
+      try {
+        const res = await fitnessService.createFitnessLog(userProfile.id, input);
+        if (res.success && res.entry) {
+          setFitnessLogs((prev) => [res.entry!, ...prev]);
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to log fitness activity.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const updateFitnessActivity = useCallback(
+    async (id: string, input: Partial<FitnessLogInput>): Promise<{ success: boolean; entry?: FitnessLogEntry; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to update activity.' };
+      }
+      try {
+        const res = await fitnessService.updateFitnessLog(userProfile.id, id, input);
+        if (res.success && res.entry) {
+          setFitnessLogs((prev) => prev.map((l) => (l.id === id ? res.entry! : l)));
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to update activity.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const deleteFitnessActivity = useCallback(
+    async (id: string): Promise<{ success: boolean; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to delete activity.' };
+      }
+      try {
+        const res = await fitnessService.deleteFitnessLog(userProfile.id, id);
+        if (res.success) {
+          setFitnessLogs((prev) => prev.filter((l) => l.id !== id));
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to delete activity.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  // Derived Today & Weekly Fitness Statistics
+  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+
+  const todayFitnessActivities = useMemo(() => {
+    return fitnessLogs.filter((l) => l.occurredAt === todayStr);
+  }, [fitnessLogs, todayStr]);
+
+  const todayFitnessMinutes = useMemo(() => {
+    return todayFitnessActivities.reduce((sum, a) => sum + (a.durationMinutes || 0), 0);
+  }, [todayFitnessActivities]);
+
+  const weeklyFitnessStats = useMemo(() => {
+    return fitnessService.calculateWeeklyStats(fitnessLogs, 150);
+  }, [fitnessLogs]);
+
+  const suggestedFitnessRoutines = useMemo(() => {
+    const activePhaseName = cycleStats.hasData && cycleStats.estimatedPhase
+      ? cycleStats.estimatedPhase.name
+      : userProfile.womensHealth?.currentPhase || 'Follicular Phase';
+    return fitnessService.generateSuggestedRoutines(userProfile, activePhaseName, todayFitnessActivities);
+  }, [userProfile, cycleStats, todayFitnessActivities]);
+
+  // --- Medications & Adherence Live State & Handlers ---
+  const [medications, setMedications] = useState<MedicationItem[]>([]);
+  const [medicationLogs, setMedicationLogs] = useState<MedicationLogEntry[]>([]);
+  const [medicationsLoading, setMedicationsLoading] = useState<boolean>(true);
+
+  const refreshMedications = useCallback(async (silent = false) => {
+    if (!userProfile?.id) {
+      setMedicationsLoading(false);
+      return;
+    }
+    if (!silent) {
+      setMedicationsLoading(true);
+    }
+    try {
+      const [medsRes, logsRes] = await Promise.all([
+        medicationService.fetchMedications(userProfile.id),
+        medicationService.fetchMedicationLogs(userProfile.id),
+      ]);
+      setMedications(medsRes.medications || []);
+      setMedicationLogs(logsRes.logs || []);
+    } catch (err) {
+      console.warn('Error refreshing medications:', err);
+    } finally {
+      if (!silent) {
+        setMedicationsLoading(false);
+      }
+    }
+  }, [userProfile?.id]);
+
+  useEffect(() => {
+    refreshMedications(false);
+
+    let medTimer: any = null;
+    const handleMedUpdate = () => {
+      clearTimeout(medTimer);
+      medTimer = setTimeout(() => {
+        refreshMedications(true);
+      }, 150);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('ovasense_medications_updated', handleMedUpdate);
+    }
+
+    return () => {
+      clearTimeout(medTimer);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('ovasense_medications_updated', handleMedUpdate);
+      }
+    };
+  }, [refreshMedications]);
+
+  const addMedication = useCallback(
+    async (input: MedicationInput): Promise<{ success: boolean; medication?: MedicationItem; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to add medicine.' };
+      }
+      try {
+        const res = await medicationService.createMedication(userProfile.id, input);
+        if (res.success && res.medication) {
+          setMedications((prev) => [res.medication!, ...prev]);
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to add medicine.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const updateMedication = useCallback(
+    async (id: string, input: Partial<MedicationInput>): Promise<{ success: boolean; medication?: MedicationItem; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to update medicine.' };
+      }
+      try {
+        const res = await medicationService.updateMedication(userProfile.id, id, input);
+        if (res.success && res.medication) {
+          setMedications((prev) => prev.map((m) => (m.id === id ? res.medication! : m)));
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to update medicine.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const deleteMedication = useCallback(
+    async (id: string): Promise<{ success: boolean; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to delete medicine.' };
+      }
+      try {
+        const res = await medicationService.deleteMedication(userProfile.id, id);
+        if (res.success) {
+          setMedications((prev) => prev.filter((m) => m.id !== id));
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to delete medicine.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const logMedicationDose = useCallback(
+    async (input: MedicationLogInput): Promise<{ success: boolean; log?: MedicationLogEntry; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to log dose.' };
+      }
+      try {
+        const res = await medicationService.logMedicationDose(userProfile.id, input);
+        if (res.success && res.log) {
+          setMedicationLogs((prev) => {
+            const idx = prev.findIndex(
+              (l) =>
+                l.medicationId === input.medicationId &&
+                l.scheduledFor === input.scheduledFor &&
+                l.scheduledTime === input.scheduledTime
+            );
+            if (idx >= 0) {
+              const updated = [...prev];
+              updated[idx] = res.log!;
+              return updated;
+            }
+            return [res.log!, ...prev];
+          });
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to log dose.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const deleteMedicationDose = useCallback(
+    async (medicationId: string, scheduledFor: string, scheduledTime: string): Promise<{ success: boolean }> => {
+      if (!userProfile?.id) return { success: false };
+      try {
+        const res = await medicationService.deleteMedicationDoseLog(
+          userProfile.id,
+          medicationId,
+          scheduledFor,
+          scheduledTime
+        );
+        if (res.success) {
+          setMedicationLogs((prev) =>
+            prev.filter(
+              (l) =>
+                !(
+                  l.medicationId === medicationId &&
+                  l.scheduledFor === scheduledFor &&
+                  l.scheduledTime === scheduledTime
+                )
+            )
+          );
+        }
+        return res;
+      } catch {
+        return { success: false };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  // Derived Today & Weekly Medication Progress & Adherence
+  const todayMedicationProgress: TodayMedicationProgress = useMemo(() => {
+    return medicationService.generateTodayProgress(medications, medicationLogs);
+  }, [medications, medicationLogs]);
+
+  const weeklyMedicationStats: WeeklyAdherenceStats = useMemo(() => {
+    return medicationService.calculateWeeklyAdherence(medications, medicationLogs, 7);
+  }, [medications, medicationLogs]);
+
+  // --- Appointments & Consultations Live State & Handlers ---
+  const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
+  const [appointmentsLoading, setAppointmentsLoading] = useState<boolean>(true);
+
+  const refreshAppointments = useCallback(async (silent = false) => {
+    if (!userProfile?.id) {
+      setAppointmentsLoading(false);
+      return;
+    }
+    if (!silent) {
+      setAppointmentsLoading(true);
+    }
+    try {
+      const res = await appointmentService.fetchAppointments(userProfile.id);
+      setAppointments(res.appointments || []);
+    } catch (err) {
+      console.warn('Error refreshing appointments:', err);
+    } finally {
+      if (!silent) {
+        setAppointmentsLoading(false);
+      }
+    }
+  }, [userProfile?.id]);
+
+  useEffect(() => {
+    refreshAppointments(false);
+
+    let apptTimer: any = null;
+    const handleApptUpdate = () => {
+      clearTimeout(apptTimer);
+      apptTimer = setTimeout(() => {
+        refreshAppointments(true);
+      }, 150);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('ovasense_appointments_updated', handleApptUpdate);
+    }
+
+    return () => {
+      clearTimeout(apptTimer);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('ovasense_appointments_updated', handleApptUpdate);
+      }
+    };
+  }, [refreshAppointments]);
+
+  const bookAppointment = useCallback(
+    async (input: AppointmentInput): Promise<{ success: boolean; appointment?: AppointmentItem; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to book appointment.' };
+      }
+      try {
+        const res = await appointmentService.createAppointment(userProfile.id, input);
+        if (res.success && res.appointment) {
+          setAppointments((prev) => [res.appointment!, ...prev]);
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to book appointment.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const updateAppointment = useCallback(
+    async (
+      id: string,
+      input: Partial<AppointmentInput> & { status?: AppointmentStatus; providerNotes?: string }
+    ): Promise<{ success: boolean; appointment?: AppointmentItem; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to update appointment.' };
+      }
+      try {
+        const res = await appointmentService.updateAppointment(userProfile.id, id, input);
+        if (res.success && res.appointment) {
+          setAppointments((prev) => prev.map((a) => (a.id === id ? res.appointment! : a)));
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to update appointment.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const cancelAppointment = useCallback(
+    async (id: string, reason?: string): Promise<{ success: boolean; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to cancel appointment.' };
+      }
+      try {
+        const res = await appointmentService.cancelAppointment(userProfile.id, id, reason);
+        if (res.success && res.appointment) {
+          setAppointments((prev) => prev.map((a) => (a.id === id ? res.appointment! : a)));
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to cancel appointment.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const completeAppointment = useCallback(
+    async (id: string, notes?: string): Promise<{ success: boolean; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to complete appointment.' };
+      }
+      try {
+        const res = await appointmentService.completeAppointment(userProfile.id, id, notes);
+        if (res.success && res.appointment) {
+          setAppointments((prev) => prev.map((a) => (a.id === id ? res.appointment! : a)));
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to complete appointment.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const deleteAppointment = useCallback(
+    async (id: string): Promise<{ success: boolean; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to delete appointment.' };
+      }
+      try {
+        const res = await appointmentService.deleteAppointment(userProfile.id, id);
+        if (res.success) {
+          setAppointments((prev) => prev.filter((a) => a.id !== id));
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to delete appointment.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const addDoctorQuestion = useCallback(
+    async (appointmentId: string, question: string): Promise<{ success: boolean; question?: ConsultationQuestion; error?: string }> => {
+      if (!userProfile?.id) return { success: false, error: 'Not signed in' };
+      const res = await appointmentService.addConsultationQuestion(userProfile.id, appointmentId, question);
+      if (res.success) {
+        await refreshAppointments(true);
+      }
+      return res;
+    },
+    [userProfile?.id, refreshAppointments]
+  );
+
+  const toggleDoctorQuestion = useCallback(
+    async (appointmentId: string, questionId: string): Promise<{ success: boolean }> => {
+      if (!userProfile?.id) return { success: false };
+      const res = await appointmentService.toggleQuestionDiscussed(userProfile.id, appointmentId, questionId);
+      if (res.success) {
+        await refreshAppointments(true);
+      }
+      return res;
+    },
+    [userProfile?.id, refreshAppointments]
+  );
+
+  const deleteDoctorQuestion = useCallback(
+    async (appointmentId: string, questionId: string): Promise<{ success: boolean }> => {
+      if (!userProfile?.id) return { success: false };
+      const res = await appointmentService.deleteConsultationQuestion(userProfile.id, appointmentId, questionId);
+      if (res.success) {
+        await refreshAppointments(true);
+      }
+      return res;
+    },
+    [userProfile?.id, refreshAppointments]
+  );
+
+  // Derived Upcoming Appointment
+  const upcomingAppointment: AppointmentItem | null = useMemo(() => {
+    const scheduled = appointments.filter((a) => a.status === 'scheduled');
+    if (scheduled.length === 0) return null;
+    return scheduled[0];
+  }, [appointments]);
+
+  // Generate Pre-Consultation Snapshot from real live data
+  const getPreConsultationSnapshot = useCallback((): HealthSummarySnapshot => {
+    return appointmentService.generatePreConsultationSnapshot(
+      userProfile,
+      cycleStats,
+      cycleRecords,
+      symptomRecords,
+      reports,
+      foodLogs,
+      waterLog,
+      fitnessLogs,
+      medications,
+      medicationLogs
+    );
   }, [
-    userProfile.medical?.medications,
-    userProfile.lifestyle?.dailyWaterGlasses,
-    userProfile.lifestyle?.exercisePreferences,
+    userProfile,
+    cycleStats,
+    cycleRecords,
+    symptomRecords,
+    reports,
+    foodLogs,
+    waterLog,
+    fitnessLogs,
+    medications,
+    medicationLogs,
   ]);
 
-  // Persist Reminders changes
-  useEffect(() => {
-    try {
-      localStorage.setItem(REMINDERS_KEY, JSON.stringify(reminders));
-    } catch {
-      // ignore
+  const getConsultationBrief = useCallback(
+    (appointment: AppointmentItem): ConsultationBrief => {
+      const snapshot = getPreConsultationSnapshot();
+      return appointmentService.generateConsultationBrief(appointment, userProfile, snapshot);
+    },
+    [getPreConsultationSnapshot, userProfile]
+  );
+
+  // Care Circle State & Live Management
+  const [careCircleMembers, setCareCircleMembers] = useState<CareCircleMember[]>([]);
+  const [careCircleInvitations, setCareCircleInvitations] = useState<CareCircleInvitation[]>([]);
+  const [careCircleLoading, setCareCircleLoading] = useState<boolean>(true);
+
+  const refreshCareCircle = useCallback(async (silent = false) => {
+    if (!userProfile?.id) {
+      setCareCircleMembers([]);
+      setCareCircleInvitations([]);
+      setCareCircleLoading(false);
+      return;
     }
-  }, [reminders]);
+    if (!silent) {
+      setCareCircleLoading(true);
+    }
+    try {
+      const { members, invitations } = await careCircleService.fetchCareCircleMembers(userProfile.id);
+      setCareCircleMembers(members || []);
+      setCareCircleInvitations(invitations || []);
+    } catch (err) {
+      console.warn('Error refreshing care circle:', err);
+    } finally {
+      if (!silent) {
+        setCareCircleLoading(false);
+      }
+    }
+  }, [userProfile?.id]);
+
+  useEffect(() => {
+    // Initial fetch on profile load
+    refreshCareCircle(false);
+
+    let debounceTimer: any = null;
+    const handleUpdate = () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        refreshCareCircle(true); // Silent update without spinner
+      }, 150);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', handleUpdate);
+      window.addEventListener('ovasense_care_circle_updated', handleUpdate);
+    }
+
+    return () => {
+      clearTimeout(debounceTimer);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('storage', handleUpdate);
+        window.removeEventListener('ovasense_care_circle_updated', handleUpdate);
+      }
+    };
+  }, [refreshCareCircle]);
+
+  // Add Care Member
+  const addCareMember = useCallback(
+    async (input: CareCircleInviteInput): Promise<{ success: boolean; inviteLink?: string; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to invite care members.' };
+      }
+      try {
+        const res = await careCircleService.addCareCircleMember(userProfile.id, input);
+        if (res.error) {
+          return { success: false, error: res.error };
+        }
+        if (res.member) {
+          setCareCircleMembers((prev) => [res.member!, ...prev]);
+        }
+        if (res.invitation) {
+          setCareCircleInvitations((prev) => [res.invitation!, ...prev]);
+        }
+        return { success: true, inviteLink: res.inviteLink };
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to add care member.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  // Update Member Permissions
+  const updateMemberPermissions = useCallback(
+    async (memberId: string, perms: CareCirclePermissionsMap): Promise<{ success: boolean; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to modify permissions.' };
+      }
+      try {
+        const res = await careCircleService.updateMemberPermissions(userProfile.id, memberId, perms);
+        if (res.success) {
+          setCareCircleMembers((prev) =>
+            prev.map((m) => (m.id === memberId ? { ...m, permissions: { ...perms } } : m))
+          );
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to update permissions.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  // Revoke Member Access
+  const revokeMemberAccess = useCallback(
+    async (memberId: string): Promise<{ success: boolean; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to revoke access.' };
+      }
+      try {
+        const res = await careCircleService.revokeMemberAccess(userProfile.id, memberId);
+        if (res.success) {
+          setCareCircleMembers((prev) =>
+            prev.map((m) => (m.id === memberId ? { ...m, status: 'revoked' as const } : m))
+          );
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to revoke access.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  // Delete Member
+  const deleteCareMember = useCallback(
+    async (memberId: string): Promise<{ success: boolean; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to delete care member.' };
+      }
+      try {
+        const res = await careCircleService.deleteMember(userProfile.id, memberId);
+        if (res.success) {
+          setCareCircleMembers((prev) => prev.filter((m) => m.id !== memberId));
+          setCareCircleInvitations((prev) => prev.filter((i) => i.id !== memberId));
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to delete care member.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  // Backward compatible CareCircleContact list dynamically derived from careCircleMembers
+  const careCircle: CareCircleContact[] = useMemo(() => {
+    const active = careCircleMembers.filter((m) => m.status === 'active');
+    if (active.length === 0) {
+      return DEFAULT_CARE_CIRCLE;
+    }
+    return active.map((m) => ({
+      id: m.id,
+      name: m.name,
+      role: m.role === 'doctor' ? 'doctor' : m.role === 'family' ? 'family' : 'caregiver',
+      specialty: m.relationship || m.clinicOrganization || (m.role === 'doctor' ? 'Healthcare Professional' : 'Trusted Contact'),
+      accessLevel: m.permissions.reports && m.permissions.cycle && m.permissions.symptoms ? 'full' : 'limited',
+      nextAppointment: m.role === 'doctor' && upcomingAppointment ? upcomingAppointment.scheduledDate : undefined,
+      permissions: {
+        symptoms: m.permissions.symptoms,
+        reports: m.permissions.reports,
+        medications: m.permissions.medications,
+        dietFitness: m.permissions.diet || m.permissions.fitness,
+        privateNotes: false,
+      },
+    }));
+  }, [careCircleMembers, upcomingAppointment]);
+
+  // Floating AI Assistant State
+  const [isAiChatOpen, setIsAiChatOpen] = useState<boolean>(false);
+  const [activeAiPrompt, setActiveAiPrompt] = useState<string | undefined>(undefined);
+
+  // Custom user reminders list stored locally
+  const [customReminders, setCustomReminders] = useState<TodayReminder[]>(() => {
+    try {
+      const raw = localStorage.getItem(REMINDERS_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Dynamically synthesize all today reminders from live Medications, Hydration, Fitness, and Custom list
+  const reminders: TodayReminder[] = useMemo(() => {
+    const list: TodayReminder[] = [];
+
+    // 1. Live Medication Doses
+    todayMedicationProgress.doses.forEach((dose) => {
+      list.push({
+        id: `rem_med_${dose.medicationId}_${dose.scheduledTime}`,
+        title: `${dose.medicationName} ${dose.dose}${dose.unit}`,
+        time: dose.timeDisplay,
+        category: 'medication',
+        completed: dose.status === 'taken',
+      });
+    });
+
+    // 2. Hydration Target
+    const waterTargetGlasses = userProfile.lifestyle?.dailyWaterGlasses || 8;
+    list.push({
+      id: 'rem_hydration_daily',
+      title: `Hydration: ${waterLog.glasses} / ${waterTargetGlasses} glasses`,
+      time: 'Daily Goal',
+      category: 'hydration',
+      completed: waterLog.glasses >= waterTargetGlasses,
+    });
+
+    // 3. Movement Target
+    list.push({
+      id: 'rem_fitness_daily',
+      title: todayFitnessMinutes >= 20 ? '✓ Daily Movement Completed' : '20 min Gentle Movement',
+      time: 'Afternoon',
+      category: 'fitness',
+      completed: todayFitnessMinutes >= 20,
+    });
+
+    // 4. Upcoming Appointment Reminder
+    if (upcomingAppointment) {
+      list.push({
+        id: `rem_appt_${upcomingAppointment.id}`,
+        title: `Appointment: ${upcomingAppointment.providerName} (${upcomingAppointment.scheduledTime})`,
+        time: upcomingAppointment.scheduledDate,
+        category: 'appointment',
+        completed: false,
+      });
+    }
+
+    // 5. Custom Reminders
+    customReminders.forEach((r) => {
+      list.push(r);
+    });
+
+    return list;
+  }, [todayMedicationProgress.doses, waterLog.glasses, userProfile.lifestyle?.dailyWaterGlasses, todayFitnessMinutes, upcomingAppointment, customReminders]);
+
+  const toggleReminder = useCallback(
+    async (id: string) => {
+      const today = new Date().toISOString().split('T')[0];
+
+      if (id.startsWith('rem_med_')) {
+        const parts = id.replace('rem_med_', '').split('_');
+        const medicationId = parts[0];
+        const scheduledTime = parts[1] || '08:00';
+        const dose = todayMedicationProgress.doses.find(
+          (d) => d.medicationId === medicationId && d.scheduledTime === scheduledTime
+        );
+
+        if (dose?.status === 'taken') {
+          await deleteMedicationDose(medicationId, today, scheduledTime);
+        } else {
+          await logMedicationDose({
+            medicationId,
+            scheduledFor: today,
+            scheduledTime,
+            status: 'taken',
+            takenAt: new Date().toISOString(),
+          });
+        }
+        return;
+      }
+
+      if (id === 'rem_hydration_daily') {
+        await incrementWater();
+        return;
+      }
+
+      setCustomReminders((prev) => {
+        const updated = prev.map((r) => (r.id === id ? { ...r, completed: !r.completed } : r));
+        try {
+          localStorage.setItem(REMINDERS_KEY, JSON.stringify(updated));
+        } catch {
+          // ignore
+        }
+        return updated;
+      });
+    },
+    [todayMedicationProgress.doses, deleteMedicationDose, logMedicationDose, incrementWater]
+  );
+
+  const addReminder = useCallback(
+    (title: string, time: string, category: TodayReminder['category']) => {
+      const newRem: TodayReminder = {
+        id: `rem_cust_${Date.now()}`,
+        title,
+        time,
+        category,
+        completed: false,
+      };
+      setCustomReminders((prev) => {
+        const updated = [newRem, ...prev];
+        try {
+          localStorage.setItem(REMINDERS_KEY, JSON.stringify(updated));
+        } catch {
+          // ignore
+        }
+        return updated;
+      });
+    },
+    []
+  );
+
+  // Derived longitudinal Weekly Health Summary
+  const weeklySummary: WeeklyHealthSummaryData = useMemo(() => {
+    return careCircleService.generateWeeklyHealthSummary(
+      userProfile?.id || 'default',
+      cycleRecords,
+      symptomRecords,
+      reports,
+      userProfile,
+      reminders,
+      upcomingAppointment
+    );
+  }, [userProfile, cycleRecords, symptomRecords, reports, reminders, upcomingAppointment]);
 
   // Dynamically compute legacy cycle metrics for backwards compatibility / fallback
   const cycleMetrics = useMemo(() => {
@@ -487,18 +1490,93 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     };
   }, [userProfile, cycleStats, symptomRecords]);
 
-  // Dynamically derive nutrition
+  // Dynamically derive nutrition snapshot object for Dashboard and widgets from LIVE food logs & water
   const nutrition: NutritionData = useMemo(() => {
-    return deriveNutritionFromProfile(userProfile);
-  }, [userProfile]);
+    const totalCalories = foodLogs.reduce((sum, l) => sum + (l.calories || 0), 0);
+    const totalProtein = foodLogs.reduce((sum, l) => sum + (l.proteinG || 0), 0);
+    const totalCarbs = foodLogs.reduce((sum, l) => sum + (l.carbsG || 0), 0);
+    const totalFat = foodLogs.reduce((sum, l) => sum + (l.fatG || 0), 0);
 
-  // Dynamically derive fitness
+    const loggedMeals = foodLogs.map((l) => ({
+      type: (l.mealType === 'morning_snack' || l.mealType === 'afternoon_snack' ? 'snack' : l.mealType) as 'breakfast' | 'lunch' | 'dinner' | 'snack',
+      name: l.foodName,
+      calories: l.calories,
+      tags: [l.serving, `${l.proteinG}g Protein`],
+    }));
+
+    const suggested = [
+      {
+        name: dailyMealPlan.meals.lunch.title,
+        desc: dailyMealPlan.meals.lunch.whyItWorks,
+        calories: dailyMealPlan.meals.lunch.calories,
+        benefits: 'High fiber and protein for steady metabolic energy',
+        culturalTag: 'Pakistani Nutrition',
+      },
+      {
+        name: dailyMealPlan.meals.dinner.title,
+        desc: dailyMealPlan.meals.dinner.whyItWorks,
+        calories: dailyMealPlan.meals.dinner.calories,
+        benefits: 'Lean protein and restorative evening minerals',
+        culturalTag: 'Traditional Balanced',
+      },
+    ];
+
+    return {
+      caloriesLogged: totalCalories,
+      caloriesTarget: dailyNutritionTargets.calories,
+      proteinGrams: Math.round(totalProtein),
+      proteinTarget: dailyNutritionTargets.proteinG,
+      carbsGrams: Math.round(totalCarbs),
+      carbsTarget: dailyNutritionTargets.carbsG,
+      fatGrams: Math.round(totalFat),
+      fatTarget: dailyNutritionTargets.fatG,
+      waterIntakeLiters: Math.round(waterLog.glasses * 0.25 * 10) / 10,
+      waterTargetLiters: Math.round(dailyNutritionTargets.waterGlasses * 0.25 * 10) / 10,
+      meals: loggedMeals.length > 0 ? loggedMeals : deriveNutritionFromProfile(userProfile).meals,
+      suggestedMeals: suggested,
+    };
+  }, [foodLogs, dailyNutritionTargets, dailyMealPlan, waterLog.glasses, userProfile]);
+
+  // Dynamically derive fitness snapshot object for Dashboard from LIVE fitness logs & suggestions
   const fitness: FitnessData = useMemo(() => {
-    const activePhaseName = cycleStats.hasData && cycleStats.estimatedPhase
-      ? cycleStats.estimatedPhase.name
-      : cycleMetrics.phaseName;
-    return deriveFitnessFromProfile(userProfile, activePhaseName);
-  }, [userProfile, cycleStats, cycleMetrics.phaseName]);
+    const todayWalkingMins = todayFitnessActivities
+      .filter((a) => a.activityType === 'walking')
+      .reduce((sum, a) => sum + a.durationMinutes, 0);
+
+    const todayStrengthMins = todayFitnessActivities
+      .filter((a) => a.activityType === 'strength')
+      .reduce((sum, a) => sum + a.durationMinutes, 0);
+
+    const topSuggestion = suggestedFitnessRoutines[0] || {
+      title: 'Gentle Sunshine Walk',
+      durationMinutes: 20,
+      intensity: 'Gentle',
+      focus: 'Blood Sugar Balance',
+      whyThisPhase: 'Gentle movement supports steady glucose and mood.',
+    };
+
+    return {
+      workoutsThisWeek: weeklyFitnessStats.totalActivitiesCount,
+      weeklyGoal: 5,
+      activeMinutesToday: todayFitnessMinutes,
+      walkingMinutes: todayWalkingMins || (todayFitnessMinutes > 0 ? 0 : 20),
+      strengthMinutes: todayStrengthMins || 0,
+      caloriesBurned: Math.round(todayFitnessMinutes * 4.5),
+      suggestedMovement: {
+        title: topSuggestion.title,
+        duration: `${topSuggestion.durationMinutes} min`,
+        intensity: (topSuggestion.intensity.toLowerCase() === 'moderate'
+          ? 'moderate'
+          : topSuggestion.intensity.toLowerCase() === 'restorative'
+          ? 'restorative'
+          : 'low') as 'low' | 'moderate' | 'restorative',
+        reason: topSuggestion.whyThisPhase,
+        phaseAlignment: cycleStats.hasData && cycleStats.estimatedPhase
+          ? cycleStats.estimatedPhase.name
+          : cycleMetrics.phaseName,
+      },
+    };
+  }, [todayFitnessActivities, weeklyFitnessStats.totalActivitiesCount, todayFitnessMinutes, suggestedFitnessRoutines, cycleStats, cycleMetrics.phaseName]);
 
   // Dynamically derive Digital Twin insight
   const digitalTwinInsight: DigitalTwinInsight = useMemo(() => {
@@ -507,26 +1585,6 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       : cycleMetrics.phaseName;
     return deriveInsightFromProfile(userProfile, activePhaseName);
   }, [userProfile, cycleStats, cycleMetrics.phaseName]);
-
-  const toggleReminder = useCallback((id: string) => {
-    setReminders((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, completed: !r.completed } : r))
-    );
-  }, []);
-
-  const addReminder = useCallback(
-    (title: string, time: string, category: TodayReminder['category']) => {
-      const newRem: TodayReminder = {
-        id: `rem_${Date.now()}`,
-        title,
-        time,
-        category,
-        completed: false,
-      };
-      setReminders((prev) => [newRem, ...prev]);
-    },
-    []
-  );
 
   const registerUser = useCallback(
     (_data: { fullName: string; email: string; dateOfBirth?: string }) => {
@@ -587,7 +1645,52 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         refreshSymptomRecords,
         reminders,
         nutrition,
+        foodLogs,
+        waterLog,
+        dailyNutritionTargets,
+        dailyMealPlan,
+        dietLoading,
+        logFoodItem,
+        deleteFoodLogItem,
+        incrementWater,
+        decrementWater,
+        refreshDietData,
         fitness,
+        fitnessLogs,
+        fitnessLoading,
+        todayFitnessMinutes,
+        todayFitnessActivities,
+        weeklyFitnessStats,
+        suggestedFitnessRoutines,
+        logFitnessActivity,
+        updateFitnessActivity,
+        deleteFitnessActivity,
+        refreshFitnessData,
+        medications,
+        medicationLogs,
+        medicationsLoading,
+        todayMedicationProgress,
+        weeklyMedicationStats,
+        addMedication,
+        updateMedication,
+        deleteMedication,
+        logMedicationDose,
+        deleteMedicationDose,
+        refreshMedications,
+        appointments,
+        upcomingAppointment,
+        appointmentsLoading,
+        bookAppointment,
+        updateAppointment,
+        cancelAppointment,
+        completeAppointment,
+        deleteAppointment,
+        addDoctorQuestion,
+        toggleDoctorQuestion,
+        deleteDoctorQuestion,
+        getPreConsultationSnapshot,
+        getConsultationBrief,
+        refreshAppointments,
         reports,
         reportStats,
         reportsLoading,
@@ -595,6 +1698,15 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         deleteReport,
         refreshReports,
         careCircle,
+        careCircleMembers,
+        careCircleInvitations,
+        careCircleLoading,
+        addCareMember,
+        updateMemberPermissions,
+        revokeMemberAccess,
+        deleteCareMember,
+        refreshCareCircle,
+        weeklySummary,
         digitalTwinInsight,
         isAiChatOpen,
         activeAiPrompt,

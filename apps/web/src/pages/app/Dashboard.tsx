@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useUserHealth } from '../../context/UserHealthContext';
+import { timelineService } from '../../services/timelineService';
 import { DashboardHeader } from '../../components/dashboard/DashboardHeader';
 import { HealthProfileSummaryCard } from '../../components/dashboard/HealthProfileSummaryCard';
 import { HealthSnapshotCard } from '../../components/dashboard/HealthSnapshotCard';
@@ -14,10 +15,21 @@ import { RecentReportsCard } from '../../components/dashboard/RecentReportsCard'
 import { CareCircleCard } from '../../components/dashboard/CareCircleCard';
 import { HealthPatternsChart } from '../../components/dashboard/HealthPatternsChart';
 import { WeeklyHealthSummary } from '../../components/dashboard/WeeklyHealthSummary';
+import { HealthJourneyTimelineCard } from '../../components/dashboard/HealthJourneyTimelineCard';
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const {
+    userProfile,
+    cycleRecords,
+    symptomRecords,
+    foodLogs,
+    waterLog,
+    fitnessLogs,
+    medications,
+    medicationLogs,
+    appointments,
+    careCircleMembers,
     snapshotMetrics,
     reminders,
     toggleReminder,
@@ -29,6 +41,39 @@ export const Dashboard: React.FC = () => {
     openAiChatWithPrompt,
   } = useUserHealth();
 
+  const timelineInputs = useMemo(
+    () => ({
+      userProfile,
+      cycleRecords,
+      symptomRecords,
+      reports,
+      foodLogs,
+      waterLog,
+      fitnessLogs,
+      medications,
+      medicationLogs,
+      appointments,
+      careCircleMembers,
+    }),
+    [
+      userProfile,
+      cycleRecords,
+      symptomRecords,
+      reports,
+      foodLogs,
+      waterLog,
+      fitnessLogs,
+      medications,
+      medicationLogs,
+      appointments,
+      careCircleMembers,
+    ]
+  );
+
+  const recentTimelineEvents = useMemo(() => {
+    return timelineService.synthesizeTimelineEvents(timelineInputs).slice(0, 4);
+  }, [timelineInputs]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -39,29 +84,31 @@ export const Dashboard: React.FC = () => {
       {/* ── 1. Top Header Bar ── */}
       <DashboardHeader />
 
-      {/* ── 2. User Health Profile Summary & Completion Center ── */}
+      {/* ── 2. Primary Showcase: OvaSense PCOS ML Screening Assessment ── */}
+      <section id="ovasense-ml-screening-section" aria-label="OvaSense PCOS ML Screening Assessment" className="w-full">
+        <DigitalTwinInsightCard
+          insight={digitalTwinInsight}
+          onOpenChat={openAiChatWithPrompt}
+        />
+      </section>
+
+      {/* ── 3. User Health Profile Summary & Completion Center ── */}
       <HealthProfileSummaryCard />
 
-      {/* ── 3. Top Metric Snapshot Cards (4 Columns) ── */}
+      {/* ── 4. Top Metric Snapshot Cards (4 Columns) ── */}
       <HealthSnapshotCard
         metrics={snapshotMetrics}
         onViewSymptoms={() => navigate('/app/symptoms')}
         onViewCycle={() => navigate('/app/cycle')}
       />
 
-      {/* ── 3. Central Core Health Triad (Cycle, AI Twin, Reminders) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* ── 5. Core Health Triad (Cycle Progress & Reminders) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Cycle Progress Segmented Ring */}
         <CycleProgressDial
           currentDay={snapshotMetrics.cycleDay}
           totalDays={snapshotMetrics.totalCycleDays}
           phaseName={snapshotMetrics.phaseName}
-        />
-
-        {/* Digital Twin AI Insights Card */}
-        <DigitalTwinInsightCard
-          insight={digitalTwinInsight}
-          onOpenChat={openAiChatWithPrompt}
         />
 
         {/* Today's Checkable Reminders */}
@@ -79,8 +126,15 @@ export const Dashboard: React.FC = () => {
         <RecentReportsCard reports={reports} />
       </div>
 
-      {/* ── 5. Multi-Track Longitudinal Health Correlation Chart ── */}
-      <HealthPatternsChart />
+      {/* ── 5. Longitudinal Health Journey & Patterns ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1">
+          <HealthJourneyTimelineCard recentEvents={recentTimelineEvents} />
+        </div>
+        <div className="lg:col-span-2">
+          <HealthPatternsChart />
+        </div>
+      </div>
 
       {/* ── 6. Care Circle Clinician Row & Executive Weekly Summary ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

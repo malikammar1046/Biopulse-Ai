@@ -1,16 +1,16 @@
 import React from 'react';
 import { Outlet, Link } from 'react-router-dom';
-import { ROUTES } from '../constants/routes';
-import { ScrollToTop } from '../components/common/ScrollToTop';
 import { AppSidebar } from '../components/navigation/AppSidebar';
 import { MobileBottomNav } from '../components/navigation/MobileBottomNav';
+import { ScrollToTop } from '../components/common/ScrollToTop';
 import { FloatingOvaSenseAI } from '../components/dashboard/FloatingOvaSenseAI';
 import { Logo } from '../components/brand/Logo';
+import { ROUTES } from '../constants/routes';
 import { ArrowLeft } from 'lucide-react';
 
 export const AppLayout: React.FC = () => {
   return (
-    <div className="flex min-h-screen bg-[#F8F5FA] text-[#1C1326] antialiased">
+    <div className="flex min-h-screen bg-[#F8F5FA] text-[#1C1326] antialiased relative">
       <ScrollToTop />
 
       {/* Desktop Deep Plum / Obsidian Sidebar */}
@@ -32,18 +32,17 @@ export const AppLayout: React.FC = () => {
           </Link>
         </header>
 
-        {/* Scrollable Content Body */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+        {/* Page Content Viewport */}
+        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 max-w-7xl w-full mx-auto">
           <Outlet />
         </main>
       </div>
 
-      {/* Floating OvaSense AI WhatsApp-style Assistant */}
+      {/* Global Interactive AI Twin Chat Experience */}
       <FloatingOvaSenseAI />
 
-      {/* Mobile Fixed Bottom Navigation Bar */}
+      {/* Mobile Sticky Bottom Navigation (< md) */}
       <MobileBottomNav />
     </div>
   );
 };
-

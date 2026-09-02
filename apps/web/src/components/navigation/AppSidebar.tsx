@@ -9,6 +9,8 @@ import {
   FileText,
   Pill,
   Users,
+  Stethoscope,
+  GitBranch,
   Settings,
   LogOut,
   Sparkles,
@@ -31,6 +33,8 @@ export const AppSidebar: React.FC = () => {
 
   const mainNavItems = [
     { label: 'Dashboard', path: ROUTES.APP.DASHBOARD, icon: LayoutDashboard },
+    { label: 'AI Twin', path: ROUTES.APP.AI_TWIN, icon: Sparkles },
+    { label: 'Health Timeline', path: ROUTES.APP.TIMELINE, icon: GitBranch },
     { label: 'Your Cycle', path: ROUTES.APP.CYCLE, icon: Calendar },
     { label: 'Symptoms', path: ROUTES.APP.SYMPTOMS, icon: Activity },
     { label: 'Food & Meals', path: ROUTES.APP.DIET, icon: Utensils },
@@ -38,6 +42,7 @@ export const AppSidebar: React.FC = () => {
     { label: 'Lab Reports', path: ROUTES.APP.REPORTS, icon: FileText },
     { label: 'Medications', path: ROUTES.APP.MEDICATIONS, icon: Pill },
     { label: 'Care Circle', path: ROUTES.APP.CARE_CIRCLE, icon: Users },
+    { label: 'Appointments', path: ROUTES.APP.APPOINTMENTS, icon: Stethoscope },
   ];
 
   const bottomNavItems = [
@@ -60,7 +65,7 @@ export const AppSidebar: React.FC = () => {
 
         {/* Primary Navigation Menu */}
         <nav className="space-y-1">
-          <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#A797BD] px-3 mb-2 block">
+          <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#D8B4FE] px-3 mb-2 block">
             Health Portal
           </span>
           {mainNavItems.map((item) => {
@@ -73,7 +78,7 @@ export const AppSidebar: React.FC = () => {
                 className={`flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all duration-200 group ${
                   active
                     ? 'bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF] text-white shadow-md shadow-purple-950/50'
-                    : 'text-[#CDBDD8] hover:bg-white/[0.06] hover:text-white'
+                    : 'text-[#A797BD] hover:bg-white/[0.06] hover:text-white'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -94,7 +99,7 @@ export const AppSidebar: React.FC = () => {
         <div className="px-1">
           <div
             onClick={() => openAiChatWithPrompt('Explain what my current cycle day and logs mean')}
-            className="p-3.5 rounded-2xl bg-gradient-to-b from-[#1C0D2E] to-[#12071F] border border-[#8E3EAF]/40 hover:border-[#FB7185] text-left cursor-pointer transition-all duration-200 group shadow-md"
+            className="p-3.5 rounded-2xl bg-gradient-to-b from-[#250E3E] to-[#140624] border border-[#8E3EAF]/30 hover:border-[#FB7185] text-left cursor-pointer transition-all duration-200 group shadow-md"
           >
             <div className="flex items-center justify-between mb-1.5">
               <div className="flex items-center gap-2 text-xs font-bold text-white">

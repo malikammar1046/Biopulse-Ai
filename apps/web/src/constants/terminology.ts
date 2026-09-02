@@ -149,6 +149,84 @@ export const OVASENSE_TERMINOLOGY_GUIDE: Record<string, TermDefinition> = {
     simpleExplanation: 'Informational analysis of health patterns (never a replacement for a doctor).',
     exampleUsage: 'Your AI Health Insights.',
   },
+
+  // Fitness & Movement
+  physical_activity_adherence: {
+    clinicalTerm: 'Physical Activity Adherence',
+    patientFriendlyTerm: 'Your Movement This Week',
+    simpleExplanation: 'Gentle and steady activity tracking that honors your energy and cycle.',
+    exampleUsage: 'Your movement this week: 145 minutes completed.',
+  },
+  cardiorespiratory_exercise: {
+    clinicalTerm: 'Cardiorespiratory Exercise',
+    patientFriendlyTerm: 'Cardio / Aerobic Movement',
+    simpleExplanation: 'Activities like brisk walking or cycling that gently raise your heart rate.',
+    exampleUsage: '20-minute low-impact cardio.',
+  },
+  low_intensity_movement: {
+    clinicalTerm: 'Low-Intensity Physical Activity',
+    patientFriendlyTerm: 'Gentle Movement',
+    simpleExplanation: 'Low-stress movement like walking, stretching, or yoga that supports blood flow without raising cortisol.',
+    exampleUsage: 'Suggested for today: 20 minutes of gentle movement.',
+  },
+  recovery_protocol: {
+    clinicalTerm: 'Recovery Protocol',
+    patientFriendlyTerm: 'Rest & Recovery Movement',
+    simpleExplanation: 'Restorative stretching or mindful resting to let muscles and adrenal pathways recover.',
+    exampleUsage: 'Rest and recovery movement today.',
+  },
+
+  // Medications & Adherence
+  medication_adherence: {
+    clinicalTerm: 'Medication Adherence Rate',
+    patientFriendlyTerm: 'How regularly you took your medicine',
+    simpleExplanation: 'A friendly percentage showing how consistently you took your scheduled doses this week.',
+    exampleUsage: 'How regularly you took your medicine: 86% this week.',
+  },
+  dosage: {
+    clinicalTerm: 'Dosage / Posology',
+    patientFriendlyTerm: 'Dose',
+    simpleExplanation: 'The exact strength and amount of medicine to take (e.g. 500 mg).',
+    exampleUsage: 'Dose: 500 mg.',
+  },
+  regimen: {
+    clinicalTerm: 'Therapeutic Regimen',
+    patientFriendlyTerm: 'Medicine Schedule',
+    simpleExplanation: 'Your personalized timetable of daily supplements and prescribed medicines.',
+    exampleUsage: 'Your daily medicine schedule.',
+  },
+  non_adherent: {
+    clinicalTerm: 'Non-Adherent / Missed Dose',
+    patientFriendlyTerm: 'Not taken / Skipped',
+    simpleExplanation: 'When a scheduled dose was missed or skipped.',
+    exampleUsage: 'Status: Skipped for today.',
+  },
+  pharmacological_therapy: {
+    clinicalTerm: 'Pharmacological Therapy',
+    patientFriendlyTerm: 'Medicine & Supplements',
+    simpleExplanation: 'Supplements or prescribed medicines you take to support your PCOS balance.',
+    exampleUsage: 'Your medicines and daily supplements.',
+  },
+
+  // Appointments & Consultations
+  clinical_consultation: {
+    clinicalTerm: 'Clinical Consultation',
+    patientFriendlyTerm: 'Doctor Visit / Consultation',
+    simpleExplanation: 'A scheduled discussion with your healthcare professional to review your health and symptoms.',
+    exampleUsage: 'Upcoming doctor visit with Dr. Sarah Malik.',
+  },
+  pre_consultation_prep: {
+    clinicalTerm: 'Pre-Consultation Clinical Synthesis',
+    patientFriendlyTerm: 'Prepare for Your Visit',
+    simpleExplanation: 'A patient summary of your cycle, symptoms, reports, and questions to help you have an informed talk with your doctor.',
+    exampleUsage: 'Prepare for your visit: Review your health summary and questions.',
+  },
+  consultation_brief: {
+    clinicalTerm: 'Clinical Consultation Brief',
+    patientFriendlyTerm: 'Your Health Summary for Doctor',
+    simpleExplanation: 'A 1-page overview summarizing your logged metrics for discussion during your appointment.',
+    exampleUsage: 'View your health summary brief for your doctor.',
+  },
 };
 
 /**
