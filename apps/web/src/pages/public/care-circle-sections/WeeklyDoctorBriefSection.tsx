@@ -46,7 +46,7 @@ export const WeeklyDoctorBriefSection: React.FC = () => {
               transition={{ duration: 0.7, delay: 0.2 }}
               className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans font-normal"
             >
-              Instead of reconstructing your week from memory during a rushed 15-minute consultation, OVASense organizes the information you've chosen to share into a crisp, physician-friendly brief.
+              Instead of reconstructing your week from memory during a rushed 15-minute consultation, VITASense organizes the information you've chosen to share into a crisp, physician-friendly brief.
             </motion.p>
 
             <motion.div
@@ -58,7 +58,7 @@ export const WeeklyDoctorBriefSection: React.FC = () => {
             >
               {[
                 { title: 'Zero Memory Burden', desc: 'No scrambling for lost symptom dates or forgotten medication slips.' },
-                { title: 'Prepared Questions', desc: 'Synthesizes questions you discussed with OVASense during the week.' },
+                { title: 'Prepared Questions', desc: 'Synthesizes questions you discussed with VITASense during the week.' },
                 { title: 'Patient Permission Guard', desc: 'Only includes categories explicitly toggled ON by you.' },
               ].map((item, idx) => (
                 <div key={idx} className="flex items-start gap-3">
@@ -175,12 +175,12 @@ export const WeeklyDoctorBriefSection: React.FC = () => {
                 </div>
               </div>
 
-              {/* Topics Discussed With OVASense AI */}
+              {/* Topics Discussed With VITASense AI */}
               <div className="py-6 space-y-3">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-[#FB7185]" />
                   <h4 className="text-sm font-bold text-white font-display uppercase tracking-wider">
-                    Topics Discussed with OVASense AI (Patient-Prepared)
+                    Topics Discussed with VITASense AI (Patient-Prepared)
                   </h4>
                 </div>
 
@@ -208,7 +208,7 @@ export const WeeklyDoctorBriefSection: React.FC = () => {
               <div className="pt-4 border-t border-white/10 flex items-start gap-2 text-[11px] text-[#B4A6C7] leading-relaxed">
                 <ShieldAlert className="w-4 h-4 text-[#FB7185] shrink-0 mt-0.5" />
                 <p>
-                  <strong>Clinical Notice:</strong> Conversation summaries reflect topics discussed with OVASense and are not clinical diagnoses. All medical decisions and prescriptions remain the sole prerogative of the licensed attending physician.
+                  <strong>Clinical Notice:</strong> Conversation summaries reflect topics discussed with VITASense and are not clinical diagnoses. All medical decisions and prescriptions remain the sole prerogative of the licensed attending physician.
                 </p>
               </div>
             </motion.div>

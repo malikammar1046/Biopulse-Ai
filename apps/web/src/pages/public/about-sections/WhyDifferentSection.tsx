@@ -1,3 +1,4 @@
+import React from 'react';
 import { Check, X } from 'lucide-react';
 import { Container } from '../../../components/ui/Container';
 import { Badge } from '../../../components/ui/Badge';
@@ -5,32 +6,32 @@ import { Badge } from '../../../components/ui/Badge';
 export const WhyDifferentSection: React.FC = () => {
   const comparisonData = [
     {
-      conventional: 'Single-purpose cycle tracking',
-      ovasense: 'Connected multimodal health information',
+      conventional: 'Single-purpose trackers with siloed data',
+      vitasense: 'Connected multimodal screening for Women, Men & Baseline users',
     },
     {
-      conventional: 'Data remains fragmented across slips & apps',
-      ovasense: 'Unified, structured longitudinal record',
+      conventional: 'Data remains fragmented across paper slips & memos',
+      vitasense: 'Unified, structured 4-tier longitudinal record',
     },
     {
       conventional: 'One-time isolated snapshot prediction',
-      ovasense: 'Multi-month longitudinal trend monitoring',
+      vitasense: 'Multi-month trend monitoring & progressive reassessment',
     },
     {
       conventional: 'Opaque black-box AI risk percentages',
-      ovasense: 'Transparent SHAP feature attribution',
+      vitasense: 'Transparent SHAP feature attribution explaining model weights',
     },
     {
-      conventional: 'Generic western lifestyle advice',
-      ovasense: 'Context-aware localized lifestyle guidance',
+      conventional: 'Indiscriminate batteries of expensive tests',
+      vitasense: 'Value-driven information prioritization (cost vs estimated gain)',
     },
     {
-      conventional: 'Unfiltered technical information overload',
-      ovasense: 'Clear, patient-friendly biomarker context',
+      conventional: 'Generic, one-size-fits-all health advice',
+      vitasense: 'Context-aware, non-curative supportive lifestyle guidance',
     },
     {
-      conventional: 'Automated AI claims replacing doctors',
-      ovasense: 'Human-supervised physician discussion summaries',
+      conventional: 'Automated AI claims attempting to replace doctors',
+      vitasense: 'Human-supervised summaries designed for collaborative doctor visits',
     },
   ];
 
@@ -43,22 +44,22 @@ export const WhyDifferentSection: React.FC = () => {
           </Badge>
 
           <h2 className="text-3xl sm:text-5xl font-extrabold font-display tracking-tight text-[#1C1326] leading-tight">
-            Not another period tracker.{' '}
-            <span className="bg-gradient-brand bg-clip-text text-transparent">
-              Not another chatbot.
+            Not another generic tracker.{' '}
+            <span className="gradient-text-brand">
+              Not another black-box AI.
             </span>
           </h2>
 
           <p className="text-base sm:text-lg text-[#584B68] leading-relaxed font-sans max-w-2xl mx-auto">
-            A deliberate architectural shift from isolated tracking toward multimodal clinical intelligence and longitudinal clarity.
+            A deliberate architectural shift from isolated symptom logging toward explainable clinical intelligence and longitudinal clarity.
           </p>
         </div>
 
         {/* Factual Comparison Table */}
         <div className="max-w-4xl mx-auto rounded-3xl bg-white border border-[#E7DFEF] shadow-xl overflow-hidden">
           <div className="grid grid-cols-2 bg-[#EDE4F7]/60 border-b border-[#E7DFEF] p-5 font-display font-bold text-xs sm:text-sm">
-            <span className="text-[#8D7E9E] uppercase tracking-wider">Conventional Digital Trackers</span>
-            <span className="text-[#6E2D8B] uppercase tracking-wider">The OVASense Platform</span>
+            <span className="text-[#8D7E9E] uppercase tracking-wider">Conventional Health Trackers</span>
+            <span className="text-[#6E2D8B] uppercase tracking-wider">The VITASense Platform</span>
           </div>
 
           <div className="divide-y divide-[#E7DFEF]">
@@ -70,7 +71,7 @@ export const WhyDifferentSection: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2.5 text-[#1C1326] font-semibold pl-2">
                   <Check className="w-4 h-4 text-[#047857] shrink-0" />
-                  <span>{row.ovasense}</span>
+                  <span>{row.vitasense}</span>
                 </div>
               </div>
             ))}

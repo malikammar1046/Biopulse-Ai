@@ -1,10 +1,11 @@
 export { HowItWorksHeroSection } from './HowItWorksHeroSection';
 export { StartWithStorySection } from './StartWithStorySection';
+export { StructuredProfileSection } from './StructuredProfileSection';
 export { UploadReportsSection } from './UploadReportsSection';
 export { VerifyControlSection } from './VerifyControlSection';
-export { StructuredProfileSection } from './StructuredProfileSection';
 export { MLAssessmentSection } from './MLAssessmentSection';
 export { ExplainResultSection } from './ExplainResultSection';
+export { InformationGapSection } from './InformationGapSection';
 export { LifestyleActionSection } from './LifestyleActionSection';
 export { LongitudinalStorySection } from './LongitudinalStorySection';
 export { ReassessmentSection } from './ReassessmentSection';

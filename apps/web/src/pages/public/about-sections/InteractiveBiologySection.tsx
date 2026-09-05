@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Activity, HeartPulse, RefreshCw, Layers, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Activity, HeartPulse, Moon, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { Container } from '../../../components/ui/Container';
 import { Badge } from '../../../components/ui/Badge';
 
@@ -9,169 +9,174 @@ export const InteractiveBiologySection: React.FC = () => {
 
   const biologyDomains = [
     {
-      id: 'hormonal',
-      title: 'Hormonal Signals',
-      subtitle: 'Endocrine Feedback Loop',
+      id: 'womens-endocrine',
+      title: "Women's Endocrine System",
+      subtitle: 'Ovarian & Cycle Signaling',
       icon: Sparkles,
-      color: '#8E3EAF',
-      desc: 'Hormonal balance involves delicate feedback between the pituitary gland and ovaries. In polycystic patterns, elevated luteinizing hormone (LH) relative to FSH and increased androgen levels can disrupt the standard follicular timeline.',
+      color: '#FB7185',
+      desc: 'Ovarian function relies on delicate feedback between the pituitary gland and ovaries. In polycystic patterns (PCOS), altered LH to FSH secretion ratios and elevated androgens can disrupt follicular maturation and cycle regularity.',
       keyPoints: [
         'LH / FSH ratio shifts altering follicular stimulation',
-        'Androgen elevation influencing oil glands and hair follicles',
-        'Anti-Müllerian Hormone (AMH) reflecting follicular reserve density',
+        'Androgen levels influencing sebaceous glands and hair follicles',
+        'Anti-Müllerian Hormone (AMH) reflecting antral follicle density',
       ],
     },
     {
-      id: 'ovarian',
-      title: 'Ovarian Function',
-      subtitle: 'Follicular Maturation',
-      icon: Layers,
-      color: '#A21CAF',
-      desc: 'Rather than a single dominant follicle maturing each month, multiple smaller follicles may arrest during development, creating the ultrasonic multi-follicular appearance described in the Rotterdam consensus.',
+      id: 'mens-endocrine',
+      title: "Men's Endocrine System",
+      subtitle: 'Testicular & Testosterone Signaling',
+      icon: Activity,
+      color: '#60A5FA',
+      desc: 'Testosterone production in testicular Leydig cells is driven by pituitary LH and FSH pulses under hypothalamic control. Male hypogonadism occurs when this signaling or response drops below physiological thresholds.',
       keyPoints: [
-        'Arrested follicular development at 2–9 mm size',
-        'Characteristic peripheral "string of pearls" ultrasound appearance',
-        'Altered estrogen and progesterone production timing',
-      ],
-    },
-    {
-      id: 'cycle',
-      title: 'Cycle Patterns',
-      subtitle: 'Menstrual Rhythm',
-      icon: RefreshCw,
-      color: '#FB7185',
-      desc: 'Because ovulation timing can be irregular or delayed, menstrual intervals frequently vary between 35 and 90+ days. Tracking phase variations over multiple cycles provides essential longitudinal visibility.',
-      keyPoints: [
-        'Oligomenorrhea (cycles > 35 days) or anovulation',
-        'Prolonged follicular phase duration',
-        'Intermittent flow intensity and unpredictable onset',
+        'Morning diurnal peak: serum testosterone highest between 7:00–10:00 AM',
+        'Pituitary gonadotropins (LH/FSH) distinguishing primary vs secondary etiologies',
+        'Free versus total testosterone modulated by sex hormone-binding globulin (SHBG)',
       ],
     },
     {
       id: 'metabolic',
-      title: 'Metabolic Health',
-      subtitle: 'Insulin & Energy Dynamics',
+      title: 'Metabolic Foundations',
+      subtitle: 'Insulin & Energy Homeostasis',
       icon: HeartPulse,
-      color: '#047857',
-      desc: 'Insulin resistance is a frequent metabolic companion to PCOS, prompting compensatory insulin production which can further stimulate ovarian androgen output.',
+      color: '#34D399',
+      desc: 'Metabolic health is deeply intertwined with reproductive hormones. Insulin resistance and glycemic swings stimulate excess androgen production in women and suppress gonadotropin release in men.',
       keyPoints: [
-        'Compensatory hyperinsulinemia impacting ovarian receptors',
-        'Carbohydrate sensitivity and energy fluctuations',
-        'Response to low-glycemic dietary adjustments and physical activity',
+        'Compensatory hyperinsulinemia altering sex hormone binding',
+        'Visceral adiposity and lipid profile variations across both sexes',
+        'Fasting glucose and HbA1c indicators reflecting metabolic resilience',
       ],
     },
     {
-      id: 'symptoms',
-      title: 'Observable Symptoms',
-      subtitle: 'Physical Expression',
-      icon: Activity,
-      color: '#E87084',
-      desc: 'Physical signals are the outward manifestations of internal endocrine patterns. Logging acne flare-ups, hirsutism progression, sleep quality, and mood changes creates a coherent multi-signal picture.',
+      id: 'circadian',
+      title: 'Sleep & Circadian Rhythm',
+      subtitle: 'Nocturnal Hormone Regulation',
+      icon: Moon,
+      color: '#818CF8',
+      desc: 'Hormones follow strict biological clocks. Disruptions in sleep architecture, high evening cortisol, and shift work interrupt nocturnal LH pulsatility and degrade daytime vitality.',
       keyPoints: [
-        'Androgen-sensitive acne and skin texture shifts',
-        'Hirsutism (excess facial or body hair growth)',
-        'Sleep disruptions, fatigue, and mood variability',
+        'Overnight sleep architecture essential for testosterone and LH peaks',
+        'HPA-axis stress modulation balancing adrenal cortisol',
+        'Restorative sleep consistency supporting neuroendocrine health',
+      ],
+    },
+    {
+      id: 'longitudinal',
+      title: 'Longitudinal Patterns',
+      subtitle: 'Dynamic Multi-Signal Trajectory',
+      icon: RefreshCw,
+      color: '#C084FC',
+      desc: 'Reproductive health is rarely static. Logging physical signals, repeat blood panels, and lifestyle modifications over 3 to 12 months reveals genuine trends that single-point assessments miss.',
+      keyPoints: [
+        'Multi-month tracking of cycle intervals, vitality, and symptom severity',
+        'Progressive data tiering updating the assessment as new labs arrive',
+        'Structured, objective summaries ready for collaborative doctor visits',
       ],
     },
   ];
 
+  const currentDomain = biologyDomains[activeTab];
+  const Icon = currentDomain.icon;
+
   return (
-    <section className="relative py-24 sm:py-32 bg-[#F8F5FA] text-[#1C1326] overflow-hidden">
+    <section className="relative py-24 sm:py-32 bg-[#10071A] text-white overflow-hidden border-t border-white/10">
+      {/* Background Lighting */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-[#6E2D8B]/20 rounded-full blur-[160px] pointer-events-none -z-10" />
+
       <Container size="xl">
         <div className="max-w-3xl mx-auto text-center space-y-5 mb-16">
           <Badge variant="primary" showDot size="md">
-            Interactive Exploration
+            Interactive Physiology
           </Badge>
 
-          <h2 className="text-3xl sm:text-5xl font-extrabold font-display tracking-tight text-[#1C1326] leading-tight">
-            Explore the Five Core Biological Domains
+          <h2 className="text-3xl sm:text-5xl font-extrabold font-display tracking-tight text-white leading-tight">
+            Explore the core physiological domains
           </h2>
 
-          <p className="text-base sm:text-lg text-[#584B68] leading-relaxed font-sans max-w-2xl mx-auto">
-            Click each domain to inspect how specific physiological pathways contribute to the overall PMOS/PCOS profile.
+          <p className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans max-w-2xl mx-auto">
+            Click each domain to inspect how hormonal feedback loops, metabolic foundations, and lifestyle factors interact in reproductive health.
           </p>
         </div>
 
-        {/* Interactive Domain Navigation */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-10">
+        {/* Tab Stepper Buttons */}
+        <div className="flex flex-wrap items-center justify-center gap-2 mb-12 max-w-4xl mx-auto">
           {biologyDomains.map((domain, idx) => {
-            const Icon = domain.icon;
             const isSelected = activeTab === idx;
+            const DomainIcon = domain.icon;
             return (
               <button
                 key={domain.id}
                 onClick={() => setActiveTab(idx)}
-                className={`p-4 rounded-2xl border transition-all text-left flex flex-col justify-between cursor-pointer ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-semibold font-sans transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-white border-[#6E2D8B] shadow-lg shadow-purple-950/10 ring-2 ring-[#6E2D8B]'
-                    : 'bg-white/60 border-[#E7DFEF] hover:bg-white hover:border-[#D8B4FE]'
+                    ? 'bg-gradient-brand text-white shadow-lg shadow-purple-950/40 ring-2 ring-[#FDA4AF]'
+                    : 'bg-white/5 text-[#B4A6C7] hover:bg-white/10 hover:text-white border border-white/10'
                 }`}
               >
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white mb-3 shadow-sm"
-                  style={{ backgroundColor: domain.color }}
-                >
-                  <Icon className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-[#8D7E9E] block font-mono">
-                    Domain 0{idx + 1}
-                  </span>
-                  <h4 className="text-xs sm:text-sm font-bold font-display text-[#1C1326] mt-0.5">
-                    {domain.title}
-                  </h4>
-                </div>
+                <DomainIcon className="w-4 h-4" style={{ color: domain.color }} />
+                <span>{domain.title}</span>
               </button>
             );
           })}
         </div>
 
-        {/* Selected Domain Detail Card */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.25 }}
-            className="p-8 sm:p-12 rounded-3xl bg-white border border-[#E7DFEF] shadow-xl space-y-6 max-w-4xl mx-auto"
-          >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#E7DFEF] pb-4 gap-2">
-              <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-[#8E3EAF] block">
-                  {biologyDomains[activeTab].subtitle}
-                </span>
-                <h3 className="text-2xl sm:text-3xl font-bold font-display text-[#1C1326]">
-                  {biologyDomains[activeTab].title}
-                </h3>
-              </div>
-              <Badge variant="primary" size="sm">
-                Domain 0{activeTab + 1}
-              </Badge>
-            </div>
-
-            <p className="text-sm sm:text-base text-[#584B68] leading-relaxed">
-              {biologyDomains[activeTab].desc}
-            </p>
-
-            <div className="space-y-3 pt-2">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-[#1C1326]">
-                Key Biological Considerations:
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {biologyDomains[activeTab].keyPoints.map((point, pIdx) => (
+        {/* Active Domain Card */}
+        <div className="max-w-4xl mx-auto p-8 sm:p-12 rounded-3xl bg-white/[0.04] border border-white/15 backdrop-blur-xl shadow-2xl">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentDomain.id}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-6"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
+                <div className="flex items-center gap-3">
                   <div
-                    key={pIdx}
-                    className="p-3.5 rounded-xl bg-[#F8F5FA] border border-[#E7DFEF] text-xs font-medium text-[#1C1326] flex items-start gap-2"
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-md shrink-0"
+                    style={{ backgroundColor: `${currentDomain.color}30`, border: `1px solid ${currentDomain.color}50` }}
                   >
-                    <CheckCircle2 className="w-4 h-4 text-[#047857] shrink-0 mt-0.5" />
-                    <span>{point}</span>
+                    <Icon className="w-6 h-6" style={{ color: currentDomain.color }} />
                   </div>
-                ))}
+                  <div>
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#FDA4AF] block">
+                      {currentDomain.subtitle}
+                    </span>
+                    <h3 className="text-2xl font-bold font-display text-white">
+                      {currentDomain.title}
+                    </h3>
+                  </div>
+                </div>
+
+                <span className="px-3 py-1 rounded-full bg-white/10 text-xs font-mono font-bold text-[#EDE4F7] self-start sm:self-center">
+                  Domain 0{activeTab + 1} of 05
+                </span>
               </div>
-            </div>
-          </motion.div>
-        </AnimatePresence>
+
+              <p className="text-sm sm:text-base text-[#EDE4F7] leading-relaxed font-sans">
+                {currentDomain.desc}
+              </p>
+
+              <div className="space-y-3 pt-2">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#FDA4AF] block">
+                  Key Physiological Factors Tracked:
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {currentDomain.keyPoints.map((point, pIdx) => (
+                    <div
+                      key={pIdx}
+                      className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-start gap-2.5 text-xs text-[#B4A6C7] leading-relaxed"
+                    >
+                      <CheckCircle2 className="w-4 h-4 text-[#34D399] shrink-0 mt-0.5" />
+                      <span>{point}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </Container>
     </section>
   );

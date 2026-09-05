@@ -30,7 +30,7 @@ export const Logo: React.FC<LogoProps> = ({
   size = 'md',
   showText = true,
   showTagline = true,
-  tagline = 'AI Health Monitor',
+  tagline = 'Reproductive Health Intelligence',
   animated = true,
   theme = 'dark',
   className = '',
@@ -62,7 +62,7 @@ export const Logo: React.FC<LogoProps> = ({
           {/* New Official Brand Logo Image */}
           <img
             src="/logo.png"
-            alt="OVASense Logo"
+            alt="VITASense Logo"
             className="w-full h-full object-contain filter drop-shadow-sm transition-transform duration-300 group-hover:scale-105"
             loading="eager"
           />
@@ -83,7 +83,7 @@ export const Logo: React.FC<LogoProps> = ({
                 sizeConfig.text
               } ${isLight ? 'text-[#1C1326] group-hover:text-[#6E2D8B]' : 'text-white group-hover:text-[#E879F9]'}`}
             >
-              OVASense
+              VITASense <span className="bg-gradient-to-r from-[#C084FC] to-[#FB7185] bg-clip-text text-transparent font-black">AI</span>
             </span>
           </div>
 

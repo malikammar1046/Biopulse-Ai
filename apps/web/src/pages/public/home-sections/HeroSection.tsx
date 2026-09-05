@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, ShieldCheck } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Activity, Sparkles, Layers } from 'lucide-react';
 import { ROUTES } from '../../../constants/routes';
 import { Button } from '../../../components/ui/Button';
 import { Container } from '../../../components/ui/Container';
@@ -23,74 +23,90 @@ export const HeroSection: React.FC = () => {
       </div>
 
       <Container size="xl" className="relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-4 items-center">
-          {/* Left Column: Asymmetrical Editorial Headline & Narrative */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+          {/* Left Column: Platform-Level Headline & Narrative */}
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
             className="lg:col-span-6 space-y-8 text-left"
           >
-            {/* Eyebrow with OVASense Pulse */}
+            {/* Eyebrow Pill */}
             <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 backdrop-blur-md">
-              <span className="w-2 h-2 rounded-full bg-[#FB7185] shadow-[0_0_8px_#FB7185] animate-pulse" />
+              <Sparkles className="w-3.5 h-3.5 text-[#38BDF8] animate-pulse" />
               <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.2em] text-[#F6F2FA]">
-                Thoughtful Health Intelligence
+                Unified Reproductive Health Intelligence
               </span>
             </div>
 
-            {/* Headline with Scientific Editorial Hierarchy */}
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.08] font-display">
-              Your{' '}
+            {/* Platform-Level Headline */}
+            <h1 className="text-4xl sm:text-6xl lg:text-6.5xl font-extrabold tracking-tight text-white leading-[1.08] font-display">
+              Your Health. Your Signals.{' '}
               <span className="bg-gradient-to-r from-[#C084FC] via-[#E879F9] to-[#FB7185] bg-clip-text text-transparent">
-                health
-              </span>{' '}
-              is more than a single symptom.
+                Better Understanding.
+              </span>
             </h1>
 
             {/* Supporting Copy */}
-            <p className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed max-w-xl font-sans font-normal">
-              OvaSense connects your period rhythm, daily symptoms, lab reports, and lifestyle habits into clear, supportive insights over time.
+            <p className="text-base sm:text-lg text-[#CDBDD8] leading-relaxed max-w-xl font-sans font-normal">
+              VITASense AI helps you understand reproductive-health signals, assess potential risks,
+              prioritize useful health information, and track your journey over time.
             </p>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-wrap items-center gap-4 pt-2">
-              <Link to={ROUTES.APP.DASHBOARD}>
+            {/* Primary & Secondary Call to Action Buttons */}
+            <div className="flex flex-wrap items-center gap-3.5 pt-2">
+              <Link to={ROUTES.REGISTER}>
                 <Button
                   variant="primary"
-                  size="lg"
-                  className="bg-gradient-to-r from-[#8E3EAF] via-[#A21CAF] to-[#E87084] text-white hover:brightness-110 shadow-xl shadow-purple-950/30"
+                  size="md"
+                  className="bg-gradient-to-r from-[#8E3EAF] via-[#A21CAF] to-[#FB7185] text-white hover:brightness-110 shadow-lg shadow-purple-950/30 cursor-pointer"
                   iconRight={<ArrowRight className="w-4 h-4" />}
                 >
-                  Explore OvaSense
+                  Start Your Assessment
                 </Button>
               </Link>
 
               <Link to={ROUTES.HOW_IT_WORKS}>
                 <Button
                   variant="outline"
-                  size="lg"
-                  className="border-white/30 text-[#F6F2FA] hover:bg-white/10 backdrop-blur-sm"
+                  size="md"
+                  className="border-white/30 text-[#F6F2FA] hover:bg-white/10 backdrop-blur-sm cursor-pointer"
                 >
-                  How It Works
+                  Explore How It Works
                 </Button>
               </Link>
             </div>
 
+            {/* Safety & Non-Diagnostic Notice Banner */}
+            <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 flex items-start gap-3 max-w-xl text-left">
+              <ShieldCheck className="w-4 h-4 text-[#38BDF8] shrink-0 mt-0.5" />
+              <p className="text-[11px] text-[#A797BD] leading-relaxed font-sans">
+                <strong className="text-white font-semibold">Screening & Education:</strong> VITASense AI
+                provides screening and risk assessment to help users understand when further evaluation may
+                be worth discussing with a healthcare professional. It does not diagnose or prescribe treatment.
+              </p>
+            </div>
+
             {/* Scientific Trust Meta Indicator */}
-            <div className="pt-6 border-t border-white/10 flex flex-wrap items-center gap-5 text-[11px] font-bold tracking-wider uppercase text-[#B4A6C7]/80">
-              <span className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-[#FB7185]" />
-                AI That Explains
+            <div className="pt-2 border-t border-white/10 flex flex-wrap items-center gap-5 text-[11px] font-bold tracking-wider uppercase text-[#B4A6C7]/80">
+              <span className="flex items-center gap-1.5">
+                <Activity className="w-3.5 h-3.5 text-[#38BDF8]" />
+                Dual Health Pathways
               </span>
               <span className="w-1 h-1 rounded-full bg-white/20" />
-              <span>Tracked Over Time</span>
+              <span className="flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-[#C084FC]" />
+                Progressive Tiers
+              </span>
               <span className="w-1 h-1 rounded-full bg-white/20" />
-              <span>Private & Secure</span>
+              <span className="flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#FB7185]" />
+                Explainable AI
+              </span>
             </div>
           </motion.div>
 
-          {/* Right Column: Lightweight GPU-Accelerated Organic Intelligence Core */}
+          {/* Right Column: GPU-Accelerated Organic Intelligence Core */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}

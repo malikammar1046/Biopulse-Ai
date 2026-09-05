@@ -1,7 +1,12 @@
 export { HeroSection } from './HeroSection';
+export { WhoIsItForSection } from './WhoIsItForSection';
+export { PathwayArchitectureSection } from './PathwayArchitectureSection';
+export { PathwayIntelligenceSection } from './PathwayIntelligenceSection';
 export { AnatomyIntelligenceSection } from './AnatomyIntelligenceSection';
 export { ProblemSection } from './ProblemSection';
 export { SolutionSection } from './SolutionSection';
+export { FourTierModelSection } from './FourTierModelSection';
+export { InformationPrioritizationSection } from './InformationPrioritizationSection';
 export { HowItWorksSection } from './HowItWorksSection';
 export { FeaturesSection } from './FeaturesSection';
 export { ExplainableAISection } from './ExplainableAISection';

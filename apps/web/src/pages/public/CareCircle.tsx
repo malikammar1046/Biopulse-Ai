@@ -13,7 +13,7 @@ import { CareCircleCTASection } from './care-circle-sections/CareCircleCTASectio
 
 export const CareCircle: React.FC = () => {
   useEffect(() => {
-    document.title = 'Care Circle | OVASense Ai Health Monitor';
+    document.title = 'Care Circle | VITASense Health Intelligence';
   }, []);
 
   return (

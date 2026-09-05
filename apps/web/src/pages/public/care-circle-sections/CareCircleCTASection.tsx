@@ -69,7 +69,7 @@ export const CareCircleCTASection: React.FC = () => {
             transition={{ duration: 0.75, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
             className="text-lg sm:text-xl text-[#B4A6C7] leading-relaxed max-w-xl mx-auto font-sans font-normal"
           >
-            OVASense brings your health information together while keeping you in control of who gets to see it.
+            VITASense brings your health information together while keeping you in control of who gets to see it.
           </motion.p>
 
           {/* CTA Buttons */}
@@ -87,7 +87,7 @@ export const CareCircleCTASection: React.FC = () => {
                 className="bg-gradient-to-r from-[#8E3EAF] via-[#A21CAF] to-[#E87084] text-white hover:brightness-110 shadow-2xl shadow-purple-950/60 cursor-pointer px-8 rounded-2xl"
                 iconRight={<ArrowRight className="w-5 h-5" />}
               >
-                Explore OVASense
+                Explore VITASense
               </Button>
             </Link>
 

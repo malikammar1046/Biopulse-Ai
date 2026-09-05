@@ -4,28 +4,28 @@ import { Container } from '../../../components/ui/Container';
 export const BiologicalChainSection: React.FC = () => {
   const chainSteps = [
     {
-      title: 'Hormonal & Metabolic Shifts',
-      detail: 'Individual variations in LH, FSH, androgens, or insulin responsiveness establish a unique baseline.',
+      title: 'Hypothalamic-Pituitary Signalling',
+      detail: 'Pulsatile GnRH release from the brain prompts the pituitary gland to secrete LH and FSH, orchestrating reproductive rhythms.',
     },
     {
-      title: 'Altered Endocrine Signaling',
-      detail: 'Feedback loops between the pituitary gland and ovaries experience modified signaling thresholds.',
+      title: 'Target Gonadal Hormone Production',
+      detail: 'The ovaries (producing estrogen and progesterone) or testes (producing testosterone) respond to pituitary gonadotropin cues.',
     },
     {
-      title: 'Ovarian Follicular Effects',
-      detail: 'Multiple small follicles develop without consistently completing the full ovulation trajectory.',
+      title: 'Endocrine Feedback & Regulation',
+      detail: 'Circulating sex hormones provide negative or positive feedback loops back to the brain to maintain physiological equilibrium.',
     },
     {
-      title: 'Cycle Irregularity & Variations',
-      detail: 'Delayed follicular phase progression results in cycle length variability or occasional missed cycles.',
+      title: 'Metabolic & Lifestyle Modulation',
+      detail: 'Insulin sensitivity, visceral adiposity, sleep quality, and stress hormones (cortisol) directly influence receptor sensitivity.',
     },
     {
-      title: 'Multivariate Symptoms',
-      detail: 'Observable physical signals such as acne, hirsutism, sleep variations, and pelvic comfort shifts emerge.',
+      title: 'Observable Bodily Signals',
+      detail: 'Shifts in energy, cycle duration, adult acne, vitality, libido, or body composition reflect underlying endocrine changes.',
     },
     {
-      title: 'Longitudinal Patterns',
-      detail: 'Over months and years, these signals form dynamic trajectories that benefit from continuous structured observation.',
+      title: 'Longitudinal Trajectory Over Time',
+      detail: 'Chronic endocrine systems are dynamic. Structured tracking month-by-month transforms scattered clues into clear health trajectories.',
     },
   ];
 
@@ -41,13 +41,12 @@ export const BiologicalChainSection: React.FC = () => {
           <h2 className="text-3xl sm:text-5xl font-extrabold font-display tracking-tight text-white leading-tight">
             A chain of{' '}
             <span className="bg-gradient-to-r from-[#FDA4AF] via-[#FB7185] to-[#E879F9] bg-clip-text text-transparent">
-              interconnected changes
+              interconnected systems
             </span>
           </h2>
 
           <p className="text-base sm:text-lg text-[#EDE4F7] leading-relaxed font-sans max-w-2xl mx-auto">
-            PMOS/PCOS does not follow one rigid pathway. Instead, it represents a dynamic cascade of interconnected
-            endocrine, reproductive, and metabolic factors that interact over time.
+            Reproductive health does not follow one isolated pathway. It represents a dynamic cascade of brain signaling, hormone production, metabolic health, and daily lifestyle factors that interact over time.
           </p>
         </div>
 

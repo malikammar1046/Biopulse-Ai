@@ -13,19 +13,19 @@ export const ContactFAQSection: React.FC = () => {
 
   const faqs: FAQItem[] = [
     {
-      question: 'What is OVASense?',
+      question: 'What is VITASense?',
       answer:
-        'OVASense is an AI-assisted health-information and longitudinal monitoring platform dedicated to women\'s hormonal health and PCOS pattern recognition. It brings together cycle tracking, symptom logs, lifestyle metrics, and medical lab report digitization into structured, clinician-friendly summaries.',
+        'VITASense is an accessibility-aware reproductive health platform dedicated to Women\'s Health (PCOS pattern screening and cycle tracking) and Men\'s Health (male fertility and sperm health intelligence). It brings together cycle logs, semen analysis parameters, lifestyle metrics, and medical lab report digitization into structured, clinician-friendly summaries.',
     },
     {
-      question: 'Is OVASense a medical diagnosis tool?',
+      question: 'Is VITASense a medical diagnosis tool?',
       answer:
-        'No. OVASense is engineered strictly as a health-information and pattern-monitoring platform. It does not provide medical diagnoses or replace direct consultation with licensed medical doctors. All insights are designed to facilitate structured conversations with your healthcare provider.',
+        'No. VITASense is engineered strictly as an educational health-information and screening support platform. It does not provide medical diagnoses or replace direct consultation with licensed medical doctors. All insights are designed to facilitate structured conversations with your healthcare provider.',
     },
     {
-      question: 'Can researchers collaborate with OVASense?',
+      question: 'Can researchers collaborate with VITASense?',
       answer:
-        'Yes. We actively invite academic, biomedical, and clinical researchers to collaborate with us on longitudinal PCOS patterns, Rotterdam criteria alignment studies, and ethical AI model validation.',
+        'Yes. We actively invite academic, biomedical, and clinical researchers to collaborate with us on longitudinal reproductive patterns, semen parameter trajectories, Rotterdam criteria alignment, and explainable AI model validation.',
     },
     {
       question: 'Can I provide product feedback?',

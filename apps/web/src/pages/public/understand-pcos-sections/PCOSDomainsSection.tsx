@@ -27,7 +27,7 @@ const DOMAIN_TABS: DomainTabConfig[] = [
     primaryQuote:
       'Changes in androgen-related signaling can contribute to symptoms such as acne or excess hair growth.',
     detailedInsight:
-      'In many individuals with PCOS, the thecal cells of the ovary produce higher baseline androgens (testosterone and androstenedione). When combined with an elevated LH pulse frequency, this signaling environment dampens the normal cyclical rise in progesterone.',
+      'In many individuals with PMOS, the thecal cells of the ovary produce higher baseline androgens (testosterone and androstenedione). When combined with an elevated LH pulse frequency, this signaling environment dampens the normal cyclical rise in progesterone.',
     clinicalBiomarkers: [
       'Total & Free Testosterone',
       'LH / FSH Biomarker Ratio',
@@ -81,7 +81,7 @@ const DOMAIN_TABS: DomainTabConfig[] = [
     headline: 'Unique expressions across every individual.',
     primaryQuote: 'Symptoms vary significantly from person to person.',
     detailedInsight:
-      'One individual might experience severe cystic acne and hirsutism with regular cycles, while another might face amenorrhea and fatigue without outward hyperandrogenic signs. No two PCOS profiles are identical.',
+      'One individual might experience severe cystic acne and hirsutism with regular cycles, while another might face amenorrhea and fatigue without outward hyperandrogenic signs. No two PMOS profiles are identical.',
     clinicalBiomarkers: [
       'Ferriman-Gallwey Score (Hirsutism)',
       'Dermatological Distribution',
@@ -98,9 +98,9 @@ const DOMAIN_TABS: DomainTabConfig[] = [
     accentColor: '#34D399',
     headline: 'Insulin sensitivity & glucose utilization.',
     primaryQuote:
-      'Some people with PCOS experience insulin resistance or other metabolic concerns.',
+      'Some people with PMOS experience insulin resistance or other metabolic concerns.',
     detailedInsight:
-      'Insulin resistance is common across both lean and higher-BMI individuals with PCOS. When cells become less responsive to insulin, higher insulin levels circulate, directly stimulating ovarian androgen synthesis and affecting metabolic energy.',
+      'Insulin resistance is common across both lean and higher-BMI individuals with PMOS. When cells become less responsive to insulin, higher insulin levels circulate, directly stimulating ovarian androgen synthesis and affecting metabolic energy.',
     clinicalBiomarkers: [
       'Fasting Insulin & HOMA-IR',
       'Fasting Blood Glucose / HbA1c',
@@ -139,7 +139,7 @@ export const PCOSDomainsSection: React.FC = () => {
           </h2>
 
           <p className="text-base sm:text-lg text-[#B4A6C7] max-w-2xl mx-auto font-sans leading-relaxed">
-            Explore how PCOS influences key physiological domains—from hormone signaling and
+            Explore how PMOS influences key physiological domains—from hormone signaling and
             ovulation to metabolic health.
           </p>
 
@@ -345,7 +345,7 @@ export const PCOSDomainsSection: React.FC = () => {
 
                       <div className="p-3.5 rounded-2xl bg-[#6E2D8B]/20 border border-[#8E3EAF]/40 space-y-1.5">
                         <div className="flex justify-between text-xs font-mono text-white">
-                          <span>PCOS Variable Cycle (45+ Days)</span>
+                          <span>PMOS Variable Cycle (45+ Days)</span>
                           <span className="text-[#FB7185]">Extended Follicular Phase</span>
                         </div>
                         <div className="flex gap-1 h-3">

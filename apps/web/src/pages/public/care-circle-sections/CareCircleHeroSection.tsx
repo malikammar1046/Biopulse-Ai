@@ -76,7 +76,7 @@ export const CareCircleHeroSection: React.FC = () => {
                 <span>The Core Principle</span>
               </div>
               <p className="italic text-[#EDE4F7] font-sans leading-relaxed text-xs sm:text-sm">
-                “OVASense doesn't just help you understand your health. It helps the right people support you — with your explicit permission.”
+                “VITASense doesn't just help you understand your health. It helps the right people support you — with your explicit permission.”
               </p>
             </motion.div>
 
@@ -226,7 +226,7 @@ export const CareCircleHeroSection: React.FC = () => {
                 </div>
               </motion.div>
 
-              {/* ── BOTTOM NODE: OVASense AI ── */}
+              {/* ── BOTTOM NODE: VITASense AI ── */}
               <motion.div
                 animate={{ y: [4, -4, 4] }}
                 transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut', delay: 0.9 }}
@@ -237,7 +237,7 @@ export const CareCircleHeroSection: React.FC = () => {
                     <Cpu className="w-4 h-4" />
                   </div>
                   <div className="text-left">
-                    <span className="text-xs font-bold text-white font-display block">OVASense AI</span>
+                    <span className="text-xs font-bold text-white font-display block">VITASense AI</span>
                     <span className="text-[10px] text-[#B4A6C7] block">Longitudinal Intelligence</span>
                   </div>
                 </div>

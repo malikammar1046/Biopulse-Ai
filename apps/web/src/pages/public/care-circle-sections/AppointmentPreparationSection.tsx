@@ -8,7 +8,7 @@ export const AppointmentPreparationSection: React.FC = () => {
     {
       day: '7 Days Before',
       title: 'Appointment Detected',
-      desc: 'OVASense notes your upcoming clinical visit and begins grouping your recent 30-day symptom and lifestyle trends.',
+      desc: 'VITASense notes your upcoming clinical visit and begins grouping your recent 30-day symptom and lifestyle trends.',
       badge: 'Timeline Initiated',
       icon: <Calendar className="w-4 h-4 text-[#FB7185]" />,
     },
@@ -90,7 +90,7 @@ export const AppointmentPreparationSection: React.FC = () => {
             transition={{ duration: 0.7, delay: 0.2 }}
             className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans font-normal"
           >
-            Never walk into a consultation unprepared. OVASense guides your timeline step-by-step to maximize every minute with your doctor.
+            Never walk into a consultation unprepared. VITASense guides your timeline step-by-step to maximize every minute with your doctor.
           </motion.p>
         </div>
 
@@ -143,7 +143,7 @@ export const AppointmentPreparationSection: React.FC = () => {
           className="mt-12 p-4 rounded-2xl bg-white/5 border border-white/10 max-w-3xl mx-auto text-xs text-[#B4A6C7] text-center"
         >
           <span>
-            💡 <strong>Proactive Collaboration:</strong> OVASense helps you organize tests and records recommended by your clinician — ensuring your consultations are grounded in longitudinal clarity.
+            💡 <strong>Proactive Collaboration:</strong> VITASense helps you organize tests and records recommended by your clinician — ensuring your consultations are grounded in longitudinal clarity.
           </span>
         </motion.div>
       </Container>

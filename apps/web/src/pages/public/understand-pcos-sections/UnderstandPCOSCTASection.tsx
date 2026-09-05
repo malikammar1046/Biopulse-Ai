@@ -93,7 +93,7 @@ export const UnderstandPCOSCTASection: React.FC = () => {
               Take your health seriously.
             </h2>
             <p className="text-base sm:text-lg text-[#CDBDD8] max-w-xl mx-auto font-sans">
-              OvaSense gives you the tools to explore your unique biological trajectory and arrive
+              PMOSense gives you the tools to explore your unique biological trajectory and arrive
               at every doctor visit fully prepared.
             </p>
           </div>
@@ -107,7 +107,7 @@ export const UnderstandPCOSCTASection: React.FC = () => {
                 className="bg-gradient-to-r from-[#8E3EAF] via-[#A21CAF] to-[#E87084] text-white hover:brightness-110 shadow-2xl shadow-purple-950/50 px-8 py-4 text-base"
                 iconRight={<ArrowRight className="w-5 h-5" />}
               >
-                Explore OvaSense
+                Explore PMOSense
               </Button>
             </Link>
 
@@ -193,7 +193,7 @@ export const UnderstandPCOSCTASection: React.FC = () => {
               <div className="p-4 rounded-2xl bg-[#6E2D8B]/20 border border-[#8E3EAF]/30 text-xs text-[#CDBDD8] leading-relaxed flex items-start gap-2.5">
                 <FileText className="w-4 h-4 text-[#FB7185] shrink-0 mt-0.5" />
                 <span>
-                  <strong>Tip:</strong> You can export your OvaSense 90-day symptom and cycle summary
+                  <strong>Tip:</strong> You can export your PMOSense 90-day symptom and cycle summary
                   directly to PDF inside the app to hand directly to your clinician.
                 </span>
               </div>

@@ -44,7 +44,7 @@ export const FourPillarsSection: React.FC = () => {
         <div className="max-w-3xl mx-auto text-center space-y-5 mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-[#FDA4AF]">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>The OVASense Difference</span>
+            <span>The VITASense Difference</span>
           </div>
 
           <h2 className="text-3xl sm:text-5xl font-extrabold font-display tracking-tight text-white leading-tight">
@@ -52,7 +52,7 @@ export const FourPillarsSection: React.FC = () => {
           </h2>
 
           <p className="text-base sm:text-lg text-[#EDE4F7] leading-relaxed font-sans max-w-2xl mx-auto">
-            The fundamental architectural pillars separating OVASense from conventional consumer trackers.
+            The fundamental architectural pillars separating VITASense from conventional consumer trackers.
           </p>
         </div>
 

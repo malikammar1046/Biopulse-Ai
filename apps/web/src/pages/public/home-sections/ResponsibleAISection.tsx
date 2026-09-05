@@ -14,7 +14,7 @@ export const ResponsibleAISection: React.FC = () => {
 
           <h2 className="text-3xl sm:text-5xl font-extrabold font-display tracking-tight text-[#1C1326] leading-tight">
             Technology can assist.{' '}
-            <span className="bg-gradient-brand bg-clip-text text-transparent">
+            <span className="gradient-text-brand">
               People still matter.
             </span>
           </h2>
@@ -63,7 +63,7 @@ export const ResponsibleAISection: React.FC = () => {
               Human Clinical Oversight
             </h3>
             <p className="text-sm text-[#584B68] leading-relaxed">
-              OVASense is an informative monitoring assistant, not a doctor replacement. It organizes data to empower
+              VITASense AI is an informative screening and risk-assessment platform, not a doctor replacement. It organizes data to empower
               better, more informed conversations with qualified physicians.
             </p>
           </div>

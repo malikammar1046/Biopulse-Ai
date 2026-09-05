@@ -24,29 +24,29 @@ export const HumanSymptomExperienceSection: React.FC = () => {
       id: 1,
       badge: 'Stage 01 — Human Experience',
       title: 'IT STARTS WITH SOMETHING YOU FEEL.',
-      subtitle: 'OVASense helps connect the signals.',
-      desc: 'Physical sensations—pelvic tension, menstrual cramps, subtle shifts in daily energy—are your body’s first biological signals.',
+      subtitle: 'VITASense helps connect the signals.',
+      desc: 'Physical sensations — subtle shifts in daily vitality, cycle variations, fatigue, sleep disruptions, or skin changes — are your body’s early biological signals.',
     },
     {
       id: 2,
       badge: 'Stage 02 — Biological Signal',
       title: 'PATTERNS YOU NOTICE, BUT CAN’T ALWAYS CONNECT.',
-      subtitle: 'Cramps. Fatigue. Cycle changes.',
-      desc: 'An isolated cramp or irregular cycle can feel random. Behind the scenes, subtle hormonal fluctuations and ovarian signaling drive these sensations.',
+      subtitle: 'Energy. Sleep. Endocrine rhythms.',
+      desc: 'An isolated symptom or uncharacteristic fatigue can feel random. Behind the scenes, subtle hormonal fluctuations and endocrine feedback drive these sensations.',
     },
     {
       id: 3,
       badge: 'Stage 03 — Structured Data Points',
       title: 'FROM PHYSICAL SENSATION TO STRUCTURED OBSERVATIONS.',
       subtitle: 'Multimodal data standardization',
-      desc: 'OVASense captures subjective observations and organizes them alongside quantified biomarkers, sleep quality, and cycle duration.',
+      desc: 'VITASense captures subjective observations and organizes them alongside quantified biomarkers, sleep quality, and physiological timing.',
     },
     {
       id: 4,
       badge: 'Stage 04 — Multimodal Convergence',
-      title: 'THE OVASENSE INTELLIGENCE CORE.',
+      title: 'THE VITASENSE INTELLIGENCE CORE.',
       subtitle: 'Unifying disparate health streams',
-      desc: 'Symptoms, cycle chronologies, verified laboratory results, and lifestyle pacing converge into a unified health matrix.',
+      desc: 'Symptoms, temporal chronologies, verified laboratory results, and lifestyle pacing converge into a unified health matrix.',
     },
     {
       id: 5,
@@ -58,12 +58,12 @@ export const HumanSymptomExperienceSection: React.FC = () => {
   ];
 
   const dataPoints = [
-    { label: 'Cycle Day', val: 'Day 14 (Follicular)', icon: Calendar, color: '#C084FC' },
+    { label: 'Temporal Marker', val: 'Morning Window (08:30 AM)', icon: Calendar, color: '#C084FC' },
     { label: 'Symptom Severity', val: 'Moderate (3/5)', icon: Activity, color: '#FB7185' },
-    { label: 'Sleep Quality', val: '6.5 hrs (Restless)', icon: Moon, color: '#93C5FD' },
-    { label: 'Activity Pacing', val: '4,200 Steps (Light)', icon: Footprints, color: '#34D399' },
-    { label: 'Lifestyle Context', val: 'Warmth & Rest Logged', icon: HeartPulse, color: '#FDA4AF' },
-    { label: 'Verified Lab Results', val: 'LH/FSH Ratio: 1.71', icon: FileText, color: '#E879F9' },
+    { label: 'Sleep Quality', val: '6.5 hrs (Fragmented)', icon: Moon, color: '#93C5FD' },
+    { label: 'Activity Pacing', val: '4,200 Steps (Paced)', icon: Footprints, color: '#34D399' },
+    { label: 'Lifestyle Context', val: 'Nutrition & Rest Logged', icon: HeartPulse, color: '#FDA4AF' },
+    { label: 'Verified Lab Results', val: 'Hormone Panel Verified', icon: FileText, color: '#E879F9' },
   ];
 
   return (
@@ -72,12 +72,12 @@ export const HumanSymptomExperienceSection: React.FC = () => {
       className="relative pt-24 sm:pt-32 pb-20 sm:pb-28 bg-[#10071A] text-white overflow-hidden border-b border-white/10"
       aria-label="Human-centered biological symptom experience and data transformation"
     >
-      {/* ── Subtle Ambient Glows ── */}
+      {/* Subtle Ambient Glows */}
       <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#6E2D8B]/20 rounded-full blur-[140px] pointer-events-none -z-10" />
       <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-[#E87084]/15 rounded-full blur-[130px] pointer-events-none -z-10" />
 
       <Container size="xl" className="relative z-10">
-        {/* ── Section Header ── */}
+        {/* Section Header */}
         <div className="max-w-3xl mx-auto text-center space-y-4 mb-14 sm:mb-18">
           <Badge variant="primary" showDot size="md" className="bg-white/10 text-[#FDA4AF] border-white/15">
             The Living Symptom Journey
@@ -91,7 +91,7 @@ export const HumanSymptomExperienceSection: React.FC = () => {
           </h2>
 
           <p className="text-base sm:text-lg text-[#EDE4F7] leading-relaxed font-sans max-w-2xl mx-auto font-normal">
-            OVASense helps connect the signals—transforming lived physical experiences into structured, explainable health insights.
+            VITASense helps connect the signals — transforming lived physical experiences into structured, explainable health insights.
           </p>
 
           {/* Interactive Stage Stepper Indicator */}
@@ -116,9 +116,9 @@ export const HumanSymptomExperienceSection: React.FC = () => {
           </div>
         </div>
 
-        {/* ── Main Stage Canvas: Split Composition ── */}
+        {/* Main Stage Canvas */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center max-w-6xl mx-auto">
-          {/* LEFT COLUMN: Clean Biological Journey Visual */}
+          {/* Left Visual Card */}
           <div className="lg:col-span-6 relative flex items-center justify-center">
             <div className="relative w-full max-w-[500px] aspect-[4/3] rounded-3xl overflow-hidden border border-white/15 bg-gradient-to-b from-[#1E0B2E] via-[#180A25] to-[#10071A] p-8 flex flex-col justify-between shadow-2xl">
               {/* Stage Context Header */}
@@ -143,7 +143,6 @@ export const HumanSymptomExperienceSection: React.FC = () => {
 
               {/* Dynamic Biological Visual Graphic */}
               <div className="relative my-auto py-6 flex items-center justify-center">
-                {/* Central Glowing Pulse Ring */}
                 <div className="w-32 h-32 rounded-full bg-gradient-to-tr from-[#6E2D8B]/40 via-[#A21CAF]/30 to-[#E87084]/40 border border-white/20 flex items-center justify-center shadow-xl">
                   <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#8E3EAF] to-[#E87084] flex items-center justify-center shadow-[0_0_25px_rgba(232,112,132,0.5)]">
                     {activeStage === 0 && <HeartPulse className="w-10 h-10 text-white" />}
@@ -157,7 +156,7 @@ export const HumanSymptomExperienceSection: React.FC = () => {
                 {/* Floating Context Pills */}
                 <div className="absolute -top-1 left-2 px-3 py-1.5 rounded-xl bg-[#10071A]/90 border border-white/15 text-[11px] font-mono text-white shadow-lg flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-[#FB7185]" />
-                  <span>Pelvic Sensation</span>
+                  <span>Early Bodily Signal</span>
                 </div>
 
                 <div className="absolute -bottom-1 right-2 px-3 py-1.5 rounded-xl bg-[#10071A]/90 border border-white/15 text-[11px] font-mono text-[#34D399] shadow-lg flex items-center gap-1.5">
@@ -175,9 +174,8 @@ export const HumanSymptomExperienceSection: React.FC = () => {
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Interactive Stage Presentation */}
+          {/* Right Presentation */}
           <div className="lg:col-span-6 space-y-6 text-left">
-            {/* Stage Summary Card */}
             <div className="p-6 sm:p-7 rounded-3xl bg-white/[0.04] border border-white/15 backdrop-blur-xl shadow-xl space-y-3">
               <span className="px-2.5 py-1 rounded-full bg-[#8E3EAF]/30 text-[#FDA4AF] border border-[#8E3EAF]/40 text-[10px] font-mono font-bold uppercase tracking-wider inline-block">
                 {stages[activeStage].badge}
@@ -190,7 +188,6 @@ export const HumanSymptomExperienceSection: React.FC = () => {
               </p>
             </div>
 
-            {/* Dynamic Stage Body */}
             <AnimatePresence mode="wait">
               {activeStage <= 1 && (
                 <motion.div
@@ -216,15 +213,15 @@ export const HumanSymptomExperienceSection: React.FC = () => {
                   <div className="space-y-2 text-xs">
                     <div className="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
                       <span className="text-[#B4A6C7]">Reported Experience:</span>
-                      <span className="font-semibold text-white">Lower Pelvic Cramps</span>
+                      <span className="font-semibold text-white">Persistent Fatigue & Vitality Shift</span>
                     </div>
                     <div className="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
                       <span className="text-[#B4A6C7]">Severity Intensity:</span>
                       <span className="font-bold text-[#FB7185]">Moderate (3 / 5)</span>
                     </div>
                     <div className="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
-                      <span className="text-[#B4A6C7]">Associated Factors:</span>
-                      <span className="font-mono text-[11px] text-[#FDA4AF]">Mid-Cycle • Follicular Day 14</span>
+                      <span className="text-[#B4A6C7]">Associated Context:</span>
+                      <span className="font-mono text-[11px] text-[#FDA4AF]">Morning Window • Sleep Disruption</span>
                     </div>
                   </div>
                 </motion.div>
@@ -244,14 +241,14 @@ export const HumanSymptomExperienceSection: React.FC = () => {
                   </span>
                   <div className="grid grid-cols-2 gap-2">
                     {dataPoints.map((dp, idx) => {
-                      const Icon = dp.icon;
+                      const DataIcon = dp.icon;
                       return (
                         <div
                           key={idx}
                           className="p-2.5 rounded-2xl bg-white/5 border border-white/10 space-y-1"
                         >
                           <div className="flex items-center gap-1.5">
-                            <Icon className="w-3.5 h-3.5" style={{ color: dp.color }} />
+                            <DataIcon className="w-3.5 h-3.5" style={{ color: dp.color }} />
                             <span className="text-[10px] font-bold text-white block truncate">{dp.label}</span>
                           </div>
                           <span className="text-[10px] font-mono text-[#B4A6C7] block truncate">{dp.val}</span>
@@ -277,15 +274,15 @@ export const HumanSymptomExperienceSection: React.FC = () => {
                   <div className="flex items-center justify-center gap-2 text-xs font-mono font-bold py-2">
                     <span className="px-2 py-1 rounded-lg bg-white/10">SYMPTOMS</span>
                     <span>+</span>
-                    <span className="px-2 py-1 rounded-lg bg-white/10">CYCLE</span>
+                    <span className="px-2 py-1 rounded-lg bg-white/10">TIMELINE</span>
                     <span>+</span>
                     <span className="px-2 py-1 rounded-lg bg-white/10">LABS</span>
                   </div>
                   <div className="w-6 h-6 rounded-full bg-white/20 mx-auto flex items-center justify-center">
                     <ArrowDown className="w-3.5 h-3.5 text-white" />
                   </div>
-                  <div className="p-3 rounded-2xl bg-white/15 border border-white/20 text-xs font-bold text-white">
-                    OVASENSE INTELLIGENCE ENGINE
+                  <div className="p-3 rounded-2xl bg-white/15 border border-white/20 text-xs font-bold text-white font-display">
+                    VITASENSE INTELLIGENCE ENGINE
                   </div>
                   <div className="w-6 h-6 rounded-full bg-white/20 mx-auto flex items-center justify-center">
                     <ArrowDown className="w-3.5 h-3.5 text-white" />

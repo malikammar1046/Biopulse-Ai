@@ -22,8 +22,7 @@ export const ClinicalFoundationSection: React.FC = () => {
           </h2>
 
           <p className="text-base sm:text-lg text-[#EDE4F7] leading-relaxed font-sans max-w-2xl mx-auto">
-            OVASense combines validated Rotterdam endocrine consensus criteria, advanced ensemble machine learning architectures,
-            SHAP mathematical explainability, and human-centered design for medical-grade transparency.
+            VITASense grounds its models in peer-reviewed clinical guidelines — including the Rotterdam Consensus for PCOS and Endocrine Society Clinical Practice Guidelines for Male Hypogonadism — combined with transparent SHAP explainability and human-centered design.
           </p>
         </div>
 
@@ -31,32 +30,32 @@ export const ClinicalFoundationSection: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {[
             {
-              title: 'Clinical Alignment',
-              desc: 'Rotterdam consensus diagnostic criteria alignment and multi-marker evaluation.',
+              title: 'Clinical Consensus',
+              desc: 'Rotterdam criteria for PCOS and Endocrine Society guidelines for male hypogonadism.',
               icon: Microscope,
               color: '#6E2D8B',
             },
             {
               title: 'Machine Learning',
-              desc: 'Validated ensemble classifiers benchmarked on clinical endocrine datasets.',
+              desc: 'Calibrated screening models benchmarked on clinical endocrine and metabolic datasets.',
               icon: BrainCircuit,
               color: '#8E3EAF',
             },
             {
               title: 'Explainable AI',
-              desc: 'SHAP game-theoretic mathematical feature attribution for every metric.',
+              desc: 'Mathematical SHAP feature attribution showing what influenced the assessment score.',
               icon: Sparkles,
               color: '#A21CAF',
             },
             {
               title: 'Health Informatics',
-              desc: 'Structured multimodal schemas with automated unit normalization and OCR.',
+              desc: 'Structured multimodal schemas with automated unit normalization and OCR verification.',
               icon: Database,
               color: '#E87084',
             },
             {
               title: 'Empathetic UX',
-              desc: 'Human-centered interface engineered to reduce cognitive fatigue and stigma.',
+              desc: 'Human-centered interface engineered to reduce cognitive fatigue, stigma, and confusion.',
               icon: HeartHandshake,
               color: '#047857',
             },

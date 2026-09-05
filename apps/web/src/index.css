@@ -122,3 +122,22 @@
 .bg-gradient-accent {
   background: linear-gradient(90deg, #A21CAF 0%, #E87084 100%);
 }
+
+/* Cross-Browser Safe Text Gradient & Clipping Utilities */
+.bg-clip-text {
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+}
+
+.text-transparent {
+  -webkit-text-fill-color: transparent !important;
+}
+
+.gradient-text-brand {
+  color: #6E2D8B;
+  background: linear-gradient(135deg, #6E2D8B 0%, #8E3EAF 50%, #E87084 100%);
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  display: inline-block;
+}

@@ -1,4 +1,6 @@
 export { UnderstandPCOSHeroSection } from './UnderstandPCOSHeroSection';
+export { WhatIsPCOSSection } from './WhatIsPCOSSection';
+export { PCOSSymptomsSection } from './PCOSSymptomsSection';
 export { BodyToBiologySection } from './BodyToBiologySection';
 export { OvaryVisualizationSection } from './OvaryVisualizationSection';
 export { HowPCOSPatternsSection } from './HowPCOSPatternsSection';
@@ -6,6 +8,7 @@ export { PCOSDomainsSection } from './PCOSDomainsSection';
 export { DontIgnorePatternsSection } from './DontIgnorePatternsSection';
 export { LongTermAwarenessSection } from './LongTermAwarenessSection';
 export { AwarenessTimelineSection } from './AwarenessTimelineSection';
+export { PCOSMythBustingSection } from './PCOSMythBustingSection';
 export { OvaSenseSolutionSection } from './OvaSenseSolutionSection';
 export { DigitalTwinSection } from './DigitalTwinSection';
 export { UnderstandPCOSCTASection } from './UnderstandPCOSCTASection';

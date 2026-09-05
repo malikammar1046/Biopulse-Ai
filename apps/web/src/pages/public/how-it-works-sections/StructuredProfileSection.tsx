@@ -1,65 +1,115 @@
-import { Layers, Calendar, Activity, FileText, HeartPulse } from 'lucide-react';
+import React from 'react';
+import { Layers, ShieldCheck } from 'lucide-react';
 import { Container } from '../../../components/ui/Container';
 
 export const StructuredProfileSection: React.FC = () => {
+  const tiers = [
+    {
+      level: 'TIER 1',
+      title: 'Accessible Information',
+      subtitle: 'Available immediately without clinic visits',
+      items: ['Self-reported symptoms & severities', 'Age, BMI, waist-to-hip ratio', 'Sleep duration & lifestyle routines', 'Personal & family health history'],
+      color: '#38BDF8',
+      bgBadge: 'bg-sky-500/20 text-sky-300 border-sky-400/30',
+    },
+    {
+      level: 'TIER 2',
+      title: 'Routine Health Information',
+      subtitle: 'Standard health checks & basic laboratory tests',
+      items: ['Complete blood counts (CBC)', 'Fasting glucose & lipid profiles', 'Blood pressure & resting heart rate', 'General metabolic screening metrics'],
+      color: '#818CF8',
+      bgBadge: 'bg-indigo-500/20 text-indigo-300 border-indigo-400/30',
+    },
+    {
+      level: 'TIER 3',
+      title: 'Pathway-Specific Information',
+      subtitle: 'Targeted endocrine & hormonal biomarkers',
+      items: ['Total & Free Testosterone (with morning timing)', 'Luteinizing Hormone (LH) & FSH ratios', 'SHBG, Prolactin, Estradiol levels', 'Anti-Müllerian Hormone (AMH) / DHEAS'],
+      color: '#E879F9',
+      bgBadge: 'bg-purple-500/20 text-purple-300 border-purple-400/30',
+    },
+    {
+      level: 'TIER 4',
+      title: 'Comprehensive Clinical Information',
+      subtitle: 'Verified specialist reports & ultrasound findings',
+      items: ['Structured pelvic ultrasound report text (Rotterdam)', 'Endocrinologist examination notes', 'Confirmed specialist diagnoses & follow-ups', 'Specialized endocrine provocations'],
+      color: '#FB7185',
+      bgBadge: 'bg-rose-500/20 text-rose-300 border-rose-400/30',
+    },
+  ];
+
   return (
-    <section className="relative py-24 sm:py-32 bg-gradient-to-b from-[#180A25] via-[#241038] to-[#35144F] text-white overflow-hidden">
-      {/* Ambient Radial Lights */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-[#6E2D8B]/25 rounded-full blur-[160px] pointer-events-none -z-10" />
+    <section className="relative py-24 sm:py-32 bg-gradient-to-b from-[#180A25] via-[#200D34] to-[#12071F] text-white overflow-hidden border-t border-white/5">
+      {/* Background Volumetric Glows */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[750px] h-[750px] bg-[#6E2D8B]/20 rounded-full blur-[170px] pointer-events-none -z-10" />
 
       <Container size="xl">
-        <div className="max-w-3xl mx-auto text-center space-y-5 mb-16">
+        <div className="max-w-3xl mx-auto text-center space-y-4 mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-[#FDA4AF]">
             <Layers className="w-3.5 h-3.5" />
-            <span>Phase 04 — Data Structuring</span>
+            <span>Research Differentiator — Progressive Health Model</span>
           </div>
 
           <h2 className="text-3xl sm:text-5xl font-extrabold font-display tracking-tight text-white leading-tight">
-            04 — Turn scattered information into structure
+            The Four-Tier Information Model
           </h2>
 
-          <p className="text-base sm:text-lg text-[#EDE4F7] leading-relaxed font-sans max-w-2xl mx-auto">
-            Once verified, disparate inputs are harmonized into a standardized multimodal health profile.
-            Cycle dates, symptom severities, hormone units, and lifestyle logs are aligned for longitudinal evaluation.
+          <p className="text-base sm:text-lg text-[#CDBDD8] leading-relaxed font-sans max-w-2xl mx-auto">
+            You do not have to provide everything at once. VITASense is architected to generate meaningful,
+            calibrated screening insights at whatever level of information you currently possess.
           </p>
         </div>
 
-        {/* Central Converging Core Diagram */}
-        <div className="max-w-4xl mx-auto p-8 sm:p-12 rounded-3xl bg-white/[0.04] border border-white/15 backdrop-blur-xl shadow-2xl relative">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            {/* Input 1 */}
-            <div className="p-4 rounded-2xl bg-white/10 border border-white/15 text-center space-y-2">
-              <Calendar className="w-6 h-6 text-[#C084FC] mx-auto" />
-              <span className="text-xs font-bold font-display block">Cycle Chronology</span>
-              <span className="text-[10px] text-[#B4A6C7]">Phase lengths & intervals</span>
-            </div>
-            {/* Input 2 */}
-            <div className="p-4 rounded-2xl bg-white/10 border border-white/15 text-center space-y-2">
-              <Activity className="w-6 h-6 text-[#FB7185] mx-auto" />
-              <span className="text-xs font-bold font-display block">Symptom Severity</span>
-              <span className="text-[10px] text-[#B4A6C7]">Standardized 1–5 gradings</span>
-            </div>
-            {/* Input 3 */}
-            <div className="p-4 rounded-2xl bg-white/10 border border-white/15 text-center space-y-2">
-              <FileText className="w-6 h-6 text-[#E879F9] mx-auto" />
-              <span className="text-xs font-bold font-display block">Verified Lab Panels</span>
-              <span className="text-[10px] text-[#B4A6C7]">Normalized hormone units</span>
-            </div>
-            {/* Input 4 */}
-            <div className="p-4 rounded-2xl bg-white/10 border border-white/15 text-center space-y-2">
-              <HeartPulse className="w-6 h-6 text-[#34D399] mx-auto" />
-              <span className="text-xs font-bold font-display block">Lifestyle Context</span>
-              <span className="text-[10px] text-[#B4A6C7]">Sleep, activity & diet</span>
-            </div>
-          </div>
+        {/* 4 Tiers Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          {tiers.map((tier, idx) => (
+            <div
+              key={idx}
+              className="p-6 sm:p-7 rounded-3xl bg-white/[0.04] border border-white/15 backdrop-blur-xl shadow-xl flex flex-col justify-between space-y-5 hover:border-white/30 transition-all group"
+            >
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className={`text-[11px] font-mono font-bold px-2.5 py-1 rounded-full border ${tier.bgBadge}`}>
+                    {tier.level}
+                  </span>
+                  <span className="text-[10px] font-mono text-[#8D7E9E]">Level {idx + 1}</span>
+                </div>
 
-          <div className="p-6 rounded-2xl bg-gradient-brand text-center text-white space-y-2 shadow-lg">
-            <span className="text-[10px] font-mono uppercase font-bold tracking-widest text-[#FDA4AF]">
-              Unified Health Profile Matrix
-            </span>
-            <h4 className="text-lg font-bold font-display">Multimodal Feature Representation</h4>
-            <p className="text-xs text-[#EDE4F7] max-w-xl mx-auto">
-              Prepared for explainable machine learning assessments and long-term longitudinal monitoring.
+                <div>
+                  <h3 className="text-lg font-bold font-display text-white group-hover:text-[#FDA4AF] transition-colors">
+                    {tier.title}
+                  </h3>
+                  <p className="text-[11px] text-[#A797BD] leading-snug mt-1 font-sans">
+                    {tier.subtitle}
+                  </p>
+                </div>
+
+                <ul className="space-y-2 pt-2 border-t border-white/10">
+                  {tier.items.map((item, itemIdx) => (
+                    <li key={itemIdx} className="text-xs text-[#EDE4F7] flex items-start gap-2 leading-relaxed">
+                      <span className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: tier.color }} />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="text-[10px] font-mono text-[#8D7E9E] pt-2 border-t border-white/5">
+                {idx === 0 && 'Entry assessment available'}
+                {idx === 1 && 'Enhances baseline calibration'}
+                {idx === 2 && 'Pathway-specific precision'}
+                {idx === 3 && 'Comprehensive clinical context'}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Reassurance & Non-Diagnostic Guidance */}
+        <div className="max-w-3xl mx-auto p-5 rounded-2xl bg-white/5 border border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-left shadow-lg">
+          <div className="flex items-start gap-3">
+            <ShieldCheck className="w-5 h-5 text-[#34D399] shrink-0 mt-0.5" />
+            <p className="text-xs text-[#CDBDD8] leading-relaxed font-sans">
+              <strong className="text-white">Continuous Accessibility:</strong> Tier 4 is not required to use the platform, and Tier 4 does not issue an automated clinical diagnosis. As additional verified information becomes available over time, your assessment can simply be revisited.
             </p>
           </div>
         </div>

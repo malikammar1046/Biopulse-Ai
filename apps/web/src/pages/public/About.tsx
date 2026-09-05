@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   AboutHeroSection,
-  WhatIsPCOSSection,
+  TwoPathwaysOneEcosystemSection,
   BiologicalChainSection,
   InteractiveBiologySection,
   DisconnectedProblemSection,
@@ -17,22 +17,22 @@ import {
 export const About: React.FC = () => {
   return (
     <div className="flex flex-col w-full overflow-hidden bg-[#10071A]">
-      {/* 1. Hero: Understanding the Complexity with 3D Reproductive System */}
+      {/* 1. Hero: Understanding the Complexity of Reproductive Health */}
       <AboutHeroSection />
 
-      {/* 2. Educational: What is PMOS/PCOS? (Hormonal, Reproductive, Metabolic) */}
-      <WhatIsPCOSSection />
+      {/* 2. Dual Pathways, One Ecosystem: Women's PCOS, Men's Hypogonadism, and Baseline */}
+      <TwoPathwaysOneEcosystemSection />
 
-      {/* 3. Biological Chain: A Chain of Interconnected Changes */}
+      {/* 3. Biological Interconnectivity: Interconnected Systems */}
       <BiologicalChainSection />
 
-      {/* 4. Interactive Biology: 5 Core Physiological Domains */}
+      {/* 4. Interactive Physiology: 5 Core Physiological Domains */}
       <InteractiveBiologySection />
 
       {/* 5. The Real Problem: Disconnected Information Silos */}
       <DisconnectedProblemSection />
 
-      {/* 6. What We Are Building: Health Intelligence Layer & Transformation Pipeline */}
+      {/* 6. What We Are Building: Health Intelligence Layer & 4-Tier Transformation Pipeline */}
       <IntelligenceLayerSection />
 
       {/* 7. Why We Are Different: Factual Comparison Table */}

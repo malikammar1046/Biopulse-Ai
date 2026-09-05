@@ -16,39 +16,67 @@ export const Footer: React.FC = () => {
               <Logo size="md" />
             </Link>
             <p className="text-sm text-[#B4A6C7] max-w-sm leading-relaxed font-sans">
-              OVASense Ai Health Monitor is an AI-assisted health-information and longitudinal monitoring platform dedicated
-              to PCOS and ovarian health. Integrating multimodal data, explainable AI, and clinician-ready summaries.
+              VITASense AI is a unified reproductive-health screening and risk-assessment platform offering dedicated intelligence for Women's Health (PCOS), Men's Health (male hypogonadism), and baseline health monitoring.
             </p>
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-[#E87084]">
               <Heart className="w-3.5 h-3.5 fill-current" />
-              <span>Advanced Health AI & Clinical Intelligence</span>
+              <span>Reproductive Health AI & Clinical Intelligence</span>
             </div>
           </div>
 
-          {/* Navigation Links */}
+          {/* Health Pathways */}
+          <div className="space-y-3">
+            <h4 className="text-xs uppercase font-bold tracking-wider text-[#F6F2FA]">
+              Health Pathways
+            </h4>
+            <ul className="space-y-2 text-sm text-[#B4A6C7]">
+              <li>
+                <Link to={ROUTES.WOMENS_HEALTH} className="hover:text-white transition-colors">
+                  Women's Health (PCOS)
+                </Link>
+              </li>
+              <li>
+                <Link to={ROUTES.MENS_HEALTH} className="hover:text-white transition-colors">
+                  Men's Health (Hypogonadism)
+                </Link>
+              </li>
+              <li>
+                <Link to={ROUTES.UNDERSTAND_PCOS_CANONICAL} className="hover:text-white transition-colors">
+                  Understand PCOS
+                </Link>
+              </li>
+              <li>
+                <Link to={ROUTES.UNDERSTAND_MALE_HYPOGONADISM} className="hover:text-white transition-colors">
+                  Understand Male Hypogonadism
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Platform & Intelligence */}
           <div className="space-y-3">
             <h4 className="text-xs uppercase font-bold tracking-wider text-[#F6F2FA]">
               Platform
             </h4>
             <ul className="space-y-2 text-sm text-[#B4A6C7]">
               <li>
-                <Link to={ROUTES.HOME} className="hover:text-white transition-colors">
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link to={ROUTES.UNDERSTAND_PCOS} className="hover:text-white transition-colors">
-                  Understand PCOS
-                </Link>
-              </li>
-              <li>
                 <Link to={ROUTES.HOW_IT_WORKS} className="hover:text-white transition-colors">
                   How It Works
                 </Link>
               </li>
               <li>
+                <Link to={ROUTES.AI_EXPLAINS} className="hover:text-white transition-colors">
+                  AI That Explains
+                </Link>
+              </li>
+              <li>
                 <Link to={ROUTES.FEATURES} className="hover:text-white transition-colors">
-                  Key Features
+                  Platform Features
+                </Link>
+              </li>
+              <li>
+                <Link to={ROUTES.FOR_DOCTORS} className="hover:text-white transition-colors">
+                  For Doctors & Clinicians
                 </Link>
               </li>
               <li>
@@ -56,20 +84,25 @@ export const Footer: React.FC = () => {
                   Care Circle
                 </Link>
               </li>
-              <li>
-                <Link to={ROUTES.ABOUT} className="hover:text-white transition-colors">
-                  About OVASense
-                </Link>
-              </li>
             </ul>
           </div>
 
-          {/* Company & Support */}
+          {/* Company & Trust */}
           <div className="space-y-3">
             <h4 className="text-xs uppercase font-bold tracking-wider text-[#F6F2FA]">
-              Support & Access
+              Trust & Access
             </h4>
             <ul className="space-y-2 text-sm text-[#B4A6C7]">
+              <li>
+                <Link to={ROUTES.ABOUT} className="hover:text-white transition-colors">
+                  About VITASense AI
+                </Link>
+              </li>
+              <li>
+                <Link to={ROUTES.TRUST_PRIVACY} className="hover:text-white transition-colors">
+                  Trust & Privacy
+                </Link>
+              </li>
               <li>
                 <Link to={ROUTES.CONTACT} className="hover:text-white transition-colors">
                   Contact & Support
@@ -87,35 +120,6 @@ export const Footer: React.FC = () => {
               </li>
             </ul>
           </div>
-
-          {/* Compliance & Trust */}
-          <div className="space-y-3">
-            <h4 className="text-xs uppercase font-bold tracking-wider text-[#F6F2FA]">
-              Trust & Ethics
-            </h4>
-            <ul className="space-y-2 text-sm text-[#B4A6C7]">
-              <li>
-                <span className="hover:text-white transition-colors cursor-pointer">
-                  Data Privacy Policy
-                </span>
-              </li>
-              <li>
-                <span className="hover:text-white transition-colors cursor-pointer">
-                  Terms of Service
-                </span>
-              </li>
-              <li>
-                <span className="hover:text-white transition-colors cursor-pointer">
-                  Responsible AI Standards
-                </span>
-              </li>
-              <li>
-                <span className="hover:text-white transition-colors cursor-pointer">
-                  Security Architecture
-                </span>
-              </li>
-            </ul>
-          </div>
         </div>
 
         {/* Clinical Disclaimer Banner */}
@@ -123,20 +127,20 @@ export const Footer: React.FC = () => {
           <ShieldAlert className="w-5 h-5 text-[#FB7185] shrink-0 mt-0.5" />
           <div className="text-xs text-[#B4A6C7] leading-relaxed">
             <strong className="text-white block mb-0.5">Clinical & Regulatory Notice:</strong>
-            OVASense is strictly an educational health-information and longitudinal monitoring platform.
-            It is <strong>NOT</strong> a diagnostic tool and does <strong>NOT</strong> provide medical diagnosis,
+            VITASense AI is strictly an educational health-information, screening support, and longitudinal monitoring platform.
+            It is <strong>NOT</strong> a diagnostic tool and does <strong>NOT</strong> provide medical diagnoses,
             clinical treatment prescriptions, or direct doctor replacements. Always consult qualified healthcare
-            professionals for formal medical advice.
+            professionals for formal medical diagnosis and individualized treatment plans.
           </div>
         </div>
 
         {/* Bottom Copyright */}
         <div className="mt-8 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#7E6F94]">
-          <p>© {new Date().getFullYear()} OVASense. Academic FYP Project. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} VITASense AI. All rights reserved.</p>
           <div className="flex items-center gap-6">
-            <span>Privacy</span>
-            <span>Terms</span>
-            <span>Security</span>
+            <Link to={ROUTES.TRUST_PRIVACY} className="hover:text-white transition-colors">Privacy & Data Security</Link>
+            <Link to={ROUTES.TRUST_PRIVACY} className="hover:text-white transition-colors">Terms of Service</Link>
+            <Link to={ROUTES.AI_EXPLAINS} className="hover:text-white transition-colors">Explainability Standards</Link>
           </div>
         </div>
       </Container>

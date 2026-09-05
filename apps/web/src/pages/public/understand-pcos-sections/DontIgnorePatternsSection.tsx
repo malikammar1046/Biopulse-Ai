@@ -106,7 +106,7 @@ export const DontIgnorePatternsSection: React.FC = () => {
               </div>
 
               <p className="text-lg sm:text-xl font-bold font-display text-white leading-snug">
-                Taking PCOS seriously doesn’t mean being afraid of it.
+                Taking PMOS seriously doesn’t mean being afraid of it.
               </p>
 
               <p className="text-sm sm:text-base text-[#CDBDD8] font-sans leading-relaxed">

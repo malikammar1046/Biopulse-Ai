@@ -90,7 +90,7 @@ export const IntelligenceLayerSection: React.FC = () => {
           <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-xs font-mono font-bold">
             <span className="px-3 py-1.5 rounded-xl bg-white/10 text-white">Scattered Data</span>
             <ArrowRight className="w-3.5 h-3.5 text-[#C084FC]" />
-            <span className="px-3 py-1.5 rounded-xl bg-[#6E2D8B] text-white">OVASense Core</span>
+            <span className="px-3 py-1.5 rounded-xl bg-[#6E2D8B] text-white">VITASense Core</span>
             <ArrowRight className="w-3.5 h-3.5 text-[#C084FC]" />
             <span className="px-3 py-1.5 rounded-xl bg-white/10 text-white">Structured Profile</span>
             <ArrowRight className="w-3.5 h-3.5 text-[#C084FC]" />

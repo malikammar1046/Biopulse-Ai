@@ -20,51 +20,51 @@ export const HowItWorksCTASection: React.FC = () => {
             <div className="lg:col-span-7 space-y-6 text-left relative z-10">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-[#FB7185]">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Experience OVASense</span>
+                <span>Ready to Begin?</span>
               </div>
 
               <h2 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold font-display tracking-tight text-white leading-tight">
-                See how your information{' '}
+                Turn your health information into{' '}
                 <span className="bg-gradient-to-r from-[#C084FC] via-[#E879F9] to-[#FB7185] bg-clip-text text-transparent">
-                  comes together.
+                  a clearer picture.
                 </span>
               </h2>
 
               <p className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans max-w-xl">
-                Begin logging your health patterns, verify extracted lab panels, and generate longitudinal summaries designed to empower you and your healthcare team.
+                Start with what you know today. Whether exploring PCOS risk, male hypogonadism patterns, or baseline health tracking, VITASense gives you structure, explainable insights, and longitudinal clarity.
               </p>
 
               <div className="flex flex-wrap items-center gap-4 pt-4">
-                <Link to={ROUTES.APP.DASHBOARD}>
+                <Link to={ROUTES.REGISTER}>
                   <Button
                     variant="primary"
                     size="lg"
-                    className="bg-gradient-to-r from-[#8E3EAF] via-[#A21CAF] to-[#E87084] text-white hover:brightness-110 shadow-lg shadow-purple-950/30"
+                    className="bg-gradient-to-r from-[#8E3EAF] via-[#A21CAF] to-[#E87084] text-white hover:brightness-110 shadow-lg shadow-purple-950/30 font-bold"
                     iconRight={<ArrowRight className="w-4 h-4" />}
                   >
-                    Explore OVASense
+                    Start Your Assessment
                   </Button>
                 </Link>
 
-                <Link to={ROUTES.REGISTER}>
+                <Link to={ROUTES.LOGIN}>
                   <Button
                     variant="outline"
                     size="lg"
                     className="border-white/30 text-[#F6F2FA] hover:bg-white/10"
                     iconLeft={<UserPlus className="w-4 h-4" />}
                   >
-                    Create an Account
+                    Log In to Existing Account
                   </Button>
                 </Link>
               </div>
 
               <div className="pt-4 flex items-center gap-2 text-xs text-[#B4A6C7]">
                 <ShieldCheck className="w-4 h-4 text-[#34D399]" />
-                <span>AI-Assisted • Longitudinal Monitoring • Non-Diagnostic Healthcare Information</span>
+                <span>Screening & Educational Platform • Non-Diagnostic • User Privacy Protected</span>
               </div>
             </div>
 
-            {/* Right Lightweight Visual Finale */}
+            {/* Right Visual Finale */}
             <div className="lg:col-span-5 relative flex items-center justify-center min-h-[280px] sm:min-h-[340px]">
               <BiologicalOrb size="md" className="w-full h-[280px] sm:h-[340px]" />
             </div>

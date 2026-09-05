@@ -99,21 +99,21 @@ export const HowPCOSPatternsSection: React.FC = () => {
           </div>
 
           <h2 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white font-display">
-            PCOS is a pattern of{' '}
+            PMOS is a pattern of{' '}
             <span className="bg-gradient-to-r from-[#C084FC] via-[#E879F9] to-[#FB7185] bg-clip-text text-transparent">
               interconnected signals.
             </span>
           </h2>
 
           <p className="text-base sm:text-lg text-[#B4A6C7] max-w-2xl mx-auto font-sans leading-relaxed">
-            Rather than a single linear switch, PCOS functions as a dynamic feedback network where
+            Rather than a single linear switch, PMOS functions as a dynamic feedback network where
             endocrine, metabolic, and ovarian signals continuously influence one another.
           </p>
 
           {/* Critical Individuality Note */}
           <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-[#6E2D8B]/20 border border-[#8E3EAF]/40 text-xs text-[#EDE4F7]">
             <Sparkles className="w-3.5 h-3.5 text-[#FB7185]" />
-            <span className="font-semibold">PCOS does not look exactly the same in every woman.</span>
+            <span className="font-semibold">PMOS does not look exactly the same in every individual.</span>
           </div>
         </div>
 

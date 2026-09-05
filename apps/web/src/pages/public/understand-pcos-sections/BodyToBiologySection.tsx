@@ -26,7 +26,7 @@ const ZOOM_STAGES: ZoomStage[] = [
     step: 1,
     zoomLevel: 'scale-100 translate-y-0',
     focusTarget: 'Whole Organism',
-    headline: 'PCOS isn’t something you can always see from the outside.',
+    headline: 'PMOS isn’t something you can always see from the outside.',
     description:
       'From the outside, reproductive and metabolic signaling disruptions may remain quiet or masked as everyday fatigue, subtle skin shifts, or variable cycle intervals.',
     structures: [
@@ -86,7 +86,7 @@ const ZOOM_STAGES: ZoomStage[] = [
     focusTarget: 'Ovarian Cortex & Follicles',
     headline: 'Beneath the surface: Microscopic follicular patterns.',
     description:
-      'Inside the ovary, fluid-filled follicles develop under hormonal guidance. In PCOS, altered signaling can cause multiple follicles to pause their maturation together.',
+      'Inside the ovary, fluid-filled follicles develop under hormonal guidance. In PMOS, altered signaling can cause multiple follicles to pause their maturation together.',
     structures: [
       { name: 'Antral Follicles', role: 'Developing follicular cluster', color: '#FB7185', pin: { top: '62%', left: '32%' } },
       { name: 'Ovarian Stroma', role: 'Thecal androgen production', color: '#E87084', pin: { top: '64%', left: '36%' } },
@@ -125,7 +125,7 @@ export const BodyToBiologySection: React.FC = () => {
           </h2>
 
           <p className="text-base sm:text-lg text-[#B4A6C7] max-w-2xl mx-auto font-sans leading-relaxed">
-            Many of PCOS’s defining patterns happen deep within biological systems—involving
+            Many of PMOS’s defining patterns happen deep within biological systems—involving
             interconnected hormones, ovulation rhythm, cycle regularity, and cellular metabolism.
           </p>
 

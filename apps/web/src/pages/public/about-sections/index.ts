@@ -1,5 +1,5 @@
 export { AboutHeroSection } from './AboutHeroSection';
-export { WhatIsPCOSSection } from './WhatIsPCOSSection';
+export { TwoPathwaysOneEcosystemSection } from './TwoPathwaysOneEcosystemSection';
 export { BiologicalChainSection } from './BiologicalChainSection';
 export { InteractiveBiologySection } from './InteractiveBiologySection';
 export { DisconnectedProblemSection } from './DisconnectedProblemSection';

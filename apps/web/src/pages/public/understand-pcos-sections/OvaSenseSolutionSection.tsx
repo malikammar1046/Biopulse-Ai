@@ -78,14 +78,14 @@ export const OvaSenseSolutionSection: React.FC = () => {
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 backdrop-blur-md">
             <Sparkles className="w-3.5 h-3.5 text-[#FB7185]" />
             <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.2em] text-[#F6F2FA]">
-              Step 07 — The OvaSense Ecosystem
+              Step 07 — The PMOSense Ecosystem
             </span>
           </div>
 
           <h2 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white font-display">
             Understanding is where{' '}
             <span className="bg-gradient-to-r from-[#C084FC] via-[#E879F9] to-[#FB7185] bg-clip-text text-transparent">
-              OvaSense begins.
+              PMOSense begins.
             </span>
           </h2>
 
@@ -149,7 +149,7 @@ export const OvaSenseSolutionSection: React.FC = () => {
           </div>
 
           <p className="text-xs text-[#B4A6C7] max-w-xl mx-auto font-sans leading-normal">
-            OvaSense provides longitudinal context to empower your clinical consultations and daily
+            PMOSense provides longitudinal context to empower your clinical consultations and daily
             lifestyle choices.
           </p>
         </motion.div>

@@ -7,23 +7,23 @@ export const WhyCareCircleDifferentSection: React.FC = () => {
   const comparisons = [
     {
       traditional: 'Patient attempts to remember 30 days of fluctuating symptoms during a 15-min visit.',
-      ovasense: 'Daily signals automatically organized into a structured longitudinal timeline.',
+      vitasense: 'Daily signals automatically organized into a structured longitudinal timeline.',
     },
     {
       traditional: 'Scrambles to find paper lab slips, bloodwork printouts, or screenshot folders.',
-      ovasense: 'Digitized biomarker summaries linked directly with symptom trend graphs.',
+      vitasense: 'Digitized biomarker summaries linked directly with symptom trend graphs.',
     },
     {
       traditional: 'All-or-nothing sharing: either hand over your entire phone or share nothing.',
-      ovasense: 'Granular permissions: you decide what doctors, family, or partners can see.',
+      vitasense: 'Granular permissions: you decide what doctors, family, or partners can see.',
     },
     {
       traditional: 'Forgets important questions discussed during the week when sitting in the clinic.',
-      ovasense: 'Prepares an organized question checklist attached directly to the weekly brief.',
+      vitasense: 'Prepares an organized question checklist attached directly to the weekly brief.',
     },
     {
       traditional: 'Family members are either completely in the dark or overly intrusive.',
-      ovasense: 'Permitted routine updates allow supportive check-ins without invading medical privacy.',
+      vitasense: 'Permitted routine updates allow supportive check-ins without invading medical privacy.',
     },
   ];
 
@@ -83,7 +83,7 @@ export const WhyCareCircleDifferentSection: React.FC = () => {
               Traditional Fragmented Healthcare
             </span>
             <span className="text-[#6E2D8B] uppercase tracking-wider">
-              The OVASense Care Circle Experience
+              The VITASense Care Circle Experience
             </span>
           </div>
 
@@ -102,12 +102,12 @@ export const WhyCareCircleDifferentSection: React.FC = () => {
                   <span>{row.traditional}</span>
                 </div>
 
-                {/* OVASense */}
+                {/* VITASense */}
                 <div className="flex items-start gap-3 text-[#1C1326] font-medium pl-0 sm:pl-2">
                   <div className="w-5 h-5 rounded-full bg-[#047857]/15 text-[#047857] flex items-center justify-center shrink-0 mt-0.5">
                     <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                   </div>
-                  <span>{row.ovasense}</span>
+                  <span>{row.vitasense}</span>
                 </div>
               </div>
             ))}

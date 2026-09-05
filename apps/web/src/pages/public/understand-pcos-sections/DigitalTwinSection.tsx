@@ -37,7 +37,7 @@ const SAMPLE_INQUIRIES: SampleInquiry[] = [
     aiResponse: {
       badge: 'Multimodal Cycle Intelligence',
       summary:
-        'Your logged data indicates a prolonged 42-day interval. In PCOS, delayed follicular maturation can extend the pre-ovulatory phase, causing the delay.',
+        'Your logged data indicates a prolonged 42-day interval. In PMOS, delayed follicular maturation can extend the pre-ovulatory phase, causing the delay.',
       keyPoints: [
         'Basal body temperature (BBT) remained in the lower baseline until Day 28.',
         'Urinary LH strip indicated a delayed peak around Day 27.',
@@ -98,7 +98,7 @@ const SAMPLE_INQUIRIES: SampleInquiry[] = [
         '“Would inositol or targeted nutritional adjustments be appropriate for my metabolic profile?”',
       ],
       suggestedDoctorTopic:
-        'Bring the exported OvaSense summary PDF directly to your consultation.',
+        'Bring the exported VITASense summary PDF directly to your consultation.',
     },
   },
   {
@@ -109,14 +109,14 @@ const SAMPLE_INQUIRIES: SampleInquiry[] = [
     aiResponse: {
       badge: 'Evidence-Based Nutrition Guidance',
       summary:
-        'For individuals with insulin-related PCOS patterns, stabilizing post-meal glucose spikes can reduce circulating insulin and excess thecal androgen stimulation.',
+        'For individuals with insulin-related PMOS patterns, stabilizing post-meal glucose spikes can reduce circulating insulin and excess thecal androgen stimulation.',
       keyPoints: [
         'Prioritize high-fiber, low-glycemic carbohydrates paired with quality protein.',
         'Incorporate omega-3 fatty acids and antioxidant-rich foods for cellular health.',
         'Maintain regular meal timing to prevent reactive blood sugar drops.',
       ],
       suggestedDoctorTopic:
-        'Discuss your dietary approach with a registered dietitian specializing in PCOS.',
+        'Discuss your dietary approach with a registered dietitian specializing in PMOS / PCOS.',
     },
   },
   {
@@ -157,7 +157,7 @@ export const DigitalTwinSection: React.FC = () => {
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 backdrop-blur-md">
             <Bot className="w-3.5 h-3.5 text-[#FB7185]" />
             <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.2em] text-[#F6F2FA]">
-              Step 08 — The OvaSense Digital Twin
+              Step 08 — The VITASense Digital Twin
             </span>
           </div>
 
@@ -169,7 +169,7 @@ export const DigitalTwinSection: React.FC = () => {
           </h2>
 
           <p className="text-base sm:text-lg text-[#B4A6C7] max-w-2xl mx-auto font-sans leading-relaxed">
-            The OvaSense Digital Twin acts as your personalized, contextual knowledge companion—translating
+            The VITASense Digital Twin acts as your personalized, contextual knowledge companion—translating
             complex biomarker trends and symptoms into clear, educational explanations.
           </p>
         </div>
@@ -229,7 +229,7 @@ export const DigitalTwinSection: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="text-sm font-bold font-display text-white">
-                      OvaSense Digital Twin
+                      VITASense Digital Twin
                     </h3>
                     <span className="text-[10px] font-mono text-[#B4A6C7] block">
                       Contextual Educational AI
@@ -299,7 +299,7 @@ export const DigitalTwinSection: React.FC = () => {
               <div className="pt-3 border-t border-white/10 text-[10px] text-[#A797BD] font-sans flex items-start gap-2">
                 <ShieldAlert className="w-3.5 h-3.5 text-[#FB7185] shrink-0 mt-0.5" />
                 <p>
-                  <strong>Disclaimer:</strong> OvaSense provides health information and
+                  <strong>Disclaimer:</strong> VITASense provides health information and
                   personalized guidance based on the data you provide. It does not diagnose
                   disease or prescribe medical treatments.
                 </p>

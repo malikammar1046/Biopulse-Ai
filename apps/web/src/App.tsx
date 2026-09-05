@@ -44,6 +44,24 @@ const Contact = lazy(() =>
 const CareProviderPortalPage = lazy(() =>
   import('./pages/public/CareProviderPortalPage').then((m) => ({ default: m.CareProviderPortalPage }))
 );
+const UnderstandMaleHypogonadism = lazy(() =>
+  import('./pages/public/UnderstandMaleHypogonadism').then((m) => ({ default: m.UnderstandMaleHypogonadism }))
+);
+const WomensHealth = lazy(() =>
+  import('./pages/public/WomensHealth').then((m) => ({ default: m.WomensHealth }))
+);
+const MensHealth = lazy(() =>
+  import('./pages/public/MensHealth').then((m) => ({ default: m.MensHealth }))
+);
+const AIThatExplains = lazy(() =>
+  import('./pages/public/AIThatExplains').then((m) => ({ default: m.AIThatExplains }))
+);
+const ForDoctors = lazy(() =>
+  import('./pages/public/ForDoctors').then((m) => ({ default: m.ForDoctors }))
+);
+const TrustAndPrivacy = lazy(() =>
+  import('./pages/public/TrustAndPrivacy').then((m) => ({ default: m.TrustAndPrivacy }))
+);
 
 // Auth & Onboarding Pages (Lazy-Loaded)
 const Login = lazy(() => import('./pages/auth/Login').then((m) => ({ default: m.Login })));
@@ -77,6 +95,15 @@ export function App() {
               <Route element={<PublicLayout />}>
                 <Route path={ROUTES.HOME} element={<Home />} />
                 <Route path={ROUTES.UNDERSTAND_PCOS} element={<UnderstandPCOS />} />
+                <Route path={ROUTES.UNDERSTAND_PCOS_CANONICAL} element={<UnderstandPCOS />} />
+                <Route path={ROUTES.UNDERSTAND_MALE_HYPOGONADISM} element={<UnderstandMaleHypogonadism />} />
+                <Route path={ROUTES.UNDERSTAND_HYPOGONADISM} element={<UnderstandMaleHypogonadism />} />
+                <Route path={ROUTES.UNDERSTAND_MALE_FERTILITY} element={<UnderstandMaleHypogonadism />} />
+                <Route path={ROUTES.WOMENS_HEALTH} element={<WomensHealth />} />
+                <Route path={ROUTES.MENS_HEALTH} element={<MensHealth />} />
+                <Route path={ROUTES.AI_EXPLAINS} element={<AIThatExplains />} />
+                <Route path={ROUTES.FOR_DOCTORS} element={<ForDoctors />} />
+                <Route path={ROUTES.TRUST_PRIVACY} element={<TrustAndPrivacy />} />
                 <Route path={ROUTES.ABOUT} element={<About />} />
                 <Route path={ROUTES.HOW_IT_WORKS} element={<HowItWorks />} />
                 <Route path={ROUTES.FEATURES} element={<Features />} />

@@ -70,7 +70,7 @@ export const ContactHeroSection: React.FC = () => {
             >
               <span className="w-2 h-2 rounded-full bg-[#FB7185] shadow-[0_0_10px_#FB7185] animate-pulse" />
               <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.2em] text-[#F6F2FA]">
-                Connect with OVASense
+                Connect with VITASense
               </span>
               <Sparkles className="w-3.5 h-3.5 text-[#E879F9]" />
             </motion.div>
@@ -86,7 +86,7 @@ export const ContactHeroSection: React.FC = () => {
               <span className="bg-gradient-to-r from-[#C084FC] via-[#E879F9] to-[#FB7185] bg-clip-text text-transparent">
                 understanding
               </span>{' '}
-              of women's health.
+              of reproductive health.
             </motion.h1>
 
             {/* Supporting Copy */}
@@ -96,7 +96,7 @@ export const ContactHeroSection: React.FC = () => {
               transition={{ duration: 0.75, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
               className="text-lg sm:text-xl text-[#B4A6C7] leading-relaxed max-w-2xl font-sans font-normal"
             >
-              Whether you're exploring OVASense, interested in research, or want to collaborate with us, we'd love to hear from you.
+              Whether you're exploring VITASense, interested in research, or want to collaborate with us, we'd love to hear from you.
             </motion.p>
 
             {/* CTA Buttons */}
@@ -123,7 +123,7 @@ export const ContactHeroSection: React.FC = () => {
                   className="border-white/30 text-[#F6F2FA] hover:bg-white/10 backdrop-blur-sm"
                   iconRight={<ArrowRight className="w-4 h-4" />}
                 >
-                  Explore OVASense
+                  Explore VITASense
                 </Button>
               </Link>
             </motion.div>
@@ -242,7 +242,7 @@ export const ContactHeroSection: React.FC = () => {
                   <MessageCircleHeart className="w-8 h-8 text-white animate-pulse" />
                 </div>
                 <span className="text-xs uppercase font-bold tracking-[0.2em] text-[#E879F9]">
-                  OVASense Ecosystem
+                  VITASense Ecosystem
                 </span>
                 <p className="text-xs text-[#B4A6C7] mt-1 font-sans">
                   Open for Research & Partnerships

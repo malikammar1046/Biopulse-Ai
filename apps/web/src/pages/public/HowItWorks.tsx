@@ -2,11 +2,12 @@ import React from 'react';
 import {
   HowItWorksHeroSection,
   StartWithStorySection,
+  StructuredProfileSection,
   UploadReportsSection,
   VerifyControlSection,
-  StructuredProfileSection,
   MLAssessmentSection,
   ExplainResultSection,
+  InformationGapSection,
   LifestyleActionSection,
   LongitudinalStorySection,
   ReassessmentSection,
@@ -18,43 +19,46 @@ import {
 export const HowItWorks: React.FC = () => {
   return (
     <div className="flex flex-col w-full overflow-hidden">
-      {/* 1. Hero: Central 3D Reproductive System + Proper Anatomical Labels */}
+      {/* 1. Hero: Unified Reproductive-Health Screening Platform */}
       <HowItWorksHeroSection />
 
-      {/* 2. Phase 01: Start With Your Health Story */}
+      {/* 2. Step 1 (Start): Start With What You Know & Pathway Routing */}
       <StartWithStorySection />
 
-      {/* 3. Phase 02: Bring Your Medical Reports With You (OCR Scanning) */}
-      <UploadReportsSection />
-
-      {/* 4. Phase 03: You Stay In Control (Interactive OCR Verification) */}
-      <VerifyControlSection />
-
-      {/* 5. Phase 04: Turn Scattered Information Into Structure */}
+      {/* 3. Progressive Structure: The 4-Tier Information Model */}
       <StructuredProfileSection />
 
-      {/* 6. Phase 05: Analyze The Pattern (Research ML Assessment) */}
+      {/* 4. Report Ingestion: 5-Step OCR Processing Flow */}
+      <UploadReportsSection />
+
+      {/* 5. Human Verification: User-in-the-Loop Control */}
+      <VerifyControlSection />
+
+      {/* 6. Step 2 (Assess): Multimodal Risk Assessment (PCOS vs Hypogonadism vs Baseline) */}
       <MLAssessmentSection />
 
-      {/* 7. Phase 06: Don't Just Show A Result. Explain It. (SHAP Attribution) */}
+      {/* 7. Step 3 (Explain): Explainable AI & Feature Attribution */}
       <ExplainResultSection />
 
-      {/* 8. Phase 07: Understand What You Can Do Next (Localized Lifestyle) */}
+      {/* 8. Step 4 & 5 (Gaps & Prioritize): Gap Analysis & Cost-Utility Information Prioritization */}
+      <InformationGapSection />
+
+      {/* 9. Step 6 (Support): Contextual Health Support & Care Circle */}
       <LifestyleActionSection />
 
-      {/* 9. Phase 08: Your Health Story Changes Over Time (Longitudinal Timeline) */}
+      {/* 10. Step 7 (Monitor): Longitudinal Health Story & Multi-Cohort Milestones */}
       <LongitudinalStorySection />
 
-      {/* 10. Phase 09: New Information Changes The Picture (Reassessment) */}
+      {/* 11. Step 8 (Reassess): Progressive Dynamic Reassessment */}
       <ReassessmentSection />
 
-      {/* 11. Final Anatomy Return: Biology + Data + Understanding */}
+      {/* 12. Synthesis: Biology + Data + Understanding Convergence */}
       <AnatomyReturnSection />
 
-      {/* 12. Responsible AI & Non-Diagnostic Clinical Positioning */}
+      {/* 13. Governance: Platform-Wide Responsible AI & Safety Disclaimers */}
       <HowItWorksResponsibleAISection />
 
-      {/* 13. Final CTA & Registration Gateway */}
+      {/* 14. Primary CTA: Start Your Assessment */}
       <HowItWorksCTASection />
     </div>
   );

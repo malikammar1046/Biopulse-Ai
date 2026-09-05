@@ -1,15 +1,15 @@
 import React from 'react';
 import {
-  User,
-  Calendar,
-  SmilePlus,
+  ShieldCheck,
+  Sparkles,
+  Layers,
   FileText,
   ScanLine,
-  BrainCircuit,
-  Sparkles,
-  HeartHandshake,
+  TrendingUp,
   History,
-  FileCheck,
+  BookOpen,
+  HeartHandshake,
+  Users,
   CheckCircle2,
 } from 'lucide-react';
 import { Container } from '../../components/ui/Container';
@@ -20,132 +20,132 @@ import { HumanSymptomExperienceSection } from './features-sections/HumanSymptomE
 export const Features: React.FC = () => {
   const platformFeatures = [
     {
-      id: 'profile',
-      title: '1. Your Complete Health Record',
-      subtitle: 'Keep all your health history in one secure place',
-      icon: User,
-      desc: 'Stores your basic details, family health background, and past doctor notes so you always have a clear, organized picture of your health.',
+      id: 'risk-assessment',
+      title: '1. Pathway-Specific Risk Assessment',
+      subtitle: 'Multimodal screening adapted to your health journey',
+      icon: ShieldCheck,
+      desc: 'Evaluates your symptoms, measurements, and verified lab results across dedicated pathways: Women’s Health (PCOS), Men’s Health (Male Hypogonadism), or Baseline Monitoring.',
       bullets: [
-        'Securely record your age, height, weight, and general health background',
-        'Set your baseline cycle length and period duration',
-        'Keep all personal health details private and organized',
+        'Dedicated screening algorithms for PCOS and Male Hypogonadism',
+        'Baseline monitoring for users without a suspected disease',
+        'Strictly educational decision-support — never an automated diagnosis',
       ],
-      badge: 'Foundation',
+      badge: 'Screening',
     },
     {
-      id: 'cycle',
-      title: '2. Your Period & Cycle Rhythm',
-      subtitle: 'Track your period, fertile window, and cycle phases',
-      icon: Calendar,
-      desc: 'Tracks when your period starts, how long it lasts, and estimates your cycle phases (like when an egg develops and when it is released).',
+      id: 'explainable-ai',
+      title: '2. Explainable AI (XAI)',
+      subtitle: 'Understand which features influenced your assessment',
+      icon: Sparkles,
+      desc: 'No black boxes. Using mathematical SHAP feature attribution, VITASense shows which specific biomarkers and reported symptoms had the greatest influence on the model’s evaluation.',
       bullets: [
-        'Calculate your cycle length and period duration automatically',
-        'See estimated phases (Menstrual, Follicular, Ovulation, and Luteal)',
-        'Track regularity and changes across consecutive months',
+        'Visual attribution bars showing relative factor influence',
+        'Clear explanations connecting your inputs to the pattern score',
+        'Clinical humility: identifies statistical association, never causality',
       ],
-      badge: 'Core Tracking',
+      badge: 'Intelligence',
     },
     {
-      id: 'symptoms',
-      title: '3. Daily Symptom & Body Journal',
-      subtitle: 'Log how you feel each day with zero guesswork',
-      icon: SmilePlus,
-      desc: 'Record daily changes in acne, unwanted hair growth, mood, energy, sleep, and pelvic comfort with simple, non-judgmental severity ratings.',
+      id: 'four-tier-model',
+      title: '3. Progressive Four-Tier Model',
+      subtitle: 'Start with what you know today; add data over time',
+      icon: Layers,
+      desc: 'You don’t need an expensive panel of blood tests to get started. Begin at Tier 1 with accessible symptoms, then add Tier 2 routine labs, Tier 3 hormones, and Tier 4 clinical summaries as available.',
       bullets: [
-        'Easy-to-use 5-point rating scale for daily symptoms',
-        'See how symptoms connect with different days in your cycle',
-        'Notice your personal patterns and lifestyle triggers',
+        'Tier 1: Symptoms, body measurements, history, and lifestyle',
+        'Tier 2 & 3: Routine metabolic panels and pathway-specific hormones',
+        'Tier 4 is never mandatory and does not equate to clinical diagnosis',
       ],
-      badge: 'Core Tracking',
+      badge: 'Architecture',
     },
     {
-      id: 'reports',
-      title: '4. Lab Report Scanner',
-      subtitle: 'Read and organize your test results automatically',
+      id: 'reports-ocr',
+      title: '4. Reports & Laboratory Ingestion',
+      subtitle: 'Standardized OCR parsing from photos and PDFs',
       icon: FileText,
-      desc: 'Upload laboratory blood tests and ultrasound reports. OvaSense scans key values (like hormone levels and blood sugar) so they are easy to read.',
+      desc: 'Upload laboratory blood tests and structured report summaries. Optical Character Recognition identifies quantitative analyte names, numbers, and reference units automatically.',
       bullets: [
-        'Safe and private storage for photos and PDF reports',
-        'Recognizes reports from major laboratories across Pakistan',
-        'Keeps your past medical test documents organized in one place',
+        'Supports standard laboratory PDFs and mobile camera snapshots',
+        'Recognizes formats from major diagnostic centers and local laboratories',
+        'Eliminates tedious manual typing of dozens of hormone numbers',
       ],
       badge: 'Data Intake',
     },
     {
-      id: 'ocr',
-      title: '5. You Confirm Every Number',
-      subtitle: 'Check and approve every scanned value first',
+      id: 'verification',
+      title: '5. Human-in-the-Loop Verification',
+      subtitle: 'You inspect and approve every number before saving',
       icon: ScanLine,
-      desc: 'Before any scanned lab value is used for insights, you review and confirm it side-by-side with your original document to ensure 100% accuracy.',
+      desc: 'OCR output is never automatically saved as truth. You review parsed numbers side-by-side with your paper slip and confirm draw timing (such as morning testosterone windows).',
       bullets: [
-        'Side-by-side view: original report image next to extracted numbers',
-        'Automatic unit conversion so all tests speak the same language',
-        'Zero unverified data is ever used in your health assessments',
+        'Side-by-side review: original paper report next to extracted fields',
+        'One-tap correction for low-contrast printouts or smudged paper',
+        'Zero unverified data is ever admitted into your screening profile',
       ],
       badge: 'Verification',
     },
     {
-      id: 'assessment',
-      title: '6. AI Health Pattern Insights',
-      subtitle: 'Smart pattern recognition based on what you share',
-      icon: BrainCircuit,
-      desc: 'Evaluates your symptoms, period rhythm, and verified test results to find meaningful patterns, starting with only the information you already have.',
+      id: 'information-prioritization',
+      title: '6. Information Prioritization',
+      subtitle: 'Targeted clarity: estimated improvement vs estimated cost',
+      icon: TrendingUp,
+      desc: 'Not all additional tests provide the same clinical value. VITASense highlights which missing markers could provide the greatest estimated performance improvement relative to estimated burden.',
       bullets: [
-        'Works with whatever data you have—even if you have no lab tests yet',
-        'Identifies hormone-related patterns with progressive data tiers',
-        'Strictly informational decision-support—never an automated diagnosis',
+        'Highlights high-gain vs redundant laboratory investigations',
+        'Intended to support informed discussion with your healthcare team',
+        'Never prescribes tests or mandates unnecessary medical expenses',
       ],
-      badge: 'Intelligence',
+      badge: 'Research Differentiator',
     },
     {
-      id: 'explainable',
-      title: '7. AI That Explains the "Why"',
-      subtitle: 'Clear explanations for every insight',
-      icon: Sparkles,
-      desc: 'No mysterious black boxes. OvaSense shows you exactly which of your entries influenced each insight, in plain everyday English.',
+      id: 'health-tracking',
+      title: '7. Longitudinal Health Tracking',
+      subtitle: 'Track symptoms, measurements, and habits over time',
+      icon: History,
+      desc: 'Chronic endocrine conditions are dynamic. Record cycle intervals, vitality scores, fatigue patterns, sleep quality, and lifestyle consistency across consecutive months.',
       bullets: [
-        'Visual charts showing which factors influenced your pattern most',
-        'Simple explanations connecting your symptoms to your results',
-        'Helps you understand what to discuss with your doctor next',
+        'Symptom journal with 5-point non-judgmental severity ratings',
+        'Track cycle regularity (women) or vitality and sleep trends (men)',
+        'Observe how daily habits correlate with biological wellbeing',
       ],
-      badge: 'Intelligence',
+      badge: 'Tracking',
     },
     {
-      id: 'lifestyle',
-      title: '8. Food & Movement for Real Life',
-      subtitle: 'Pakistani meals and realistic home routines',
+      id: 'education',
+      title: '8. Supportive Disease Education',
+      subtitle: 'Clear, patient-friendly learning for PCOS and Hypogonadism',
+      icon: BookOpen,
+      desc: 'Demystify reproductive biology without overwhelming medical jargon. Explore ovarian follicular development, the hypothalamic-pituitary-gonadal (HPG) axis, and hormone signaling.',
+      bullets: [
+        'Patient-friendly interactive anatomical and physiological guides',
+        'Bust common misconceptions around reproductive health',
+        'Understand what specific lab markers mean in plain everyday language',
+      ],
+      badge: 'Education',
+    },
+    {
+      id: 'lifestyle-support',
+      title: '9. Nutrition & Lifestyle Guidance',
+      subtitle: 'Context-aware routines designed for real daily life',
       icon: HeartHandshake,
-      desc: 'Practical portion ideas for everyday foods (like roti, daal, and biryani) and low-equipment movement routines designed for hormone balance.',
+      desc: 'Practical, evidence-informed dietary pacing and physical movement routines adapted to everyday regional foods. Supportive habit guidance without restrictive diets or curative claims.',
       bullets: [
-        'Gentle nutrition guidance tailored to everyday Pakistani foods',
-        'Walking and home-based movement with no gym required',
-        'Encouraging guidance focused on balance—not strict food bans',
+        'Gentle nutrition sequencing with whole grains, proteins, and lentils',
+        'Paced walking and low-equipment resistance movement routines',
+        'Sleep and stress modulation supporting circadian endocrine balance',
       ],
       badge: 'Support',
     },
     {
-      id: 'timeline',
-      title: '9. See Your Progress Over Time',
-      subtitle: 'Track how your health evolves over months',
-      icon: History,
-      desc: 'Compare changes in your cycle rhythm, symptoms, and lab results over 3, 6, and 12 months to see what habits help you feel your best.',
+      id: 'care-circle',
+      title: '10. Care Circle & Clinician Summaries',
+      subtitle: 'Share selectively with trusted partners and doctors',
+      icon: Users,
+      desc: 'Reproductive health can feel isolating. Choose to share permitted lifestyle updates with loved ones, or export a consolidated, multi-month summary for your next 15-minute doctor visit.',
       bullets: [
-        'Visual graphs comparing your baseline to your latest check-ins',
-        'Observe how lifestyle improvements support your cycle regularity',
-        'Clear longitudinal record showing your true health journey',
-      ],
-      badge: 'Analytics',
-    },
-    {
-      id: 'summary',
-      title: '10. Doctor Visit Summary',
-      subtitle: 'A clean summary to share with your doctor',
-      icon: FileCheck,
-      desc: 'Generate a clean, private summary showing your verified test results, cycle history, and symptom trends to share with your physician.',
-      bullets: [
-        'Easy-to-read summary organized specifically for your doctor visit',
-        'Eliminates forgotten dates and lost paper receipts',
-        'Private 7-day share link you can send directly over WhatsApp',
+        '100% user-controlled, granular, and revocable sharing permissions',
+        'Structured clinician briefs summarizing longitudinal trends and labs',
+        'No doctor, partner, or contact sees anything without explicit consent',
       ],
       badge: 'Collaboration',
     },
@@ -153,7 +153,7 @@ export const Features: React.FC = () => {
 
   return (
     <div className="flex flex-col w-full overflow-hidden bg-[#10071A] text-white">
-      {/* 1. Top Cinematic Hero: "IT STARTS WITH SOMETHING YOU FEEL." (5-Stage Living Symptom Journey) */}
+      {/* 1. Top Cinematic Hero: The Living Symptom Journey */}
       <HumanSymptomExperienceSection />
 
       {/* 2. Comprehensive 10-Feature Suite Overview */}
@@ -163,13 +163,13 @@ export const Features: React.FC = () => {
         <Container size="xl">
           <div className="max-w-3xl mx-auto text-center mb-16 space-y-4">
             <Badge variant="secondary" size="md" className="bg-white/10 text-[#C084FC] border-white/15">
-              Platform Suite
+              Platform Capabilities
             </Badge>
             <h2 className="text-3xl sm:text-5xl font-extrabold text-white font-display tracking-tight">
               The Complete 10-Feature Architecture
             </h2>
-            <p className="text-base text-[#B4A6C7] max-w-2xl mx-auto">
-              Explore each dedicated capability connecting daily observation, laboratory digitization, explainable AI, and clinician collaboration.
+            <p className="text-base text-[#B4A6C7] max-w-2xl mx-auto font-sans">
+              Explore each dedicated capability connecting daily observation, laboratory digitization, explainable AI, information prioritization, and clinician collaboration.
             </p>
           </div>
 

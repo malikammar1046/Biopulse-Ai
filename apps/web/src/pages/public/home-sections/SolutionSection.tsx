@@ -1,145 +1,149 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Activity, Calendar, FileCheck2, HeartPulse, Sparkles, CheckCircle2 } from 'lucide-react';
+import {
+  HelpCircle,
+  Activity,
+  BrainCircuit,
+  Search,
+  Sliders,
+  History,
+  Sparkles
+} from 'lucide-react';
 import { Container } from '../../../components/ui/Container';
 
 export const SolutionSection: React.FC = () => {
+  const steps = [
+    {
+      num: '01',
+      title: 'Understand',
+      subtitle: 'Plain-language health literacy',
+      desc: 'Learn what your symptoms, physical patterns, and health information may mean without confusing medical jargon.',
+      icon: HelpCircle,
+      accent: '#FB7185',
+    },
+    {
+      num: '02',
+      title: 'Assess',
+      subtitle: 'Pathway-specific screening',
+      desc: 'Complete an appropriate, non-diagnostic risk screening based on your symptoms, body metrics, and existing lab reports.',
+      icon: Activity,
+      accent: '#C084FC',
+    },
+    {
+      num: '03',
+      title: 'Explain',
+      subtitle: 'Transparent feature attribution',
+      desc: 'See exactly which pieces of available information influenced the assessment through clear visual factor breakdowns.',
+      icon: BrainCircuit,
+      accent: '#E879F9',
+    },
+    {
+      num: '04',
+      title: 'Identify Gaps',
+      subtitle: 'Information completeness check',
+      desc: 'Understand what missing information (e.g. hormone panels, ultrasound scans) could make the screening assessment more informative.',
+      icon: Search,
+      accent: '#38BDF8',
+    },
+    {
+      num: '05',
+      title: 'Prioritize',
+      subtitle: 'Estimated value vs. cost',
+      desc: 'Understand which additional tests or information may offer the greatest estimated improvement in screening performance relative to estimated cost.',
+      icon: Sliders,
+      accent: '#FBBF24',
+    },
+    {
+      num: '06',
+      title: 'Monitor',
+      subtitle: 'Longitudinal health timeline',
+      desc: 'Track symptoms, biomarkers, and lifestyle habits across months, generating objective summaries for your next doctor check-up.',
+      icon: History,
+      accent: '#34D399',
+    },
+  ];
+
   return (
-    <section className="relative py-24 sm:py-32 bg-gradient-to-b from-[#241038] via-[#35144F] to-[#4A154B] text-white overflow-hidden">
-      {/* Rich Orchid Ambient Glows */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-[#8E3EAF]/25 rounded-full blur-[150px] pointer-events-none -z-10" />
+    <section
+      id="unified-solution"
+      className="py-24 sm:py-32 bg-gradient-to-b from-[#180A25] via-[#220D35] to-[#12071F] text-white overflow-hidden border-t border-white/10 select-none"
+      aria-labelledby="solution-title"
+    >
+      {/* Ambient Orchid Glow */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-[#8E3EAF]/20 rounded-full blur-[160px] pointer-events-none -z-10" />
 
       <Container size="xl">
-        <div className="max-w-3xl mx-auto text-center space-y-5 mb-16">
+        <div className="max-w-4xl mx-auto text-center space-y-4 mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-[#E879F9] backdrop-blur-md">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>The Unified OVASense Ecosystem</span>
+            <span>The Unified Platform Journey</span>
           </div>
 
-          <h2 className="text-3xl sm:text-5xl font-extrabold font-display tracking-tight text-white leading-tight">
-            We{' '}
+          <h2
+            id="solution-title"
+            className="text-3xl sm:text-5xl font-extrabold font-display tracking-tight text-white leading-tight"
+          >
+            What VITASense AI{' '}
             <span className="bg-gradient-to-r from-[#E879F9] via-[#FB7185] to-[#FDA4AF] bg-clip-text text-transparent">
-              connect the pieces.
+              Actually Does
             </span>
           </h2>
 
           <p className="text-base sm:text-lg text-[#EDE4F7] leading-relaxed font-sans max-w-2xl mx-auto">
-            OVASense turns scattered health information into a structured, understandable picture that can be
-            monitored longitudinally and reviewed with healthcare professionals.
+            From your very first symptom entry to multi-month clinician consultations, VITASense AI
+            guides you through a structured, explainable six-step flow.
           </p>
         </div>
 
-        {/* Central Convergence Architecture Diagram */}
-        <div className="relative max-w-4xl mx-auto p-8 sm:p-14 rounded-3xl bg-white/[0.04] border border-white/15 backdrop-blur-xl shadow-2xl overflow-hidden">
-          {/* Animated Connecting Particle Rays */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-80 h-80 rounded-full border border-dashed border-[#C084FC]/30 animate-[spin_40s_linear_infinite]" />
-            <div className="absolute w-56 h-56 rounded-full border border-[#FB7185]/20 animate-[spin_25s_linear_infinite_reverse]" />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center relative z-10">
-            {/* Left Stream Node (Cycle + Symptoms) */}
-            <div className="space-y-6">
+        {/* 6-Step Unified Journey Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          {steps.map((step, idx) => {
+            const Icon = step.icon;
+            return (
               <motion.div
-                whileHover={{ scale: 1.03 }}
-                className="p-4 sm:p-5 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md shadow-lg"
+                key={step.num}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-40px' }}
+                transition={{ duration: 0.4, delay: idx * 0.08 }}
+                className="p-7 rounded-3xl bg-gradient-to-b from-[#1C0D2E]/80 to-[#12071F]/90 border border-white/10 hover:border-white/25 transition-all flex flex-col justify-between shadow-xl backdrop-blur-xl text-left space-y-4 group"
               >
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-8 h-8 rounded-xl bg-[#8E3EAF] text-white flex items-center justify-center">
-                    <Calendar className="w-4 h-4" />
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span
+                      className="text-xs font-mono font-bold tracking-wider px-3 py-1 rounded-full border"
+                      style={{
+                        backgroundColor: `${step.accent}18`,
+                        color: step.accent,
+                        borderColor: `${step.accent}35`,
+                      }}
+                    >
+                      Step {step.num}
+                    </span>
+                    <div
+                      className="w-10 h-10 rounded-2xl flex items-center justify-center border group-hover:scale-110 transition-transform"
+                      style={{
+                        backgroundColor: `${step.accent}20`,
+                        color: step.accent,
+                        borderColor: `${step.accent}40`,
+                      }}
+                    >
+                      <Icon className="w-5 h-5" />
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-white font-display">Cycle Dynamics</h4>
-                    <span className="text-[10px] text-[#C084FC] uppercase font-semibold">Continuous Record</span>
-                  </div>
-                </div>
-                <p className="text-xs text-[#EDE4F7] leading-relaxed">
-                  Tracks follicular and luteal timing alongside cycle irregularity metrics.
-                </p>
-              </motion.div>
 
-              <motion.div
-                whileHover={{ scale: 1.03 }}
-                className="p-4 sm:p-5 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md shadow-lg"
-              >
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-8 h-8 rounded-xl bg-[#A21CAF] text-white flex items-center justify-center">
-                    <Activity className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-white font-display">Symptom Observation</h4>
-                    <span className="text-[10px] text-[#FDA4AF] uppercase font-semibold">Multivariate Logging</span>
-                  </div>
-                </div>
-                <p className="text-xs text-[#EDE4F7] leading-relaxed">
-                  Daily tracking for acne, hirsutism, mood, sleep, and pelvic comfort.
-                </p>
-              </motion.div>
-            </div>
-
-            {/* Central OVASense Fusion Hub */}
-            <div className="text-center my-6 md:my-0 flex flex-col items-center">
-              <div className="relative">
-                <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-[#8E3EAF] to-[#E87084] blur-xl opacity-60 animate-pulse" />
-                
-                <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-3xl bg-gradient-to-br from-[#8E3EAF] via-[#A21CAF] to-[#E87084] p-1 shadow-2xl flex flex-col items-center justify-center text-white border border-white/25">
-                  <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center mb-1">
-                    <Sparkles className="w-5 h-5 text-white" />
-                  </div>
-                  <span className="text-xs sm:text-sm font-extrabold tracking-wider font-display">
-                    OVASENSE
+                  <h3 className="text-xl font-bold font-display text-white">{step.title}</h3>
+                  <span className="text-[11px] font-mono text-[#A797BD] block -mt-1">
+                    {step.subtitle}
                   </span>
-                  <span className="text-[9px] uppercase tracking-widest text-purple-100 font-semibold">
-                    Core Fusion
-                  </span>
-                </div>
-              </div>
 
-              <div className="mt-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-[10px] font-semibold text-[#EDE4F7] border border-white/15">
-                <CheckCircle2 className="w-3 h-3 text-[#34D399]" />
-                <span>Multimodal Health Record</span>
-              </div>
-            </div>
-
-            {/* Right Stream Node (Verified Reports + Lifestyle) */}
-            <div className="space-y-6">
-              <motion.div
-                whileHover={{ scale: 1.03 }}
-                className="p-4 sm:p-5 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md shadow-lg"
-              >
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-8 h-8 rounded-xl bg-[#6E2D8B] text-white flex items-center justify-center">
-                    <FileCheck2 className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-white font-display">Verified Lab Reports</h4>
-                    <span className="text-[10px] text-[#C084FC] uppercase font-semibold">OCR Verification</span>
-                  </div>
+                  <p className="text-xs sm:text-sm text-[#CDBDD8] leading-relaxed font-sans">
+                    {step.desc}
+                  </p>
                 </div>
-                <p className="text-xs text-[#EDE4F7] leading-relaxed">
-                  User-confirmed hormone panels (LH, FSH, AMH) and pelvic ultrasound metrics.
-                </p>
               </motion.div>
-
-              <motion.div
-                whileHover={{ scale: 1.03 }}
-                className="p-4 sm:p-5 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md shadow-lg"
-              >
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-8 h-8 rounded-xl bg-[#047857] text-white flex items-center justify-center">
-                    <HeartPulse className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-white font-display">Lifestyle Context</h4>
-                    <span className="text-[10px] text-[#34D399] uppercase font-semibold">Supportive Guidance</span>
-                  </div>
-                </div>
-                <p className="text-xs text-[#EDE4F7] leading-relaxed">
-                  Nutrition, sleep pacing, and physical activity linked to health trajectories.
-                </p>
-              </motion.div>
-            </div>
-          </div>
+            );
+          })}
         </div>
       </Container>
     </section>

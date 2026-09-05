@@ -91,7 +91,7 @@ export const LongTermAwarenessSection: React.FC = () => {
               <strong className="text-white block font-display text-sm mb-1">
                 Medical Clarification & Safety:
               </strong>
-              <strong>PCOS itself is NOT cancer.</strong> However, prolonged irregular or absent
+              <strong>PMOS itself is NOT cancer.</strong> However, prolonged irregular or absent
               periods can mean the uterine lining (endometrium) experiences continuous estrogen
               stimulation without the balancing effect of progesterone, which can be associated
               with increased long-term risk of endometrial hyperplasia.
@@ -164,7 +164,7 @@ export const LongTermAwarenessSection: React.FC = () => {
                 <span>Personalized Biological Variability</span>
               </div>
               <p className="leading-relaxed">
-                Risk depends on individual factors and cycle frequency. Not everyone with PCOS
+                Risk depends on individual factors and cycle frequency. Not everyone with PMOS
                 develops these complications. Regular clinical evaluations provide tailored
                 protection.
               </p>

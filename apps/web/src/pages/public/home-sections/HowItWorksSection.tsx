@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   UserCircle2,
-  Calendar,
+  Activity,
   FileText,
   ScanLine,
   UserCheck,
@@ -21,45 +21,45 @@ export const HowItWorksSection: React.FC = () => {
     {
       num: '01',
       title: 'Build your health profile',
-      subtitle: 'Demographic baseline & endocrine history',
+      subtitle: 'Demographic baseline & history',
       icon: UserCircle2,
-      desc: 'Establish your personalized baseline including age, BMI, family endocrine context, and historical consultations in a private record.',
+      desc: 'Establish your personalized baseline including age, metabolic factors, lifestyle patterns, and family health history in a secure digital space.',
     },
     {
       num: '02',
-      title: 'Record cycle and symptoms',
-      subtitle: 'Daily & phase-based tracking',
-      icon: Calendar,
-      desc: 'Log menstrual phase shifts, flow levels, acne, hirsutism, mood, and sleep fluctuations with standardized severity indicators.',
+      title: 'Record symptoms & daily signals',
+      subtitle: 'Multi-parameter logging',
+      icon: Activity,
+      desc: 'Log relevant health signals—such as cycle timing, skin changes, morning vitality, sleep recovery, or physical strength—using standardized severity scales.',
     },
     {
       num: '03',
       title: 'Upload medical reports',
-      subtitle: 'Hormone blood panels & pelvic scans',
+      subtitle: 'Laboratory panels & imaging',
       icon: FileText,
-      desc: 'Upload laboratory documents and ultrasound reports. Computer vision scans documents and prepares extracted fields.',
+      desc: 'Upload laboratory documents, blood panels, or ultrasound reports. Automated OCR scans documents and prepares extracted fields for your review.',
     },
     {
       num: '04',
       title: 'Verify extracted information',
-      subtitle: 'Mandatory human-in-the-loop validation',
+      subtitle: 'Human-in-the-loop review',
       icon: UserCheck,
-      desc: 'Review OCR-extracted biomarkers (LH, FSH, AMH, Testosterone) side-by-side with original scans prior to saving into the record.',
+      desc: 'Review OCR-extracted biomarkers side-by-side with your original lab slips before saving them to your verified personal health record.',
       isVerificationCard: true,
     },
     {
       num: '05',
       title: 'Explore AI-assisted assessment',
-      subtitle: 'Explainable machine learning patterns',
+      subtitle: 'Transparent feature attribution',
       icon: BrainCircuit,
-      desc: 'Validated algorithms evaluate multivariate interactions and output transparent SHAP-explained biomarker importance distributions.',
+      desc: 'Algorithms evaluate multi-variable patterns and output clear feature influence scores showing which factors mattered most—without black boxes.',
     },
     {
       num: '06',
       title: 'Monitor changes over time',
       subtitle: 'Longitudinal timeline & doctor summaries',
       icon: History,
-      desc: 'Track long-term trajectories across consecutive months and generate structured appointment summaries for informed clinician dialogue.',
+      desc: 'Track biomarker trajectories across consecutive months and generate structured appointment summaries for collaborative dialogue with your physician.',
     },
   ];
 
@@ -71,15 +71,15 @@ export const HowItWorksSection: React.FC = () => {
       <Container size="xl">
         <div className="max-w-3xl mx-auto text-center space-y-5 mb-16">
           <Badge variant="primary" showDot size="md">
-            Biological Pathway
+            Platform Workflow
           </Badge>
 
           <h2 className="text-3xl sm:text-5xl font-extrabold font-display tracking-tight text-[#1C1326] leading-tight">
-            How OVASense Works
+            How VITASense AI Works
           </h2>
 
           <p className="text-base sm:text-lg text-[#584B68] leading-relaxed font-sans max-w-2xl mx-auto">
-            A seamless, verified journey from daily symptom tracking to transparent machine learning and longitudinal monitoring.
+            A seamless, verified workflow from signal entry and OCR extraction to transparent screening assessment and longitudinal tracking.
           </p>
         </div>
 
@@ -170,7 +170,7 @@ export const HowItWorksSection: React.FC = () => {
                     <div className="flex items-center justify-between border-b border-[#E7DFEF] pb-2">
                       <div className="flex items-center gap-2 text-[#1C1326] font-sans font-bold text-xs">
                         <ScanLine className="w-4 h-4 text-[#6E2D8B]" />
-                        <span>Tesseract OCR Extraction Output</span>
+                        <span>OCR Extraction & Verification Output</span>
                       </div>
                       <span className="px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#047857] text-[10px] font-bold">
                         Information Extracted
@@ -179,20 +179,20 @@ export const HowItWorksSection: React.FC = () => {
 
                     <div className="grid grid-cols-2 gap-3 font-sans">
                       <div className="p-3 rounded-xl bg-white border border-[#E7DFEF]">
-                        <span className="text-[11px] text-[#8D7E9E] block">Total Testosterone</span>
-                        <span className="text-sm font-bold text-[#1C1326]">2.4 nmol/L</span>
+                        <span className="text-[11px] text-[#8D7E9E] block">Serum Hormone Value</span>
+                        <span className="text-sm font-bold text-[#1C1326]">Verified Field</span>
                       </div>
                       <div className="p-3 rounded-xl bg-white border border-[#E7DFEF]">
-                        <span className="text-[11px] text-[#8D7E9E] block">Luteinizing Hormone (LH)</span>
-                        <span className="text-sm font-bold text-[#1C1326]">8.2 mIU/mL</span>
+                        <span className="text-[11px] text-[#8D7E9E] block">Metabolic Reference</span>
+                        <span className="text-sm font-bold text-[#1C1326]">Standard Range</span>
                       </div>
                       <div className="p-3 rounded-xl bg-white border border-[#E7DFEF]">
-                        <span className="text-[11px] text-[#8D7E9E] block">FSH Level</span>
-                        <span className="text-sm font-bold text-[#1C1326]">5.1 mIU/mL</span>
+                        <span className="text-[11px] text-[#8D7E9E] block">Confidence Rating</span>
+                        <span className="text-sm font-bold text-[#059669]">99.2% OCR Match</span>
                       </div>
                       <div className="p-3 rounded-xl bg-white border border-[#E7DFEF]">
-                        <span className="text-[11px] text-[#8D7E9E] block">LH / FSH Ratio</span>
-                        <span className="text-sm font-bold text-[#6E2D8B]">1.61 (Calculated)</span>
+                        <span className="text-[11px] text-[#8D7E9E] block">Audit Trail</span>
+                        <span className="text-sm font-bold text-[#6E2D8B]">Logged & Audited</span>
                       </div>
                     </div>
 
@@ -212,8 +212,8 @@ export const HowItWorksSection: React.FC = () => {
                       <CheckCircle2 className="w-6 h-6" />
                     </div>
                     <div className="text-xs text-[#584B68] space-y-0.5">
-                      <strong className="text-[#1C1326] block">Non-Diagnostic Safety Assurance</strong>
-                      Data is processed to highlight longitudinal trends and prepare clinician summaries without issuing prescriptive treatments.
+                      <strong className="text-[#1C1326] block">Screening & Risk Assessment Safety Assurance</strong>
+                      Data is evaluated to identify risk patterns and prepare clinician summaries without diagnosing diseases or prescribing treatments.
                     </div>
                   </div>
                 )}

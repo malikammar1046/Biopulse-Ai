@@ -1,10 +1,13 @@
 import React from 'react';
 import {
   HeroSection,
-  AnatomyIntelligenceSection,
+  WhoIsItForSection,
+  PathwayArchitectureSection,
   ProblemSection,
   SolutionSection,
-  HowItWorksSection,
+  PathwayIntelligenceSection,
+  FourTierModelSection,
+  InformationPrioritizationSection,
   FeaturesSection,
   ExplainableAISection,
   LongitudinalSection,
@@ -16,37 +19,46 @@ import {
 export const Home: React.FC = () => {
   return (
     <div className="w-full overflow-hidden bg-[#10071A]">
-      {/* 1. Hero Section: Atmospheric Dark with 3D Vital Orb & Editorial Typography */}
+      {/* 1. Hero Section: Unified Platform Positioning with Vital Biological Orb */}
       <HeroSection />
 
-      {/* 2. Reproductive Anatomy & AI Correlation Section */}
-      <AnatomyIntelligenceSection />
+      {/* 2. Target Users: One Platform. Different Health Journeys. (Women, Men, Everyone) */}
+      <WhoIsItForSection />
 
-      {/* 3. The Problem: Fragmented Health Data */}
+      {/* 3. Dual-Pathway Tree Architecture & Shared Platform Infrastructure */}
+      <PathwayArchitectureSection />
+
+      {/* 4. The Problem: Fragmented Reproductive & Endocrine Data */}
       <ProblemSection />
 
-      {/* 3. OVASense Solution: Connecting The Pieces */}
+      {/* 5. What VITASense AI Does: 6-Step Unified Journey (Understand -> Assess -> Explain -> Gaps -> Prioritize -> Monitor) */}
       <SolutionSection />
 
-      {/* 4. How It Works: Interactive Step-by-Step Workflow & OCR Verification */}
-      <HowItWorksSection />
+      {/* 6. Pathway-Specific Intelligence: Balanced Visualizers (Women's PCOS, Men's HPT Axis, Baseline Profile) */}
+      <PathwayIntelligenceSection />
 
-      {/* 5. Core Features: 6 Pillars of OVASense Ecosystem */}
+      {/* 7. Progressive Information: Four-Tier Screening Model */}
+      <FourTierModelSection />
+
+      {/* 8. Research Differentiator: Information Prioritization (Value of Information vs Estimated Cost) */}
+      <InformationPrioritizationSection />
+
+      {/* 9. Platform Capabilities: Eight Core Pillars of VITASense AI */}
       <FeaturesSection />
 
-      {/* 6. Explainable AI: SHAP Feature Attribution Transparency */}
+      {/* 10. Explainable AI: AI That Explains (SHAP Feature Influence Attribution) */}
       <ExplainableAISection />
 
-      {/* 7. Longitudinal Monitoring: Multi-Month Journey Timeline */}
+      {/* 11. Longitudinal Health: Assess -> Understand -> Track -> Reassess Across Journeys */}
       <LongitudinalSection />
 
-      {/* 8. Built For Real Life: Localized Context & Everyday Movement */}
+      {/* 12. Built For Real People: "You don't need to know what's wrong before you start" */}
       <RealLifeSection />
 
-      {/* 9. Trust & Responsible AI: Privacy, Transparency & Clinical Oversight */}
+      {/* 13. Trust & Governance: Privacy, Algorithmic Transparency, Human Clinical Oversight */}
       <ResponsibleAISection />
 
-      {/* 10. Final CTA: Biological Orb Finale */}
+      {/* 14. Final Platform CTA: "Start With What You Know." */}
       <FinalCTASection />
     </div>
   );
