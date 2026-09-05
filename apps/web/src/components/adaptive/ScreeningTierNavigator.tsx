@@ -1,0 +1,147 @@
+import React, { useState } from 'react';
+import {
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
+import type { TierLevel, TierSummary } from '../../types/adaptiveScreening';
+import { AdaptiveInformationCard } from './AdaptiveInformationCard';
+
+interface ScreeningTierNavigatorProps {
+  tiers: Record<TierLevel, TierSummary>;
+  selectedTier: TierLevel;
+  onSelectTier: (tier: TierLevel) => void;
+  onVerifyBiomarker?: (itemId: string, reportId?: string, resultId?: string) => void;
+}
+
+export const ScreeningTierNavigator: React.FC<ScreeningTierNavigatorProps> = ({
+  tiers,
+  selectedTier,
+  onSelectTier,
+  onVerifyBiomarker,
+}) => {
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  const tierKeys: TierLevel[] = ['tier_1', 'tier_2', 'tier_3', 'tier_4'];
+  const activeSummary = tiers[selectedTier];
+
+  return (
+    <div className="p-6 sm:p-8 rounded-[32px] bg-white border border-[#E7DFEF] shadow-sm space-y-6 text-left select-none">
+      {/* ── 1. Top Tier Navigation Tabs ─────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#F0EAF5] pb-4">
+        <div>
+          <span className="text-[10px] font-mono uppercase font-bold text-[#8E3EAF] block mb-0.5">
+            Progressive Disclosure
+          </span>
+          <h3 className="text-xl sm:text-2xl font-bold font-display text-[#1C1326]">
+            Screening Information Tiers
+          </h3>
+        </div>
+
+        {/* Tab Buttons */}
+        <div
+          className="flex flex-wrap items-center gap-1.5 p-1.5 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF]"
+          role="tablist"
+          aria-label="Progressive Screening Information Tiers"
+        >
+          {tierKeys.map((tKey, idx) => {
+            const sum = tiers[tKey];
+            if (!sum) return null;
+            const isSelected = selectedTier === tKey;
+
+            return (
+              <button
+                key={tKey}
+                type="button"
+                role="tab"
+                aria-selected={isSelected}
+                onClick={() => onSelectTier(tKey)}
+                className={`px-3.5 py-2 rounded-xl text-xs font-sans font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                  isSelected
+                    ? 'bg-gradient-to-r from-[#8E3EAF] to-[#FB7185] text-white shadow-sm'
+                    : 'text-[#584B68] hover:text-[#1C1326] hover:bg-white'
+                }`}
+              >
+                <span>{`Tier ${idx + 1}`}</span>
+                <span
+                  className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
+                    isSelected
+                      ? 'bg-white/20 text-white'
+                      : 'bg-black/5 text-[#8D7E9E]'
+                  }`}
+                >
+                  {sum.statusSymbol}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── 2. Active Tier Header Banner & Progressive Disclosure ────────── */}
+      {activeSummary && (
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-5 rounded-2xl bg-[#FAF7FC] border border-[#E7DFEF]">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <h4 className="text-base sm:text-lg font-bold text-[#1C1326] font-display">
+                  {activeSummary.name}
+                </h4>
+                <span className="text-xs font-mono text-[#047857] font-bold bg-[#ECFDF5] px-2 py-0.5 rounded-md border border-[#A7F3D0]/60">
+                  {activeSummary.statusSymbol} {activeSummary.statusLabel}
+                </span>
+              </div>
+              <p className="text-xs text-[#584B68] leading-relaxed">
+                {activeSummary.subtitle}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-4 self-start sm:self-auto shrink-0">
+              <div className="text-right font-mono">
+                <span className="text-xs font-bold text-[#1C1326] block">
+                  {activeSummary.knownCount} / {activeSummary.totalFieldsCount} Recorded
+                </span>
+                <span className="text-[11px] text-[#8D7E9E]">
+                  {activeSummary.completenessPercentage}% Complete
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-[#F4EFF8] border border-[#E7DFEF] text-xs text-[#584B68] hover:text-[#1C1326] font-sans flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                aria-expanded={isExpanded}
+              >
+                <span>{isExpanded ? 'Collapse Tier' : 'Explore Tier Items'}</span>
+                {isExpanded ? (
+                  <ChevronUp className="w-3.5 h-3.5 text-[#584B68]" />
+                ) : (
+                  <ChevronDown className="w-3.5 h-3.5 text-[#584B68]" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* ── 3. Cards Grid for the Active Tier ──────────────────────────── */}
+          {isExpanded && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs text-[#736384]">
+                <span>Biomarkers & Indicators in this tier ({activeSummary.items.length})</span>
+                <span className="italic">Click any item's "Why It Matters" for clinical context</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                {activeSummary.items.map((item) => (
+                  <AdaptiveInformationCard
+                    key={item.id}
+                    item={item}
+                    onVerify={onVerifyBiomarker}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};

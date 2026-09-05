@@ -8,6 +8,16 @@ import { UserHealthProvider } from './context/UserHealthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { OnboardingRoute } from './components/auth/OnboardingRoute';
 import { PublicOnlyRoute } from './components/auth/PublicOnlyRoute';
+import { PathwayRouteGuard } from './components/auth/PathwayRouteGuard';
+import { useUserHealth } from './context/UserHealthContext';
+import { getPathwayDashboardRoute } from './constants/routes';
+
+// Dynamic redirection to user's authorized pathway dashboard
+const DashboardRedirect: React.FC = () => {
+  const { userProfile } = useUserHealth();
+  const destination = getPathwayDashboardRoute(userProfile);
+  return <Navigate to={destination} replace />;
+};
 
 // Lightweight Page Loading Skeleton / Fallback
 const PageLoadingFallback: React.FC = () => (
@@ -66,7 +76,10 @@ const TrustAndPrivacy = lazy(() =>
 // Auth & Onboarding Pages (Lazy-Loaded)
 const Login = lazy(() => import('./pages/auth/Login').then((m) => ({ default: m.Login })));
 const Register = lazy(() => import('./pages/auth/Register').then((m) => ({ default: m.Register })));
-const OnboardingFlow = lazy(() => import('./pages/onboarding/OnboardingFlow').then((m) => ({ default: m.OnboardingFlow })));
+const OnboardingDispatcher = lazy(() => import('./pages/onboarding/OnboardingDispatcher').then((m) => ({ default: m.OnboardingDispatcher })));
+const FemaleOnboarding = lazy(() => import('./pages/onboarding/FemaleOnboarding').then((m) => ({ default: m.FemaleOnboarding })));
+const MaleOnboarding = lazy(() => import('./pages/onboarding/MaleOnboarding').then((m) => ({ default: m.MaleOnboarding })));
+const GeneralOnboarding = lazy(() => import('./pages/onboarding/GeneralOnboarding').then((m) => ({ default: m.GeneralOnboarding })));
 
 // Authenticated Health App Pages (Lazy-Loaded)
 const Dashboard = lazy(() => import('./pages/app/Dashboard').then((m) => ({ default: m.Dashboard })));
@@ -120,23 +133,64 @@ export function App() {
               {/* Protected Care Provider Portal (Token-Authorized) */}
               <Route path={ROUTES.CARE_PROVIDER_PORTAL} element={<CareProviderPortalPage />} />
 
-              {/* 7-Step Onboarding Flow (Guarded) */}
+              {/* Separate Pathway-Specific Onboarding Journeys (Guarded) */}
               <Route element={<OnboardingRoute />}>
-                <Route path={ROUTES.ONBOARDING} element={<OnboardingFlow />} />
+                <Route path={ROUTES.ONBOARDING} element={<OnboardingDispatcher />} />
+                <Route path={ROUTES.ONBOARDING_FEMALE} element={<FemaleOnboarding />} />
+                <Route path={ROUTES.ONBOARDING_MALE} element={<MaleOnboarding />} />
+                <Route path={ROUTES.ONBOARDING_GENERAL} element={<GeneralOnboarding />} />
               </Route>
 
               {/* Authenticated OvaSense Health Application (Protected) */}
               <Route element={<ProtectedRoute />}>
                 <Route path={ROUTES.APP.ROOT} element={<AppLayout />}>
-                  <Route index element={<Navigate to={ROUTES.APP.DASHBOARD} replace />} />
-                  <Route path="dashboard" element={<Dashboard />} />
+                  {/* Dynamic Pathway Redirection */}
+                  <Route index element={<DashboardRedirect />} />
+                  <Route path="dashboard" element={<DashboardRedirect />} />
+
+                  {/* Pathway-Specific Specialized Dashboards */}
+                  <Route
+                    path="ovasense"
+                    element={
+                      <PathwayRouteGuard allowedPathway="female">
+                        <Dashboard pathway="female" />
+                      </PathwayRouteGuard>
+                    }
+                  />
+                  <Route
+                    path="androsense"
+                    element={
+                      <PathwayRouteGuard allowedPathway="male">
+                        <Dashboard pathway="male" />
+                      </PathwayRouteGuard>
+                    }
+                  />
+                  <Route
+                    path="vitasense"
+                    element={
+                      <PathwayRouteGuard allowedPathway="general">
+                        <Dashboard pathway="general" />
+                      </PathwayRouteGuard>
+                    }
+                  />
+
+                  {/* Female-Only Cycle Tracking (Protected from unauthorized direct URLs) */}
+                  <Route
+                    path="cycle"
+                    element={
+                      <PathwayRouteGuard allowedPathway="female">
+                        <CyclePage />
+                      </PathwayRouteGuard>
+                    }
+                  />
+
+                  {/* Universal Platform Features */}
                   <Route path="hub" element={<MasterHealthHub />} />
                   <Route path="master-hub" element={<MasterHealthHub />} />
                   <Route path="ai-twin" element={<ChatPage />} />
                   <Route path="chat" element={<ChatPage />} />
                   <Route path="ai" element={<ChatPage />} />
                   <Route path="assistant" element={<ChatPage />} />
-                  <Route path="cycle" element={<CyclePage />} />
                   <Route path="symptoms" element={<SymptomsPage />} />
                   <Route path="diet" element={<DietPage />} />
                   <Route path="diet/week" element={<DietPage />} />

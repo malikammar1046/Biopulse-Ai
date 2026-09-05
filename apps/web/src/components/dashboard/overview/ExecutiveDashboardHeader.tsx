@@ -1,24 +1,50 @@
 import React, { useState } from 'react';
 import { Search, Bell, ChevronDown } from 'lucide-react';
 import { useUserHealth } from '../../../context/UserHealthContext';
+import { resolvePathway, type HealthPathway } from '../../../types/onboarding';
 
 interface ExecutiveDashboardHeaderProps {
   timeframe: 'today' | 'week' | 'month';
   onTimeframeChange: (timeframe: 'today' | 'week' | 'month') => void;
   onSearch?: (query: string) => void;
+  pathwayOverride?: HealthPathway;
 }
 
 export const ExecutiveDashboardHeader: React.FC<ExecutiveDashboardHeaderProps> = ({
   timeframe,
   onTimeframeChange,
   onSearch,
+  pathwayOverride,
 }) => {
   const { userProfile, openAiChatWithPrompt } = useUserHealth();
   const [searchQuery, setSearchQuery] = useState('');
   const [isTimeframeOpen, setIsTimeframeOpen] = useState(false);
 
+  const pathway = pathwayOverride || resolvePathway(userProfile.gender, userProfile.pathway);
+
+  const pathwayMeta = {
+    female: {
+      title: 'OvaSense AI',
+      subtitle: "Your personalized women's health companion",
+      badge: "Women's Health & PCOS Screening",
+      badgeClass: 'bg-[#6E2D8B]/10 text-[#8E3EAF] border-[#8E3EAF]/30',
+    },
+    male: {
+      title: 'AndroSense AI',
+      subtitle: "Your personalized men's health companion",
+      badge: "Men's Health & Hormone Vitality",
+      badgeClass: 'bg-[#0284C7]/10 text-[#0284C7] border-[#38BDF8]/30',
+    },
+    general: {
+      title: 'VITASense',
+      subtitle: 'Your personalized health companion',
+      badge: 'Baseline Health & Wellness',
+      badgeClass: 'bg-[#8B5CF6]/10 text-[#7C3AED] border-[#A78BFA]/30',
+    },
+  }[pathway];
+
   const fullName = userProfile.fullName?.trim() || 'Health Member';
-  const email = userProfile.email || 'member@ovasense.health';
+  const email = userProfile.email || 'member@vitasense.health';
   const avatarUrl =
     userProfile.avatarUrl ||
     'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
@@ -41,30 +67,36 @@ export const ExecutiveDashboardHeader: React.FC<ExecutiveDashboardHeaderProps> =
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         {/* User Card & Greeting Title */}
         <div className="space-y-2">
-          {/* User pill profile */}
-          <div className="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-white border border-[#E7DFEF] shadow-xs">
-            <img
-              src={avatarUrl}
-              alt={fullName}
-              className="w-7 h-7 rounded-full object-cover border border-[#D8B4FE]"
-            />
-            <div className="leading-tight">
-              <span className="text-xs font-bold font-display text-[#1C1326] block">
-                {fullName}
-              </span>
-              <span className="text-[10px] text-[#8D7E9E] font-mono block">
-                {email}
-              </span>
+          {/* User pill profile & pathway badge */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-white border border-[#E7DFEF] shadow-xs">
+              <img
+                src={avatarUrl}
+                alt={fullName}
+                className="w-7 h-7 rounded-full object-cover border border-[#D8B4FE]"
+              />
+              <div className="leading-tight">
+                <span className="text-xs font-bold font-display text-[#1C1326] block">
+                  {fullName}
+                </span>
+                <span className="text-[10px] text-[#8D7E9E] font-mono block">
+                  {email}
+                </span>
+              </div>
+              <ChevronDown className="w-3.5 h-3.5 text-[#8D7E9E] ml-1" />
             </div>
-            <ChevronDown className="w-3.5 h-3.5 text-[#8D7E9E] ml-1" />
+
+            <span className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded-full border ${pathwayMeta.badgeClass}`}>
+              {pathwayMeta.badge}
+            </span>
           </div>
 
           <div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-display text-[#1C1326] tracking-tight">
-              Health Overview
+              {pathwayMeta.title}
             </h1>
             <p className="text-xs sm:text-sm text-[#736384] font-sans">
-              Take control of your health today!
+              {pathwayMeta.subtitle}
             </p>
           </div>
         </div>

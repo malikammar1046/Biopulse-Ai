@@ -8,7 +8,7 @@ import { AuthField } from '../../components/auth/AuthField';
 import { PasswordInput } from '../../components/auth/PasswordInput';
 import { GoogleAuthButton } from '../../components/auth/GoogleAuthButton';
 import { useAuth } from '../../context/AuthContext';
-import { ROUTES } from '../../constants/routes';
+import { ROUTES, getPathwayDashboardRoute, getPathwayOnboardingRoute } from '../../constants/routes';
 
 interface FormErrors {
   email?: string;
@@ -19,7 +19,7 @@ interface FormErrors {
 export const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, loginWithGoogle } = useAuth();
+  const { login, loginWithGoogle, userProfile } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -85,9 +85,23 @@ export const Login: React.FC = () => {
         setErrors({ general: res.error || 'Invalid email or password. Please try again.' });
         return;
       }
-      // Route to destination or default dashboard
-      const from = (location.state as { from?: { pathname?: string } })?.from?.pathname || ROUTES.APP.DASHBOARD;
-      navigate(from, { replace: true });
+
+      // Route to destination: if onboarding incomplete -> pathway onboarding, otherwise pathway dashboard
+      const activeProfile = res.profile || userProfile;
+      const destination = activeProfile.isOnboarded
+        ? getPathwayDashboardRoute(activeProfile)
+        : getPathwayOnboardingRoute(activeProfile);
+
+      const from = (location.state as { from?: { pathname?: string } })?.from?.pathname;
+      const target =
+        from &&
+        from !== ROUTES.LOGIN &&
+        from !== ROUTES.REGISTER &&
+        !from.startsWith('/onboarding')
+          ? from
+          : destination;
+
+      navigate(target, { replace: true });
     } catch (err: any) {
       setErrors({
         general: err?.message || 'Invalid email or password. Please try again.',
@@ -110,9 +124,22 @@ export const Login: React.FC = () => {
         setGoogleLoading(false);
         return;
       }
-      // In demo/mock mode without redirect, navigate to destination
-      const from = (location.state as { from?: { pathname?: string } })?.from?.pathname || ROUTES.APP.DASHBOARD;
-      navigate(from, { replace: true });
+
+      // In demo/mock mode without redirect, navigate to destination or pathway dashboard/onboarding
+      const destination = userProfile.isOnboarded
+        ? getPathwayDashboardRoute(userProfile)
+        : getPathwayOnboardingRoute(userProfile);
+
+      const from = (location.state as { from?: { pathname?: string } })?.from?.pathname;
+      const target =
+        from &&
+        from !== ROUTES.LOGIN &&
+        from !== ROUTES.REGISTER &&
+        !from.startsWith('/onboarding')
+          ? from
+          : destination;
+
+      navigate(target, { replace: true });
     } catch (err: any) {
       setErrors({
         general: err?.message || 'Google sign-in could not be completed. Please try again.',

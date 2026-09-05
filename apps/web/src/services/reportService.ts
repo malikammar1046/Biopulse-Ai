@@ -2,6 +2,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type {
   MedicalReport,
   MedicalReportInput,
+  ReportResultInput,
   ReportType,
   ReportStatus,
 } from '../types/report';
@@ -55,7 +56,7 @@ export function mapDbRowToMedicalReport(
     fileName: row.file_name,
     fileSize: row.file_size || undefined,
     mimeType: row.mime_type,
-    status: (row.status as ReportStatus) || 'verified',
+    status: (row.status as ReportStatus) || 'needs_verification',
     results: (results || []).map((r) => ({
       id: r.id,
       reportId: r.report_id,
@@ -68,7 +69,8 @@ export function mapDbRowToMedicalReport(
       referenceHigh: r.reference_high,
       status: (r.status as any) || 'within_range',
       ocrConfidence: r.ocr_confidence ?? 0.95,
-      userVerified: r.user_verified ?? true,
+      userVerified: Boolean(r.user_verified),
+      verificationState: r.user_verified ? 'user_confirmed' : 'extracted',
       explanation: r.explanation || '',
       createdAt: r.created_at,
     })),
@@ -207,7 +209,8 @@ class ReportService {
   }
 
   /**
-   * Creates a new medical report and saves all verified test results.
+   * Creates a new medical report and saves test results.
+   * If any results are unverified, parent status defaults to 'needs_verification'.
    */
   async createMedicalReport(
     userId: string,
@@ -219,6 +222,12 @@ class ReportService {
 
     const reportId = 'rep_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
 
+    const hasResults = (input.results || []).length > 0;
+    const allResultsVerified =
+      hasResults && input.results!.every((r) => Boolean(r.userVerified));
+    const computedStatus: ReportStatus =
+      input.status || (allResultsVerified ? 'verified' : 'needs_verification');
+
     const fullReport: MedicalReport = {
       id: reportId,
       userId,
@@ -229,7 +238,7 @@ class ReportService {
       fileName: input.fileName,
       fileSize: input.fileSize,
       mimeType: input.mimeType,
-      status: input.status || 'verified',
+      status: computedStatus,
       results: (input.results || []).map((r) => ({
         id: 'res_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
         reportId,
@@ -242,7 +251,8 @@ class ReportService {
         referenceHigh: r.referenceHigh ?? null,
         status: r.status,
         ocrConfidence: r.ocrConfidence ?? 0.95,
-        userVerified: r.userVerified ?? true,
+        userVerified: Boolean(r.userVerified),
+        verificationState: r.userVerified ? 'user_confirmed' : 'extracted',
         explanation: r.explanation || '',
         timelineConnection: r.timelineConnection || '',
       })),
@@ -272,7 +282,7 @@ class ReportService {
           file_name: input.fileName,
           file_size: input.fileSize,
           mime_type: input.mimeType,
-          status: input.status || 'verified',
+          status: computedStatus,
         })
         .select()
         .single();
@@ -302,7 +312,7 @@ class ReportService {
         reference_high: r.referenceHigh ?? null,
         status: r.status,
         ocr_confidence: r.ocrConfidence ?? 0.95,
-        user_verified: r.userVerified ?? true,
+        user_verified: Boolean(r.userVerified),
         explanation: r.explanation || '',
       }));
 
@@ -378,6 +388,98 @@ class ReportService {
       this.setLocalCache(userId, filtered);
       return { success: true };
     }
+  }
+
+  /**
+   * Updates an individual test result and optionally confirms user verification.
+   * If all results in the parent report are verified, automatically updates parent status to 'verified'.
+   */
+  async updateReportResult(
+    userId: string,
+    reportId: string,
+    resultId: string,
+    updates: Partial<ReportResultInput>,
+    markVerified: boolean = false
+  ): Promise<{ success: boolean; error?: string }> {
+    if (!reportId || !resultId) {
+      return { success: false, error: 'Report ID and Result ID are required.' };
+    }
+
+    try {
+      const payload: Record<string, any> = {};
+      if (updates.testName !== undefined) payload.test_name = updates.testName;
+      if (updates.resultValue !== undefined) payload.result_value = updates.resultValue;
+      if (updates.resultNumeric !== undefined) payload.result_numeric = updates.resultNumeric;
+      if (updates.unit !== undefined) payload.unit = updates.unit;
+      if (updates.referenceRange !== undefined) payload.reference_range = updates.referenceRange;
+      if (updates.status !== undefined) payload.status = updates.status;
+      if (markVerified) payload.user_verified = true;
+
+      if (isSupabaseConfigured() && Object.keys(payload).length > 0) {
+        await supabase
+          .from('report_results')
+          .update(payload)
+          .eq('id', resultId);
+      }
+
+      // Update local cache and check parent report completeness
+      const existing = this.getLocalCache(userId);
+      let parentReportAllVerified = false;
+      const updated = existing.map((rep) => {
+        if (rep.id === reportId) {
+          const updatedResults = rep.results.map((r) => {
+            if (r.id === resultId) {
+              const isNowVerified = markVerified ? true : (updates.userVerified !== undefined ? Boolean(updates.userVerified) : r.userVerified);
+              return {
+                ...r,
+                testName: updates.testName ?? r.testName,
+                resultValue: updates.resultValue ?? r.resultValue,
+                resultNumeric: updates.resultNumeric !== undefined ? updates.resultNumeric : r.resultNumeric,
+                unit: updates.unit ?? r.unit,
+                referenceRange: updates.referenceRange ?? r.referenceRange,
+                status: updates.status ?? r.status,
+                userVerified: isNowVerified,
+                verificationState: isNowVerified ? ('user_confirmed' as const) : ('extracted' as const),
+              };
+            }
+            return r;
+          });
+          parentReportAllVerified = updatedResults.length > 0 && updatedResults.every((r) => r.userVerified);
+          return {
+            ...rep,
+            status: parentReportAllVerified ? ('verified' as ReportStatus) : rep.status,
+            results: updatedResults,
+          };
+        }
+        return rep;
+      });
+
+      this.setLocalCache(userId, updated);
+
+      // If all results are verified, elevate parent report in Supabase as well
+      if (isSupabaseConfigured() && parentReportAllVerified) {
+        await supabase
+          .from('medical_reports')
+          .update({ status: 'verified' })
+          .eq('id', reportId);
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      console.warn('Error updating report result:', err);
+      return { success: false, error: err.message };
+    }
+  }
+
+  /**
+   * Confirms user verification for an individual extracted biomarker result.
+   */
+  async verifyReportResult(
+    userId: string,
+    reportId: string,
+    resultId: string
+  ): Promise<{ success: boolean; error?: string }> {
+    return this.updateReportResult(userId, reportId, resultId, {}, true);
   }
 }
 

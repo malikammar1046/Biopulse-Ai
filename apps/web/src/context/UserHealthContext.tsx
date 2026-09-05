@@ -21,6 +21,7 @@ import type {
 import type {
   MedicalReport,
   MedicalReportInput,
+  ReportResultInput,
   ReportSummaryStats,
 } from '../types/report';
 import {
@@ -78,6 +79,9 @@ import type {
 import type { IntelligenceAssessment } from '../types/intelligence';
 import { fetchBackendAssessment, clearAssessmentCache } from '../services/intelligenceService';
 import { useAuth } from './AuthContext';
+import type { AdaptiveHealthProfile, ADAMQuestionnaireState } from '../types/adaptiveScreening';
+import { adaptiveProfileService } from '../services/adaptiveProfileService';
+import { resolvePathway } from '../types/onboarding';
 
 interface UserHealthContextType {
   userProfile: UserProfile;
@@ -177,6 +181,15 @@ interface UserHealthContextType {
   updateUserProfile: (data: Partial<UserProfile>) => Promise<{ success: boolean; error?: string }>;
   resetToDefaultProfile: () => void;
   clearUserData: () => void;
+  adaptiveProfile: AdaptiveHealthProfile;
+  verifyReportBiomarker: (reportId: string, resultId: string) => Promise<void>;
+  updateReportBiomarker: (
+    reportId: string,
+    resultId: string,
+    updates: Partial<ReportResultInput>,
+    markVerified?: boolean
+  ) => Promise<{ success: boolean; error?: string }>;
+  saveADAMResponses: (adamState: ADAMQuestionnaireState) => Promise<void>;
 }
 
 const REMINDERS_KEY = 'ovasense_user_reminders_v1';
@@ -257,6 +270,74 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setReportsLoading(false);
     }
   }, [userProfile?.id]);
+
+  // Phase 4: Adaptive Health Profile Engine
+  const activePathway = useMemo(() => {
+    return resolvePathway(userProfile.gender, userProfile.pathway);
+  }, [userProfile.gender, userProfile.pathway]);
+
+  const adaptiveProfile: AdaptiveHealthProfile = useMemo(() => {
+    return adaptiveProfileService.generateAdaptiveProfile(
+      activePathway,
+      userProfile,
+      cycleRecords,
+      symptomRecords,
+      reports
+    );
+  }, [activePathway, userProfile, cycleRecords, symptomRecords, reports]);
+
+  const verifyReportBiomarker = useCallback(
+    async (reportId: string, resultId: string) => {
+      if (!userProfile?.id) return;
+      await reportService.verifyReportResult(userProfile.id, reportId, resultId);
+      await refreshReports();
+    },
+    [userProfile?.id, refreshReports]
+  );
+
+  const updateReportBiomarker = useCallback(
+    async (
+      reportId: string,
+      resultId: string,
+      updates: Partial<ReportResultInput>,
+      markVerified?: boolean
+    ) => {
+      if (!userProfile?.id) return { success: false, error: 'User must be signed in.' };
+      const res = await reportService.updateReportResult(
+        userProfile.id,
+        reportId,
+        resultId,
+        updates,
+        markVerified
+      );
+      await refreshReports();
+      return res;
+    },
+    [userProfile?.id, refreshReports]
+  );
+
+  const saveADAMResponses = useCallback(
+    async (adamState: ADAMQuestionnaireState) => {
+      if (!userProfile) return;
+      const q1 = adamState.questions.find((q) => q.questionNumber === 1)?.response;
+      const q2 = adamState.questions.find((q) => q.questionNumber === 2)?.response;
+      const q7 = adamState.questions.find((q) => q.questionNumber === 7)?.response;
+      const q9 = adamState.questions.find((q) => q.questionNumber === 9)?.response;
+
+      const updatedMens = {
+        ...userProfile.mensHealth,
+        sexDrive: q1 === true ? 'reduced' : userProfile.mensHealth?.sexDrive || 'normal',
+        energyLevel: q2 === true ? 'low' : userProfile.mensHealth?.energyLevel || 'moderate',
+        erectileDifficulties: q7 === true ? 'occasional' : userProfile.mensHealth?.erectileDifficulties || 'none',
+        sleepQuality: q9 === true ? 'frequently_waking' : userProfile.mensHealth?.sleepQuality || 'restful',
+      };
+
+      await authUpdateProfile({
+        mensHealth: updatedMens as any,
+      });
+    },
+    [userProfile, authUpdateProfile]
+  );
 
   useEffect(() => {
     refreshCycleRecords();
@@ -1781,6 +1862,10 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         updateUserProfile,
         resetToDefaultProfile,
         clearUserData,
+        adaptiveProfile,
+        verifyReportBiomarker,
+        updateReportBiomarker,
+        saveADAMResponses,
       }}
     >
       {children}

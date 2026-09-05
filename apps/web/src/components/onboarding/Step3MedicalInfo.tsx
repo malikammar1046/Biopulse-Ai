@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Plus, X, Stethoscope, Pill, AlertCircle, HeartPulse, Check } from 'lucide-react';
-import type { MedicalProfile, MedicationItem } from '../../types/onboarding';
+import { Plus, X, Stethoscope, Pill, AlertCircle, HeartPulse, Check, Pizza, Dumbbell, Sparkles } from 'lucide-react';
+import type { MedicalProfile, MedicationItem, LifestyleProfile } from '../../types/onboarding';
 import {
   DEFAULT_ALLERGY_OPTIONS,
   DEFAULT_CONDITION_OPTIONS,
@@ -10,11 +10,13 @@ import {
 interface Step3Props {
   data: MedicalProfile;
   onChange: (medical: MedicalProfile) => void;
+  lifestyle?: LifestyleProfile;
+  onLifestyleChange?: (lifestyle: LifestyleProfile) => void;
 }
 
 const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Not Sure'];
 
-export const Step3MedicalInfo: React.FC<Step3Props> = ({ data, onChange }) => {
+export const Step3MedicalInfo: React.FC<Step3Props> = ({ data, onChange, lifestyle, onLifestyleChange }) => {
   const [customAllergy, setCustomAllergy] = useState('');
   const [customCondition, setCustomCondition] = useState('');
   const [newMedName, setNewMedName] = useState('');
@@ -376,6 +378,85 @@ export const Step3MedicalInfo: React.FC<Step3Props> = ({ data, onChange }) => {
           })}
         </div>
       </div>
+
+      {/* 6. Model Risk Assessment Predictors (Fast Food & Regular Exercise) */}
+      {lifestyle && onLifestyleChange && (
+        <div className="p-5 rounded-3xl bg-white/[0.04] border border-white/10 space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold font-mono text-[#EDE4F7] uppercase tracking-wider flex items-center gap-2">
+              <Sparkles className="w-3.5 h-3.5 text-[#FB7185]" />
+              Lifestyle Risk Factors (Evaluated by AI Screening Model)
+            </span>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#FB7185]/20 text-[#FDA4AF] border border-[#FB7185]/30">
+              Model Indicator
+            </span>
+          </div>
+
+          {/* Fast Food Intake */}
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-white/90 flex items-center gap-1.5">
+              <Pizza className="w-3.5 h-3.5 text-[#FB7185]" />
+              <span>Fast-Food & Processed Intake</span>
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {[
+                { id: 'frequent', label: 'Frequent (3+ times/wk)', desc: 'Regular takeout or fried food' },
+                { id: 'occasional', label: 'Occasional (1–2 times/wk)', desc: 'Balanced with home cooking' },
+                { id: 'rare_never', label: 'Rare / Never', desc: 'Mostly whole home food' },
+              ].map((opt) => {
+                const isSelected = (lifestyle.fastFoodIntake || 'occasional') === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => onLifestyleChange({ ...lifestyle, fastFoodIntake: opt.id as any })}
+                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                      isSelected
+                        ? 'bg-[#1C0D2E] border-[#FB7185] text-white shadow-sm ring-1 ring-[#FB7185]/50'
+                        : 'bg-[#140924] border-white/10 text-[#CDBDD8] hover:border-white/20'
+                    }`}
+                  >
+                    <span className="text-xs font-bold">{opt.label}</span>
+                    <span className="text-[10px] text-[#A797BD] mt-1">{opt.desc}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Regular Physical Exercise */}
+          <div className="space-y-2 pt-1">
+            <label className="text-xs font-semibold text-white/90 flex items-center gap-1.5">
+              <Dumbbell className="w-3.5 h-3.5 text-[#34D399]" />
+              <span>Do you engage in regular physical exercise?</span>
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => onLifestyleChange({ ...lifestyle, regularExercise: true, activityLevel: 'moderate' })}
+                className={`py-2.5 px-3 rounded-2xl border text-center transition-all cursor-pointer text-xs font-bold ${
+                  lifestyle.regularExercise !== false
+                    ? 'bg-[#1C0D2E] border-[#34D399] text-white'
+                    : 'bg-[#140924] border-white/10 text-[#CDBDD8]'
+                }`}
+              >
+                Yes (Workouts / Active Movement)
+              </button>
+              <button
+                type="button"
+                onClick={() => onLifestyleChange({ ...lifestyle, regularExercise: false, activityLevel: 'sedentary' })}
+                className={`py-2.5 px-3 rounded-2xl border text-center transition-all cursor-pointer text-xs font-bold ${
+                  lifestyle.regularExercise === false
+                    ? 'bg-[#1C0D2E] border-[#FB7185] text-white'
+                    : 'bg-[#140924] border-white/10 text-[#CDBDD8]'
+                }`}
+              >
+                No (Mostly Sedentary Routine)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

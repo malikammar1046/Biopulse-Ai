@@ -258,6 +258,7 @@ class OcrService {
                 status: r.status,
                 ocrConfidence: r.confidence,
                 userVerified: false, // Prominently encourage human verification
+                verificationState: 'extracted' as const,
                 requiresReview: r.requires_review,
                 sourceText: r.source_text,
                 extractionMethod: r.extraction_method || 'paddleocr',
@@ -303,6 +304,7 @@ class OcrService {
         resultNumeric: numericVal,
         status: computedStatus,
         userVerified: false,
+        verificationState: 'extracted' as const,
         extractionMethod: 'fallback',
         explanation: kb?.whatIsIt || item.explanation,
         timelineConnection: kb?.timelineConnection || item.timelineConnection,

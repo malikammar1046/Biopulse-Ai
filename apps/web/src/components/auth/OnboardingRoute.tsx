@@ -1,10 +1,10 @@
 import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { ROUTES } from '../../constants/routes';
+import { ROUTES, getPathwayDashboardRoute } from '../../constants/routes';
 
 export const OnboardingRoute: React.FC = () => {
-  const { isAuthenticated, isOnboarded, loading } = useAuth();
+  const { userProfile, isAuthenticated, isOnboarded, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -26,10 +26,11 @@ export const OnboardingRoute: React.FC = () => {
     return <Navigate to={ROUTES.LOGIN} replace state={{ from: location }} />;
   }
 
-  // If already completed onboarding, redirect to dashboard unless explicitly launched to re-onboard
+  // If already completed onboarding, redirect to designated pathway dashboard unless explicitly launched to re-onboard
   const isExplicitRelaunch = (location.state as any)?.allowReonboard;
   if (isOnboarded && !isExplicitRelaunch) {
-    return <Navigate to={ROUTES.APP.DASHBOARD} replace />;
+    const targetRoute = getPathwayDashboardRoute(userProfile);
+    return <Navigate to={targetRoute} replace />;
   }
 
   return <Outlet />;

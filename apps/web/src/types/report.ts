@@ -22,6 +22,8 @@ export type ReportResultStatus =
 
 export type ReportStatus = 'processing' | 'needs_verification' | 'verified';
 
+export type VerificationState = 'extracted' | 'user_confirmed';
+
 export interface ReportResult {
   id: string;
   reportId: string;
@@ -35,6 +37,7 @@ export interface ReportResult {
   status: ReportResultStatus;
   ocrConfidence: number; // 0.00 to 1.00
   userVerified: boolean;
+  verificationState?: VerificationState;
   explanation?: string;
   timelineConnection?: string;
   timelineCorrelation?: string;
@@ -52,6 +55,7 @@ export interface ReportResultInput {
   status: ReportResultStatus;
   ocrConfidence?: number;
   userVerified?: boolean;
+  verificationState?: VerificationState;
   explanation?: string;
   timelineConnection?: string;
   timelineCorrelation?: string;

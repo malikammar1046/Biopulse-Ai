@@ -13,7 +13,7 @@ interface AuthContextType {
   loading: boolean;
   isAuthenticated: boolean;
   isOnboarded: boolean;
-  login: (payload: LoginPayload) => Promise<{ success: boolean; error?: string }>;
+  login: (payload: LoginPayload) => Promise<{ success: boolean; profile?: UserProfile; error?: string }>;
   loginWithGoogle: (redirectTo?: string) => Promise<{ success: boolean; error?: string }>;
   register: (payload: RegisterPayload) => Promise<{ success: boolean; emailConfirmationRequired?: boolean; error?: string }>;
   logout: () => Promise<void>;
@@ -45,7 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return createEmptyUserProfile();
   });
 
-  const loadProfile = useCallback(async (activeUser: SupabaseUser) => {
+  const loadProfile = useCallback(async (activeUser: SupabaseUser): Promise<UserProfile> => {
     const userMeta = activeUser.user_metadata || {};
     const metaFullName =
       userMeta.full_name ||
@@ -53,11 +53,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       userMeta.user_name ||
       (activeUser.email ? activeUser.email.split('@')[0] : '');
     const metaAvatarUrl = userMeta.avatar_url || userMeta.picture || '';
+    const metaGender = (userMeta.gender as any) || undefined;
+    const metaPathway = (userMeta.pathway as any) || undefined;
 
-    const { profile } = await profileService.fetchUserProfile(activeUser.id);
+    const { profile } = await profileService.fetchUserProfile(activeUser.id, {
+      id: activeUser.id,
+      email: activeUser.email || '',
+      fullName: metaFullName,
+      dateOfBirth: userMeta.date_of_birth,
+      gender: metaGender,
+      pathway: metaPathway,
+    });
+
     if (profile) {
+      // Prioritize explicit metadata and profile pathway, fallback to female
+      const resolvedPathway =
+        metaPathway ||
+        profile.pathway ||
+        (metaGender === 'female' ? 'female' : metaGender === 'male' ? 'male' : undefined) ||
+        (profile.gender === 'female' ? 'female' : profile.gender === 'male' ? 'male' : undefined) ||
+        'female';
+
+      const resolvedGender =
+        metaGender ||
+        profile.gender ||
+        (resolvedPathway === 'female' ? 'female' : resolvedPathway === 'male' ? 'male' : 'female');
+
       const updatedProfile: UserProfile = {
         ...profile,
+        pathway: resolvedPathway,
+        gender: resolvedGender,
         avatarUrl: profile.avatarUrl || (metaAvatarUrl ? metaAvatarUrl : undefined),
         fullName: profile.fullName || metaFullName,
       };
@@ -67,14 +92,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch {
         // ignore
       }
+      return updatedProfile;
     } else {
       // Create empty initial profile for new user
+      const initialPathway =
+        metaPathway ||
+        (metaGender === 'female' ? 'female' : metaGender === 'male' ? 'male' : undefined) ||
+        'female';
+      const initialGender =
+        metaGender ||
+        (initialPathway === 'female' ? 'female' : initialPathway === 'male' ? 'male' : 'female');
+
       const initial = createEmptyUserProfile({
         id: activeUser.id,
         email: activeUser.email || '',
         fullName: metaFullName,
         avatarUrl: metaAvatarUrl || undefined,
         dateOfBirth: userMeta.date_of_birth || '',
+        gender: initialGender,
+        pathway: initialPathway,
         isOnboarded: false,
       });
       setUserProfile(initial);
@@ -87,6 +123,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (isSupabaseConfigured()) {
         await profileService.upsertUserProfile(initial, activeUser.id);
       }
+      return initial;
     }
   }, []);
 
@@ -143,7 +180,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [loadProfile]);
 
-  const login = async (payload: LoginPayload): Promise<{ success: boolean; error?: string }> => {
+  const login = async (
+    payload: LoginPayload
+  ): Promise<{ success: boolean; profile?: UserProfile; error?: string }> => {
     const res = await authService.login(payload);
     if (!res.success) {
       return { success: false, error: res.error };
@@ -152,7 +191,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (res.session?.user) {
       setUser(res.session.user);
       setSession(res.session);
-      await loadProfile(res.session.user);
+      const loaded = await loadProfile(res.session.user);
+      return { success: true, profile: loaded };
     } else if (res.user && !isSupabaseConfigured()) {
       // Mock login handling
       const demoProfile: UserProfile = {
@@ -162,9 +202,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         fullName: res.user.fullName || userProfile.fullName,
       };
       setUserProfile(demoProfile);
+      return { success: true, profile: demoProfile };
     }
 
-    return { success: true };
+    return { success: true, profile: userProfile };
   };
 
   const loginWithGoogle = async (
@@ -211,6 +252,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: payload.email,
         fullName: payload.fullName,
         dateOfBirth: payload.dateOfBirth || '',
+        gender: payload.gender,
+        pathway: payload.pathway,
         isOnboarded: false,
       });
       setUserProfile(newProfile);
@@ -223,6 +266,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           email: payload.email,
           fullName: payload.fullName,
           dateOfBirth: payload.dateOfBirth || '',
+          gender: payload.gender,
+          pathway: payload.pathway,
           isOnboarded: false,
         });
         setUserProfile(newProfile);
@@ -284,17 +329,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateUserProfile = async (
     data: Partial<UserProfile>
   ): Promise<{ success: boolean; error?: string }> => {
+    // 1. Optimistically update local state immediately so UI and route guards react instantly
+    const optimistic: UserProfile = {
+      ...userProfile,
+      ...data,
+      gender: data.gender || userProfile.gender || 'female',
+      pathway: data.pathway || userProfile.pathway || 'female',
+      updatedAt: new Date().toISOString(),
+    };
+    setUserProfile(optimistic);
+    try {
+      localStorage.setItem(STORAGE_PROFILE_KEY, JSON.stringify(optimistic));
+    } catch {
+      // ignore
+    }
+
     const targetUserId = user?.id || userProfile.id || 'demo-user-id';
-    const res = await profileService.updateProfileFields(targetUserId, userProfile, data);
+    const res = await profileService.updateProfileFields(targetUserId, optimistic, data);
 
     if (!res.success) {
       return { success: false, error: res.error || 'Failed to update profile.' };
     }
 
     if (res.profile) {
-      setUserProfile(res.profile);
+      const confirmed: UserProfile = {
+        ...res.profile,
+        gender: data.gender || res.profile.gender || optimistic.gender,
+        pathway: data.pathway || res.profile.pathway || optimistic.pathway,
+      };
+      setUserProfile(confirmed);
       try {
-        localStorage.setItem(STORAGE_PROFILE_KEY, JSON.stringify(res.profile));
+        localStorage.setItem(STORAGE_PROFILE_KEY, JSON.stringify(confirmed));
       } catch {
         // ignore
       }

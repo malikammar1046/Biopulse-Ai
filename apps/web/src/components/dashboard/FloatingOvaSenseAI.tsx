@@ -1,8 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, X, Send, Bot, AlertTriangle, Stethoscope } from 'lucide-react';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { sendChatMessage } from '../../services/intelligenceService';
+import { resolvePathway } from '../../types/onboarding';
+import { ROUTES } from '../../constants/routes';
 
 interface ChatMessage {
   id: string;
@@ -13,7 +16,7 @@ interface ChatMessage {
   needsClinician?: boolean;
 }
 
-const QUICK_PROMPTS = [
+const FEMALE_QUICK_PROMPTS = [
   'Explain my PCOS screening result',
   'What factors influenced my risk score?',
   'What should I discuss with my doctor?',
@@ -22,7 +25,26 @@ const QUICK_PROMPTS = [
   'What does my Vitamin D result mean?',
 ];
 
+const MALE_QUICK_PROMPTS = [
+  'Explain my male health screening result',
+  'How do symptoms correlate with energy levels?',
+  'What questions should I ask my doctor about hormones?',
+  'Why is morning blood draw timing important?',
+  'What lifestyle factors support vitality and stamina?',
+  'What does my testosterone or metabolic result mean?',
+];
+
+const GENERAL_QUICK_PROMPTS = [
+  'Explain my general health overview',
+  'What habits improve daily energy and recovery?',
+  'What questions should I ask my doctor?',
+  'What do my lab report results mean?',
+  'What foods support metabolic wellness?',
+];
+
 export const FloatingOvaSenseAI: React.FC = () => {
+  const location = useLocation();
+  const isChatPage = location.pathname === ROUTES.APP.CHAT || location.pathname.startsWith('/app/chat');
   const { userProfile, snapshotMetrics, isAiChatOpen, activeAiPrompt, toggleAiChat, closeAiChat } = useUserHealth();
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -32,10 +54,23 @@ export const FloatingOvaSenseAI: React.FC = () => {
     typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `conv_${Date.now()}`
   );
 
-  const initialGreeting = `Hello ${userProfile.fullName ? userProfile.fullName.split(' ')[0] : 'there'}! I'm OvaSense AI, your health companion. ${
-    snapshotMetrics.cycleDay > 0
+  const pathway = resolvePathway(userProfile.gender, userProfile.pathway);
+  const aiBrandName =
+    pathway === 'male' ? 'AndroSense AI' : pathway === 'female' ? 'OvaSense AI' : 'VITASense AI';
+
+  const quickPrompts =
+    pathway === 'male'
+      ? MALE_QUICK_PROMPTS
+      : pathway === 'female'
+      ? FEMALE_QUICK_PROMPTS
+      : GENERAL_QUICK_PROMPTS;
+
+  const initialGreeting = `Hello ${userProfile.fullName ? userProfile.fullName.split(' ')[0] : 'there'}! I'm ${aiBrandName}, your health companion. ${
+    pathway === 'female' && snapshotMetrics.cycleDay > 0
       ? `Observations from your Digital Twin indicate you are currently on Day ${snapshotMetrics.cycleDay} (${snapshotMetrics.phaseName}).`
-      : 'I am here to help you understand your cycle, symptoms, verified lab reports, and ML screening patterns based on observations from your Digital Twin.'
+      : pathway === 'male'
+      ? 'I am here to help you understand hormone vitality, male health screening patterns, daily symptoms, and verified lab reports.'
+      : 'I am here to help you explore your baseline health patterns, symptoms, nutrition, activity, and verified lab reports.'
   } How can I assist you today?`;
 
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -161,13 +196,17 @@ export const FloatingOvaSenseAI: React.FC = () => {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold font-display text-white">OvaSense AI Twin</h3>
+                    <h3 className="text-sm font-bold font-display text-white">{aiBrandName} Twin</h3>
                     <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-[#34D399]/20 text-[#34D399] font-bold">
                       Online
                     </span>
                   </div>
                   <span className="text-[11px] text-[#A797BD] font-sans">
-                    Conversational health & ML insights companion
+                    {pathway === 'male'
+                      ? 'Male hormone & health screening companion'
+                      : pathway === 'female'
+                      ? 'Conversational health & ML insights companion'
+                      : 'Baseline health & wellness insights companion'}
                   </span>
                 </div>
               </div>
@@ -236,7 +275,7 @@ export const FloatingOvaSenseAI: React.FC = () => {
                     <div className="w-2 h-2 rounded-full bg-[#8E3EAF] animate-bounce delay-150" />
                     <div className="w-2 h-2 rounded-full bg-[#D8B4FE] animate-bounce delay-300" />
                   </div>
-                  <span className="text-[11px] font-medium text-white/70">OvaSense AI is consulting your records...</span>
+                  <span className="text-[11px] font-medium text-white/70">{aiBrandName} is consulting your records...</span>
                 </div>
               )}
               <div ref={messagesEndRef} />
@@ -244,7 +283,7 @@ export const FloatingOvaSenseAI: React.FC = () => {
 
             {/* Quick Prompt Chips */}
             <div className="p-3 bg-white/[0.02] border-t border-white/5 flex gap-1.5 overflow-x-auto no-scrollbar">
-              {QUICK_PROMPTS.map((prompt, idx) => (
+              {quickPrompts.map((prompt, idx) => (
                 <button
                   key={idx}
                   type="button"
@@ -267,7 +306,13 @@ export const FloatingOvaSenseAI: React.FC = () => {
               >
                 <input
                   type="text"
-                  placeholder="Ask about your PCOS screening, cycle, symptoms, or doctor prep..."
+                  placeholder={
+                    pathway === 'male'
+                      ? 'Ask about male health screening, hormone vitality, symptoms, or doctor prep...'
+                      : pathway === 'female'
+                      ? 'Ask about your PCOS screening, cycle, symptoms, or doctor prep...'
+                      : 'Ask about your health indicators, symptoms, lab reports, or doctor prep...'
+                  }
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   className="flex-1 px-4 py-2.5 rounded-2xl bg-[#12071F] border border-white/15 text-xs text-white placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-[#8E3EAF]"
@@ -283,34 +328,36 @@ export const FloatingOvaSenseAI: React.FC = () => {
               </form>
 
               <p className="text-[9px] text-[#8D7E9E] font-sans text-center">
-                OvaSense AI provides educational explanations and is not a medical diagnostic device.
+                {aiBrandName} provides educational explanations and is not a medical diagnostic device.
               </p>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ── Floating Trigger Button (Available Globally) ── */}
-      <div className="fixed bottom-20 md:bottom-8 right-5 sm:right-8 z-40 select-none">
-        <motion.button
-          type="button"
-          onClick={toggleAiChat}
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.94 }}
-          className="relative group p-3.5 sm:p-4 rounded-full bg-gradient-to-tr from-[#6E2D8B] via-[#8E3EAF] to-[#FB7185] text-white shadow-2xl shadow-purple-950/70 border-2 border-white/40 flex items-center justify-center cursor-pointer transition-transform"
-          aria-label="Ask OvaSense AI Twin"
-        >
-          {/* Subtle pulse wave ring */}
-          <span className="absolute inset-0 rounded-full bg-[#FB7185]/30 animate-ping pointer-events-none" />
+      {/* ── Floating Trigger Button (Available Globally, except on dedicated full-screen Chat Page) ── */}
+      {!isChatPage && (
+        <div className="fixed bottom-20 md:bottom-8 right-5 sm:right-8 z-40 select-none">
+          <motion.button
+            type="button"
+            onClick={toggleAiChat}
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.94 }}
+            className="relative group p-3.5 sm:p-4 rounded-full bg-gradient-to-tr from-[#6E2D8B] via-[#8E3EAF] to-[#FB7185] text-white shadow-2xl shadow-purple-950/70 border-2 border-white/40 flex items-center justify-center cursor-pointer transition-transform"
+            aria-label={`Ask ${aiBrandName} Twin`}
+          >
+            {/* Subtle pulse wave ring */}
+            <span className="absolute inset-0 rounded-full bg-[#FB7185]/30 animate-ping pointer-events-none" />
 
-          <Sparkles className="w-6 h-6 text-white" />
+            <Sparkles className="w-6 h-6 text-white" />
 
-          {/* Hover Tooltip (Desktop) */}
-          <span className="hidden sm:group-hover:block absolute right-full mr-3 px-3 py-1.5 rounded-xl bg-[#180A26] text-white text-xs font-mono font-bold whitespace-nowrap shadow-xl border border-white/20">
-            Ask OvaSense AI Twin ✨
-          </span>
-        </motion.button>
-      </div>
+            {/* Hover Tooltip (Desktop) */}
+            <span className="hidden sm:group-hover:block absolute right-full mr-3 px-3 py-1.5 rounded-xl bg-[#180A26] text-white text-xs font-mono font-bold whitespace-nowrap shadow-xl border border-white/20">
+              Ask {aiBrandName} Twin ✨
+            </span>
+          </motion.button>
+        </div>
+      )}
     </>
   );
 };

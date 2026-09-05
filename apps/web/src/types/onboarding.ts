@@ -56,6 +56,42 @@ export interface HealthGoals {
   supportPreference: 'gentle_nudges' | 'structured_weekly' | 'daily_coaching'; // REQUIRED
 }
 
+export type UserGender = 'female' | 'male' | 'other' | 'prefer_not_to_say';
+export type HealthPathway = 'female' | 'male' | 'general';
+
+export interface MensHealthProfile {
+  // Marriage, Kids & Intimacy (Patient-friendly clinical context)
+  maritalStatus?: 'unmarried' | 'married';
+  marriageYears?: number;
+  hasKids?: boolean;
+  kidsCount?: number;
+  tryingToConceive?: boolean;
+  intimacyFrequency?: 'regular' | 'occasional' | 'rare' | 'none';
+  intimacySatisfaction?: 'satisfied' | 'mild_concerns' | 'significant_difficulty';
+
+  // Screening symptoms (patient-friendly non-diagnostic language)
+  energyLevel: 'high' | 'moderate' | 'low' | 'very_low'; // "Low energy"
+  sexDrive: 'normal' | 'reduced' | 'significantly_reduced'; // "Sex drive"
+  erectileDifficulties: 'none' | 'occasional' | 'frequent';
+  muscleStrengthChanges: 'stable' | 'reduced' | 'significantly_reduced';
+  bodyHairChanges: 'no_change' | 'thinning' | 'reduced_growth';
+  moodChanges: string[]; // e.g. ['Low Motivation', 'Irritability', 'Brain Fog']
+  sleepQuality: 'restful' | 'frequently_waking' | 'poor';
+  // Relevant clinical history & medication context
+  hadTestosteroneTest?: 'no' | 'yes' | 'unsure';
+  testosteroneValue?: number | null; // ng/dL or nmol/L
+  testosteroneUnit?: 'ng/dL' | 'nmol/L';
+  testDrawTime?: 'morning_fasting' | 'afternoon' | 'unsure';
+  priorMedications?: string[]; // e.g. 'Prescription Opioids', 'Steroids / Testosterone Therapy', 'None'
+  primaryConcern?: string;
+}
+
+export interface GeneralHealthProfile {
+  primaryFocus: string[];
+  energyPatterns: string;
+  stressLevel: 'low' | 'moderate' | 'high';
+}
+
 export interface UserProfile {
   // Required Personal Identifiers
   id: string;
@@ -63,11 +99,14 @@ export interface UserProfile {
   email: string;
   phone: string;
   dateOfBirth: string; // YYYY-MM-DD
+  gender?: UserGender;
+  pathway?: HealthPathway;
 
   // Optional Personal & Biometric Attributes
   avatarUrl?: string;
   heightCm?: number | null; // e.g. 165
   weightKg?: number | null; // e.g. 62
+  waistCm?: number | null; // e.g. 85
 
   // Status & Timestamps
   isOnboarded: boolean;
@@ -78,7 +117,27 @@ export interface UserProfile {
   emergencyContacts: EmergencyContact[];
   medical: MedicalProfile;
   womensHealth: WomensHealthProfile;
+  mensHealth?: MensHealthProfile;
+  generalHealth?: GeneralHealthProfile;
   lifestyle: LifestyleProfile;
   goals: HealthGoals;
+}
+
+/**
+ * Resolves a reliable HealthPathway from user profile attributes.
+ * Defaults to 'female' (the flagship OvaSense clinical pathway) instead of 'general'.
+ */
+export function resolvePathway(
+  gender?: string | null,
+  pathway?: string | null,
+  fallbackDefault: HealthPathway = 'female'
+): HealthPathway {
+  if (pathway === 'female' || pathway === 'male' || pathway === 'general') {
+    return pathway;
+  }
+  if (gender === 'female') return 'female';
+  if (gender === 'male') return 'male';
+  if (gender === 'other' || gender === 'prefer_not_to_say') return 'general';
+  return fallbackDefault;
 }
 

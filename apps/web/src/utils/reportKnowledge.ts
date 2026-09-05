@@ -212,6 +212,126 @@ export const LAB_TEST_KNOWLEDGE_BASE: Record<string, TestKnowledgeItem> = {
     timelineConnection:
       'Correlates with your period duration and flow intensity logs.',
   },
+
+  shbg: {
+    id: 'shbg',
+    name: 'SHBG (Sex Hormone-Binding Globulin)',
+    aliases: ['shbg', 'sex hormone binding globulin', 's-shbg'],
+    category: 'hormone_test',
+    defaultUnit: 'nmol/L',
+    typicalRange: '10 – 57 nmol/L',
+    whatIsIt:
+      'A protein made in the liver that binds tightly to testosterone and estrogen, controlling how much free hormone is active.',
+    whatDoesItMean:
+      'Helps your clinician calculate the exact amount of free or bioavailable testosterone circulating in your body.',
+    timelineConnection:
+      'Correlates with insulin sensitivity, metabolic balance, and androgen symptoms in your health profile.',
+  },
+
+  estradiol: {
+    id: 'estradiol',
+    name: 'Estradiol (E2)',
+    aliases: ['estradiol', 'e2', '17-beta estradiol', 'serum estradiol'],
+    category: 'hormone_test',
+    defaultUnit: 'pg/mL',
+    typicalRange: '10 – 40 pg/mL',
+    whatIsIt:
+      'The primary active estrogen hormone. In men, a small amount of testosterone is naturally converted into estradiol.',
+    whatDoesItMean:
+      'Maintains healthy bone density, mood, and cardiovascular health when kept in a balanced ratio with testosterone.',
+    timelineConnection:
+      'Monitored during testosterone assessments to ensure hormone balance and metabolic health.',
+  },
+
+  psa: {
+    id: 'psa',
+    name: 'PSA (Prostate-Specific Antigen)',
+    aliases: ['psa', 'prostate specific antigen', 'total psa', 's-psa'],
+    category: 'blood_test',
+    defaultUnit: 'ng/mL',
+    typicalRange: '< 4.0 ng/mL',
+    whatIsIt:
+      'A protein produced by cells of the prostate gland, measured via a standard blood sample.',
+    whatDoesItMean:
+      'Used as a baseline health screen before and during endocrine evaluations to monitor prostate safety.',
+    timelineConnection:
+      'Included in Tier 3 comprehensive endocrine and safety screenings.',
+  },
+
+  semen_volume: {
+    id: 'semen_volume',
+    name: 'Semen Volume',
+    aliases: ['semen volume', 'ejaculate volume', 'volume semen'],
+    category: 'other',
+    defaultUnit: 'mL',
+    typicalRange: '≥ 1.5 mL',
+    whatIsIt:
+      'The total liquid volume of fluid collected during a standard semen analysis.',
+    whatDoesItMean:
+      'Reflects the contributions of the seminal vesicles and prostate gland.',
+    timelineConnection:
+      'Provides reproductive and fertility context within your AndroSense profile.',
+  },
+
+  sperm_concentration: {
+    id: 'sperm_concentration',
+    name: 'Sperm Concentration',
+    aliases: ['sperm concentration', 'sperm count', 'sperm density'],
+    category: 'other',
+    defaultUnit: 'million/mL',
+    typicalRange: '≥ 15 million/mL',
+    whatIsIt:
+      'The number of sperm cells in each milliliter of semen fluid.',
+    whatDoesItMean:
+      'A standard baseline parameter of reproductive health and testicular function.',
+    timelineConnection:
+      'Tracks testicular function and fertility markers in comprehensive male health screenings.',
+  },
+
+  sperm_motility: {
+    id: 'sperm_motility',
+    name: 'Total Sperm Motility',
+    aliases: ['total sperm motility', 'sperm motility', 'motility'],
+    category: 'other',
+    defaultUnit: '%',
+    typicalRange: '≥ 40 %',
+    whatIsIt:
+      'The percentage of sperm cells that are actively moving and swimming forward.',
+    whatDoesItMean:
+      'Good motility indicates healthy energy metabolism inside sperm cells.',
+    timelineConnection:
+      'Evaluated alongside testosterone levels and lifestyle check-ins.',
+  },
+
+  sperm_morphology: {
+    id: 'sperm_morphology',
+    name: 'Normal Sperm Morphology',
+    aliases: ['normal sperm morphology', 'sperm morphology', 'morphology normal forms'],
+    category: 'other',
+    defaultUnit: '%',
+    typicalRange: '≥ 4 %',
+    whatIsIt:
+      'The percentage of sperm that have a standard normal shape under microscopic examination.',
+    whatDoesItMean:
+      'An indicator of cell development and testicular spermatogenesis quality.',
+    timelineConnection:
+      'Contributes to comprehensive fertility and endocrine screening tiers.',
+  },
+
+  testosterone_draw_time: {
+    id: 'testosterone_draw_time',
+    name: 'Testosterone Draw Time',
+    aliases: ['draw time', 'collection time', 'time of draw', 'blood draw time'],
+    category: 'hormone_test',
+    defaultUnit: 'time',
+    typicalRange: '07:00 – 10:00 AM',
+    whatIsIt:
+      'The exact clock time of day when your morning blood sample was collected at the laboratory.',
+    whatDoesItMean:
+      'Testosterone follows a natural daily rhythm, peaking early in the morning between 7:00 and 10:00 AM.',
+    timelineConnection:
+      'Confirms that testosterone measurements meet diagnostic clinical timing standards.',
+  },
 };
 
 /**

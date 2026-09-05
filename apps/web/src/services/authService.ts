@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { User as SupabaseUser, Session as SupabaseSession } from '@supabase/supabase-js';
+import type { UserGender, HealthPathway } from '../types/onboarding';
 
 export interface LoginPayload {
   email: string;
@@ -13,6 +14,8 @@ export interface RegisterPayload {
   password: string;
   dateOfBirth?: string;
   consent: boolean;
+  gender?: UserGender;
+  pathway?: HealthPathway;
 }
 
 export interface AuthUserProfile {
@@ -171,6 +174,8 @@ class AuthService {
           data: {
             full_name: payload.fullName.trim(),
             date_of_birth: payload.dateOfBirth || null,
+            gender: payload.gender || null,
+            pathway: payload.pathway || null,
           },
         },
       });

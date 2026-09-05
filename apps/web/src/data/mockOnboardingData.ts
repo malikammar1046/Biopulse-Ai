@@ -103,3 +103,29 @@ export const HEALTH_GOAL_OPTIONS = [
     icon: 'Bot',
   },
 ];
+
+export const DEFAULT_MALE_SYMPTOM_OPTIONS = [
+  { id: 'low_energy', label: 'Low Energy & Afternoon Slumps', icon: 'Moon', desc: 'Persistent tiredness or feeling drained throughout the workday' },
+  { id: 'reduced_sex_drive', label: 'Changes in Sex Drive', icon: 'Heart', desc: 'Noticeable reduction in desire, libido, or intimacy motivation' },
+  { id: 'erectile_changes', label: 'Morning & Intimacy Firmness', icon: 'Activity', desc: 'Fewer morning erections or changes in maintaining firmness' },
+  { id: 'reduced_muscle_strength', label: 'Muscle Strength & Stamina', icon: 'Dumbbell', desc: 'Reduced workout performance, loss of muscle tone, or slower recovery' },
+  { id: 'body_hair_changes', label: 'Body or Facial Hair Growth', icon: 'Flame', desc: 'Slower shaving frequency or thinning body hair' },
+  { id: 'mood_changes', label: 'Mood Shifts & Low Motivation', icon: 'Sparkles', desc: 'Occasional irritability, feeling flat, or difficulty focusing' },
+  { id: 'sleep_quality', label: 'Sleep & Night Restfulness', icon: 'Moon', desc: 'Waking up unrefreshed, frequent interruptions, or restless sleep' },
+];
+
+export const MALE_MEDICATION_FACTORS = [
+  'Prescription Opioids for Pain',
+  'Anabolic Steroids / Testosterone Therapy',
+  'Glucocorticoid / Cortisone Therapy',
+  'None of the above',
+];
+
+export const GENERAL_HEALTH_FOCUS_OPTIONS = [
+  'Daily Energy & Sleep Optimization',
+  'Nutritional & Metabolic Health',
+  'Physical Activity & Recovery',
+  'Organizing Lab Tests & Medical Reports',
+  'Longitudinal Preventive Wellness',
+];
+

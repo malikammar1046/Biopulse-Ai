@@ -45,11 +45,22 @@ export const ReportCard: React.FC<ReportCardProps> = ({
             </div>
           </div>
 
-          <span
-            className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded-full border shrink-0 ${categoryMeta.badgeClass}`}
-          >
-            {categoryMeta.label}
-          </span>
+          <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+            <span
+              className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded-full border ${categoryMeta.badgeClass}`}
+            >
+              {categoryMeta.label}
+            </span>
+            {report.status === 'needs_verification' || (report.results && report.results.some((r) => !r.userVerified)) ? (
+              <span className="text-[10px] font-mono font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                Waiting for confirmation
+              </span>
+            ) : (
+              <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                Verified ✓
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Key Biomarker Quick Snippet Chips */}

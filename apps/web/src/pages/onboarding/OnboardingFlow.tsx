@@ -2,24 +2,27 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, ShieldCheck } from 'lucide-react';
-import { ROUTES } from '../../constants/routes';
+import { getPathwayDashboardRoute } from '../../constants/routes';
 import { useUserHealth } from '../../context/UserHealthContext';
 import type {
   UserProfile,
   MedicalProfile,
   WomensHealthProfile,
+  MensHealthProfile,
+  GeneralHealthProfile,
+  LifestyleProfile,
 } from '../../types/onboarding';
 import { Logo } from '../../components/brand/Logo';
 import { OnboardingProgressBar } from '../../components/onboarding/OnboardingProgressBar';
 import { Step1PersonalInfo } from '../../components/onboarding/Step1PersonalInfo';
 import { Step3MedicalInfo } from '../../components/onboarding/Step3MedicalInfo';
-import { Step4WomensHealth } from '../../components/onboarding/Step4WomensHealth';
+import { Step3AdaptiveHealth } from '../../components/onboarding/Step3AdaptiveHealth';
 import { Step7ProfileComplete } from '../../components/onboarding/Step7ProfileComplete';
 
 const ONBOARDING_STEPS = [
   { number: '1', label: 'Basic Info' },
   { number: '2', label: 'Medical History' },
-  { number: '3', label: 'Period & Cycle' },
+  { number: '3', label: 'Pathway Health' },
   { number: '4', label: 'All Done' },
 ];
 
@@ -39,6 +42,8 @@ export const OnboardingFlow: React.FC = () => {
     email: userProfile.email || '',
     phone: userProfile.phone || '',
     dateOfBirth: userProfile.dateOfBirth || '',
+    gender: userProfile.gender,
+    pathway: userProfile.pathway,
   }));
 
   const validateStep = (step: number): boolean => {
@@ -49,6 +54,7 @@ export const OnboardingFlow: React.FC = () => {
       if (!draftProfile.dateOfBirth) errs.dateOfBirth = 'Date of Birth is required';
       if (!draftProfile.phone.trim()) errs.phone = 'Phone Number is required';
       if (!draftProfile.email.trim()) errs.email = 'Email Address is required';
+      if (!draftProfile.gender) errs.gender = 'Please select your Health Pathway';
     }
 
     setErrors(errs);
@@ -76,7 +82,8 @@ export const OnboardingFlow: React.FC = () => {
     try {
       const res = await completeOnboarding(draftProfile);
       if (res.success) {
-        navigate(ROUTES.APP.DASHBOARD);
+        const targetRoute = getPathwayDashboardRoute(draftProfile);
+        navigate(targetRoute, { replace: true });
       } else {
         setSaveError(res.error || 'Failed to save health profile to database. Please try again.');
         setIsSubmitting(false);
@@ -100,7 +107,7 @@ export const OnboardingFlow: React.FC = () => {
         <Logo size="sm" showTagline tagline="Health Setup" />
 
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-[#B4A6C7]">
-          <ShieldCheck className="w-3.5 h-3.5 text-[#FB7185]" />
+          <ShieldCheck className="w-3.5 h-3.5 text-[#34D399]" />
           <span>Encrypted Profile</span>
         </div>
       </header>
@@ -138,17 +145,30 @@ export const OnboardingFlow: React.FC = () => {
               {currentStep === 2 && (
                 <Step3MedicalInfo
                   data={draftProfile.medical}
+                  lifestyle={draftProfile.lifestyle}
                   onChange={(med: MedicalProfile) =>
                     setDraftProfile((prev) => ({ ...prev, medical: med }))
+                  }
+                  onLifestyleChange={(ls: LifestyleProfile) =>
+                    setDraftProfile((prev) => ({ ...prev, lifestyle: ls }))
                   }
                 />
               )}
 
               {currentStep === 3 && (
-                <Step4WomensHealth
-                  data={draftProfile.womensHealth}
-                  onChange={(wh: WomensHealthProfile) =>
+                <Step3AdaptiveHealth
+                  gender={draftProfile.gender}
+                  womensHealth={draftProfile.womensHealth}
+                  mensHealth={draftProfile.mensHealth}
+                  generalHealth={draftProfile.generalHealth}
+                  onWomensHealthChange={(wh: WomensHealthProfile) =>
                     setDraftProfile((prev) => ({ ...prev, womensHealth: wh }))
+                  }
+                  onMensHealthChange={(mh: MensHealthProfile) =>
+                    setDraftProfile((prev) => ({ ...prev, mensHealth: mh }))
+                  }
+                  onGeneralHealthChange={(gh: GeneralHealthProfile) =>
+                    setDraftProfile((prev) => ({ ...prev, generalHealth: gh }))
                   }
                 />
               )}
@@ -196,9 +216,9 @@ export const OnboardingFlow: React.FC = () => {
         </div>
       </main>
 
-      {/* ── Footer Disclaim ── */}
+      {/* ── Footer Disclaimer ── */}
       <footer className="w-full max-w-4xl mx-auto py-4 text-center text-xs text-[#A797BD] font-mono">
-        <span>© {new Date().getFullYear()} OvaSense AI Health Monitor • Personalized Health Intelligence</span>
+        <span>© {new Date().getFullYear()} VITASense Health Platform • Personalized Healthcare Intelligence</span>
       </footer>
     </div>
   );

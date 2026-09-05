@@ -289,6 +289,109 @@ TEST_DEFINITIONS = [
         "default_unit": "%",
         "explanation": "Average concentration of hemoglobin in a given volume of packed red blood cells.",
     },
+    # Male Endocrine, Hypogonadism & Semen Analysis Parameters
+    {
+        "canonical_name": "SHBG (Sex Hormone-Binding Globulin)",
+        "patterns": [
+            r"\bsex\s*hormone[-\s]*binding\s*globulin\b",
+            r"\bshbg\b",
+            r"\bs-?shbg\b",
+        ],
+        "default_unit": "nmol/L",
+        "reference_range": "10.0 – 57.0 nmol/L",
+        "default_low": 10.0,
+        "default_high": 57.0,
+        "explanation": "Carrier protein produced by the liver that binds testosterone; used to calculate free and bioavailable testosterone.",
+    },
+    {
+        "canonical_name": "Estradiol (E2)",
+        "patterns": [
+            r"\bestradiol\b",
+            r"\be2\b",
+            r"\b17[-\s]*beta[-\s]*estradiol\b",
+            r"\bserum\s*estradiol\b",
+        ],
+        "default_unit": "pg/mL",
+        "reference_range": "10.0 – 40.0 pg/mL",
+        "default_low": 10.0,
+        "default_high": 40.0,
+        "explanation": "Primary active estrogen; in men, evaluates the peripheral aromatization of testosterone.",
+    },
+    {
+        "canonical_name": "PSA (Prostate-Specific Antigen)",
+        "patterns": [
+            r"\bprostate[-\s]*specific\s*antigen\b",
+            r"\bpsa\s*(?:total)?\b",
+            r"\btotal\s*psa\b",
+            r"\bs-?psa\b",
+        ],
+        "default_unit": "ng/mL",
+        "reference_range": "< 4.0 ng/mL",
+        "default_low": 0.0,
+        "default_high": 4.0,
+        "explanation": "Prostate gland glycoprotein; monitored before and during endocrine evaluations.",
+    },
+    {
+        "canonical_name": "Semen Volume",
+        "patterns": [
+            r"\bsemen\s*volume\b",
+            r"\bejaculate\s*volume\b",
+            r"\bvolume\s*of\s*semen\b",
+        ],
+        "default_unit": "mL",
+        "reference_range": "≥ 1.5 mL",
+        "default_low": 1.5,
+        "explanation": "Total liquid volume of fluid collected during semen analysis.",
+    },
+    {
+        "canonical_name": "Sperm Concentration",
+        "patterns": [
+            r"\bsperm\s*concentration\b",
+            r"\bsperm\s*count\b",
+            r"\bsperm\s*density\b",
+        ],
+        "default_unit": "million/mL",
+        "reference_range": "≥ 15.0 million/mL",
+        "default_low": 15.0,
+        "explanation": "Total number of sperm cells per milliliter of semen fluid.",
+    },
+    {
+        "canonical_name": "Total Sperm Motility",
+        "patterns": [
+            r"\btotal\s*motility\b",
+            r"\bsperm\s*motility\b",
+            r"\bmotility\s*(?:total|pr\s*\+\s*np)?\b",
+        ],
+        "default_unit": "%",
+        "reference_range": "≥ 40 %",
+        "default_low": 40.0,
+        "explanation": "Percentage of sperm displaying progressive and non-progressive movement.",
+    },
+    {
+        "canonical_name": "Normal Sperm Morphology",
+        "patterns": [
+            r"\b(?:normal\s*)?sperm\s*morphology\b",
+            r"\bnormal\s*forms\b",
+            r"\bkruger\s*strict\b",
+        ],
+        "default_unit": "%",
+        "reference_range": "≥ 4 %",
+        "default_low": 4.0,
+        "explanation": "Percentage of sperm cells exhibiting normal head, midpiece, and tail dimensions.",
+    },
+    {
+        "canonical_name": "Testosterone Draw Time",
+        "patterns": [
+            r"\b(?:blood|sample|draw|collection)\s*time\b",
+            r"\btime\s*of\s*collection\b",
+            r"\btime\s*of\s*draw\b",
+            r"\bdraw\s*time\b",
+            r"\bcollection\s*time\b",
+        ],
+        "default_unit": "time",
+        "reference_range": "07:00 – 10:00 AM",
+        "explanation": "Clock time of morning blood collection; clinical guidelines require testosterone draw between 7:00 and 10:00 AM.",
+    },
 ]
 
 
@@ -325,16 +428,16 @@ def parse_reference_range(range_str: str) -> Tuple[Optional[float], Optional[flo
         except ValueError:
             pass
 
-    # Handle upper bound: '< 5.7' or '< 2'
-    upper_match = re.search(r"[<≤]\s*((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?)", range_str)
+    # Handle upper bound: '< 5.7', '<= 2', or '< 2'
+    upper_match = re.search(r"[<≤]=?\s*((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?)", range_str)
     if upper_match:
         try:
             return 0.0, float(upper_match.group(1).replace(",", ""))
         except ValueError:
             pass
 
-    # Handle lower bound: '> 30.0' or '>= 30'
-    lower_match = re.search(r"[>≥]\s*((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?)", range_str)
+    # Handle lower bound: '> 30.0', '>= 30', or '≥ 1.5'
+    lower_match = re.search(r"[>≥]=?\s*((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?)", range_str)
     if lower_match:
         try:
             return float(lower_match.group(1).replace(",", "")), None
@@ -479,17 +582,50 @@ class MedicalReportParser:
         """
         # 1. Detect unit in primary text; if not detected, use test's standard unit
         unit = test_defn["default_unit"]
-        unit_pattern = r"\b(mIU/mL|IU/L|ng/dL|ng/mL|pg/mL|ug/dL|uIU/mL|mg/dL|mmol/L|pmol/L|%|g/dL|g/dl|cumm|lakhs/cumm|million/cumm|fL|fl|Pg|pg)\b"
+        unit_pattern = r"\b(mIU/mL|IU/L|ng/dL|ng/mL|pg/mL|ug/dL|uIU/mL|mg/dL|mmol/L|pmol/L|nmol/L|million/mL|M/mL|mL|ml|%|g/dL|g/dl|cumm|lakhs/cumm|million/cumm|fL|fl|Pg|pg)\b"
         unit_match = re.search(unit_pattern, primary_text, re.IGNORECASE)
         if unit_match:
             unit = unit_match.group(1)
 
+        # Handle time-based parameters (e.g. Morning Testosterone Draw Time)
+        if test_defn.get("default_unit") == "time":
+            time_pat = r"\b((?:0?[1-9]|1[0-2]):[0-5]\d(?:\s*[AaPp][Mm])?|(?:[01]?\d|2[0-3]):[0-5]\d(?:\s*hrs?)?)\b"
+            time_match = re.search(time_pat, primary_text) or re.search(time_pat, window_text)
+            if time_match:
+                result_val = time_match.group(1).strip()
+                # Evaluate if drawn during optimal morning window (07:00 - 10:00 AM)
+                h_match = re.match(r"^0?([1-9]|1[0-2]):([0-5]\d)(?:\s*([AaPp][Mm]))?", result_val)
+                time_status = "within_range"
+                if h_match:
+                    h = int(h_match.group(1))
+                    meridiem = (h_match.group(3) or "AM").upper()
+                    if meridiem == "PM" or h < 7 or (h >= 10 and h != 12):
+                        time_status = "outside_range"
+
+                return ParsedTestResult(
+                    test_name=test_defn["canonical_name"],
+                    result_value=result_val,
+                    result_numeric=None,
+                    unit="time",
+                    reference_range=test_defn.get("reference_range", "07:00 – 10:00 AM"),
+                    reference_low=None,
+                    reference_high=None,
+                    status=time_status,
+                    confidence=round(base_confidence, 2),
+                    source_text=primary_text[:140],
+                    extraction_method=extraction_method,
+                    page_number=page_number,
+                    requires_review=(time_status != "within_range"),
+                    explanation=test_defn["explanation"],
+                )
+            return None
+
         # 2. Detect reference range in primary or window text
-        ref_pattern = r"(?:ref(?:erence)?\s*(?:range)?|normal\s*range|interval)?\s*[:=]?\s*([<>]?\s*(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?\s*(?:-|–|—|to)\s*(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?|[<≤>≥]\s*(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?)"
+        ref_pattern = r"(?:ref(?:erence)?\s*(?:range)?|normal\s*range|interval)?\s*[:=]?\s*([<>]?\s*(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?\s*(?:-|–|—|to)\s*(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?|[<≤>≥]=?\s*(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?)"
         ref_match = re.search(ref_pattern, primary_text, re.IGNORECASE) or re.search(ref_pattern, window_text, re.IGNORECASE)
 
         range_numbers: set[float] = set()
-        if ref_match and ("-" in ref_match.group(1) or "–" in ref_match.group(1) or "to" in ref_match.group(1) or "<" in ref_match.group(1) or ">" in ref_match.group(1)):
+        if ref_match and ("-" in ref_match.group(1) or "–" in ref_match.group(1) or "to" in ref_match.group(1) or "<" in ref_match.group(1) or ">" in ref_match.group(1) or "≤" in ref_match.group(1) or "≥" in ref_match.group(1)):
             reference_range = ref_match.group(1).strip()
             low, high = parse_reference_range(reference_range)
             if low is not None:

@@ -1,14 +1,29 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, User, ArrowRight, Loader2, Sparkles, CheckCircle2, ShieldCheck, Calendar } from 'lucide-react';
+import {
+  Mail,
+  User,
+  ArrowRight,
+  ArrowLeft,
+  Loader2,
+  Sparkles,
+  CheckCircle2,
+  ShieldCheck,
+  Calendar,
+  Heart,
+  Activity,
+  Compass,
+  Check,
+} from 'lucide-react';
 import { AuthShell } from '../../components/auth/AuthShell';
 import { AuthCard } from '../../components/auth/AuthCard';
 import { AuthField } from '../../components/auth/AuthField';
 import { PasswordInput } from '../../components/auth/PasswordInput';
 import { GoogleAuthButton } from '../../components/auth/GoogleAuthButton';
 import { useAuth } from '../../context/AuthContext';
-import { ROUTES } from '../../constants/routes';
+import { ROUTES, getPathwayOnboardingRoute } from '../../constants/routes';
+import type { HealthPathway, UserGender } from '../../types/onboarding';
 
 interface FormErrors {
   fullName?: string;
@@ -16,6 +31,7 @@ interface FormErrors {
   password?: string;
   confirmPassword?: string;
   consent?: string;
+  pathway?: string;
   general?: string;
 }
 
@@ -23,6 +39,10 @@ export const Register: React.FC = () => {
   const navigate = useNavigate();
   const { register, loginWithGoogle } = useAuth();
 
+  // Step state: 1 = credentials, 2 = pathway selection
+  const [step, setStep] = useState<'credentials' | 'pathway'>('credentials');
+
+  // Step 1: Account credentials
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -30,13 +50,16 @@ export const Register: React.FC = () => {
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [consent, setConsent] = useState(false);
 
+  // Step 2: Pathway selection
+  const [selectedPathway, setSelectedPathway] = useState<HealthPathway>('female');
+
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSuccess, setIsSuccess] = useState(false);
   const [emailConfirmReq, setEmailConfirmReq] = useState(false);
 
-  const validateForm = (): boolean => {
+  const validateCredentials = (): boolean => {
     const nextErrors: FormErrors = {};
 
     if (!fullName.trim()) {
@@ -60,18 +83,32 @@ export const Register: React.FC = () => {
     }
 
     if (!consent) {
-      nextErrors.consent = 'Please acknowledge that OVASense provides health guidance and does not replace medical advice.';
+      nextErrors.consent = 'Please acknowledge that VITASense provides health guidance and does not replace medical advice.';
     }
 
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleContinueToPathway = (e: React.FormEvent) => {
     e.preventDefault();
+    if (validateCredentials()) {
+      setErrors({});
+      setStep('pathway');
+    }
+  };
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setErrors({});
 
-    if (!validateForm()) return;
+    if (!selectedPathway) {
+      setErrors({ pathway: 'Please select a health pathway to personalize your experience.' });
+      return;
+    }
+
+    const derivedGender: UserGender =
+      selectedPathway === 'female' ? 'female' : selectedPathway === 'male' ? 'male' : 'other';
 
     setLoading(true);
     try {
@@ -81,6 +118,8 @@ export const Register: React.FC = () => {
         password,
         dateOfBirth: dateOfBirth || undefined,
         consent,
+        pathway: selectedPathway,
+        gender: derivedGender,
       });
 
       if (!res.success) {
@@ -88,9 +127,16 @@ export const Register: React.FC = () => {
         return;
       }
 
-      setIsSuccess(true);
       if (res.emailConfirmationRequired) {
+        setIsSuccess(true);
         setEmailConfirmReq(true);
+      } else {
+        // Direct seamless navigation to the selected pathway's onboarding journey
+        const targetOnboarding = getPathwayOnboardingRoute({
+          pathway: selectedPathway,
+          gender: derivedGender,
+        });
+        navigate(targetOnboarding, { replace: true });
       }
     } catch (err: any) {
       setErrors({
@@ -125,36 +171,48 @@ export const Register: React.FC = () => {
 
   return (
     <AuthShell
-      headlineLine1="A new standard for"
-      headlineLine2="women's hormonal health."
-      supportingCopy="Create your private, clinically grounded health record. Track cycles, log symptoms, and understand biological trends."
+      headlineLine1="A unified standard for"
+      headlineLine2="specialized health intelligence."
+      supportingCopy="Create your private, clinically grounded health record across specialized women's, men's, or baseline health pathways."
       identityTag="Personal Health Intelligence"
     >
       <AuthCard
-        heading={!isSuccess ? 'Create your account' : undefined}
-        subheading={!isSuccess ? 'Start your OVASense journey.' : undefined}
+        heading={
+          !isSuccess
+            ? step === 'credentials'
+              ? 'Create your account'
+              : 'Choose your health pathway'
+            : undefined
+        }
+        subheading={
+          !isSuccess
+            ? step === 'credentials'
+              ? 'Start your VITASense journey.'
+              : 'Select the companion and screening focus tailored to you.'
+            : undefined
+        }
         headerAccessory={
           !isSuccess ? (
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EDE4F7]/10 border border-[#8E3EAF]/30 text-xs text-[#D8B4FE]">
               <Sparkles className="w-3.5 h-3.5 text-[#E87084]" />
-              <span>Personalized Health Pattern Intelligence</span>
+              <span>Step {step === 'credentials' ? '1 of 2' : '2 of 2'}</span>
             </div>
           ) : undefined
         }
       >
         <AnimatePresence mode="wait">
-          {!isSuccess ? (
+          {!isSuccess && step === 'credentials' && (
+            /* ── Step 1: Basic Account Information ── */
             <motion.form
-              key="register-form"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-              onSubmit={handleSubmit}
+              key="step-credentials"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              transition={{ duration: 0.25 }}
+              onSubmit={handleContinueToPathway}
               noValidate
-              className="space-y-4"
+              className="space-y-4 text-left"
             >
-              {/* General Error Banner */}
               {errors.general && (
                 <div className="p-3 rounded-2xl bg-[#E87084]/15 border border-[#E87084]/40 text-xs text-[#F48498]">
                   {errors.general}
@@ -175,7 +233,7 @@ export const Register: React.FC = () => {
                   setFullName(e.target.value);
                   if (errors.fullName) setErrors((prev) => ({ ...prev, fullName: undefined }));
                 }}
-                leftAccessory={<User className="w-4 h-4" />}
+                leftAccessory={<User className="w-4 h-4 text-[#B4A6C7]" />}
               />
 
               {/* Email Address */}
@@ -193,7 +251,7 @@ export const Register: React.FC = () => {
                   setEmail(e.target.value);
                   if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
                 }}
-                leftAccessory={<Mail className="w-4 h-4" />}
+                leftAccessory={<Mail className="w-4 h-4 text-[#B4A6C7]" />}
               />
 
               {/* Password with Strength Indicator */}
@@ -235,7 +293,7 @@ export const Register: React.FC = () => {
                 optional
                 value={dateOfBirth}
                 onChange={(e) => setDateOfBirth(e.target.value)}
-                leftAccessory={<Calendar className="w-4 h-4" />}
+                leftAccessory={<Calendar className="w-4 h-4 text-[#B4A6C7]" />}
                 helperText="Optional. Medical information is never mandatory during account creation."
               />
 
@@ -260,7 +318,7 @@ export const Register: React.FC = () => {
                       className="mt-0.5 w-4 h-4 rounded bg-[#140924] border border-[#8E3EAF]/50 text-[#8E3EAF] focus:ring-2 focus:ring-[#8E3EAF]/30 cursor-pointer accent-[#8E3EAF] shrink-0"
                     />
                     <span className="leading-relaxed">
-                      I understand that OVASense provides AI-assisted health information and monitoring and does not replace professional medical care.
+                      I understand that VITASense provides AI-assisted health screening and educational insights and does not replace professional medical care.
                     </span>
                   </label>
                 </div>
@@ -271,30 +329,20 @@ export const Register: React.FC = () => {
                 )}
               </div>
 
-              {/* Primary CTA Button */}
+              {/* Continue to Step 2 Button */}
               <div className="pt-2">
                 <motion.button
                   type="submit"
-                  disabled={loading || googleLoading}
-                  whileHover={!loading && !googleLoading ? { y: -2, boxShadow: '0 10px 25px -5px rgba(162, 28, 175, 0.4)' } : undefined}
-                  whileTap={!loading && !googleLoading ? { scale: 0.98 } : undefined}
-                  className="w-full min-h-[48px] px-6 py-3 rounded-2xl font-sans font-semibold text-sm text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#A21CAF] border border-[#8E3EAF]/40 hover:brightness-110 shadow-lg shadow-purple-950/40 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                  whileHover={{ y: -2, boxShadow: '0 10px 25px -5px rgba(162, 28, 175, 0.4)' }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full min-h-[48px] px-6 py-3 rounded-2xl font-sans font-semibold text-sm text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#A21CAF] border border-[#8E3EAF]/40 hover:brightness-110 shadow-lg shadow-purple-950/40 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin text-white" />
-                      <span>Creating Account...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Create Account</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
+                  <span>Continue to Pathway Selection</span>
+                  <ArrowRight className="w-4 h-4" />
                 </motion.button>
               </div>
 
-              {/* Visual Divider: ──────── OR ──────── */}
+              {/* Visual Divider */}
               <div className="relative my-5 flex items-center justify-center">
                 <div className="w-full border-t border-[#8E3EAF]/25" />
                 <span className="absolute bg-[#180A26] px-3 text-[11px] font-semibold text-[#B4A6C7] tracking-wider uppercase">
@@ -302,7 +350,7 @@ export const Register: React.FC = () => {
                 </span>
               </div>
 
-              {/* Google OAuth Button */}
+              {/* Google OAuth */}
               <div>
                 <GoogleAuthButton
                   onClick={handleGoogleSignIn}
@@ -324,8 +372,210 @@ export const Register: React.FC = () => {
                 </Link>
               </div>
             </motion.form>
-          ) : (
-            /* ── Premium Animated Registration Success State ── */
+          )}
+
+          {!isSuccess && step === 'pathway' && (
+            /* ── Step 2: Pathway Selection ── */
+            <motion.div
+              key="step-pathway"
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+              transition={{ duration: 0.25 }}
+              className="space-y-4 text-left"
+            >
+              {/* Informative Guidance */}
+              <div className="p-3.5 rounded-2xl bg-[#12071F]/80 border border-[#8E3EAF]/30 space-y-1">
+                <p className="text-xs text-[#EDE4F7] font-medium leading-relaxed">
+                  We’ll use your selection to personalize your onboarding and health experience. You can explore information and screening tools relevant to your pathway.
+                </p>
+                <p className="text-[11px] text-[#A797BD]">
+                  This determines your specialized dashboard and educational focus. It is not a medical diagnosis.
+                </p>
+              </div>
+
+              {errors.general && (
+                <div className="p-3 rounded-2xl bg-[#E87084]/15 border border-[#E87084]/40 text-xs text-[#F48498]">
+                  {errors.general}
+                </div>
+              )}
+
+              {/* Pathway Selection Cards */}
+              <div className="space-y-3 pt-1">
+                {/* 1. Women's Health (OvaSense AI) */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedPathway('female')}
+                  className={`w-full text-left p-4 rounded-2xl border transition-all cursor-pointer flex items-start justify-between gap-3 ${
+                    selectedPathway === 'female'
+                      ? 'bg-gradient-to-r from-[#6E2D8B]/40 to-[#8E3EAF]/30 border-[#FB7185] ring-1 ring-[#FB7185]/50 shadow-md shadow-purple-950/40'
+                      : 'bg-[#180A26]/80 border-white/10 hover:border-[#8E3EAF]/50 hover:bg-white/[0.04]'
+                  }`}
+                >
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                        selectedPathway === 'female'
+                          ? 'bg-gradient-to-br from-[#FB7185] to-[#E87084] text-white shadow-md'
+                          : 'bg-white/10 text-[#CDBDD8]'
+                      }`}
+                    >
+                      <Heart className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono uppercase tracking-wider text-[#FB7185] font-bold">
+                          Women's Health
+                        </span>
+                        <span className="text-sm font-bold text-white font-display">
+                          OvaSense AI
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#CDBDD8] mt-1 leading-relaxed">
+                        Understand and monitor women's reproductive and metabolic health, PCOS screening, and cycle patterns.
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
+                      selectedPathway === 'female'
+                        ? 'border-[#FB7185] bg-[#FB7185] text-white'
+                        : 'border-white/30 bg-transparent'
+                    }`}
+                  >
+                    {selectedPathway === 'female' && <Check className="w-3 h-3 stroke-[3]" />}
+                  </div>
+                </button>
+
+                {/* 2. Men's Health (AndroSense AI) */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedPathway('male')}
+                  className={`w-full text-left p-4 rounded-2xl border transition-all cursor-pointer flex items-start justify-between gap-3 ${
+                    selectedPathway === 'male'
+                      ? 'bg-gradient-to-r from-[#1E293B]/60 to-[#334155]/40 border-[#38BDF8] ring-1 ring-[#38BDF8]/50 shadow-md shadow-sky-950/40'
+                      : 'bg-[#180A26]/80 border-white/10 hover:border-[#38BDF8]/50 hover:bg-white/[0.04]'
+                  }`}
+                >
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                        selectedPathway === 'male'
+                          ? 'bg-gradient-to-br from-[#38BDF8] to-[#0284C7] text-white shadow-md'
+                          : 'bg-white/10 text-[#CDBDD8]'
+                      }`}
+                    >
+                      <Activity className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono uppercase tracking-wider text-[#38BDF8] font-bold">
+                          Men's Health
+                        </span>
+                        <span className="text-sm font-bold text-white font-display">
+                          AndroSense AI
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#CDBDD8] mt-1 leading-relaxed">
+                        Understand and monitor men's reproductive and hormone-related health, vitality, and hypogonadism screening.
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
+                      selectedPathway === 'male'
+                        ? 'border-[#38BDF8] bg-[#38BDF8] text-white'
+                        : 'border-white/30 bg-transparent'
+                    }`}
+                  >
+                    {selectedPathway === 'male' && <Check className="w-3 h-3 stroke-[3]" />}
+                  </div>
+                </button>
+
+                {/* 3. General Health (VITASense) */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedPathway('general')}
+                  className={`w-full text-left p-4 rounded-2xl border transition-all cursor-pointer flex items-start justify-between gap-3 ${
+                    selectedPathway === 'general'
+                      ? 'bg-gradient-to-r from-[#14532D]/40 to-[#166534]/30 border-[#34D399] ring-1 ring-[#34D399]/50 shadow-md shadow-emerald-950/40'
+                      : 'bg-[#180A26]/80 border-white/10 hover:border-[#34D399]/50 hover:bg-white/[0.04]'
+                  }`}
+                >
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                        selectedPathway === 'general'
+                          ? 'bg-gradient-to-br from-[#34D399] to-[#059669] text-white shadow-md'
+                          : 'bg-white/10 text-[#CDBDD8]'
+                      }`}
+                    >
+                      <Compass className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono uppercase tracking-wider text-[#34D399] font-bold">
+                          General Health
+                        </span>
+                        <span className="text-sm font-bold text-white font-display">
+                          VITASense
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#CDBDD8] mt-1 leading-relaxed">
+                        Start with a broader baseline health experience, lifestyle tracking, nutrition, and wellness monitoring.
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
+                      selectedPathway === 'general'
+                        ? 'border-[#34D399] bg-[#34D399] text-white'
+                        : 'border-white/30 bg-transparent'
+                    }`}
+                  >
+                    {selectedPathway === 'general' && <Check className="w-3 h-3 stroke-[3]" />}
+                  </div>
+                </button>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-3 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setStep('credentials')}
+                  disabled={loading}
+                  className="px-4 py-3 rounded-2xl border border-white/15 text-xs text-[#CDBDD8] hover:text-white hover:bg-white/5 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Back</span>
+                </button>
+
+                <motion.button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => handleSubmit()}
+                  whileHover={!loading ? { y: -2, boxShadow: '0 10px 25px -5px rgba(162, 28, 175, 0.4)' } : undefined}
+                  whileTap={!loading ? { scale: 0.98 } : undefined}
+                  className="flex-1 min-h-[48px] px-6 py-3 rounded-2xl font-sans font-semibold text-sm text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#A21CAF] border border-[#8E3EAF]/40 hover:brightness-110 shadow-lg shadow-purple-950/40 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                      <span>Creating Account...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Create Account & Start Onboarding</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+
+          {isSuccess && (
+            /* ── Registration Success State (e.g. Email Confirmation Required) ── */
             <motion.div
               key="register-success"
               initial={{ opacity: 0, scale: 0.94 }}
@@ -333,7 +583,6 @@ export const Register: React.FC = () => {
               transition={{ duration: 0.5, ease: 'easeOut' }}
               className="text-center py-6 sm:py-8 space-y-6"
             >
-              {/* Animated Checkmark Circle */}
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
@@ -345,7 +594,7 @@ export const Register: React.FC = () => {
 
               <div className="space-y-2.5">
                 <h2 className="text-2xl sm:text-3xl font-bold font-display text-white tracking-tight">
-                  {emailConfirmReq ? 'Confirm your email.' : 'Welcome to OVASense.'}
+                  {emailConfirmReq ? 'Confirm your email.' : 'Welcome to VITASense.'}
                 </h2>
                 <p className="text-sm sm:text-base text-[#EDE4F7] max-w-xs mx-auto leading-relaxed">
                   {emailConfirmReq
@@ -354,41 +603,40 @@ export const Register: React.FC = () => {
                 </p>
               </div>
 
-              {/* Informative Micro Badges */}
+              {/* Pathway confirmation tag */}
               <div className="p-4 rounded-2xl bg-[#12071F]/80 border border-[#8E3EAF]/30 text-left space-y-2 text-xs text-[#B4A6C7]">
                 <div className="flex items-center gap-2 text-[#EDE4F7] font-semibold">
                   <ShieldCheck className="w-4 h-4 text-[#34D399]" />
-                  <span>Secure Profile Initialized</span>
+                  <span>
+                    {selectedPathway === 'female'
+                      ? 'OvaSense AI Pathway Assigned'
+                      : selectedPathway === 'male'
+                      ? 'AndroSense AI Pathway Assigned'
+                      : 'VITASense Baseline Pathway Assigned'}
+                  </span>
                 </div>
                 <p className="text-[11px] leading-relaxed">
-                  Your encrypted health record has been provisioned in Supabase with Row Level Security (RLS).
+                  Your encrypted health record has been initialized with your personalized companion.
                 </p>
               </div>
 
               {/* Continue CTA */}
-              {emailConfirmReq ? (
-                <motion.button
-                  type="button"
-                  whileHover={{ y: -2, boxShadow: '0 10px 25px -5px rgba(162, 28, 175, 0.4)' }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => navigate(ROUTES.LOGIN)}
-                  className="w-full min-h-[48px] px-6 py-3.5 rounded-2xl font-sans font-semibold text-sm text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#A21CAF] border border-[#8E3EAF]/40 hover:brightness-110 shadow-lg shadow-purple-950/40 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <span>Proceed to Log In</span>
-                  <ArrowRight className="w-4 h-4" />
-                </motion.button>
-              ) : (
-                <motion.button
-                  type="button"
-                  whileHover={{ y: -2, boxShadow: '0 10px 25px -5px rgba(162, 28, 175, 0.4)' }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => navigate(ROUTES.ONBOARDING)}
-                  className="w-full min-h-[48px] px-6 py-3.5 rounded-2xl font-sans font-semibold text-sm text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#A21CAF] border border-[#8E3EAF]/40 hover:brightness-110 shadow-lg shadow-purple-950/40 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <span>Complete Health Profile</span>
-                  <ArrowRight className="w-4 h-4" />
-                </motion.button>
-              )}
+              <motion.button
+                type="button"
+                whileHover={{ y: -2, boxShadow: '0 10px 25px -5px rgba(162, 28, 175, 0.4)' }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() =>
+                  navigate(
+                    emailConfirmReq
+                      ? ROUTES.LOGIN
+                      : getPathwayOnboardingRoute({ pathway: selectedPathway })
+                  )
+                }
+                className="w-full min-h-[48px] px-6 py-3.5 rounded-2xl font-sans font-semibold text-sm text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#A21CAF] border border-[#8E3EAF]/40 hover:brightness-110 shadow-lg shadow-purple-950/40 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>{emailConfirmReq ? 'Proceed to Log In' : 'Begin Personalized Onboarding'}</span>
+                <ArrowRight className="w-4 h-4" />
+              </motion.button>
             </motion.div>
           )}
         </AnimatePresence>
@@ -396,3 +644,5 @@ export const Register: React.FC = () => {
     </AuthShell>
   );
 };
+
+export default Register;

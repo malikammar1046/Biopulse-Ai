@@ -16,6 +16,7 @@ import {
 import { useUserHealth } from '../../context/UserHealthContext';
 import { sendChatMessage } from '../../services/intelligenceService';
 import { DigitalTwinService } from '../../services/digitalTwinService';
+import { resolvePathway } from '../../types/onboarding';
 import type { ChatSafetyLevel } from '../../types/intelligence';
 
 interface LocalMessage {
@@ -59,8 +60,8 @@ const SUGGESTED_QUESTIONS = [
     category: 'Doctor Discussion',
     icon: Stethoscope,
     prompts: [
-      'What key questions should I prepare for my next gynecologist appointment?',
-      'How can I discuss my cycle tracking logs with my care team?',
+      'What key questions should I prepare for my next doctor appointment?',
+      'How can I discuss my screening logs with my care team?',
     ],
   },
 ];
@@ -79,6 +80,10 @@ export const ChatPage: React.FC = () => {
     mlAssessment,
     snapshotMetrics,
   } = useUserHealth();
+
+  const pathway = resolvePathway(userProfile.gender, userProfile.pathway);
+  const aiBrandName =
+    pathway === 'male' ? 'AndroSense AI' : pathway === 'female' ? 'OvaSense AI' : 'VITASense AI';
 
   const conversationId = useRef<string>(
     typeof crypto !== 'undefined' && crypto.randomUUID
@@ -126,10 +131,12 @@ export const ChatPage: React.FC = () => {
     sender: 'ai',
     text: `Hello ${
       userProfile.fullName ? userProfile.fullName.split(' ')[0] : 'there'
-    }! I am OvaSense AI, your health literacy and pattern explanation companion. ${
-      snapshotMetrics.cycleDay > 0
+    }! I am ${aiBrandName}, your health literacy and pattern explanation companion. ${
+      pathway === 'female' && snapshotMetrics.cycleDay > 0
         ? `Observations from your Digital Twin show you are currently on Day ${snapshotMetrics.cycleDay} (${snapshotMetrics.phaseName}).`
-        : 'I am here to help you explore your cycle, verified lab markers, and lifestyle insights.'
+        : pathway === 'male'
+        ? 'I am here to help you explore hormonal vitality, male health screening patterns, and verified lab markers.'
+        : 'I am here to help you explore your baseline health patterns, verified lab markers, and lifestyle insights.'
     } What would you like to explore today?`,
     timestamp: 'Just now',
     safetyLevel: 'normal',
@@ -234,7 +241,7 @@ export const ChatPage: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-lg sm:text-xl font-extrabold font-display text-white">
-                OvaSense AI
+                {aiBrandName}
               </h1>
               <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-[10px] font-mono text-emerald-300 font-bold">
                 Connected
@@ -270,9 +277,9 @@ export const ChatPage: React.FC = () => {
       </div>
 
       {/* ── Main Chat Area ── */}
-      <div className="flex-1 flex flex-col rounded-[28px] bg-white/[0.02] border border-white/10 shadow-lg overflow-hidden relative">
+      <div className="flex-1 flex flex-col rounded-[32px] bg-white border border-[#E7DFEF] shadow-sm overflow-hidden relative">
         {/* Messages Stream */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-[#FCFBFD]">
           {messages.map((msg) => (
             <div
               key={msg.id}
@@ -280,40 +287,51 @@ export const ChatPage: React.FC = () => {
                 msg.sender === 'user' ? 'items-end' : 'items-start'
               }`}
             >
-              <div
-                className={`max-w-[85%] sm:max-w-[75%] rounded-3xl p-4 text-sm leading-relaxed ${
-                  msg.sender === 'user'
-                    ? 'bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF] text-white shadow-md rounded-br-none'
-                    : 'bg-[#180C28]/90 border border-white/10 text-[#F1E8F8] shadow-md rounded-bl-none'
-                }`}
-              >
-                {/* Clinician Referral Alert Flag */}
-                {msg.needsClinician && (
-                  <div className="mb-2 p-2.5 rounded-xl bg-rose-500/20 border border-rose-500/40 text-xs text-rose-200 flex items-start gap-2 font-sans">
-                    <Stethoscope className="w-4 h-4 text-[#FB7185] shrink-0 mt-0.5" />
-                    <span>
-                      <strong>Clinical Evaluation Advised:</strong> Please consult your licensed healthcare provider for individualized care.
-                    </span>
+              {msg.sender === 'user' ? (
+                <div className="max-w-[85%] sm:max-w-[75%] rounded-3xl rounded-tr-xs p-4 bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF] text-white shadow-sm space-y-1">
+                  <p className="whitespace-pre-wrap font-sans text-xs sm:text-sm leading-relaxed text-white">{msg.text}</p>
+                  <div className="flex items-center justify-end text-[10px] font-mono text-purple-200/80 pt-0.5">
+                    <span>{msg.timestamp}</span>
                   </div>
-                )}
-
-                {/* Message text with whitespace preservation */}
-                <p className="whitespace-pre-wrap font-sans">{msg.text}</p>
-
-                <div className="mt-2 flex items-center justify-end gap-1.5 text-[10px] font-mono text-[#A898BC]">
-                  <span>{msg.timestamp}</span>
                 </div>
-              </div>
+              ) : (
+                <div className="flex items-start gap-2.5 max-w-[88%] sm:max-w-[80%]">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#6E2D8B] via-[#8E3EAF] to-[#FB7185] flex items-center justify-center text-white shadow-xs shrink-0 mt-0.5">
+                    <Sparkles className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="rounded-3xl rounded-tl-xs p-4 sm:p-5 bg-white border border-[#E7DFEF] text-[#1C1326] shadow-xs space-y-2">
+                    {/* Clinician Referral Alert Flag */}
+                    {msg.needsClinician && (
+                      <div className="p-2.5 rounded-xl bg-[#FFF1F2] border border-[#FDA4AF] text-xs text-[#BE123C] flex items-start gap-2 font-sans">
+                        <Stethoscope className="w-4 h-4 text-[#BE123C] shrink-0 mt-0.5" />
+                        <span>
+                          <strong>Clinical Evaluation Advised:</strong> Please consult your licensed healthcare provider for individualized care.
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Message text with whitespace preservation */}
+                    <p className="whitespace-pre-wrap font-sans text-xs sm:text-sm leading-relaxed text-[#1C1326]">{msg.text}</p>
+
+                    <div className="flex items-center justify-end text-[10px] font-mono text-[#8D7E9E] pt-1">
+                      <span>{msg.timestamp}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
 
           {/* Shimmering Typing Indicator */}
           {isTyping && (
-            <div className="flex items-start">
-              <div className="rounded-3xl p-4 bg-[#180C28]/90 border border-white/10 rounded-bl-none flex items-center gap-3">
-                <Loader2 className="w-4 h-4 text-[#FB7185] animate-spin" />
-                <span className="text-xs text-[#CDBDD8] font-sans">
-                  OvaSense AI is consulting your Digital Twin observations...
+            <div className="flex items-start gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#6E2D8B] via-[#8E3EAF] to-[#FB7185] flex items-center justify-center text-white shadow-xs shrink-0 mt-0.5">
+                <Sparkles className="w-4 h-4 text-white" />
+              </div>
+              <div className="rounded-3xl rounded-tl-xs p-3.5 sm:p-4 bg-white border border-[#E7DFEF] shadow-xs flex items-center gap-2.5 text-[#584B68]">
+                <Loader2 className="w-4 h-4 text-[#8E3EAF] animate-spin" />
+                <span className="text-xs font-sans">
+                  {aiBrandName} is consulting your Digital Twin observations...
                 </span>
               </div>
             </div>
@@ -321,20 +339,20 @@ export const ChatPage: React.FC = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* ── Suggested Questions Carousel / Grid (Collapsible) ── */}
-        <div className="border-t border-white/10 p-3 sm:p-4 bg-[#12071F]/70">
-          <div className="text-[11px] font-mono text-[#A898BC] uppercase mb-2 flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-[#FB7185]" />
+        {/* ── Suggested Questions Carousel / Grid (No Windows Native Scrollbar) ── */}
+        <div className="border-t border-[#E7DFEF] p-3 sm:p-4 bg-white/95">
+          <div className="text-[11px] font-mono text-[#6E2D8B] uppercase font-bold mb-2 flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-[#8E3EAF]" />
             <span>Suggested Inquiries</span>
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
-            {SUGGESTED_QUESTIONS.flatMap((cat) => cat.prompts).slice(0, 4).map((prompt, idx) => (
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {SUGGESTED_QUESTIONS.flatMap((cat) => cat.prompts).slice(0, 5).map((prompt, idx) => (
               <button
                 key={idx}
                 type="button"
                 onClick={() => handleSendMessage(prompt)}
-                className="shrink-0 px-3.5 py-1.5 rounded-full bg-white/[0.05] hover:bg-white/10 border border-white/10 text-xs text-[#E3D5EE] transition-all cursor-pointer"
+                className="shrink-0 px-3.5 py-1.5 rounded-full bg-[#FAF5FF] hover:bg-[#F3E8FF] border border-[#E9D5FF] text-xs font-semibold text-[#6E2D8B] transition-all cursor-pointer shadow-2xs hover:shadow-xs"
               >
                 {prompt}
               </button>
@@ -343,7 +361,7 @@ export const ChatPage: React.FC = () => {
         </div>
 
         {/* ── Input Bar ── */}
-        <div className="p-3 sm:p-4 border-t border-white/10 bg-[#160924]">
+        <div className="p-3 sm:p-4 border-t border-[#E7DFEF] bg-white">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -355,21 +373,21 @@ export const ChatPage: React.FC = () => {
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder="Ask OvaSense AI about your cycle, symptoms, lab reports, or nutrition..."
+              placeholder={`Ask ${aiBrandName} about your cycle, symptoms, lab reports, or nutrition...`}
               disabled={isTyping}
-              className="flex-1 px-4 py-3 rounded-2xl bg-white/[0.05] border border-white/10 text-white text-sm placeholder-[#8A799E] focus:outline-none focus:border-[#FB7185] transition-all"
+              className="flex-1 px-4 py-3 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] text-[#1C1326] text-xs sm:text-sm placeholder-[#8D7E9E] focus:outline-none focus:border-[#8E3EAF] focus:bg-white transition-all shadow-2xs"
             />
             <button
               type="submit"
               disabled={!inputText.trim() || isTyping}
-              className="px-5 py-3 rounded-2xl bg-gradient-to-r from-[#6E2D8B] to-[#FB7185] hover:brightness-110 disabled:opacity-40 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer"
+              className="px-5 py-3 rounded-2xl bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#FB7185] hover:brightness-110 disabled:opacity-40 text-white font-bold text-xs shadow-md shadow-purple-950/20 transition-all flex items-center gap-2 cursor-pointer shrink-0"
             >
               <span>Send</span>
               <Send className="w-4 h-4" />
             </button>
           </form>
-          <p className="text-[10px] text-center text-[#8A799E] font-sans mt-2">
-            OvaSense AI provides health literacy explanations based on your Digital Twin. It does not provide medical diagnoses or prescription changes.
+          <p className="text-[10px] text-center text-[#8D7E9E] font-sans mt-2">
+            {aiBrandName} provides health literacy explanations based on your Digital Twin. It does not provide medical diagnoses or prescription changes.
           </p>
         </div>
       </div>

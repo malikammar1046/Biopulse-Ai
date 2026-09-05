@@ -1,10 +1,10 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { ROUTES } from '../../constants/routes';
+import { ROUTES, getPathwayDashboardRoute } from '../../constants/routes';
 
 export const PublicOnlyRoute: React.FC = () => {
-  const { isAuthenticated, isOnboarded, loading } = useAuth();
+  const { userProfile, isAuthenticated, isOnboarded, loading } = useAuth();
 
   if (loading) {
     return (
@@ -23,7 +23,8 @@ export const PublicOnlyRoute: React.FC = () => {
 
   if (isAuthenticated) {
     if (isOnboarded) {
-      return <Navigate to={ROUTES.APP.DASHBOARD} replace />;
+      const targetRoute = getPathwayDashboardRoute(userProfile);
+      return <Navigate to={targetRoute} replace />;
     }
     return <Navigate to={ROUTES.ONBOARDING} replace />;
   }

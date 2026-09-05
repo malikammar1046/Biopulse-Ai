@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { UserProfile } from '../types/onboarding';
+import { resolvePathway } from '../types/onboarding';
 import { createEmptyUserProfile, DEFAULT_USER_PROFILE } from '../data/mockDashboardData';
 
 export interface DatabaseProfileRow {
@@ -31,6 +32,11 @@ export interface DatabaseProfileRow {
   work_lifestyle: string | null;
   selected_goals: any;
   support_preference: string | null;
+  gender?: string | null;
+  pathway?: string | null;
+  waist_cm?: number | null;
+  mens_health?: any;
+  general_health?: any;
   is_onboarded: boolean;
   created_at: string;
   updated_at: string;
@@ -41,13 +47,15 @@ export interface DatabaseProfileRow {
  */
 export function mapDbRowToUserProfile(
   row: Partial<DatabaseProfileRow>,
-  fallback?: { id: string; email?: string; fullName?: string; dateOfBirth?: string }
+  fallback?: { id?: string; email?: string; fullName?: string; dateOfBirth?: string; gender?: any; pathway?: any }
 ): UserProfile {
   const base = createEmptyUserProfile({
     id: row.id || fallback?.id || '',
     email: row.email || fallback?.email || '',
     fullName: row.full_name || fallback?.fullName || '',
     dateOfBirth: row.date_of_birth || fallback?.dateOfBirth || '',
+    gender: (row.gender as any) || fallback?.gender,
+    pathway: (row.pathway as any) || fallback?.pathway,
     isOnboarded: row.is_onboarded ?? false,
   });
 
@@ -58,15 +66,21 @@ export function mapDbRowToUserProfile(
       ? parseInt(row.cycle_length, 10)
       : base.womensHealth.cycleLength;
 
+  const resolvedGender = (row.gender as any) || fallback?.gender || base.gender || 'female';
+  const resolvedPathway = (row.pathway as any) || fallback?.pathway || resolvePathway(resolvedGender, row.pathway, 'female');
+
   return {
     id: row.id || base.id,
     fullName: row.full_name ?? base.fullName,
     email: row.email ?? base.email,
     phone: row.phone ?? base.phone,
     dateOfBirth: row.date_of_birth ?? base.dateOfBirth,
+    gender: resolvedGender,
+    pathway: resolvedPathway,
     avatarUrl: row.avatar_url ?? base.avatarUrl,
     heightCm: row.height_cm ?? base.heightCm,
     weightKg: row.weight_kg ?? base.weightKg,
+    waistCm: row.waist_cm ?? base.waistCm,
     isOnboarded: row.is_onboarded ?? false,
     createdAt: row.created_at ?? base.createdAt,
     updatedAt: row.updated_at ?? base.updatedAt,
@@ -94,6 +108,8 @@ export function mapDbRowToUserProfile(
       isPregnant: (row as any).is_pregnant ?? base.womensHealth.isPregnant ?? false,
       abortionsCount: (row as any).abortions_count ?? base.womensHealth.abortionsCount ?? 0,
     },
+    mensHealth: row.mens_health ?? base.mensHealth,
+    generalHealth: row.general_health ?? base.generalHealth,
     lifestyle: {
       dietaryPreference: row.dietary_preference ?? base.lifestyle.dietaryPreference,
       dailyWaterGlasses: row.daily_water_glasses ?? base.lifestyle.dailyWaterGlasses,
@@ -165,13 +181,23 @@ class ProfileService {
   /**
    * Fetches the user profile from Supabase by user ID.
    */
-  async fetchUserProfile(userId: string): Promise<{ profile: UserProfile | null; error?: string }> {
+  async fetchUserProfile(
+    userId: string,
+    fallback?: { id?: string; email?: string; fullName?: string; dateOfBirth?: string; gender?: any; pathway?: any }
+  ): Promise<{ profile: UserProfile | null; error?: string }> {
     if (!isSupabaseConfigured()) {
       // Local demo fallback
       try {
         const cached = localStorage.getItem('ovasense_user_profile_v1');
         if (cached) {
-          return { profile: JSON.parse(cached) };
+          const parsed = JSON.parse(cached);
+          return {
+            profile: {
+              ...parsed,
+              gender: fallback?.gender || parsed.gender || 'female',
+              pathway: fallback?.pathway || parsed.pathway || 'female',
+            },
+          };
         }
       } catch {
         // ignore
@@ -194,7 +220,7 @@ class ProfileService {
         return { profile: null };
       }
 
-      const profile = mapDbRowToUserProfile(data);
+      const profile = mapDbRowToUserProfile(data, fallback);
       return { profile };
     } catch (err: any) {
       return { profile: null, error: err?.message || 'Failed to fetch user profile.' };
@@ -215,6 +241,21 @@ class ProfileService {
     }
 
     try {
+      // Persist pathway, gender, waist_cm to auth user metadata so it is safely stored
+      try {
+        await supabase.auth.updateUser({
+          data: {
+            full_name: profile.fullName || '',
+            date_of_birth: profile.dateOfBirth || null,
+            gender: profile.gender || null,
+            pathway: profile.pathway || null,
+            waist_cm: profile.waistCm ?? null,
+          },
+        });
+      } catch {
+        // Non-blocking if auth user metadata update encounters network issue
+      }
+
       const payload = mapUserProfileToDbRow(profile, userId);
       const { error } = await supabase
         .from('profiles')
@@ -241,10 +282,18 @@ class ProfileService {
     const merged: UserProfile = {
       ...currentProfile,
       ...partialData,
+      gender: partialData.gender || currentProfile.gender || 'female',
+      pathway: partialData.pathway || currentProfile.pathway || 'female',
       medical: partialData.medical ? { ...currentProfile.medical, ...partialData.medical } : currentProfile.medical,
       womensHealth: partialData.womensHealth
         ? { ...currentProfile.womensHealth, ...partialData.womensHealth }
         : currentProfile.womensHealth,
+      mensHealth: partialData.mensHealth
+        ? { ...currentProfile.mensHealth, ...partialData.mensHealth }
+        : currentProfile.mensHealth,
+      generalHealth: partialData.generalHealth
+        ? { ...currentProfile.generalHealth, ...partialData.generalHealth }
+        : currentProfile.generalHealth,
       lifestyle: partialData.lifestyle
         ? { ...currentProfile.lifestyle, ...partialData.lifestyle }
         : currentProfile.lifestyle,

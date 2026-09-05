@@ -5,10 +5,14 @@ import { MobileBottomNav } from '../components/navigation/MobileBottomNav';
 import { ScrollToTop } from '../components/common/ScrollToTop';
 import { FloatingOvaSenseAI } from '../components/dashboard/FloatingOvaSenseAI';
 import { Logo } from '../components/brand/Logo';
-import { ROUTES } from '../constants/routes';
+import { ROUTES, getPathwayDashboardRoute } from '../constants/routes';
+import { useUserHealth } from '../context/UserHealthContext';
 import { ArrowLeft } from 'lucide-react';
 
 export const AppLayout: React.FC = () => {
+  const { userProfile } = useUserHealth();
+  const overviewRoute = getPathwayDashboardRoute(userProfile);
+
   return (
     <div className="flex min-h-screen bg-[#F8F5FA] text-[#1C1326] antialiased relative">
       <ScrollToTop />
@@ -20,7 +24,7 @@ export const AppLayout: React.FC = () => {
       <div className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0">
         {/* Mobile Top Header (hidden on desktop) */}
         <header className="md:hidden h-14 bg-[#180A26] border-b border-white/10 px-4 flex items-center justify-between shrink-0 text-white select-none">
-          <Link to={ROUTES.APP.DASHBOARD} className="flex items-center">
+          <Link to={overviewRoute} className="flex items-center">
             <Logo size="xs" theme="dark" showTagline={false} />
           </Link>
           <Link

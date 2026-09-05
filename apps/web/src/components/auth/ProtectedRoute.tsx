@@ -1,10 +1,10 @@
 import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { ROUTES } from '../../constants/routes';
+import { ROUTES, getPathwayOnboardingRoute } from '../../constants/routes';
 
 export const ProtectedRoute: React.FC = () => {
-  const { isAuthenticated, isOnboarded, loading } = useAuth();
+  const { isAuthenticated, isOnboarded, userProfile, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -27,7 +27,8 @@ export const ProtectedRoute: React.FC = () => {
   }
 
   if (!isOnboarded) {
-    return <Navigate to={ROUTES.ONBOARDING} replace />;
+    const targetOnboarding = getPathwayOnboardingRoute(userProfile);
+    return <Navigate to={targetOnboarding} replace />;
   }
 
   return <Outlet />;

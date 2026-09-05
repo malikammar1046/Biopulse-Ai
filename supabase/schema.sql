@@ -244,7 +244,7 @@ CREATE TABLE IF NOT EXISTS public.medical_reports (
   file_name TEXT NOT NULL,
   file_size BIGINT NULL,
   mime_type TEXT NOT NULL,
-  status TEXT NOT NULL CHECK (status IN ('processing', 'needs_verification', 'verified')),
+  status TEXT NOT NULL DEFAULT 'needs_verification' CHECK (status IN ('processing', 'needs_verification', 'verified')),
   created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -300,7 +300,7 @@ CREATE TABLE IF NOT EXISTS public.report_results (
   reference_high NUMERIC NULL,
   status TEXT NOT NULL CHECK (status IN ('within_range', 'outside_range', 'needs_review', 'insufficient_info')),
   ocr_confidence NUMERIC DEFAULT 0.95,
-  user_verified BOOLEAN DEFAULT true,
+  user_verified BOOLEAN DEFAULT false,
   explanation TEXT DEFAULT '',
   created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -366,6 +366,65 @@ CREATE POLICY "Users can delete own report results"
       WHERE medical_reports.id = report_results.report_id
       AND medical_reports.user_id = auth.uid()
     )
+  );
+
+-- ==============================================================================
+-- Supabase Storage: Bucket 'medical-reports' & Secure Storage Policies
+-- ==============================================================================
+
+-- 22b. Create private bucket for medical reports
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'medical-reports',
+  'medical-reports',
+  false,
+  10485760, -- 10MB limit
+  ARRAY['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+)
+ON CONFLICT (id) DO NOTHING;
+
+-- Storage RLS: Authenticated users can upload files into their own user_id folder
+DROP POLICY IF EXISTS "Users can upload own medical reports" ON storage.objects;
+CREATE POLICY "Users can upload own medical reports"
+  ON storage.objects FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    bucket_id = 'medical-reports' AND
+    (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+-- Storage RLS: Authenticated users can read their own medical reports
+DROP POLICY IF EXISTS "Users can select own medical reports storage" ON storage.objects;
+CREATE POLICY "Users can select own medical reports storage"
+  ON storage.objects FOR SELECT
+  TO authenticated
+  USING (
+    bucket_id = 'medical-reports' AND
+    (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+-- Storage RLS: Authenticated users can update their own medical reports
+DROP POLICY IF EXISTS "Users can update own medical reports storage" ON storage.objects;
+CREATE POLICY "Users can update own medical reports storage"
+  ON storage.objects FOR UPDATE
+  TO authenticated
+  USING (
+    bucket_id = 'medical-reports' AND
+    (storage.foldername(name))[1] = auth.uid()::text
+  )
+  WITH CHECK (
+    bucket_id = 'medical-reports' AND
+    (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+-- Storage RLS: Authenticated users can delete their own medical reports
+DROP POLICY IF EXISTS "Users can delete own medical reports storage" ON storage.objects;
+CREATE POLICY "Users can delete own medical reports storage"
+  ON storage.objects FOR DELETE
+  TO authenticated
+  USING (
+    bucket_id = 'medical-reports' AND
+    (storage.foldername(name))[1] = auth.uid()::text
   );
 -- ==============================================================================
 -- Table: public.care_circle_members

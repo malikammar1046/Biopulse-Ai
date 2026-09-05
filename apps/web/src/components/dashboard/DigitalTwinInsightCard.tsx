@@ -6,7 +6,7 @@ import {
   AlertCircle,
   Loader2,
   RefreshCw,
-  ClipboardCheck,
+  Layers,
 } from 'lucide-react';
 import type { DigitalTwinInsight } from '../../types/dashboard';
 import { useUserHealth } from '../../context/UserHealthContext';
@@ -33,6 +33,7 @@ export const DigitalTwinInsightCard: React.FC<DigitalTwinProps> = ({
     mlAssessmentLoading,
     mlAssessmentError,
     refreshMlAssessment,
+    adaptiveProfile,
   } = useUserHealth();
 
   const assessment = mlAssessment;
@@ -103,6 +104,9 @@ export const DigitalTwinInsightCard: React.FC<DigitalTwinProps> = ({
                   : loadState === 'error'
                   ? 'Backend Offline'
                   : 'Analyzing…'}
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[#CDBDD8]">
+                {adaptiveProfile?.overallCompletenessPercentage || 0}% Complete
               </span>
             </div>
             <span className="text-xs text-[#B4A6C7] font-sans">
@@ -276,8 +280,8 @@ export const DigitalTwinInsightCard: React.FC<DigitalTwinProps> = ({
             onClick={() => navigate('/app/assessment')}
             className="px-4 py-2.5 rounded-2xl font-sans font-bold text-xs text-[#E3D5EE] hover:text-white bg-white/10 hover:bg-white/15 border border-white/10 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
           >
-            <ClipboardCheck className="w-4 h-4 text-[#FDA4AF]" />
-            <span>Update Questionnaire</span>
+            <Layers className="w-4 h-4 text-[#FDA4AF]" />
+            <span>4-Tier Screening Profile</span>
           </button>
         </div>
 

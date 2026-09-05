@@ -17,7 +17,8 @@ import {
   Sparkles,
   ClipboardCheck,
 } from 'lucide-react';
-import { ROUTES } from '../../constants/routes';
+import { ROUTES, getPathwayDashboardRoute } from '../../constants/routes';
+import { resolvePathway } from '../../types/onboarding';
 import { Logo } from '../brand/Logo';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { useAuth } from '../../context/AuthContext';
@@ -33,13 +34,28 @@ export const AppSidebar: React.FC = () => {
     navigate(ROUTES.LOGIN);
   };
 
+  const overviewPath = getPathwayDashboardRoute(userProfile);
+  const pathway = resolvePathway(userProfile.gender, userProfile.pathway);
+  const brandTagline =
+    pathway === 'male'
+      ? 'AndroSense AI'
+      : pathway === 'female'
+      ? 'OvaSense AI'
+      : 'VITASense';
+
   const mainNavItems = [
-    { label: 'Overview', path: ROUTES.APP.DASHBOARD, icon: LayoutDashboard },
+    { label: 'Overview', path: overviewPath, icon: LayoutDashboard },
     { label: 'Master Health Hub', path: ROUTES.APP.HUB, icon: LayoutGrid },
-    { label: 'OvaSense AI', path: ROUTES.APP.CHAT, icon: Sparkles },
+    {
+      label: pathway === 'male' ? 'AndroSense AI' : pathway === 'female' ? 'OvaSense AI' : 'VITASense AI',
+      path: ROUTES.APP.CHAT,
+      icon: Sparkles,
+    },
     { label: 'Assessment', path: ROUTES.APP.ASSESSMENT, icon: ClipboardCheck },
     { label: 'Health Timeline', path: ROUTES.APP.TIMELINE, icon: GitBranch },
-    { label: 'Your Cycle', path: ROUTES.APP.CYCLE, icon: Calendar },
+    ...(pathway === 'female'
+      ? [{ label: 'Your Cycle', path: ROUTES.APP.CYCLE, icon: Calendar }]
+      : []),
     { label: 'Symptoms', path: ROUTES.APP.SYMPTOMS, icon: Activity },
     { label: 'Food & Meals', path: ROUTES.APP.DIET, icon: Utensils },
     { label: 'Movement', path: ROUTES.APP.FITNESS, icon: Dumbbell },
@@ -53,17 +69,24 @@ export const AppSidebar: React.FC = () => {
     { label: 'Settings', path: ROUTES.APP.SETTINGS, icon: Settings },
   ];
 
-  const isActive = (path: string) =>
-    location.pathname === path ||
-    (path === ROUTES.APP.DASHBOARD && location.pathname === ROUTES.APP.ROOT);
+  const isActive = (path: string) => {
+    if (path === overviewPath) {
+      return (
+        location.pathname === overviewPath ||
+        location.pathname === ROUTES.APP.ROOT ||
+        location.pathname === ROUTES.APP.DASHBOARD
+      );
+    }
+    return location.pathname === path;
+  };
 
   return (
     <aside className="w-64 bg-[#180A26] border-r border-white/10 text-white flex flex-col justify-between p-4 hidden md:flex shrink-0 select-none z-30">
       <div className="space-y-6">
         {/* Brand Logo at Top */}
         <div className="px-3 py-3">
-          <Link to={ROUTES.APP.DASHBOARD} className="flex items-center">
-            <Logo size="sm" theme="dark" showTagline tagline="Health Intelligence" />
+          <Link to={overviewPath} className="flex items-center">
+            <Logo size="sm" theme="dark" showTagline tagline={brandTagline} />
           </Link>
         </div>
 
@@ -102,7 +125,15 @@ export const AppSidebar: React.FC = () => {
         {/* Digital Twin AI Quick Launcher in Sidebar */}
         <div className="px-1">
           <div
-            onClick={() => openAiChatWithPrompt('Explain what my current cycle day and logs mean')}
+            onClick={() =>
+              openAiChatWithPrompt(
+                pathway === 'male'
+                  ? 'Explain what my hormone health and recent logs mean'
+                  : pathway === 'female'
+                  ? 'Explain what my current cycle day and logs mean'
+                  : 'Explain what my baseline health patterns and logs mean'
+              )
+            }
             className="p-3.5 rounded-2xl bg-gradient-to-b from-[#250E3E] to-[#140624] border border-[#8E3EAF]/30 hover:border-[#FB7185] text-left cursor-pointer transition-all duration-200 group shadow-md"
           >
             <div className="flex items-center justify-between mb-1.5">
