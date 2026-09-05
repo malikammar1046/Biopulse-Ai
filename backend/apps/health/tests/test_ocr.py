@@ -44,7 +44,7 @@ def create_mock_supabase_token(user_id="ocr-test-patient-uuid-1234", email="pati
 
 def generate_sample_lab_image_bytes() -> bytes:
     """Creates a clean synthetic lab report image containing hormonal and metabolic tests."""
-    img = Image.new("RGB", (1000, 800), color=(255, 255, 255))
+    img = Image.new("RGB", (1400, 1000), color=(255, 255, 255))
     draw = ImageDraw.Draw(img)
 
     lines = [
@@ -60,14 +60,15 @@ def generate_sample_lab_image_bytes() -> bytes:
         "25-OH Vitamin D : 34.5 ng/mL (Ref: 30.0 - 100.0)",
     ]
 
-    y = 40
+    y = 60
     for line in lines:
-        draw.text((50, y), line, fill=(0, 0, 0))
-        y += 65
+        draw.text((60, y), line, fill=(0, 0, 0))
+        y += 85
 
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     return buf.getvalue()
+
 
 
 def generate_sample_selectable_pdf_bytes() -> bytes:

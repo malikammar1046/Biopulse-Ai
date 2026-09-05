@@ -43,9 +43,10 @@ TEST_DEFINITIONS = [
     {
         "canonical_name": "LH (Luteinizing Hormone)",
         "patterns": [
-            r"\b(luteinizing|luteinising)\s+hormone\b",
-            r"\blh\s*(?:serum|level|blood)?\b",
-            r"\bs-?lh\b",
+            r"\b(luteinizing|luteinising)\s*hormone\b",
+            r"\bl\s*[.\-]?\s*h\s*(?:serum|level|blood)?\b",
+            r"\blh\b",
+            r"\bs-?\s*l\s*[.\-]?\s*h\b",
         ],
         "default_unit": "mIU/mL",
         "reference_range": "2.4 – 12.6 mIU/mL",
@@ -56,9 +57,10 @@ TEST_DEFINITIONS = [
     {
         "canonical_name": "FSH (Follicle-Stimulating Hormone)",
         "patterns": [
-            r"\bfollicle[-\s]*stimulating\s+hormone\b",
-            r"\bfsh\s*(?:serum|level|blood)?\b",
-            r"\bs-?fsh\b",
+            r"\bfollicle[-\s]*stimulating\s*hormone\b",
+            r"\bf\s*[.\-]?\s*s\s*[.\-]?\s*h\s*(?:serum|level|blood)?\b",
+            r"\bfsh\b",
+            r"\bs-?\s*f\s*[.\-]?\s*s\s*[.\-]?\s*h\b",
         ],
         "default_unit": "mIU/mL",
         "reference_range": "3.5 – 12.5 mIU/mL",
@@ -91,10 +93,10 @@ TEST_DEFINITIONS = [
     {
         "canonical_name": "Total Testosterone",
         "patterns": [
-            r"\btotal\s+testost.*?rone\b",
-            r"\btestost.*?rone[,\s]+total\b",
-            r"\bs-?testost.*?rone\b",
-            r"\btestost.*?rone\b",
+            r"\btotal\s*testost\s*.*?rone\b",
+            r"\btestost\s*.*?rone[,\s]+total\b",
+            r"\bs-?testost\s*.*?rone\b",
+            r"\btestost\s*.*?rone\b",
         ],
         "default_unit": "ng/dL",
         "explanation": "Primary androgen hormone; mild to moderate elevation is common in hyperandrogenic PCOS.",
@@ -116,6 +118,7 @@ TEST_DEFINITIONS = [
             r"\bfasting\s+(?:blood\s+)?sugar\b",
             r"\bfbs\b",
             r"\bglucose[,\s]+fasting\b",
+            r"\bglucose\b",
         ],
         "default_unit": "mg/dL",
         "explanation": "Blood glucose level after an overnight fast; key baseline indicator for glycemic regulation.",
@@ -580,12 +583,41 @@ class MedicalReportParser:
         Parses numeric result, unit, and reference range from line or window text.
         Preserves the report's own stated reference range; never invents missing ranges.
         """
-        # 1. Detect unit in primary text; if not detected, use test's standard unit
+        # 1. Detect unit in primary text with OCR-tolerant normalization
         unit = test_defn["default_unit"]
-        unit_pattern = r"\b(mIU/mL|IU/L|ng/dL|ng/mL|pg/mL|ug/dL|uIU/mL|mg/dL|mmol/L|pmol/L|nmol/L|million/mL|M/mL|mL|ml|%|g/dL|g/dl|cumm|lakhs/cumm|million/cumm|fL|fl|Pg|pg)\b"
-        unit_match = re.search(unit_pattern, primary_text, re.IGNORECASE)
-        if unit_match:
-            unit = unit_match.group(1)
+        unit_patterns = [
+            (r"\bm[iI1l]u\s*/\s*m[lL]\b", "mIU/mL"),
+            (r"\b[uµ][iI1l]u\s*/\s*m[lL]\b", "uIU/mL"),
+            (r"\b[iI1l]u\s*/\s*[lL]\b", "IU/L"),
+            (r"\bng\s*/\s*d[lL]\b", "ng/dL"),
+            (r"\bng\s*/\s*m[lL]\b", "ng/mL"),
+            (r"\bpg\s*/\s*m[lL]\b", "pg/mL"),
+            (r"\bug\s*/\s*d[lL]\b", "ug/dL"),
+            (r"\bmg\s*/\s*d[lL]\b", "mg/dL"),
+            (r"\bmmol\s*/\s*[lL]\b", "mmol/L"),
+            (r"\bpmol\s*/\s*[lL]\b", "pmol/L"),
+            (r"\bnmol\s*/\s*[lL]\b", "nmol/L"),
+            (r"\bg\s*/\s*d[lL]\b", "g/dL"),
+            (r"\bmillion\s*/\s*m[lL]\b", "million/mL"),
+            (r"\b[mM]\s*/\s*m[lL]\b", "million/mL"),
+            (r"\bcumm\b|\blakhs/cumm\b|\bmillion/cumm\b", "cumm"),
+            (r"\bf[lL]\b", "fL"),
+            (r"\b[pP]g\b", "pg"),
+            (r"\bm[lL]\b", "mL"),
+            (r"\b%\b", "%"),
+        ]
+        detected_unit = None
+        for u_pat, canonical_u in unit_patterns:
+            if re.search(u_pat, primary_text, re.IGNORECASE):
+                detected_unit = canonical_u
+                break
+        if not detected_unit:
+            for u_pat, canonical_u in unit_patterns:
+                if re.search(u_pat, window_text, re.IGNORECASE):
+                    detected_unit = canonical_u
+                    break
+        if detected_unit:
+            unit = detected_unit
 
         # Handle time-based parameters (e.g. Morning Testosterone Draw Time)
         if test_defn.get("default_unit") == "time":
@@ -621,7 +653,7 @@ class MedicalReportParser:
             return None
 
         # 2. Detect reference range in primary or window text
-        ref_pattern = r"(?:ref(?:erence)?\s*(?:range)?|normal\s*range|interval)?\s*[:=]?\s*([<>]?\s*(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?\s*(?:-|–|—|to)\s*(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?|[<≤>≥]=?\s*(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?)"
+        ref_pattern = r"(?:ref(?:erence)?\.?|normal\s*range|interval)?\s*[:=.]?\s*([<>]?\s*(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?\s*(?:-|–|—|to)\s*(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?|[<≤>≥]=?\s*(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?)"
         ref_match = re.search(ref_pattern, primary_text, re.IGNORECASE) or re.search(ref_pattern, window_text, re.IGNORECASE)
 
         range_numbers: set[float] = set()
@@ -647,6 +679,13 @@ class MedicalReportParser:
         # Also strip reference range string from search text if detected
         if ref_match:
             search_primary = search_primary.replace(ref_match.group(0), " ")
+            if ref_match.group(1):
+                search_primary = search_primary.replace(ref_match.group(1), " ")
+
+        # Strip remaining Ref/normal range annotations (e.g. '(Ref: ...)', '(Ref. ...)')
+        search_primary = re.sub(r"\(?\s*ref\.?.*?\)?", " ", search_primary, flags=re.IGNORECASE)
+        # Normalize decimals split by OCR spaces (e.g. '7. 4' -> '7.4')
+        search_primary = re.sub(r'(\d+)\s*\.\s*(\d+)', r'\1.\2', search_primary)
 
         # Look for numbers in stripped primary line first (supports 5,100 or 15.0)
         num_pattern = r"\b((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?)\b"
