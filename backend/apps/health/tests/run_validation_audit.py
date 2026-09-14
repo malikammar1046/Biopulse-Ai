@@ -21,7 +21,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 import django
 django.setup()
 
-import fitz  # PyMuPDF
+import pymupdf
 from PIL import Image, ImageDraw
 from apps.health.services.paddle_ocr_engine import paddle_ocr_engine
 from apps.health.services.medical_report_parser import medical_report_parser
@@ -33,7 +33,7 @@ def build_realistic_multipage_pdf() -> bytes:
     Contains multiple tests, units, ranges, and flagged abnormal values.
     Uses purely synthetic, fictitious test identifiers.
     """
-    doc = fitz.open()
+    doc = pymupdf.open()
 
     # --- Page 1: Reproductive Endocrinology & Androgen Profile ---
     page1 = doc.new_page(width=595, height=842)  # A4
@@ -113,9 +113,9 @@ def build_realistic_scanned_pdf() -> bytes:
     img_buf = io.BytesIO()
     img.save(img_buf, format="PNG")
 
-    doc = fitz.open()
+    doc = pymupdf.open()
     page = doc.new_page(width=595, height=842)
-    page.insert_image(fitz.Rect(30, 40, 565, 600), stream=img_buf.getvalue())
+    page.insert_image(pymupdf.Rect(30, 40, 565, 600), stream=img_buf.getvalue())
     scanned_bytes = doc.tobytes()
     doc.close()
     return scanned_bytes
@@ -222,7 +222,7 @@ def run_audit():
 
     # --- Test 4: Missing Reference Range Safety ---
     print("[4] Testing Report Without Reference Ranges (Safety Audit)...")
-    doc_no_ref = fitz.open()
+    doc_no_ref = pymupdf.open()
     p_no_ref = doc_no_ref.new_page(width=595, height=842)
     p_no_ref.insert_text((50, 70), "Luteinizing Hormone 9.5 mIU/mL\nFSH 4.1 mIU/mL", fontsize=11)
     no_ref_bytes = doc_no_ref.tobytes()
@@ -238,7 +238,7 @@ def run_audit():
 
     # --- Test 5: Incompatible HOMA-IR Units Safety ---
     print("[5] Testing HOMA-IR Safety with Incompatible / Non-Fasting Inputs...")
-    doc_incompat = fitz.open()
+    doc_incompat = pymupdf.open()
     p_incompat = doc_incompat.new_page(width=595, height=842)
     # Random Glucose instead of Fasting Glucose, and unknown unit
     p_incompat.insert_text((50, 70), "Random Glucose 110.0 mg/dL\nFasting Serum Insulin 15.0 uIU/mL", fontsize=11)

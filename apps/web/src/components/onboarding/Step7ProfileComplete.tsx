@@ -22,10 +22,10 @@ export const Step7ProfileComplete: React.FC<Step7Props> = ({
   // Pathway-specific configuration
   const config = {
     female: {
-      brandName: 'OvaSense AI',
-      headline: 'Your OvaSense AI profile is ready.',
+      brandName: 'BioPulse AI',
+      headline: 'Your BioPulse AI profile is ready.',
       narrative: '“Let’s understand your health, one pattern at a time.”',
-      ctaText: 'ENTER OVASENSE AI',
+      ctaText: 'ENTER BIOPULSE AI',
       accentGradient: 'from-[#6E2D8B] via-[#8E3EAF] to-[#E87084]',
       glowGradient: 'from-[#6E2D8B] via-[#8E3EAF] to-[#FB7185]',
       icon: Heart,
@@ -53,16 +53,16 @@ export const Step7ProfileComplete: React.FC<Step7Props> = ({
           val: `${typeof profile.womensHealth?.cycleLength === 'number' ? `${profile.womensHealth.cycleLength}-day cycle` : 'Cycle recorded'} • ${profile.womensHealth?.periodRegularity ? profile.womensHealth.periodRegularity.replace(/_/g, ' ') : 'Tracked'}`,
         },
         {
-          label: 'OvaSense AI Screening Status',
+          label: 'BioPulse AI Screening Status',
           val: 'Profile Ready • Non-diagnostic ML analysis enabled',
         },
       ],
     },
     male: {
-      brandName: 'AndroSense AI',
-      headline: 'Your AndroSense AI profile is ready.',
+      brandName: 'BioPulse AI',
+      headline: 'Your BioPulse AI profile is ready.',
       narrative: '“Let’s track and understand your hormonal and metabolic vitality.”',
-      ctaText: 'ENTER ANDROSENSE AI',
+      ctaText: 'ENTER BIOPULSE AI',
       accentGradient: 'from-[#0369A1] via-[#0284C7] to-[#38BDF8]',
       glowGradient: 'from-[#0369A1] via-[#0284C7] to-[#38BDF8]',
       icon: Activity,
@@ -90,16 +90,16 @@ export const Step7ProfileComplete: React.FC<Step7Props> = ({
           val: `${profile.mensHealth?.energyLevel ? `${profile.mensHealth.energyLevel} energy` : 'Energy recorded'} • ${profile.mensHealth?.sleepQuality ? profile.mensHealth.sleepQuality.replace(/_/g, ' ') : 'Sleep tracked'}`,
         },
         {
-          label: 'AndroSense AI Screening Status',
+          label: 'BioPulse AI Screening Status',
           val: 'Profile Ready • Non-diagnostic hormone screening enabled',
         },
       ],
     },
     general: {
-      brandName: 'VITASense',
-      headline: 'Your VITASense profile is ready.',
+      brandName: 'BioPulse AI',
+      headline: 'Your BioPulse AI profile is ready.',
       narrative: '“Your unified baseline health companion.”',
-      ctaText: 'ENTER VITASENSE',
+      ctaText: 'ENTER BIOPULSE AI',
       accentGradient: 'from-[#5B21B6] via-[#7C3AED] to-[#A78BFA]',
       glowGradient: 'from-[#5B21B6] via-[#7C3AED] to-[#A78BFA]',
       icon: Compass,
@@ -127,7 +127,7 @@ export const Step7ProfileComplete: React.FC<Step7Props> = ({
           val: `${profile.generalHealth?.primaryFocus?.length || 2} priorities configured • ${profile.generalHealth?.stressLevel || 'moderate'} stress pace`,
         },
         {
-          label: 'VITASense Platform Status',
+          label: 'BioPulse AI Platform Status',
           val: 'Profile Ready • Baseline health tracking active',
         },
       ],
@@ -270,7 +270,7 @@ export const Step7ProfileComplete: React.FC<Step7Props> = ({
 
         <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-[#A797BD] font-mono">
           <ShieldCheck className="w-3.5 h-3.5 text-[#34D399]" />
-          <span>Non-Diagnostic Longitudinal Health Intelligence • VITASense Ecosystem</span>
+          <span>Non-Diagnostic Longitudinal Health Intelligence • BioPulse AI</span>
         </div>
       </motion.div>
     </div>

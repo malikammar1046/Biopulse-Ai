@@ -28,8 +28,8 @@ export const PlaceholderPage: React.FC<PlaceholderProps> = ({
               Phase 2 Module: {moduleName}
             </Badge>
           </div>
-          <h1 className="text-3xl font-bold font-display text-[#1C1326]">{title}</h1>
-          <p className="text-sm text-[#584B68] mt-1">{subtitle}</p>
+          <h1 className="text-3xl font-bold font-display text-[#0F172A]">{title}</h1>
+          <p className="text-sm text-[#475569] mt-1">{subtitle}</p>
         </div>
 
         <Link to={ROUTES.HOME}>
@@ -39,9 +39,9 @@ export const PlaceholderPage: React.FC<PlaceholderProps> = ({
         </Link>
       </div>
 
-      <Card variant="standard" className="p-8 space-y-6 border-[#E7DFEF]">
-        <div className="flex items-center gap-3 p-4 rounded-2xl bg-[#EDE4F7] border border-[#D8B4FE]/50 text-[#6E2D8B]">
-          <Sparkles className="w-5 h-5 shrink-0" />
+      <Card variant="standard" className="p-8 space-y-6 border-[#BAE6FD]">
+        <div className="flex items-center gap-3 p-4 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] text-[#0369A1]">
+          <Sparkles className="w-5 h-5 shrink-0 text-[#0288D1]" />
           <p className="text-xs font-semibold">
             This module is reserved for Phase 2 implementation. The UI architecture, database schemas,
             and API controllers will connect during the authenticated application phase.
@@ -49,16 +49,16 @@ export const PlaceholderPage: React.FC<PlaceholderProps> = ({
         </div>
 
         <div className="space-y-3">
-          <h3 className="text-xs uppercase font-bold tracking-wider text-[#1C1326]">
+          <h3 className="text-xs uppercase font-bold tracking-wider text-[#0F172A]">
             Planned Capabilities for {moduleName}:
           </h3>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {expectedCapabilities.map((cap, idx) => (
               <li
                 key={idx}
-                className="p-3.5 rounded-xl bg-[#F8F5FA] border border-[#E7DFEF] text-xs font-medium text-[#1C1326] flex items-center gap-2"
+                className="p-3.5 rounded-xl bg-[#F8FAFC] border border-[#BAE6FD] text-xs font-medium text-[#0F172A] flex items-center gap-2"
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-[#6E2D8B]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#0288D1]" />
                 <span>{cap}</span>
               </li>
             ))}

@@ -104,7 +104,8 @@ export function calculateReportSummaryStats(reports: MedicalReport[]): ReportSum
  */
 export function extractHistoricalTrends(
   reports: MedicalReport[],
-  targetTestName: string
+  targetTestName: string,
+  onlyVerified: boolean = false
 ): BiomarkerTrendPoint[] {
   if (!reports || !targetTestName) return [];
 
@@ -113,6 +114,9 @@ export function extractHistoricalTrends(
 
   for (const rep of reports) {
     for (const res of rep.results || []) {
+      if (onlyVerified && !res.userVerified) {
+        continue; // Quarantined: exclude unverified OCR extractions
+      }
       if (
         res.testName.toLowerCase().includes(normalizedTarget) ||
         normalizedTarget.includes(res.testName.toLowerCase())

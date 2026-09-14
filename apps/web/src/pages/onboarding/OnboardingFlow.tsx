@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, ShieldCheck } from 'lucide-react';
-import { getPathwayDashboardRoute } from '../../constants/routes';
+import { ROUTES, getPathwayDashboardRoute } from '../../constants/routes';
 import { useUserHealth } from '../../context/UserHealthContext';
 import type {
   UserProfile,
@@ -18,6 +18,7 @@ import { Step1PersonalInfo } from '../../components/onboarding/Step1PersonalInfo
 import { Step3MedicalInfo } from '../../components/onboarding/Step3MedicalInfo';
 import { Step3AdaptiveHealth } from '../../components/onboarding/Step3AdaptiveHealth';
 import { Step7ProfileComplete } from '../../components/onboarding/Step7ProfileComplete';
+import { validateDateOfBirth, validatePakistaniPhone } from '../../utils/profileValidation';
 
 const ONBOARDING_STEPS = [
   { number: '1', label: 'Basic Info' },
@@ -51,8 +52,13 @@ export const OnboardingFlow: React.FC = () => {
 
     if (step === 1) {
       if (!draftProfile.fullName.trim()) errs.fullName = 'Full Name is required';
-      if (!draftProfile.dateOfBirth) errs.dateOfBirth = 'Date of Birth is required';
-      if (!draftProfile.phone.trim()) errs.phone = 'Phone Number is required';
+      
+      const dobCheck = validateDateOfBirth(draftProfile.dateOfBirth);
+      if (!dobCheck.isValid) errs.dateOfBirth = dobCheck.error!;
+
+      const phoneCheck = validatePakistaniPhone(draftProfile.phone);
+      if (!phoneCheck.isValid) errs.phone = phoneCheck.error!;
+
       if (!draftProfile.email.trim()) errs.email = 'Email Address is required';
       if (!draftProfile.gender) errs.gender = 'Please select your Health Pathway';
     }
@@ -104,7 +110,9 @@ export const OnboardingFlow: React.FC = () => {
 
       {/* ── Top Header Brand Bar ── */}
       <header className="w-full max-w-4xl mx-auto flex items-center justify-between py-4">
-        <Logo size="sm" showTagline tagline="Health Setup" />
+        <Link to={ROUTES.HOME} className="flex items-center gap-2 group transition-transform hover:scale-[1.01]">
+          <Logo size="sm" theme="dark" />
+        </Link>
 
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-[#B4A6C7]">
           <ShieldCheck className="w-3.5 h-3.5 text-[#34D399]" />
@@ -218,7 +226,7 @@ export const OnboardingFlow: React.FC = () => {
 
       {/* ── Footer Disclaimer ── */}
       <footer className="w-full max-w-4xl mx-auto py-4 text-center text-xs text-[#A797BD] font-mono">
-        <span>© {new Date().getFullYear()} VITASense Health Platform • Personalized Healthcare Intelligence</span>
+        <span>© {new Date().getFullYear()} BioPulse AI • Personalized Healthcare Intelligence</span>
       </footer>
     </div>
   );

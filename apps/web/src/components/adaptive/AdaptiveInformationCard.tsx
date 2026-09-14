@@ -53,10 +53,10 @@ export const AdaptiveInformationCard: React.FC<AdaptiveInformationCardProps> = (
     <div
       className={`p-4 sm:p-5 rounded-2xl border transition-all duration-200 text-left select-none ${
         isAvailable
-          ? 'bg-white border-[#E7DFEF] hover:border-[#D8B4FE] shadow-2xs hover:shadow-xs'
+          ? 'bg-white border-[#BAE6FD]/80 hover:border-[#0288D1] shadow-xs'
           : isPending
-          ? 'bg-[#FFFDF5] border-[#FDE68A] shadow-2xs'
-          : 'bg-[#FAF8FC] border-[#E7DFEF]/90 hover:border-[#E7DFEF]'
+          ? 'bg-[#FFFDF5] border-[#FDE68A] shadow-xs'
+          : 'bg-[#F8FAFC] border-[#BAE6FD]/60 hover:border-[#BAE6FD]'
       }`}
     >
       {/* ── Top Header Row ──────────────────────────────────────────────── */}
@@ -65,11 +65,11 @@ export const AdaptiveInformationCard: React.FC<AdaptiveInformationCardProps> = (
           {item.isKeyPredictor && (
             <span
               title="Key Screening Feature"
-              className="w-2 h-2 rounded-full bg-[#FB7185] animate-pulse"
+              className="w-2 h-2 rounded-full bg-[#0288D1] animate-pulse"
               aria-label="Key screening predictor"
             />
           )}
-          <h4 className="text-sm sm:text-base font-bold text-[#1C1326] font-display">
+          <h4 className="text-sm sm:text-base font-bold text-[#01579B] font-display">
             {item.label}
           </h4>
         </div>
@@ -83,11 +83,11 @@ export const AdaptiveInformationCard: React.FC<AdaptiveInformationCardProps> = (
         <div>
           {isAvailable && item.valueDisplay !== undefined ? (
             <div className="flex items-baseline gap-2">
-              <span className="text-lg sm:text-xl font-extrabold text-[#1C1326] font-mono">
+              <span className="text-lg sm:text-xl font-extrabold text-[#0F172A] font-mono">
                 {String(item.valueDisplay)}
               </span>
               {item.referenceRange && (
-                <span className="text-xs text-[#736384] font-sans font-medium">
+                <span className="text-xs text-[#64748B] font-sans font-medium">
                   (Ref: {item.referenceRange})
                 </span>
               )}
@@ -102,7 +102,7 @@ export const AdaptiveInformationCard: React.FC<AdaptiveInformationCardProps> = (
               </p>
             </div>
           ) : (
-            <p className="text-xs text-[#8D7E9E] italic">
+            <p className="text-xs text-[#64748B] italic">
               No recorded data. Higher tiers are optional and can be added if available.
             </p>
           )}
@@ -110,10 +110,10 @@ export const AdaptiveInformationCard: React.FC<AdaptiveInformationCardProps> = (
 
         {/* Source & Verification Badges */}
         {isAvailable && (
-          <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#584B68]">
+          <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#475569]">
             {item.source && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#F8F5FA] border border-[#E7DFEF] text-[#6E2D8B] font-medium">
-                <FileText className="w-3 h-3 text-[#8E3EAF]" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#E0F2FE] border border-[#BAE6FD] text-[#01579B] font-medium">
+                <FileText className="w-3 h-3 text-[#0288D1]" />
                 <span>{item.source}</span>
               </span>
             )}
@@ -151,7 +151,7 @@ export const AdaptiveInformationCard: React.FC<AdaptiveInformationCardProps> = (
           <button
             type="button"
             onClick={() => onVerify(item.id, item.reportId, item.resultId)}
-            className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#D97706] to-[#F59E0B] hover:brightness-105 text-white text-xs font-bold font-sans transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+            className="px-3.5 py-1.5 rounded-xl bg-[#D97706] hover:bg-[#B45309] text-white text-xs font-bold font-sans transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
             <UserCheck className="w-3.5 h-3.5" />
             <span>Confirm & Verify Value</span>
@@ -160,29 +160,29 @@ export const AdaptiveInformationCard: React.FC<AdaptiveInformationCardProps> = (
       )}
 
       {/* ── Collapsible "Why It Matters" Education Block ─────────────────── */}
-      <div className="mt-3 pt-2.5 border-t border-[#F0EAF5]">
+      <div className="mt-3 pt-2.5 border-t border-[#E2E8F0]">
         <button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center justify-between w-full text-xs text-[#584B68] hover:text-[#1C1326] transition-colors cursor-pointer py-0.5"
+          className="flex items-center justify-between w-full text-xs text-[#475569] hover:text-[#01579B] transition-colors cursor-pointer py-0.5"
           aria-expanded={isExpanded}
         >
           <span className="flex items-center gap-1.5 font-medium">
-            <HelpCircle className="w-3.5 h-3.5 text-[#8E3EAF]" />
+            <HelpCircle className="w-3.5 h-3.5 text-[#0288D1]" />
             <span>Why this information matters</span>
           </span>
           {isExpanded ? (
-            <ChevronUp className="w-3.5 h-3.5 text-[#736384]" />
+            <ChevronUp className="w-3.5 h-3.5 text-[#64748B]" />
           ) : (
-            <ChevronDown className="w-3.5 h-3.5 text-[#736384]" />
+            <ChevronDown className="w-3.5 h-3.5 text-[#64748B]" />
           )}
         </button>
 
         {isExpanded && (
-          <div className="mt-2 text-xs text-[#584B68] space-y-1.5 bg-[#F8F5FA] p-3 rounded-xl border border-[#E7DFEF]">
+          <div className="mt-2 text-xs text-[#475569] space-y-1.5 bg-[#F8FAFC] p-3 rounded-xl border border-[#BAE6FD]/80">
             <p className="leading-relaxed">{item.whyItMatters}</p>
             {item.clinicalNote && (
-              <p className="text-[11px] text-[#6E2D8B] leading-normal pt-1 border-t border-[#E7DFEF]">
+              <p className="text-[11px] text-[#01579B] leading-normal pt-1 border-t border-[#BAE6FD]/60">
                 <strong>Educational note:</strong> {item.clinicalNote}
               </p>
             )}

@@ -10,56 +10,56 @@ export const CycleOverviewCard: React.FC<CycleOverviewCardProps> = ({ stats }) =
   if (!stats.hasData) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 select-none">
-        <div className="p-5 rounded-3xl bg-white border border-[#E7DFEF] shadow-sm text-left space-y-3">
-          <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#8E3EAF] uppercase tracking-wider">
-            <span className="p-1.5 rounded-xl bg-[#EDE4F7] text-[#6E2D8B]">
+        <div className="p-5 rounded-2xl bg-white border border-[#BAE6FD] shadow-sm text-left space-y-3">
+          <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#0288D1] uppercase tracking-wider">
+            <span className="p-1.5 rounded-xl bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD]">
               <Calendar className="w-3.5 h-3.5" />
             </span>
             <span>Cycle Day</span>
           </div>
-          <span className="text-xl font-bold font-display text-[#8D7E9E] block">
+          <span className="text-xl font-bold font-display text-[#64748B] block">
             Not enough data yet
           </span>
-          <span className="text-xs text-[#8D7E9E] block">Log a period to calculate day</span>
+          <span className="text-xs text-[#64748B] block">Log a period to calculate day</span>
         </div>
 
-        <div className="p-5 rounded-3xl bg-white border border-[#E7DFEF] shadow-sm text-left space-y-3">
-          <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#6E2D8B] uppercase tracking-wider">
-            <span className="p-1.5 rounded-xl bg-[#EDE4F7] text-[#6E2D8B]">
+        <div className="p-5 rounded-2xl bg-white border border-[#BAE6FD] shadow-sm text-left space-y-3">
+          <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#0288D1] uppercase tracking-wider">
+            <span className="p-1.5 rounded-xl bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD]">
               <Sparkles className="w-3.5 h-3.5" />
             </span>
             <span>Cycle Phase</span>
           </div>
-          <span className="text-xl font-bold font-display text-[#8D7E9E] block">
+          <span className="text-xl font-bold font-display text-[#64748B] block">
             Not enough data yet
           </span>
-          <span className="text-xs text-[#8D7E9E] block">Estimated phase baseline</span>
+          <span className="text-xs text-[#64748B] block">Estimated phase baseline</span>
         </div>
 
-        <div className="p-5 rounded-3xl bg-white border border-[#E7DFEF] shadow-sm text-left space-y-3">
-          <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#A21CAF] uppercase tracking-wider">
-            <span className="p-1.5 rounded-xl bg-[#FDF2F8] text-[#A21CAF]">
+        <div className="p-5 rounded-2xl bg-white border border-[#BAE6FD] shadow-sm text-left space-y-3">
+          <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#0288D1] uppercase tracking-wider">
+            <span className="p-1.5 rounded-xl bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD]">
               <Clock className="w-3.5 h-3.5" />
             </span>
             <span>Cycle Length</span>
           </div>
-          <span className="text-xl font-bold font-display text-[#8D7E9E] block">
+          <span className="text-xl font-bold font-display text-[#64748B] block">
             {stats.totalCycleDays} days (default)
           </span>
-          <span className="text-xs text-[#8D7E9E] block">Will adapt as you log cycles</span>
+          <span className="text-xs text-[#64748B] block">Will adapt as you log cycles</span>
         </div>
 
-        <div className="p-5 rounded-3xl bg-white border border-[#E7DFEF] shadow-sm text-left space-y-3">
+        <div className="p-5 rounded-2xl bg-white border border-[#BAE6FD] shadow-sm text-left space-y-3">
           <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#047857] uppercase tracking-wider">
             <span className="p-1.5 rounded-xl bg-[#ECFDF5] text-[#047857]">
               <Activity className="w-3.5 h-3.5" />
             </span>
             <span>Period Status</span>
           </div>
-          <span className="text-xl font-bold font-display text-[#8D7E9E] block">
+          <span className="text-xl font-bold font-display text-[#64748B] block">
             Not enough data yet
           </span>
-          <span className="text-xs text-[#8D7E9E] block">Awaiting first recorded period</span>
+          <span className="text-xs text-[#64748B] block">Awaiting first recorded period</span>
         </div>
       </div>
     );
@@ -68,80 +68,80 @@ export const CycleOverviewCard: React.FC<CycleOverviewCardProps> = ({ stats }) =
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 select-none">
       {/* 1. Cycle Day */}
-      <div className="p-5 rounded-3xl bg-white border border-[#E7DFEF] shadow-sm hover:shadow-md transition-all text-left space-y-3">
+      <div className="p-5 rounded-2xl bg-white border border-[#BAE6FD] shadow-sm hover:shadow-md transition-all text-left space-y-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#8E3EAF] uppercase tracking-wider">
-            <span className="p-1.5 rounded-xl bg-[#EDE4F7] text-[#6E2D8B]">
+          <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#0288D1] uppercase tracking-wider">
+            <span className="p-1.5 rounded-xl bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD]">
               <Calendar className="w-3.5 h-3.5" />
             </span>
             <span>Current Cycle Day</span>
           </div>
-          <span className="text-[10px] font-mono text-[#8D7E9E] font-medium">
+          <span className="text-[10px] font-mono text-[#64748B] font-medium">
             of ~{stats.totalCycleDays}d
           </span>
         </div>
 
         <div>
-          <span className="text-3xl font-extrabold font-display text-[#1C1326] tracking-tight">
+          <span className="text-3xl font-extrabold font-display text-[#0F172A] tracking-tight">
             Day {stats.currentCycleDay}
           </span>
-          <span className="text-xs font-semibold text-[#8E3EAF] flex items-center gap-1.5 mt-0.5">
-            <span className="w-2 h-2 rounded-full bg-[#8E3EAF] animate-pulse" />
+          <span className="text-xs font-semibold text-[#0288D1] flex items-center gap-1.5 mt-0.5">
+            <span className="w-2 h-2 rounded-full bg-[#0288D1] animate-pulse" />
             {stats.estimatedPhase?.name || 'Active Cycle'}
           </span>
         </div>
       </div>
 
       {/* 2. Cycle Phase */}
-      <div className="p-5 rounded-3xl bg-white border border-[#E7DFEF] shadow-sm hover:shadow-md transition-all text-left space-y-3">
+      <div className="p-5 rounded-2xl bg-white border border-[#BAE6FD] shadow-sm hover:shadow-md transition-all text-left space-y-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#6E2D8B] uppercase tracking-wider">
-            <span className="p-1.5 rounded-xl bg-[#EDE4F7] text-[#6E2D8B]">
+          <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#0288D1] uppercase tracking-wider">
+            <span className="p-1.5 rounded-xl bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD]">
               <Sparkles className="w-3.5 h-3.5" />
             </span>
             <span>Estimated Phase</span>
           </div>
-          <span className="text-[10px] font-mono text-[#8D7E9E] font-medium">
+          <span className="text-[10px] font-mono text-[#64748B] font-medium">
             Estimate
           </span>
         </div>
 
         <div>
-          <span className="text-2xl font-extrabold font-display text-[#6E2D8B] tracking-tight block truncate">
+          <span className="text-2xl font-extrabold font-display text-[#0288D1] tracking-tight block truncate">
             {stats.estimatedPhase?.name || 'Follicular Phase'}
           </span>
-          <span className="text-xs text-[#584B68] block mt-0.5 truncate">
+          <span className="text-xs text-[#475569] block mt-0.5 truncate">
             {stats.estimatedPhase?.tag === 'Peak Fertile' ? 'Fertile window' : 'Hormone pattern window'}
           </span>
         </div>
       </div>
 
       {/* 3. Cycle Length */}
-      <div className="p-5 rounded-3xl bg-white border border-[#E7DFEF] shadow-sm hover:shadow-md transition-all text-left space-y-3">
+      <div className="p-5 rounded-2xl bg-white border border-[#BAE6FD] shadow-sm hover:shadow-md transition-all text-left space-y-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#A21CAF] uppercase tracking-wider">
-            <span className="p-1.5 rounded-xl bg-[#FDF2F8] text-[#A21CAF]">
+          <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#0288D1] uppercase tracking-wider">
+            <span className="p-1.5 rounded-xl bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD]">
               <Clock className="w-3.5 h-3.5" />
             </span>
             <span>Cycle Length</span>
           </div>
-          <span className="text-[10px] font-mono text-[#8D7E9E] font-medium">
+          <span className="text-[10px] font-mono text-[#64748B] font-medium">
             {stats.totalRecordsCount > 1 ? 'Calculated Avg' : 'Initial'}
           </span>
         </div>
 
         <div>
-          <span className="text-3xl font-extrabold font-display text-[#1C1326] tracking-tight">
+          <span className="text-3xl font-extrabold font-display text-[#0F172A] tracking-tight">
             {stats.totalCycleDays} days
           </span>
-          <span className="text-xs text-[#584B68] block mt-0.5">
+          <span className="text-xs text-[#475569] block mt-0.5">
             ~{stats.periodDuration} days average flow
           </span>
         </div>
       </div>
 
       {/* 4. Period Status */}
-      <div className="p-5 rounded-3xl bg-white border border-[#E7DFEF] shadow-sm hover:shadow-md transition-all text-left space-y-3">
+      <div className="p-5 rounded-2xl bg-white border border-[#BAE6FD] shadow-sm hover:shadow-md transition-all text-left space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#047857] uppercase tracking-wider">
             <span className="p-1.5 rounded-xl bg-[#ECFDF5] text-[#047857]">
@@ -150,17 +150,17 @@ export const CycleOverviewCard: React.FC<CycleOverviewCardProps> = ({ stats }) =
             <span>Period Status</span>
           </div>
           {stats.isCycleActive && (
-            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#FDF2F8] text-[#FB7185]">
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#047857]">
               Active
             </span>
           )}
         </div>
 
         <div>
-          <span className="text-lg font-bold font-display text-[#1C1326] tracking-tight block truncate">
+          <span className="text-lg font-bold font-display text-[#0F172A] tracking-tight block truncate">
             {stats.periodStatus}
           </span>
-          <span className="text-xs text-[#584B68] block mt-0.5">
+          <span className="text-xs text-[#475569] block mt-0.5">
             Next est: {stats.nextPeriodDate || 'Calculating...'}
           </span>
         </div>

@@ -20,24 +20,24 @@ export const MealDetailModal: React.FC<MealDetailModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm select-none">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm select-none">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          className="w-full max-w-xl bg-white rounded-[32px] shadow-2xl border border-[#E7DFEF] overflow-hidden flex flex-col max-h-[90vh]"
+          className="w-full max-w-xl bg-white rounded-2xl shadow-xl border border-[#BAE6FD] overflow-hidden flex flex-col max-h-[90vh]"
         >
           {/* Header */}
-          <div className="p-6 pb-4 border-b border-[#E7DFEF] flex items-center justify-between bg-gradient-to-r from-[#FAF5FF] to-[#FDF2F8]">
+          <div className="p-5 sm:p-6 pb-4 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F0F9FF]">
             <div className="flex items-center gap-2.5">
-              <span className="p-2 rounded-2xl bg-[#EDE4F7] text-[#6E2D8B]">
+              <span className="p-2 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
                 <Utensils className="w-5 h-5" />
               </span>
               <div>
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#8E3EAF] block">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#0288D1] block">
                   {meal.mealType} Recipe & Guidance
                 </span>
-                <h2 className="text-lg font-bold font-display text-[#1C1326]">
+                <h2 className="text-lg font-bold text-[#0F172A]">
                   {meal.title}
                 </h2>
               </div>
@@ -46,57 +46,57 @@ export const MealDetailModal: React.FC<MealDetailModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-full text-[#8D7E9E] hover:text-[#1C1326] hover:bg-white transition-all cursor-pointer"
+              className="p-2 rounded-xl text-[#64748B] hover:text-[#0F172A] hover:bg-[#E0F2FE] transition-all cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Body */}
-          <div className="p-6 overflow-y-auto space-y-5 text-left">
+          <div className="p-4 sm:p-6 overflow-y-auto space-y-5 text-left">
             {/* Quick Nutrition Pills */}
-            <div className="grid grid-cols-4 gap-2 text-center">
-              <div className="p-2.5 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF]">
-                <span className="text-[10px] font-mono text-[#8D7E9E] block">Calories</span>
-                <span className="text-sm font-bold font-mono text-[#1C1326]">{meal.calories}</span>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+              <div className="p-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
+                <span className="text-[10px] font-mono text-[#64748B] block">Calories</span>
+                <span className="text-sm font-bold font-mono text-[#0F172A]">{meal.calories}</span>
               </div>
-              <div className="p-2.5 rounded-2xl bg-[#EDE4F7]/40 border border-[#D8B4FE]/40">
-                <span className="text-[10px] font-mono text-[#6E2D8B] block">Protein</span>
-                <span className="text-sm font-bold font-mono text-[#6E2D8B]">{meal.proteinG}g</span>
+              <div className="p-2.5 rounded-xl bg-[#E0F2FE] border border-[#BAE6FD]">
+                <span className="text-[10px] font-mono text-[#01579B] block">Protein</span>
+                <span className="text-sm font-bold font-mono text-[#01579B]">{meal.proteinG}g</span>
               </div>
-              <div className="p-2.5 rounded-2xl bg-[#FDF2F8] border border-[#FCE7F3]">
-                <span className="text-[10px] font-mono text-[#BE185D] block">Carbs</span>
-                <span className="text-sm font-bold font-mono text-[#BE185D]">{meal.carbsG}g</span>
+              <div className="p-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
+                <span className="text-[10px] font-mono text-[#0288D1] block">Carbs</span>
+                <span className="text-sm font-bold font-mono text-[#0288D1]">{meal.carbsG}g</span>
               </div>
-              <div className="p-2.5 rounded-2xl bg-[#FEF3C7] border border-[#FDE68A]">
-                <span className="text-[10px] font-mono text-[#B45309] block">Fiber</span>
-                <span className="text-sm font-bold font-mono text-[#B45309]">{meal.fiberG}g</span>
+              <div className="p-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
+                <span className="text-[10px] font-mono text-emerald-700 block">Fiber</span>
+                <span className="text-sm font-bold font-mono text-emerald-800">{meal.fiberG}g</span>
               </div>
             </div>
 
             {/* Why this was suggested */}
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-[#FAF5FF] to-[#FDF2F8] border border-[#EDE4F7] space-y-1">
-              <span className="text-[10px] font-mono font-bold uppercase text-[#6E2D8B] flex items-center gap-1">
+            <div className="p-4 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] space-y-1">
+              <span className="text-[10px] font-mono font-bold uppercase text-[#0288D1] flex items-center gap-1">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Why this was suggested</span>
               </span>
-              <p className="text-xs text-[#584B68] leading-relaxed">
+              <p className="text-xs text-[#475569] leading-relaxed">
                 {meal.whyItWorks}
               </p>
             </div>
 
             {/* Ingredients */}
             <div className="space-y-2">
-              <span className="text-xs font-mono font-bold uppercase text-[#8D7E9E] tracking-wider block">
+              <span className="text-xs font-mono font-bold uppercase text-[#64748B] tracking-wider block">
                 Ingredients & Measurements
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {meal.ingredients.map((ing, idx) => (
                   <div
                     key={idx}
-                    className="p-2.5 rounded-xl bg-[#F8F5FA] border border-[#E7DFEF] text-xs text-[#1C1326] flex items-center gap-2"
+                    className="p-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs text-[#0F172A] flex items-center gap-2"
                   >
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#8E3EAF]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#0288D1]" />
                     <span>{ing}</span>
                   </div>
                 ))}
@@ -106,10 +106,10 @@ export const MealDetailModal: React.FC<MealDetailModalProps> = ({
             {/* Simple Prep Steps */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-mono font-bold uppercase text-[#8D7E9E] tracking-wider">
+                <span className="text-xs font-mono font-bold uppercase text-[#64748B] tracking-wider">
                   Simple Preparation
                 </span>
-                <span className="text-xs font-mono text-[#8E3EAF] flex items-center gap-1">
+                <span className="text-xs font-mono text-[#0288D1] flex items-center gap-1">
                   <Clock className="w-3.5 h-3.5" />
                   <span>~{meal.prepTimeMinutes} mins</span>
                 </span>
@@ -117,8 +117,8 @@ export const MealDetailModal: React.FC<MealDetailModalProps> = ({
 
               <div className="space-y-2">
                 {meal.simpleSteps.map((step, idx) => (
-                  <div key={idx} className="flex items-start gap-3 text-xs text-[#3E3050] leading-relaxed">
-                    <span className="w-5 h-5 rounded-full bg-[#EDE4F7] text-[#6E2D8B] font-mono font-bold flex items-center justify-center shrink-0 text-[10px] mt-0.5">
+                  <div key={idx} className="flex items-start gap-3 text-xs text-[#334155] leading-relaxed">
+                    <span className="w-5 h-5 rounded-full bg-[#E0F2FE] text-[#01579B] font-mono font-bold flex items-center justify-center shrink-0 text-[10px] mt-0.5">
                       {idx + 1}
                     </span>
                     <span>{step}</span>
@@ -128,18 +128,18 @@ export const MealDetailModal: React.FC<MealDetailModalProps> = ({
             </div>
 
             {/* Serving advice */}
-            <div className="p-3.5 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] text-xs text-[#584B68] space-y-1">
-              <span className="font-semibold text-[#1C1326] block">Portion Guidance:</span>
+            <div className="p-3.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs text-[#475569] space-y-1">
+              <span className="font-semibold text-[#0F172A] block">Portion Guidance:</span>
               <p>{meal.approxServing}</p>
             </div>
           </div>
 
           {/* Footer Actions */}
-          <div className="p-4 sm:p-6 border-t border-[#E7DFEF] flex items-center justify-end gap-3 bg-[#FAF5FF]">
+          <div className="p-4 sm:p-6 border-t border-[#E2E8F0] flex items-center justify-end gap-3 bg-[#F0F9FF]">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-2xl border border-[#E7DFEF] text-xs font-bold text-[#584B68] hover:bg-white transition-all cursor-pointer"
+              className="px-4 py-2 rounded-xl border border-[#E2E8F0] text-xs font-semibold text-[#64748B] hover:bg-white transition-all cursor-pointer"
             >
               Close
             </button>
@@ -150,7 +150,7 @@ export const MealDetailModal: React.FC<MealDetailModalProps> = ({
                 onLogMeal(meal);
                 onClose();
               }}
-              className="px-6 py-2.5 rounded-2xl bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF] text-white text-xs font-bold hover:brightness-110 shadow-md shadow-purple-950/20 flex items-center gap-1.5 transition-all cursor-pointer"
+              className="px-5 py-2 rounded-xl bg-[#0288D1] text-white text-xs font-semibold hover:bg-[#0277BD] shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Log This Meal</span>

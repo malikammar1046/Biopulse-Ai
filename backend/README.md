@@ -256,12 +256,12 @@ CORS_ALLOWED_ORIGINS=http://localhost:5173
 ### 3. Train the ML model
 
 ```bash
-backend/venv/Scripts/python -m ml.training.train_pipeline
+backend/venv/Scripts/python machine-learning/ml/training/train_pipeline.py
 ```
 
 This creates:
-- `ml/artifacts/model.joblib`   — trained sklearn Pipeline
-- `ml/artifacts/metadata.json`  — model metadata
+- `machine-learning/ml/artifacts/model.joblib`   — trained sklearn Pipeline
+- `machine-learning/ml/artifacts/metadata.json`  — model metadata
 
 ### 4. Run Django system check
 

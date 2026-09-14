@@ -118,8 +118,6 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
       detectedType = 'glucose_sugar';
     } else if (lowerName.includes('lipid') || lowerName.includes('cholesterol')) {
       detectedType = 'lipid_cholesterol';
-    } else if (lowerName.includes('semen') || lowerName.includes('sperm')) {
-      detectedType = 'other';
     } else if (lowerName.includes('vitamin') || lowerName.includes('vit')) {
       detectedType = 'vitamin_test';
     }
@@ -318,19 +316,19 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
           transition={{ duration: 0.2 }}
           className={`relative w-full ${
             currentStep === 4 ? 'max-w-6xl' : 'max-w-2xl'
-          } rounded-[32px] bg-white border border-[#E7DFEF] shadow-2xl p-5 sm:p-8 text-left space-y-5 z-10 select-none my-6 max-h-[92vh] overflow-y-auto transition-all duration-300`}
+          } rounded-[32px] bg-white border border-[#BAE6FD] shadow-2xl p-5 sm:p-8 text-left space-y-5 z-10 select-none my-6 max-h-[92vh] overflow-y-auto transition-all duration-300`}
         >
           {/* Header Bar */}
-          <div className="flex items-center justify-between pb-3.5 border-b border-[#F0EAF5]">
+          <div className="flex items-center justify-between pb-3.5 border-b border-[#E2E8F0]">
             <div className="flex items-center gap-2.5">
-              <span className="p-2 rounded-2xl bg-[#EDE4F7] text-[#6E2D8B]">
+              <span className="p-2 rounded-2xl bg-[#E0F2FE] text-[#0288D1]">
                 <FileText className="w-5 h-5" />
               </span>
               <div>
-                <h2 className="text-lg sm:text-xl font-bold font-display text-[#1C1326]">
+                <h2 className="text-lg sm:text-xl font-bold font-display text-[#0F172A]">
                   {currentStep === 4 ? 'Review & Confirm Extracted Values' : 'Upload Medical Report'}
                 </h2>
-                <p className="text-xs text-[#584B68]">
+                <p className="text-xs text-[#64748B]">
                   Step {currentStep} of 4 • {currentStep === 1 && 'Select Document'}
                   {currentStep === 2 && 'Preview & Details'}
                   {currentStep === 3 && 'Reading Document with OCR'}
@@ -342,7 +340,7 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-xl text-[#8D7E9E] hover:text-[#1C1326] hover:bg-[#F8F5FA] transition-colors cursor-pointer"
+              className="p-2 rounded-xl text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -355,8 +353,8 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                 key={s}
                 className={`h-1.5 rounded-full flex-1 transition-all ${
                   s <= currentStep
-                    ? 'bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF]'
-                    : 'bg-[#E7DFEF]'
+                    ? 'bg-[#0288D1]'
+                    : 'bg-[#E2E8F0]'
                 }`}
               />
             ))}
@@ -373,15 +371,15 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
           {/* ── STEP 1: Select File ── */}
           {currentStep === 1 && (
             <div className="space-y-5 text-center py-4">
-              <div className="p-8 rounded-3xl border-2 border-dashed border-[#D8B4FE] bg-[#F8F5FA] space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-[#EDE4F7] text-[#6E2D8B] flex items-center justify-center mx-auto">
-                  <Upload className="w-6 h-6 text-[#8E3EAF]" />
+              <div className="p-8 rounded-3xl border-2 border-dashed border-[#BAE6FD] bg-[#F8FAFC] space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD] flex items-center justify-center mx-auto">
+                  <Upload className="w-6 h-6 text-[#0288D1]" />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm font-bold text-[#1C1326]">
+                  <p className="text-sm font-bold text-[#0F172A]">
                     Choose a lab report, blood test, or ultrasound file
                   </p>
-                  <p className="text-xs text-[#8D7E9E]">PDF, JPG, PNG up to 10MB</p>
+                  <p className="text-xs text-[#64748B]">PDF, JPG, PNG up to 10MB</p>
                 </div>
                 <input
                   type="file"
@@ -396,7 +394,7 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                 />
                 <label
                   htmlFor="modal-file-upload"
-                  className="px-5 py-2.5 rounded-2xl font-sans font-bold text-xs text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#E87084] hover:brightness-110 shadow-md inline-block cursor-pointer"
+                  className="px-5 py-2.5 rounded-2xl font-sans font-bold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm inline-block cursor-pointer"
                 >
                   Browse File
                 </label>
@@ -407,22 +405,22 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
           {/* ── STEP 2: Document Details ── */}
           {currentStep === 2 && selectedFile && (
             <div className="space-y-5">
-              <div className="p-4 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-white text-[#6E2D8B] shadow-2xs">
-                  <FileText className="w-6 h-6 text-[#8E3EAF]" />
+              <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-white text-[#0288D1] border border-[#BAE6FD]/60 shadow-xs">
+                  <FileText className="w-6 h-6 text-[#0288D1]" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <span className="text-xs font-bold text-[#1C1326] block truncate">
+                  <span className="text-xs font-bold text-[#0F172A] block truncate">
                     {selectedFile.name}
                   </span>
-                  <span className="text-[10px] font-mono text-[#8D7E9E]">
+                  <span className="text-[10px] font-mono text-[#64748B]">
                     {Math.round(selectedFile.size / 1024)} KB • {selectedFile.type || 'Document'}
                   </span>
                 </div>
               </div>
 
               {previewUrl && selectedFile.type.startsWith('image/') && (
-                <div className="p-2 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] max-h-48 overflow-hidden flex items-center justify-center">
+                <div className="p-2 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] max-h-48 overflow-hidden flex items-center justify-center">
                   <img
                     src={previewUrl}
                     alt="Document preview"
@@ -433,23 +431,23 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-[#1C1326] block">Report Title *</label>
+                  <label className="text-xs font-bold text-[#0F172A] block">Report Title *</label>
                   <input
                     type="text"
                     value={reportTitle}
                     onChange={(e) => setReportTitle(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] text-xs font-medium text-[#1C1326] focus:bg-white focus:outline-none focus:border-[#8E3EAF]"
+                    className="w-full px-3.5 py-2.5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs font-medium text-[#0F172A] focus:bg-white focus:outline-none focus:border-[#0288D1]"
                     required
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-[#1C1326] block">Report Date *</label>
+                  <label className="text-xs font-bold text-[#0F172A] block">Report Date *</label>
                   <input
                     type="date"
                     value={reportDate}
                     onChange={(e) => setReportDate(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] text-xs font-medium text-[#1C1326] focus:bg-white focus:outline-none focus:border-[#8E3EAF]"
+                    className="w-full px-3.5 py-2.5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs font-medium text-[#0F172A] focus:bg-white focus:outline-none focus:border-[#0288D1]"
                     required
                   />
                 </div>
@@ -457,7 +455,7 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
 
               {/* Category selector */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[#1C1326] block">Report Type *</label>
+                <label className="text-xs font-bold text-[#0F172A] block">Report Type *</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {REPORT_CATEGORIES.map((cat) => (
                     <button
@@ -466,8 +464,8 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                       onClick={() => setReportType(cat.id)}
                       className={`p-2.5 rounded-2xl border text-xs font-medium text-left transition-all cursor-pointer truncate ${
                         reportType === cat.id
-                          ? 'bg-[#6E2D8B] text-white font-bold shadow-xs'
-                          : 'bg-[#F8F5FA] border-[#E7DFEF] text-[#584B68] hover:bg-white'
+                          ? 'bg-[#0288D1] text-white font-bold shadow-xs border-[#0288D1]'
+                          : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] hover:bg-white'
                       }`}
                     >
                       {cat.label}
@@ -477,11 +475,11 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-3 flex items-center justify-between border-t border-[#F0EAF5]">
+              <div className="pt-3 flex items-center justify-between border-t border-[#E2E8F0]">
                 <button
                   type="button"
                   onClick={() => setCurrentStep(1)}
-                  className="px-4 py-2 text-xs font-semibold text-[#584B68] hover:text-[#1C1326]"
+                  className="px-4 py-2 text-xs font-semibold text-[#64748B] hover:text-[#0F172A]"
                 >
                   Choose another file
                 </button>
@@ -489,7 +487,7 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                 <button
                   type="button"
                   onClick={handleStartOcrExtraction}
-                  className="px-6 py-2.5 rounded-2xl font-sans font-bold text-xs text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#E87084] hover:brightness-110 shadow-md flex items-center gap-2 cursor-pointer"
+                  className="px-6 py-2.5 rounded-2xl font-sans font-bold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm flex items-center gap-2 cursor-pointer"
                 >
                   <Sparkles className="w-4 h-4" />
                   <span>Scan & Read Numbers (OCR)</span>
@@ -502,19 +500,19 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
           {currentStep === 3 && (
             <div className="py-12 flex flex-col items-center justify-center text-center space-y-4">
               <div className="relative">
-                <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-[#6E2D8B] via-[#8E3EAF] to-[#FB7185] flex items-center justify-center shadow-lg shadow-purple-950/30 animate-pulse">
+                <div className="w-16 h-16 rounded-3xl bg-[#0288D1] flex items-center justify-center shadow-lg shadow-sky-950/20 animate-pulse">
                   <Sparkles className="w-8 h-8 text-white" />
                 </div>
                 <div className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-white shadow-xs">
-                  <Loader2 className="w-4 h-4 animate-spin text-[#8E3EAF]" />
+                  <Loader2 className="w-4 h-4 animate-spin text-[#0288D1]" />
                 </div>
               </div>
 
               <div className="space-y-1.5 max-w-sm">
-                <h3 className="text-lg font-bold font-display text-[#1C1326]">
+                <h3 className="text-lg font-bold font-display text-[#0F172A]">
                   Reading your medical report...
                 </h3>
-                <p className="text-xs text-[#584B68] leading-relaxed">
+                <p className="text-xs text-[#64748B] leading-relaxed">
                   Extracting test names, numerical results, units, and laboratory reference intervals. Remember: OCR data is never trusted until you verify it.
                 </p>
               </div>
@@ -525,27 +523,27 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
           {currentStep === 4 && (
             <div className="space-y-4">
               {/* Mandatory Review Notice Banner */}
-              <div className="p-3.5 rounded-2xl bg-[#EDE4F7] border border-[#D8B4FE]/60 flex items-start gap-2.5 text-xs text-[#6E2D8B]">
-                <ShieldCheck className="w-5 h-5 text-[#8E3EAF] shrink-0 mt-0.5" />
+              <div className="p-3.5 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-start gap-2.5 text-xs text-[#0288D1]">
+                <ShieldCheck className="w-5 h-5 text-[#0288D1] shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <p className="font-bold text-[#1C1326] text-sm">
+                  <p className="font-bold text-[#0F172A] text-sm">
                     Please review the values extracted from your report. Check them against your original report before confirming.
                   </p>
-                  <p className="text-[#584B68] leading-relaxed">
+                  <p className="text-[#64748B] leading-relaxed">
                     OCR-extracted numbers stay marked as <strong>Waiting for confirmation</strong> and are not added to your trusted health profile until you explicitly verify them.
                   </p>
                 </div>
               </div>
 
               {/* Mobile View Switcher (< lg) */}
-              <div className="flex lg:hidden items-center justify-between gap-2 p-1 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF]">
+              <div className="flex lg:hidden items-center justify-between gap-2 p-1 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0]">
                 <button
                   type="button"
                   onClick={() => setMobileTab('results')}
                   className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
                     mobileTab === 'results'
-                      ? 'bg-white text-[#6E2D8B] shadow-xs'
-                      : 'text-[#584B68] hover:text-[#1C1326]'
+                      ? 'bg-white text-[#0288D1] shadow-xs'
+                      : 'text-[#64748B] hover:text-[#0F172A]'
                   }`}
                 >
                   Extracted Values ({extractedResults.length})
@@ -555,8 +553,8 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                   onClick={() => setMobileTab('document')}
                   className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                     mobileTab === 'document'
-                      ? 'bg-white text-[#6E2D8B] shadow-xs'
-                      : 'text-[#584B68] hover:text-[#1C1326]'
+                      ? 'bg-white text-[#0288D1] shadow-xs'
+                      : 'text-[#64748B] hover:text-[#0F172A]'
                   }`}
                 >
                   <Eye className="w-3.5 h-3.5" />
@@ -573,8 +571,8 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                   }`}
                 >
                   <div className="flex items-center justify-between px-1">
-                    <span className="text-xs font-bold text-[#1C1326] flex items-center gap-1.5">
-                      <FileText className="w-3.5 h-3.5 text-[#8E3EAF]" />
+                    <span className="text-xs font-bold text-[#0F172A] flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5 text-[#0288D1]" />
                       Original Document
                     </span>
                     {previewUrl && (
@@ -582,7 +580,7 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                         href={previewUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-[11px] font-semibold text-[#6E2D8B] hover:underline flex items-center gap-1"
+                        className="text-[11px] font-semibold text-[#0288D1] hover:underline flex items-center gap-1"
                       >
                         <ExternalLink className="w-3 h-3" />
                         <span>Open in new tab</span>
@@ -590,7 +588,7 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                     )}
                   </div>
 
-                  <div className="h-[480px] rounded-2xl border border-[#E7DFEF] bg-[#1C1326]/5 overflow-hidden flex flex-col justify-center items-center relative">
+                  <div className="h-[480px] rounded-2xl border border-[#BAE6FD] bg-[#F8FAFC] overflow-hidden flex flex-col justify-center items-center relative">
                     {previewUrl && selectedFile?.type === 'application/pdf' ? (
                       <iframe
                         src={previewUrl}
@@ -606,10 +604,10 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                         />
                       </div>
                     ) : (
-                      <div className="text-center p-6 space-y-2 text-[#584B68]">
-                        <FileText className="w-10 h-10 text-[#8E3EAF] mx-auto" />
+                      <div className="text-center p-6 space-y-2 text-[#64748B]">
+                        <FileText className="w-10 h-10 text-[#0288D1] mx-auto" />
                         <p className="text-xs font-semibold">{selectedFile?.name || 'Report Document'}</p>
-                        <p className="text-[11px] text-[#8D7E9E]">
+                        <p className="text-[11px] text-[#64748B]">
                           Preview not available for this file type.
                         </p>
                       </div>
@@ -624,13 +622,13 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                   }`}
                 >
                   {/* Status & Quick Action Bar */}
-                  <div className="p-3 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] flex flex-wrap items-center justify-between gap-2">
+                  <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-[#1C1326]">
+                      <span className="text-xs font-bold text-[#0F172A]">
                         {confirmedCount} of {extractedResults.length} confirmed
                       </span>
                       {isAllConfirmed ? (
-                        <span className="text-[10px] font-mono font-bold text-[#047857] bg-[#ECFDF5] px-2 py-0.5 rounded-full border border-[#A7F3D0]/60 flex items-center gap-1">
+                        <span className="text-[10px] font-mono font-bold text-[#059669] bg-[#ECFDF5] px-2 py-0.5 rounded-full border border-[#A7F3D0] flex items-center gap-1">
                           <CheckCircle2 className="w-3 h-3" />
                           Ready for trusted profile
                         </span>
@@ -646,14 +644,14 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                       <button
                         type="button"
                         onClick={handleConfirmAllRows}
-                        className="px-2.5 py-1 rounded-xl bg-white border border-[#D8B4FE] text-xs font-bold text-[#6E2D8B] hover:bg-[#EDE4F7] transition-colors cursor-pointer"
+                        className="px-2.5 py-1 rounded-xl bg-white border border-[#BAE6FD] text-xs font-bold text-[#0288D1] hover:bg-[#E0F2FE] transition-colors cursor-pointer"
                       >
                         Confirm All Values
                       </button>
                       <button
                         type="button"
                         onClick={handleAddResultRow}
-                        className="px-2.5 py-1 rounded-xl bg-white border border-[#E7DFEF] text-xs font-bold text-[#584B68] hover:bg-slate-50 transition-colors flex items-center gap-1 cursor-pointer"
+                        className="px-2.5 py-1 rounded-xl bg-white border border-[#E2E8F0] text-xs font-bold text-[#64748B] hover:bg-slate-50 transition-colors flex items-center gap-1 cursor-pointer"
                       >
                         <Plus className="w-3 h-3" />
                         <span>Add Missing</span>
@@ -664,9 +662,9 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                   {/* Scrollable Results List */}
                   <div className="h-[420px] overflow-y-auto pr-1 space-y-3">
                     {extractedResults.length === 0 ? (
-                      <div className="text-center py-12 p-6 rounded-2xl border-2 border-dashed border-[#E7DFEF] space-y-2">
-                        <p className="text-xs font-bold text-[#1C1326]">No numbers extracted</p>
-                        <p className="text-xs text-[#8D7E9E]">
+                      <div className="text-center py-12 p-6 rounded-2xl border-2 border-dashed border-[#BAE6FD] space-y-2">
+                        <p className="text-xs font-bold text-[#0F172A]">No numbers extracted</p>
+                        <p className="text-xs text-[#64748B]">
                           The report could not be read cleanly. Click "Add Missing" to enter results manually.
                         </p>
                       </div>
@@ -677,13 +675,13 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                           className={`p-3.5 rounded-2xl border transition-all text-left text-xs space-y-2.5 ${
                             res.userVerified
                               ? 'bg-[#F0FDF4] border-[#86EFAC]/80'
-                              : 'bg-[#F8F5FA] border-[#E7DFEF]'
+                              : 'bg-[#F8FAFC] border-[#E2E8F0]'
                           }`}
                         >
                           {/* Row 1: Test Name + Confidence & Verification Badges + Delete */}
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex-1 min-w-0">
-                              <label className="text-[10px] font-mono text-[#8D7E9E] block">
+                              <label className="text-[10px] font-mono text-[#64748B] block">
                                 Test Name
                               </label>
                               <input
@@ -693,14 +691,14 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                                   handleUpdateResultRow(index, { testName: e.target.value })
                                 }
                                 placeholder="Test Name"
-                                className="font-bold text-[#1C1326] bg-transparent border-b border-transparent hover:border-[#D8B4FE] focus:border-[#8E3EAF] focus:outline-none w-full py-0.5 truncate text-xs"
+                                className="font-bold text-[#0F172A] bg-transparent border-b border-transparent hover:border-[#BAE6FD] focus:border-[#0288D1] focus:outline-none w-full py-0.5 truncate text-xs"
                               />
                             </div>
 
                             <div className="flex items-center gap-1.5 shrink-0">
                               {/* Confidence Badge */}
                               {res.ocrConfidence && res.ocrConfidence >= 0.9 ? (
-                                <span className="text-[10px] font-mono text-[#047857] bg-[#ECFDF5] px-2 py-0.5 rounded-md border border-[#A7F3D0]/60">
+                                <span className="text-[10px] font-mono text-[#059669] bg-[#ECFDF5] px-2 py-0.5 rounded-md border border-[#A7F3D0]">
                                   {Math.round(res.ocrConfidence * 100)}% Confidence
                                 </span>
                               ) : (
@@ -725,7 +723,7 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                               <button
                                 type="button"
                                 onClick={() => handleDeleteResultRow(index)}
-                                className="p-1 text-[#8D7E9E] hover:text-[#E11D48] transition-colors"
+                                className="p-1 text-[#64748B] hover:text-[#E11D48] transition-colors cursor-pointer"
                                 title="Remove test"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -736,7 +734,7 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                           {/* Row 2: Value, Unit, Reference Range */}
                           <div className="grid grid-cols-3 gap-2">
                             <div>
-                              <label className="text-[10px] font-mono text-[#8D7E9E] block">
+                              <label className="text-[10px] font-mono text-[#64748B] block">
                                 Result *
                               </label>
                               <input
@@ -746,12 +744,12 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                                   handleUpdateResultRow(index, { resultValue: e.target.value })
                                 }
                                 placeholder="e.g. 12.4"
-                                className="w-full px-2.5 py-1 rounded-xl bg-white border border-[#E7DFEF] font-bold text-[#1C1326] focus:outline-none focus:border-[#8E3EAF] text-xs"
+                                className="w-full px-2.5 py-1 rounded-xl bg-white border border-[#E2E8F0] font-bold text-[#0F172A] focus:outline-none focus:border-[#0288D1] text-xs"
                               />
                             </div>
 
                             <div>
-                              <label className="text-[10px] font-mono text-[#8D7E9E] block">
+                              <label className="text-[10px] font-mono text-[#64748B] block">
                                 Unit
                               </label>
                               <input
@@ -761,12 +759,12 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                                   handleUpdateResultRow(index, { unit: e.target.value })
                                 }
                                 placeholder="e.g. ng/dL"
-                                className="w-full px-2.5 py-1 rounded-xl bg-white border border-[#E7DFEF] text-[#584B68] focus:outline-none focus:border-[#8E3EAF] text-xs"
+                                className="w-full px-2.5 py-1 rounded-xl bg-white border border-[#E2E8F0] text-[#475569] focus:outline-none focus:border-[#0288D1] text-xs"
                               />
                             </div>
 
                             <div>
-                              <label className="text-[10px] font-mono text-[#8D7E9E] block">
+                              <label className="text-[10px] font-mono text-[#64748B] block">
                                 Typical Range
                               </label>
                               <input
@@ -776,14 +774,14 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                                   handleUpdateResultRow(index, { referenceRange: e.target.value })
                                 }
                                 placeholder="e.g. 15 – 70"
-                                className="w-full px-2.5 py-1 rounded-xl bg-white border border-[#E7DFEF] text-[#584B68] focus:outline-none focus:border-[#8E3EAF] text-xs"
+                                className="w-full px-2.5 py-1 rounded-xl bg-white border border-[#E2E8F0] text-[#475569] focus:outline-none focus:border-[#0288D1] text-xs"
                               />
                             </div>
                           </div>
 
                           {/* Row 3: Item Confirmation Toggle */}
-                          <div className="pt-1 flex items-center justify-between border-t border-[#E7DFEF]/60">
-                            <span className="text-[10px] text-[#8D7E9E]">
+                          <div className="pt-1 flex items-center justify-between border-t border-[#E2E8F0]">
+                            <span className="text-[10px] text-[#64748B]">
                               {res.userVerified
                                 ? 'Included in your verified screening calculations'
                                 : 'Needs your verification before adding to profile'}
@@ -795,7 +793,7 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                               className={`px-3 py-1 rounded-xl font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer ${
                                 res.userVerified
                                   ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border border-emerald-300'
-                                  : 'bg-white text-[#6E2D8B] hover:bg-[#EDE4F7] border border-[#D8B4FE]'
+                                  : 'bg-white text-[#0288D1] hover:bg-[#E0F2FE] border border-[#BAE6FD]'
                               }`}
                             >
                               <Check className="w-3.5 h-3.5" />
@@ -810,12 +808,12 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
               </div>
 
               {/* Action Buttons Footer */}
-              <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-[#F0EAF5]">
+              <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-[#E2E8F0]">
                 <button
                   type="button"
                   onClick={() => setCurrentStep(2)}
                   disabled={isSaving}
-                  className="px-4 py-2 text-xs font-semibold text-[#584B68] hover:text-[#1C1326] disabled:opacity-50 self-start sm:self-auto"
+                  className="px-4 py-2 text-xs font-semibold text-[#64748B] hover:text-[#0F172A] disabled:opacity-50 self-start sm:self-auto cursor-pointer"
                 >
                   Back to Details
                 </button>
@@ -826,7 +824,7 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                     type="button"
                     onClick={() => handleSaveWithMode(false)}
                     disabled={isSaving}
-                    className="px-4 py-2.5 rounded-2xl border border-[#E7DFEF] text-xs font-bold text-[#584B68] hover:bg-[#F8F5FA] transition-colors disabled:opacity-50 cursor-pointer"
+                    className="px-4 py-2.5 rounded-2xl border border-[#E2E8F0] text-xs font-bold text-[#64748B] hover:bg-[#F8FAFC] transition-colors disabled:opacity-50 cursor-pointer"
                   >
                     Save Without Verifying
                   </button>
@@ -836,7 +834,7 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                     type="button"
                     onClick={() => handleSaveWithMode(true)}
                     disabled={isSaving}
-                    className="px-6 py-2.5 rounded-2xl font-sans font-bold text-xs text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#E87084] hover:brightness-110 shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                    className="px-6 py-2.5 rounded-2xl font-sans font-bold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm flex items-center gap-2 cursor-pointer disabled:opacity-50"
                   >
                     {isSaving ? (
                       <>

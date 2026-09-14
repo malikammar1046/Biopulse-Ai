@@ -21,6 +21,7 @@ interface AuthContextType {
   saveOnboardingProfile: (data: Partial<UserProfile>) => Promise<{ success: boolean; error?: string }>;
   updateUserProfile: (data: Partial<UserProfile>) => Promise<{ success: boolean; error?: string }>;
   resetToDefaultProfile: () => void;
+  deleteAccountAndData: () => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -83,6 +84,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ...profile,
         pathway: resolvedPathway,
         gender: resolvedGender,
+        waistCm: profile.waistCm ?? (userMeta.waist_cm !== undefined ? userMeta.waist_cm : undefined),
+        mensHealth: profile.mensHealth || userMeta.mens_health || undefined,
+        generalHealth: profile.generalHealth || userMeta.general_health || undefined,
         avatarUrl: profile.avatarUrl || (metaAvatarUrl ? metaAvatarUrl : undefined),
         fullName: profile.fullName || metaFullName,
       };
@@ -251,7 +255,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         id: res.session.user.id,
         email: payload.email,
         fullName: payload.fullName,
-        dateOfBirth: payload.dateOfBirth || '',
+        dateOfBirth: '',
         gender: payload.gender,
         pathway: payload.pathway,
         isOnboarded: false,
@@ -265,7 +269,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           id: res.user.id,
           email: payload.email,
           fullName: payload.fullName,
-          dateOfBirth: payload.dateOfBirth || '',
+          dateOfBirth: '',
           gender: payload.gender,
           pathway: payload.pathway,
           isOnboarded: false,
@@ -377,6 +381,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const deleteAccountAndData = async (): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const activeUserId = user?.id || userProfile.id;
+
+      if (isSupabaseConfigured() && activeUserId) {
+        try {
+          await profileService.deleteUserProfile(activeUserId);
+        } catch (e) {
+          console.warn('Could not delete remote Supabase profile:', e);
+        }
+      }
+
+      try {
+        const allKeys: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key) allKeys.push(key);
+        }
+        allKeys.forEach((key) => {
+          if (
+            key.startsWith('symptoms_') ||
+            key.startsWith('reports_') ||
+            key.startsWith('meds_') ||
+            key.startsWith('med_logs_') ||
+            key.startsWith('fitness_') ||
+            key.startsWith('cycles_') ||
+            key.startsWith('diet_') ||
+            key.startsWith('care_circle_') ||
+            key.startsWith('appointments_') ||
+            key.startsWith('ovasense_') ||
+            key.startsWith('vitasense_') ||
+            key.startsWith('androsense_') ||
+            key.startsWith('adaptive_') ||
+            key.startsWith('sb-') ||
+            key.includes('profile') ||
+            key.includes('reminders')
+          ) {
+            localStorage.removeItem(key);
+          }
+        });
+      } catch (e) {
+        console.warn('Could not clean localStorage:', e);
+      }
+
+      try {
+        sessionStorage.clear();
+      } catch {}
+
+      try {
+        await authService.logout();
+      } catch {}
+
+      setUser(null);
+      setSession(null);
+      setUserProfile(DEFAULT_USER_PROFILE);
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Failed to delete account and data.' };
+    }
+  };
+
   const isAuthenticated = isSupabaseConfigured() ? Boolean(user) : Boolean(userProfile.id);
   const isOnboarded = userProfile.isOnboarded;
 
@@ -397,6 +463,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         saveOnboardingProfile,
         updateUserProfile,
         resetToDefaultProfile,
+        deleteAccountAndData,
       }}
     >
       {children}

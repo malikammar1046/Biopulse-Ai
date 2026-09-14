@@ -18,28 +18,28 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
       {/* ── 1. CYCLE DAY CARD ── */}
       <div
         onClick={onViewCycle}
-        className="p-5 rounded-3xl bg-white border border-[#E7DFEF] hover:border-[#8E3EAF]/40 shadow-sm hover:shadow-md transition-all duration-300 text-left space-y-3 cursor-pointer group"
+        className="p-5 rounded-2xl bg-white border border-[#E2E8F0] hover:border-[#BAE6FD] shadow-xs transition-all text-left space-y-3 cursor-pointer group"
       >
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#8E3EAF] uppercase tracking-wider">
-            <span className="p-1.5 rounded-xl bg-[#EDE4F7] text-[#6E2D8B]">
+          <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#0288D1] uppercase tracking-wider">
+            <span className="p-1.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
               <Calendar className="w-3.5 h-3.5" />
             </span>
             <span>Your Cycle Day</span>
           </div>
-          <span className="text-[10px] font-mono text-[#8D7E9E] font-medium">
+          <span className="text-[10px] font-mono text-[#64748B] font-medium">
             {metrics.totalCycleDays}-day cycle
           </span>
         </div>
 
         <div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold font-display text-[#1C1326] tracking-tight">
+            <span className="text-3xl font-extrabold font-display text-[#0F172A] tracking-tight">
               {metrics.cycleDay > 0 ? `Day ${metrics.cycleDay}` : 'Day —'}
             </span>
           </div>
-          <span className="text-xs font-semibold text-[#FB7185] flex items-center gap-1.5 mt-0.5">
-            <span className="w-2 h-2 rounded-full bg-[#FB7185] animate-pulse" />
+          <span className="text-xs font-semibold text-[#0288D1] flex items-center gap-1.5 mt-0.5">
+            <span className="w-2 h-2 rounded-full bg-[#29B6F6]" />
             {metrics.phaseName}
           </span>
         </div>
@@ -50,13 +50,13 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
             <path
               d="M 0 18 Q 25 22, 50 8 T 100 12"
               fill="none"
-              stroke="#FB7185"
+              stroke="#29B6F6"
               strokeWidth="2.5"
               strokeLinecap="round"
             />
-            <circle cx="50" cy="8" r="3.5" fill="#6E2D8B" />
+            <circle cx="50" cy="8" r="3.5" fill="#0288D1" />
           </svg>
-          <span className="text-[10px] font-mono text-[#8D7E9E] group-hover:text-[#6E2D8B] flex items-center transition-colors">
+          <span className="text-[10px] font-mono text-[#64748B] group-hover:text-[#0288D1] flex items-center transition-colors">
             Details <ChevronRight className="w-3 h-3" />
           </span>
         </div>
@@ -65,23 +65,23 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
       {/* ── 2. NEXT PERIOD CARD ── */}
       <div
         onClick={onViewCycle}
-        className="p-5 rounded-3xl bg-white border border-[#E7DFEF] hover:border-[#8E3EAF]/40 shadow-sm hover:shadow-md transition-all duration-300 text-left space-y-3 cursor-pointer group"
+        className="p-5 rounded-2xl bg-white border border-[#E2E8F0] hover:border-[#BAE6FD] shadow-xs transition-all text-left space-y-3 cursor-pointer group"
       >
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#6E2D8B] uppercase tracking-wider">
-            <span className="p-1.5 rounded-xl bg-[#EDE4F7] text-[#6E2D8B]">
+          <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#0288D1] uppercase tracking-wider">
+            <span className="p-1.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
               <Clock className="w-3.5 h-3.5" />
             </span>
             <span>Next Period</span>
           </div>
-          <span className="text-[10px] font-mono text-[#8D7E9E] font-medium">Estimated</span>
+          <span className="text-[10px] font-mono text-[#64748B] font-medium">Estimated</span>
         </div>
 
         <div>
-          <span className="text-3xl font-extrabold font-display text-[#1C1326] tracking-tight">
+          <span className="text-3xl font-extrabold font-display text-[#0F172A] tracking-tight">
             {metrics.nextPeriodDays > 0 ? `In ${metrics.nextPeriodDays} days` : 'Not recorded'}
           </span>
-          <span className="text-xs text-[#584B68] block mt-0.5 font-medium">
+          <span className="text-xs text-[#64748B] block mt-0.5 font-medium">
             {metrics.nextPeriodDate}
           </span>
         </div>
@@ -93,8 +93,8 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
               key={i}
               className={`h-1.5 rounded-full flex-1 transition-all ${
                 i < 7
-                  ? 'bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF]'
-                  : 'bg-[#E7DFEF]'
+                  ? 'bg-[#0288D1]'
+                  : 'bg-[#E2E8F0]'
               }`}
             />
           ))}
@@ -104,28 +104,28 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
       {/* ── 3. SYMPTOMS LOGGED CARD ── */}
       <div
         onClick={onViewSymptoms}
-        className="p-5 rounded-3xl bg-white border border-[#E7DFEF] hover:border-[#8E3EAF]/40 shadow-sm hover:shadow-md transition-all duration-300 text-left space-y-3 cursor-pointer group"
+        className="p-5 rounded-2xl bg-white border border-[#E2E8F0] hover:border-[#BAE6FD] shadow-xs transition-all text-left space-y-3 cursor-pointer group"
       >
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#A21CAF] uppercase tracking-wider">
-            <span className="p-1.5 rounded-xl bg-[#FDF2F8] text-[#A21CAF]">
+          <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#0288D1] uppercase tracking-wider">
+            <span className="p-1.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
               <Activity className="w-3.5 h-3.5" />
             </span>
             <span>Today&apos;s Symptoms</span>
           </div>
-          <span className="text-[10px] font-mono text-[#A21CAF] font-bold group-hover:underline">
+          <span className="text-[10px] font-mono text-[#0288D1] font-bold group-hover:underline">
             View all
           </span>
         </div>
 
         <div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold font-display text-[#1C1326] tracking-tight">
+            <span className="text-3xl font-extrabold font-display text-[#0F172A] tracking-tight">
               {metrics.symptomsCountToday}
             </span>
-            <span className="text-xs text-[#584B68] font-medium">Logged today</span>
+            <span className="text-xs text-[#64748B] font-medium">Logged today</span>
           </div>
-          <span className="text-xs text-[#584B68] block mt-0.5 truncate font-sans">
+          <span className="text-xs text-[#64748B] block mt-0.5 truncate font-sans">
             {metrics.symptomsList.length > 0
               ? metrics.symptomsList.map((s) => s.name).join(' • ')
               : 'No symptoms logged today'}
@@ -134,34 +134,34 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
 
         {/* Mini Vertical Bar Indicator */}
         <div className="pt-1 flex items-end gap-1.5 h-6">
-          <div className="w-2 h-3 bg-[#D8B4FE] rounded-t-sm" />
-          <div className="w-2 h-5 bg-[#FB7185] rounded-t-sm" />
-          <div className="w-2 h-4 bg-[#8E3EAF] rounded-t-sm" />
-          <div className="w-2 h-2 bg-[#E7DFEF] rounded-t-sm" />
-          <div className="w-2 h-6 bg-[#6E2D8B] rounded-t-sm" />
+          <div className="w-2 h-3 bg-[#BAE6FD] rounded-t-sm" />
+          <div className="w-2 h-5 bg-[#29B6F6] rounded-t-sm" />
+          <div className="w-2 h-4 bg-[#0288D1] rounded-t-sm" />
+          <div className="w-2 h-2 bg-[#E2E8F0] rounded-t-sm" />
+          <div className="w-2 h-6 bg-[#0288D1] rounded-t-sm" />
         </div>
       </div>
 
       {/* ── 4. WELLNESS SCORE CARD ── */}
-      <div className="p-5 rounded-3xl bg-white border border-[#E7DFEF] hover:border-[#8E3EAF]/40 shadow-sm hover:shadow-md transition-all duration-300 text-left space-y-3">
+      <div className="p-5 rounded-2xl bg-white border border-[#E2E8F0] hover:border-[#BAE6FD] shadow-xs transition-all text-left space-y-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#047857] uppercase tracking-wider">
-            <span className="p-1.5 rounded-xl bg-[#ECFDF5] text-[#047857]">
+          <div className="flex items-center gap-2 text-xs font-mono font-bold text-emerald-700 uppercase tracking-wider">
+            <span className="p-1.5 rounded-xl bg-emerald-50 text-emerald-600">
               <Sparkles className="w-3.5 h-3.5" />
             </span>
             <span>Wellness Check</span>
           </div>
-          <div className="flex items-center gap-1 text-[11px] font-mono font-bold text-[#047857] bg-[#ECFDF5] px-2 py-0.5 rounded-full">
+          <div className="flex items-center gap-1 text-[11px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
             <TrendingUp className="w-3 h-3" />
             <span>+{metrics.wellnessScoreChange}% vs last week</span>
           </div>
         </div>
 
         <div>
-          <span className="text-3xl font-extrabold font-display text-[#1C1326] tracking-tight">
+          <span className="text-3xl font-extrabold font-display text-[#0F172A] tracking-tight">
             {metrics.wellnessScore}%
           </span>
-          <span className="text-xs text-[#584B68] block mt-0.5 font-medium">
+          <span className="text-xs text-[#64748B] block mt-0.5 font-medium">
             Based on sleep, activity & meals
           </span>
         </div>
@@ -172,13 +172,13 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
             <path
               d="M 0 18 Q 20 16, 40 10 T 80 6 T 100 2"
               fill="none"
-              stroke="#047857"
+              stroke="#059669"
               strokeWidth="2.5"
               strokeLinecap="round"
             />
-            <circle cx="100" cy="2" r="3.5" fill="#047857" />
+            <circle cx="100" cy="2" r="3.5" fill="#059669" />
           </svg>
-          <span className="text-[10px] font-mono text-[#047857] font-semibold">Feeling Balanced</span>
+          <span className="text-[10px] font-mono text-emerald-700 font-semibold">Feeling Balanced</span>
         </div>
       </div>
     </div>

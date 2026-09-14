@@ -37,7 +37,7 @@ export async function submitContactInquiry(
 
   return {
     success: true,
-    message: 'Message received. Thank you for reaching out to OVASense.',
-    referenceId: `OVA-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+    message: 'Message received. Thank you for reaching out to BioPulse AI.',
+    referenceId: `BP-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
   };
 }

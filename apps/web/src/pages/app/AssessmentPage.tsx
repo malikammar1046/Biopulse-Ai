@@ -19,6 +19,11 @@ import {
   CostAwarePrioritizationCard,
   ExplainabilityPlaceholderCard,
   ADAMQuestionnaireModal,
+  ProgressiveAssessmentCard,
+  ClinicalLabsModal,
+  MaleClinicalLabsModal,
+  UltrasoundUploadModal,
+  AssessmentHistoryModal,
 } from '../../components/adaptive';
 
 export const AssessmentPage: React.FC = () => {
@@ -29,12 +34,20 @@ export const AssessmentPage: React.FC = () => {
     verifyReportBiomarker,
     saveADAMResponses,
     refreshMlAssessment,
+    activeAssessment,
+    assessmentLoading,
+    refreshActiveAssessment,
   } = useUserHealth();
 
   // Active view tab: 'overview' (4-tier progressive profile) or 'intake' (quick update)
   const [activeTab, setActiveTab] = useState<'overview' | 'intake'>('overview');
   const [selectedTier, setSelectedTier] = useState<TierLevel>('tier_1');
   const [isAdamModalOpen, setIsAdamModalOpen] = useState(false);
+
+  // Progressive Assessment Modals
+  const [isClinicalModalOpen, setIsClinicalModalOpen] = useState(false);
+  const [isUltrasoundModalOpen, setIsUltrasoundModalOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
 
   // Intake / Update Form state
   const [heightCm, setHeightCm] = useState<number>(userProfile.heightCm || 165);
@@ -63,6 +76,7 @@ export const AssessmentPage: React.FC = () => {
       };
       await updateUserProfile(payload);
       await refreshMlAssessment();
+      await refreshActiveAssessment();
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
@@ -80,42 +94,41 @@ export const AssessmentPage: React.FC = () => {
       className="max-w-7xl mx-auto space-y-6 sm:space-y-8 pb-20 text-left select-none"
     >
       {/* ── 1. Top Executive Banner ───────────────────────────────────────── */}
-      <div className="relative p-6 sm:p-8 rounded-[32px] bg-gradient-to-r from-[#180A26] via-[#240F38] to-[#12071F] border border-white/10 text-white shadow-xl overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-[#8E3EAF]/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="relative p-6 sm:p-8 rounded-[32px] bg-[#01579B] border border-[#BAE6FD] text-white shadow-sm overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#6E2D8B]/30 border border-[#8E3EAF]/40 text-xs font-mono text-[#FDA4AF]">
-              <Layers className="w-3.5 h-3.5 text-[#FB7185]" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 border border-white/25 text-xs font-mono text-white">
+              <Layers className="w-3.5 h-3.5 text-[#BAE6FD]" />
               <span>{adaptiveProfile.screeningPathwayName}</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold font-display tracking-tight text-white">
               Adaptive Health Profile & Screening
             </h1>
-            <p className="text-xs sm:text-sm text-[#CDBDD8] font-sans max-w-2xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-sky-100 font-sans max-w-2xl leading-relaxed">
               Start with what you know → understand available information → identify gaps → progressively build your profile without mandatory testing.
             </p>
           </div>
 
           {/* Navigation Toggle between 4-Tier System and Quick Profile Editor */}
-          <div className="flex items-center gap-2 p-1 rounded-2xl bg-black/40 border border-white/10 self-start md:self-auto">
+          <div className="flex items-center gap-2 p-1 rounded-2xl bg-black/20 border border-white/15 self-start md:self-auto">
             <button
               type="button"
               onClick={() => setActiveTab('overview')}
               className={`px-4 py-2 rounded-xl text-xs font-sans font-bold transition-all cursor-pointer ${
                 activeTab === 'overview'
-                  ? 'bg-gradient-to-r from-[#8E3EAF] to-[#FB7185] text-white shadow-md'
-                  : 'text-[#CDBDD8] hover:text-white'
+                  ? 'bg-white text-[#01579B] shadow-sm'
+                  : 'text-sky-100 hover:text-white'
               }`}
             >
-              4-Tier Screening
+              {pathway === 'male' ? '2-Tier Screening' : '3-Tier Screening'}
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('intake')}
               className={`px-4 py-2 rounded-xl text-xs font-sans font-bold transition-all cursor-pointer ${
                 activeTab === 'intake'
-                  ? 'bg-gradient-to-r from-[#8E3EAF] to-[#FB7185] text-white shadow-md'
-                  : 'text-[#CDBDD8] hover:text-white'
+                  ? 'bg-white text-[#01579B] shadow-sm'
+                  : 'text-sky-100 hover:text-white'
               }`}
             >
               Update Biometrics
@@ -127,6 +140,16 @@ export const AssessmentPage: React.FC = () => {
       {/* ── 2. Primary 4-Tier Screening Content ────────────────────────────── */}
       {activeTab === 'overview' && (
         <div className="space-y-6 sm:space-y-8">
+          {/* Progressive Clinical Assessment Card (Tier 1 / Tier 1+2 / Tier 1+2+3 Multimodal) */}
+          <ProgressiveAssessmentCard
+            assessment={activeAssessment}
+            loading={assessmentLoading}
+            onOpenClinicalModal={() => setIsClinicalModalOpen(true)}
+            onOpenUltrasoundModal={() => setIsUltrasoundModalOpen(true)}
+            onOpenHistoryModal={() => setIsHistoryModalOpen(true)}
+            onRefresh={refreshActiveAssessment}
+          />
+
           {/* Master Profile Completeness & Readiness Card */}
           <ProfileCompletenessCard
             profile={adaptiveProfile}
@@ -135,21 +158,21 @@ export const AssessmentPage: React.FC = () => {
 
           {/* Dedicated Male ADAM Questionnaire Action Button for Tier 1 */}
           {pathway === 'male' && (
-            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#0284C7] to-[#0369A1] border border-[#38BDF8]/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white shadow-md">
+            <div className="p-4 sm:p-5 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[#0F172A] shadow-xs">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/20 border border-white/30 flex items-center justify-center text-white shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-[#0288D1] flex items-center justify-center text-white shrink-0 shadow-xs">
                   <ClipboardCheck className="w-5 h-5" />
                 </div>
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
-                    <h4 className="text-sm sm:text-base font-bold text-white font-display">
+                    <h4 className="text-sm sm:text-base font-bold text-[#01579B] font-display">
                       ADAM Questionnaire (Tier 1 Screening Tool)
                     </h4>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/20 text-white font-bold">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD] font-bold">
                       Standardized
                     </span>
                   </div>
-                  <p className="text-xs text-sky-100">
+                  <p className="text-xs text-[#475569]">
                     10-item validated symptom screening questionnaire for self-reported male vitality and stamina.
                   </p>
                 </div>
@@ -158,18 +181,19 @@ export const AssessmentPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsAdamModalOpen(true)}
-                className="px-4 py-2 rounded-xl bg-white hover:bg-sky-50 text-[#0284C7] text-xs font-bold font-sans transition-all flex items-center gap-1.5 cursor-pointer shadow-md self-start sm:self-auto shrink-0"
+                className="px-4 py-2 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold font-sans transition-all flex items-center gap-1.5 cursor-pointer shadow-xs self-start sm:self-auto shrink-0"
               >
                 <span>Take / Review Questionnaire</span>
               </button>
             </div>
           )}
 
-          {/* Interactive 4-Tier Navigator & Disclosure */}
+          {/* Interactive Screening Tier Navigator & Disclosure */}
           <ScreeningTierNavigator
             tiers={adaptiveProfile.tiers}
             selectedTier={selectedTier}
             onSelectTier={setSelectedTier}
+            pathway={pathway === 'male' ? 'male' : 'female'}
             onVerifyBiomarker={async (itemId, reportId, resultId) => {
               if (reportId && resultId) {
                 await verifyReportBiomarker(reportId, resultId);
@@ -215,21 +239,21 @@ export const AssessmentPage: React.FC = () => {
       {activeTab === 'intake' && (
         <form
           onSubmit={handleSaveIntake}
-          className="p-6 sm:p-8 rounded-[32px] bg-white border border-[#E7DFEF] text-[#1C1326] shadow-sm space-y-6 max-w-2xl mx-auto"
+          className="p-6 sm:p-8 rounded-[32px] bg-white border border-[#BAE6FD] text-[#0F172A] shadow-xs space-y-6 max-w-2xl mx-auto"
         >
-          <div className="border-b border-[#E7DFEF] pb-4 space-y-1">
-            <h3 className="text-lg font-bold font-display text-[#1C1326] flex items-center gap-2">
-              <Edit3 className="w-5 h-5 text-[#8E3EAF]" />
+          <div className="border-b border-[#E2E8F0] pb-4 space-y-1">
+            <h3 className="text-lg font-bold font-display text-[#01579B] flex items-center gap-2">
+              <Edit3 className="w-5 h-5 text-[#0288D1]" />
               <span>Update Tier 1 Biometrics & Habits</span>
             </h3>
-            <p className="text-xs text-[#584B68]">
+            <p className="text-xs text-[#475569]">
               Modifying these accessible metrics automatically recalculates your BMI and tier completeness.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1.5">
-              <label className="block text-xs font-mono uppercase text-[#584B68]">
+              <label className="block text-xs font-mono uppercase text-[#475569] font-semibold">
                 Height (cm)
               </label>
               <input
@@ -238,12 +262,12 @@ export const AssessmentPage: React.FC = () => {
                 max={250}
                 value={heightCm}
                 onChange={(e) => setHeightCm(Number(e.target.value))}
-                className="w-full px-4 py-2.5 rounded-xl bg-[#F8F5FA] border border-[#E7DFEF] text-[#1C1326] text-sm focus:outline-none focus:border-[#8E3EAF] focus:bg-white transition-colors"
+                className="w-full px-4 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#BAE6FD]/80 text-[#0F172A] text-sm focus:outline-none focus:border-[#0288D1] focus:bg-white transition-colors font-medium"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-mono uppercase text-[#584B68]">
+              <label className="block text-xs font-mono uppercase text-[#475569] font-semibold">
                 Weight (kg)
               </label>
               <input
@@ -252,12 +276,12 @@ export const AssessmentPage: React.FC = () => {
                 max={250}
                 value={weightKg}
                 onChange={(e) => setWeightKg(Number(e.target.value))}
-                className="w-full px-4 py-2.5 rounded-xl bg-[#F8F5FA] border border-[#E7DFEF] text-[#1C1326] text-sm focus:outline-none focus:border-[#8E3EAF] focus:bg-white transition-colors"
+                className="w-full px-4 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#BAE6FD]/80 text-[#0F172A] text-sm focus:outline-none focus:border-[#0288D1] focus:bg-white transition-colors font-medium"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-mono uppercase text-[#584B68]">
+              <label className="block text-xs font-mono uppercase text-[#475569] font-semibold">
                 Waist (cm)
               </label>
               <input
@@ -266,14 +290,14 @@ export const AssessmentPage: React.FC = () => {
                 max={180}
                 value={waistCm}
                 onChange={(e) => setWaistCm(Number(e.target.value))}
-                className="w-full px-4 py-2.5 rounded-xl bg-[#F8F5FA] border border-[#E7DFEF] text-[#1C1326] text-sm focus:outline-none focus:border-[#8E3EAF] focus:bg-white transition-colors"
+                className="w-full px-4 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#BAE6FD]/80 text-[#0F172A] text-sm focus:outline-none focus:border-[#0288D1] focus:bg-white transition-colors font-medium"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="block text-xs font-mono uppercase text-[#584B68]">
+              <label className="block text-xs font-mono uppercase text-[#475569] font-semibold">
                 Average Sleep Duration (Hours)
               </label>
               <input
@@ -283,18 +307,18 @@ export const AssessmentPage: React.FC = () => {
                 max={12}
                 value={sleepHours}
                 onChange={(e) => setSleepHours(Number(e.target.value))}
-                className="w-full px-4 py-2.5 rounded-xl bg-[#F8F5FA] border border-[#E7DFEF] text-[#1C1326] text-sm focus:outline-none focus:border-[#8E3EAF] focus:bg-white transition-colors"
+                className="w-full px-4 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#BAE6FD]/80 text-[#0F172A] text-sm focus:outline-none focus:border-[#0288D1] focus:bg-white transition-colors font-medium"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-mono uppercase text-[#584B68]">
+              <label className="block text-xs font-mono uppercase text-[#475569] font-semibold">
                 Physical Activity Level
               </label>
               <select
                 value={activityLevel}
                 onChange={(e) => setActivityLevel(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl bg-[#F8F5FA] border border-[#E7DFEF] text-[#1C1326] text-sm focus:outline-none focus:border-[#8E3EAF] focus:bg-white transition-colors"
+                className="w-full px-4 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#BAE6FD]/80 text-[#0F172A] text-sm focus:outline-none focus:border-[#0288D1] focus:bg-white transition-colors font-medium"
               >
                 <option value="sedentary">Sedentary (Little or no exercise)</option>
                 <option value="light">Light (Exercise 1–3 days/week)</option>
@@ -315,15 +339,15 @@ export const AssessmentPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setActiveTab('overview')}
-              className="px-4 py-2 rounded-xl bg-[#F8F5FA] hover:bg-[#EFE9F5] text-xs text-[#584B68] font-medium transition-colors cursor-pointer border border-[#E7DFEF]"
+              className="px-4 py-2 rounded-xl bg-[#F8FAFC] hover:bg-[#E0F2FE] text-xs text-[#475569] hover:text-[#01579B] font-medium transition-colors cursor-pointer border border-[#BAE6FD]"
             >
-              Back to 4-Tier View
+              {pathway === 'male' ? 'Back to 2-Tier View' : 'Back to 3-Tier View'}
             </button>
 
             <button
               type="submit"
               disabled={isSaving}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#8E3EAF] to-[#FB7185] hover:from-[#7B3299] hover:to-[#F43F5E] text-white text-xs font-bold font-sans transition-all flex items-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
+              className="px-5 py-2.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold font-sans transition-all flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
             >
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               <span>Save & Update Profile</span>
@@ -332,7 +356,33 @@ export const AssessmentPage: React.FC = () => {
         </form>
       )}
 
-      {/* ── 4. ADAM Questionnaire Modal (Male) ────────────────────────────── */}
+      {/* ── 4. Progressive Assessment Modals ───────────────────────────────── */}
+      {pathway === 'male' ? (
+        <MaleClinicalLabsModal
+          isOpen={isClinicalModalOpen}
+          onClose={() => setIsClinicalModalOpen(false)}
+          onSuccess={() => refreshActiveAssessment()}
+        />
+      ) : (
+        <ClinicalLabsModal
+          isOpen={isClinicalModalOpen}
+          onClose={() => setIsClinicalModalOpen(false)}
+          onSuccess={() => refreshActiveAssessment()}
+        />
+      )}
+
+      <UltrasoundUploadModal
+        isOpen={isUltrasoundModalOpen}
+        onClose={() => setIsUltrasoundModalOpen(false)}
+        onSuccess={() => refreshActiveAssessment()}
+      />
+
+      <AssessmentHistoryModal
+        isOpen={isHistoryModalOpen}
+        onClose={() => setIsHistoryModalOpen(false)}
+      />
+
+      {/* ── 5. ADAM Questionnaire Modal (Male) ────────────────────────────── */}
       <ADAMQuestionnaireModal
         isOpen={isAdamModalOpen}
         onClose={() => setIsAdamModalOpen(false)}

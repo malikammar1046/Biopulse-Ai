@@ -28,27 +28,24 @@ export const ReportVerificationBanner: React.FC<ReportVerificationBannerProps> =
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -6 }}
       transition={{ duration: 0.3 }}
-      className="w-full p-4 sm:p-5 rounded-[28px] bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-rose-500/10 border-2 border-amber-400/40 shadow-sm text-left flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden"
+      className="w-full p-4 sm:p-5 rounded-[24px] bg-amber-50 border-2 border-amber-300 shadow-xs text-left flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden"
       id="report-verification-banner"
     >
-      {/* Volumetric accent glow */}
-      <div className="absolute -top-10 -right-10 w-32 h-32 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
-
       <div className="flex items-start sm:items-center gap-3.5 min-w-0">
-        <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-700 flex items-center justify-center shrink-0 border border-amber-500/30">
+        <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 border border-amber-300">
           <Clock className="w-5 h-5 animate-pulse" />
         </div>
 
         <div className="space-y-0.5 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[10px] font-mono uppercase tracking-wider font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-800 border border-amber-500/30">
+            <span className="text-[10px] font-mono uppercase tracking-wider font-bold px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 border border-amber-300">
               Awaiting Verification
             </span>
             <span className="text-xs font-bold font-display text-amber-950 truncate">
               {count} Medical Report{count === 1 ? '' : 's'} Extracted by OCR
             </span>
           </div>
-          <p className="text-xs text-amber-900/80 font-sans leading-relaxed">
+          <p className="text-xs text-amber-900 font-sans leading-relaxed">
             Biomarkers are quarantined. Confirmed values will unlock Tier 2/3 screening and update your trusted health profile.
           </p>
         </div>

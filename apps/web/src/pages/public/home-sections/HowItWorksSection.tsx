@@ -1,227 +1,380 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
-  UserCircle2,
-  Activity,
   FileText,
-  ScanLine,
-  UserCheck,
-  BrainCircuit,
-  History,
-  CheckCircle2,
+  BarChart3,
+  Leaf,
+  Check,
+  Heart,
   ArrowRight,
 } from 'lucide-react';
 import { Container } from '../../../components/ui/Container';
-import { Badge } from '../../../components/ui/Badge';
+import { ROUTES } from '../../../constants/routes';
 
 export const HowItWorksSection: React.FC = () => {
-  const [currentStep, setCurrentStep] = useState(0);
-
-  const steps = [
-    {
-      num: '01',
-      title: 'Build your health profile',
-      subtitle: 'Demographic baseline & history',
-      icon: UserCircle2,
-      desc: 'Establish your personalized baseline including age, metabolic factors, lifestyle patterns, and family health history in a secure digital space.',
-    },
-    {
-      num: '02',
-      title: 'Record symptoms & daily signals',
-      subtitle: 'Multi-parameter logging',
-      icon: Activity,
-      desc: 'Log relevant health signals—such as cycle timing, skin changes, morning vitality, sleep recovery, or physical strength—using standardized severity scales.',
-    },
-    {
-      num: '03',
-      title: 'Upload medical reports',
-      subtitle: 'Laboratory panels & imaging',
-      icon: FileText,
-      desc: 'Upload laboratory documents, blood panels, or ultrasound reports. Automated OCR scans documents and prepares extracted fields for your review.',
-    },
-    {
-      num: '04',
-      title: 'Verify extracted information',
-      subtitle: 'Human-in-the-loop review',
-      icon: UserCheck,
-      desc: 'Review OCR-extracted biomarkers side-by-side with your original lab slips before saving them to your verified personal health record.',
-      isVerificationCard: true,
-    },
-    {
-      num: '05',
-      title: 'Explore AI-assisted assessment',
-      subtitle: 'Transparent feature attribution',
-      icon: BrainCircuit,
-      desc: 'Algorithms evaluate multi-variable patterns and output clear feature influence scores showing which factors mattered most—without black boxes.',
-    },
-    {
-      num: '06',
-      title: 'Monitor changes over time',
-      subtitle: 'Longitudinal timeline & doctor summaries',
-      icon: History,
-      desc: 'Track biomarker trajectories across consecutive months and generate structured appointment summaries for collaborative dialogue with your physician.',
-    },
-  ];
-
   return (
-    <section className="relative py-24 sm:py-32 bg-gradient-to-b from-[#EDE4F7] via-[#F8F5FA] to-[#EDE4F7] text-[#1C1326] overflow-hidden">
-      {/* Soft Ambient Biological Glows */}
-      <div className="absolute top-1/3 left-1/4 w-[600px] h-[600px] bg-[#D8B4FE]/30 rounded-full blur-[140px] pointer-events-none -z-10" />
+    <section className="relative py-20 sm:py-28 bg-[#FAFCFF] text-[#162A45] border-t border-slate-200/70 overflow-hidden select-none">
+      {/* ── Soft Ambient Glows ── */}
+      <div
+        className="absolute top-1/4 left-1/4 w-[500px] h-[500px] rounded-full pointer-events-none -z-0 opacity-30"
+        style={{
+          background: 'radial-gradient(circle at 40% 40%, rgba(207, 250, 254, 0.7) 0%, transparent 65%)',
+        }}
+        aria-hidden="true"
+      />
+      <div
+        className="absolute bottom-10 right-1/4 w-[450px] h-[450px] rounded-full pointer-events-none -z-0 opacity-25"
+        style={{
+          background: 'radial-gradient(circle at 50% 50%, rgba(254, 205, 211, 0.6) 0%, transparent 65%)',
+        }}
+        aria-hidden="true"
+      />
 
-      <Container size="xl">
-        <div className="max-w-3xl mx-auto text-center space-y-5 mb-16">
-          <Badge variant="primary" showDot size="md">
-            Platform Workflow
-          </Badge>
+      <Container size="xl" className="relative z-10">
+        {/* ── Header ── */}
+        <div className="max-w-3xl mx-auto text-center space-y-3.5 mb-16 sm:mb-20">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E0F7FA] border border-[#B2EBF2] text-xs font-semibold text-[#00838F] shadow-2xs">
+            <span className="w-2 h-2 rounded-full bg-[#00838F]" />
+            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.18em]">
+              How BioPulse AI Works
+            </span>
+          </div>
 
-          <h2 className="text-3xl sm:text-5xl font-extrabold font-display tracking-tight text-[#1C1326] leading-tight">
-            How VITASense AI Works
+          <h2 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-extrabold font-display tracking-tight leading-[1.15]">
+            <span className="text-[#0F254B]">From Answers to a</span>{' '}
+            <span className="text-[#00838F]">Healthier You</span>
           </h2>
 
-          <p className="text-base sm:text-lg text-[#584B68] leading-relaxed font-sans max-w-2xl mx-auto">
-            A seamless, verified workflow from signal entry and OCR extraction to transparent screening assessment and longitudinal tracking.
+          <p className="text-xs sm:text-sm lg:text-base text-slate-600 max-w-xl mx-auto leading-relaxed font-sans">
+            A simple, guided process that turns your information into meaningful insights &mdash; so you can take the next step with confidence.
           </p>
         </div>
 
-        {/* Interactive Step Navigator Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-          {/* Step Selectors (Left 5 cols) */}
-          <div className="lg:col-span-5 space-y-2.5">
-            {steps.map((step, idx) => {
-              const Icon = step.icon;
-              const isSelected = currentStep === idx;
-              return (
-                <button
-                  key={idx}
-                  onClick={() => setCurrentStep(idx)}
-                  className={`w-full text-left p-4 rounded-2xl border transition-all duration-200 flex items-center justify-between cursor-pointer ${
-                    isSelected
-                      ? 'bg-white text-[#1C1326] border-[#6E2D8B] shadow-xl shadow-purple-950/10 ring-2 ring-[#6E2D8B]'
-                      : 'bg-white/70 text-[#584B68] border-[#E7DFEF] hover:bg-white hover:border-[#D8B4FE]'
-                  }`}
-                >
-                  <div className="flex items-center gap-3.5">
-                    <div
-                      className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs ${
-                        isSelected ? 'bg-[#6E2D8B] text-white' : 'bg-[#EDE4F7] text-[#6E2D8B]'
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
+        {/* ── 3 Cards with Continuous Connecting Wave ── */}
+        <div className="relative max-w-6xl mx-auto">
+          {/* Continuous Connecting Wave Line Across Cards (Desktop) */}
+          <svg
+            className="hidden lg:block absolute -top-4 left-8 right-8 w-[calc(100%-4rem)] h-12 pointer-events-none z-20"
+            viewBox="0 0 1000 60"
+            fill="none"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M 50,30 C 200,5 350,55 500,30 C 650,5 800,55 950,30"
+              stroke="url(#how-it-works-wave-gradient)"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+            <defs>
+              <linearGradient id="how-it-works-wave-gradient" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#F472B6" stopOpacity="0.8" />
+                <stop offset="50%" stopColor="#0891B2" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#10B981" stopOpacity="0.8" />
+              </linearGradient>
+            </defs>
+          </svg>
+
+          {/* Cards Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-7 sm:gap-8 items-stretch">
+            {/* ══════════════════════════════════════════════
+                CARD 1: SHARE YOUR HEALTH INFORMATION
+               ══════════════════════════════════════════════ */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.45 }}
+              className="relative pt-4 flex"
+            >
+              {/* Top Step Number Badge 01 */}
+              <div className="absolute top-0 left-6 z-30 w-8 h-8 rounded-full bg-[#E11D48] text-white font-mono font-bold text-xs flex items-center justify-center shadow-md shadow-pink-600/30">
+                01
+              </div>
+
+              <div className="w-full rounded-[30px] bg-gradient-to-br from-[#FFF0F5]/80 via-white to-[#FFF5F8] border border-pink-100 p-6 sm:p-7 shadow-[0_10px_30px_rgba(244,114,182,0.08)] flex flex-col justify-between space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+                  {/* Left Text */}
+                  <div className="sm:col-span-7 space-y-3">
+                    <div className="w-9 h-9 rounded-xl bg-pink-50 border border-pink-200/80 text-[#E11D48] flex items-center justify-center shadow-2xs">
+                      <FileText className="w-4 h-4" />
                     </div>
-                    <div>
-                      <span
-                        className={`text-[10px] font-mono font-bold uppercase tracking-wider block ${
-                          isSelected ? 'text-[#8E3EAF]' : 'text-[#8D7E9E]'
-                        }`}
-                      >
-                        STEP {step.num}
-                      </span>
-                      <h4 className="text-sm font-bold font-display">{step.title}</h4>
-                    </div>
+
+                    <h3 className="text-lg sm:text-xl font-bold font-display text-[#0F254B] leading-snug">
+                      Share Your Health Information
+                    </h3>
+
+                    <p className="text-xs sm:text-[13px] text-slate-600 leading-relaxed font-sans">
+                      Start with a few simple questions about your symptoms, lifestyle and health history.
+                    </p>
                   </div>
 
-                  <ArrowRight
-                    className={`w-4 h-4 transition-transform ${
-                      isSelected ? 'text-[#6E2D8B] translate-x-1' : 'text-[#8D7E9E]'
-                    }`}
-                  />
-                </button>
-              );
-            })}
-          </div>
+                  {/* Right Illustration: Stylized Clipboard */}
+                  <div className="sm:col-span-5 relative flex items-center justify-center min-h-[170px]">
+                    {/* Pink Leaf Backdrop */}
+                    <div className="absolute -right-2 top-2 w-16 h-24 opacity-60 pointer-events-none">
+                      <svg viewBox="0 0 100 150" fill="none" className="w-full h-full text-pink-300">
+                        <path d="M50 150 C 30 100, 20 50, 80 10 C 60 40, 70 80, 50 150 Z" fill="#FBCFE8" />
+                        <path d="M50 150 C 80 120, 90 70, 70 40" stroke="#F472B6" strokeWidth="2" />
+                      </svg>
+                    </div>
 
-          {/* Central Interactive Visualization Card (Right 7 cols) */}
-          <div className="lg:col-span-7">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentStep}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-                className="rounded-3xl bg-white text-[#1C1326] p-8 sm:p-10 shadow-2xl border border-[#E7DFEF] space-y-6"
-              >
-                <div className="flex items-center justify-between border-b border-[#E7DFEF] pb-4">
-                  <div className="flex items-center gap-3">
-                    <span className="w-10 h-10 rounded-2xl bg-[#EDE4F7] text-[#6E2D8B] font-mono font-bold text-sm flex items-center justify-center">
-                      {steps[currentStep].num}
-                    </span>
-                    <div>
-                      <span className="text-[10px] uppercase font-bold tracking-wider text-[#8E3EAF]">
-                        Platform Workflow
-                      </span>
-                      <h3 className="text-2xl font-bold font-display text-[#1C1326]">
-                        {steps[currentStep].title}
-                      </h3>
+                    {/* Clipboard Card */}
+                    <div className="relative z-10 w-32 bg-white rounded-2xl p-3 shadow-md shadow-pink-900/10 border border-pink-100 space-y-2">
+                      {/* Top Clip Heart */}
+                      <div className="flex justify-center -mt-5">
+                        <div className="w-9 h-6 bg-slate-100 border border-slate-200 rounded-t-lg flex items-center justify-center shadow-2xs">
+                          <div className="w-3.5 h-3.5 rounded-full bg-rose-50 border border-pink-200 flex items-center justify-center">
+                            <Heart className="w-2.5 h-2.5 fill-[#E11D48] text-[#E11D48]" />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 3 Checked Items */}
+                      <div className="space-y-2 pt-1">
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 rounded-md bg-slate-800 text-white flex items-center justify-center shrink-0">
+                            <Check className="w-2.5 h-2.5 stroke-[3]" />
+                          </div>
+                          <div className="h-2 w-14 bg-slate-200 rounded-full" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 rounded-md bg-slate-800 text-white flex items-center justify-center shrink-0">
+                            <Check className="w-2.5 h-2.5 stroke-[3]" />
+                          </div>
+                          <div className="h-2 w-18 bg-slate-200 rounded-full" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 rounded-md bg-slate-800 text-white flex items-center justify-center shrink-0">
+                            <Check className="w-2.5 h-2.5 stroke-[3]" />
+                          </div>
+                          <div className="h-2 w-12 bg-slate-200 rounded-full" />
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <Badge variant="primary" size="sm">
-                    {steps[currentStep].subtitle}
-                  </Badge>
                 </div>
 
-                <p className="text-sm sm:text-base text-[#584B68] leading-relaxed">
-                  {steps[currentStep].desc}
-                </p>
+                <div className="pt-2 border-t border-pink-100/70">
+                  <Link
+                    to={ROUTES.HOW_IT_WORKS}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#E11D48] hover:text-[#BE123C] group"
+                  >
+                    <span>Your story matters</span>
+                    <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
 
-                {/* Specific Animated Medical Document & OCR Verification Preview for Step 4 */}
-                {steps[currentStep].isVerificationCard ? (
-                  <div className="p-5 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] space-y-4 font-mono text-xs">
-                    <div className="flex items-center justify-between border-b border-[#E7DFEF] pb-2">
-                      <div className="flex items-center gap-2 text-[#1C1326] font-sans font-bold text-xs">
-                        <ScanLine className="w-4 h-4 text-[#6E2D8B]" />
-                        <span>OCR Extraction & Verification Output</span>
-                      </div>
-                      <span className="px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#047857] text-[10px] font-bold">
-                        Information Extracted
-                      </span>
+            {/* ══════════════════════════════════════════════
+                CARD 2: UNDERSTAND YOUR SCREENING RESULT
+               ══════════════════════════════════════════════ */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.45, delay: 0.1 }}
+              className="relative pt-4 flex"
+            >
+              {/* Top Step Number Badge 02 */}
+              <div className="absolute top-0 left-6 z-30 w-8 h-8 rounded-full bg-[#0284C7] text-white font-mono font-bold text-xs flex items-center justify-center shadow-md shadow-sky-600/30">
+                02
+              </div>
+
+              <div className="w-full rounded-[30px] bg-gradient-to-br from-[#F0F9FF]/80 via-white to-[#F0FAFA] border border-sky-100 p-6 sm:p-7 shadow-[0_10px_30px_rgba(56,189,248,0.08)] flex flex-col justify-between space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+                  {/* Left Text */}
+                  <div className="sm:col-span-7 space-y-3">
+                    <div className="w-9 h-9 rounded-xl bg-sky-50 border border-sky-200/80 text-[#0284C7] flex items-center justify-center shadow-2xs">
+                      <BarChart3 className="w-4 h-4" />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 font-sans">
-                      <div className="p-3 rounded-xl bg-white border border-[#E7DFEF]">
-                        <span className="text-[11px] text-[#8D7E9E] block">Serum Hormone Value</span>
-                        <span className="text-sm font-bold text-[#1C1326]">Verified Field</span>
-                      </div>
-                      <div className="p-3 rounded-xl bg-white border border-[#E7DFEF]">
-                        <span className="text-[11px] text-[#8D7E9E] block">Metabolic Reference</span>
-                        <span className="text-sm font-bold text-[#1C1326]">Standard Range</span>
-                      </div>
-                      <div className="p-3 rounded-xl bg-white border border-[#E7DFEF]">
-                        <span className="text-[11px] text-[#8D7E9E] block">Confidence Rating</span>
-                        <span className="text-sm font-bold text-[#059669]">99.2% OCR Match</span>
-                      </div>
-                      <div className="p-3 rounded-xl bg-white border border-[#E7DFEF]">
-                        <span className="text-[11px] text-[#8D7E9E] block">Audit Trail</span>
-                        <span className="text-sm font-bold text-[#6E2D8B]">Logged & Audited</span>
-                      </div>
-                    </div>
+                    <h3 className="text-lg sm:text-xl font-bold font-display text-[#0F254B] leading-snug">
+                      Understand Your Screening Result
+                    </h3>
 
-                    <div className="p-3 rounded-xl bg-[#EDE4F7] border border-[#D8B4FE]/60 flex items-center justify-between text-xs text-[#6E2D8B] font-sans">
-                      <div className="flex items-center gap-2">
-                        <UserCheck className="w-4 h-4" />
-                        <span className="font-bold">Human-in-the-loop: Review before saving</span>
+                    <p className="text-xs sm:text-[13px] text-slate-600 leading-relaxed font-sans">
+                      Get a clear, easy-to-understand risk assessment with key factors that influence your result.
+                    </p>
+                  </div>
+
+                  {/* Right Illustration: Assessment Gauge Card */}
+                  <div className="sm:col-span-5 relative flex items-center justify-center min-h-[170px]">
+                    {/* Cyan Backdrop Circle */}
+                    <div className="absolute w-28 h-28 rounded-full bg-cyan-100/70 -top-1 -right-1 blur-xs" />
+
+                    {/* Assessment Card */}
+                    <div className="relative z-10 w-32 bg-white rounded-2xl p-3 shadow-md shadow-cyan-900/10 border border-cyan-100 space-y-1.5">
+                      <div className="text-[10px] font-bold text-slate-800 text-center">
+                        Your Risk Assessment
                       </div>
-                      <span className="px-2 py-0.5 rounded-md bg-white text-[#6E2D8B] font-semibold text-[10px]">
-                        Verified by User
-                      </span>
+
+                      {/* Semi-circular Radial Meter */}
+                      <div className="relative flex flex-col items-center justify-center py-0.5">
+                        <svg className="w-18 h-10" viewBox="0 0 100 55">
+                          <path
+                            d="M10 50 A 40 40 0 0 1 90 50"
+                            fill="none"
+                            stroke="#E2E8F0"
+                            strokeWidth="8"
+                            strokeLinecap="round"
+                          />
+                          <path
+                            d="M10 50 A 40 40 0 0 1 45 12"
+                            fill="none"
+                            stroke="#0284C7"
+                            strokeWidth="8"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        <div className="text-center -mt-4">
+                          <span className="text-xs font-extrabold text-slate-900 block leading-tight">28%</span>
+                          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tight">Lower Risk</span>
+                        </div>
+                      </div>
+
+                      {/* Key Contributing Factors */}
+                      <div className="space-y-1 pt-1 border-t border-slate-100">
+                        <div className="text-[8px] font-bold text-slate-600">Key Contributing Factors</div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-[#0284C7]" />
+                          <div className="h-1.5 w-12 bg-slate-200 rounded-full" />
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          <div className="h-1.5 w-16 bg-slate-200 rounded-full" />
+                        </div>
+                      </div>
                     </div>
                   </div>
-                ) : (
-                  <div className="p-5 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-[#EDE4F7] text-[#6E2D8B] flex items-center justify-center shrink-0">
-                      <CheckCircle2 className="w-6 h-6" />
+                </div>
+
+                <div className="pt-2 border-t border-sky-100/70">
+                  <Link
+                    to={ROUTES.HOW_IT_WORKS}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0284C7] hover:text-[#0369A1] group"
+                  >
+                    <span>See how it works</span>
+                    <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* ══════════════════════════════════════════════
+                CARD 3: KNOW YOUR NEXT STEP
+               ══════════════════════════════════════════════ */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.45, delay: 0.2 }}
+              className="relative pt-4 flex"
+            >
+              {/* Top Step Number Badge 03 */}
+              <div className="absolute top-0 left-6 z-30 w-8 h-8 rounded-full bg-[#059669] text-white font-mono font-bold text-xs flex items-center justify-center shadow-md shadow-emerald-600/30">
+                03
+              </div>
+
+              <div className="w-full rounded-[30px] bg-gradient-to-br from-[#F0FDF4]/80 via-white to-[#F0FDF9] border border-emerald-100 p-6 sm:p-7 shadow-[0_10px_30px_rgba(16,185,129,0.08)] flex flex-col justify-between space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+                  {/* Left Text */}
+                  <div className="sm:col-span-7 space-y-3">
+                    <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200/80 text-[#059669] flex items-center justify-center shadow-2xs">
+                      <Leaf className="w-4 h-4" />
                     </div>
-                    <div className="text-xs text-[#584B68] space-y-0.5">
-                      <strong className="text-[#1C1326] block">Screening & Risk Assessment Safety Assurance</strong>
-                      Data is evaluated to identify risk patterns and prepare clinician summaries without diagnosing diseases or prescribing treatments.
+
+                    <h3 className="text-lg sm:text-xl font-bold font-display text-[#0F254B] leading-snug">
+                      Know Your Next Step
+                    </h3>
+
+                    <p className="text-xs sm:text-[13px] text-slate-600 leading-relaxed font-sans">
+                      Receive personalized guidance, recommended tests (if needed) and practical next steps.
+                    </p>
+                  </div>
+
+                  {/* Right Illustration: Directional Signpost */}
+                  <div className="sm:col-span-5 relative flex items-center justify-center min-h-[170px]">
+                    {/* Green Foliage Backdrop */}
+                    <div className="absolute -left-1 bottom-1 w-16 h-24 opacity-60 pointer-events-none">
+                      <svg viewBox="0 0 100 150" fill="none" className="w-full h-full text-emerald-400">
+                        <path d="M50 150 C 30 100, 10 70, 40 30 C 50 60, 40 100, 50 150 Z" fill="#A7F3D0" />
+                        <path d="M50 150 C 70 110, 80 80, 60 50" stroke="#059669" strokeWidth="2" />
+                      </svg>
+                    </div>
+
+                    {/* Signpost Elements */}
+                    <div className="relative z-10 flex flex-col items-center py-2">
+                      {/* Vertical Post Pole */}
+                      <div className="absolute top-0 bottom-0 w-2.5 bg-slate-700 rounded-full shadow-xs" />
+
+                      {/* Direction 1: Insights */}
+                      <div className="relative z-10 mb-2 mr-4 px-3 py-1 rounded-full bg-white border border-slate-200 shadow-sm text-[10px] font-bold text-slate-700 tracking-tight">
+                        Insights
+                      </div>
+
+                      {/* Direction 2: Guidance */}
+                      <div className="relative z-10 mb-2 ml-4 px-3 py-1 rounded-full bg-white border border-slate-200 shadow-sm text-[10px] font-bold text-slate-700 tracking-tight">
+                        Guidance
+                      </div>
+
+                      {/* Direction 3: A Healthier You */}
+                      <div className="relative z-10 px-3.5 py-1.5 rounded-full bg-[#008CA5] shadow-md shadow-cyan-900/20 text-[10px] font-extrabold text-white tracking-tight">
+                        A Healthier You
+                      </div>
                     </div>
                   </div>
-                )}
-              </motion.div>
-            </AnimatePresence>
+                </div>
+
+                <div className="pt-2 border-t border-emerald-100/70">
+                  <Link
+                    to={ROUTES.HOW_IT_WORKS}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#059669] hover:text-[#047857] group"
+                  >
+                    <span>Take charge of your health</span>
+                    <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* ── Center Primary Action Button ── */}
+        <div className="text-center pt-12 sm:pt-14">
+          <Link to={ROUTES.HOW_IT_WORKS}>
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full font-bold text-white text-sm sm:text-base bg-[#008CA5] hover:bg-[#007A90] shadow-md shadow-cyan-900/20 transition-all cursor-pointer"
+            >
+              <span>See the Full Process</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </Link>
+        </div>
+
+        {/* ── Bottom Micro Tagline (Left) & Cursive Note (Right) ── */}
+        <div className="mt-8 pt-4 flex items-center justify-between relative">
+          <div className="hidden lg:block text-[10px] xl:text-[11px] font-mono font-bold tracking-[0.22em] text-slate-400 uppercase select-none">
+            SCIENCE &nbsp;+&nbsp; INSIGHTS &nbsp;+&nbsp; A HEALTHIER YOU
+          </div>
+
+          <div className="hidden lg:block absolute bottom-0 right-2 xl:right-4 select-none pointer-events-none rotate-[-6deg]">
+            <span
+              className="text-2xl xl:text-3xl font-bold text-[#00A8B5] block leading-tight text-right drop-shadow-xs"
+              style={{ fontFamily: "'Caveat', cursive" }}
+            >
+              Small Steps
+              <br />
+              Brighter Tomorrows
+            </span>
           </div>
         </div>
       </Container>
     </section>
   );
 };
+
+export default HowItWorksSection;

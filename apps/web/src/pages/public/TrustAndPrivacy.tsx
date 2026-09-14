@@ -77,7 +77,7 @@ export const TrustAndPrivacy: React.FC = () => {
             </h1>
 
             <p className="text-base md:text-lg text-[#B4A6C7] leading-relaxed font-sans max-w-2xl mx-auto">
-              Reproductive health is deeply personal. Explore how VITASense protects privacy,
+              Reproductive health is deeply personal. Explore how BIOPulse AI protects privacy,
               enforces strict encryption, and adheres to responsible AI principles.
             </p>
 
@@ -160,7 +160,7 @@ export const TrustAndPrivacy: React.FC = () => {
                 Medicine is fundamentally contextual, clinical, and human. While statistical algorithms can identify patterns across complex biomarkers, a true diagnosis requires physical examination, patient medical history, differential clinical reasoning, and licensed human accountability.
               </p>
               <p>
-                VITASense is strictly an <strong className="text-white">educational screening and longitudinal monitoring platform</strong>. We highlight signals, organize scattered lab reports, and prepare patients for consultations. We do not issue formal clinical diagnoses, prescribe pharmacotherapy, or advise ignoring licensed medical directives.
+                BIOPulse AI is strictly an <strong className="text-white">educational screening and longitudinal monitoring platform</strong>. We highlight signals, organize scattered lab reports, and prepare patients for consultations. We do not issue formal clinical diagnoses, prescribe pharmacotherapy, or advise ignoring licensed medical directives.
               </p>
             </div>
           </div>
@@ -175,7 +175,7 @@ export const TrustAndPrivacy: React.FC = () => {
               Reproductive Health Intelligence You Can Trust
             </h2>
             <p className="text-sm md:text-base text-[#B4A6C7] max-w-xl mx-auto leading-relaxed">
-              Explore VITASense today with full confidence in your data privacy and ethical standards.
+              Explore BIOPulse AI today with full confidence in your data privacy and ethical standards.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
               <Link to={ROUTES.REGISTER}>

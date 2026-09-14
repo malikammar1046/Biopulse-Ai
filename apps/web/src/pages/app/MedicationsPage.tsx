@@ -10,6 +10,7 @@ import { MedicationModal } from '../../components/medications/MedicationModal';
 
 export const MedicationsPage: React.FC = () => {
   const {
+    userProfile,
     medications,
     todayMedicationProgress,
     weeklyMedicationStats,
@@ -20,6 +21,8 @@ export const MedicationsPage: React.FC = () => {
     deleteMedicationDose,
     openAiChatWithPrompt,
   } = useUserHealth();
+
+  const isMale = userProfile?.pathway === 'male' || userProfile?.gender === 'male';
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMedication, setEditingMedication] = useState<MedicationItem | null>(null);
@@ -85,7 +88,9 @@ export const MedicationsPage: React.FC = () => {
         onOpenAddModal={handleOpenAddModal}
         onAskAi={() =>
           openAiChatWithPrompt(
-            'How do my daily inositol and metformin supplements support steady glucose and cycle regularity?'
+            isMale
+              ? 'How do consistent daily micronutrients, zinc, and vitamin D support metabolic health and energy regulation?'
+              : 'How do my daily supplements and prescribed medications support steady glucose and endocrine balance?'
           )
         }
       />

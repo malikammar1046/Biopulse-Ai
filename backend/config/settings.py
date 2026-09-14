@@ -9,7 +9,7 @@ Environment variables (set in .env, never commit secrets):
   SUPABASE_URL             — Supabase project URL
   SUPABASE_SERVICE_ROLE_KEY — server-side only, NEVER expose to frontend
   SUPABASE_JWT_SECRET      — from Supabase Settings → API → JWT Secret
-  ML_MODEL_ARTIFACTS_DIR   — path to ml/artifacts (defaults to repo relative path)
+  ML_MODEL_ARTIFACTS_DIR   — path to ML artifacts (defaults to repo relative path)
 """
 
 import os
@@ -23,13 +23,14 @@ from dotenv import load_dotenv
 # ---------------------------------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 REPO_ROOT = BASE_DIR.parent   # Root repo directory
-OVASENSE_ML_DIR = REPO_ROOT / "Ovasense-ML"
+PCOS_ML_DIR = REPO_ROOT / "machine-learning" / "PCOS-ML"
+MALE_ML_ROOT_DIR = REPO_ROOT / "machine-learning" / "male-ML"
 
-# Add repo root and Ovasense-ML to sys.path so model transformers and modules resolve cleanly
+# Add repo root and PCOS-ML to sys.path so model transformers and modules resolve cleanly
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
-if str(OVASENSE_ML_DIR) not in sys.path:
-    sys.path.insert(0, str(OVASENSE_ML_DIR))
+if str(PCOS_ML_DIR) not in sys.path:
+    sys.path.insert(0, str(PCOS_ML_DIR))
 
 # Load .env from repo root
 load_dotenv(REPO_ROOT / ".env")
@@ -148,11 +149,11 @@ if not SUPABASE_URL and not DEBUG:
     warnings.warn("SUPABASE_URL is not configured.", RuntimeWarning, stacklevel=2)
 
 # ---------------------------------------------------------------------------
-# ML artifact path (Points to authoritative Ovasense-ML models)
+# ML artifact path (Points to authoritative PCOS-ML models)
 # ---------------------------------------------------------------------------
 ML_ARTIFACTS_DIR = os.environ.get(
     "ML_MODEL_ARTIFACTS_DIR",
-    str(OVASENSE_ML_DIR / "models"),
+    str(PCOS_ML_DIR / "models"),
 )
 
 # ---------------------------------------------------------------------------

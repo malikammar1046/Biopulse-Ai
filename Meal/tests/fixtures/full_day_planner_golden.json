@@ -1,0 +1,89 @@
+{
+  "description": "Deterministic hand-computable golden test cases for Phase 6D Full-Day Meal Planning.",
+  "cases": [
+    {
+      "case_id": "case_1_exact_feasible_day",
+      "description": "Full day where all scheduled meals are feasible and aggregate daily totals fall squarely within Phase 5A neutral targets. J_day = 0.0.",
+      "daily_target": {
+        "energy_target_kcal": 2000.0,
+        "energy_tolerance_kcal": 100.0,
+        "protein_min_g": 60.0,
+        "protein_max_g": 120.0,
+        "carbohydrate_min_g": 220.0,
+        "carbohydrate_max_g": 330.0,
+        "fat_min_g": 45.0,
+        "fat_max_g": 75.0
+      },
+      "expected": {
+        "status": "FULL_DAILY_TARGETS_MET",
+        "feasibility_class": "FEASIBLE",
+        "daily_primary_objective": 0.0,
+        "all_daily_core_targets_within_range": true,
+        "meals_requested": 4,
+        "meals_generated": 4,
+        "meals_failed": []
+      }
+    },
+    {
+      "case_id": "case_2_meals_feasible_daily_target_missed",
+      "description": "All meals individually satisfy their assigned meal targets (J*=0 for each), but the combined aggregate energy exceeds daily target bounds. Demonstrates independence of meal vs day feasibility.",
+      "daily_target": {
+        "energy_target_kcal": 1800.0,
+        "energy_tolerance_kcal": 50.0,
+        "protein_min_g": 50.0,
+        "protein_max_g": 100.0,
+        "carbohydrate_min_g": 180.0,
+        "carbohydrate_max_g": 270.0,
+        "fat_min_g": 40.0,
+        "fat_max_g": 70.0
+      },
+      "expected": {
+        "status": "BEST_AVAILABLE_WITH_DAILY_DEVIATIONS",
+        "feasibility_class": "OPTIMAL_WITH_DAILY_DEVIATIONS",
+        "daily_primary_objective_positive": true,
+        "all_daily_core_targets_within_range": false,
+        "meals_requested": 3,
+        "meals_generated": 3
+      }
+    },
+    {
+      "case_id": "case_3_one_meal_fails_partial_day",
+      "description": "One scheduled meal fails (e.g., conflicting required entity or no valid combination). With require_all_meals=True, returns PARTIAL_DAY_GENERATED, exact failed role, and no false complete plan.",
+      "failing_role": "dinner",
+      "expected": {
+        "status": "PARTIAL_DAY_GENERATED",
+        "meals_requested": 3,
+        "meals_generated": 2,
+        "meals_failed": ["dinner"],
+        "best_day_plan_is_none": true
+      }
+    },
+    {
+      "case_id": "case_4_user_preference_handling",
+      "description": "Two candidate day configurations with identical daily primary objective J_day. Day plan with higher user preference match coverage ranks higher.",
+      "expected": {
+        "best_day_has_higher_preference_coverage": true
+      }
+    },
+    {
+      "case_id": "case_5_condition_isolation",
+      "description": "Identical daily schedule, constraints, and preferences executed under GENERAL, PCOS, and MALE_HYPOGONADISM. Must produce 100% identical compositions, grams, and daily totals.",
+      "tested_pathways": ["GENERAL", "PCOS", "MALE_HYPOGONADISM"],
+      "expected": {
+        "identical_day_id": true,
+        "identical_daily_energy": true,
+        "identical_daily_macros": true,
+        "numerical_disease_manipulation_effect": 0.0
+      }
+    },
+    {
+      "case_id": "case_6_fiber_partial_coverage",
+      "description": "One or more foods in the day has unknown fiber. Day aggregation must report fiber_coverage_status=PARTIAL, record missing_fiber_entity_ids, and never convert missing fiber to zero.",
+      "expected": {
+        "fiber_coverage_status": "PARTIAL",
+        "missing_fiber_entity_ids_non_empty": true,
+        "known_fiber_total_positive": true
+      }
+    }
+  ]
+}

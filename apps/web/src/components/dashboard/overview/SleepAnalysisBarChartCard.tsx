@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Moon, ChevronDown, Calendar } from 'lucide-react';
+import { Moon, ChevronDown, Calendar, ShieldCheck } from 'lucide-react';
+import type { HealthPathway } from '../../../types/onboarding';
 
 interface SleepAnalysisBarChartCardProps {
   efficiencyPercent?: number;
@@ -8,6 +9,7 @@ interface SleepAnalysisBarChartCardProps {
   durationMinutes?: number;
   currentCycleDay?: number;
   phaseName?: string;
+  pathway?: HealthPathway;
 }
 
 export const SleepAnalysisBarChartCard: React.FC<SleepAnalysisBarChartCardProps> = ({
@@ -16,29 +18,31 @@ export const SleepAnalysisBarChartCard: React.FC<SleepAnalysisBarChartCardProps>
   durationMinutes = 15,
   currentCycleDay = 14,
   phaseName = 'Follicular',
+  pathway = 'female',
 }) => {
   const [filterMode, setFilterMode] = useState<'Monthly' | 'Weekly'>('Monthly');
+  const isMale = pathway === 'male';
 
   const monthsData = [
     { label: 'Jun', height: 48, isCurrent: false, cycleLen: '28d' },
     { label: 'Jul', height: 60, isCurrent: false, cycleLen: '29d' },
     { label: 'Aug', height: 42, isCurrent: false, cycleLen: '28d' },
-    { label: 'Sept ↗', height: 95, isCurrent: true, efficiencyHeight: 88, durationHeight: 72, cycleLen: `Day ${currentCycleDay}` },
+    { label: 'Sept ↗', height: 95, isCurrent: true, efficiencyHeight: 88, durationHeight: 72, cycleLen: isMale ? 'Target: 8h' : `Day ${currentCycleDay}` },
     { label: 'Oct', height: 50, isCurrent: false, cycleLen: '28d' },
     { label: 'Nov', height: 65, isCurrent: false, cycleLen: '28d' },
     { label: 'Dec', height: 55, isCurrent: false, cycleLen: '28d' },
   ];
 
   return (
-    <div className="p-6 sm:p-7 rounded-[32px] bg-[#180A26] border border-white/10 text-white shadow-xl flex flex-col justify-between space-y-6 text-left select-none relative h-full">
+    <div className="p-6 sm:p-7 rounded-[24px] bg-white border border-[#E2E8F0] text-[#0F172A] shadow-sm flex flex-col justify-between space-y-6 text-left select-none relative h-full">
       {/* ── Top Header Row ── */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <span className="p-2 rounded-2xl bg-white/5 border border-white/10 text-[#FDA4AF]">
+          <span className="p-2 rounded-xl bg-[#E0F2FE] border border-[#BAE6FD] text-[#0288D1]">
             <Moon className="w-4 h-4" />
           </span>
           <div>
-            <h3 className="text-base font-bold font-display text-white">
+            <h3 className="text-base font-bold font-display text-[#0F172A]">
               Sleep & Hormone Recovery
             </h3>
           </div>
@@ -48,10 +52,10 @@ export const SleepAnalysisBarChartCard: React.FC<SleepAnalysisBarChartCardProps>
         <button
           type="button"
           onClick={() => setFilterMode((prev) => (prev === 'Monthly' ? 'Weekly' : 'Monthly'))}
-          className="px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 hover:border-white/20 text-xs font-semibold text-[#EDE4F7] flex items-center gap-1.5 transition-all cursor-pointer"
+          className="px-3.5 py-1.5 rounded-full bg-[#F8FAFC] border border-[#E2E8F0] hover:border-[#BAE6FD] text-xs font-semibold text-[#0F172A] flex items-center gap-1.5 transition-all cursor-pointer"
         >
           <span>{filterMode}</span>
-          <ChevronDown className="w-3.5 h-3.5 text-[#A797BD]" />
+          <ChevronDown className="w-3.5 h-3.5 text-[#64748B]" />
         </button>
       </div>
 
@@ -59,15 +63,15 @@ export const SleepAnalysisBarChartCard: React.FC<SleepAnalysisBarChartCardProps>
       <div className="flex flex-wrap items-center gap-6 sm:gap-8">
         {/* Metric 1: Sleep Efficiency */}
         <div className="flex items-center gap-2.5">
-          <span className="w-1.5 h-6 rounded-full bg-[#BEF264] block shrink-0" />
+          <span className="w-1.5 h-6 rounded-full bg-[#29B6F6] block shrink-0" />
           <div>
             <div className="flex items-baseline gap-1">
-              <span className="text-xl sm:text-2xl font-extrabold font-display text-white">
+              <span className="text-xl sm:text-2xl font-extrabold font-display text-[#0F172A]">
                 {efficiencyPercent}
               </span>
-              <span className="text-xs font-display font-bold text-[#BEF264]">%</span>
+              <span className="text-xs font-display font-bold text-[#0288D1]">%</span>
             </div>
-            <span className="text-[11px] text-[#A797BD] font-sans block">
+            <span className="text-[11px] text-[#64748B] font-sans block">
               Sleep Efficiency
             </span>
           </div>
@@ -75,22 +79,29 @@ export const SleepAnalysisBarChartCard: React.FC<SleepAnalysisBarChartCardProps>
 
         {/* Metric 2: Sleep Duration */}
         <div className="flex items-center gap-2.5">
-          <span className="w-1.5 h-6 rounded-full bg-[#C084FC] block shrink-0" />
+          <span className="w-1.5 h-6 rounded-full bg-[#0288D1] block shrink-0" />
           <div>
-            <span className="text-xl sm:text-2xl font-extrabold font-display text-white block leading-tight">
+            <span className="text-xl sm:text-2xl font-extrabold font-display text-[#0F172A] block leading-tight">
               {durationHours}h {durationMinutes}m
             </span>
-            <span className="text-[11px] text-[#A797BD] font-sans block">
+            <span className="text-[11px] text-[#64748B] font-sans block">
               Sleep Duration
             </span>
           </div>
         </div>
 
-        {/* Metric 3: Active Cycle Phase Badge */}
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.06] border border-white/10 text-xs text-[#FDA4AF] font-mono ml-auto">
-          <Calendar className="w-3.5 h-3.5 text-[#FB7185]" />
-          <span>{phaseName} (Day {currentCycleDay})</span>
-        </div>
+        {/* Metric 3: Active Status Badge (Cycle Day for Female, Circadian Alignment for Male) */}
+        {!isMale && currentCycleDay > 0 ? (
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs text-[#0288D1] font-mono ml-auto">
+            <Calendar className="w-3.5 h-3.5 text-[#0288D1]" />
+            <span>{phaseName} (Day {currentCycleDay})</span>
+          </div>
+        ) : (
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs text-[#0288D1] font-mono ml-auto">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#0288D1]" />
+            <span>{isMale ? 'Circadian Alignment' : 'Daily Recovery'}</span>
+          </div>
+        )}
       </div>
 
       {/* ── Stylized Monthly Bar Chart ── */}
@@ -101,22 +112,22 @@ export const SleepAnalysisBarChartCard: React.FC<SleepAnalysisBarChartCardProps>
               return (
                 <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
                   <div className="flex items-end gap-1 sm:gap-1.5 h-full justify-center w-full">
-                    {/* Primary Lime Bar */}
+                    {/* Primary Medical Blue Bar */}
                     <motion.div
                       initial={{ height: 0 }}
                       animate={{ height: `${item.efficiencyHeight || 90}%` }}
                       transition={{ duration: 0.6, delay: 0.1 }}
-                      className="w-3 sm:w-4 rounded-full bg-[#BEF264] shadow-[0_0_12px_rgba(190,242,100,0.3)]"
+                      className="w-3 sm:w-4 rounded-full bg-[#29B6F6]"
                     />
-                    {/* Secondary Lavender Bar */}
+                    {/* Secondary Deep Medical Blue Bar */}
                     <motion.div
                       initial={{ height: 0 }}
                       animate={{ height: `${item.durationHeight || 75}%` }}
                       transition={{ duration: 0.6, delay: 0.2 }}
-                      className="w-3 sm:w-4 rounded-full bg-[#C084FC] shadow-[0_0_12px_rgba(192,132,252,0.3)]"
+                      className="w-3 sm:w-4 rounded-full bg-[#0288D1]"
                     />
                   </div>
-                  <span className="text-xs font-mono font-bold text-white flex items-center gap-0.5">
+                  <span className="text-xs font-mono font-bold text-[#0F172A] flex items-center gap-0.5">
                     {item.label}
                   </span>
                 </div>
@@ -128,18 +139,10 @@ export const SleepAnalysisBarChartCard: React.FC<SleepAnalysisBarChartCardProps>
                 <div className="w-4 sm:w-5 h-full flex items-end justify-center">
                   <div
                     style={{ height: `${item.height}%` }}
-                    className="w-full rounded-full bg-white/[0.07] border border-white/5 group-hover:bg-white/[0.12] transition-all relative overflow-hidden"
-                  >
-                    <div
-                      className="absolute inset-0 opacity-20"
-                      style={{
-                        backgroundImage:
-                          'repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(255,255,255,0.4) 3px, rgba(255,255,255,0.4) 6px)',
-                      }}
-                    />
-                  </div>
+                    className="w-full rounded-full bg-[#F1F5F9] border border-[#E2E8F0] group-hover:bg-[#E2E8F0] transition-all relative overflow-hidden"
+                  />
                 </div>
-                <span className="text-[11px] font-mono text-[#8D7E9E] group-hover:text-white transition-colors">
+                <span className="text-[11px] font-mono text-[#64748B] group-hover:text-[#0F172A] transition-colors">
                   {item.label}
                 </span>
               </div>

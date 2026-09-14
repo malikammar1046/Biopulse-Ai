@@ -12,20 +12,20 @@ export const NutritionSnapshotCard: React.FC<NutritionProps> = ({ data }) => {
   const calPercent = Math.min((data.caloriesLogged / data.caloriesTarget) * 100, 100);
 
   return (
-    <div className="p-6 sm:p-7 rounded-[32px] bg-white border border-[#E7DFEF] shadow-sm flex flex-col justify-between select-none text-left space-y-5">
+    <div className="p-6 sm:p-7 rounded-[32px] bg-white border border-[#BAE6FD] shadow-sm flex flex-col justify-between select-none text-left space-y-5">
       {/* Top Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="p-1.5 rounded-xl bg-[#EDE4F7] text-[#6E2D8B]">
+          <span className="p-1.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
             <Utensils className="w-4 h-4" />
           </span>
-          <h3 className="text-base font-bold font-display text-[#1C1326]">
+          <h3 className="text-base font-bold font-display text-[#0F172A]">
             Today’s Food & Meals
           </h3>
         </div>
 
         <div className="flex items-center gap-1.5">
-          <span className="text-xs font-mono font-bold text-[#0284C7] bg-[#E0F2FE] px-2.5 py-1 rounded-full">
+          <span className="text-xs font-mono font-bold text-[#0288D1] bg-[#E0F2FE] border border-[#BAE6FD] px-2.5 py-1 rounded-full">
             💧 {data.waterIntakeLiters}L / {data.waterTargetLiters}L
           </span>
         </div>
@@ -41,7 +41,7 @@ export const NutritionSnapshotCard: React.FC<NutritionProps> = ({ data }) => {
               cy="60"
               r="48"
               fill="none"
-              stroke="#F2ECF7"
+              stroke="#E2E8F0"
               strokeWidth="10"
             />
             <circle
@@ -49,7 +49,7 @@ export const NutritionSnapshotCard: React.FC<NutritionProps> = ({ data }) => {
               cy="60"
               r="48"
               fill="none"
-              stroke="#8E3EAF"
+              stroke="#0288D1"
               strokeWidth="10"
               strokeDasharray={2 * Math.PI * 48}
               strokeDashoffset={(2 * Math.PI * 48) * (1 - calPercent / 100)}
@@ -58,10 +58,10 @@ export const NutritionSnapshotCard: React.FC<NutritionProps> = ({ data }) => {
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-            <span className="text-lg font-extrabold font-display text-[#1C1326] leading-none">
+            <span className="text-lg font-extrabold font-display text-[#0F172A] leading-none">
               {data.caloriesLogged.toLocaleString()}
             </span>
-            <span className="text-[10px] font-mono text-[#8D7E9E] mt-0.5">
+            <span className="text-[10px] font-mono text-[#64748B] mt-0.5">
               of {data.caloriesTarget} kcal
             </span>
           </div>
@@ -72,12 +72,12 @@ export const NutritionSnapshotCard: React.FC<NutritionProps> = ({ data }) => {
           {/* Protein */}
           <div className="space-y-1">
             <div className="flex justify-between text-xs font-sans">
-              <span className="font-semibold text-[#1C1326]">Protein</span>
-              <span className="font-mono text-[#8D7E9E]">{data.proteinGrams}g / {data.proteinTarget}g</span>
+              <span className="font-semibold text-[#0F172A]">Protein</span>
+              <span className="font-mono text-[#64748B]">{data.proteinGrams}g / {data.proteinTarget}g</span>
             </div>
-            <div className="h-2 rounded-full bg-[#F2ECF7] overflow-hidden">
+            <div className="h-2 rounded-full bg-[#E2E8F0] overflow-hidden">
               <div
-                className="h-full bg-[#8E3EAF] rounded-full"
+                className="h-full bg-[#0288D1] rounded-full"
                 style={{ width: `${(data.proteinGrams / data.proteinTarget) * 100}%` }}
               />
             </div>
@@ -86,12 +86,12 @@ export const NutritionSnapshotCard: React.FC<NutritionProps> = ({ data }) => {
           {/* Carbs */}
           <div className="space-y-1">
             <div className="flex justify-between text-xs font-sans">
-              <span className="font-semibold text-[#1C1326]">Complex Carbs</span>
-              <span className="font-mono text-[#8D7E9E]">{data.carbsGrams}g / {data.carbsTarget}g</span>
+              <span className="font-semibold text-[#0F172A]">Complex Carbs</span>
+              <span className="font-mono text-[#64748B]">{data.carbsGrams}g / {data.carbsTarget}g</span>
             </div>
-            <div className="h-2 rounded-full bg-[#F2ECF7] overflow-hidden">
+            <div className="h-2 rounded-full bg-[#E2E8F0] overflow-hidden">
               <div
-                className="h-full bg-[#FB7185] rounded-full"
+                className="h-full bg-[#29B6F6] rounded-full"
                 style={{ width: `${(data.carbsGrams / data.carbsTarget) * 100}%` }}
               />
             </div>
@@ -100,12 +100,12 @@ export const NutritionSnapshotCard: React.FC<NutritionProps> = ({ data }) => {
           {/* Healthy Fats */}
           <div className="space-y-1">
             <div className="flex justify-between text-xs font-sans">
-              <span className="font-semibold text-[#1C1326]">Healthy Fats</span>
-              <span className="font-mono text-[#8D7E9E]">{data.fatGrams}g / {data.fatTarget}g</span>
+              <span className="font-semibold text-[#0F172A]">Healthy Fats</span>
+              <span className="font-mono text-[#64748B]">{data.fatGrams}g / {data.fatTarget}g</span>
             </div>
-            <div className="h-2 rounded-full bg-[#F2ECF7] overflow-hidden">
+            <div className="h-2 rounded-full bg-[#E2E8F0] overflow-hidden">
               <div
-                className="h-full bg-[#34D399] rounded-full"
+                className="h-full bg-[#059669] rounded-full"
                 style={{ width: `${(data.fatGrams / data.fatTarget) * 100}%` }}
               />
             </div>
@@ -115,33 +115,33 @@ export const NutritionSnapshotCard: React.FC<NutritionProps> = ({ data }) => {
 
       {/* Suggested Phase Meal Pill */}
       {data.suggestedMeals[0] && (
-        <div className="p-3.5 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] space-y-1.5">
+        <div className="p-3.5 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#6E2D8B] flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-[#FB7185]" />
+            <span className="text-xs font-bold text-[#01579B] flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-[#0288D1]" />
               Suggested: {data.suggestedMeals[0].name}
             </span>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#EDE4F7] text-[#6E2D8B] font-bold">
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD] font-bold">
               {data.suggestedMeals[0].culturalTag || 'Hormone Balanced'}
             </span>
           </div>
-          <p className="text-[11px] text-[#584B68] leading-tight font-sans">
+          <p className="text-[11px] text-[#475569] leading-tight font-sans">
             {data.suggestedMeals[0].desc}
           </p>
         </div>
       )}
 
       {/* Footer Link */}
-      <div className="pt-2 border-t border-[#F0EAF5] flex items-center justify-between">
+      <div className="pt-2 border-t border-[#E2E8F0] flex items-center justify-between">
         <Link
           to={ROUTES.APP.DIET}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-[#6E2D8B] hover:text-[#A21CAF] transition-colors group"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0288D1] hover:text-[#01579B] transition-colors group"
         >
           <span>View Full Meal Plan</span>
           <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
         </Link>
 
-        <span className="text-[10px] font-mono text-[#8D7E9E]">
+        <span className="text-[10px] font-mono text-[#64748B]">
           Roti • Daal • Rice • Chai
         </span>
       </div>

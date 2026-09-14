@@ -12,7 +12,7 @@
 - **Django Backend Application (`apps.intelligence`)**:
   - `views.py`: Exposes `/api/v1/intelligence/status/`, `/health/`, `/assessment/`.
   - `intelligence_orchestrator.py`: Coordinates data retrieval from `supabase_health_service.py`, feature extraction, ML prediction, and TreeSHAP explanation.
-  - `ovasense_ml_bridge.py`: Wraps `Ovasense-ML/models/ovasense_final_model.joblib` (ExtraTreesClassifier, 16 features, 0.38 calibrated screening threshold) and `shap.TreeExplainer`.
+  - `ovasense_ml_bridge.py`: Wraps `machine-learning/Ovasense-ML/models/ovasense_final_model.joblib` (ExtraTreesClassifier, 16 features, 0.38 calibrated screening threshold) and `shap.TreeExplainer`.
 
 ---
 

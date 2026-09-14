@@ -23,7 +23,7 @@ export const AIThatExplains: React.FC = () => {
       icon: Eye,
       title: 'No Black Boxes',
       description:
-        'Conventional machine learning outputs a percentage without justification. VITASense breaks down every assessment into identifiable, clinical features so you know exactly what influenced the result.',
+        'Conventional machine learning outputs a percentage without justification. BIOPulse AI breaks down every assessment into identifiable, clinical features so you know exactly what influenced the result.',
     },
     {
       icon: BarChart3,
@@ -35,7 +35,7 @@ export const AIThatExplains: React.FC = () => {
       icon: AlertCircle,
       title: 'Missing Data Awareness',
       description:
-        'A responsible AI must communicate uncertainty. If critical lab tests are absent, VITASense explicitly states what missing information could make the assessment more informative.',
+        'A responsible AI must communicate uncertainty. If critical lab tests are absent, BIOPulse AI explicitly states what missing information could make the assessment more informative.',
     },
     {
       icon: FileCheck,
@@ -69,7 +69,7 @@ export const AIThatExplains: React.FC = () => {
 
             <p className="text-base md:text-lg text-[#B4A6C7] leading-relaxed font-sans max-w-2xl mx-auto">
               In medicine, an unexplained score is dangerous.
-              VITASense makes reproductive health intelligence transparent, auditable, and grounded in clinical science.
+              BIOPulse AI makes reproductive health intelligence transparent, auditable, and grounded in clinical science.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
@@ -142,7 +142,7 @@ export const AIThatExplains: React.FC = () => {
                 How an Insight is Explained
               </h2>
               <p className="text-sm text-[#B4A6C7]">
-                Here is a conceptual look at how VITASense breaks down a screening attribution card across pathways.
+                Here is a conceptual look at how BIOPulse AI breaks down a screening attribution card across pathways.
               </p>
 
               {/* Pathway Switcher */}

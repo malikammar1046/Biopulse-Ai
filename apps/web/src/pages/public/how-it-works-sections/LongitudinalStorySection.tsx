@@ -173,7 +173,7 @@ export const LongitudinalStorySection: React.FC = () => {
           </h2>
 
           <p className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans max-w-2xl mx-auto">
-            Reproductive health is never a static snapshot. VITASense organizes your symptoms, lab reports, and habits into a continuous longitudinal trajectory: <span className="text-white font-semibold">Assess → Track → Add Information → Reassess</span>.
+            Reproductive health is never a static snapshot. BIOPulse AI organizes your symptoms, lab reports, and habits into a continuous longitudinal trajectory: <span className="text-white font-semibold">Assess → Track → Add Information → Reassess</span>.
           </p>
 
           {/* Pathway Switcher */}
@@ -221,16 +221,16 @@ export const LongitudinalStorySection: React.FC = () => {
         </div>
 
         {/* Interactive Timeline Box */}
-        <div className="max-w-5xl mx-auto p-6 sm:p-10 rounded-3xl bg-white/[0.04] border border-white/15 backdrop-blur-xl shadow-2xl">
+        <div className="max-w-5xl mx-auto p-4 sm:p-10 rounded-3xl bg-white/[0.04] border border-white/15 backdrop-blur-xl shadow-2xl">
           {/* Month Steppers */}
-          <div className="grid grid-cols-6 gap-2 border-b border-white/10 pb-6 mb-8">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 border-b border-white/10 pb-6 mb-8">
             {currentMilestones.map((item, idx) => {
               const isSelected = selectedMonth === idx;
               return (
                 <button
                   key={idx}
                   onClick={() => setSelectedMonth(idx)}
-                  className={`text-center py-3 rounded-2xl transition-all cursor-pointer ${
+                  className={`text-center py-2.5 sm:py-3 px-1 rounded-2xl transition-all cursor-pointer ${
                     isSelected
                       ? 'bg-gradient-to-r from-[#8E3EAF] to-[#E87084] text-white font-bold shadow-lg ring-2 ring-[#FDA4AF]'
                       : 'bg-white/5 text-[#B4A6C7] hover:bg-white/10 hover:text-white'
@@ -244,7 +244,7 @@ export const LongitudinalStorySection: React.FC = () => {
           </div>
 
           {/* Active Month Detail */}
-          <div className="p-6 sm:p-8 rounded-2xl bg-white/5 border border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          <div className="p-4 sm:p-8 rounded-2xl bg-white/5 border border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div className="space-y-2 max-w-2xl text-left">
               <div className="flex items-center gap-2.5">
                 <span className="px-2.5 py-0.5 rounded-full bg-[#8E3EAF]/30 text-[#C084FC] text-[10px] font-bold uppercase font-mono border border-[#8E3EAF]/40">

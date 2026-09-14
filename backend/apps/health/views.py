@@ -19,7 +19,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.authentication.supabase_auth import SupabaseAuthentication
-from apps.health.serializers import OcrResponseSerializer
+from apps.health.serializers import (
+    OcrResponseSerializer,
+    ProfileValidationSerializer,
+    OnboardingValidationSerializer,
+    validate_age_and_dob,
+)
 from apps.health.services.digital_twin_service import DigitalTwinService
 from apps.health.services.medical_report_parser import medical_report_parser
 from apps.health.services.paddle_ocr_engine import paddle_ocr_engine
@@ -178,4 +183,46 @@ class DigitalTwinView(APIView):
                 {"error": "Failed to assemble Digital Twin state."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class ProfileValidationView(APIView):
+    """
+    POST /api/v1/health/profile/validate/
+
+    Validates demographic and date of birth inputs.
+    Enforces minimum age of 13 years old and rejects future dates.
+    """
+    authentication_classes = []
+    permission_classes = []
+
+    def post(self, request):
+        serializer = ProfileValidationSerializer(data=request.data)
+        if serializer.is_valid():
+            dob = serializer.validated_data.get("date_of_birth")
+            age = validate_age_and_dob(dob)
+            return Response(
+                {
+                    "valid": True,
+                    "age": age,
+                    "message": "Age and demographic requirements verified successfully.",
+                },
+                status=status.HTTP_200_OK,
+            )
+        return Response(
+            {
+                "error": "Profile validation failed.",
+                "details": serializer.errors,
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+
+class OnboardingValidationView(ProfileValidationView):
+    """
+    POST /api/v1/health/onboarding/validate/
+
+    Validates onboarding demographic inputs.
+    """
+    pass
+
 

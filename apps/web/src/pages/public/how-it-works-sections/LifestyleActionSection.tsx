@@ -20,7 +20,7 @@ export const LifestyleActionSection: React.FC = () => {
           </h2>
 
           <p className="text-base sm:text-lg text-[#584B68] leading-relaxed font-sans max-w-2xl mx-auto">
-            Screening is only the starting point. VITASense provides evidence-informed education, nutrition routines, and activity guidance — designed to support healthier daily habits rather than promising medical cures.
+            Screening is only the starting point. BIOPulse AI provides evidence-informed education, nutrition routines, and activity guidance — designed to support healthier daily habits rather than promising medical cures.
           </p>
         </div>
 

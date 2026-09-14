@@ -25,43 +25,43 @@ export const HealthJourneyTimelineCard: React.FC<HealthJourneyTimelineCardProps>
   const getCategoryIcon = (cat: TimelineCategory) => {
     switch (cat) {
       case 'cycle':
-        return <Calendar className="w-3.5 h-3.5 text-[#FB7185]" />;
+        return <Calendar className="w-3.5 h-3.5 text-[#0288D1]" />;
       case 'symptom':
-        return <Activity className="w-3.5 h-3.5 text-[#A21CAF]" />;
+        return <Activity className="w-3.5 h-3.5 text-[#0288D1]" />;
       case 'report':
-        return <FileText className="w-3.5 h-3.5 text-[#38BDF8]" />;
+        return <FileText className="w-3.5 h-3.5 text-[#0288D1]" />;
       case 'medication':
-        return <Pill className="w-3.5 h-3.5 text-[#F59E0B]" />;
+        return <Pill className="w-3.5 h-3.5 text-[#0288D1]" />;
       case 'nutrition':
-        return <Utensils className="w-3.5 h-3.5 text-[#34D399]" />;
+        return <Utensils className="w-3.5 h-3.5 text-[#059669]" />;
       case 'fitness':
-        return <Dumbbell className="w-3.5 h-3.5 text-[#8E3EAF]" />;
+        return <Dumbbell className="w-3.5 h-3.5 text-[#0288D1]" />;
       case 'appointment':
-        return <Stethoscope className="w-3.5 h-3.5 text-[#6E2D8B]" />;
+        return <Stethoscope className="w-3.5 h-3.5 text-[#01579B]" />;
       case 'care_circle':
       default:
-        return <Users className="w-3.5 h-3.5 text-[#6366F1]" />;
+        return <Users className="w-3.5 h-3.5 text-[#0288D1]" />;
     }
   };
 
   const displayEvents = recentEvents.slice(0, 4);
 
   return (
-    <div className="p-6 sm:p-7 rounded-[32px] bg-white border border-[#E7DFEF] shadow-sm flex flex-col justify-between select-none text-left space-y-5">
+    <div className="p-6 sm:p-7 rounded-[32px] bg-white border border-[#BAE6FD] shadow-sm flex flex-col justify-between select-none text-left space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="p-1.5 rounded-xl bg-[#EDE4F7] text-[#6E2D8B]">
+          <span className="p-1.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
             <GitBranch className="w-4 h-4" />
           </span>
-          <h3 className="text-base font-bold font-display text-[#1C1326]">
+          <h3 className="text-base font-bold font-display text-[#0F172A]">
             Your Health Journey
           </h3>
         </div>
 
         <Link
           to={ROUTES.APP.TIMELINE}
-          className="text-xs font-mono font-bold text-[#6E2D8B] hover:text-[#A21CAF] flex items-center gap-1 transition-colors"
+          className="text-xs font-mono font-bold text-[#0288D1] hover:text-[#01579B] flex items-center gap-1 transition-colors"
         >
           <span>Timeline</span>
           <ArrowRight className="w-3.5 h-3.5" />
@@ -71,8 +71,8 @@ export const HealthJourneyTimelineCard: React.FC<HealthJourneyTimelineCardProps>
       {/* Events List */}
       <div className="space-y-2.5 flex-1">
         {displayEvents.length === 0 ? (
-          <div className="p-5 rounded-2xl bg-[#F8F5FA] border border-dashed border-[#E7DFEF] text-center">
-            <p className="text-xs text-[#8D7E9E]">
+          <div className="p-5 rounded-2xl bg-[#F8FAFC] border border-dashed border-[#BAE6FD] text-center">
+            <p className="text-xs text-[#64748B]">
               Your longitudinal health journey is just getting started.
             </p>
           </div>
@@ -87,24 +87,24 @@ export const HealthJourneyTimelineCard: React.FC<HealthJourneyTimelineCardProps>
               <Link
                 key={evt.id}
                 to={ROUTES.APP.TIMELINE}
-                className="p-3 rounded-2xl bg-[#F8F5FA] hover:bg-[#F2ECF7] border border-[#E7DFEF] flex items-center justify-between gap-3 transition-all duration-200 group"
+                className="p-3 rounded-2xl bg-[#F8FAFC] hover:bg-[#F0F9FF] border border-[#E2E8F0] hover:border-[#BAE6FD] flex items-center justify-between gap-3 transition-all duration-200 group"
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="p-2 rounded-xl bg-white border border-[#E7DFEF] shrink-0">
+                  <div className="p-2 rounded-xl bg-white border border-[#BAE6FD]/60 shrink-0">
                     {getCategoryIcon(evt.category)}
                   </div>
                   <div className="min-w-0">
-                    <span className="text-xs font-bold text-[#1C1326] block truncate group-hover:text-[#6E2D8B] transition-colors">
+                    <span className="text-xs font-bold text-[#0F172A] block truncate group-hover:text-[#0288D1] transition-colors">
                       {evt.title}
                     </span>
-                    <span className="text-[10px] font-mono text-[#8D7E9E]">
+                    <span className="text-[10px] font-mono text-[#64748B]">
                       {dateDisplay} {evt.time ? `• ${evt.time}` : ''}
                     </span>
                   </div>
                 </div>
 
                 {evt.metric && (
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-white border border-[#E7DFEF] text-[#6E2D8B] shrink-0">
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-white border border-[#BAE6FD] text-[#0288D1] shrink-0">
                     {evt.metric.value}
                   </span>
                 )}
@@ -115,10 +115,10 @@ export const HealthJourneyTimelineCard: React.FC<HealthJourneyTimelineCardProps>
       </div>
 
       {/* Footer CTA */}
-      <div className="pt-2 border-t border-[#F0EAF5]">
+      <div className="pt-2 border-t border-[#E2E8F0]">
         <Link
           to={ROUTES.APP.TIMELINE}
-          className="inline-flex items-center justify-between w-full text-xs font-bold text-[#6E2D8B] hover:text-[#A21CAF] transition-colors"
+          className="inline-flex items-center justify-between w-full text-xs font-bold text-[#0288D1] hover:text-[#01579B] transition-colors"
         >
           <span>View Longitudinal Timeline</span>
           <ArrowRight className="w-3.5 h-3.5" />

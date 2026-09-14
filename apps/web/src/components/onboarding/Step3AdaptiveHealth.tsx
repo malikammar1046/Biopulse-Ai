@@ -442,13 +442,13 @@ export const Step3AdaptiveHealth: React.FC<Step3AdaptiveProps> = ({
       <div className="space-y-1">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#8B5CF6]/20 border border-[#A78BFA]/40 text-xs font-mono text-[#C4B5FD] mb-1">
           <Compass className="w-3.5 h-3.5 text-[#A78BFA]" />
-          <span>VITASense Baseline Health Profile</span>
+          <span>BioPulse AI Baseline Health Profile</span>
         </div>
         <h2 className="text-2xl sm:text-3xl font-bold font-display text-white">
           Your Health Baseline & Priorities
         </h2>
         <p className="text-sm text-[#CDBDD8] font-sans">
-          This helps VITASense tailor your health tracking, nutrition, activity, and medical records.
+          This helps BioPulse AI tailor your health tracking, nutrition, activity, and medical records.
         </p>
       </div>
 

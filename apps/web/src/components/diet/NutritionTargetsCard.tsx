@@ -38,50 +38,50 @@ export const NutritionTargetsCard: React.FC<NutritionTargetsCardProps> = ({
   const finalScore = Math.min(balanceScore, 96);
 
   return (
-    <div className="p-6 sm:p-7 rounded-[32px] bg-white border border-[#E7DFEF] shadow-sm select-none text-left space-y-5">
+    <div className="p-6 sm:p-7 rounded-2xl bg-white border border-[#BAE6FD] shadow-none select-none text-left space-y-5">
       {/* Header & Balance Check-In Score */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#F5F0FA]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-xl bg-[#EDE4F7] text-[#6E2D8B]">
+            <span className="p-1.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
               <Target className="w-4 h-4" />
             </span>
-            <h3 className="text-base font-bold font-display text-[#1C1326]">
+            <h3 className="text-base font-bold text-[#0F172A]">
               Today’s Nutrition Check-In
             </h3>
           </div>
-          <p className="text-xs text-[#584B68] leading-relaxed font-sans">
+          <p className="text-xs text-[#64748B] leading-relaxed font-sans">
             Based on the foods and water you’ve logged today.
           </p>
         </div>
 
         {/* Balance Score Badge */}
-        <div className="flex items-center gap-3 bg-gradient-to-r from-[#FAF5FF] to-[#FDF2F8] px-4 py-2 rounded-2xl border border-[#EDE4F7]">
+        <div className="flex items-center gap-3 bg-[#F0F9FF] px-4 py-2 rounded-xl border border-[#BAE6FD]">
           <div className="text-right">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-[#8E3EAF] block font-bold">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-[#0288D1] block font-bold">
               Today’s Balance
             </span>
-            <span className="text-xl font-extrabold font-display text-[#6E2D8B] leading-none">
-              {finalScore} <span className="text-xs font-mono font-normal text-[#8D7E9E]">/ 100</span>
+            <span className="text-xl font-extrabold text-[#01579B] leading-none">
+              {finalScore} <span className="text-xs font-mono font-normal text-[#64748B]">/ 100</span>
             </span>
           </div>
         </div>
       </div>
 
       {/* Calories Gauge & Summary */}
-      <div className="p-4 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] space-y-2">
+      <div className="p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-2">
         <div className="flex items-center justify-between text-xs font-sans">
-          <span className="font-semibold text-[#1C1326] flex items-center gap-1.5">
-            <Flame className="w-3.5 h-3.5 text-[#E11D48]" />
+          <span className="font-semibold text-[#0F172A] flex items-center gap-1.5">
+            <Flame className="w-3.5 h-3.5 text-[#0288D1]" />
             <span>Estimated Energy Target</span>
           </span>
-          <span className="font-mono text-[#8E3EAF] font-bold">
+          <span className="font-mono text-[#0288D1] font-bold">
             {totalCalories} / {targets.calories} kcal ({calPercent}%)
           </span>
         </div>
-        <div className="h-2.5 rounded-full bg-[#E7DFEF] overflow-hidden">
+        <div className="h-2 rounded-full bg-[#E2E8F0] overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF] rounded-full transition-all duration-500"
+            className="h-full bg-[#0288D1] rounded-full transition-all duration-500"
             style={{ width: `${calPercent}%` }}
           />
         </div>
@@ -92,16 +92,16 @@ export const NutritionTargetsCard: React.FC<NutritionTargetsCardProps> = ({
         {/* Protein */}
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xs font-sans">
-            <span className="font-medium text-[#1C1326]">
-              Protein <span className="text-[10px] text-[#8D7E9E]">(Tissues & Satiety)</span>
+            <span className="font-medium text-[#0F172A]">
+              Protein <span className="text-[10px] text-[#64748B]">(Tissues & Satiety)</span>
             </span>
-            <span className="font-mono text-xs font-semibold text-[#1C1326]">
-              {Math.round(totalProtein)}g <span className="text-[#8D7E9E] font-normal">/ {targets.proteinG}g</span>
+            <span className="font-mono text-xs font-semibold text-[#0F172A]">
+              {Math.round(totalProtein)}g <span className="text-[#64748B] font-normal">/ {targets.proteinG}g</span>
             </span>
           </div>
-          <div className="h-2 rounded-full bg-[#F2ECF7] overflow-hidden">
+          <div className="h-2 rounded-full bg-[#F1F5F9] overflow-hidden">
             <div
-              className="h-full bg-[#8E3EAF] rounded-full transition-all duration-500"
+              className="h-full bg-[#0288D1] rounded-full transition-all duration-500"
               style={{ width: `${proteinPercent}%` }}
             />
           </div>
@@ -110,16 +110,16 @@ export const NutritionTargetsCard: React.FC<NutritionTargetsCardProps> = ({
         {/* Complex Carbs */}
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xs font-sans">
-            <span className="font-medium text-[#1C1326]">
-              Complex Carbs <span className="text-[10px] text-[#8D7E9E]">(Steady Glucose)</span>
+            <span className="font-medium text-[#0F172A]">
+              Complex Carbs <span className="text-[10px] text-[#64748B]">(Steady Glucose)</span>
             </span>
-            <span className="font-mono text-xs font-semibold text-[#1C1326]">
-              {Math.round(totalCarbs)}g <span className="text-[#8D7E9E] font-normal">/ {targets.carbsG}g</span>
+            <span className="font-mono text-xs font-semibold text-[#0F172A]">
+              {Math.round(totalCarbs)}g <span className="text-[#64748B] font-normal">/ {targets.carbsG}g</span>
             </span>
           </div>
-          <div className="h-2 rounded-full bg-[#F2ECF7] overflow-hidden">
+          <div className="h-2 rounded-full bg-[#F1F5F9] overflow-hidden">
             <div
-              className="h-full bg-[#FB7185] rounded-full transition-all duration-500"
+              className="h-full bg-[#0284C7] rounded-full transition-all duration-500"
               style={{ width: `${carbsPercent}%` }}
             />
           </div>
@@ -128,16 +128,16 @@ export const NutritionTargetsCard: React.FC<NutritionTargetsCardProps> = ({
         {/* Healthy Fats */}
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xs font-sans">
-            <span className="font-medium text-[#1C1326]">
-              Healthy Fats <span className="text-[10px] text-[#8D7E9E]">(Cellular Calm)</span>
+            <span className="font-medium text-[#0F172A]">
+              Healthy Fats <span className="text-[10px] text-[#64748B]">(Cellular Calm)</span>
             </span>
-            <span className="font-mono text-xs font-semibold text-[#1C1326]">
-              {Math.round(totalFat)}g <span className="text-[#8D7E9E] font-normal">/ {targets.fatG}g</span>
+            <span className="font-mono text-xs font-semibold text-[#0F172A]">
+              {Math.round(totalFat)}g <span className="text-[#64748B] font-normal">/ {targets.fatG}g</span>
             </span>
           </div>
-          <div className="h-2 rounded-full bg-[#F2ECF7] overflow-hidden">
+          <div className="h-2 rounded-full bg-[#F1F5F9] overflow-hidden">
             <div
-              className="h-full bg-[#34D399] rounded-full transition-all duration-500"
+              className="h-full bg-[#059669] rounded-full transition-all duration-500"
               style={{ width: `${fatPercent}%` }}
             />
           </div>
@@ -146,16 +146,16 @@ export const NutritionTargetsCard: React.FC<NutritionTargetsCardProps> = ({
         {/* Fiber */}
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xs font-sans">
-            <span className="font-medium text-[#1C1326]">
-              Dietary Fiber <span className="text-[10px] text-[#8D7E9E]">(Digestive Motility)</span>
+            <span className="font-medium text-[#0F172A]">
+              Dietary Fiber <span className="text-[10px] text-[#64748B]">(Digestive Motility)</span>
             </span>
-            <span className="font-mono text-xs font-semibold text-[#1C1326]">
-              {Math.round(totalFiber)}g <span className="text-[#8D7E9E] font-normal">/ {targets.fiberG}g</span>
+            <span className="font-mono text-xs font-semibold text-[#0F172A]">
+              {Math.round(totalFiber)}g <span className="text-[#64748B] font-normal">/ {targets.fiberG}g</span>
             </span>
           </div>
-          <div className="h-2 rounded-full bg-[#F2ECF7] overflow-hidden">
+          <div className="h-2 rounded-full bg-[#F1F5F9] overflow-hidden">
             <div
-              className="h-full bg-[#F59E0B] rounded-full transition-all duration-500"
+              className="h-full bg-[#D97706] rounded-full transition-all duration-500"
               style={{ width: `${fiberPercent}%` }}
             />
           </div>
@@ -163,8 +163,8 @@ export const NutritionTargetsCard: React.FC<NutritionTargetsCardProps> = ({
       </div>
 
       {/* Educational Disclaimer Footer */}
-      <div className="p-3 rounded-xl bg-[#FAF5FF] border border-[#EDE4F7] text-[11px] text-[#584B68] flex items-start gap-2 leading-relaxed">
-        <Info className="w-3.5 h-3.5 text-[#8E3EAF] shrink-0 mt-0.5" />
+      <div className="p-3 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] text-[11px] text-[#475569] flex items-start gap-2 leading-relaxed">
+        <Info className="w-3.5 h-3.5 text-[#0288D1] shrink-0 mt-0.5" />
         <span>
           <strong>Estimated daily target:</strong> {targets.calculationRationale} These suggestions are educational guidance to support balanced eating.
         </span>

@@ -45,8 +45,8 @@ const HowItWorks = lazy(() =>
 const Features = lazy(() =>
   import('./pages/public/Features').then((m) => ({ default: m.Features }))
 );
-const CareCircle = lazy(() =>
-  import('./pages/public/CareCircle').then((m) => ({ default: m.CareCircle }))
+const Conditions = lazy(() =>
+  import('./pages/public/Conditions').then((m) => ({ default: m.Conditions }))
 );
 const Contact = lazy(() =>
   import('./pages/public/Contact').then((m) => ({ default: m.Contact }))
@@ -56,18 +56,6 @@ const CareProviderPortalPage = lazy(() =>
 );
 const UnderstandMaleHypogonadism = lazy(() =>
   import('./pages/public/UnderstandMaleHypogonadism').then((m) => ({ default: m.UnderstandMaleHypogonadism }))
-);
-const WomensHealth = lazy(() =>
-  import('./pages/public/WomensHealth').then((m) => ({ default: m.WomensHealth }))
-);
-const MensHealth = lazy(() =>
-  import('./pages/public/MensHealth').then((m) => ({ default: m.MensHealth }))
-);
-const AIThatExplains = lazy(() =>
-  import('./pages/public/AIThatExplains').then((m) => ({ default: m.AIThatExplains }))
-);
-const ForDoctors = lazy(() =>
-  import('./pages/public/ForDoctors').then((m) => ({ default: m.ForDoctors }))
 );
 const TrustAndPrivacy = lazy(() =>
   import('./pages/public/TrustAndPrivacy').then((m) => ({ default: m.TrustAndPrivacy }))
@@ -96,6 +84,7 @@ const TimelinePage = lazy(() => import('./pages/app/TimelinePage').then((m) => (
 const SettingsPage = lazy(() => import('./pages/app/SettingsPage').then((m) => ({ default: m.SettingsPage })));
 const ChatPage = lazy(() => import('./pages/app/ChatPage').then((m) => ({ default: m.ChatPage })));
 const AssessmentPage = lazy(() => import('./pages/app/AssessmentPage').then((m) => ({ default: m.AssessmentPage })));
+const ProgressPage = lazy(() => import('./pages/app/ProgressPage').then((m) => ({ default: m.ProgressPage })));
 
 export function App() {
   return (
@@ -107,20 +96,24 @@ export function App() {
               {/* Public Marketing Website */}
               <Route element={<PublicLayout />}>
                 <Route path={ROUTES.HOME} element={<Home />} />
+                <Route path={ROUTES.CONDITIONS} element={<Conditions />} />
                 <Route path={ROUTES.UNDERSTAND_PCOS} element={<UnderstandPCOS />} />
                 <Route path={ROUTES.UNDERSTAND_PCOS_CANONICAL} element={<UnderstandPCOS />} />
                 <Route path={ROUTES.UNDERSTAND_MALE_HYPOGONADISM} element={<UnderstandMaleHypogonadism />} />
                 <Route path={ROUTES.UNDERSTAND_HYPOGONADISM} element={<UnderstandMaleHypogonadism />} />
-                <Route path={ROUTES.UNDERSTAND_MALE_FERTILITY} element={<UnderstandMaleHypogonadism />} />
-                <Route path={ROUTES.WOMENS_HEALTH} element={<WomensHealth />} />
-                <Route path={ROUTES.MENS_HEALTH} element={<MensHealth />} />
-                <Route path={ROUTES.AI_EXPLAINS} element={<AIThatExplains />} />
-                <Route path={ROUTES.FOR_DOCTORS} element={<ForDoctors />} />
+                
+                {/* Redirect deprecated/duplicate public routes to canonical destinations */}
+                <Route path={ROUTES.UNDERSTAND_MALE_FERTILITY} element={<Navigate to={ROUTES.UNDERSTAND_MALE_HYPOGONADISM} replace />} />
+                <Route path={ROUTES.WOMENS_HEALTH} element={<Navigate to={ROUTES.UNDERSTAND_PCOS_CANONICAL} replace />} />
+                <Route path={ROUTES.MENS_HEALTH} element={<Navigate to={ROUTES.UNDERSTAND_MALE_HYPOGONADISM} replace />} />
+                <Route path={ROUTES.CARE_CIRCLE} element={<Navigate to={ROUTES.ABOUT} replace />} />
+                <Route path={ROUTES.FOR_DOCTORS} element={<Navigate to={ROUTES.ABOUT} replace />} />
+                <Route path="/ai-that-explains" element={<Navigate to={ROUTES.HOW_IT_WORKS} replace />} />
+                
                 <Route path={ROUTES.TRUST_PRIVACY} element={<TrustAndPrivacy />} />
                 <Route path={ROUTES.ABOUT} element={<About />} />
                 <Route path={ROUTES.HOW_IT_WORKS} element={<HowItWorks />} />
                 <Route path={ROUTES.FEATURES} element={<Features />} />
-                <Route path={ROUTES.CARE_CIRCLE} element={<CareCircle />} />
                 <Route path={ROUTES.CONTACT} element={<Contact />} />
 
                 {/* Public Only Auth Pages */}
@@ -200,6 +193,7 @@ export function App() {
                   <Route path="care-circle" element={<CareCirclePage />} />
                   <Route path="appointments" element={<AppointmentsPage />} />
                   <Route path="timeline" element={<TimelinePage />} />
+                  <Route path="progress" element={<ProgressPage />} />
                   <Route path="assessment" element={<AssessmentPage />} />
                   <Route path="settings" element={<SettingsPage />} />
                   {/* Backward compatibility aliases */}

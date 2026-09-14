@@ -62,13 +62,13 @@ export const TimelineFilters: React.FC<TimelineFiltersProps> = ({
   };
 
   return (
-    <div className="p-5 sm:p-6 rounded-[32px] bg-white border border-[#E7DFEF] shadow-sm space-y-4 select-none">
+    <div className="p-5 sm:p-6 rounded-2xl bg-white border border-[#BAE6FD] shadow-none space-y-4 select-none">
       {/* Top Row: Date Range Buttons + Search + Milestone Toggle */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         {/* Date Range Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
-          <span className="text-[11px] font-mono text-[#8D7E9E] uppercase font-bold mr-1 flex items-center gap-1 shrink-0">
-            <SlidersHorizontal className="w-3.5 h-3.5" />
+          <span className="text-[11px] font-mono text-[#64748B] uppercase font-bold mr-1 flex items-center gap-1 shrink-0">
+            <SlidersHorizontal className="w-3.5 h-3.5 text-[#0288D1]" />
             <span>Horizon:</span>
           </span>
           {dateRanges.map((range) => {
@@ -78,10 +78,10 @@ export const TimelineFilters: React.FC<TimelineFiltersProps> = ({
                 key={range.value}
                 type="button"
                 onClick={() => onFilterChange({ dateRange: range.value })}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer border ${
                   isSelected
-                    ? 'bg-[#1C0D2E] text-white shadow-xs'
-                    : 'bg-[#F8F5FA] text-[#584B68] hover:bg-[#EDE4F7] hover:text-[#1C1326]'
+                    ? 'bg-[#0288D1] border-[#0288D1] text-white shadow-xs'
+                    : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#475569] hover:bg-[#E0F2FE] hover:text-[#0288D1]'
                 }`}
               >
                 {range.label}
@@ -94,13 +94,13 @@ export const TimelineFilters: React.FC<TimelineFiltersProps> = ({
         <div className="flex items-center gap-2.5">
           {/* Search Field */}
           <div className="relative flex-1 sm:w-64">
-            <Search className="w-3.5 h-3.5 text-[#8D7E9E] absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={filterState.searchQuery}
               onChange={(e) => onFilterChange({ searchQuery: e.target.value })}
               placeholder="Search health events..."
-              className="w-full pl-8 pr-3 py-1.5 rounded-xl text-xs bg-[#F8F5FA] border border-[#E7DFEF] focus:outline-hidden focus:border-[#8E3EAF] text-[#1C1326] placeholder-[#8D7E9E]"
+              className="w-full pl-8 pr-3 py-1.5 rounded-xl text-xs bg-[#F8FAFC] border border-[#E2E8F0] focus:outline-none focus:border-[#0288D1] text-[#0F172A] placeholder-[#94A3B8]"
             />
           </div>
 
@@ -108,27 +108,27 @@ export const TimelineFilters: React.FC<TimelineFiltersProps> = ({
           <button
             type="button"
             onClick={() => onFilterChange({ onlyImportant: !filterState.onlyImportant })}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer border ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer border ${
               filterState.onlyImportant
-                ? 'bg-[#FEF3C7] text-[#B45309] border-[#FDE68A]'
-                : 'bg-[#F8F5FA] text-[#584B68] border-[#E7DFEF] hover:bg-[#EDE4F7]'
+                ? 'bg-amber-50 text-amber-800 border-amber-300'
+                : 'bg-[#F8FAFC] text-[#475569] border-[#E2E8F0] hover:bg-[#E0F2FE]'
             }`}
           >
-            <Star className={`w-3.5 h-3.5 ${filterState.onlyImportant ? 'fill-[#B45309]' : ''}`} />
+            <Star className={`w-3.5 h-3.5 ${filterState.onlyImportant ? 'fill-amber-600 text-amber-600' : 'text-[#64748B]'}`} />
             <span>Key Milestones</span>
           </button>
         </div>
       </div>
 
       {/* Bottom Row: Category Chips with Counts */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none pt-2 border-t border-[#F0EAF5]">
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none pt-2 border-t border-[#E2E8F0]">
         <button
           type="button"
           onClick={selectAllCategories}
-          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+          className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer border ${
             filterState.selectedCategories.length === 0
-              ? 'bg-[#6E2D8B] text-white shadow-xs'
-              : 'bg-[#F8F5FA] text-[#584B68] hover:bg-[#EDE4F7]'
+              ? 'bg-[#0288D1] border-[#0288D1] text-white shadow-xs'
+              : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#475569] hover:bg-[#E0F2FE] hover:text-[#0288D1]'
           }`}
         >
           All Signals ({categoryCounts.all || 0})
@@ -144,17 +144,17 @@ export const TimelineFilters: React.FC<TimelineFiltersProps> = ({
               key={cat.value}
               type="button"
               onClick={() => toggleCategory(cat.value)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer border ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer border ${
                 isSelected
-                  ? 'bg-[#EDE4F7] text-[#6E2D8B] border-[#D8B4FE]'
-                  : 'bg-white text-[#584B68] border-[#E7DFEF] hover:bg-[#F8F5FA]'
+                  ? 'bg-[#E0F2FE] text-[#01579B] border-[#0288D1]'
+                  : 'bg-white text-[#475569] border-[#E2E8F0] hover:bg-[#F8FAFC]'
               }`}
             >
-              <Icon className="w-3.5 h-3.5" />
+              <Icon className="w-3.5 h-3.5 text-[#0288D1]" />
               <span>{cat.label}</span>
               <span
                 className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
-                  isSelected ? 'bg-[#6E2D8B] text-white' : 'bg-[#E7DFEF] text-[#584B68]'
+                  isSelected ? 'bg-[#0288D1] text-white' : 'bg-[#E2E8F0] text-[#475569]'
                 }`}
               >
                 {count}

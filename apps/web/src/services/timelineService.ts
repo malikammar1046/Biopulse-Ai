@@ -506,45 +506,71 @@ class TimelineService {
         : 'Luteal Phase';
     };
 
-    // Correlation 1: Cycle Phase vs Symptom Clustering
+    const isMale = userProfile.gender === 'male' || userProfile.pathway === 'male';
+
+    // Correlation 1: Symptom Clustering
     if (symptomRecords.length >= 2) {
-      const symptomsByPhase: Record<string, { total: number; types: Record<string, number> }> = {
-        'Menstrual Phase': { total: 0, types: {} },
-        'Follicular Phase': { total: 0, types: {} },
-        'Ovulatory Window': { total: 0, types: {} },
-        'Luteal Phase': { total: 0, types: {} },
-      };
+      if (!isMale) {
+        // Female: Cycle Phase vs Symptom Clustering
+        const symptomsByPhase: Record<string, { total: number; types: Record<string, number> }> = {
+          'Menstrual Phase': { total: 0, types: {} },
+          'Follicular Phase': { total: 0, types: {} },
+          'Ovulatory Window': { total: 0, types: {} },
+          'Luteal Phase': { total: 0, types: {} },
+        };
 
-      symptomRecords.forEach((s) => {
-        const phase = getPhaseForDate(s.occurredAt);
-        if (symptomsByPhase[phase]) {
-          symptomsByPhase[phase].total += 1;
-          symptomsByPhase[phase].types[s.symptomType] =
-            (symptomsByPhase[phase].types[s.symptomType] || 0) + 1;
-        }
-      });
-
-      // Find predominant phase
-      const sortedPhases = Object.entries(symptomsByPhase).sort(
-        (a, b) => b[1].total - a[1].total
-      );
-      const topPhase = sortedPhases[0];
-
-      if (topPhase && topPhase[1].total >= 2) {
-        const topSymptom = Object.entries(topPhase[1].types).sort((a, b) => b[1] - a[1])[0];
-        const symptomName = topSymptom ? topSymptom[0] : 'symptoms';
-        const symptomCount = topSymptom ? topSymptom[1] : topPhase[1].total;
-
-        patterns.push({
-          id: 'pat_cycle_symptom_clustering',
-          category: 'cycle_symptom',
-          title: `Symptom Rhythm: ${topPhase[0]} Clustering`,
-          observation: `Observed: ${symptomCount} out of ${symptomRecords.length} recorded entries (${symptomName}) occurred during your ${topPhase[0]}.`,
-          interpretation: `OvaSense Interpretation: Hormonal shifts in estrogen and progesterone during this phase are known to influence pelvic comfort, energy, and neurotransmitter balance. Logging across consecutive cycles helps distinguish natural phase patterns from persistent concerns.`,
-          confidence: 'high',
-          signals: ['Cycle Rhythm', 'Symptom Log'],
-          actionTip: `Prepare this observation for your next specialist visit to discuss targeted phase-based lifestyle adjustments.`,
+        symptomRecords.forEach((s) => {
+          const phase = getPhaseForDate(s.occurredAt);
+          if (symptomsByPhase[phase]) {
+            symptomsByPhase[phase].total += 1;
+            symptomsByPhase[phase].types[s.symptomType] =
+              (symptomsByPhase[phase].types[s.symptomType] || 0) + 1;
+          }
         });
+
+        // Find predominant phase
+        const sortedPhases = Object.entries(symptomsByPhase).sort(
+          (a, b) => b[1].total - a[1].total
+        );
+        const topPhase = sortedPhases[0];
+
+        if (topPhase && topPhase[1].total >= 2) {
+          const topSymptom = Object.entries(topPhase[1].types).sort((a, b) => b[1] - a[1])[0];
+          const symptomName = topSymptom ? topSymptom[0] : 'symptoms';
+          const symptomCount = topSymptom ? topSymptom[1] : topPhase[1].total;
+
+          patterns.push({
+            id: 'pat_cycle_symptom_clustering',
+            category: 'cycle_symptom',
+            title: `Symptom Rhythm: ${topPhase[0]} Clustering`,
+            observation: `Observed: ${symptomCount} out of ${symptomRecords.length} recorded entries (${symptomName}) occurred during your ${topPhase[0]}.`,
+            interpretation: `BioPulse AI Interpretation: Hormonal shifts in estrogen and progesterone during this phase are known to influence pelvic comfort, energy, and neurotransmitter balance. Logging across consecutive cycles helps distinguish natural phase patterns from persistent concerns.`,
+            confidence: 'high',
+            signals: ['Cycle Rhythm', 'Symptom Log'],
+            actionTip: `Prepare this observation for your next specialist visit to discuss targeted phase-based lifestyle adjustments.`,
+          });
+        }
+      } else {
+        // Male: Symptom Frequency Distribution
+        const symptomCounts: Record<string, number> = {};
+        symptomRecords.forEach((s) => {
+          symptomCounts[s.symptomType] = (symptomCounts[s.symptomType] || 0) + 1;
+        });
+        const sortedSymptoms = Object.entries(symptomCounts).sort((a, b) => b[1] - a[1]);
+        const topSymptom = sortedSymptoms[0];
+
+        if (topSymptom && topSymptom[1] >= 2) {
+          patterns.push({
+            id: 'pat_male_symptom_clustering',
+            category: 'lifestyle_symptom',
+            title: `Symptom Rhythm: ${topSymptom[0]} Frequency`,
+            observation: `Observed: ${topSymptom[1]} out of ${symptomRecords.length} recorded entries relate to ${topSymptom[0]}.`,
+            interpretation: `Clinical Interpretation: Tracking symptom frequency and diurnal patterns provides valuable longitudinal baseline data for your clinical consultations.`,
+            confidence: 'high',
+            signals: ['Symptom Rhythm', 'Vitality Tracker'],
+            actionTip: `Prepare this observation for your next specialist consultation to discuss hormone and recovery balance.`,
+          });
+        }
       }
     }
 
@@ -558,7 +584,9 @@ class TimelineService {
         category: 'lifestyle_movement',
         title: 'Movement & Metabolic Rhythm',
         observation: `Observed: You completed ${fitnessLogs.length} activity sessions averaging ${avgMins} minutes over your logged history.`,
-        interpretation: `OvaSense Interpretation: Regular gentle movement (such as walking, yoga, and resistance training) supports peripheral insulin sensitivity and metabolic recovery in PCOS without spiking cortisol levels.`,
+        interpretation: isMale
+          ? `Clinical Interpretation: Regular progressive movement (including resistance training and aerobic activity) supports androgen balance, metabolic recovery, and insulin sensitivity.`
+          : `BioPulse AI Interpretation: Regular gentle movement (such as walking, yoga, and resistance training) supports peripheral insulin sensitivity and metabolic recovery in PCOS without spiking cortisol levels.`,
         confidence: 'high',
         signals: ['Movement', 'Metabolic Health'],
         actionTip: `Aim to maintain 150 minutes of moderate or gentle movement per week to support hormone homeostasis.`,
@@ -573,9 +601,11 @@ class TimelineService {
       patterns.push({
         id: 'pat_hydration_baseline',
         category: 'lifestyle_symptom',
-        title: 'Hydration & Hormone Clearance',
+        title: 'Hydration & Metabolic Balance',
         observation: `Observed: Today's water intake reached ${waterLog.glasses} / ${target} glasses (${(waterLog.glasses * 0.25).toFixed(1)} L).`,
-        interpretation: `OvaSense Interpretation: Adequate daily hydration assists renal clearance of estrogen metabolites, supports vascular volume during the luteal phase, and mitigates dehydration-induced fatigue.`,
+        interpretation: isMale
+          ? `Clinical Interpretation: Adequate daily hydration assists renal clearance, supports cellular energy and vascular volume, and mitigates fatigue.`
+          : `BioPulse AI Interpretation: Adequate daily hydration assists renal clearance of estrogen metabolites, supports vascular volume during the luteal phase, and mitigates dehydration-induced fatigue.`,
         confidence: 'moderate',
         signals: ['Hydration', 'Daily Logs'],
         actionTip: isTargetMet
@@ -594,7 +624,9 @@ class TimelineService {
         category: 'medication_adherence',
         title: 'Medication Adherence Consistency',
         observation: `Observed: Overall medication adherence across logged doses is currently at ${adherenceRate}% (${taken}/${medicationLogs.length} doses confirmed).`,
-        interpretation: `OvaSense Interpretation: Consistent adherence to prescribed insulin sensitizers, cyclic support, or supplements is key for steady-state hormonal modulation.`,
+        interpretation: isMale
+          ? `Clinical Interpretation: Consistent adherence to prescribed medications and supplements is key for steady-state hormonal and metabolic balance.`
+          : `BioPulse AI Interpretation: Consistent adherence to prescribed insulin sensitizers, cyclic support, or supplements is key for steady-state hormonal modulation.`,
         confidence: 'high',
         signals: ['Medications', 'Adherence'],
         actionTip:
@@ -620,7 +652,7 @@ class TimelineService {
           category: 'report_comparison',
           title: 'Lab Report Longitudinal Review',
           observation: `Observed: Across ${reports.length} uploaded diagnostic report(s), ${flaggedTotal} biomarker finding(s) have been flagged for clinical review.`,
-          interpretation: `OvaSense Interpretation: Periodic comparison of metabolic, lipid, and androgen markers provides objective evidence of physiological progress under your care plan.`,
+          interpretation: `Clinical Interpretation: Periodic comparison of metabolic, lipid, and androgen markers provides objective evidence of physiological progress under your care plan.`,
           confidence: 'high',
           signals: ['Lab Reports', 'Biomarkers'],
           actionTip: `Review these flagged markers in your consultation brief prior to your next appointment.`,
@@ -632,13 +664,15 @@ class TimelineService {
     if (patterns.length === 0) {
       patterns.push({
         id: 'pat_initial_journey',
-        category: 'cycle_regularity',
+        category: isMale ? 'lifestyle_symptom' : 'cycle_regularity',
         title: 'Your Health Story Is Emerging',
-        observation: `Observed: OvaSense is analyzing your initial health entries across your cycle, symptoms, nutrition, and medications.`,
-        interpretation: `OvaSense Interpretation: Longitudinal pattern recognition strengthens significantly as you log across 2–3 menstrual cycles. Each daily log adds clarity to your personal health trajectory.`,
+        observation: `Observed: Analyzing your initial health entries across symptoms, nutrition, activity, and lifestyle logs.`,
+        interpretation: isMale
+          ? `Clinical Interpretation: Longitudinal pattern recognition strengthens significantly as you log across consecutive weeks. Each daily log adds clarity to your personal health trajectory.`
+          : `BioPulse AI Interpretation: Longitudinal pattern recognition strengthens significantly as you log across 2–3 menstrual cycles. Each daily log adds clarity to your personal health trajectory.`,
         confidence: 'moderate',
         signals: ['Longitudinal Engine'],
-        actionTip: `Continue logging daily symptoms, meals, and cycle changes to reveal deeper correlations.`,
+        actionTip: `Continue logging daily symptoms, meals, and lifestyle changes to reveal deeper correlations.`,
       });
     }
 

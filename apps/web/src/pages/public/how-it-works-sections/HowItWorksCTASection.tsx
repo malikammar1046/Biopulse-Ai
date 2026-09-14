@@ -31,7 +31,7 @@ export const HowItWorksCTASection: React.FC = () => {
               </h2>
 
               <p className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans max-w-xl">
-                Start with what you know today. Whether exploring PCOS risk, male hypogonadism patterns, or baseline health tracking, VITASense gives you structure, explainable insights, and longitudinal clarity.
+                Start with what you know today. Whether exploring PCOS risk, male hypogonadism patterns, or baseline health tracking, BIOPulse AI gives you structure, explainable insights, and longitudinal clarity.
               </p>
 
               <div className="flex flex-wrap items-center gap-4 pt-4">

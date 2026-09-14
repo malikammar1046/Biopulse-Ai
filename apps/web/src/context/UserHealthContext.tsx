@@ -76,8 +76,18 @@ import type {
   HealthSummarySnapshot,
   ConsultationBrief,
 } from '../types/appointment';
-import type { IntelligenceAssessment } from '../types/intelligence';
-import { fetchBackendAssessment, clearAssessmentCache } from '../services/intelligenceService';
+import type { IntelligenceAssessment, ProgressiveAssessment } from '../types/intelligence';
+import {
+  fetchBackendAssessment,
+  clearAssessmentCache,
+  fetchActiveAssessment,
+  fetchAssessmentHistory,
+  submitTier1Assessment,
+  submitTier2Assessment,
+  submitMaleTier1Assessment,
+  submitMaleTier2Assessment,
+  uploadUltrasoundAssessment,
+} from '../services/intelligenceService';
 import { useAuth } from './AuthContext';
 import type { AdaptiveHealthProfile, ADAMQuestionnaireState } from '../types/adaptiveScreening';
 import { adaptiveProfileService } from '../services/adaptiveProfileService';
@@ -165,6 +175,18 @@ interface UserHealthContextType {
   refreshCareCircle: () => Promise<void>;
   weeklySummary: WeeklyHealthSummaryData;
   digitalTwinInsight: DigitalTwinInsight;
+  activeAssessment: ProgressiveAssessment | null;
+  assessmentHistory: ProgressiveAssessment[];
+  assessmentLoading: boolean;
+  assessmentNotification: { message: string; type: 'success' | 'error' } | null;
+  triggerAssessmentNotification: (message: string, type?: 'success' | 'error') => void;
+  dismissAssessmentNotification: () => void;
+  refreshActiveAssessment: () => Promise<void>;
+  submitTier1: (inputs?: Record<string, any>) => Promise<ProgressiveAssessment | null>;
+  submitTier2: (inputs: Record<string, any>) => Promise<ProgressiveAssessment | null>;
+  submitMaleTier1: (inputs?: Record<string, any>) => Promise<ProgressiveAssessment | null>;
+  submitMaleTier2: (inputs: Record<string, any>) => Promise<ProgressiveAssessment | null>;
+  submitUltrasound: (imageFile: File, reportId?: string) => Promise<ProgressiveAssessment | null>;
   mlAssessment: IntelligenceAssessment | null;
   mlAssessmentLoading: boolean;
   mlAssessmentError: boolean;
@@ -1677,6 +1699,167 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [mlAssessmentLoading, setMlAssessmentLoading] = useState<boolean>(false);
   const [mlAssessmentError, setMlAssessmentError] = useState<boolean>(false);
 
+  // PCOS-ML Progressive Assessment State
+  const [activeAssessment, setActiveAssessment] = useState<ProgressiveAssessment | null>(null);
+  const [assessmentHistory, setAssessmentHistory] = useState<ProgressiveAssessment[]>([]);
+  const [assessmentLoading, setAssessmentLoading] = useState<boolean>(false);
+
+  const refreshActiveAssessment = useCallback(async () => {
+    if (!userProfile?.id) return;
+    setAssessmentLoading(true);
+    const isMale = resolvePathway(userProfile?.gender, userProfile?.pathway) === 'male';
+    const targetModule = isMale ? 'male_hypogonadism' : 'female_pcos';
+    try {
+      const [active, history] = await Promise.all([
+        fetchActiveAssessment(true, targetModule),
+        fetchAssessmentHistory(targetModule),
+      ]);
+      if (active) {
+        setActiveAssessment(active);
+        setMlAssessment(active as unknown as IntelligenceAssessment);
+      }
+      setAssessmentHistory(history || []);
+    } catch (err) {
+      console.warn('[Assessment Context] Error fetching progressive assessment:', err);
+    } finally {
+      setAssessmentLoading(false);
+    }
+  }, [userProfile]);
+
+  // Transient in-memory assessment notification state (never persisted to DB, storage, or URL)
+  const [assessmentNotification, setAssessmentNotification] = useState<{
+    message: string;
+    type: 'success' | 'error';
+  } | null>(null);
+
+  const triggerAssessmentNotification = useCallback(
+    (message: string, type: 'success' | 'error' = 'success') => {
+      setAssessmentNotification({ message, type });
+    },
+    []
+  );
+
+  const dismissAssessmentNotification = useCallback(() => {
+    setAssessmentNotification(null);
+  }, []);
+
+  const submitMaleTier1 = useCallback(
+    async (inputs: Record<string, any> = {}): Promise<ProgressiveAssessment | null> => {
+      setAssessmentLoading(true);
+      try {
+        const res = await submitMaleTier1Assessment(inputs);
+        if (res) {
+          setActiveAssessment(res);
+          setMlAssessment(res as unknown as IntelligenceAssessment);
+          await refreshActiveAssessment();
+          triggerAssessmentNotification(
+            'Updated Result: Your initial hypogonadism screening assessment has been generated.',
+            'success'
+          );
+        }
+        return res;
+      } finally {
+        setAssessmentLoading(false);
+      }
+    },
+    [refreshActiveAssessment, triggerAssessmentNotification]
+  );
+
+  const submitMaleTier2 = useCallback(
+    async (inputs: Record<string, any>): Promise<ProgressiveAssessment | null> => {
+      setAssessmentLoading(true);
+      try {
+        const res = await submitMaleTier2Assessment(inputs);
+        if (res) {
+          setActiveAssessment(res);
+          setMlAssessment(res as unknown as IntelligenceAssessment);
+          await refreshActiveAssessment();
+          triggerAssessmentNotification(
+            'Updated Result: Your hypogonadism screening assessment has been updated with clinical evidence.',
+            'success'
+          );
+        }
+        return res;
+      } finally {
+        setAssessmentLoading(false);
+      }
+    },
+    [refreshActiveAssessment, triggerAssessmentNotification]
+  );
+
+  const submitTier1 = useCallback(
+    async (inputs: Record<string, any> = {}): Promise<ProgressiveAssessment | null> => {
+      if (resolvePathway(userProfile?.gender, userProfile?.pathway) === 'male') {
+        return submitMaleTier1(inputs);
+      }
+      setAssessmentLoading(true);
+      try {
+        const res = await submitTier1Assessment(inputs);
+        if (res) {
+          setActiveAssessment(res);
+          setMlAssessment(res as unknown as IntelligenceAssessment);
+          await refreshActiveAssessment();
+        }
+        return res;
+      } finally {
+        setAssessmentLoading(false);
+      }
+    },
+    [userProfile, submitMaleTier1, refreshActiveAssessment]
+  );
+
+  const submitTier2 = useCallback(
+    async (inputs: Record<string, any>): Promise<ProgressiveAssessment | null> => {
+      if (resolvePathway(userProfile?.gender, userProfile?.pathway) === 'male') {
+        return submitMaleTier2(inputs);
+      }
+
+      setAssessmentLoading(true);
+      try {
+        const res = await submitTier2Assessment(inputs);
+        if (res) {
+          setActiveAssessment(res);
+          setMlAssessment(res as unknown as IntelligenceAssessment);
+          await refreshActiveAssessment();
+          triggerAssessmentNotification(
+            'Updated Result: Your assessment has been updated using additional clinical evidence.',
+            'success'
+          );
+        }
+        return res;
+      } finally {
+        setAssessmentLoading(false);
+      }
+    },
+    [userProfile, submitMaleTier2, refreshActiveAssessment, triggerAssessmentNotification]
+  );
+
+  const submitUltrasound = useCallback(
+    async (imageFile: File, reportId?: string): Promise<ProgressiveAssessment | null> => {
+      setAssessmentLoading(true);
+      try {
+        const res = await uploadUltrasoundAssessment(imageFile, reportId);
+        if (res) {
+          if (res.is_active) {
+            setActiveAssessment(res);
+            setMlAssessment(res as unknown as IntelligenceAssessment);
+          }
+          await refreshActiveAssessment();
+          if (res.is_active && (res.assessment_level === 'tier_1_2' || res.assessment_level === 'tier_1_2_3')) {
+            triggerAssessmentNotification(
+              'Updated Result: Your assessment has been updated using additional clinical evidence.',
+              'success'
+            );
+          }
+        }
+        return res;
+      } finally {
+        setAssessmentLoading(false);
+      }
+    },
+    [refreshActiveAssessment, triggerAssessmentNotification]
+  );
+
   const refreshMlAssessment = useCallback(
     async (force = false) => {
       if (!userProfile?.id) return;
@@ -1696,6 +1879,7 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         } else {
           setMlAssessmentError(true);
         }
+        await refreshActiveAssessment();
       } catch (err) {
         console.warn('[OvaSense ML Context] Assessment error:', err);
         setMlAssessmentError(true);
@@ -1703,7 +1887,7 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setMlAssessmentLoading(false);
       }
     },
-    [userProfile, cycleRecords, symptomRecords, foodLogs, fitnessLogs]
+    [userProfile, cycleRecords, symptomRecords, foodLogs, fitnessLogs, refreshActiveAssessment]
   );
 
   // Automatically trigger assessment on profile load or when health factors change
@@ -1846,6 +2030,18 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         refreshCareCircle,
         weeklySummary,
         digitalTwinInsight,
+        activeAssessment,
+        assessmentHistory,
+        assessmentLoading,
+        assessmentNotification,
+        triggerAssessmentNotification,
+        dismissAssessmentNotification,
+        refreshActiveAssessment,
+        submitTier1,
+        submitTier2,
+        submitMaleTier1,
+        submitMaleTier2,
+        submitUltrasound,
         mlAssessment,
         mlAssessmentLoading,
         mlAssessmentError,

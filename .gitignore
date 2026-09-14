@@ -101,10 +101,10 @@ data/patient_records/
 *.nii
 *.nii.gz
 *.csv_raw
-ml/checkpoints/
-ml/runs/
-ml/wandb/
-ml/mlruns/
+machine-learning/ml/checkpoints/
+machine-learning/ml/runs/
+machine-learning/ml/wandb/
+machine-learning/ml/mlruns/
 *.h5
 *.onnx_large
 *.pt
@@ -159,3 +159,12 @@ Desktop.ini
 # ------------------------------------------------------------------------------
 logs/
 *.log
+
+# ------------------------------------------------------------------------------
+# 11. Scratch & Agent Diagnostics
+# ------------------------------------------------------------------------------
+scratch/
+.reticle/
+**/.reticle/
+**/.reticle.json
+walkthrough.md

@@ -54,7 +54,7 @@ export const ReassessmentSection: React.FC = () => {
           </h2>
 
           <p className="text-base sm:text-lg text-[#EDE4F7] leading-relaxed font-sans max-w-2xl mx-auto">
-            Traditional health apps force you to restart from scratch. VITASense is built around continuous Bayesian-inspired reassessment: as you verify new laboratory panels, the screening context updates dynamically while preserving your historical record.
+            Traditional health apps force you to restart from scratch. BIOPulse AI is built around continuous Bayesian-inspired reassessment: as you verify new laboratory panels, the screening context updates dynamically while preserving your historical record.
           </p>
         </div>
 

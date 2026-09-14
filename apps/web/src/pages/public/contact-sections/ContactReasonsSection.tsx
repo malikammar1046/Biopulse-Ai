@@ -9,77 +9,56 @@ interface ReasonCard {
   description: string;
   icon: React.ReactNode;
   accentColor: string;
-  glowColor: string;
+  bg: string;
 }
 
 export const ContactReasonsSection: React.FC = () => {
   const cards: ReasonCard[] = [
     {
       tag: 'RESEARCH',
-      title: 'Multimodal Health Studies',
-      description: 'Help us explore better ways to understand complex women\'s health patterns.',
-      icon: <Microscope className="w-6 h-6 text-[#C084FC]" />,
-      accentColor: 'from-[#C084FC] to-[#8E3EAF]',
-      glowColor: 'shadow-[0_0_25px_rgba(192,132,252,0.3)]',
+      title: 'Endocrine Health Studies',
+      description: 'Collaborate with us to advance explainable AI screening for PCOS and Male Hypogonadism.',
+      icon: <Microscope className="w-6 h-6 text-[#0891B2]" />,
+      accentColor: '#0891B2',
+      bg: 'bg-cyan-50',
     },
     {
       tag: 'COLLABORATION',
       title: 'Ecosystem Partnerships',
-      description: 'Work with us on technology, healthcare, research or responsible AI.',
-      icon: <Users className="w-6 h-6 text-[#FB7185]" />,
-      accentColor: 'from-[#FB7185] to-[#E87084]',
-      glowColor: 'shadow-[0_0_25px_rgba(251,113,133,0.3)]',
+      description: 'Work with us on clinical laboratory integration, nutrition science, or responsible AI validation.',
+      icon: <Users className="w-6 h-6 text-purple-600" />,
+      accentColor: '#7C3AED',
+      bg: 'bg-purple-50',
     },
     {
       tag: 'FEEDBACK',
       title: 'Human-Centered Design',
-      description: 'Tell us what would make VITASense genuinely useful in everyday life.',
-      icon: <Sparkles className="w-6 h-6 text-[#E879F9]" />,
-      accentColor: 'from-[#E879F9] to-[#A21CAF]',
-      glowColor: 'shadow-[0_0_25px_rgba(232,121,249,0.3)]',
+      description: 'Tell us what features and guidance would make BioPulse AI genuinely helpful in everyday life.',
+      icon: <Sparkles className="w-6 h-6 text-emerald-600" />,
+      accentColor: '#059669',
+      bg: 'bg-emerald-50',
     },
   ];
 
   return (
-    <section className="py-20 sm:py-28 bg-[#180A25] text-white relative overflow-hidden border-t border-white/10">
-      {/* Ambient Radial Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-[#6E2D8B]/20 rounded-full blur-[170px] pointer-events-none -z-10" />
-
+    <section className="py-20 sm:py-24 bg-white text-[#162A45] relative overflow-hidden border-t border-slate-200">
       <Container size="xl">
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto space-y-4 mb-16 sm:mb-20">
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/15 backdrop-blur-md"
-          >
-            <span className="w-2 h-2 rounded-full bg-[#FB7185] animate-pulse" />
-            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#F6F2FA]">
+        <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-xs font-semibold text-[#0891B2]">
+            <Sparkles className="w-3.5 h-3.5 text-[#0891B2]" />
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em]">
               Purposeful Dialogue
             </span>
-          </motion.div>
+          </div>
 
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7, delay: 0.1 }}
-            className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight font-display"
-          >
-            More than a message.
-          </motion.h2>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-[#162A45] tracking-tight font-display">
+            More than a message
+          </h2>
 
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7, delay: 0.2 }}
-            className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans font-normal"
-          >
-            VITASense is being built at the intersection of health, AI, research and human experience.
-          </motion.p>
+          <p className="text-base text-slate-600 leading-relaxed font-sans max-w-xl mx-auto">
+            BioPulse AI is engineered at the intersection of endocrine health, explainable machine learning, and human-centered design.
+          </p>
         </div>
 
         {/* 3 Cards Composition */}
@@ -87,41 +66,39 @@ export const ContactReasonsSection: React.FC = () => {
           {cards.map((card, idx) => (
             <motion.div
               key={card.tag}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.65, delay: idx * 0.15, ease: [0.22, 1, 0.36, 1] }}
-              whileHover={{ y: -8 }}
-              className="relative group rounded-3xl bg-[#10071A]/90 border border-white/12 p-8 sm:p-9 flex flex-col justify-between backdrop-blur-xl transition-all duration-300 hover:border-white/30 hover:bg-[#200D33]"
+              transition={{ duration: 0.4, delay: idx * 0.1 }}
+              className="rounded-3xl bg-slate-50 border border-slate-200/90 p-8 flex flex-col justify-between hover:shadow-lg transition-all duration-200 hover:bg-white"
             >
-              {/* Follicle-style glowing indicator dot */}
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    {card.icon}
-                  </div>
-                  <span className="text-xs font-mono font-bold tracking-[0.2em] text-[#E879F9]">
-                    {card.tag}
-                  </span>
+              <div className="flex items-center justify-between mb-6">
+                <div className={`w-12 h-12 rounded-2xl ${card.bg} flex items-center justify-center`}>
+                  {card.icon}
                 </div>
-
-                {/* Tiny Glowing Follicle Dot */}
-                <div className={`w-3 h-3 rounded-full bg-gradient-to-r ${card.accentColor} ${card.glowColor} group-hover:scale-125 transition-transform duration-300`} />
+                <span
+                  className="text-xs font-mono font-bold tracking-[0.15em] px-2.5 py-1 rounded-full text-white"
+                  style={{ backgroundColor: card.accentColor }}
+                >
+                  {card.tag}
+                </span>
               </div>
 
               {/* Title & Description */}
-              <div className="space-y-3 text-left">
-                <h3 className="text-xl sm:text-2xl font-extrabold text-white font-display flex items-center justify-between">
+              <div className="space-y-2.5 text-left">
+                <h3 className="text-xl font-bold text-[#162A45] font-display flex items-center justify-between">
                   <span>{card.title}</span>
-                  <ArrowUpRight className="w-5 h-5 text-[#8D7E9E] group-hover:text-white group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-200" />
+                  <ArrowUpRight className="w-4 h-4 text-slate-400" />
                 </h3>
-                <p className="text-sm text-[#B4A6C7] leading-relaxed font-sans font-normal">
-                  "{card.description}"
+                <p className="text-sm text-slate-600 leading-relaxed font-sans">
+                  {card.description}
                 </p>
               </div>
 
-              {/* Subtle Bottom Accent Gradient Line */}
-              <div className={`mt-8 h-1 w-full rounded-full bg-gradient-to-r ${card.accentColor} opacity-20 group-hover:opacity-100 transition-opacity duration-300`} />
+              <div
+                className="mt-6 h-1 w-full rounded-full opacity-30"
+                style={{ backgroundColor: card.accentColor }}
+              />
             </motion.div>
           ))}
         </div>
@@ -129,3 +106,5 @@ export const ContactReasonsSection: React.FC = () => {
     </section>
   );
 };
+
+export default ContactReasonsSection;

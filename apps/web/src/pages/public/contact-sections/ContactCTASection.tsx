@@ -126,7 +126,7 @@ export const ContactCTASection: React.FC = () => {
               className="bg-gradient-to-r from-[#8E3EAF] via-[#A21CAF] to-[#E87084] text-white hover:brightness-110 shadow-2xl shadow-purple-950/60 cursor-pointer px-8 rounded-2xl"
               iconRight={<MessageCircleHeart className="w-5 h-5" />}
             >
-              Talk to VITASense
+              Talk to BIOPulse AI
             </Button>
 
             <Link to={ROUTES.HOW_IT_WORKS}>

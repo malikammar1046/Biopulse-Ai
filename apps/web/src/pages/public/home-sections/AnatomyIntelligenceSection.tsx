@@ -49,7 +49,7 @@ export const ANATOMICAL_STRUCTURES: AnatomicalStructure[] = [
       featureName: 'Ultrasound OCR & Rotterdam Morphology Engine',
       icon: 'ocr',
       description:
-        'VITASense parses left ovarian volume (normal <10 cm³) and antral follicle count (AFC) from pelvic ultrasound PDFs and scans.',
+        'BIOPulse AI parses left ovarian volume (normal <10 cm³) and antral follicle count (AFC) from pelvic ultrasound PDFs and scans.',
       trackedBiomarkers: [
         'Left Ovarian Volume (cm³)',
         'Antral Follicle Count (AFC)',
@@ -206,7 +206,7 @@ export const AnatomyIntelligenceSection: React.FC = () => {
           </h2>
 
           <p className="text-sm sm:text-base text-[#B4A6C7] font-sans leading-relaxed">
-            VITASense connects complex women's health symptoms to foundational pelvic biology.
+            BIOPulse AI connects complex women's health symptoms to foundational pelvic biology.
             Click each anatomical structure below to see <strong>why it matters</strong> in PCOS and{' '}
             <strong>how our app analyzes its clinical signals</strong>.
           </p>
@@ -254,7 +254,7 @@ export const AnatomyIntelligenceSection: React.FC = () => {
               {/* Anatomical Model Image with Smooth Vignette Edge Mask */}
               <img
                 src="/anatomy-hero-model.jpg"
-                alt="VITASense Female Reproductive Anatomy Model"
+                alt="BIOPulse AI Female Reproductive Anatomy Model"
                 className="w-full h-full object-contain object-center select-none"
                 style={{
                   maskImage:
@@ -386,7 +386,7 @@ export const AnatomyIntelligenceSection: React.FC = () => {
                     }`}
                   >
                     <BrainCircuit className="w-3.5 h-3.5 text-[#FDA4AF]" />
-                    <span>2. VITASense App Impact</span>
+                    <span>2. BIOPulse AI Impact</span>
                   </button>
                 </div>
 
@@ -419,7 +419,7 @@ export const AnatomyIntelligenceSection: React.FC = () => {
                   </motion.div>
                 )}
 
-                {/* Content Panel 2: VITASense App Impact */}
+                {/* Content Panel 2: BIOPulse AI Impact */}
                 {activeTab === 'impact' && (
                   <motion.div
                     initial={{ opacity: 0 }}

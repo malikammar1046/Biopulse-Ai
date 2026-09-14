@@ -1,18 +1,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, BookOpen, ShieldCheck, Heart, Activity, UserCheck, Sparkles } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Heart, Activity, Sparkles, Layers } from 'lucide-react';
 import { ROUTES } from '../../../constants/routes';
 import { Button } from '../../../components/ui/Button';
 import { Container } from '../../../components/ui/Container';
 
 export const AboutHeroSection: React.FC = () => {
   return (
-    <section className="relative min-h-[88vh] bg-gradient-to-b from-[#10071A] via-[#180A25] to-[#241038] text-white pt-32 pb-20 sm:pb-28 overflow-hidden flex items-center">
-      {/* Cinematic Ambient Glows */}
-      <div className="absolute top-1/4 left-1/4 w-[600px] sm:w-[800px] h-[600px] sm:h-[800px] bg-[#6E2D8B]/25 rounded-full blur-[160px] pointer-events-none -z-10" />
-      <div className="absolute bottom-1/4 right-1/4 w-[500px] sm:w-[700px] h-[500px] sm:h-[700px] bg-[#E87084]/20 rounded-full blur-[150px] pointer-events-none -z-10" />
-      <div className="absolute top-1/2 right-1/3 w-[350px] h-[350px] bg-[#A21CAF]/25 rounded-full blur-[120px] pointer-events-none -z-10" />
+    <section className="relative min-h-[85vh] bg-gradient-to-b from-[#FAFCFF] via-[#FFFFFF] to-[#F8FAFC] text-[#162A45] pt-32 pb-20 sm:pb-28 overflow-hidden flex items-center border-b border-slate-200/80">
+      {/* Ambient Glows */}
+      <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-cyan-100/40 rounded-full blur-[160px] pointer-events-none -z-10" />
+      <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-pink-100/30 rounded-full blur-[150px] pointer-events-none -z-10" />
 
       <Container size="xl" className="relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
@@ -20,29 +19,29 @@ export const AboutHeroSection: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
-            className="lg:col-span-6 space-y-8 text-left"
+            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            className="lg:col-span-7 space-y-7 text-left"
           >
             {/* Eyebrow */}
-            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 backdrop-blur-md">
-              <span className="w-2 h-2 rounded-full bg-[#FB7185] shadow-[0_0_8px_#FB7185] animate-pulse" />
-              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.2em] text-[#F6F2FA]">
-                About VITASense
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 border border-slate-200/80 text-xs font-semibold text-[#0891B2] shadow-2xs">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span className="text-[11px] font-bold uppercase tracking-[0.2em]">
+                Our Purpose
               </span>
             </div>
 
             {/* Headline */}
-            <h1 className="text-4xl sm:text-6xl lg:text-6.5xl font-extrabold tracking-tight text-white leading-[1.08] font-display">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#162A45] leading-[1.1] font-display">
               Reproductive health is{' '}
-              <span className="bg-gradient-to-r from-[#C084FC] via-[#E879F9] to-[#FB7185] bg-clip-text text-transparent">
+              <span className="text-[#0891B2]">
                 complex.
               </span>{' '}
               Understanding it shouldn't be.
             </h1>
 
             {/* Supporting Copy */}
-            <p className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed max-w-xl font-sans font-normal">
-              VITASense turns fragmented symptoms, scattered laboratory reports, and daily observations into a single, explainable health story. One unified intelligence layer supporting Women's Health (PCOS), Men's Health (Male Hypogonadism), and baseline monitoring for everyone.
+            <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-xl font-sans font-normal">
+              BioPulse AI turns fragmented symptoms, scattered laboratory reports, and everyday health observations into explainable, non-diagnostic screening support. With dedicated pathways for PCOS and Male Hypogonadism, we provide accessible health literacy and doctor-ready summaries.
             </p>
 
             {/* CTA Buttons */}
@@ -51,38 +50,37 @@ export const AboutHeroSection: React.FC = () => {
                 <Button
                   variant="primary"
                   size="lg"
-                  className="bg-gradient-to-r from-[#8E3EAF] via-[#A21CAF] to-[#E87084] text-white hover:brightness-110 shadow-xl shadow-purple-950/30 font-bold"
+                  className="bg-[#0891B2] hover:bg-[#0E7490] text-white shadow-lg shadow-cyan-600/20 font-bold rounded-full"
                   iconRight={<ArrowRight className="w-4 h-4" />}
                 >
                   Explore How It Works
                 </Button>
               </Link>
 
-              <Link to={ROUTES.FEATURES}>
+              <Link to={ROUTES.CONDITIONS}>
                 <Button
                   variant="outline"
                   size="lg"
-                  className="border-white/30 text-[#F6F2FA] hover:bg-white/10 backdrop-blur-sm font-semibold"
-                  iconRight={<BookOpen className="w-4 h-4" />}
+                  className="border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold rounded-full"
                 >
-                  Platform Features
+                  Supported Conditions
                 </Button>
               </Link>
             </div>
 
             {/* Safety & Mission Meta */}
-            <div className="pt-6 border-t border-white/10 flex flex-wrap items-center gap-5 text-[11px] font-bold tracking-wider uppercase text-[#B4A6C7]/80">
+            <div className="pt-6 border-t border-slate-200/80 flex flex-wrap items-center gap-5 text-[11px] font-bold tracking-wider uppercase text-slate-500 font-mono">
               <span className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-[#34D399]" />
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
                 Non-Diagnostic Screening
               </span>
               <span className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-[#FDA4AF]" />
+                <Sparkles className="w-4 h-4 text-[#0891B2]" />
                 Explainable Feature Attribution
               </span>
               <span className="flex items-center gap-2">
-                <Activity className="w-4 h-4 text-[#60A5FA]" />
-                Longitudinal Monitoring
+                <Activity className="w-4 h-4 text-[#0284C7]" />
+                Longitudinal Tracking
               </span>
             </div>
           </motion.div>
@@ -91,85 +89,37 @@ export const AboutHeroSection: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.15 }}
-            className="lg:col-span-6 relative"
+            transition={{ duration: 0.7, delay: 0.15 }}
+            className="lg:col-span-5 relative"
           >
-            <div className="p-8 sm:p-10 rounded-3xl bg-white/[0.04] border border-white/15 backdrop-blur-2xl shadow-2xl space-y-6">
-              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+            <div className="p-8 sm:p-10 rounded-3xl bg-white border border-slate-200/90 shadow-xl space-y-6 text-left">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                 <div>
-                  <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-[#FDA4AF] block">
-                    Unified Platform Architecture
+                  <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-[#0891B2] block">
+                    BioPulse AI Mission
                   </span>
-                  <h3 className="text-xl font-bold font-display text-white">
-                    One Platform • Three Dedicated Journeys
+                  <h3 className="text-xl font-bold font-display text-[#162A45]">
+                    Closing Diagnostic Gaps
                   </h3>
                 </div>
-                <span className="px-3 py-1 rounded-full bg-[#8E3EAF]/30 text-[#C084FC] text-xs font-mono font-bold border border-[#8E3EAF]/40">
-                  v2.0 Architecture
-                </span>
+                <div className="w-10 h-10 rounded-2xl bg-cyan-50 text-[#0891B2] flex items-center justify-center">
+                  <Layers className="w-5 h-5" />
+                </div>
               </div>
 
-              {/* Pathway 1: Women's Health */}
-              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2 hover:border-[#FB7185]/40 transition-all">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-[#FB7185]/20 text-[#FB7185] flex items-center justify-center">
-                      <Heart className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-white">Women's Health Pathway</h4>
-                      <span className="text-[11px] text-[#FDA4AF] font-mono">PCOS Risk Assessment & Pattern Screening</span>
-                    </div>
-                  </div>
-                  <span className="text-[10px] text-[#B4A6C7] font-mono uppercase bg-white/5 px-2 py-0.5 rounded-md">
-                    Endocrine & Cycle
-                  </span>
-                </div>
-                <p className="text-xs text-[#B4A6C7] leading-relaxed">
-                  Cycle regularity intervals, androgen scores (Ferriman-Gallwey), metabolic glucose trends, and structured lab summaries.
-                </p>
-              </div>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-sans">
+                Women with PCOS frequently face a 2 to 5 year delay before clinical identification. Men with hypogonadism often live with debilitating fatigue for years without testing morning testosterone.
+              </p>
 
-              {/* Pathway 2: Men's Health */}
-              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2 hover:border-[#60A5FA]/40 transition-all">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-[#60A5FA]/20 text-[#60A5FA] flex items-center justify-center">
-                      <Activity className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-white">Men's Health Pathway</h4>
-                      <span className="text-[11px] text-[#60A5FA] font-mono">Male Hypogonadism Screening & HPT Axis</span>
-                    </div>
-                  </div>
-                  <span className="text-[10px] text-[#B4A6C7] font-mono uppercase bg-white/5 px-2 py-0.5 rounded-md">
-                    Testosterone Rhythm
-                  </span>
+              <div className="space-y-3 pt-2">
+                <div className="p-3.5 rounded-2xl bg-rose-50/70 border border-pink-200/80 flex items-center gap-3 text-xs text-slate-700">
+                  <Heart className="w-4 h-4 text-[#E11D48] shrink-0" />
+                  <span><strong>PCOS Pathway:</strong> Ovulatory, androgenic &amp; metabolic tracking</span>
                 </div>
-                <p className="text-xs text-[#B4A6C7] leading-relaxed">
-                  Morning testosterone timing confirmation (7–10 AM), pituitary LH/FSH profiles, vitality symptom tracking, and sleep metrics.
-                </p>
-              </div>
-
-              {/* Pathway 3: General / Baseline */}
-              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2 hover:border-[#34D399]/40 transition-all">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-[#047857]/20 text-[#34D399] flex items-center justify-center">
-                      <UserCheck className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-white">Baseline Health Journey</h4>
-                      <span className="text-[11px] text-[#34D399] font-mono">Health Monitoring & Report Archival</span>
-                    </div>
-                  </div>
-                  <span className="text-[10px] text-[#B4A6C7] font-mono uppercase bg-white/5 px-2 py-0.5 rounded-md">
-                    Wellness Baseline
-                  </span>
+                <div className="p-3.5 rounded-2xl bg-sky-50/70 border border-sky-200/80 flex items-center gap-3 text-xs text-slate-700">
+                  <Activity className="w-4 h-4 text-[#0284C7] shrink-0" />
+                  <span><strong>Male Pathway:</strong> Testosterone signaling &amp; vitality screening</span>
                 </div>
-                <p className="text-xs text-[#B4A6C7] leading-relaxed">
-                  Establish a reproductive health baseline, organize health records, learn about endocrine health, and track changes over time.
-                </p>
               </div>
             </div>
           </motion.div>
@@ -178,3 +128,5 @@ export const AboutHeroSection: React.FC = () => {
     </section>
   );
 };
+
+export default AboutHeroSection;

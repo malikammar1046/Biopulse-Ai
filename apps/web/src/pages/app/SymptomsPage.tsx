@@ -16,6 +16,7 @@ import type {
 
 export const SymptomsPage: React.FC = () => {
   const {
+    userProfile,
     symptomRecords,
     symptomStats,
     symptomsLoading,
@@ -26,6 +27,8 @@ export const SymptomsPage: React.FC = () => {
     deleteSymptom,
     refreshSymptomRecords,
   } = useUserHealth();
+
+  const isMale = userProfile?.pathway === 'male' || userProfile?.gender === 'male';
 
   // Modal States
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
@@ -76,18 +79,18 @@ export const SymptomsPage: React.FC = () => {
       className="max-w-6xl mx-auto space-y-6 sm:space-y-8 text-left select-none pb-16"
     >
       {/* ── 1. Page Header Bar ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E7DFEF]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-xl bg-[#FDF2F8] text-[#FB7185]">
+            <span className="p-1.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
               <Activity className="w-5 h-5" />
             </span>
-            <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-[#1C1326] tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-[#0F172A] tracking-tight">
               Symptoms & Body Journal
             </h1>
           </div>
-          <p className="text-xs text-[#584B68]">
-            Track how your body feels, connect symptoms to your cycle rhythm, and uncover patterns over time.
+          <p className="text-xs text-[#64748B]">
+            Track how your body feels, connect symptoms to your clinical rhythm, and uncover patterns over time.
           </p>
         </div>
 
@@ -95,7 +98,7 @@ export const SymptomsPage: React.FC = () => {
           <button
             type="button"
             onClick={() => refreshSymptomRecords()}
-            className="p-2.5 rounded-2xl bg-white border border-[#E7DFEF] text-[#584B68] hover:text-[#6E2D8B] hover:bg-[#F8F5FA] transition-colors cursor-pointer"
+            className="p-2.5 rounded-2xl bg-white border border-[#E2E8F0] text-[#64748B] hover:text-[#0288D1] hover:bg-[#F8FAFC] transition-colors cursor-pointer"
             title="Refresh symptom logs"
           >
             <RefreshCw className={`w-4 h-4 ${symptomsLoading ? 'animate-spin' : ''}`} />
@@ -104,7 +107,7 @@ export const SymptomsPage: React.FC = () => {
           <button
             type="button"
             onClick={handleOpenGeneralModal}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl font-sans font-bold text-xs text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#E87084] hover:brightness-110 shadow-md shadow-purple-950/20 transition-all cursor-pointer"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl font-sans font-bold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-xs transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>Log a Symptom</span>
@@ -125,11 +128,13 @@ export const SymptomsPage: React.FC = () => {
         totalLoggedCount={symptomStats.totalLoggedCount}
       />
 
-      {/* ── 4. Cycle Day Scatter Timeline ── */}
-      <SymptomCycleTimeline
-        records={symptomRecords}
-        cycleLength={cycleStats.totalCycleDays || 28}
-      />
+      {/* ── 4. Cycle Day Scatter Timeline (Female Pathway Only) ── */}
+      {!isMale && (
+        <SymptomCycleTimeline
+          records={symptomRecords}
+          cycleLength={cycleStats.totalCycleDays || 28}
+        />
+      )}
 
       {/* ── 5. Chronological Recent Logs List ── */}
       <SymptomRecentList

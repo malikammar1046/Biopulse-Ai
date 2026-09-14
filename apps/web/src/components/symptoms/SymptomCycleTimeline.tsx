@@ -30,41 +30,41 @@ export const SymptomCycleTimeline: React.FC<SymptomCycleTimelineProps> = ({
   const milestones = [1, 7, 14, 21, cycleLength];
 
   return (
-    <div className="p-6 sm:p-8 rounded-[32px] bg-white border border-[#E7DFEF] shadow-sm text-left select-none space-y-6">
+    <div className="p-6 sm:p-8 rounded-[24px] bg-white border border-[#E2E8F0] shadow-sm text-left select-none space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EDE4F7] text-[#6E2D8B] text-xs font-mono font-bold">
-            <Activity className="w-3.5 h-3.5 text-[#8E3EAF]" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E0F2FE] text-[#0288D1] text-xs font-mono font-bold border border-[#BAE6FD]">
+            <Activity className="w-3.5 h-3.5 text-[#0288D1]" />
             <span>Cycle Scatter Timeline</span>
           </div>
-          <h3 className="text-xl sm:text-2xl font-bold font-display text-[#1C1326]">
+          <h3 className="text-xl sm:text-2xl font-bold font-display text-[#0F172A]">
             Symptoms Across Your Cycle
           </h3>
-          <p className="text-xs text-[#584B68]">
+          <p className="text-xs text-[#475569]">
             See when symptoms occurred relative to your period start and cycle days.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 text-xs font-mono text-[#8D7E9E]">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#FB7185]" /> Cycle & Body
-          <span className="w-2.5 h-2.5 rounded-full bg-[#A21CAF] ml-2" /> Skin & Hair
-          <span className="w-2.5 h-2.5 rounded-full bg-[#8E3EAF] ml-2" /> Energy & Mood
+        <div className="flex items-center gap-2 text-xs font-mono text-[#64748B]">
+          <span className="w-2.5 h-2.5 rounded-full bg-rose-500" /> Cycle & Body
+          <span className="w-2.5 h-2.5 rounded-full bg-[#0288D1] ml-2" /> Skin & Hair
+          <span className="w-2.5 h-2.5 rounded-full bg-[#01579B] ml-2" /> Energy & Mood
         </div>
       </div>
 
       {cycleSymptoms.length === 0 ? (
-        <div className="p-8 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] text-center space-y-2">
-          <p className="text-xs text-[#584B68]">
+        <div className="p-8 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] text-center space-y-2">
+          <p className="text-xs text-[#475569]">
             No cycle-linked symptoms recorded yet. When you log symptoms during your period cycles, they will plot automatically along this ~{cycleLength}-day timeline.
           </p>
         </div>
       ) : (
         <div className="space-y-6 pt-2">
           {/* Visual Track */}
-          <div className="relative py-8 px-2 sm:px-6 bg-[#FAF8FC] rounded-3xl border border-[#E7DFEF]/60">
+          <div className="relative py-8 px-2 sm:px-6 bg-[#F8FAFC] rounded-3xl border border-[#E2E8F0]">
             {/* Horizontal Baseline Bar */}
-            <div className="relative h-2 rounded-full bg-gradient-to-r from-[#6E2D8B]/20 via-[#8E3EAF]/30 to-[#FB7185]/20">
+            <div className="relative h-2 rounded-full bg-[#E2E8F0]">
               {/* Day Markers */}
               {milestones.map((day) => {
                 const percent = ((day - 1) / (cycleLength - 1)) * 100;
@@ -74,8 +74,8 @@ export const SymptomCycleTimeline: React.FC<SymptomCycleTimelineProps> = ({
                     style={{ left: `${percent}%` }}
                     className="absolute -top-1.5 -translate-x-1/2 flex flex-col items-center gap-1.5"
                   >
-                    <div className="w-4 h-4 rounded-full bg-white border-2 border-[#8E3EAF] shadow-xs" />
-                    <span className="text-[10px] font-mono font-bold text-[#8D7E9E] mt-1">
+                    <div className="w-4 h-4 rounded-full bg-white border-2 border-[#0288D1] shadow-xs" />
+                    <span className="text-[10px] font-mono font-bold text-[#64748B] mt-1">
                       Day {day}
                     </span>
                   </div>
@@ -94,7 +94,7 @@ export const SymptomCycleTimeline: React.FC<SymptomCycleTimelineProps> = ({
                     className="absolute -top-7 -translate-x-1/2 flex flex-col items-center group cursor-pointer"
                   >
                     {/* Tooltip on hover */}
-                    <div className="opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity absolute -top-9 bg-[#1C1326] text-white text-[10px] font-sans px-2.5 py-1 rounded-xl shadow-lg whitespace-nowrap z-20">
+                    <div className="opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity absolute -top-9 bg-[#0F172A] text-white text-[10px] font-sans px-2.5 py-1 rounded-xl shadow-lg whitespace-nowrap z-20">
                       Day {day}: {dayRecords.map((r) => r.symptomType).join(', ')}
                     </div>
 
@@ -119,11 +119,11 @@ export const SymptomCycleTimeline: React.FC<SymptomCycleTimelineProps> = ({
           </div>
 
           {/* Legend / Info Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-[#584B68] pt-2">
+          <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-[#475569] pt-2">
             <span className="font-medium">
               Mapped {cycleSymptoms.length} symptom {cycleSymptoms.length === 1 ? 'event' : 'events'} across active cycle days.
             </span>
-            <span className="font-mono text-[11px] text-[#8D7E9E]">
+            <span className="font-mono text-[11px] text-[#64748B]">
               Hover over dots for symptom details
             </span>
           </div>

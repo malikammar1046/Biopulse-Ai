@@ -130,25 +130,25 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm select-none">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm select-none">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          className="w-full max-w-xl bg-white rounded-[32px] shadow-2xl border border-[#E7DFEF] overflow-hidden flex flex-col max-h-[90vh]"
+          className="w-full max-w-xl bg-white rounded-2xl shadow-xl border border-[#BAE6FD] overflow-hidden flex flex-col max-h-[90vh]"
         >
           {/* Modal Header */}
-          <div className="p-6 pb-4 border-b border-[#E7DFEF] flex items-center justify-between bg-[#FAF5FF]">
+          <div className="p-5 sm:p-6 pb-4 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F0F9FF]">
             <div className="flex items-center gap-2.5">
-              <span className="p-2 rounded-2xl bg-[#EDE4F7] text-[#6E2D8B]">
+              <span className="p-2 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
                 <Utensils className="w-5 h-5" />
               </span>
               <div>
-                <h2 className="text-lg font-bold font-display text-[#1C1326]">
+                <h2 className="text-lg font-bold text-[#0F172A]">
                   Log Food & Nourishment
                 </h2>
-                <p className="text-xs text-[#584B68]">
-                  Record what you enjoyed today
+                <p className="text-xs text-[#64748B]">
+                  Record nutritional items enjoyed today
                 </p>
               </div>
             </div>
@@ -156,20 +156,20 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-full text-[#8D7E9E] hover:text-[#1C1326] hover:bg-white transition-all cursor-pointer"
+              className="p-2 rounded-xl text-[#64748B] hover:text-[#0F172A] hover:bg-[#E0F2FE] transition-all cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Form Body */}
-          <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-5 text-left">
+          <form onSubmit={handleSubmit} className="p-4 sm:p-6 overflow-y-auto space-y-5 text-left">
             {/* 1. Meal Type Selector */}
             <div className="space-y-2">
-              <label className="text-xs font-mono font-bold uppercase tracking-wider text-[#8D7E9E] block">
+              <label className="text-xs font-mono font-bold uppercase tracking-wider text-[#64748B] block">
                 Select Meal
               </label>
-              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                 {[
                   { key: 'breakfast', label: 'Breakfast', icon: <Sun className="w-3.5 h-3.5" /> },
                   { key: 'morning_snack', label: 'M. Snack', icon: <Coffee className="w-3.5 h-3.5" /> },
@@ -182,12 +182,12 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({
                     <button
                       key={item.key}
                       type="button"
-                      onClick={() => setMealType(item.key as MealType)}
-                      className={`p-2.5 rounded-2xl text-xs font-bold font-sans flex flex-col items-center gap-1 border transition-all cursor-pointer ${
+                      onClick={() => setMealType(item.key as any)}
+                      className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center gap-1.5 ${
                         isSelected
-                          ? 'bg-[#6E2D8B] text-white border-[#6E2D8B] shadow-md shadow-purple-950/20'
-                          : 'bg-[#F8F5FA] text-[#584B68] border-[#E7DFEF] hover:bg-[#FAF5FF]'
-                      }`}
+                          ? 'bg-[#E0F2FE] border-[#0288D1] text-[#01579B] font-bold shadow-xs'
+                          : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#475569] hover:bg-white hover:border-[#CBD5E1]'
+                      } ${item.key === 'dinner' ? 'col-span-2 sm:col-span-1' : ''}`}
                     >
                       {item.icon}
                       <span className="text-[11px]">{item.label}</span>
@@ -200,7 +200,7 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({
             {/* 2. Food Search or Select */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-mono font-bold uppercase tracking-wider text-[#8D7E9E]">
+                <label className="text-xs font-mono font-bold uppercase tracking-wider text-[#64748B]">
                   Search Pakistani & Familiar Foods
                 </label>
                 <button
@@ -209,7 +209,7 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({
                     setIsCustomMode(!isCustomMode);
                     setSelectedFood(null);
                   }}
-                  className="text-xs font-bold text-[#6E2D8B] hover:underline cursor-pointer"
+                  className="text-xs font-semibold text-[#0288D1] hover:underline cursor-pointer"
                 >
                   {isCustomMode ? '← Back to Search' : '+ Custom Food'}
                 </button>
@@ -218,36 +218,36 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({
               {!isCustomMode ? (
                 <div className="space-y-2">
                   <div className="relative">
-                    <Search className="w-4 h-4 text-[#8D7E9E] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <Search className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
                       placeholder="e.g. Roti, Moong Daal, Chicken Tikka, Chana..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] text-xs font-sans text-[#1C1326] focus:bg-white focus:border-[#8E3EAF] focus:outline-none transition-all"
+                      className="w-full pl-10 pr-4 py-2 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs font-sans text-[#0F172A] focus:bg-white focus:border-[#0288D1] focus:outline-none transition-all"
                     />
                   </div>
 
                   {/* Autocomplete list */}
-                  <div className="max-h-40 overflow-y-auto border border-[#E7DFEF] rounded-2xl divide-y divide-[#F5F0FA] bg-white">
+                  <div className="max-h-40 overflow-y-auto border border-[#E2E8F0] rounded-xl divide-y divide-[#E2E8F0] bg-white">
                     {filteredFoods.map((f) => (
                       <button
                         key={f.id}
                         type="button"
                         onClick={() => handleSelectFood(f)}
-                        className={`w-full p-2.5 text-left text-xs flex items-center justify-between hover:bg-[#FAF5FF] transition-all cursor-pointer ${
-                          selectedFood?.id === f.id ? 'bg-[#EDE4F7] font-bold text-[#6E2D8B]' : 'text-[#1C1326]'
+                        className={`w-full p-2.5 text-left text-xs flex items-center justify-between hover:bg-[#F0F9FF] transition-all cursor-pointer ${
+                          selectedFood?.id === f.id ? 'bg-[#E0F2FE] font-bold text-[#01579B]' : 'text-[#0F172A]'
                         }`}
                       >
                         <div>
                           <span className="font-semibold">{f.name}</span>
                           {f.urduName && (
-                            <span className="text-[10px] text-[#8D7E9E] ml-2 font-mono">
+                            <span className="text-[10px] text-[#64748B] ml-2 font-mono">
                               ({f.urduName})
                             </span>
                           )}
                         </div>
-                        <span className="text-[11px] font-mono text-[#8E3EAF] font-bold">
+                        <span className="text-[11px] font-mono text-[#0288D1] font-bold">
                           {f.caloriesPerServing} kcal
                         </span>
                       </button>
@@ -256,62 +256,62 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({
                 </div>
               ) : (
                 /* Custom Food Manual Entry */
-                <div className="p-4 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] space-y-3">
+                <div className="p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-3">
                   <div className="space-y-1">
-                    <label className="text-[11px] font-mono text-[#8D7E9E]">Food Name</label>
+                    <label className="text-[11px] font-mono text-[#64748B]">Food Name</label>
                     <input
                       type="text"
                       placeholder="e.g. Homemade Pulao with Raita"
                       value={customFoodName}
                       onChange={(e) => setCustomFoodName(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-white border border-[#E7DFEF] text-xs font-sans text-[#1C1326] focus:border-[#8E3EAF] focus:outline-none"
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-[#E2E8F0] text-xs font-sans text-[#0F172A] focus:border-[#0288D1] focus:outline-none"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                     <div>
-                      <label className="text-[10px] font-mono text-[#8D7E9E]">Calories</label>
+                      <label className="text-[10px] font-mono text-[#64748B]">Calories</label>
                       <input
                         type="number"
                         value={customCalories}
                         onChange={(e) => setCustomCalories(Number(e.target.value))}
-                        className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#E7DFEF] text-xs font-mono"
+                        className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#E2E8F0] text-xs font-mono"
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-mono text-[#8D7E9E]">Protein (g)</label>
+                      <label className="text-[10px] font-mono text-[#64748B]">Protein (g)</label>
                       <input
                         type="number"
                         value={customProtein}
                         onChange={(e) => setCustomProtein(Number(e.target.value))}
-                        className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#E7DFEF] text-xs font-mono"
+                        className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#E2E8F0] text-xs font-mono"
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-mono text-[#8D7E9E]">Carbs (g)</label>
+                      <label className="text-[10px] font-mono text-[#64748B]">Carbs (g)</label>
                       <input
                         type="number"
                         value={customCarbs}
                         onChange={(e) => setCustomCarbs(Number(e.target.value))}
-                        className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#E7DFEF] text-xs font-mono"
+                        className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#E2E8F0] text-xs font-mono"
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-mono text-[#8D7E9E]">Fats (g)</label>
+                      <label className="text-[10px] font-mono text-[#64748B]">Fats (g)</label>
                       <input
                         type="number"
                         value={customFat}
                         onChange={(e) => setCustomFat(Number(e.target.value))}
-                        className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#E7DFEF] text-xs font-mono"
+                        className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#E2E8F0] text-xs font-mono"
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-mono text-[#8D7E9E]">Fiber (g)</label>
+                      <label className="text-[10px] font-mono text-[#64748B]">Fiber (g)</label>
                       <input
                         type="number"
                         value={customFiber}
                         onChange={(e) => setCustomFiber(Number(e.target.value))}
-                        className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#E7DFEF] text-xs font-mono"
+                        className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#E2E8F0] text-xs font-mono"
                       />
                     </div>
                   </div>
@@ -321,9 +321,9 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({
 
             {/* 3. Serving Size Presets */}
             {selectedFood && (
-              <div className="p-4 rounded-2xl bg-[#EDE4F7]/40 border border-[#D8B4FE]/50 space-y-2">
+              <div className="p-4 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] space-y-2">
                 <div className="flex items-center justify-between text-xs font-sans">
-                  <span className="font-semibold text-[#6E2D8B]">
+                  <span className="font-semibold text-[#01579B]">
                     Serving Portion: {selectedFood.standardServing}
                   </span>
                   <div className="flex items-center gap-1">
@@ -334,8 +334,8 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({
                         onClick={() => setCustomServingMultiplier(num)}
                         className={`px-2 py-1 rounded-lg text-[10px] font-mono font-bold transition-all cursor-pointer ${
                           customServingMultiplier === num
-                            ? 'bg-[#6E2D8B] text-white'
-                            : 'bg-white text-[#584B68] border border-[#E7DFEF]'
+                            ? 'bg-[#0288D1] text-white'
+                            : 'bg-white text-[#475569] border border-[#E2E8F0]'
                         }`}
                       >
                         {num}x
@@ -344,7 +344,7 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-1 text-[11px] font-mono text-[#584B68]">
+                <div className="flex items-center justify-between pt-1 text-[11px] font-mono text-[#475569]">
                   <span>Energy: {Math.round(selectedFood.caloriesPerServing * customServingMultiplier)} kcal</span>
                   <span>Protein: {Math.round(selectedFood.proteinGrams * customServingMultiplier * 10) / 10}g</span>
                   <span>Fiber: {Math.round(selectedFood.fiberGrams * customServingMultiplier * 10) / 10}g</span>
@@ -354,22 +354,22 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({
 
             {/* Optional Notes */}
             <div className="space-y-1">
-              <label className="text-[11px] font-mono text-[#8D7E9E]">Optional Notes</label>
+              <label className="text-[11px] font-mono text-[#64748B]">Optional Notes</label>
               <input
                 type="text"
                 placeholder="e.g. cooked with minimal oil, accompanied by dahi"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-[#F8F5FA] border border-[#E7DFEF] text-xs font-sans text-[#1C1326] focus:bg-white focus:border-[#8E3EAF] focus:outline-none"
+                className="w-full px-3 py-2 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs font-sans text-[#0F172A] focus:bg-white focus:border-[#0288D1] focus:outline-none"
               />
             </div>
 
             {/* Submit Actions */}
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E7DFEF]">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E2E8F0]">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-5 py-2.5 rounded-2xl border border-[#E7DFEF] text-xs font-bold text-[#584B68] hover:bg-[#FAF5FF] transition-all cursor-pointer"
+                className="px-4 py-2 rounded-xl border border-[#E2E8F0] text-xs font-semibold text-[#64748B] hover:bg-[#F8FAFC] transition-all cursor-pointer"
               >
                 Cancel
               </button>
@@ -377,7 +377,7 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-6 py-2.5 rounded-2xl bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#E87084] hover:brightness-110 text-white text-xs font-bold shadow-md shadow-purple-950/20 flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                className="px-5 py-2 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
               >
                 {successToast ? (
                   <>
@@ -386,7 +386,7 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({
                   </>
                 ) : (
                   <>
-                    <Plus className="w-4 h-4 text-[#FDA4AF]" />
+                    <Plus className="w-4 h-4 text-[#E0F2FE]" />
                     <span>Save to Today’s Log</span>
                   </>
                 )}

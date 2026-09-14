@@ -533,7 +533,7 @@ function buildFemaleAdaptiveProfile(
       reportId: fUltrasound?.reportId,
       resultId: fUltrasound?.resultId,
       whyItMatters: 'Extracts structured follicle count and ovarian volume metrics from verified clinical radiology reports.',
-      clinicalNote: 'Only verified radiology text reports are used. VITASense does not interpret raw ultrasound imagery.',
+      clinicalNote: 'Only verified radiology text reports are used. BioPulse AI does not interpret raw ultrasound imagery.',
     },
     {
       id: 'female_amh',
@@ -683,7 +683,7 @@ function buildFemaleAdaptiveProfile(
 
   return {
     pathway: 'female',
-    screeningPathwayName: 'OvaSense AI • PCOS Screening',
+    screeningPathwayName: 'BioPulse AI • PCOS Screening',
     isSpecializedPathway: true,
     readinessStatus,
     readinessLabel,
@@ -1100,8 +1100,6 @@ function buildMaleAdaptiveProfile(
 
   // ── 4. TIER 4: Comprehensive Information ─────────────────────────────────
   const mFreeT = findBiomarkerInReports(reports, ['free testosterone', 'bioavailable testosterone']);
-  const mSemen = findBiomarkerInReports(reports, ['semen analysis', 'sperm count', 'sperm concentration']);
-  const mUS = findBiomarkerInReports(reports, ['scrotal ultrasound', 'testicular ultrasound']);
   const mMRI = findBiomarkerInReports(reports, ['pituitary mri', 'brain mri', 'sella mri']);
   const mDEXA = findBiomarkerInReports(reports, ['dexa', 'bone density', 'bmd']);
   const mPSA = findBiomarkerInReports(reports, ['psa', 'prostate specific']);
@@ -1121,34 +1119,6 @@ function buildMaleAdaptiveProfile(
       resultId: mFreeT?.resultId,
       whyItMatters: 'Directly measures the free circulating hormone unattached to SHBG or albumin.',
       clinicalNote: 'Optional comprehensive evaluation often performed when SHBG levels are altered by age or metabolic factors.',
-    },
-    {
-      id: 'male_semen_analysis',
-      tier: 'tier_4',
-      label: 'Semen Analysis (Volume & Concentration)',
-      category: 'routine_labs',
-      availability: mSemen ? (mSemen.userVerified ? 'known' : 'pending_verification') : 'unknown',
-      verification: mSemen ? (mSemen.userVerified ? 'user_verified' : 'extracted') : 'self_reported',
-      valueDisplay: mSemen ? `${mSemen.value} (${mSemen.reportTitle})` : undefined,
-      recordedAt: mSemen?.date,
-      reportId: mSemen?.reportId,
-      resultId: mSemen?.resultId,
-      whyItMatters: 'Evaluates exocrine testicular function (spermatogenesis) alongside endocrine hormone production.',
-      clinicalNote: 'Optional clinical test utilized within comprehensive reproductive workups.',
-    },
-    {
-      id: 'male_testicular_ultrasound',
-      tier: 'tier_4',
-      label: 'Structured Testicular Ultrasound Report',
-      category: 'imaging',
-      availability: mUS ? (mUS.userVerified ? 'known' : 'pending_verification') : 'unknown',
-      verification: mUS ? (mUS.userVerified ? 'user_verified' : 'extracted') : 'self_reported',
-      valueDisplay: mUS ? `${mUS.value} (${mUS.reportTitle})` : undefined,
-      recordedAt: mUS?.date,
-      reportId: mUS?.reportId,
-      resultId: mUS?.resultId,
-      whyItMatters: 'Assesses testicular volume, symmetry, parenchymal texture, and venous blood flow patterns.',
-      clinicalNote: 'Structured findings from verified clinical reports only. Raw imagery is not analyzed by the platform.',
     },
     {
       id: 'male_pituitary_mri',
@@ -1196,7 +1166,7 @@ function buildMaleAdaptiveProfile(
   const tier1Summary = buildTierSummary('tier_1', 'Tier 1: Accessible Information', 'Self-reported symptoms, biometrics & health history', tier1Items);
   const tier2Summary = buildTierSummary('tier_2', 'Tier 2: Routine Medical Information', 'Accessible metabolic blood panels, glucose, CBC & lipids', tier2Items);
   const tier3Summary = buildTierSummary('tier_3', 'Tier 3: Specialized Hormonal Information', 'Morning testosterone, LH/FSH & endocrine markers', tier3Items);
-  const tier4Summary = buildTierSummary('tier_4', 'Tier 4: Comprehensive Information', 'Free testosterone, semen analysis & structured imaging reports', tier4Items);
+  const tier4Summary = buildTierSummary('tier_4', 'Tier 4: Comprehensive Information', 'Free testosterone & specialized clinical reports', tier4Items);
 
   // Overall Information Completeness
   const totalAllFields = tier1Items.length + tier2Items.length + tier3Items.length + tier4Items.length;
@@ -1298,7 +1268,7 @@ function buildMaleAdaptiveProfile(
 
   return {
     pathway: 'male',
-    screeningPathwayName: 'AndroSense AI • Male Hypogonadism Screening',
+    screeningPathwayName: 'BioPulse AI • Male Hypogonadism Screening',
     isSpecializedPathway: true,
     readinessStatus,
     readinessLabel,
@@ -1415,7 +1385,7 @@ function buildGeneralAdaptiveProfile(
 
   return {
     pathway: 'general',
-    screeningPathwayName: 'VITASense • Baseline Health & Wellness',
+    screeningPathwayName: 'BioPulse AI • Baseline Health & Wellness',
     isSpecializedPathway: false,
     readinessStatus: 'ready_for_initial_screening',
     readinessLabel: 'Profile Active',
@@ -1437,7 +1407,7 @@ function buildGeneralAdaptiveProfile(
     prioritizedRecommendations: [],
     explainability: {
       headline: 'General Health Focus Areas',
-      disclaimer: 'VITASense provides preventive baseline wellness tracking.',
+      disclaimer: 'BioPulse AI provides preventive baseline wellness tracking.',
       features: [],
     },
     lastCalculatedAt: new Date().toISOString(),

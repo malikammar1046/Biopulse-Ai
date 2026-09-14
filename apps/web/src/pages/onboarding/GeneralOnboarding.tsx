@@ -19,6 +19,7 @@ import { useUserHealth } from '../../context/UserHealthContext';
 import type { UserProfile, GeneralHealthProfile, LifestyleProfile } from '../../types/onboarding';
 import { Logo } from '../../components/brand/Logo';
 import { OnboardingProgressBar } from '../../components/onboarding/OnboardingProgressBar';
+import { validateDateOfBirth, validatePakistaniPhone, getDobInputBounds } from '../../utils/profileValidation';
 
 const GENERAL_STEPS = [
   { number: '1', label: 'Basic Info' },
@@ -157,13 +158,19 @@ export const GeneralOnboarding: React.FC = () => {
     }));
   };
 
+  const dobBounds = getDobInputBounds();
+
   const validateStep = (stepNum: number): boolean => {
     const errs: Record<string, string> = {};
 
     if (stepNum === 1) {
       if (!draftProfile.fullName.trim()) errs.fullName = 'Full Name is required.';
-      if (!draftProfile.phone.trim()) errs.phone = 'Phone number is required for alerts.';
-      if (!draftProfile.dateOfBirth) errs.dateOfBirth = 'Date of birth is required.';
+      
+      const dobCheck = validateDateOfBirth(draftProfile.dateOfBirth);
+      if (!dobCheck.isValid) errs.dateOfBirth = dobCheck.error!;
+
+      const phoneCheck = validatePakistaniPhone(draftProfile.phone);
+      if (!phoneCheck.isValid) errs.phone = phoneCheck.error!;
     }
 
     setErrors(errs);
@@ -211,12 +218,12 @@ export const GeneralOnboarding: React.FC = () => {
     <div className="min-h-screen bg-[#0A1A12] text-white flex flex-col justify-between p-4 sm:p-6 lg:p-8 select-none">
       {/* Top Header */}
       <header className="max-w-4xl w-full mx-auto flex items-center justify-between pb-6 border-b border-white/10">
-        <Link to={ROUTES.HOME} className="flex items-center gap-2">
-          <Logo size="sm" theme="dark" showTagline tagline="Baseline Health Companion" />
+        <Link to={ROUTES.HOME} className="flex items-center gap-2 group transition-transform hover:scale-[1.01]">
+          <Logo size="sm" theme="dark" />
         </Link>
         <div className="flex items-center gap-2">
           <span className="text-[11px] font-mono px-3 py-1 rounded-full bg-[#34D399]/20 text-[#34D399] border border-[#34D399]/30 font-bold">
-            VITASense Baseline
+            BIOPulse AI Baseline
           </span>
           <span className="text-[11px] text-[#A7F3D0]/70 hidden sm:inline">Encrypted Onboarding</span>
         </div>
@@ -278,13 +285,16 @@ export const GeneralOnboarding: React.FC = () => {
                 {/* Date of Birth & Phone */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-bold text-[#E6F4EA] uppercase tracking-wider block mb-1">
-                      Date of Birth <span className="text-[#34D399]">*</span>
+                    <label className="text-xs font-bold text-[#E6F4EA] uppercase tracking-wider flex items-center justify-between mb-1">
+                      <span>Date of Birth <span className="text-[#34D399]">*</span></span>
+                      <span className="text-[10px] text-[#A7F3D0]/70 font-mono">16 – 50 years</span>
                     </label>
                     <div className="relative">
                       <Calendar className="w-4 h-4 text-[#A7F3D0]/60 absolute left-3.5 top-3.5" />
                       <input
                         type="date"
+                        min={dobBounds.min}
+                        max={dobBounds.max}
                         value={draftProfile.dateOfBirth}
                         onChange={(e) => updateDraft('dateOfBirth', e.target.value)}
                         className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-[#0B1E15] border border-white/15 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#34D399]"
@@ -296,8 +306,9 @@ export const GeneralOnboarding: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-[#E6F4EA] uppercase tracking-wider block mb-1">
-                      Phone Number <span className="text-[#34D399]">*</span>
+                    <label className="text-xs font-bold text-[#E6F4EA] uppercase tracking-wider flex items-center justify-between mb-1">
+                      <span>Phone Number <span className="text-[#34D399]">*</span></span>
+                      <span className="text-[10px] text-[#A7F3D0]/70 font-mono">11 digits (03xx or +92)</span>
                     </label>
                     <div className="relative">
                       <Phone className="w-4 h-4 text-[#A7F3D0]/60 absolute left-3.5 top-3.5" />
@@ -306,7 +317,7 @@ export const GeneralOnboarding: React.FC = () => {
                         value={draftProfile.phone}
                         onChange={(e) => updateDraft('phone', e.target.value)}
                         className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-[#0B1E15] border border-white/15 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#34D399]"
-                        placeholder="+1 (555) 000-0000"
+                        placeholder="03001234567 or +923001234567"
                       />
                     </div>
                     {errors.phone && <p className="text-xs text-[#34D399] mt-1">{errors.phone}</p>}
@@ -367,7 +378,7 @@ export const GeneralOnboarding: React.FC = () => {
                   What health priorities matter most to you?
                 </h2>
                 <p className="text-sm text-[#A7F3D0]/80">
-                  Select the pillars you want VITASense to highlight across your tracking and report analytics.
+                  Select the pillars you want BioPulse AI to highlight across your tracking and report analytics.
                 </p>
               </div>
 
@@ -541,7 +552,7 @@ export const GeneralOnboarding: React.FC = () => {
                   What would you like to focus on?
                 </h2>
                 <p className="text-sm text-[#A7F3D0]/80">
-                  Select the primary outcomes you want VITASense to prioritize.
+                  Select the primary outcomes you want BioPulse AI to prioritize.
                 </p>
               </div>
 
@@ -589,7 +600,7 @@ export const GeneralOnboarding: React.FC = () => {
                   <Compass className="w-8 h-8 text-[#0A1A12]" />
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-bold font-display text-white">
-                  Your VITASense profile is ready.
+                  Your BIOPulse AI profile is ready.
                 </h2>
                 <p className="text-sm text-[#E6F4EA] max-w-md mx-auto">
                   Your baseline health dashboard has been provisioned with your wellness priorities and lifestyle tracking tools.
@@ -606,7 +617,7 @@ export const GeneralOnboarding: React.FC = () => {
               {/* Feature Highlights */}
               <div className="p-6 rounded-3xl bg-[#122A1E]/80 border border-white/10 space-y-3">
                 <span className="text-xs font-mono uppercase tracking-widest text-[#34D399] font-bold block">
-                  What You Can Now Explore in VITASense:
+                  What You Can Now Explore in BIOPulse AI:
                 </span>
                 <ul className="space-y-2 text-xs text-[#A7F3D0]/80">
                   <li className="flex items-center gap-2.5">
@@ -643,11 +654,11 @@ export const GeneralOnboarding: React.FC = () => {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin text-[#0A1A12]" />
-                    <span>Initializing VITASense...</span>
+                    <span>Initializing BIOPulse AI...</span>
                   </>
                 ) : (
                   <>
-                    <span>Enter VITASense</span>
+                    <span>Enter BIOPulse AI</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -690,7 +701,7 @@ export const GeneralOnboarding: React.FC = () => {
           <span>Encrypted HIPAA-grade health data container.</span>
         </div>
         <div>
-          <span>VITASense provides baseline health guidance and does not replace medical advice.</span>
+          <span>BIOPulse AI provides baseline health guidance and does not replace medical advice.</span>
         </div>
       </footer>
     </div>

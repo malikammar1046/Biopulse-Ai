@@ -2,6 +2,7 @@ export const ROUTES = {
   // Public Marketing Routes
   HOME: '/',
   ABOUT: '/about',
+  CONDITIONS: '/conditions',
   UNDERSTAND_PCOS: '/understand-pcos',
   UNDERSTAND_PCOS_CANONICAL: '/understand/pcos',
   UNDERSTAND_MALE_HYPOGONADISM: '/understand/male-hypogonadism',
@@ -47,6 +48,7 @@ export const ROUTES = {
     CARE_CIRCLE: '/app/care-circle',
     APPOINTMENTS: '/app/appointments',
     ASSESSMENT: '/app/assessment',
+    PROGRESS: '/app/progress',
     LIFESTYLE: '/app/lifestyle',
     TIMELINE: '/app/timeline',
     SETTINGS: '/app/settings',
@@ -75,4 +77,3 @@ export function getPathwayOnboardingRoute(profile?: { pathway?: string; gender?:
   if (pathway === 'general') return ROUTES.ONBOARDING_GENERAL;
   return ROUTES.ONBOARDING;
 }
-

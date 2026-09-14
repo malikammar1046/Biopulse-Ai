@@ -24,27 +24,27 @@ export const ExecutiveDashboardHeader: React.FC<ExecutiveDashboardHeaderProps> =
 
   const pathwayMeta = {
     female: {
-      title: 'OvaSense AI',
-      subtitle: "Your personalized women's health companion",
+      title: 'BIOPulse AI',
+      subtitle: "Your personalized women's health and PCOS companion",
       badge: "Women's Health & PCOS Screening",
-      badgeClass: 'bg-[#6E2D8B]/10 text-[#8E3EAF] border-[#8E3EAF]/30',
+      badgeClass: 'bg-[#E0F2FE] text-[#0288D1] border-[#BAE6FD]',
     },
     male: {
-      title: 'AndroSense AI',
-      subtitle: "Your personalized men's health companion",
-      badge: "Men's Health & Hormone Vitality",
-      badgeClass: 'bg-[#0284C7]/10 text-[#0284C7] border-[#38BDF8]/30',
+      title: 'BIOPulse AI',
+      subtitle: "Your personalized men's health and hypogonadism screening companion",
+      badge: "Men's Health • Hypogonadism Screening",
+      badgeClass: 'bg-[#E0F2FE] text-[#0288D1] border-[#BAE6FD]',
     },
     general: {
-      title: 'VITASense',
-      subtitle: 'Your personalized health companion',
+      title: 'BIOPulse AI',
+      subtitle: 'Your personalized health intelligence companion',
       badge: 'Baseline Health & Wellness',
-      badgeClass: 'bg-[#8B5CF6]/10 text-[#7C3AED] border-[#A78BFA]/30',
+      badgeClass: 'bg-[#E0F2FE] text-[#0288D1] border-[#BAE6FD]',
     },
   }[pathway];
 
   const fullName = userProfile.fullName?.trim() || 'Health Member';
-  const email = userProfile.email || 'member@vitasense.health';
+  const email = userProfile.email || 'member@biopulse.ai';
   const avatarUrl =
     userProfile.avatarUrl ||
     'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
@@ -69,21 +69,21 @@ export const ExecutiveDashboardHeader: React.FC<ExecutiveDashboardHeaderProps> =
         <div className="space-y-2">
           {/* User pill profile & pathway badge */}
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-white border border-[#E7DFEF] shadow-xs">
+            <div className="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-white border border-[#E2E8F0] shadow-xs">
               <img
                 src={avatarUrl}
                 alt={fullName}
-                className="w-7 h-7 rounded-full object-cover border border-[#D8B4FE]"
+                className="w-7 h-7 rounded-full object-cover border border-[#BAE6FD]"
               />
               <div className="leading-tight">
-                <span className="text-xs font-bold font-display text-[#1C1326] block">
+                <span className="text-xs font-bold font-display text-[#0F172A] block">
                   {fullName}
                 </span>
-                <span className="text-[10px] text-[#8D7E9E] font-mono block">
+                <span className="text-[10px] text-[#64748B] font-mono block">
                   {email}
                 </span>
               </div>
-              <ChevronDown className="w-3.5 h-3.5 text-[#8D7E9E] ml-1" />
+              <ChevronDown className="w-3.5 h-3.5 text-[#64748B] ml-1" />
             </div>
 
             <span className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded-full border ${pathwayMeta.badgeClass}`}>
@@ -92,20 +92,20 @@ export const ExecutiveDashboardHeader: React.FC<ExecutiveDashboardHeaderProps> =
           </div>
 
           <div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-display text-[#1C1326] tracking-tight">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-display text-[#0F172A] tracking-tight">
               {pathwayMeta.title}
             </h1>
-            <p className="text-xs sm:text-sm text-[#736384] font-sans">
+            <p className="text-xs sm:text-sm text-[#475569] font-sans">
               {pathwayMeta.subtitle}
             </p>
           </div>
         </div>
 
         {/* Right Tools: Search Bar, Notifications, Date, Timeframe Filter */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
           {/* Search Bar Input */}
-          <div className="relative">
-            <Search className="w-4 h-4 text-[#8D7E9E] absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <div className="relative flex-1 sm:flex-initial">
+            <Search className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search..."
@@ -114,7 +114,7 @@ export const ExecutiveDashboardHeader: React.FC<ExecutiveDashboardHeaderProps> =
                 setSearchQuery(e.target.value);
                 onSearch?.(e.target.value);
               }}
-              className="w-44 sm:w-56 h-10 pl-9 pr-4 rounded-full bg-white border border-[#E7DFEF] text-xs font-sans text-[#1C1326] placeholder-[#A797BD] focus:outline-none focus:border-[#8E3EAF] shadow-xs transition-all"
+              className="w-full sm:w-56 h-10 pl-9 pr-4 rounded-full bg-white border border-[#E2E8F0] text-xs font-sans text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#29B6F6] shadow-xs transition-all"
             />
           </div>
 
@@ -122,15 +122,15 @@ export const ExecutiveDashboardHeader: React.FC<ExecutiveDashboardHeaderProps> =
           <button
             type="button"
             onClick={() => openAiChatWithPrompt('What are my upcoming health tasks and reminders for today?')}
-            className="w-10 h-10 rounded-full bg-white border border-[#E7DFEF] flex items-center justify-center text-[#584B68] hover:text-[#6E2D8B] hover:border-[#D8B4FE] shadow-xs relative transition-all cursor-pointer"
+            className="w-10 h-10 rounded-full bg-white border border-[#E2E8F0] flex items-center justify-center text-[#475569] hover:text-[#0288D1] hover:border-[#BAE6FD] shadow-xs relative transition-all cursor-pointer"
             title="Notifications"
           >
             <Bell className="w-4 h-4" />
-            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#FB7185] border-2 border-white" />
+            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#0288D1] border-2 border-white" />
           </button>
 
           {/* Date String */}
-          <span className="text-xs font-mono text-[#8D7E9E] px-2 hidden sm:inline-block">
+          <span className="text-xs font-mono text-[#64748B] px-2 hidden sm:inline-block">
             {todayStr}
           </span>
 
@@ -139,14 +139,14 @@ export const ExecutiveDashboardHeader: React.FC<ExecutiveDashboardHeaderProps> =
             <button
               type="button"
               onClick={() => setIsTimeframeOpen((prev) => !prev)}
-              className="h-10 px-4 rounded-full bg-white border border-[#E7DFEF] text-xs font-bold text-[#1C1326] hover:border-[#D8B4FE] shadow-xs flex items-center gap-2 transition-all cursor-pointer"
+              className="h-10 px-4 rounded-full bg-white border border-[#E2E8F0] text-xs font-bold text-[#0F172A] hover:border-[#BAE6FD] shadow-xs flex items-center gap-2 transition-all cursor-pointer"
             >
               <span>{timeframeLabels[timeframe]}</span>
-              <ChevronDown className={`w-3.5 h-3.5 text-[#8D7E9E] transition-transform ${isTimeframeOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-3.5 h-3.5 text-[#64748B] transition-transform ${isTimeframeOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {isTimeframeOpen && (
-              <div className="absolute right-0 mt-1.5 w-36 rounded-2xl bg-white border border-[#E7DFEF] shadow-xl p-1.5 z-40 animate-in fade-in zoom-in-95 duration-150">
+              <div className="absolute right-0 mt-1.5 w-36 rounded-2xl bg-white border border-[#E2E8F0] shadow-xl p-1.5 z-40 animate-in fade-in zoom-in-95 duration-150">
                 {(['today', 'week', 'month'] as const).map((t) => (
                   <button
                     key={t}
@@ -157,8 +157,8 @@ export const ExecutiveDashboardHeader: React.FC<ExecutiveDashboardHeaderProps> =
                     }}
                     className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
                       timeframe === t
-                        ? 'bg-[#EDE4F7] text-[#6E2D8B] font-bold'
-                        : 'text-[#584B68] hover:bg-[#F8F5FA]'
+                        ? 'bg-[#E0F2FE] text-[#0288D1]'
+                        : 'text-[#475569] hover:bg-[#F8FAFC] hover:text-[#0F172A]'
                     }`}
                   >
                     {timeframeLabels[t]}

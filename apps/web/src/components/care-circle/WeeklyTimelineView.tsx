@@ -21,14 +21,14 @@ export const WeeklyTimelineView: React.FC<WeeklyTimelineViewProps> = ({
     <div className="space-y-4 select-none text-left">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="p-1.5 rounded-xl bg-[#EDE4F7] text-[#6E2D8B]">
+          <span className="p-1.5 rounded-xl bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD]">
             <Calendar className="w-4 h-4" />
           </span>
-          <h3 className="text-sm font-bold font-display text-[#1C1326]">
+          <h3 className="text-sm font-bold font-display text-[#0F172A]">
             7-Day Longitudinal Health Timeline
           </h3>
         </div>
-        <span className="text-[11px] font-mono text-[#8D7E9E]">
+        <span className="text-[11px] font-mono text-[#64748B]">
           Day-by-Day Synthesis
         </span>
       </div>
@@ -37,14 +37,14 @@ export const WeeklyTimelineView: React.FC<WeeklyTimelineViewProps> = ({
         {days.map((day, idx) => (
           <div
             key={idx}
-            className="p-4 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] flex flex-col justify-between space-y-3 hover:bg-[#FAF5FF] transition-colors"
+            className="p-4 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] flex flex-col justify-between space-y-3 hover:bg-[#E0F2FE] transition-colors"
           >
             {/* Day Header */}
-            <div className="border-b border-[#E7DFEF]/80 pb-2">
-              <span className="text-xs font-bold text-[#1C1326] block">
+            <div className="border-b border-[#BAE6FD] pb-2">
+              <span className="text-xs font-bold text-[#0F172A] block">
                 {day.dayName}
               </span>
-              <span className="text-[10px] font-mono text-[#8D7E9E] block">
+              <span className="text-[10px] font-mono text-[#64748B] block">
                 {day.date}
               </span>
             </div>
@@ -54,8 +54,8 @@ export const WeeklyTimelineView: React.FC<WeeklyTimelineViewProps> = ({
               {/* Meals */}
               {showDiet && (
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-[#584B68] inline-flex items-center gap-1">
-                    <Utensils className="w-3 h-3 text-[#8D7E9E]" />
+                  <span className="text-[#475569] inline-flex items-center gap-1">
+                    <Utensils className="w-3 h-3 text-[#64748B]" />
                     Meals
                   </span>
                   {day.mealsLogged ? (
@@ -63,7 +63,7 @@ export const WeeklyTimelineView: React.FC<WeeklyTimelineViewProps> = ({
                       <Check className="w-3 h-3" /> Logged
                     </span>
                   ) : (
-                    <span className="text-[#9CA3AF] text-[10px]">None</span>
+                    <span className="text-[#94A3B8] text-[10px]">None</span>
                   )}
                 </div>
               )}
@@ -71,8 +71,8 @@ export const WeeklyTimelineView: React.FC<WeeklyTimelineViewProps> = ({
               {/* Movement */}
               {showFitness && (
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-[#584B68] inline-flex items-center gap-1">
-                    <Dumbbell className="w-3 h-3 text-[#8D7E9E]" />
+                  <span className="text-[#475569] inline-flex items-center gap-1">
+                    <Dumbbell className="w-3 h-3 text-[#64748B]" />
                     Exercise
                   </span>
                   {day.exerciseLogged ? (
@@ -80,7 +80,7 @@ export const WeeklyTimelineView: React.FC<WeeklyTimelineViewProps> = ({
                       <Check className="w-3 h-3" /> Yes
                     </span>
                   ) : (
-                    <span className="text-[#9CA3AF] text-[10px]">Rest</span>
+                    <span className="text-[#94A3B8] text-[10px]">Rest</span>
                   )}
                 </div>
               )}
@@ -88,11 +88,11 @@ export const WeeklyTimelineView: React.FC<WeeklyTimelineViewProps> = ({
               {/* Meds */}
               {showMedications && (
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-[#584B68] inline-flex items-center gap-1">
-                    <Pill className="w-3 h-3 text-[#8D7E9E]" />
+                  <span className="text-[#475569] inline-flex items-center gap-1">
+                    <Pill className="w-3 h-3 text-[#64748B]" />
                     Meds
                   </span>
-                  <span className="font-mono text-[10px] text-[#6E2D8B] font-bold">
+                  <span className="font-mono text-[10px] text-[#0288D1] font-bold">
                     {day.medsCompleted}/{day.medsTotal}
                   </span>
                 </div>
@@ -100,8 +100,8 @@ export const WeeklyTimelineView: React.FC<WeeklyTimelineViewProps> = ({
 
               {/* Symptoms */}
               {showSymptoms && (
-                <div className="pt-1 border-t border-[#E7DFEF]/60 space-y-1">
-                  <span className="text-[9px] font-mono uppercase text-[#8D7E9E] block">
+                <div className="pt-1 border-t border-[#BAE6FD] space-y-1">
+                  <span className="text-[9px] font-mono uppercase text-[#64748B] block">
                     Symptoms
                   </span>
                   {day.symptoms.length > 0 ? (
@@ -114,7 +114,7 @@ export const WeeklyTimelineView: React.FC<WeeklyTimelineViewProps> = ({
                       </div>
                     ))
                   ) : (
-                    <span className="text-[10px] text-[#9CA3AF] italic block">
+                    <span className="text-[10px] text-[#94A3B8] italic block">
                       No symptoms logged
                     </span>
                   )}

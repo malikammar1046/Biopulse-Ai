@@ -1,0 +1,5 @@
+architecture,target,split,roc_auc,pr_auc,accuracy,sensitivity,specificity,precision,f1,brier,tn,fp,fn,tp
+EfficientNet-B0 (Ultrasound Image),Clinical PCOS Reference Outcome,Dev 5-Fold OOF (N=432),0.5513392313129097,0.35529550425633666,0.6736111111111112,0.0,1.0,0.0,0.0,0.21838885468018018,291,0,141,0
+EfficientNet-B0 (Ultrasound Image),Clinical PCOS Reference Outcome,Frozen Holdout (N=109),0.504185692541857,0.3414231538799233,0.6697247706422018,0.0,1.0,0.0,0.0,0.2205050603696465,73,0,36,0
+ConvNeXt-Tiny (Ultrasound Image),Clinical PCOS Reference Outcome,Dev 5-Fold OOF (N=432),0.4672564646243084,0.31721379181626774,0.6736111111111112,0.0,1.0,0.0,0.0,0.2214000819465138,291,0,141,0
+ConvNeXt-Tiny (Ultrasound Image),Clinical PCOS Reference Outcome,Frozen Holdout (N=109),0.4813546423135464,0.36744804899444794,0.6697247706422018,0.0,1.0,0.0,0.0,0.22135235304089176,73,0,36,0

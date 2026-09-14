@@ -22,21 +22,21 @@ export const ReportCard: React.FC<ReportCardProps> = ({
   ).length;
 
   return (
-    <div className="p-5 sm:p-6 rounded-3xl bg-white border border-[#E7DFEF] hover:border-[#8E3EAF]/30 shadow-2xs hover:shadow-sm transition-all duration-200 text-left select-none space-y-4 flex flex-col justify-between group">
+    <div className="p-5 sm:p-6 rounded-3xl bg-white border border-[#BAE6FD] hover:border-[#0288D1] shadow-xs hover:shadow-sm transition-all duration-200 text-left select-none space-y-4 flex flex-col justify-between group">
       {/* Top Row: Title, Date, Type Badge */}
       <div className="space-y-2">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-[#EDE4F7] text-[#6E2D8B] shrink-0">
-              <FileText className="w-5 h-5 text-[#8E3EAF]" />
+            <div className="p-2.5 rounded-2xl bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD]/60 shrink-0">
+              <FileText className="w-5 h-5 text-[#0288D1]" />
             </div>
             <div>
-              <h3 className="text-sm sm:text-base font-bold font-display text-[#1C1326] block truncate">
+              <h3 className="text-sm sm:text-base font-bold font-display text-[#0F172A] block truncate">
                 {report.title}
               </h3>
-              <div className="flex items-center gap-2 text-xs text-[#584B68] font-medium">
+              <div className="flex items-center gap-2 text-xs text-[#64748B] font-medium">
                 <span className="flex items-center gap-1">
-                  <Calendar className="w-3 h-3 text-[#8E3EAF]" />
+                  <Calendar className="w-3 h-3 text-[#0288D1]" />
                   {report.reportDate}
                 </span>
                 <span>•</span>
@@ -47,7 +47,7 @@ export const ReportCard: React.FC<ReportCardProps> = ({
 
           <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
             <span
-              className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded-full border ${categoryMeta.badgeClass}`}
+              className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-full border bg-[#F0F9FF] text-[#0288D1] border-[#BAE6FD]"
             >
               {categoryMeta.label}
             </span>
@@ -69,14 +69,14 @@ export const ReportCard: React.FC<ReportCardProps> = ({
             {report.results.slice(0, 3).map((res) => (
               <span
                 key={res.id}
-                className="text-[11px] font-sans px-2.5 py-0.5 rounded-lg bg-[#F8F5FA] border border-[#E7DFEF] text-[#584B68]"
+                className="text-[11px] font-sans px-2.5 py-0.5 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] text-[#475569]"
               >
-                <strong className="text-[#1C1326] font-semibold">{res.testName}:</strong>{' '}
+                <strong className="text-[#0F172A] font-semibold">{res.testName}:</strong>{' '}
                 {res.resultValue} {res.unit}
               </span>
             ))}
             {report.results.length > 3 && (
-              <span className="text-[10px] font-mono text-[#8D7E9E] px-2 py-0.5">
+              <span className="text-[10px] font-mono text-[#64748B] px-2 py-0.5">
                 +{report.results.length - 3} more
               </span>
             )}
@@ -85,7 +85,7 @@ export const ReportCard: React.FC<ReportCardProps> = ({
       </div>
 
       {/* Bottom Row: Status & Actions */}
-      <div className="pt-3 border-t border-[#F0EAF5] flex items-center justify-between gap-2">
+      <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-between gap-2">
         <div>
           {outsideRangeCount > 0 ? (
             <span className="text-[11px] font-mono font-semibold text-[#D97706] bg-[#FFFBEB] px-2.5 py-0.5 rounded-full border border-[#FDE68A]/60 flex items-center gap-1">
@@ -93,8 +93,8 @@ export const ReportCard: React.FC<ReportCardProps> = ({
               {outsideRangeCount} {outsideRangeCount === 1 ? 'number needs a look' : 'numbers need a look'}
             </span>
           ) : (
-            <span className="text-[11px] font-mono font-semibold text-[#047857] bg-[#ECFDF5] px-2.5 py-0.5 rounded-full border border-[#A7F3D0]/60 flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3 text-[#047857]" />
+            <span className="text-[11px] font-mono font-semibold text-[#059669] bg-[#ECFDF5] px-2.5 py-0.5 rounded-full border border-[#A7F3D0] flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3 text-[#059669]" />
               Within typical lab range
             </span>
           )}
@@ -104,7 +104,7 @@ export const ReportCard: React.FC<ReportCardProps> = ({
           <button
             type="button"
             onClick={() => onDelete(report)}
-            className="p-2 rounded-xl text-[#8D7E9E] hover:text-[#E11D48] hover:bg-[#FFF1F2] transition-colors cursor-pointer"
+            className="p-2 rounded-xl text-[#64748B] hover:text-[#E11D48] hover:bg-[#FFF1F2] transition-colors cursor-pointer"
             title="Delete report"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -113,7 +113,7 @@ export const ReportCard: React.FC<ReportCardProps> = ({
           <button
             type="button"
             onClick={() => onViewDetail(report)}
-            className="px-3.5 py-1.5 rounded-xl font-bold text-xs text-[#6E2D8B] bg-[#EDE4F7] hover:bg-[#D8B4FE]/40 transition-colors flex items-center gap-1 cursor-pointer"
+            className="px-3.5 py-1.5 rounded-xl font-bold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] transition-colors flex items-center gap-1 cursor-pointer shadow-xs"
           >
             <Eye className="w-3.5 h-3.5" />
             <span>View Details</span>

@@ -1,0 +1,194 @@
+{
+  "tier": "Male Tier 2",
+  "model_type": "Laboratory and Hormonal Pattern Screener",
+  "champion_model": "Random Forest",
+  "population": "Adult men aged 19-60",
+  "sample_size": {
+    "total_men_19_60": 3575,
+    "train_samples": 2860,
+    "test_samples": 715,
+    "low_t_prevalence_percent": 23.81
+  },
+  "features_used": [
+    "age",
+    "shbg_nmol_l",
+    "estradiol_pg_ml",
+    "albumin_g_dl",
+    "hba1c_pct",
+    "glucose_mg_dl",
+    "hemoglobin_g_dl",
+    "hematocrit_pct",
+    "rbc_count",
+    "alt_u_l",
+    "ast_u_l",
+    "total_bilirubin_mg_dl",
+    "creatinine_mg_dl",
+    "bun_mg_dl",
+    "uric_acid_mg_dl",
+    "hdl_mg_dl"
+  ],
+  "anti_leakage_safeguards": [
+    "Total Testosterone (LBXTST) strictly excluded from predictor features",
+    "Calculated Free Testosterone strictly excluded from predictor features",
+    "Only indirect laboratory markers (SHBG, Estradiol, Albumin, HbA1c, CBC, CMP, Lipids) used in model"
+  ],
+  "cross_validation_benchmark": {
+    "Logistic Regression": {
+      "roc_auc_mean": 0.8487,
+      "roc_auc_std": 0.0133,
+      "pr_auc_mean": 0.6674,
+      "sensitivity_default_mean": 0.8092,
+      "brier_score_mean": 0.1609
+    },
+    "Random Forest": {
+      "roc_auc_mean": 0.8521,
+      "roc_auc_std": 0.012,
+      "pr_auc_mean": 0.6639,
+      "sensitivity_default_mean": 0.7695,
+      "brier_score_mean": 0.1576
+    },
+    "Extra Trees": {
+      "roc_auc_mean": 0.8407,
+      "roc_auc_std": 0.0083,
+      "pr_auc_mean": 0.6332,
+      "sensitivity_default_mean": 0.7607,
+      "brier_score_mean": 0.207
+    },
+    "XGBoost": {
+      "roc_auc_mean": 0.849,
+      "roc_auc_std": 0.012,
+      "pr_auc_mean": 0.6616,
+      "sensitivity_default_mean": 0.7401,
+      "brier_score_mean": 0.146
+    }
+  },
+  "test_set_evaluation": {
+    "roc_auc": 0.8742,
+    "pr_auc": 0.6723,
+    "brier_score": 0.1164,
+    "screening_threshold": 0.3379,
+    "metrics_at_screening_threshold": {
+      "threshold": 0.3379,
+      "sensitivity": 0.7353,
+      "specificity": 0.8349,
+      "precision": 0.5814,
+      "npv": 0.91,
+      "f1": 0.6494,
+      "accuracy": 0.8112,
+      "confusion_matrix": {
+        "TN": 455,
+        "FP": 90,
+        "FN": 45,
+        "TP": 125
+      }
+    },
+    "metrics_at_default_0_5": {
+      "threshold": 0.5,
+      "sensitivity": 0.5529,
+      "specificity": 0.9174,
+      "precision": 0.6763,
+      "npv": 0.8681,
+      "f1": 0.6084,
+      "accuracy": 0.8308,
+      "confusion_matrix": {
+        "TN": 500,
+        "FP": 45,
+        "FN": 76,
+        "TP": 94
+      }
+    },
+    "age_subpopulation_metrics": {
+      "19-30": {
+        "n_samples": 197,
+        "positive_count": 38,
+        "positive_prevalence": 0.1929,
+        "roc_auc": 0.9219,
+        "sensitivity": 0.7895,
+        "specificity": 0.8931,
+        "npv": 0.9467,
+        "precision": 0.6383
+      },
+      "31-40": {
+        "n_samples": 170,
+        "positive_count": 44,
+        "positive_prevalence": 0.2588,
+        "roc_auc": 0.8902,
+        "sensitivity": 0.8409,
+        "specificity": 0.7698,
+        "npv": 0.9327,
+        "precision": 0.5606
+      },
+      "41-50": {
+        "n_samples": 177,
+        "positive_count": 49,
+        "positive_prevalence": 0.2768,
+        "roc_auc": 0.9093,
+        "sensitivity": 0.8571,
+        "specificity": 0.7891,
+        "npv": 0.9352,
+        "precision": 0.6087
+      },
+      "51-60": {
+        "n_samples": 171,
+        "positive_count": 39,
+        "positive_prevalence": 0.2281,
+        "roc_auc": 0.7793,
+        "sensitivity": 0.4103,
+        "specificity": 0.8712,
+        "npv": 0.8333,
+        "precision": 0.4848
+      }
+    }
+  },
+  "feature_importance": {
+    "age": {
+      "importance": 0.0524
+    },
+    "shbg_nmol_l": {
+      "importance": 0.3805
+    },
+    "estradiol_pg_ml": {
+      "importance": 0.1698
+    },
+    "albumin_g_dl": {
+      "importance": 0.0104
+    },
+    "hba1c_pct": {
+      "importance": 0.0522
+    },
+    "glucose_mg_dl": {
+      "importance": 0.0505
+    },
+    "hemoglobin_g_dl": {
+      "importance": 0.0247
+    },
+    "hematocrit_pct": {
+      "importance": 0.0311
+    },
+    "rbc_count": {
+      "importance": 0.0147
+    },
+    "alt_u_l": {
+      "importance": 0.0357
+    },
+    "ast_u_l": {
+      "importance": 0.0098
+    },
+    "total_bilirubin_mg_dl": {
+      "importance": 0.0139
+    },
+    "creatinine_mg_dl": {
+      "importance": 0.0116
+    },
+    "bun_mg_dl": {
+      "importance": 0.0056
+    },
+    "uric_acid_mg_dl": {
+      "importance": 0.0692
+    },
+    "hdl_mg_dl": {
+      "importance": 0.0678
+    }
+  },
+  "safety_statement": "Educational screening tool only. Not a medical diagnosis. A clinical diagnosis of hypogonadism requires morning fasting laboratory blood tests and clinical evaluation by a physician."
+}

@@ -12,7 +12,6 @@ export interface RegisterPayload {
   fullName: string;
   email: string;
   password: string;
-  dateOfBirth?: string;
   consent: boolean;
   gender?: UserGender;
   pathway?: HealthPathway;
@@ -160,7 +159,6 @@ class AuthService {
           id: 'demo-user-id-' + Math.random().toString(36).substring(2, 9),
           email: payload.email,
           fullName: payload.fullName,
-          dateOfBirth: payload.dateOfBirth,
           createdAt: new Date().toISOString(),
         },
       };
@@ -173,7 +171,6 @@ class AuthService {
         options: {
           data: {
             full_name: payload.fullName.trim(),
-            date_of_birth: payload.dateOfBirth || null,
             gender: payload.gender || null,
             pathway: payload.pathway || null,
           },
@@ -206,7 +203,6 @@ class AuthService {
           id: data.user.id,
           email: data.user.email || payload.email,
           fullName: payload.fullName,
-          dateOfBirth: payload.dateOfBirth,
           createdAt: data.user.created_at,
         },
         session: data.session,

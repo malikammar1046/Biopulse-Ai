@@ -31,24 +31,24 @@ export const QuickTrackingRow: React.FC<QuickTrackingRowProps> = ({
   // Theme colors per pathway
   const theme = {
     female: {
-      accent: 'text-[#6E2D8B]',
-      border: 'border-[#E7DFEF]',
-      hoverBorder: 'hover:border-[#CBB2DF]',
-      iconBg: 'bg-[#EDE4F7]',
+      accent: 'text-[#0288D1]',
+      border: 'border-[#E2E8F0]',
+      hoverBorder: 'hover:border-[#BAE6FD]',
+      iconBg: 'bg-[#E0F2FE]',
       cardBg: 'bg-white',
     },
     male: {
-      accent: 'text-sky-700',
-      border: 'border-sky-100',
-      hoverBorder: 'hover:border-sky-300',
-      iconBg: 'bg-sky-50',
+      accent: 'text-[#0288D1]',
+      border: 'border-[#E2E8F0]',
+      hoverBorder: 'hover:border-[#BAE6FD]',
+      iconBg: 'bg-[#E0F2FE]',
       cardBg: 'bg-white',
     },
     general: {
-      accent: 'text-violet-700',
-      border: 'border-violet-100',
-      hoverBorder: 'hover:border-violet-300',
-      iconBg: 'bg-violet-50',
+      accent: 'text-[#0288D1]',
+      border: 'border-[#E2E8F0]',
+      hoverBorder: 'hover:border-[#BAE6FD]',
+      iconBg: 'bg-[#E0F2FE]',
       cardBg: 'bg-white',
     },
   }[pathway];
@@ -79,7 +79,7 @@ export const QuickTrackingRow: React.FC<QuickTrackingRowProps> = ({
       id: 'cycle',
       label: 'Cycle Tracking',
       metric: snapshotMetrics.cycleDay ? `Day ${snapshotMetrics.cycleDay} • ${snapshotMetrics.phaseName}` : 'Log Period',
-      icon: <Calendar className="w-4 h-4 text-[#8E3EAF]" />,
+      icon: <Calendar className="w-4 h-4 text-[#0288D1]" />,
       route: ROUTES.APP.CYCLE,
     });
   }
@@ -137,14 +137,14 @@ export const QuickTrackingRow: React.FC<QuickTrackingRowProps> = ({
     <div className="space-y-3 text-left" id="quick-tracking-section">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-mono uppercase tracking-widest text-[#8A7A99] font-bold">
+          <span className="text-[11px] font-mono uppercase tracking-widest text-[#64748B] font-bold">
             Daily Log
           </span>
-          <span className="text-xs font-bold font-display text-[#1C1326]">
+          <span className="text-xs font-bold font-display text-[#0F172A]">
             Quick Tracking Shortcuts
           </span>
         </div>
-        <span className="text-[11px] font-mono text-[#8A7A99]">
+        <span className="text-[11px] font-mono text-[#64748B]">
           Fast 1-Tap Entry
         </span>
       </div>
@@ -165,16 +165,16 @@ export const QuickTrackingRow: React.FC<QuickTrackingRowProps> = ({
                 <div className={`w-8 h-8 rounded-xl ${theme.iconBg} flex items-center justify-center shrink-0`}>
                   {item.icon}
                 </div>
-                <div className="w-6 h-6 rounded-lg bg-[#FAF7FD] text-[#8A7A99] group-hover:text-[#6E2D8B] group-hover:bg-[#EDE4F7] flex items-center justify-center transition-colors">
+                <div className="w-6 h-6 rounded-lg bg-[#F8FAFC] text-[#64748B] group-hover:text-[#0288D1] group-hover:bg-[#E0F2FE] flex items-center justify-center transition-colors">
                   <Plus className="w-3.5 h-3.5" />
                 </div>
               </div>
 
               <div className="pt-2">
-                <span className="text-xs font-bold font-display text-[#1C1326] block truncate">
+                <span className="text-xs font-bold font-display text-[#0F172A] block truncate">
                   {item.label}
                 </span>
-                <span className="text-[11px] font-mono text-[#7A6B88] truncate block">
+                <span className="text-[11px] font-mono text-[#64748B] truncate block">
                   {item.metric}
                 </span>
               </div>

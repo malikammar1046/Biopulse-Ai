@@ -1,0 +1,8 @@
+Metric,Tier 1 (tau=0.50),Tier 2 (tau=0.50),Tier 1 (Screening),Tier 2 (Screening)
+ROC-AUC,0.898,0.8919,0.898,0.8919
+PR-AUC,0.8324,0.8243,0.8324,0.8243
+Sensitivity,0.6944,0.6944,0.8056,0.7778
+Specificity,0.9452,0.9315,0.8356,0.8356
+Precision,0.8621,0.8333,0.7073,0.7
+F1-Score,0.7692,0.7576,0.7532,0.7368
+Brier Score,0.1121,0.1138,0.1121,0.1138

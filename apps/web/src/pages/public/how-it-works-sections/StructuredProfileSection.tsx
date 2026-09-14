@@ -55,7 +55,7 @@ export const StructuredProfileSection: React.FC = () => {
           </h2>
 
           <p className="text-base sm:text-lg text-[#CDBDD8] leading-relaxed font-sans max-w-2xl mx-auto">
-            You do not have to provide everything at once. VITASense is architected to generate meaningful,
+            You do not have to provide everything at once. BIOPulse AI is architected to generate meaningful,
             calibrated screening insights at whatever level of information you currently possess.
           </p>
         </div>

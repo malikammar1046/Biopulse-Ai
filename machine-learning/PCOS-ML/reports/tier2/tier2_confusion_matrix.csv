@@ -1,0 +1,3 @@
+Condition,TN,FP,FN,TP
+Default (0.50),68,5,11,25
+Screening (0.29),61,12,8,28

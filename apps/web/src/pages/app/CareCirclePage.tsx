@@ -62,15 +62,11 @@ export const CareCirclePage: React.FC = () => {
       className="max-w-6xl mx-auto space-y-6 sm:space-y-8 text-left select-none pb-16"
     >
       {/* ── 1. HERO & OWNERSHIP BANNER ── */}
-      <div className="relative p-6 sm:p-10 rounded-[36px] bg-gradient-to-r from-[#180A26] via-[#150824] to-[#250F38] text-white shadow-xl border border-white/10 overflow-hidden">
-        {/* Ambient volumetric light */}
-        <div className="absolute top-0 right-10 w-96 h-96 bg-[#6E2D8B]/30 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 right-1/3 w-64 h-64 bg-[#E87084]/20 rounded-full blur-2xl pointer-events-none" />
-
+      <div className="relative p-6 sm:p-10 rounded-2xl bg-[#01579B] text-white shadow-md border border-[#BAE6FD] overflow-hidden">
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-3 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-xs font-mono font-bold text-[#FDA4AF] backdrop-blur-md">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#FB7185]" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-xs font-mono font-bold text-[#BAE6FD]">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#BAE6FD]" />
               <span>Zero-Compromise Patient Consent</span>
             </div>
 
@@ -78,19 +74,19 @@ export const CareCirclePage: React.FC = () => {
               My Care Circle
             </h1>
 
-            <p className="text-xs sm:text-sm text-[#CDBDD8] font-sans leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#E0F2FE] font-sans leading-relaxed">
               Choose who can support you and control what they can see. People you trust can support your health journey — with your permission.
             </p>
 
             {/* Quick Stat Badges */}
             <div className="flex flex-wrap items-center gap-3 pt-2">
-              <div className="px-3.5 py-1.5 rounded-xl bg-white/[0.07] border border-white/10 text-xs font-mono text-white">
-                <span className="text-[#FDA4AF] font-bold">{activeMembers.length}</span> Active Connections
+              <div className="px-3.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-xs font-mono text-white">
+                <span className="text-[#BAE6FD] font-bold">{activeMembers.length}</span> Active Connections
               </div>
-              <div className="px-3.5 py-1.5 rounded-xl bg-white/[0.07] border border-white/10 text-xs font-mono text-white">
+              <div className="px-3.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-xs font-mono text-white">
                 <span className="text-[#FCD34D] font-bold">{careCircleInvitations.length || pendingMembers.length}</span> Pending
               </div>
-              <div className="px-3.5 py-1.5 rounded-xl bg-white/[0.07] border border-white/10 text-xs font-mono text-[#34D399] flex items-center gap-1.5">
+              <div className="px-3.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-xs font-mono text-[#6EE7B7] flex items-center gap-1.5">
                 <Lock className="w-3 h-3" />
                 <span>Instant Revocation Enabled</span>
               </div>
@@ -102,16 +98,16 @@ export const CareCirclePage: React.FC = () => {
             <button
               type="button"
               onClick={() => handleOpenAddModal('doctor')}
-              className="px-5 py-3 rounded-2xl font-sans font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#E87084] hover:brightness-110 shadow-lg shadow-purple-950/40 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="px-5 py-3 rounded-xl font-sans font-semibold text-xs sm:text-sm text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
-              <Stethoscope className="w-4 h-4 text-[#FDA4AF]" />
+              <Stethoscope className="w-4 h-4 text-[#BAE6FD]" />
               <span>Add Doctor / Clinician</span>
             </button>
 
             <button
               type="button"
               onClick={() => handleOpenAddModal('family')}
-              className="px-5 py-3 rounded-2xl font-sans font-bold text-xs sm:text-sm text-[#1C1326] bg-white hover:bg-[#FAF5FF] shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="px-5 py-3 rounded-xl font-sans font-semibold text-xs sm:text-sm text-[#01579B] bg-white hover:bg-[#F0F9FF] shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <Heart className="w-4 h-4 text-[#E11D48]" />
               <span>Add Family Member</span>
@@ -124,10 +120,10 @@ export const CareCirclePage: React.FC = () => {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-xl bg-[#EDE4F7] text-[#6E2D8B]">
+            <span className="p-1.5 rounded-xl bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD]">
               <Users className="w-4 h-4" />
             </span>
-            <h2 className="text-lg font-bold font-display text-[#1C1326]">
+            <h2 className="text-lg font-bold font-display text-[#0F172A]">
               Active Connections ({activeMembers.length})
             </h2>
           </div>
@@ -135,7 +131,7 @@ export const CareCirclePage: React.FC = () => {
           <button
             type="button"
             onClick={() => handleOpenAddModal('trusted_person')}
-            className="text-xs font-bold text-[#6E2D8B] hover:text-[#A21CAF] transition-colors inline-flex items-center gap-1 cursor-pointer"
+            className="text-xs font-bold text-[#0288D1] hover:text-[#01579B] transition-colors inline-flex items-center gap-1 cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Trusted Person</span>
@@ -143,9 +139,9 @@ export const CareCirclePage: React.FC = () => {
         </div>
 
         {careCircleLoading && careCircleMembers.length === 0 ? (
-          <div className="p-12 rounded-[32px] bg-white border border-[#E7DFEF] text-center space-y-3">
-            <div className="w-8 h-8 rounded-full border-2 border-[#6E2D8B] border-t-transparent animate-spin mx-auto" />
-            <span className="text-xs font-mono text-[#8D7E9E] block">
+          <div className="p-12 rounded-2xl bg-white border border-[#BAE6FD] text-center space-y-3">
+            <div className="w-8 h-8 rounded-full border-2 border-[#0288D1] border-t-transparent animate-spin mx-auto" />
+            <span className="text-xs font-mono text-[#64748B] block">
               Loading Care Circle members...
             </span>
           </div>
@@ -161,22 +157,22 @@ export const CareCirclePage: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div className="p-8 sm:p-12 rounded-[32px] bg-white border border-dashed border-[#D8B4FE] text-center space-y-4">
-            <div className="w-14 h-14 rounded-2xl bg-[#EDE4F7] text-[#6E2D8B] flex items-center justify-center mx-auto">
+          <div className="p-8 sm:p-12 rounded-2xl bg-white border border-dashed border-[#BAE6FD] text-center space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD] flex items-center justify-center mx-auto">
               <Users className="w-7 h-7" />
             </div>
             <div className="space-y-1">
-              <h3 className="text-base font-bold font-display text-[#1C1326]">
+              <h3 className="text-base font-bold font-display text-[#0F172A]">
                 Your Care Circle is empty
               </h3>
-              <p className="text-xs text-[#584B68] max-w-md mx-auto leading-relaxed">
+              <p className="text-xs text-[#475569] max-w-md mx-auto leading-relaxed">
                 Connect your gynecologist, reproductive endocrinologist, or family members to share longitudinal summaries on your terms.
               </p>
             </div>
             <button
               type="button"
               onClick={() => handleOpenAddModal('doctor')}
-              className="px-6 py-2.5 rounded-2xl font-sans font-bold text-xs text-white bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF] hover:brightness-110 shadow-md transition-all inline-flex items-center gap-2 cursor-pointer"
+              className="px-6 py-2.5 rounded-xl font-sans font-semibold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm transition-all inline-flex items-center gap-2 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add Someone You Trust</span>
@@ -194,20 +190,20 @@ export const CareCirclePage: React.FC = () => {
       />
 
       {/* ── 4. EMERGENCY SAFETY CONTACTS ── */}
-      <div className="p-6 sm:p-8 rounded-[32px] bg-white border border-[#E7DFEF] shadow-sm space-y-4">
+      <div className="p-6 sm:p-8 rounded-2xl bg-white border border-[#BAE6FD] shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-bold font-display text-[#1C1326]">
+            <h2 className="text-base font-bold font-display text-[#0F172A]">
               Emergency Safety Contacts
             </h2>
-            <p className="text-xs text-[#584B68] mt-0.5">
+            <p className="text-xs text-[#64748B] mt-0.5">
               Contacts designated to receive critical alerts during unexpected health anomalies.
             </p>
           </div>
           <button
             type="button"
             onClick={() => openAiChatWithPrompt('How do I update my emergency safety contacts?')}
-            className="text-xs font-bold text-[#6E2D8B] hover:text-[#A21CAF] transition-colors"
+            className="text-xs font-bold text-[#0288D1] hover:text-[#01579B] transition-colors"
           >
             Update Contacts
           </button>
@@ -218,16 +214,16 @@ export const CareCirclePage: React.FC = () => {
             {emergencyContacts.map((contact, idx) => (
               <div
                 key={contact.id || idx}
-                className="p-5 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                className="p-5 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-[#1C1326]">{contact.name}</span>
+                    <span className="text-sm font-bold text-[#0F172A]">{contact.name}</span>
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#ECFDF5] text-[#047857] font-bold">
                       {contact.isPrimary ? 'Primary Safety Contact' : 'Secondary'}
                     </span>
                   </div>
-                  <span className="text-xs text-[#584B68] block mt-0.5">
+                  <span className="text-xs text-[#475569] block mt-0.5">
                     {contact.relationship} • {contact.phone}
                   </span>
                 </div>
@@ -240,8 +236,8 @@ export const CareCirclePage: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div className="p-6 rounded-2xl bg-[#F8F5FA] border border-dashed border-[#E7DFEF] text-center">
-            <p className="text-xs text-[#584B68]">No emergency contacts registered in your profile.</p>
+          <div className="p-6 rounded-xl bg-[#F8FAFC] border border-dashed border-[#E2E8F0] text-center">
+            <p className="text-xs text-[#64748B]">No emergency contacts registered in your profile.</p>
           </div>
         )}
       </div>
@@ -249,15 +245,15 @@ export const CareCirclePage: React.FC = () => {
       {/* ── 5. MODALS ── */}
       <AddCareMemberModal
         isOpen={isAddModalOpen}
-        initialRole={initialAddRole}
         onClose={() => setIsAddModalOpen(false)}
+        initialRole={initialAddRole}
         onSubmit={async (input) => {
           return await addCareMember(input);
         }}
       />
 
       <ManageAccessModal
-        isOpen={Boolean(selectedMemberForManage)}
+        isOpen={!!selectedMemberForManage}
         member={selectedMemberForManage}
         onClose={() => setSelectedMemberForManage(null)}
         onUpdatePermissions={async (memberId, perms) => {
@@ -269,11 +265,11 @@ export const CareCirclePage: React.FC = () => {
       />
 
       <RevokeAccessConfirmModal
-        isOpen={Boolean(selectedMemberForRevoke)}
+        isOpen={!!selectedMemberForRevoke}
         member={selectedMemberForRevoke}
-        loading={isRevoking}
         onClose={() => setSelectedMemberForRevoke(null)}
         onConfirm={handleConfirmRevoke}
+        loading={isRevoking}
       />
     </motion.div>
   );

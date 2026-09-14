@@ -162,7 +162,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={handleClose}
-          className="fixed inset-0 bg-[#10071A]/70 backdrop-blur-md"
+          className="fixed inset-0 bg-[#0F172A]/60 backdrop-blur-sm"
         />
 
         {/* Modal Window */}
@@ -170,20 +170,20 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
           initial={{ opacity: 0, scale: 0.96, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 15 }}
-          className="relative w-full max-w-2xl max-h-[90vh] bg-white rounded-[36px] shadow-2xl border border-[#E7DFEF] flex flex-col text-left select-none z-10 overflow-hidden"
+          className="relative w-full max-w-2xl max-h-[90vh] bg-white rounded-2xl shadow-xl border border-[#BAE6FD] flex flex-col text-left select-none z-10 overflow-hidden"
         >
           {/* Header */}
-          <div className="p-6 sm:p-7 border-b border-[#E7DFEF] flex items-center justify-between shrink-0 bg-gradient-to-r from-[#FAF5FF] via-white to-[#FFF5F7]">
+          <div className="p-6 sm:p-7 border-b border-[#BAE6FD] flex items-center justify-between shrink-0 bg-[#01579B] text-white">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="p-1.5 rounded-xl bg-[#EDE4F7] text-[#6E2D8B]">
-                  <Users className="w-4 h-4" />
+                <span className="p-1.5 rounded-xl bg-white/10 text-white">
+                  <Users className="w-4 h-4 text-[#BAE6FD]" />
                 </span>
-                <h3 className="text-xl font-bold font-display text-[#1C1326]">
+                <h3 className="text-xl font-bold font-display text-white">
                   {step === 4 ? 'Invitation Created' : 'Add to Care Circle'}
                 </h3>
               </div>
-              <p className="text-xs text-[#584B68]">
+              <p className="text-xs text-[#E0F2FE]">
                 {step === 1 && 'Step 1 of 3: Choose who can support your health journey.'}
                 {step === 2 && 'Step 2 of 3: Enter contact information.'}
                 {step === 3 && 'Step 3 of 3: Set granular access permissions.'}
@@ -194,7 +194,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
             <button
               type="button"
               onClick={handleClose}
-              className="p-2 rounded-2xl text-[#8D7E9E] hover:text-[#1C1326] hover:bg-white transition-colors cursor-pointer"
+              className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -203,7 +203,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
           {/* Scrollable Content Body */}
           <div className="p-6 sm:p-8 overflow-y-auto flex-1 space-y-6">
             {errorMessage && (
-              <div className="p-4 rounded-2xl bg-[#FFF1F2] border border-[#FFE4E6] flex items-center gap-3 text-xs text-[#E11D48]">
+              <div className="p-4 rounded-xl bg-[#FFF1F2] border border-[#FFE4E6] flex items-center gap-3 text-xs text-[#E11D48]">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{errorMessage}</span>
               </div>
@@ -213,10 +213,10 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
             {step === 1 && (
               <div className="space-y-4">
                 <div className="text-center sm:text-left space-y-1">
-                  <h4 className="text-base font-bold font-display text-[#1C1326]">
+                  <h4 className="text-base font-bold font-display text-[#0F172A]">
                     Who are you adding?
                   </h4>
-                  <p className="text-xs text-[#584B68]">
+                  <p className="text-xs text-[#64748B]">
                     You remain the owner of your data. You decide what they can see.
                   </p>
                 </div>
@@ -226,20 +226,20 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                   <button
                     type="button"
                     onClick={() => handleRoleSelect('doctor')}
-                    className="p-6 rounded-3xl border-2 text-left transition-all flex flex-col justify-between gap-4 group cursor-pointer hover:border-[#6E2D8B] hover:bg-[#FAF5FF] border-[#E7DFEF] bg-white shadow-xs"
+                    className="p-6 rounded-2xl border text-left transition-all flex flex-col justify-between gap-4 group cursor-pointer hover:border-[#0288D1] hover:bg-[#F0F9FF] border-[#BAE6FD] bg-white shadow-xs"
                   >
-                    <div className="w-12 h-12 rounded-2xl bg-[#EDE4F7] text-[#6E2D8B] flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <div className="w-12 h-12 rounded-xl bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD] flex items-center justify-center group-hover:scale-105 transition-transform">
                       <Stethoscope className="w-6 h-6" />
                     </div>
                     <div>
-                      <span className="font-bold text-sm text-[#1C1326] block">
+                      <span className="font-bold text-sm text-[#0F172A] block">
                         Doctor / Clinician
                       </span>
-                      <span className="text-[11px] text-[#584B68] block mt-1 leading-snug">
+                      <span className="text-[11px] text-[#475569] block mt-1 leading-snug">
                         Gynecologist, endocrinologist, or fertility specialist.
                       </span>
                     </div>
-                    <span className="text-[10px] font-mono font-bold text-[#6E2D8B] inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                    <span className="text-[10px] font-mono font-bold text-[#0288D1] inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                       Select Doctor <ArrowRight className="w-3 h-3" />
                     </span>
                   </button>
@@ -248,20 +248,20 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                   <button
                     type="button"
                     onClick={() => handleRoleSelect('family')}
-                    className="p-6 rounded-3xl border-2 text-left transition-all flex flex-col justify-between gap-4 group cursor-pointer hover:border-[#E87084] hover:bg-[#FFF5F7] border-[#E7DFEF] bg-white shadow-xs"
+                    className="p-6 rounded-2xl border text-left transition-all flex flex-col justify-between gap-4 group cursor-pointer hover:border-[#0288D1] hover:bg-[#F0F9FF] border-[#BAE6FD] bg-white shadow-xs"
                   >
-                    <div className="w-12 h-12 rounded-2xl bg-[#FFE4E6] text-[#E11D48] flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <div className="w-12 h-12 rounded-xl bg-[#FFE4E6] text-[#E11D48] border border-[#FFE4E6] flex items-center justify-center group-hover:scale-105 transition-transform">
                       <Heart className="w-6 h-6" />
                     </div>
                     <div>
-                      <span className="font-bold text-sm text-[#1C1326] block">
+                      <span className="font-bold text-sm text-[#0F172A] block">
                         Family Member
                       </span>
-                      <span className="text-[11px] text-[#584B68] block mt-1 leading-snug">
+                      <span className="text-[11px] text-[#475569] block mt-1 leading-snug">
                         Mother, sister, partner, or daughter for personal support.
                       </span>
                     </div>
-                    <span className="text-[10px] font-mono font-bold text-[#E11D48] inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                    <span className="text-[10px] font-mono font-bold text-[#0288D1] inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                       Select Family <ArrowRight className="w-3 h-3" />
                     </span>
                   </button>
@@ -270,20 +270,20 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                   <button
                     type="button"
                     onClick={() => handleRoleSelect('trusted_person')}
-                    className="p-6 rounded-3xl border-2 text-left transition-all flex flex-col justify-between gap-4 group cursor-pointer hover:border-[#8E3EAF] hover:bg-[#FAF5FF] border-[#E7DFEF] bg-white shadow-xs"
+                    className="p-6 rounded-2xl border text-left transition-all flex flex-col justify-between gap-4 group cursor-pointer hover:border-[#0288D1] hover:bg-[#F0F9FF] border-[#BAE6FD] bg-white shadow-xs"
                   >
-                    <div className="w-12 h-12 rounded-2xl bg-[#EDE4F7] text-[#8E3EAF] flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <div className="w-12 h-12 rounded-xl bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD] flex items-center justify-center group-hover:scale-105 transition-transform">
                       <ShieldCheck className="w-6 h-6" />
                     </div>
                     <div>
-                      <span className="font-bold text-sm text-[#1C1326] block">
+                      <span className="font-bold text-sm text-[#0F172A] block">
                         Trusted Person
                       </span>
-                      <span className="text-[11px] text-[#584B68] block mt-1 leading-snug">
+                      <span className="text-[11px] text-[#475569] block mt-1 leading-snug">
                         Close friend, wellness advocate, or personal caregiver.
                       </span>
                     </div>
-                    <span className="text-[10px] font-mono font-bold text-[#8E3EAF] inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                    <span className="text-[10px] font-mono font-bold text-[#0288D1] inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                       Select Trusted <ArrowRight className="w-3 h-3" />
                     </span>
                   </button>
@@ -294,52 +294,52 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
             {/* ── STEP 2: DETAILS ENTRY ── */}
             {step === 2 && (
               <form onSubmit={handleStep2Submit} className="space-y-4">
-                <div className="p-3.5 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] flex items-center justify-between text-xs">
-                  <span className="text-[#584B68]">Adding as:</span>
-                  <span className="font-mono font-bold px-3 py-1 rounded-full bg-[#EDE4F7] text-[#6E2D8B] capitalize">
+                <div className="p-3.5 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-center justify-between text-xs">
+                  <span className="text-[#475569]">Adding as:</span>
+                  <span className="font-mono font-bold px-3 py-1 rounded-full bg-white text-[#0288D1] border border-[#BAE6FD] capitalize">
                     {role === 'doctor' ? 'Doctor / Healthcare Professional' : role === 'family' ? 'Family Member' : 'Trusted Person'}
                   </span>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-[#1C1326] font-display">
+                  <label className="block text-xs font-bold text-[#0F172A] font-display">
                     Full Name *
                   </label>
                   <div className="relative">
-                    <User className="w-4 h-4 text-[#8D7E9E] absolute left-3.5 top-3.5" />
+                    <User className="w-4 h-4 text-[#64748B] absolute left-3.5 top-3.5" />
                     <input
                       type="text"
                       required
                       placeholder={role === 'doctor' ? 'e.g. Dr. Sarah Malik' : 'e.g. Mariam Khan'}
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] text-sm text-[#1C1326] focus:outline-hidden focus:border-[#6E2D8B] focus:bg-white transition-all"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#F8FAFC] border border-[#BAE6FD] text-sm text-[#0F172A] focus:outline-hidden focus:border-[#0288D1] focus:bg-white transition-all"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-[#1C1326] font-display">
+                  <label className="block text-xs font-bold text-[#0F172A] font-display">
                     Email Address *
                   </label>
                   <div className="relative">
-                    <Mail className="w-4 h-4 text-[#8D7E9E] absolute left-3.5 top-3.5" />
+                    <Mail className="w-4 h-4 text-[#64748B] absolute left-3.5 top-3.5" />
                     <input
                       type="email"
                       required
                       placeholder="e.g. sarah.malik@clinic.org"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] text-sm text-[#1C1326] focus:outline-hidden focus:border-[#6E2D8B] focus:bg-white transition-all"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#F8FAFC] border border-[#BAE6FD] text-sm text-[#0F172A] focus:outline-hidden focus:border-[#0288D1] focus:bg-white transition-all"
                     />
                   </div>
-                  <span className="text-[10px] text-[#8D7E9E] block">
+                  <span className="text-[10px] text-[#64748B] block">
                     They will receive a private invitation link to view your permitted health summary.
                   </span>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-[#1C1326] font-display">
+                  <label className="block text-xs font-bold text-[#0F172A] font-display">
                     Relationship / Role
                   </label>
                   <input
@@ -353,33 +353,33 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                     }
                     value={relationship}
                     onChange={(e) => setRelationship(e.target.value)}
-                    className="w-full px-4 py-3 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] text-sm text-[#1C1326] focus:outline-hidden focus:border-[#6E2D8B] focus:bg-white transition-all"
+                    className="w-full px-4 py-3 rounded-xl bg-[#F8FAFC] border border-[#BAE6FD] text-sm text-[#0F172A] focus:outline-hidden focus:border-[#0288D1] focus:bg-white transition-all"
                   />
                 </div>
 
                 {role === 'doctor' && (
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-[#1C1326] font-display">
+                    <label className="block text-xs font-bold text-[#0F172A] font-display">
                       Clinic / Organization (Optional)
                     </label>
                     <div className="relative">
-                      <Building2 className="w-4 h-4 text-[#8D7E9E] absolute left-3.5 top-3.5" />
+                      <Building2 className="w-4 h-4 text-[#64748B] absolute left-3.5 top-3.5" />
                       <input
                         type="text"
                         placeholder="e.g. Harley St. Women’s Health, City Hospital"
                         value={clinicOrganization}
                         onChange={(e) => setClinicOrganization(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] text-sm text-[#1C1326] focus:outline-hidden focus:border-[#6E2D8B] focus:bg-white transition-all"
+                        className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#F8FAFC] border border-[#BAE6FD] text-sm text-[#0F172A] focus:outline-hidden focus:border-[#0288D1] focus:bg-white transition-all"
                       />
                     </div>
                   </div>
                 )}
 
-                <div className="flex items-center justify-between pt-4 border-t border-[#E7DFEF]">
+                <div className="flex items-center justify-between pt-4 border-t border-[#E2E8F0]">
                   <button
                     type="button"
                     onClick={() => setStep(1)}
-                    className="px-4 py-2.5 rounded-2xl font-sans font-bold text-xs text-[#584B68] bg-[#F8F5FA] hover:bg-[#EDE4F7] transition-colors flex items-center gap-1.5 cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl font-sans font-bold text-xs text-[#475569] bg-[#F8FAFC] hover:bg-[#F0F9FF] border border-[#E2E8F0] transition-colors flex items-center gap-1.5 cursor-pointer"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
                     <span>Back</span>
@@ -387,7 +387,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
 
                   <button
                     type="submit"
-                    className="px-6 py-2.5 rounded-2xl font-sans font-bold text-xs text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#E87084] hover:brightness-110 shadow-md transition-all flex items-center gap-2 cursor-pointer"
+                    className="px-6 py-2.5 rounded-xl font-sans font-semibold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm transition-all flex items-center gap-2 cursor-pointer"
                   >
                     <span>Choose Permissions</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -401,7 +401,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
               <div className="space-y-6">
                 {/* Presets Header */}
                 <div className="space-y-2">
-                  <span className="text-xs font-bold text-[#1C1326] font-display block">
+                  <span className="text-xs font-bold text-[#0F172A] font-display block">
                     Access Level Presets
                   </span>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -417,16 +417,16 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                           key={p.id}
                           type="button"
                           onClick={() => handlePresetSelect(p.id as CareCirclePreset)}
-                          className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                          className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                             isSelected
-                              ? 'bg-[#180A26] border-[#6E2D8B] text-white shadow-md'
-                              : 'bg-[#F8F5FA] border-[#E7DFEF] text-[#1C1326] hover:bg-[#EDE4F7]'
+                              ? 'bg-[#01579B] border-[#0288D1] text-white shadow-sm'
+                              : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] hover:bg-[#F0F9FF] hover:border-[#BAE6FD]'
                           }`}
                         >
-                          <span className={`text-[11px] font-mono font-bold block ${isSelected ? 'text-[#FDA4AF]' : 'text-[#6E2D8B]'}`}>
+                          <span className={`text-[11px] font-mono font-bold block ${isSelected ? 'text-[#BAE6FD]' : 'text-[#0288D1]'}`}>
                             {p.label}
                           </span>
-                          <span className={`text-[10px] block truncate ${isSelected ? 'text-[#CDBDD8]' : 'text-[#584B68]'}`}>
+                          <span className={`text-[10px] block truncate ${isSelected ? 'text-[#E0F2FE]' : 'text-[#64748B]'}`}>
                             {p.desc}
                           </span>
                         </button>
@@ -436,13 +436,13 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                 </div>
 
                 {/* Privacy Guarantee Note */}
-                <div className="p-4 rounded-2xl bg-[#EDE4F7]/60 border border-[#D8B4FE]/50 flex items-start gap-3">
-                  <Shield className="w-4 h-4 text-[#6E2D8B] shrink-0 mt-0.5" />
+                <div className="p-4 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-start gap-3">
+                  <Shield className="w-4 h-4 text-[#0288D1] shrink-0 mt-0.5" />
                   <div className="text-xs space-y-0.5">
-                    <span className="font-bold text-[#1C1326] block">
+                    <span className="font-bold text-[#0F172A] block">
                       Patient Ownership Guarantee
                     </span>
-                    <span className="text-[#584B68] text-[11px] leading-relaxed block">
+                    <span className="text-[#475569] text-[11px] leading-relaxed block">
                       You can instantly revoke access or adjust any of these toggles anytime from your Care Circle dashboard.
                     </span>
                   </div>
@@ -450,7 +450,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
 
                 {/* Granular Permission Toggles List */}
                 <div className="space-y-3">
-                  <span className="text-xs font-bold text-[#1C1326] font-display block">
+                  <span className="text-xs font-bold text-[#0F172A] font-display block">
                     What {name || 'they'} can see:
                   </span>
 
@@ -461,22 +461,22 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                         <div
                           key={def.key}
                           onClick={() => handleTogglePermission(def.key)}
-                          className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-4 cursor-pointer ${
+                          className={`p-3.5 rounded-xl border transition-all flex items-center justify-between gap-4 cursor-pointer ${
                             isEnabled
-                              ? 'bg-[#FAF5FF] border-[#D8B4FE]'
-                              : 'bg-white border-[#E7DFEF] hover:bg-[#F8F5FA]'
+                              ? 'bg-[#F0F9FF] border-[#BAE6FD]'
+                              : 'bg-white border-[#E2E8F0] hover:bg-[#F8FAFC]'
                           }`}
                         >
                           <div className="space-y-0.5 min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="text-xs font-bold text-[#1C1326]">{def.label}</span>
+                              <span className="text-xs font-bold text-[#0F172A]">{def.label}</span>
                               {def.isSensitive && (
                                 <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-full bg-[#FFE4E6] text-[#E11D48] font-bold">
                                   Sensitive
                                 </span>
                               )}
                             </div>
-                            <p className="text-[11px] text-[#584B68] leading-tight">
+                            <p className="text-[11px] text-[#475569] leading-tight">
                               {def.description}
                             </p>
                           </div>
@@ -484,7 +484,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                           {/* Switch Switcher */}
                           <div
                             className={`w-11 h-6 rounded-full transition-colors relative shrink-0 p-0.5 ${
-                              isEnabled ? 'bg-gradient-to-r from-[#6E2D8B] to-[#E87084]' : 'bg-[#D1C7DC]'
+                              isEnabled ? 'bg-[#0288D1]' : 'bg-[#CBD5E1]'
                             }`}
                           >
                             <motion.div
@@ -495,9 +495,9 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                               }`}
                             >
                               {isEnabled ? (
-                                <Check className="w-3 h-3 text-[#6E2D8B]" />
+                                <Check className="w-3 h-3 text-[#0288D1]" />
                               ) : (
-                                <Lock className="w-2.5 h-2.5 text-[#8D7E9E]" />
+                                <Lock className="w-2.5 h-2.5 text-[#94A3B8]" />
                               )}
                             </motion.div>
                           </div>
@@ -508,7 +508,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                 </div>
 
                 {/* AI Chat Topics Clarification */}
-                <div className="p-3.5 rounded-2xl bg-[#FFFBEB] border border-[#FDE68A] flex items-start gap-2.5 text-xs text-[#92400E]">
+                <div className="p-3.5 rounded-xl bg-[#FFFBEB] border border-[#FEF3C7] flex items-start gap-2.5 text-xs text-[#92400E]">
                   <MessageSquare className="w-4 h-4 shrink-0 mt-0.5 text-[#D97706]" />
                   <p className="text-[11px] leading-relaxed">
                     <strong>Zero-Compromise Chat Privacy:</strong> Enabling "Health Topics Summary" only shares broad discussion themes (e.g. cycle timing queries). Raw private conversation transcripts are never shared with doctors or family.
@@ -516,12 +516,12 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                 </div>
 
                 {/* Footer Navigation */}
-                <div className="flex items-center justify-between pt-4 border-t border-[#E7DFEF]">
+                <div className="flex items-center justify-between pt-4 border-t border-[#E2E8F0]">
                   <button
                     type="button"
                     onClick={() => setStep(2)}
                     disabled={isSubmitting}
-                    className="px-4 py-2.5 rounded-2xl font-sans font-bold text-xs text-[#584B68] bg-[#F8F5FA] hover:bg-[#EDE4F7] transition-colors flex items-center gap-1.5 cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl font-sans font-bold text-xs text-[#475569] bg-[#F8FAFC] hover:bg-[#F0F9FF] border border-[#E2E8F0] transition-colors flex items-center gap-1.5 cursor-pointer"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
                     <span>Back</span>
@@ -531,7 +531,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                     type="button"
                     onClick={handleFinalSubmit}
                     disabled={isSubmitting}
-                    className="px-6 py-3 rounded-2xl font-sans font-bold text-xs text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#E87084] hover:brightness-110 shadow-lg shadow-purple-950/20 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60"
+                    className="px-6 py-3 rounded-xl font-sans font-semibold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60"
                   >
                     {isSubmitting ? (
                       <>
@@ -540,7 +540,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                       </>
                     ) : (
                       <>
-                        <Sparkles className="w-3.5 h-3.5 text-[#FDA4AF]" />
+                        <Sparkles className="w-3.5 h-3.5 text-[#BAE6FD]" />
                         <span>Send Invitation & Generate Link</span>
                       </>
                     )}
@@ -552,22 +552,22 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
             {/* ── STEP 4: INVITATION READY / LINK GENERATION ── */}
             {step === 4 && generatedInviteLink && (
               <div className="space-y-6 text-center">
-                <div className="w-16 h-16 rounded-3xl bg-[#ECFDF5] text-[#047857] flex items-center justify-center mx-auto shadow-inner">
+                <div className="w-16 h-16 rounded-2xl bg-[#ECFDF5] text-[#047857] flex items-center justify-center mx-auto">
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
 
                 <div className="space-y-1">
-                  <h4 className="text-xl font-bold font-display text-[#1C1326]">
+                  <h4 className="text-xl font-bold font-display text-[#0F172A]">
                     {name} has been invited!
                   </h4>
-                  <p className="text-xs text-[#584B68] max-w-md mx-auto leading-relaxed">
-                    An invitation was created for <span className="font-semibold text-[#1C1326]">{email}</span>. Share the private portal link below with them to activate their view.
+                  <p className="text-xs text-[#475569] max-w-md mx-auto leading-relaxed">
+                    An invitation was created for <span className="font-semibold text-[#0F172A]">{email}</span>. Share the private portal link below with them to activate their view.
                   </p>
                 </div>
 
                 {/* Copyable Link Box */}
-                <div className="p-4 rounded-3xl bg-[#F8F5FA] border border-[#E7DFEF] space-y-3 text-left">
-                  <span className="text-[10px] font-mono text-[#8D7E9E] uppercase block font-bold">
+                <div className="p-4 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] space-y-3 text-left">
+                  <span className="text-[10px] font-mono text-[#0369A1] uppercase block font-bold">
                     Direct Care Provider Link
                   </span>
                   <div className="flex items-center gap-2">
@@ -575,12 +575,12 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                       type="text"
                       readOnly
                       value={generatedInviteLink}
-                      className="flex-1 px-3.5 py-2.5 rounded-xl bg-white border border-[#E7DFEF] font-mono text-xs text-[#6E2D8B] truncate focus:outline-hidden"
+                      className="flex-1 px-3.5 py-2.5 rounded-xl bg-white border border-[#BAE6FD] font-mono text-xs text-[#0288D1] truncate focus:outline-hidden"
                     />
                     <button
                       type="button"
                       onClick={handleCopyLink}
-                      className="px-4 py-2.5 rounded-xl font-sans font-bold text-xs text-white bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF] hover:brightness-110 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+                      className="px-4 py-2.5 rounded-xl font-sans font-semibold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
                     >
                       {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                       <span>{copied ? 'Copied!' : 'Copy Link'}</span>
@@ -594,7 +594,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                     href={generatedInviteLink}
                     target="_blank"
                     rel="noreferrer"
-                    className="w-full sm:w-auto px-6 py-3 rounded-2xl font-sans font-bold text-xs text-[#6E2D8B] bg-[#EDE4F7] hover:bg-[#E7DFEF] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full sm:w-auto px-6 py-3 rounded-xl font-sans font-semibold text-xs text-[#0288D1] bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <span>Preview Doctor / Portal View</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -603,7 +603,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                   <button
                     type="button"
                     onClick={handleClose}
-                    className="w-full sm:w-auto px-8 py-3 rounded-2xl font-sans font-bold text-xs text-white bg-[#180A26] hover:bg-[#2A1143] transition-all cursor-pointer"
+                    className="w-full sm:w-auto px-8 py-3 rounded-xl font-sans font-semibold text-xs text-white bg-[#01579B] hover:bg-[#0277BD] transition-all cursor-pointer shadow-sm"
                   >
                     Done
                   </button>

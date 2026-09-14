@@ -133,7 +133,7 @@ export const PeriodLogModal: React.FC<PeriodLogModalProps> = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="fixed inset-0 bg-[#10071A]/70 backdrop-blur-sm"
+          className="fixed inset-0 bg-[#0F172A]/60 backdrop-blur-xs"
         />
 
         {/* Modal Window */}
@@ -142,19 +142,19 @@ export const PeriodLogModal: React.FC<PeriodLogModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.2 }}
-          className="relative w-full max-w-lg rounded-[32px] bg-white border border-[#E7DFEF] shadow-2xl p-6 sm:p-8 text-left space-y-6 z-10 select-none my-8 max-h-[90vh] overflow-y-auto"
+          className="relative w-full max-w-lg rounded-[28px] bg-white border border-[#BAE6FD] shadow-2xl p-4 sm:p-8 text-left space-y-6 z-10 select-none my-8 max-h-[90vh] overflow-y-auto"
         >
           {/* Header */}
-          <div className="flex items-center justify-between pb-4 border-b border-[#F0EAF5]">
+          <div className="flex items-center justify-between pb-4 border-b border-[#E2E8F0]">
             <div className="flex items-center gap-2.5">
-              <span className="p-2 rounded-2xl bg-[#FDF2F8] text-[#FB7185]">
+              <span className="p-2 rounded-2xl bg-[#F0F9FF] text-[#0288D1]">
                 <Calendar className="w-5 h-5" />
               </span>
               <div>
-                <h2 className="text-xl font-bold font-display text-[#1C1326]">
+                <h2 className="text-xl font-bold font-display text-[#0F172A]">
                   {isEditing ? 'Edit Period Entry' : 'Log Your Period'}
                 </h2>
-                <p className="text-xs text-[#584B68]">
+                <p className="text-xs text-[#475569]">
                   Record your period start date, end date, and flow intensity.
                 </p>
               </div>
@@ -163,7 +163,7 @@ export const PeriodLogModal: React.FC<PeriodLogModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-xl text-[#8D7E9E] hover:text-[#1C1326] hover:bg-[#F8F5FA] transition-colors cursor-pointer"
+              className="p-2 rounded-xl text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -171,8 +171,8 @@ export const PeriodLogModal: React.FC<PeriodLogModalProps> = ({
 
           {/* General Error Banner */}
           {generalError && (
-            <div className="p-4 rounded-2xl bg-[#FFF1F2] border border-[#FDA4AF] flex items-start gap-3 text-xs text-[#9F1239]">
-              <AlertTriangle className="w-4 h-4 text-[#E11D48] shrink-0 mt-0.5" />
+            <div className="p-4 rounded-2xl bg-[#FEF2F2] border border-[#FECACA] flex items-start gap-3 text-xs text-[#991B1B]">
+              <AlertTriangle className="w-4 h-4 text-[#DC2626] shrink-0 mt-0.5" />
               <span>{generalError}</span>
             </div>
           )}
@@ -183,48 +183,48 @@ export const PeriodLogModal: React.FC<PeriodLogModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Start Date */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[#1C1326] block">
-                  Period Start Date <span className="text-[#FB7185]">*</span>
+                <label className="text-xs font-bold text-[#0F172A] block">
+                  Period Start Date <span className="text-[#DC2626]">*</span>
                 </label>
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className={`w-full px-3.5 py-2.5 rounded-2xl bg-[#F8F5FA] border text-xs font-medium text-[#1C1326] focus:bg-white focus:outline-none transition-colors ${
-                    errors.startDate ? 'border-[#FB7185] ring-1 ring-[#FB7185]' : 'border-[#E7DFEF] focus:border-[#8E3EAF]'
+                  className={`w-full px-3.5 py-2.5 rounded-2xl bg-[#F8FAFC] border text-xs font-medium text-[#0F172A] focus:bg-white focus:outline-none transition-colors ${
+                    errors.startDate ? 'border-[#DC2626] ring-1 ring-[#DC2626]' : 'border-[#BAE6FD] focus:border-[#0288D1]'
                   }`}
                   required
                 />
                 {errors.startDate && (
-                  <span className="text-[11px] text-[#FB7185] font-medium block">{errors.startDate}</span>
+                  <span className="text-[11px] text-[#DC2626] font-medium block">{errors.startDate}</span>
                 )}
               </div>
 
               {/* End Date */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[#1C1326] block">
-                  Period End Date <span className="text-[#FB7185]">*</span>
+                <label className="text-xs font-bold text-[#0F172A] block">
+                  Period End Date <span className="text-[#DC2626]">*</span>
                 </label>
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className={`w-full px-3.5 py-2.5 rounded-2xl bg-[#F8F5FA] border text-xs font-medium text-[#1C1326] focus:bg-white focus:outline-none transition-colors ${
-                    errors.endDate ? 'border-[#FB7185] ring-1 ring-[#FB7185]' : 'border-[#E7DFEF] focus:border-[#8E3EAF]'
+                  className={`w-full px-3.5 py-2.5 rounded-2xl bg-[#F8FAFC] border text-xs font-medium text-[#0F172A] focus:bg-white focus:outline-none transition-colors ${
+                    errors.endDate ? 'border-[#DC2626] ring-1 ring-[#DC2626]' : 'border-[#BAE6FD] focus:border-[#0288D1]'
                   }`}
                   required
                 />
                 {errors.endDate && (
-                  <span className="text-[11px] text-[#FB7185] font-medium block">{errors.endDate}</span>
+                  <span className="text-[11px] text-[#DC2626] font-medium block">{errors.endDate}</span>
                 )}
               </div>
             </div>
 
             {/* Calculated Duration Pill */}
             {durationPreview !== null && (
-              <div className="p-3 rounded-2xl bg-[#EDE4F7] border border-[#D8B4FE]/40 flex items-center justify-between text-xs">
-                <span className="text-[#6E2D8B] font-medium">Estimated Period Duration:</span>
-                <span className="font-mono font-bold text-[#6E2D8B] bg-white px-2.5 py-0.5 rounded-full">
+              <div className="p-3 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-center justify-between text-xs">
+                <span className="text-[#0369A1] font-medium">Estimated Period Duration:</span>
+                <span className="font-mono font-bold text-[#0288D1] bg-white px-2.5 py-0.5 rounded-full border border-[#BAE6FD]">
                   {durationPreview} Day{durationPreview === 1 ? '' : 's'}
                 </span>
               </div>
@@ -232,10 +232,10 @@ export const PeriodLogModal: React.FC<PeriodLogModalProps> = ({
 
             {/* Menstrual Flow Intensity Selector */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-[#1C1326] block">
-                Period Flow Intensity <span className="text-[#FB7185]">*</span>
+              <label className="text-xs font-bold text-[#0F172A] block">
+                Period Flow Intensity <span className="text-[#DC2626]">*</span>
               </label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
                 {[
                   { value: 'light', label: 'Light', desc: 'Minimal bleeding / Spotting', iconCount: 1 },
                   { value: 'medium', label: 'Medium', desc: 'Standard regular flow', iconCount: 2 },
@@ -249,29 +249,29 @@ export const PeriodLogModal: React.FC<PeriodLogModalProps> = ({
                       onClick={() => setFlow(option.value as MenstrualFlow)}
                       className={`p-3 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-between gap-1.5 ${
                         isSelected
-                          ? 'border-[#8E3EAF] ring-2 ring-[#8E3EAF]/30 bg-[#F2ECF7]'
-                          : 'border-[#E7DFEF] bg-[#F8F5FA] hover:bg-white'
+                          ? 'border-[#0288D1] ring-2 ring-[#0288D1]/20 bg-[#F0F9FF]'
+                          : 'border-[#E2E8F0] bg-[#F8FAFC] hover:bg-white hover:border-[#BAE6FD]'
                       }`}
                     >
-                      <div className="flex items-center gap-0.5 text-[#FB7185]">
+                      <div className="flex items-center gap-0.5 text-[#0288D1]">
                         {Array.from({ length: option.iconCount }).map((_, i) => (
-                          <Droplet key={i} className="w-3.5 h-3.5 fill-[#FB7185]" />
+                          <Droplet key={i} className="w-3.5 h-3.5 fill-[#0288D1]" />
                         ))}
                       </div>
-                      <span className="text-xs font-bold text-[#1C1326]">{option.label}</span>
-                      <span className="text-[10px] text-[#8D7E9E] line-clamp-1">{option.desc}</span>
+                      <span className="text-xs font-bold text-[#0F172A]">{option.label}</span>
+                      <span className="text-[10px] text-[#64748B] line-clamp-1">{option.desc}</span>
                     </button>
                   );
                 })}
               </div>
               {errors.flow && (
-                <span className="text-[11px] text-[#FB7185] font-medium block">{errors.flow}</span>
+                <span className="text-[11px] text-[#DC2626] font-medium block">{errors.flow}</span>
               )}
             </div>
 
             {/* Common Cycle Symptoms */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-[#1C1326] block">
+              <label className="text-xs font-bold text-[#0F172A] block">
                 Associated Symptoms (Optional)
               </label>
               <div className="flex flex-wrap gap-2">
@@ -284,8 +284,8 @@ export const PeriodLogModal: React.FC<PeriodLogModalProps> = ({
                       onClick={() => toggleSymptom(sym)}
                       className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                         isSelected
-                          ? 'bg-[#8E3EAF] text-white shadow-xs'
-                          : 'bg-[#F8F5FA] border border-[#E7DFEF] text-[#584B68] hover:bg-white'
+                          ? 'bg-[#0288D1] text-white shadow-xs font-semibold'
+                          : 'bg-[#F8FAFC] border border-[#E2E8F0] text-[#475569] hover:bg-white hover:border-[#BAE6FD]'
                       }`}
                     >
                       {isSelected && <Check className="w-3 h-3" />}
@@ -298,7 +298,7 @@ export const PeriodLogModal: React.FC<PeriodLogModalProps> = ({
 
             {/* Notes */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#1C1326] block">
+              <label className="text-xs font-bold text-[#0F172A] block">
                 Personal Notes (Optional)
               </label>
               <textarea
@@ -306,17 +306,17 @@ export const PeriodLogModal: React.FC<PeriodLogModalProps> = ({
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Add any details (e.g. stress levels, medication taken, cramps intensity)..."
                 rows={2}
-                className="w-full px-3.5 py-2.5 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] text-xs text-[#1C1326] focus:bg-white focus:outline-none focus:border-[#8E3EAF] transition-colors"
+                className="w-full px-3.5 py-2.5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs text-[#0F172A] focus:bg-white focus:outline-none focus:border-[#0288D1] transition-colors"
               />
             </div>
 
             {/* Action Buttons */}
-            <div className="pt-3 flex items-center justify-end gap-3 border-t border-[#F0EAF5]">
+            <div className="pt-3 flex items-center justify-end gap-3 border-t border-[#E2E8F0]">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className="px-5 py-2.5 rounded-2xl border border-[#E7DFEF] text-xs font-bold text-[#584B68] hover:bg-[#F8F5FA] transition-colors cursor-pointer disabled:opacity-50"
+                className="px-5 py-2.5 rounded-2xl border border-[#E2E8F0] text-xs font-bold text-[#475569] hover:bg-[#F8FAFC] transition-colors cursor-pointer disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -324,7 +324,7 @@ export const PeriodLogModal: React.FC<PeriodLogModalProps> = ({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-6 py-2.5 rounded-2xl font-sans font-bold text-xs text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#E87084] hover:brightness-110 shadow-md transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                className="px-6 py-2.5 rounded-2xl font-sans font-semibold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <>

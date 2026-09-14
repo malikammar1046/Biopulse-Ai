@@ -23,17 +23,17 @@ export const CareCirclePendingInvites: React.FC<CareCirclePendingInvitesProps> =
   };
 
   return (
-    <div className="p-6 sm:p-8 rounded-[32px] bg-white border border-[#E7DFEF] shadow-sm text-left select-none space-y-4">
+    <div className="p-6 sm:p-8 rounded-2xl bg-white border border-[#BAE6FD] shadow-sm text-left select-none space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="p-1.5 rounded-xl bg-[#FEF3C7] text-[#D97706]">
+          <span className="p-1.5 rounded-xl bg-[#FFFBEB] text-[#D97706]">
             <Clock className="w-4 h-4" />
           </span>
-          <h2 className="text-base font-bold font-display text-[#1C1326]">
+          <h2 className="text-base font-bold font-display text-[#0F172A]">
             Pending Invitations
           </h2>
         </div>
-        <span className="text-xs font-mono font-bold text-[#8D7E9E]">
+        <span className="text-xs font-mono font-bold text-[#64748B]">
           {invitations.length} Pending
         </span>
       </div>
@@ -47,30 +47,30 @@ export const CareCirclePendingInvites: React.FC<CareCirclePendingInvitesProps> =
           return (
             <div
               key={inv.id}
-              className="p-4 sm:p-5 rounded-2xl bg-[#FFFBEB]/50 border border-[#FDE68A]/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              className="p-4 sm:p-5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div
-                  className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${
+                  className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
                     isDoctor
-                      ? 'bg-[#EDE4F7] text-[#6E2D8B]'
+                      ? 'bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD]'
                       : isFamily
-                      ? 'bg-[#FFE4E6] text-[#E11D48]'
-                      : 'bg-[#EDE4F7] text-[#8E3EAF]'
+                      ? 'bg-[#FFE4E6] text-[#E11D48] border border-[#FFE4E6]'
+                      : 'bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD]'
                   }`}
                 >
                   <Icon className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-[#1C1326] truncate">
+                    <span className="text-sm font-bold text-[#0F172A] truncate">
                       {inv.memberName}
                     </span>
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#FEF3C7] text-[#B45309] font-bold capitalize">
                       {inv.relationship || inv.role}
                     </span>
                   </div>
-                  <span className="text-xs text-[#584B68] block truncate mt-0.5">
+                  <span className="text-xs text-[#475569] block truncate mt-0.5">
                     {inv.inviteEmail}
                   </span>
                 </div>
@@ -80,7 +80,7 @@ export const CareCirclePendingInvites: React.FC<CareCirclePendingInvitesProps> =
                 <button
                   type="button"
                   onClick={() => handleCopy(inv.token)}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#6E2D8B] bg-white border border-[#E7DFEF] hover:bg-[#EDE4F7] transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#0288D1] bg-white border border-[#BAE6FD] hover:bg-[#F0F9FF] transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
                 >
                   {copiedToken === inv.token ? (
                     <>
@@ -99,16 +99,16 @@ export const CareCirclePendingInvites: React.FC<CareCirclePendingInvitesProps> =
                   href={`/care-provider/${inv.token}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#584B68] bg-white border border-[#E7DFEF] hover:bg-[#F8F5FA] transition-colors flex items-center gap-1 cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-[#475569] bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors flex items-center gap-1 cursor-pointer"
                 >
                   <span>Portal</span>
-                  <ExternalLink className="w-3 h-3 text-[#8D7E9E]" />
+                  <ExternalLink className="w-3 h-3 text-[#64748B]" />
                 </a>
 
                 <button
                   type="button"
                   onClick={() => onDeleteInvite(inv.id)}
-                  className="p-1.5 rounded-xl text-[#8D7E9E] hover:text-[#E11D48] hover:bg-[#FFE4E6]/50 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-xl text-[#94A3B8] hover:text-[#E11D48] hover:bg-[#FFE4E6]/50 transition-colors cursor-pointer"
                   title="Cancel Invitation"
                 >
                   <Trash2 className="w-4 h-4" />

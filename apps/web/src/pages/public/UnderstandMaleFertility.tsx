@@ -124,8 +124,8 @@ export const UnderstandMaleFertility: React.FC = () => {
       a: 'Because the full cycle of sperm creation (spermatogenesis) and maturation in the epididymis takes roughly 70 to 90 days, improvements in nutrition, sleep, exercise, and heat avoidance usually take about 3 months to be observable in a follow-up semen analysis.',
     },
     {
-      q: 'What role does VITASense play in Men’s Health?',
-      a: 'VITASense provides educational health literacy, longitudinal parameter visualization, OCR lab-report digitizing, and clinician summary exports. It does not replace a doctor or give an automated diagnosis. It is designed to help you understand your metrics so you can have structured, productive conversations with your healthcare provider.',
+      q: 'What role does BIOPulse AI play in Men’s Health?',
+      a: 'BIOPulse AI provides educational health literacy, longitudinal parameter visualization, OCR lab-report digitizing, and clinician summary exports. It does not replace a doctor or give an automated diagnosis. It is designed to help you understand your metrics so you can have structured, productive conversations with your healthcare provider.',
     },
   ];
 

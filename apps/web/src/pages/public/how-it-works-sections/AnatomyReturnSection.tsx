@@ -56,7 +56,7 @@ export const AnatomyReturnSection: React.FC = () => {
           </h2>
 
           <p className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans max-w-2xl mx-auto">
-            By connecting biological physiology with structured health records, explainable artificial intelligence, and longitudinal tracking, VITASense turns fragmented reproductive health experiences into continuous clarity.
+            By connecting biological physiology with structured health records, explainable artificial intelligence, and longitudinal tracking, BIOPulse AI turns fragmented reproductive health experiences into continuous clarity.
           </p>
         </div>
 
@@ -101,7 +101,7 @@ export const AnatomyReturnSection: React.FC = () => {
         {/* Unified Ecosystem Strip */}
         <div className="max-w-4xl mx-auto p-6 rounded-3xl bg-white/[0.03] border border-white/10 text-center space-y-2">
           <span className="text-xs font-mono uppercase tracking-widest text-[#FDA4AF] block">
-            The VITASense Promise
+            The BIOPulse AI Promise
           </span>
           <p className="text-sm text-[#EDE4F7] font-medium">
             One unified platform. Two specialized reproductive-health pathways. One baseline health monitoring journey. Shared privacy and explainable AI standards.

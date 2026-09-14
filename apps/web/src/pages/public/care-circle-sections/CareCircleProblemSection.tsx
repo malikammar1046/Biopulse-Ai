@@ -58,7 +58,7 @@ export const CareCircleProblemSection: React.FC = () => {
             transition={{ duration: 0.7, delay: 0.2 }}
             className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans font-normal"
           >
-            When health data lives in eight different places, explaining your reality to doctors and loved ones becomes exhausting. VITASense introduces an intelligent central layer to organize what matters.
+            When health data lives in eight different places, explaining your reality to doctors and loved ones becomes exhausting. BIOPulse AI introduces an intelligent central layer to organize what matters.
           </motion.p>
 
           {/* Interactive State Toggle */}
@@ -152,7 +152,7 @@ export const CareCircleProblemSection: React.FC = () => {
                     <div className="w-full h-full rounded-full bg-[#180A25] flex flex-col items-center justify-center">
                       <ShieldCheck className="w-8 h-8 text-[#FB7185]" />
                       <span className="text-[9px] font-mono font-bold text-[#E879F9]">
-                        VITASENSE CORE
+                        BIOPULSE CORE
                       </span>
                     </div>
                   </div>

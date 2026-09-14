@@ -1,64 +1,32 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   HeroSection,
-  WhoIsItForSection,
-  PathwayArchitectureSection,
-  ProblemSection,
-  SolutionSection,
-  PathwayIntelligenceSection,
-  FourTierModelSection,
-  InformationPrioritizationSection,
+  TwoHealthPathwaysSection,
+  HowItWorksSection,
   FeaturesSection,
-  ExplainableAISection,
-  LongitudinalSection,
-  RealLifeSection,
-  ResponsibleAISection,
   FinalCTASection,
 } from './home-sections';
 
 export const Home: React.FC = () => {
+  useEffect(() => {
+    document.title = 'BioPulse AI | Reproductive-Endocrine Screening & Decision Support';
+  }, []);
+
   return (
-    <div className="w-full overflow-hidden bg-[#10071A]">
-      {/* 1. Hero Section: Unified Platform Positioning with Vital Biological Orb */}
+    <div className="w-full overflow-hidden bg-transparent text-[#162A45]">
+      {/* 1. Hero: Unified Platform Positioning + 4-Item Value Strip */}
       <HeroSection />
 
-      {/* 2. Target Users: One Platform. Different Health Journeys. (Women, Men, Everyone) */}
-      <WhoIsItForSection />
+      {/* 2. Two Screening Pathways: PCOS (Female) & Hypogonadism (Male) */}
+      <TwoHealthPathwaysSection />
 
-      {/* 3. Dual-Pathway Tree Architecture & Shared Platform Infrastructure */}
-      <PathwayArchitectureSection />
+      {/* 3. Short How BioPulse Works: 3 Simple Steps */}
+      <HowItWorksSection />
 
-      {/* 4. The Problem: Fragmented Reproductive & Endocrine Data */}
-      <ProblemSection />
-
-      {/* 5. What VITASense AI Does: 6-Step Unified Journey (Understand -> Assess -> Explain -> Gaps -> Prioritize -> Monitor) */}
-      <SolutionSection />
-
-      {/* 6. Pathway-Specific Intelligence: Balanced Visualizers (Women's PCOS, Men's HPT Axis, Baseline Profile) */}
-      <PathwayIntelligenceSection />
-
-      {/* 7. Progressive Information: Four-Tier Screening Model */}
-      <FourTierModelSection />
-
-      {/* 8. Research Differentiator: Information Prioritization (Value of Information vs Estimated Cost) */}
-      <InformationPrioritizationSection />
-
-      {/* 9. Platform Capabilities: Eight Core Pillars of VITASense AI */}
+      {/* 4. Short Feature Preview: 3 Key Differentiators */}
       <FeaturesSection />
 
-      {/* 10. Explainable AI: AI That Explains (SHAP Feature Influence Attribution) */}
-      <ExplainableAISection />
-
-      {/* 11. Longitudinal Health: Assess -> Understand -> Track -> Reassess Across Journeys */}
-      <LongitudinalSection />
-
-      {/* 12. Built For Real People: "You don't need to know what's wrong before you start" */}
-      <RealLifeSection />
-
-      {/* 13. Trust & Governance: Privacy, Algorithmic Transparency, Human Clinical Oversight */}
-      <ResponsibleAISection />
-
-      {/* 14. Final Platform CTA: "Start With What You Know." */}
+      {/* 5. Final CTA: High-Conversion Call to Action */}
       <FinalCTASection />
     </div>
   );

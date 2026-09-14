@@ -13,6 +13,19 @@ export function cmToFtIn(cm: number | null | undefined): { feet: number; inches:
   return { feet, inches };
 }
 
+export function cmToFtInNullable(cm: number | null | undefined): { feet: number | null; inches: number | null } {
+  if (cm === null || cm === undefined || isNaN(cm) || cm <= 0) {
+    return { feet: null, inches: null };
+  }
+  const totalInches = cm / 2.54;
+  const feet = Math.floor(totalInches / 12);
+  const inches = Math.round(totalInches % 12);
+  if (inches === 12) {
+    return { feet: feet + 1, inches: 0 };
+  }
+  return { feet, inches };
+}
+
 export function ftInToCm(feet: number, inches: number): number {
   const safeFeet = Math.max(0, feet || 0);
   const safeInches = Math.max(0, inches || 0);

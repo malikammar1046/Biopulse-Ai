@@ -11,12 +11,16 @@
 OVASense is organized as a lightweight, clean monorepo tailored for academic FYP development:
 
 ```text
-OVASense/
+PMOSense/
 ├── apps/
 │   ├── mobile/          # Mobile Application (React Native, Expo, TypeScript, Expo Router, Reanimated)
 │   └── web/             # Web Dashboard (React, TypeScript, Vite, Tailwind CSS, Framer Motion, Three.js)
 ├── backend/             # REST API Backend (Python, Django, Django REST Framework, Supabase)
-├── ml/                  # AI/ML Engine (pandas, NumPy, scikit-learn, SHAP, Tesseract OCR / OpenCV)
+├── machine-learning/    # Machine Learning Core
+│   ├── male-ML/         # Male hypogonadism screening models and clinical pipelines
+│   ├── Ovasense-ML/     # Baseline and research models for PCOS
+│   ├── PCOS-ML/         # Authoritative multi-tier PCOS assessment models
+│   └── ml/              # Metabolic risk pattern engine & explainability
 ├── docs/                # Architecture, API specifications, and research documentation
 ├── scripts/             # Development, seeding, and environment verification scripts
 └── .github/

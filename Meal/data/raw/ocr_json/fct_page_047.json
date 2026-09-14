@@ -1,0 +1,55 @@
+{
+  "pdf_name": "fct",
+  "page_num": 47,
+  "img_path": "Meal/data/raw/rendered_pages/fct_page_047.png",
+  "boxes": [
+    {
+      "text": "WEANING AND SUPPLEMENTARY",
+      "confidence": 0.9056843335811908,
+      "box": [
+        [
+          225.0,
+          413.0
+        ],
+        [
+          1159.0,
+          405.0
+        ],
+        [
+          1159.0,
+          454.0
+        ],
+        [
+          226.0,
+          462.0
+        ]
+      ],
+      "x_center": 692.25,
+      "y_center": 433.5
+    },
+    {
+      "text": "FOODMIXES",
+      "confidence": 0.886160922050476,
+      "box": [
+        [
+          521.0,
+          489.0
+        ],
+        [
+          877.0,
+          486.0
+        ],
+        [
+          877.0,
+          533.0
+        ],
+        [
+          522.0,
+          536.0
+        ]
+      ],
+      "x_center": 699.25,
+      "y_center": 511.0
+    }
+  ]
+}

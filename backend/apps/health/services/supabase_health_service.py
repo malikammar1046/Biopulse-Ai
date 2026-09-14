@@ -517,11 +517,14 @@ class SupabaseHealthService:
                 )
                 .eq("medical_reports.user_id", patient_uuid)
                 .not_.is_("result_numeric", "null")
-                .order("medical_reports.report_date", desc=True)
                 .limit(200)
                 .execute()
             )
             rows = res.data or []
+            rows.sort(
+                key=lambda r: (r.get("medical_reports") or {}).get("report_date") or "",
+                reverse=True,
+            )
         except Exception as exc:
             logger.warning("report_results fetch failed: %s", exc)
             return []

@@ -17,7 +17,7 @@ export const MLAssessmentSection: React.FC = () => {
           </h2>
 
           <p className="text-base sm:text-lg text-[#584B68] leading-relaxed font-sans max-w-2xl mx-auto">
-            VITASense does not force one generic screening template onto every user. The evaluated models adapt to the unique biological and clinical markers of your selected health pathway.
+            BIOPulse AI does not force one generic screening template onto every user. The evaluated models adapt to the unique biological and clinical markers of your selected health pathway.
           </p>
         </div>
 
@@ -57,7 +57,7 @@ export const MLAssessmentSection: React.FC = () => {
             <div className="p-3.5 rounded-2xl bg-[#FFF0F2] border border-[#FDA4AF]/40 flex items-start gap-2.5 text-[11px] text-[#584B68]">
               <Info className="w-4 h-4 text-[#E87084] shrink-0 mt-0.5" />
               <span>
-                <strong className="text-[#1C1326]">Ultrasonography Note:</strong> VITASense parses structured text report findings (such as antral follicle count); it does not interpret raw ultrasound medical images.
+                <strong className="text-[#1C1326]">Ultrasonography Note:</strong> BIOPulse AI parses structured text report findings (such as antral follicle count); it does not interpret raw ultrasound medical images.
               </span>
             </div>
           </div>
@@ -96,7 +96,7 @@ export const MLAssessmentSection: React.FC = () => {
             <div className="p-3.5 rounded-2xl bg-[#F0F9FF] border border-[#38BDF8]/40 flex items-start gap-2.5 text-[11px] text-[#584B68]">
               <Info className="w-4 h-4 text-[#0284C7] shrink-0 mt-0.5" />
               <span>
-                <strong className="text-[#1C1326]">Morning Timing Sensitivity:</strong> Testosterone naturally follows a diurnal rhythm. VITASense specifically tracks whether testing was performed in the morning (7:00 AM – 10:00 AM).
+                <strong className="text-[#1C1326]">Morning Timing Sensitivity:</strong> Testosterone naturally follows a diurnal rhythm. BIOPulse AI specifically tracks whether testing was performed in the morning (7:00 AM – 10:00 AM).
               </span>
             </div>
           </div>
@@ -106,7 +106,7 @@ export const MLAssessmentSection: React.FC = () => {
         <div className="max-w-3xl mx-auto p-4 rounded-2xl bg-white border border-[#E7DFEF] flex items-center justify-center gap-3 text-xs text-[#584B68] shadow-xs">
           <ShieldCheck className="w-4 h-4 text-[#047857] shrink-0" />
           <span>
-            <strong className="text-[#1C1326]">Screening, Not Diagnosis:</strong> VITASense assesses multivariate patterns to help you prepare for discussions with a healthcare professional.
+            <strong className="text-[#1C1326]">Screening, Not Diagnosis:</strong> BIOPulse AI assesses multivariate patterns to help you prepare for discussions with a healthcare professional.
           </span>
         </div>
       </Container>

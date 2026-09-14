@@ -97,26 +97,26 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="fixed inset-0 bg-[#1C1326]/60 backdrop-blur-sm"
+          className="fixed inset-0 bg-[#0F172A]/60 backdrop-blur-sm"
         />
 
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          className="relative w-full max-w-lg rounded-[32px] bg-white border border-[#E7DFEF] shadow-2xl overflow-hidden z-10 my-8 text-left select-none"
+          className="relative w-full max-w-lg rounded-2xl bg-white border border-[#BAE6FD] shadow-xl overflow-hidden z-10 my-8 text-left select-none"
         >
           {/* Header */}
-          <div className="p-6 border-b border-[#F0EAF5] bg-gradient-to-r from-[#FAF5FF] via-white to-[#FDF2F8] flex items-center justify-between">
+          <div className="p-6 border-b border-[#BAE6FD] bg-[#01579B] text-white flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-[#EDE4F7] text-[#6E2D8B] flex items-center justify-center">
-                <Stethoscope className="w-5 h-5" />
+              <div className="w-11 h-11 rounded-xl bg-white/10 text-white flex items-center justify-center">
+                <Stethoscope className="w-5 h-5 text-[#E0F2FE]" />
               </div>
               <div>
-                <span className="text-[10px] font-mono uppercase font-bold text-[#8E3EAF]">
+                <span className="text-[10px] font-mono uppercase font-bold text-[#BAE6FD]">
                   {appointment.appointmentType.replace('_', ' ')}
                 </span>
-                <h2 className="text-lg font-bold font-display text-[#1C1326]">
+                <h2 className="text-lg font-bold font-display text-white">
                   {appointment.title}
                 </h2>
               </div>
@@ -125,7 +125,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-xl text-[#8D7E9E] hover:text-[#1C1326] hover:bg-[#F5F0FA] transition-colors cursor-pointer"
+              className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -134,13 +134,13 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
           {/* Body */}
           <div className="p-6 space-y-4 text-xs">
             {/* Status & Provider Banner */}
-            <div className="p-4 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] flex items-center justify-between">
+            <div className="p-4 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-mono text-[#8D7E9E] uppercase font-bold block">
+                <span className="text-[10px] font-mono text-[#0369A1] uppercase font-bold block">
                   Healthcare Professional
                 </span>
-                <span className="text-sm font-bold text-[#1C1326] block">{appointment.providerName}</span>
-                <span className="text-[11px] text-[#584B68] block">{appointment.providerSpecialty}</span>
+                <span className="text-sm font-bold text-[#0F172A] block">{appointment.providerName}</span>
+                <span className="text-[11px] text-[#475569] block">{appointment.providerSpecialty}</span>
               </div>
 
               <span
@@ -158,27 +158,27 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
 
             {/* Time & Medium */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3.5 rounded-xl bg-white border border-[#E7DFEF] space-y-1">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-[#6E2D8B]">
+              <div className="p-3.5 rounded-xl bg-white border border-[#E2E8F0] space-y-1">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-[#0288D1]">
                   <Calendar className="w-3.5 h-3.5" />
                   <span>Date & Time</span>
                 </div>
-                <p className="font-bold text-[#1C1326]">{appointment.scheduledDate}</p>
-                <p className="text-[11px] text-[#584B68]">{appointment.scheduledTime} ({appointment.durationMinutes} mins)</p>
+                <p className="font-bold text-[#0F172A]">{appointment.scheduledDate}</p>
+                <p className="text-[11px] text-[#64748B]">{appointment.scheduledTime} ({appointment.durationMinutes} mins)</p>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-white border border-[#E7DFEF] space-y-1">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-[#8E3EAF]">
+              <div className="p-3.5 rounded-xl bg-white border border-[#E2E8F0] space-y-1">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-[#0288D1]">
                   {appointment.meetingUrl ? <Video className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
                   <span>Location</span>
                 </div>
-                <p className="font-bold text-[#1C1326] truncate">{appointment.location}</p>
+                <p className="font-bold text-[#0F172A] truncate">{appointment.location}</p>
                 {appointment.meetingUrl && (
                   <a
                     href={appointment.meetingUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-[11px] text-[#047857] hover:underline font-bold block truncate"
+                    className="text-[11px] text-[#0288D1] hover:underline font-bold block truncate"
                   >
                     Open Telehealth Link →
                   </a>
@@ -189,8 +189,8 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
             {/* Reason & Notes */}
             {appointment.reason && (
               <div className="space-y-1">
-                <span className="font-bold text-[#1C1326] block">Reason for Visit</span>
-                <p className="p-3 rounded-xl bg-[#FAF5FF] border border-[#EDE4F7] text-[#584B68]">
+                <span className="font-bold text-[#0F172A] block">Reason for Visit</span>
+                <p className="p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#334155]">
                   {appointment.reason}
                 </p>
               </div>
@@ -198,8 +198,8 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
 
             {appointment.patientNotes && (
               <div className="space-y-1">
-                <span className="font-bold text-[#1C1326] block">Patient Notes</span>
-                <p className="p-3 rounded-xl bg-[#F8F5FA] border border-[#E7DFEF] text-[#584B68]">
+                <span className="font-bold text-[#0F172A] block">Patient Notes</span>
+                <p className="p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#334155]">
                   {appointment.patientNotes}
                 </p>
               </div>
@@ -207,7 +207,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
 
             {/* Reschedule View */}
             {isRescheduling && (
-              <form onSubmit={handleRescheduleSubmit} className="p-4 rounded-2xl bg-[#FFFBEB] border border-[#FEF3C7] space-y-3">
+              <form onSubmit={handleRescheduleSubmit} className="p-4 rounded-xl bg-[#FFFBEB] border border-[#FEF3C7] space-y-3">
                 <span className="font-bold text-[#B45309] block">Reschedule Appointment</span>
                 <div className="grid grid-cols-2 gap-2">
                   <input
@@ -216,28 +216,28 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
                     value={rescheduleDate}
                     onChange={(e) => setRescheduleDate(e.target.value)}
                     required
-                    className="px-3 py-1.5 rounded-lg border border-[#FDE68A] bg-white text-xs"
+                    className="px-3 py-1.5 rounded-lg border border-[#FDE68A] bg-white text-xs text-[#0F172A]"
                   />
                   <input
                     type="time"
                     value={rescheduleTime}
                     onChange={(e) => setRescheduleTime(e.target.value)}
                     required
-                    className="px-3 py-1.5 rounded-lg border border-[#FDE68A] bg-white text-xs"
+                    className="px-3 py-1.5 rounded-lg border border-[#FDE68A] bg-white text-xs text-[#0F172A]"
                   />
                 </div>
                 <div className="flex justify-end gap-2">
                   <button
                     type="button"
                     onClick={() => setIsRescheduling(false)}
-                    className="px-3 py-1 rounded-lg text-xs font-semibold text-[#78350F]"
+                    className="px-3 py-1 rounded-lg text-xs font-semibold text-[#78350F] hover:bg-[#FEF3C7] transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmitting || !rescheduleDate}
-                    className="px-4 py-1 rounded-lg bg-[#B45309] text-white text-xs font-bold"
+                    className="px-4 py-1 rounded-lg bg-[#B45309] hover:bg-[#92400E] text-white text-xs font-bold"
                   >
                     Save New Date
                   </button>
@@ -247,27 +247,27 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
 
             {/* Cancel Form View */}
             {isCancelling && (
-              <form onSubmit={handleCancelSubmit} className="p-4 rounded-2xl bg-[#FEF2F2] border border-[#FECACA] space-y-3">
+              <form onSubmit={handleCancelSubmit} className="p-4 rounded-xl bg-[#FEF2F2] border border-[#FECACA] space-y-3">
                 <span className="font-bold text-[#B91C1C] block">Cancel Appointment</span>
                 <input
                   type="text"
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
                   placeholder="Reason for cancellation (optional)"
-                  className="w-full px-3 py-1.5 rounded-lg border border-[#FCA5A5] bg-white text-xs"
+                  className="w-full px-3 py-1.5 rounded-lg border border-[#FCA5A5] bg-white text-xs text-[#0F172A]"
                 />
                 <div className="flex justify-end gap-2">
                   <button
                     type="button"
                     onClick={() => setIsCancelling(false)}
-                    className="px-3 py-1 rounded-lg text-xs font-semibold text-[#7F1D1D]"
+                    className="px-3 py-1 rounded-lg text-xs font-semibold text-[#7F1D1D] hover:bg-[#FEE2E2] transition-colors"
                   >
                     Back
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="px-4 py-1 rounded-lg bg-[#B91C1C] text-white text-xs font-bold"
+                    className="px-4 py-1 rounded-lg bg-[#B91C1C] hover:bg-[#991B1B] text-white text-xs font-bold"
                   >
                     Confirm Cancellation
                   </button>
@@ -276,13 +276,13 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
             )}
 
             {/* Action Buttons */}
-            <div className="pt-3 border-t border-[#F0EAF5] flex flex-wrap items-center justify-between gap-2">
+            <div className="pt-3 border-t border-[#E2E8F0] flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={handleDeleteClick}
                   disabled={isSubmitting}
-                  className="p-2 rounded-xl text-[#8D7E9E] hover:text-[#B91C1C] hover:bg-[#FEF2F2] transition-colors cursor-pointer"
+                  className="p-2 rounded-xl text-[#64748B] hover:text-[#B91C1C] hover:bg-[#FEF2F2] transition-colors cursor-pointer"
                   title="Delete record"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -297,7 +297,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
                         setRescheduleTime(appointment.scheduledTime);
                         setIsRescheduling(true);
                       }}
-                      className="px-3 py-1.5 rounded-xl border border-[#E7DFEF] text-[#6E2D8B] font-bold hover:bg-[#F8F5FA] transition-colors cursor-pointer"
+                      className="px-3 py-1.5 rounded-xl border border-[#BAE6FD] text-[#0288D1] font-bold hover:bg-[#F0F9FF] transition-colors cursor-pointer"
                     >
                       Reschedule
                     </button>
@@ -332,7 +332,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
                     onClose();
                     onPrepare(appointment);
                   }}
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF] text-white font-bold shadow-xs hover:brightness-110 transition-all flex items-center gap-1.5 cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white font-semibold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
                 >
                   <FileText className="w-3.5 h-3.5" />
                   <span>Prepare Brief</span>

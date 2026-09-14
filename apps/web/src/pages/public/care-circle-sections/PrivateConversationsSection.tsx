@@ -47,7 +47,7 @@ export const PrivateConversationsSection: React.FC = () => {
             transition={{ duration: 0.7, delay: 0.2 }}
             className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans font-normal"
           >
-            Your intimate health conversations with VITASense AI are protected by a strict privacy barrier. They are never visible to doctors, family, or partners unless you explicitly choose to include a synthesized summary.
+            Your intimate health conversations with BIOPulse AI are protected by a strict privacy barrier. They are never visible to doctors, family, or partners unless you explicitly choose to include a synthesized summary.
           </motion.p>
         </div>
 
@@ -86,7 +86,7 @@ export const PrivateConversationsSection: React.FC = () => {
               <div className="p-4 rounded-2xl bg-[#1D0E30] border border-[#8E3EAF]/40 space-y-2">
                 <div className="flex items-center justify-between text-xs text-[#C084FC]">
                   <span className="font-mono font-bold flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5" /> VITASense AI Intelligence
+                    <Sparkles className="w-3.5 h-3.5" /> BIOPulse AI Intelligence
                   </span>
                   <span className="text-[10px] text-[#B4A6C7]">Non-Diagnostic Synthesis</span>
                 </div>

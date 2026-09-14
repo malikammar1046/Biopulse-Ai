@@ -65,18 +65,18 @@ export const HealthTrajectoryChart: React.FC<HealthTrajectoryChartProps> = ({
   const adherencePath = generatePath((d) => d.medsAdherencePercent, 100);
 
   return (
-    <div className="p-6 sm:p-8 rounded-[36px] bg-white border border-[#E7DFEF] shadow-sm space-y-6 select-none text-left">
+    <div className="p-6 sm:p-7 rounded-2xl bg-white border border-[#BAE6FD] shadow-none space-y-6 select-none text-left">
       {/* Chart Header & Stats */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-[#EDE4F7] text-[#6E2D8B]">
+          <div className="p-2.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
             <TrendingUp className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-lg sm:text-xl font-bold font-display text-[#1C1326]">
+            <h2 className="text-lg sm:text-xl font-bold text-[#0F172A]">
               Health Signal Trajectory
             </h2>
-            <p className="text-xs text-[#584B68]">
+            <p className="text-xs text-[#64748B]">
               Interactive multi-signal timeline overlaying your longitudinal wellness data.
             </p>
           </div>
@@ -84,7 +84,7 @@ export const HealthTrajectoryChart: React.FC<HealthTrajectoryChartProps> = ({
 
         {/* Coverage Badge */}
         <div className="flex items-center gap-2">
-          <span className="text-xs font-mono font-bold text-[#047857] bg-[#ECFDF5] px-3 py-1 rounded-full">
+          <span className="text-xs font-mono font-bold text-[#0288D1] bg-[#E0F2FE] px-3 py-1 rounded-full">
             {coveragePercentage}% Tracking Coverage ({totalLoggedDays} Active Days)
           </span>
         </div>
@@ -97,8 +97,8 @@ export const HealthTrajectoryChart: React.FC<HealthTrajectoryChartProps> = ({
           onClick={() => toggleSignal('symptoms')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
             activeSignals.symptoms
-              ? 'bg-[#EDE4F7] text-[#6E2D8B] border-[#D8B4FE]'
-              : 'bg-[#F8F5FA] text-[#8D7E9E] border-[#E7DFEF] opacity-60'
+              ? 'bg-[#E0F2FE] text-[#01579B] border-[#0288D1]'
+              : 'bg-[#F8FAFC] text-[#64748B] border-[#E2E8F0] opacity-60'
           }`}
         >
           <Activity className="w-3.5 h-3.5" />
@@ -110,8 +110,8 @@ export const HealthTrajectoryChart: React.FC<HealthTrajectoryChartProps> = ({
           onClick={() => toggleSignal('movement')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
             activeSignals.movement
-              ? 'bg-[#ECFDF5] text-[#047857] border-[#A7F3D0]'
-              : 'bg-[#F8F5FA] text-[#8D7E9E] border-[#E7DFEF] opacity-60'
+              ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+              : 'bg-[#F8FAFC] text-[#64748B] border-[#E2E8F0] opacity-60'
           }`}
         >
           <Dumbbell className="w-3.5 h-3.5" />
@@ -123,8 +123,8 @@ export const HealthTrajectoryChart: React.FC<HealthTrajectoryChartProps> = ({
           onClick={() => toggleSignal('hydration')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
             activeSignals.hydration
-              ? 'bg-[#E0F2FE] text-[#0284C7] border-[#BAE6FD]'
-              : 'bg-[#F8F5FA] text-[#8D7E9E] border-[#E7DFEF] opacity-60'
+              ? 'bg-sky-50 text-sky-800 border-sky-300'
+              : 'bg-[#F8FAFC] text-[#64748B] border-[#E2E8F0] opacity-60'
           }`}
         >
           <Droplets className="w-3.5 h-3.5" />
@@ -136,8 +136,8 @@ export const HealthTrajectoryChart: React.FC<HealthTrajectoryChartProps> = ({
           onClick={() => toggleSignal('adherence')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
             activeSignals.adherence
-              ? 'bg-[#FEF3C7] text-[#B45309] border-[#FDE68A]'
-              : 'bg-[#F8F5FA] text-[#8D7E9E] border-[#E7DFEF] opacity-60'
+              ? 'bg-amber-50 text-amber-800 border-amber-300'
+              : 'bg-[#F8FAFC] text-[#64748B] border-[#E2E8F0] opacity-60'
           }`}
         >
           <Pill className="w-3.5 h-3.5" />
@@ -149,8 +149,8 @@ export const HealthTrajectoryChart: React.FC<HealthTrajectoryChartProps> = ({
           onClick={() => toggleSignal('cycle')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
             activeSignals.cycle
-              ? 'bg-[#FFF1F2] text-[#BE123C] border-[#FECDD3]'
-              : 'bg-[#F8F5FA] text-[#8D7E9E] border-[#E7DFEF] opacity-60'
+              ? 'bg-rose-50 text-rose-800 border-rose-300'
+              : 'bg-[#F8FAFC] text-[#64748B] border-[#E2E8F0] opacity-60'
           }`}
         >
           <Calendar className="w-3.5 h-3.5" />
@@ -159,32 +159,32 @@ export const HealthTrajectoryChart: React.FC<HealthTrajectoryChartProps> = ({
       </div>
 
       {/* SVG Visualization Canvas */}
-      <div className="relative p-4 rounded-3xl bg-[#FAF8FC] border border-[#E7DFEF] overflow-hidden">
+      <div className="relative p-4 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] overflow-hidden">
         {/* Interactive Tooltip if hovered */}
         {hoveredPoint && (
-          <div className="absolute top-3 right-3 z-20 p-3 rounded-2xl bg-white/95 backdrop-blur-md border border-[#D8B4FE] shadow-lg text-xs space-y-1 animate-in fade-in duration-150">
-            <div className="font-bold text-[#1C1326] flex items-center justify-between gap-3 border-b border-[#E7DFEF] pb-1">
+          <div className="absolute top-3 right-3 z-20 p-3 rounded-xl bg-white/95 backdrop-blur-md border border-[#BAE6FD] shadow-lg text-xs space-y-1 animate-in fade-in duration-150">
+            <div className="font-bold text-[#0F172A] flex items-center justify-between gap-3 border-b border-[#E2E8F0] pb-1">
               <span>{hoveredPoint.displayDate}</span>
               {hoveredPoint.cycleDay && (
-                <span className="font-mono text-[#6E2D8B]">
+                <span className="font-mono text-[#0288D1]">
                   CD {hoveredPoint.cycleDay} • {hoveredPoint.phaseName}
                 </span>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px] text-[#584B68]">
-              <span>Symptoms: <strong className="text-[#1C1326]">{hoveredPoint.symptomsCount}</strong></span>
-              <span>Movement: <strong className="text-[#1C1326]">{hoveredPoint.movementMinutes}m</strong></span>
-              <span>Water: <strong className="text-[#1C1326]">{hoveredPoint.waterGlasses} gl</strong></span>
-              <span>Meds: <strong className="text-[#1C1326]">{hoveredPoint.medsAdherencePercent}%</strong></span>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px] text-[#475569]">
+              <span>Symptoms: <strong className="text-[#0F172A]">{hoveredPoint.symptomsCount}</strong></span>
+              <span>Movement: <strong className="text-[#0F172A]">{hoveredPoint.movementMinutes}m</strong></span>
+              <span>Water: <strong className="text-[#0F172A]">{hoveredPoint.waterGlasses} gl</strong></span>
+              <span>Meds: <strong className="text-[#0F172A]">{hoveredPoint.medsAdherencePercent}%</strong></span>
             </div>
           </div>
         )}
 
         <svg viewBox="0 0 600 180" className="w-full h-44 overflow-visible">
           {/* Background Grid Lines */}
-          <line x1={padding} y1={padding} x2={600 - padding} y2={padding} stroke="#E7DFEF" strokeDasharray="3 3" />
-          <line x1={padding} y1={height / 2} x2={600 - padding} y2={height / 2} stroke="#E7DFEF" strokeDasharray="3 3" />
-          <line x1={padding} y1={height - padding} x2={600 - padding} y2={height - padding} stroke="#E7DFEF" />
+          <line x1={padding} y1={padding} x2={600 - padding} y2={padding} stroke="#E2E8F0" strokeDasharray="3 3" />
+          <line x1={padding} y1={height / 2} x2={600 - padding} y2={height / 2} stroke="#E2E8F0" strokeDasharray="3 3" />
+          <line x1={padding} y1={height - padding} x2={600 - padding} y2={height - padding} stroke="#CBD5E1" />
 
           {/* Cycle Phase Shading Bands */}
           {activeSignals.cycle &&
@@ -202,7 +202,7 @@ export const HealthTrajectoryChart: React.FC<HealthTrajectoryChartProps> = ({
                   y={padding}
                   width={8}
                   height={height - 2 * padding}
-                  fill={isMenstrual ? '#FB7185' : '#8E3EAF'}
+                  fill={isMenstrual ? '#F43F5E' : '#0288D1'}
                   opacity={0.12}
                 />
               );
@@ -222,7 +222,7 @@ export const HealthTrajectoryChart: React.FC<HealthTrajectoryChartProps> = ({
           )}
 
           {activeSignals.symptoms && symptomPath && (
-            <path d={symptomPath} fill="none" stroke="#6E2D8B" strokeWidth="3" strokeLinecap="round" />
+            <path d={symptomPath} fill="none" stroke="#0288D1" strokeWidth="3" strokeLinecap="round" />
           )}
 
           {/* Interactive Date Nodes */}
@@ -241,7 +241,7 @@ export const HealthTrajectoryChart: React.FC<HealthTrajectoryChartProps> = ({
                     cx={x}
                     cy={height - padding - (d.symptomSeverityScore / 10) * (height - 2 * padding)}
                     r={isHovered ? 5 : 3}
-                    fill={isHovered ? '#FB7185' : '#6E2D8B'}
+                    fill={isHovered ? '#29B6F6' : '#0288D1'}
                     stroke="#FFFFFF"
                     strokeWidth="1.5"
                     className="transition-all"
@@ -253,7 +253,7 @@ export const HealthTrajectoryChart: React.FC<HealthTrajectoryChartProps> = ({
         </svg>
 
         {/* Bottom Timeline Axis Labels */}
-        <div className="flex items-center justify-between text-[10px] font-mono text-[#8D7E9E] pt-2 px-2 border-t border-[#E7DFEF]">
+        <div className="flex items-center justify-between text-[10px] font-mono text-[#64748B] pt-2 px-2 border-t border-[#E2E8F0]">
           <span>{dataPoints[0]?.displayDate}</span>
           <span className="hidden sm:inline">{dataPoints[Math.floor(count / 2)]?.displayDate}</span>
           <span>{dataPoints[count - 1]?.displayDate}</span>
@@ -261,8 +261,8 @@ export const HealthTrajectoryChart: React.FC<HealthTrajectoryChartProps> = ({
       </div>
 
       {/* Explainer Tip */}
-      <div className="flex items-center gap-2 text-[11px] text-[#8D7E9E]">
-        <Info className="w-3.5 h-3.5 text-[#6E2D8B] shrink-0" />
+      <div className="flex items-center gap-2 text-[11px] text-[#64748B]">
+        <Info className="w-3.5 h-3.5 text-[#0288D1] shrink-0" />
         <span>Hover along the trajectory to inspect daily multi-signal correlation snapshots.</span>
       </div>
     </div>

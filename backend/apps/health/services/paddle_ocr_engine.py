@@ -17,9 +17,9 @@ from pathlib import Path
 from typing import Any, List, Optional, Tuple
 
 try:
-    import fitz  # PyMuPDF
+    import pymupdf
 except ImportError:
-    fitz = None
+    pymupdf = None
 
 import numpy as np
 from PIL import Image
@@ -190,9 +190,9 @@ class PaddleOcrEngine:
         2. If digital text layer is rich, extracts text blocks directly.
         3. If scanned / image-based, renders pages at 300 DPI and runs PaddleOCR.
         """
-        if fitz is None:
-            raise RuntimeError("PyMuPDF (fitz) is not installed. Please install pymupdf to enable PDF OCR extraction.")
-        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+        if pymupdf is None:
+            raise RuntimeError("PyMuPDF is not installed. Please install pymupdf to enable PDF OCR extraction.")
+        doc = pymupdf.open(stream=pdf_bytes, filetype="pdf")
         total_pages = len(doc)
         all_blocks: List[OcrTextBlock] = []
         is_digital_text = False
@@ -227,7 +227,7 @@ class PaddleOcrEngine:
                                 ))
         else:
             # Scanned / Image PDF: Render pages as images (2x resolution for crisp OCR)
-            zoom_matrix = fitz.Matrix(2.0, 2.0)
+            zoom_matrix = pymupdf.Matrix(2.0, 2.0)
             for page_idx in range(total_pages):
                 page = doc[page_idx]
                 pix = page.get_pixmap(matrix=zoom_matrix, alpha=False)

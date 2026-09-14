@@ -17,9 +17,10 @@ Tests cover:
 
 import io
 import json
-from unittest.mock import MagicMock, patch
-
-import fitz  # PyMuPDF
+try:
+    import pymupdf
+except ImportError:
+    pymupdf = None
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
@@ -73,7 +74,7 @@ def generate_sample_lab_image_bytes() -> bytes:
 
 def generate_sample_selectable_pdf_bytes() -> bytes:
     """Creates a digital PDF document with native selectable text."""
-    doc = fitz.open()
+    doc = pymupdf.open()
     page = doc.new_page(width=595, height=842)  # A4
 
     text = """
@@ -99,9 +100,9 @@ def generate_sample_selectable_pdf_bytes() -> bytes:
 def generate_sample_scanned_pdf_bytes() -> bytes:
     """Creates a scanned PDF document containing only an embedded raster image."""
     img_bytes = generate_sample_lab_image_bytes()
-    doc = fitz.open()
+    doc = pymupdf.open()
     page = doc.new_page(width=595, height=842)
-    page.insert_image(fitz.Rect(50, 50, 545, 450), stream=img_bytes)
+    page.insert_image(pymupdf.Rect(50, 50, 545, 450), stream=img_bytes)
     buf = doc.tobytes()
     doc.close()
     return buf

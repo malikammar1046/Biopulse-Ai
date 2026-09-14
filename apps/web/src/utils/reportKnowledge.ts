@@ -60,7 +60,7 @@ export const LAB_TEST_KNOWLEDGE_BASE: Record<string, TestKnowledgeItem> = {
     whatDoesItMean:
       'Levels can fluctuate naturally. When values are outside the typical reference range printed by the lab, it can be viewed alongside skin check-ins and cycle patterns.',
     timelineConnection:
-      'Correlates with skin changes (such as breakouts) and cycle rhythms in your OvaSense timeline.',
+      'Correlates with skin changes (such as breakouts) and cycle rhythms in your BioPulse AI timeline.',
   },
 
   dhea_s: {
@@ -135,7 +135,7 @@ export const LAB_TEST_KNOWLEDGE_BASE: Record<string, TestKnowledgeItem> = {
     whatDoesItMean:
       'Provides a steady, long-term picture of how your body handles sugar without being swayed by a single meal.',
     timelineConnection:
-      'A valuable milestone in your 6-month OvaSense progress timeline.',
+      'A valuable milestone in your 6-month BioPulse AI progress timeline.',
   },
 
   fasting_insulin: {
@@ -256,66 +256,6 @@ export const LAB_TEST_KNOWLEDGE_BASE: Record<string, TestKnowledgeItem> = {
       'Used as a baseline health screen before and during endocrine evaluations to monitor prostate safety.',
     timelineConnection:
       'Included in Tier 3 comprehensive endocrine and safety screenings.',
-  },
-
-  semen_volume: {
-    id: 'semen_volume',
-    name: 'Semen Volume',
-    aliases: ['semen volume', 'ejaculate volume', 'volume semen'],
-    category: 'other',
-    defaultUnit: 'mL',
-    typicalRange: '≥ 1.5 mL',
-    whatIsIt:
-      'The total liquid volume of fluid collected during a standard semen analysis.',
-    whatDoesItMean:
-      'Reflects the contributions of the seminal vesicles and prostate gland.',
-    timelineConnection:
-      'Provides reproductive and fertility context within your AndroSense profile.',
-  },
-
-  sperm_concentration: {
-    id: 'sperm_concentration',
-    name: 'Sperm Concentration',
-    aliases: ['sperm concentration', 'sperm count', 'sperm density'],
-    category: 'other',
-    defaultUnit: 'million/mL',
-    typicalRange: '≥ 15 million/mL',
-    whatIsIt:
-      'The number of sperm cells in each milliliter of semen fluid.',
-    whatDoesItMean:
-      'A standard baseline parameter of reproductive health and testicular function.',
-    timelineConnection:
-      'Tracks testicular function and fertility markers in comprehensive male health screenings.',
-  },
-
-  sperm_motility: {
-    id: 'sperm_motility',
-    name: 'Total Sperm Motility',
-    aliases: ['total sperm motility', 'sperm motility', 'motility'],
-    category: 'other',
-    defaultUnit: '%',
-    typicalRange: '≥ 40 %',
-    whatIsIt:
-      'The percentage of sperm cells that are actively moving and swimming forward.',
-    whatDoesItMean:
-      'Good motility indicates healthy energy metabolism inside sperm cells.',
-    timelineConnection:
-      'Evaluated alongside testosterone levels and lifestyle check-ins.',
-  },
-
-  sperm_morphology: {
-    id: 'sperm_morphology',
-    name: 'Normal Sperm Morphology',
-    aliases: ['normal sperm morphology', 'sperm morphology', 'morphology normal forms'],
-    category: 'other',
-    defaultUnit: '%',
-    typicalRange: '≥ 4 %',
-    whatIsIt:
-      'The percentage of sperm that have a standard normal shape under microscopic examination.',
-    whatDoesItMean:
-      'An indicator of cell development and testicular spermatogenesis quality.',
-    timelineConnection:
-      'Contributes to comprehensive fertility and endocrine screening tiers.',
   },
 
   testosterone_draw_time: {

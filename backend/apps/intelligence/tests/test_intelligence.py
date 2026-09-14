@@ -1,290 +1,298 @@
 """
-OvaSense Intelligence Layer — Automated Tests.
+backend/apps/intelligence/tests/test_intelligence.py
+PCOS-ML Progressive Assessment Automated Test Suite.
 
-Tests the real Ovasense-ML Joblib model integration:
-  1. Model loading & metadata verification (ExtraTreesClassifier, 16 features, threshold 0.38)
-  2. Feature construction (exact 16-feature DataFrame, missing-data NaN handling)
-  3. Prediction (probabilities, thresholding at 0.38, risk categories)
-  4. TreeSHAP explainability (attributions, directions, magnitudes)
-  5. Authentication (JWT enforcement, 401 on invalid/missing tokens)
-  6. Patient isolation & API endpoints (/status/, /health/, /assessment/)
+Tests:
+1. Tier 1 model loading, 16 features, and threshold 0.38
+2. Cumulative Tier 2 model, 32 cumulative features, and threshold 0.29
+3. Ultrasound image pipeline (EfficientNet-B0 + PCOM + Grad-CAM)
+4. Full Multimodal Fusion (Tier 1+2+3, 95/5 weighted probability fusion)
+5. Safe Tier 1+3 handling (returns tier_1_3_model_unavailable, preserves Tier 1 active)
+6. Transactional replacement of active assessment and history preservation
+7. All DRF API endpoints (/status/, /active/, /history/, /tier1/, /tier2/, /ultrasound/)
+8. Image validation (corrupted images, invalid MIME types, oversized payloads)
+9. Cross-user data isolation and authentication
 """
 
+import io
+import json
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import numpy as np
-import pandas as pd
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
+from PIL import Image
 from rest_framework.test import APIClient
 
-# Ensure repo root and Ovasense-ML are on Python path
-_REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
-_ML_ROOT = _REPO_ROOT / "Ovasense-ML"
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
-if str(_ML_ROOT) not in sys.path:
-    sys.path.insert(0, str(_ML_ROOT))
-
 from apps.authentication.supabase_auth import SupabaseUser
-from apps.health.services.supabase_health_service import (
-    PatientHealthData,
-    PatientProfile,
-    CycleRecordData,
-    SymptomRecordData,
-    FitnessLogData,
-    FoodLogData,
-    MedicationData,
-    ReportResultData,
-)
-from apps.intelligence.services.ovasense_ml_bridge import (
-    ovasense_ml_bridge,
-    RAW_FEATURE_NAMES,
-    SCREENING_THRESHOLD,
-    LOWER_RISK_CUTOFF,
+from apps.intelligence.services.assessment_repository import assessment_repository
+from apps.intelligence.services.pcos_ml_service import (
+    pcos_ml_service,
+    TIER1_FEATURE_NAMES,
+    TIER2_FEATURE_NAMES,
+    TIER1_SCREENING_THRESHOLD,
+    TIER2_SCREENING_THRESHOLD,
+    MULTIMODAL_SCREENING_THRESHOLD,
 )
 
 
-def _build_test_health_data(
-    dob="1998-05-15",
-    weight=62.0,
-    height=165.0,
-    period_regularity="very_regular",
-    cycle_length="28",
-    symptoms=None,
-    cycle_records=None,
-):
-    profile = PatientProfile(
-        user_id="test-patient-uuid-1234",
-        date_of_birth=dob,
-        height_cm=height,
-        weight_kg=weight,
-        cycle_length=cycle_length,
-        period_regularity=period_regularity,
-        common_symptoms=symptoms or [],
-        activity_level="moderate",
-        sleep_hours=7.5,
-        daily_water_glasses=8,
-    )
-    return PatientHealthData(
-        profile=profile,
-        cycle_records=cycle_records or [],
-        symptom_records=[],
-        fitness_logs=[],
-        food_logs=[],
-        medications=[],
-        medication_logs=[],
-        report_results=[],
-    )
+def _create_sample_image_file(name="ultrasound.jpg", size=(224, 224), fmt="JPEG"):
+    """Generates a dummy in-memory image for upload testing."""
+    img = Image.new("RGB", size, color=(100, 100, 100))
+    buf = io.BytesIO()
+    img.save(buf, format=fmt)
+    buf.seek(0)
+    return SimpleUploadedFile(name, buf.read(), content_type=f"image/{fmt.lower()}")
 
 
-class TestModelLoading(TestCase):
-    """Test Joblib model loading and metadata."""
-
-    def test_model_loads_successfully(self):
-        ovasense_ml_bridge.load()
-        self.assertTrue(ovasense_ml_bridge.is_ready)
-
-    def test_metadata_structure(self):
-        meta = ovasense_ml_bridge.metadata
-        self.assertEqual(meta["feature_count"], 16)
-        self.assertEqual(meta["screening_threshold"], 0.38)
-        self.assertEqual(meta["classifier"], "ExtraTreesClassifier")
-        self.assertEqual(meta["framework"], "scikit-learn")
-
-
-class TestFeatureExtraction(TestCase):
-    """Test 16-feature DataFrame construction and missing-data behavior."""
-
-    def test_exact_16_features_extracted(self):
-        health_data = _build_test_health_data()
-        df, dq = ovasense_ml_bridge.extract_features(health_data)
-
-        self.assertEqual(list(df.columns), RAW_FEATURE_NAMES)
-        self.assertEqual(len(df), 1)
-        self.assertFalse(np.isnan(df.at[0, " Age (yrs)"]))
-        self.assertEqual(df.at[0, "Weight (Kg)"], 62.0)
-        self.assertEqual(df.at[0, "Height(Cm) "], 165.0)
-        self.assertEqual(df.at[0, "BMI"], 22.8)
-        self.assertEqual(df.at[0, "Cycle(R/I)"], 2.0)
-
-    def test_irregular_cycle_mapping(self):
-        health_data = _build_test_health_data(period_regularity="irregular")
-        df, _ = ovasense_ml_bridge.extract_features(health_data)
-        self.assertEqual(df.at[0, "Cycle(R/I)"], 4.0)
-
-    def test_missing_data_stays_nan(self):
-        """Ensure uncollected fields remain NaN so the pipeline's imputer handles them."""
-        empty_profile = PatientProfile(user_id="empty-user")
-        health_data = PatientHealthData(profile=empty_profile)
-
-        df, dq = ovasense_ml_bridge.extract_features(health_data)
-        self.assertTrue(np.isnan(df.at[0, "Marraige Status (Yrs)"]))
-        self.assertTrue(np.isnan(df.at[0, "Pregnant(Y/N)"]))
-        self.assertTrue(np.isnan(df.at[0, "No. of aborptions"]))
-        self.assertEqual(dq.quality_level, "insufficient_data")
-
-    def test_symptom_mapping_to_binary_flags(self):
-        health_data = _build_test_health_data(symptoms=["hirsutism", "cystic_acne", "hair_thinning"])
-        df, _ = ovasense_ml_bridge.extract_features(health_data)
-
-        self.assertEqual(df.at[0, "hair growth(Y/N)"], 1.0)
-        self.assertEqual(df.at[0, "Pimples(Y/N)"], 1.0)
-        self.assertEqual(df.at[0, "Hair loss(Y/N)"], 1.0)
-
-
-class TestPrediction(TestCase):
-    """Test model prediction, probability output, and screening threshold logic."""
+class TestPCOSMLProgressiveService(TestCase):
+    """Unit tests for the underlying PCOSMLService ML engine."""
 
     def setUp(self):
-        ovasense_ml_bridge.load()
+        pcos_ml_service.load()
 
-    def test_prediction_output_bounds(self):
-        health_data = _build_test_health_data()
-        df, _ = ovasense_ml_bridge.extract_features(health_data)
-        pred = ovasense_ml_bridge.predict(df)
+    def test_tier1_feature_preparation_and_inference(self):
+        sample_raw = {
+            "age": 25,
+            "weight_kg": 65.0,
+            "height_cm": 165.0,
+            "waist_inch": 30.0,
+            "hip_inch": 38.0,
+            "cycle_length_raw": 32.0,
+            "cycle_regularity": 0,
+            "weight_gain": 0,
+            "hirsutism": 0,
+            "skin_darkening": 0,
+            "hair_loss": 0,
+            "pimples_acne": 0,
+            "fast_food": 0,
+            "regular_exercise": 1,
+        }
+        df_t1 = pcos_ml_service.prepare_tier1_features(sample_raw)
+        self.assertEqual(list(df_t1.columns), TIER1_FEATURE_NAMES)
+        self.assertAlmostEqual(df_t1.at[0, "bmi"], 23.88, places=1)
+        self.assertAlmostEqual(df_t1.at[0, "waist_hip_ratio"], 0.789, places=2)
 
-        self.assertIn("pcos_probability", pred)
-        self.assertIn("non_pcos_probability", pred)
-        self.assertIn("risk_category", pred)
-        self.assertIn("screening_threshold", pred)
-        self.assertIn("is_higher_risk", pred)
+        res = pcos_ml_service.predict_tier1(sample_raw)
+        self.assertEqual(res["assessment_level"], "tier_1")
+        self.assertEqual(res["tiers_included"], [1])
+        self.assertEqual(res["threshold"], TIER1_SCREENING_THRESHOLD)
+        self.assertGreaterEqual(res["probability"], 0.0)
+        self.assertLessEqual(res["probability"], 1.0)
+        self.assertIn(res["risk_category"], ["lower", "intermediate", "higher"])
+        self.assertTrue(len(res["explanations"]) > 0)
 
-        pcos_p = pred["pcos_probability"]
-        non_p = pred["non_pcos_probability"]
-        self.assertGreaterEqual(pcos_p, 0.0)
-        self.assertLessEqual(pcos_p, 1.0)
-        self.assertAlmostEqual(pcos_p + non_p, 1.0, places=4)
-        self.assertEqual(pred["screening_threshold"], 0.38)
+    def test_tier2_cumulative_features_and_inference(self):
+        sample_t2 = {
+            "age": 27,
+            "weight_kg": 75.0,
+            "height_cm": 160.0,
+            "waist_inch": 36.0,
+            "hip_inch": 40.0,
+            "cycle_length_raw": 50.0,
+            "cycle_regularity": 1,
+            "weight_gain": 1,
+            "hirsutism": 1,
+            "skin_darkening": 1,
+            "hair_loss": 1,
+            "pimples_acne": 1,
+            "fast_food": 1,
+            "regular_exercise": 0,
+            "pulse_rate_bpm": 80.0,
+            "respiratory_rate": 20.0,
+            "hemoglobin": 11.5,
+            "beta_hcg_i": 1.5,
+            "beta_hcg_ii": 1.2,
+            "fsh": 4.2,
+            "lh": 11.8,
+            "tsh": 3.2,
+            "amh": 8.5,
+            "prolactin": 22.0,
+            "vitamin_d3": 12.0,
+            "progesterone": 0.3,
+            "rbs": 110.0,
+            "bp_systolic": 130.0,
+            "bp_diastolic": 85.0,
+        }
+        df_t2 = pcos_ml_service.prepare_tier2_features(sample_t2)
+        self.assertEqual(list(df_t2.columns), TIER2_FEATURE_NAMES)
+        self.assertEqual(len(df_t2.columns), 32)
+        self.assertAlmostEqual(df_t2.at[0, "fsh_lh_ratio"], round(4.2 / 11.8, 2), places=2)
 
-    def test_threshold_classification(self):
-        test_cases = [
-            (0.15, "lower_risk", False),
-            (0.30, "intermediate_risk", False),
-            (0.38, "higher_risk", True),
-            (0.75, "higher_risk", True),
-        ]
-        for prob, expected_cat, expected_high in test_cases:
-            if prob < LOWER_RISK_CUTOFF:
-                cat = "lower_risk"
-            elif prob < SCREENING_THRESHOLD:
-                cat = "intermediate_risk"
-            else:
-                cat = "higher_risk"
-            self.assertEqual(cat, expected_cat)
-            self.assertEqual(prob >= SCREENING_THRESHOLD, expected_high)
+        res = pcos_ml_service.predict_tier2_cumulative(sample_t2)
+        self.assertEqual(res["assessment_level"], "tier_1_2")
+        self.assertEqual(res["tiers_included"], [1, 2])
+        self.assertEqual(res["threshold"], TIER2_SCREENING_THRESHOLD)
+        self.assertGreaterEqual(res["probability"], 0.0)
+        self.assertLessEqual(res["probability"], 1.0)
+        self.assertEqual(res["risk_category"], "higher")
+
+    def test_ultrasound_processing_and_multimodal_fusion(self):
+        img = Image.new("RGB", (224, 224), color=(80, 80, 80))
+        img_res = pcos_ml_service.process_ultrasound_image(img)
+        self.assertIn("pcom_probability", img_res)
+        self.assertIn("pcom_status", img_res)
+        self.assertIn("gradcam_b64", img_res)
+
+        sample_t2 = {
+            "age": 25, "weight_kg": 60.0, "height_cm": 160.0, "waist_inch": 30.0, "hip_inch": 37.0,
+            "cycle_length_raw": 28.0, "cycle_regularity": 0, "weight_gain": 0, "hirsutism": 0,
+            "skin_darkening": 0, "hair_loss": 0, "pimples_acne": 0, "fast_food": 0, "regular_exercise": 1,
+            "pulse_rate_bpm": 72.0, "respiratory_rate": 18.0, "hemoglobin": 12.5, "beta_hcg_i": 1.0,
+            "beta_hcg_ii": 1.0, "fsh": 5.5, "lh": 5.0, "tsh": 2.0, "amh": 3.0, "prolactin": 15.0,
+            "vitamin_d3": 25.0, "progesterone": 0.6, "rbs": 90.0, "bp_systolic": 115.0, "bp_diastolic": 75.0,
+        }
+        mm_res = pcos_ml_service.predict_tier1_2_3_multimodal(sample_t2, img)
+        self.assertEqual(mm_res["assessment_level"], "tier_1_2_3")
+        self.assertEqual(mm_res["tiers_included"], [1, 2, 3])
+        self.assertEqual(mm_res["threshold"], MULTIMODAL_SCREENING_THRESHOLD)
+        self.assertIn("fusion_details", mm_res)
+        self.assertEqual(mm_res["fusion_details"]["clinical_weight"], 0.95)
+        self.assertEqual(mm_res["fusion_details"]["ultrasound_weight"], 0.05)
 
 
-class TestTreeSHAPExplainability(TestCase):
-    """Test TreeSHAP feature attributions on the ExtraTreesClassifier."""
-
-    def setUp(self):
-        ovasense_ml_bridge.load()
-
-    def test_explain_returns_top_factors(self):
-        health_data = _build_test_health_data(
-            period_regularity="irregular",
-            symptoms=["hirsutism", "skin_darkening", "acne"],
-        )
-        df, _ = ovasense_ml_bridge.extract_features(health_data)
-        explanations = ovasense_ml_bridge.explain(df, top_n=5)
-
-        self.assertIsInstance(explanations, list)
-        self.assertGreater(len(explanations), 0)
-        self.assertLessEqual(len(explanations), 5)
-
-        first = explanations[0]
-        self.assertIn("feature", first)
-        self.assertIn("human_label", first)
-        self.assertIn("direction", first)
-        self.assertIn(first["direction"], ["increases_risk", "decreases_risk"])
-        self.assertIn("magnitude", first)
-        self.assertGreaterEqual(first["magnitude"], 0.0)
-        self.assertIn("patient_explanation", first)
-
-
-class TestAuthenticationAndSecurity(TestCase):
-    """Test JWT authentication and endpoint permissions."""
+class TestProgressiveAssessmentAPI(TestCase):
+    """Integration API tests for progressive assessment flow."""
 
     def setUp(self):
         self.client = APIClient()
+        self.user1_uuid = "11111111-1111-1111-1111-111111111111"
+        self.user2_uuid = "22222222-2222-2222-2222-222222222222"
+        self.user1 = SupabaseUser(self.user1_uuid, "user1@example.com", "authenticated", "mock-jwt-token-1")
+        self.user2 = SupabaseUser(self.user2_uuid, "user2@example.com", "authenticated", "mock-jwt-token-2")
 
-    def test_status_endpoint_is_public(self):
-        url = reverse("intelligence-status")
-        response = self.client.get(url)
+    # 1. Public Status Endpoint
+    def test_status_endpoint_returns_registry_metadata(self):
+        response = self.client.get("/api/v1/intelligence/status/")
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data["status"], "ok")
-        self.assertEqual(data["model"]["feature_count"], 16)
-        self.assertEqual(data["model"]["screening_threshold"], 0.38)
+        self.assertIn("tier_1", data["models"])
+        self.assertIn("tier_1_2", data["models"])
+        self.assertIn("tier_1_2_3", data["models"])
+        self.assertEqual(data["models"]["tier_1"]["features_count"], 16)
+        self.assertEqual(data["models"]["tier_1_2"]["features_count"], 32)
+        self.assertFalse(data["models"]["tier_1_3"]["supported"])
 
-    def test_health_endpoint_requires_auth(self):
-        url = reverse("intelligence-health")
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 401)
+    # 2. Authentication Enforcement
+    def test_unauthenticated_requests_blocked(self):
+        endpoints = [
+            ("/api/v1/intelligence/assessment/active/", "get"),
+            ("/api/v1/intelligence/assessment/history/", "get"),
+            ("/api/v1/intelligence/assessment/tier1/", "post"),
+            ("/api/v1/intelligence/assessment/tier2/", "post"),
+            ("/api/v1/intelligence/assessment/ultrasound/", "post"),
+        ]
+        for url, method in endpoints:
+            if method == "get":
+                res = self.client.get(url)
+            else:
+                res = self.client.post(url, {})
+            self.assertIn(res.status_code, [401, 403], f"Endpoint {url} failed auth check")
 
-    def test_assessment_endpoint_requires_auth(self):
-        url = reverse("intelligence-assessment")
-        response = self.client.post(url, {}, format="json")
-        self.assertEqual(response.status_code, 401)
+    # 3. Progressive Flow: Tier 1 -> Tier 1+2 Cumulative Replacement -> Tier 1+2+3 Multimodal
+    def test_full_progressive_assessment_workflow(self):
+        self.client.force_authenticate(user=self.user1)
 
+        # Step 1: Submit Tier 1
+        t1_payload = {
+            "age": 24, "weight_kg": 55.0, "height_cm": 162.0, "waist_inch": 28.0, "hip_inch": 36.0,
+            "cycle_length_raw": 28, "cycle_regularity": 0, "weight_gain": 0, "hirsutism": 0,
+            "skin_darkening": 0, "hair_loss": 0, "pimples_acne": 0, "fast_food": 0, "regular_exercise": 1,
+        }
+        res_t1 = self.client.post("/api/v1/intelligence/assessment/tier1/", t1_payload, format="json")
+        self.assertEqual(res_t1.status_code, 200)
+        data_t1 = res_t1.json()
+        self.assertEqual(data_t1["assessment_level"], "tier_1")
+        self.assertTrue(data_t1["is_active"])
+        t1_id = data_t1["assessment_id"]
 
-class TestEndToEndAssessmentPipeline(TestCase):
-    """Test end-to-end assessment execution with mocked Supabase health service."""
+        # Verify active assessment is Tier 1
+        active_res = self.client.get("/api/v1/intelligence/assessment/active/")
+        self.assertEqual(active_res.status_code, 200)
+        self.assertEqual(active_res.json()["assessment_id"], t1_id)
 
-    def setUp(self):
-        self.client = APIClient()
-        self.test_user = SupabaseUser(
-            id="auth-test-uuid-9999",
-            email="patient@example.com",
-            role="authenticated",
-            raw_token="fake-jwt-token",
-        )
-        self.client.force_authenticate(user=self.test_user)
+        # Step 2: Submit Clinical Labs (Tier 1+2 Cumulative)
+        t2_payload = {
+            "pulse_rate_bpm": 76.0, "respiratory_rate": 18.0, "hemoglobin": 12.8,
+            "beta_hcg_i": 1.0, "beta_hcg_ii": 1.0, "fsh": 5.0, "lh": 10.5,
+            "tsh": 2.4, "amh": 6.8, "prolactin": 18.0, "vitamin_d3": 18.0,
+            "progesterone": 0.5, "rbs": 95.0, "bp_systolic": 118.0, "bp_diastolic": 76.0,
+        }
+        res_t2 = self.client.post("/api/v1/intelligence/assessment/tier2/", t2_payload, format="json")
+        self.assertEqual(res_t2.status_code, 200)
+        data_t2 = res_t2.json()
+        self.assertEqual(data_t2["assessment_level"], "tier_1_2")
+        self.assertTrue(data_t2["is_active"])
+        self.assertEqual(data_t2["replaced_assessment_id"], t1_id)
+        t2_id = data_t2["assessment_id"]
 
-    @patch("apps.intelligence.services.intelligence_orchestrator.health_service")
-    def test_assessment_endpoint_success(self, mock_health_service):
-        mock_health_data = _build_test_health_data(
-            period_regularity="irregular",
-            symptoms=["hirsutism", "acne"],
-        )
-        mock_health_service.fetch_all.return_value = mock_health_data
+        # Verify active assessment is now Tier 1+2 (replacing Tier 1)
+        active_res2 = self.client.get("/api/v1/intelligence/assessment/active/")
+        self.assertEqual(active_res2.json()["assessment_id"], t2_id)
+        self.assertEqual(active_res2.json()["assessment_level"], "tier_1_2")
 
-        url = reverse("intelligence-assessment")
-        response = self.client.post(url, {}, format="json")
+        # Step 3: Upload Ultrasound Image (Tier 1+2+3 Multimodal Full Fusion)
+        img_file = _create_sample_image_file("pelvic_scan.jpg")
+        res_t3 = self.client.post("/api/v1/intelligence/assessment/ultrasound/", {"image": img_file}, format="multipart")
+        self.assertEqual(res_t3.status_code, 200)
+        data_t3 = res_t3.json()
+        self.assertEqual(data_t3["assessment_level"], "tier_1_2_3")
+        self.assertTrue(data_t3["is_active"])
+        self.assertEqual(data_t3["replaced_assessment_id"], t2_id)
+        self.assertIn("pcom_status", data_t3)
+        t3_id = data_t3["assessment_id"]
 
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
+        # Step 4: Verify History preserves all assessments
+        hist_res = self.client.get("/api/v1/intelligence/assessment/history/")
+        self.assertEqual(hist_res.status_code, 200)
+        hist_data = hist_res.json()["history"]
+        self.assertGreaterEqual(len(hist_data), 3)
+        self.assertEqual(hist_data[0]["id"], t3_id)
 
-        # Verify patient isolation: fetch_all called with authenticated user UUID and token
-        mock_health_service.fetch_all.assert_called_once_with("auth-test-uuid-9999", auth_token="fake-jwt-token")
+    # 4. Safe Tier 1 + Ultrasound (Without Clinical Labs)
+    def test_tier1_followed_directly_by_ultrasound_fallback(self):
+        self.client.force_authenticate(user=self.user2)
 
-        # Verify output payload fields
-        self.assertIn("risk_category", data)
-        self.assertIn("pcos_probability", data)
-        self.assertIn("screening_threshold", data)
-        self.assertEqual(data["screening_threshold"], 0.38)
-        self.assertIn("is_higher_risk", data)
-        self.assertIn("data_quality", data)
-        self.assertIn("explanations", data)
-        self.assertIn("disclaimer", data)
-        self.assertTrue(data["shap_enabled"])
-        self.assertEqual(data["backend_mode"], "ml")
+        # Submit Tier 1
+        t1_payload = {"age": 22, "weight_kg": 50.0, "height_cm": 158.0}
+        self.client.post("/api/v1/intelligence/assessment/tier1/", t1_payload, format="json")
 
-    @patch("apps.intelligence.services.intelligence_orchestrator.health_service")
-    def test_insufficient_data_handling(self, mock_health_service):
-        empty_profile = PatientProfile(user_id="empty-patient-id")
-        empty_data = PatientHealthData(profile=empty_profile)
-        mock_health_service.fetch_all.return_value = empty_data
+        # Upload ultrasound without clinical labs
+        img_file = _create_sample_image_file("scan.jpg")
+        res_us = self.client.post("/api/v1/intelligence/assessment/ultrasound/", {"image": img_file}, format="multipart")
+        self.assertEqual(res_us.status_code, 200)
+        data_us = res_us.json()
 
-        url = reverse("intelligence-assessment")
-        response = self.client.post(url, {}, format="json")
+        # Status indicates tier_1_3_model_unavailable
+        self.assertEqual(data_us.get("status_code"), "tier_1_3_model_unavailable")
+        self.assertIn("pcom_status", data_us)
 
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertEqual(data["risk_category"], "insufficient_data")
-        self.assertIsNone(data["pcos_probability"])
-        self.assertEqual(data["data_quality"]["quality_level"], "insufficient_data")
-        self.assertFalse(data["shap_enabled"])
+        # Active assessment remains Tier 1
+        active_res = self.client.get("/api/v1/intelligence/assessment/active/")
+        self.assertEqual(active_res.json()["assessment_level"], "tier_1")
+
+    # 5. Image Validation & Error Handling
+    def test_corrupt_image_upload_rejected(self):
+        self.client.force_authenticate(user=self.user1)
+        corrupted_file = SimpleUploadedFile("broken.jpg", b"not-a-valid-jpeg-image-bytes", content_type="image/jpeg")
+        response = self.client.post("/api/v1/intelligence/assessment/ultrasound/", {"image": corrupted_file}, format="multipart")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("not a valid or readable image", response.json()["error"])
+
+    def test_unsupported_mime_type_rejected(self):
+        self.client.force_authenticate(user=self.user1)
+        pdf_file = SimpleUploadedFile("report.pdf", b"%PDF-1.4 dummy pdf bytes", content_type="application/pdf")
+        response = self.client.post("/api/v1/intelligence/assessment/ultrasound/", {"image": pdf_file}, format="multipart")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Unsupported file type", response.json()["error"])
+
+    def test_oversized_image_rejected(self):
+        self.client.force_authenticate(user=self.user1)
+        # 11MB dummy content
+        oversized = SimpleUploadedFile("huge.jpg", b"x" * (11 * 1024 * 1024), content_type="image/jpeg")
+        response = self.client.post("/api/v1/intelligence/assessment/ultrasound/", {"image": oversized}, format="multipart")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("exceeds maximum allowable size", response.json()["error"])

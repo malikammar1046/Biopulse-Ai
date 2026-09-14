@@ -89,7 +89,7 @@ export const WomensHealth: React.FC = () => {
                 <strong className="text-white block font-semibold mb-0.5">
                   Educational & Screening Support Notice:
                 </strong>
-                VITASense Women's Health provides health information and screening support. It is not a diagnostic tool and does not replace consultation with a qualified gynecologist or endocrinologist.
+                BIOPulse AI Women's Health provides health information and screening support. It is not a diagnostic tool and does not replace consultation with a qualified gynecologist or endocrinologist.
               </div>
             </div>
 
@@ -126,7 +126,7 @@ export const WomensHealth: React.FC = () => {
               Designed for the Whole Spectrum of Ovarian Health
             </h2>
             <p className="text-sm md:text-base text-[#B4A6C7] leading-relaxed">
-              Moving beyond basic period counters. VITASense integrates clinical research, Rotterdam criteria markers, and metabolic realities.
+              Moving beyond basic period counters. BIOPulse AI integrates clinical research, Rotterdam criteria markers, and metabolic realities.
             </p>
           </div>
 
@@ -162,7 +162,7 @@ export const WomensHealth: React.FC = () => {
           <div className="max-w-4xl mx-auto space-y-12">
             <div className="text-center space-y-3">
               <h2 className="text-3xl md:text-4xl font-bold font-display text-white">
-                How Women Use VITASense
+                How Women Use BIOPulse AI
               </h2>
               <p className="text-sm text-[#B4A6C7]">
                 A connected, supportive experience for navigating PCOS and reproductive wellness.

@@ -11,6 +11,7 @@ import { PreConsultationPrepModal } from '../../components/appointments/PreConsu
 
 export const AppointmentsPage: React.FC = () => {
   const {
+    userProfile,
     appointments,
     upcomingAppointment,
     careCircleMembers,
@@ -26,6 +27,8 @@ export const AppointmentsPage: React.FC = () => {
     getConsultationBrief,
     openAiChatWithPrompt,
   } = useUserHealth();
+
+  const isMale = userProfile?.pathway === 'male' || userProfile?.gender === 'male';
 
   const [isBookModalOpen, setIsBookModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentItem | null>(null);
@@ -71,7 +74,9 @@ export const AppointmentsPage: React.FC = () => {
         onOpenBookModal={handleOpenBookModal}
         onAskAi={() =>
           openAiChatWithPrompt(
-            'What are the key clinical questions and hormone metrics I should discuss with my gynecologist at my next PCOS appointment?'
+            isMale
+              ? 'What are the key clinical questions and hormone metrics I should discuss with my endocrinologist or urologist regarding male hormonal health?'
+              : 'What are the key clinical questions and hormone metrics I should discuss with my gynecologist at my next PCOS appointment?'
           )
         }
       />

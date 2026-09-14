@@ -99,7 +99,7 @@ export const ExplainResultSection: React.FC = () => {
           </h2>
 
           <p className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans max-w-2xl mx-auto">
-            VITASense is engineered with mathematical feature-attribution methods so you can clearly see what information influenced your assessment.
+            BIOPulse AI is engineered with mathematical feature-attribution methods so you can clearly see what information influenced your assessment.
           </p>
 
           {/* Pathway Switcher */}

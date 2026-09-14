@@ -99,7 +99,7 @@ export const InteractiveBiologySection: React.FC = () => {
         </div>
 
         {/* Tab Stepper Buttons */}
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-12 max-w-4xl mx-auto">
+        <div className="flex overflow-x-auto no-scrollbar flex-nowrap sm:flex-wrap items-center justify-start sm:justify-center gap-2 mb-8 sm:mb-12 max-w-4xl mx-auto pb-2 px-1">
           {biologyDomains.map((domain, idx) => {
             const isSelected = activeTab === idx;
             const DomainIcon = domain.icon;
@@ -107,7 +107,7 @@ export const InteractiveBiologySection: React.FC = () => {
               <button
                 key={domain.id}
                 onClick={() => setActiveTab(idx)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-semibold font-sans transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-semibold font-sans transition-all cursor-pointer shrink-0 ${
                   isSelected
                     ? 'bg-gradient-brand text-white shadow-lg shadow-purple-950/40 ring-2 ring-[#FDA4AF]'
                     : 'bg-white/5 text-[#B4A6C7] hover:bg-white/10 hover:text-white border border-white/10'
@@ -121,7 +121,7 @@ export const InteractiveBiologySection: React.FC = () => {
         </div>
 
         {/* Active Domain Card */}
-        <div className="max-w-4xl mx-auto p-8 sm:p-12 rounded-3xl bg-white/[0.04] border border-white/15 backdrop-blur-xl shadow-2xl">
+        <div className="max-w-4xl mx-auto p-5 sm:p-12 rounded-3xl bg-white/[0.04] border border-white/15 backdrop-blur-xl shadow-2xl">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentDomain.id}

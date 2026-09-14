@@ -23,35 +23,17 @@ export const ProfileCompletenessCard: React.FC<ProfileCompletenessCardProps> = (
 }) => {
   const { percentage, isComplete, missingFields } = completion;
 
-  // Pathway specific color scheme
-  const theme = {
+  // Pathway specific titles
+  const pathwayTitles = {
     female: {
-      ringColor: '#6E2D8B',
-      ringBg: '#EDE4F7',
-      accent: 'text-[#6E2D8B]',
-      badgeBg: 'bg-[#EDE4F7]',
-      border: 'border-[#E7DFEF]',
-      ctaBg: 'bg-[#6E2D8B] hover:bg-[#8E3EAF] text-white',
       title: 'PCOS Screening Readiness',
       subtitle: 'Complete your health profile to unlock comprehensive hormonal analysis.',
     },
     male: {
-      ringColor: '#0284C7',
-      ringBg: '#E0F2FE',
-      accent: 'text-sky-700',
-      badgeBg: 'bg-sky-50',
-      border: 'border-sky-100',
-      ctaBg: 'bg-sky-600 hover:bg-sky-700 text-white',
-      title: 'Hormonal Vitality Readiness',
-      subtitle: 'Complete your health profile for deeper male vitality & biomarker assessment.',
+      title: 'Hypogonadism Screening Readiness',
+      subtitle: 'Complete your health profile for deeper male hypogonadism screening & biomarker assessment.',
     },
     general: {
-      ringColor: '#7C3AED',
-      ringBg: '#EDE9FE',
-      accent: 'text-violet-700',
-      badgeBg: 'bg-violet-50',
-      border: 'border-violet-100',
-      ctaBg: 'bg-violet-600 hover:bg-violet-700 text-white',
       title: 'Baseline Wellness Readiness',
       subtitle: 'Complete your health profile to establish your clinical longevity baseline.',
     },
@@ -66,21 +48,21 @@ export const ProfileCompletenessCard: React.FC<ProfileCompletenessCardProps> = (
 
   return (
     <div
-      className={`p-6 sm:p-7 rounded-[32px] bg-white border ${theme.border} shadow-sm flex flex-col justify-between space-y-6 text-left`}
+      className="p-6 sm:p-7 rounded-[24px] bg-white border border-[#E2E8F0] shadow-sm flex flex-col justify-between space-y-6 text-left"
       id="profile-completeness-card"
     >
       {/* Top Title & Pathway Badge */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <div className={`w-8 h-8 rounded-xl ${theme.badgeBg} flex items-center justify-center ${theme.accent}`}>
+          <div className="w-8 h-8 rounded-xl bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center text-[#0288D1]">
             <User className="w-4 h-4" />
           </div>
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-wider text-[#8A7A99] font-bold block">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-[#64748B] font-bold block">
               Profile Completeness
             </span>
-            <h3 className="text-base sm:text-lg font-bold font-display text-[#1C1326]">
-              {theme.title}
+            <h3 className="text-base sm:text-lg font-bold font-display text-[#0F172A]">
+              {pathwayTitles.title}
             </h3>
           </div>
         </div>
@@ -91,14 +73,14 @@ export const ProfileCompletenessCard: React.FC<ProfileCompletenessCardProps> = (
             Verified 100%
           </span>
         ) : (
-          <span className={`inline-flex items-center gap-1 text-[11px] font-mono font-bold px-2.5 py-1 rounded-full ${theme.badgeBg} ${theme.accent}`}>
+          <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold px-2.5 py-1 rounded-full bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD]">
             {percentage}% Ready
           </span>
         )}
       </div>
 
       {/* Center: Radial Progress Ring + Stats */}
-      <div className="flex items-center gap-5 sm:gap-6 bg-[#FCFAFF] p-4 sm:p-5 rounded-2xl border border-[#EAE2F2]">
+      <div className="flex items-center gap-5 sm:gap-6 bg-[#F8FAFC] p-4 sm:p-5 rounded-2xl border border-[#E2E8F0]">
         {/* Radial SVG Gauge */}
         <div className="relative w-24 h-24 shrink-0 flex items-center justify-center">
           <svg className="w-full h-full transform -rotate-90" viewBox="0 0 96 96">
@@ -106,7 +88,7 @@ export const ProfileCompletenessCard: React.FC<ProfileCompletenessCardProps> = (
               cx="48"
               cy="48"
               r={radius}
-              stroke={theme.ringBg}
+              stroke="#E0F2FE"
               strokeWidth="8"
               fill="transparent"
             />
@@ -114,7 +96,7 @@ export const ProfileCompletenessCard: React.FC<ProfileCompletenessCardProps> = (
               cx="48"
               cy="48"
               r={radius}
-              stroke={theme.ringColor}
+              stroke="#29B6F6"
               strokeWidth="8"
               strokeDasharray={circumference}
               strokeDashoffset={circumference}
@@ -125,10 +107,10 @@ export const ProfileCompletenessCard: React.FC<ProfileCompletenessCardProps> = (
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-            <span className="text-xl font-bold font-display text-[#1C1326]">
+            <span className="text-xl font-bold font-display text-[#0F172A]">
               {percentage}%
             </span>
-            <span className="text-[9px] font-mono uppercase text-[#8A7A99] font-semibold">
+            <span className="text-[9px] font-mono uppercase text-[#64748B] font-semibold">
               Complete
             </span>
           </div>
@@ -136,14 +118,14 @@ export const ProfileCompletenessCard: React.FC<ProfileCompletenessCardProps> = (
 
         {/* Narrative */}
         <div className="space-y-1.5 min-w-0 flex-1">
-          <p className="text-xs text-[#5C4F6B] font-sans leading-relaxed">
+          <p className="text-xs text-[#64748B] font-sans leading-relaxed">
             {isComplete
               ? 'Your profile contains all foundational biomarkers for accurate screening.'
-              : theme.subtitle}
+              : pathwayTitles.subtitle}
           </p>
           {!isComplete && missingFields.length > 0 && (
-            <p className="text-[11px] font-mono text-[#8A7A99]">
-              <span className="font-bold text-[#1C1326]">{missingFields.length}</span> field
+            <p className="text-[11px] font-mono text-[#64748B]">
+              <span className="font-bold text-[#0F172A]">{missingFields.length}</span> field
               {missingFields.length === 1 ? '' : 's'} remaining to complete.
             </p>
           )}
@@ -152,7 +134,7 @@ export const ProfileCompletenessCard: React.FC<ProfileCompletenessCardProps> = (
 
       {/* Bottom Section: Missing Fields or Complete State */}
       {isComplete ? (
-        <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 flex items-center justify-between gap-3">
+        <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span className="text-xs font-sans text-emerald-900 font-medium">
@@ -169,7 +151,7 @@ export const ProfileCompletenessCard: React.FC<ProfileCompletenessCardProps> = (
         </div>
       ) : (
         <div className="space-y-2.5">
-          <div className="text-[11px] font-mono uppercase tracking-wider text-[#8A7A99] font-bold">
+          <div className="text-[11px] font-mono uppercase tracking-wider text-[#64748B] font-bold">
             Recommended Next Fields
           </div>
 
@@ -177,15 +159,15 @@ export const ProfileCompletenessCard: React.FC<ProfileCompletenessCardProps> = (
             {topMissing.map((field) => (
               <div
                 key={field.id}
-                className="flex items-center justify-between p-3 rounded-xl bg-white border border-[#E7DFEF] hover:border-[#D6C4E6] transition-colors gap-3"
+                className="flex items-center justify-between p-3 rounded-xl bg-white border border-[#E2E8F0] hover:border-[#BAE6FD] transition-colors gap-3"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
                   <div className="min-w-0">
-                    <span className="text-xs font-bold text-[#1C1326] font-display block truncate">
+                    <span className="text-xs font-bold text-[#0F172A] font-display block truncate">
                       {field.label}
                     </span>
-                    <span className="text-[10px] text-[#8A7A99] font-sans">
+                    <span className="text-[10px] text-[#64748B] font-sans">
                       Section: {field.section}
                     </span>
                   </div>
@@ -193,7 +175,7 @@ export const ProfileCompletenessCard: React.FC<ProfileCompletenessCardProps> = (
 
                 <Link
                   to={ROUTES.APP.PROFILE}
-                  className="text-xs font-bold font-sans px-3 py-1.5 rounded-lg bg-[#FAF7FD] hover:bg-[#EDE4F7] text-[#6E2D8B] transition-colors shrink-0 inline-flex items-center gap-1 cursor-pointer"
+                  className="text-xs font-bold font-sans px-3 py-1.5 rounded-lg bg-[#F0F9FF] hover:bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD] transition-colors shrink-0 inline-flex items-center gap-1 cursor-pointer"
                 >
                   <span>Add</span>
                   <ArrowRight className="w-3 h-3" />
@@ -205,7 +187,7 @@ export const ProfileCompletenessCard: React.FC<ProfileCompletenessCardProps> = (
           <div className="pt-1">
             <Link
               to={ROUTES.APP.PROFILE}
-              className={`w-full py-2.5 rounded-2xl ${theme.ctaBg} text-xs font-bold font-sans transition-all flex items-center justify-center gap-2 cursor-pointer`}
+              className="w-full py-2.5 rounded-2xl bg-[#0288D1] hover:bg-[#0277BD] text-white shadow-sm text-xs font-bold font-sans transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>Update Health Profile</span>
               <ArrowRight className="w-3.5 h-3.5" />

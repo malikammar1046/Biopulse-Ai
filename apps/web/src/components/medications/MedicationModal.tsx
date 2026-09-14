@@ -130,24 +130,24 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm select-none text-left">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0F172A]/60 backdrop-blur-xs select-none text-left">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          className="w-full max-w-xl bg-white rounded-[32px] shadow-2xl border border-[#E7DFEF] overflow-hidden flex flex-col max-h-[90vh]"
+          className="w-full max-w-xl bg-white rounded-[28px] shadow-2xl border border-[#BAE6FD] overflow-hidden flex flex-col max-h-[90vh]"
         >
           {/* Header */}
-          <div className="p-6 pb-4 border-b border-[#E7DFEF] flex items-center justify-between bg-gradient-to-r from-[#FAF5FF] to-[#FDF2F8]">
+          <div className="p-6 pb-4 border-b border-[#E2E8F0] flex items-center justify-between bg-white">
             <div className="flex items-center gap-2.5">
-              <span className="p-2 rounded-2xl bg-[#EDE4F7] text-[#6E2D8B]">
+              <span className="p-2 rounded-2xl bg-[#F0F9FF] text-[#0288D1]">
                 <Pill className="w-5 h-5" />
               </span>
               <div>
-                <h2 className="text-lg font-bold font-display text-[#1C1326]">
+                <h2 className="text-lg font-bold font-display text-[#0F172A]">
                   {editingMedication ? 'Edit Medicine' : 'Add Medicine or Supplement'}
                 </h2>
-                <p className="text-xs text-[#584B68]">
+                <p className="text-xs text-[#475569]">
                   Keep track of what you take and when
                 </p>
               </div>
@@ -156,7 +156,7 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-full text-[#8D7E9E] hover:text-[#1C1326] hover:bg-white transition-all cursor-pointer"
+              className="p-2 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] transition-all cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -165,8 +165,8 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
           {/* Form */}
           <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-5">
             {errorMsg && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
+              <div className="p-3 rounded-xl bg-[#FEF2F2] border border-[#FECACA] text-[#991B1B] text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-[#DC2626]" />
                 <span>{errorMsg}</span>
               </div>
             )}
@@ -174,7 +174,7 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
             {/* Quick Suggestions Chips */}
             {!editingMedication && (
               <div className="space-y-1.5">
-                <label className="text-[11px] font-mono font-bold uppercase text-[#8D7E9E]">
+                <label className="text-[11px] font-mono font-bold uppercase text-[#64748B]">
                   Quick Fill Suggestions
                 </label>
                 <div className="flex flex-wrap gap-1.5">
@@ -198,7 +198,7 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
                           handleFrequencyChange('once_daily');
                         }
                       }}
-                      className="px-2.5 py-1 rounded-xl text-[11px] font-mono bg-[#F8F5FA] hover:bg-[#EDE4F7] text-[#6E2D8B] border border-[#E7DFEF] transition-all cursor-pointer"
+                      className="px-2.5 py-1 rounded-xl text-[11px] font-mono bg-[#F8FAFC] hover:bg-[#F0F9FF] text-[#0369A1] border border-[#BAE6FD] transition-all cursor-pointer"
                     >
                       + {item}
                     </button>
@@ -209,7 +209,7 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
 
             {/* 1. Medicine Name */}
             <div className="space-y-1">
-              <label className="text-xs font-mono font-bold uppercase text-[#8D7E9E]">
+              <label className="text-xs font-mono font-bold uppercase text-[#64748B]">
                 Medicine Name *
               </label>
               <input
@@ -218,14 +218,14 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
                 placeholder="e.g. Metformin, Myo-Inositol, Spironolactone"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] text-xs font-sans text-[#1C1326] focus:bg-white focus:border-[#8E3EAF] focus:outline-none"
+                className="w-full px-4 py-2.5 rounded-2xl bg-[#F8FAFC] border border-[#BAE6FD] text-xs font-sans text-[#0F172A] focus:bg-white focus:border-[#0288D1] focus:outline-none"
               />
             </div>
 
             {/* 2. Dose & Unit */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-mono font-bold uppercase text-[#8D7E9E]">
+                <label className="text-xs font-mono font-bold uppercase text-[#64748B]">
                   Dose Amount *
                 </label>
                 <input
@@ -234,18 +234,18 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
                   placeholder="e.g. 500, 2000, 1"
                   value={dose}
                   onChange={(e) => setDose(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] text-xs font-mono text-[#1C1326] focus:bg-white focus:border-[#8E3EAF] focus:outline-none"
+                  className="w-full px-4 py-2.5 rounded-2xl bg-[#F8FAFC] border border-[#BAE6FD] text-xs font-mono text-[#0F172A] focus:bg-white focus:border-[#0288D1] focus:outline-none"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-mono font-bold uppercase text-[#8D7E9E]">
+                <label className="text-xs font-mono font-bold uppercase text-[#64748B]">
                   Unit
                 </label>
                 <select
                   value={unit}
                   onChange={(e) => setUnit(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] text-xs font-mono text-[#1C1326] focus:bg-white focus:border-[#8E3EAF] focus:outline-none"
+                  className="w-full px-4 py-2.5 rounded-2xl bg-[#F8FAFC] border border-[#BAE6FD] text-xs font-mono text-[#0F172A] focus:bg-white focus:border-[#0288D1] focus:outline-none"
                 >
                   {UNIT_OPTIONS.map((u) => (
                     <option key={u} value={u}>
@@ -258,7 +258,7 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
 
             {/* 3. Frequency */}
             <div className="space-y-2">
-              <label className="text-xs font-mono font-bold uppercase text-[#8D7E9E] block">
+              <label className="text-xs font-mono font-bold uppercase text-[#64748B] block">
                 How often do you take it?
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -269,10 +269,10 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
                       key={opt.key}
                       type="button"
                       onClick={() => handleFrequencyChange(opt.key)}
-                      className={`p-2.5 rounded-2xl text-xs font-bold font-sans border transition-all cursor-pointer ${
+                      className={`p-2.5 rounded-2xl text-xs font-semibold font-sans border transition-all cursor-pointer ${
                         isSelected
-                          ? 'bg-[#6E2D8B] text-white border-[#6E2D8B] shadow-xs'
-                          : 'bg-[#F8F5FA] text-[#584B68] border-[#E7DFEF] hover:bg-[#FAF5FF]'
+                          ? 'bg-[#0288D1] text-white border-[#0288D1] shadow-xs'
+                          : 'bg-[#F8FAFC] text-[#475569] border-[#E2E8F0] hover:bg-[#F0F9FF] hover:border-[#BAE6FD]'
                       }`}
                     >
                       {opt.label}
@@ -284,18 +284,18 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
 
             {/* 4. Scheduled Times */}
             <div className="space-y-2">
-              <label className="text-xs font-mono font-bold uppercase text-[#8D7E9E] block">
+              <label className="text-xs font-mono font-bold uppercase text-[#64748B] block">
                 Scheduled Time(s)
               </label>
               <div className="flex flex-wrap gap-2">
                 {scheduledTimes.map((time, idx) => (
-                  <div key={idx} className="flex items-center gap-1.5 bg-[#F8F5FA] border border-[#E7DFEF] p-2 rounded-2xl">
-                    <Clock className="w-3.5 h-3.5 text-[#8E3EAF]" />
+                  <div key={idx} className="flex items-center gap-1.5 bg-[#F8FAFC] border border-[#BAE6FD] p-2 rounded-2xl">
+                    <Clock className="w-3.5 h-3.5 text-[#0288D1]" />
                     <input
                       type="time"
                       value={time}
                       onChange={(e) => handleTimeChange(idx, e.target.value)}
-                      className="text-xs font-mono font-bold text-[#6E2D8B] bg-transparent focus:outline-none"
+                      className="text-xs font-mono font-bold text-[#0288D1] bg-transparent focus:outline-none"
                     />
                   </div>
                 ))}
@@ -305,29 +305,29 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
             {/* 5. Start Date & End Date */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-[11px] font-mono text-[#8D7E9E]">Start Date</label>
+                <label className="text-[11px] font-mono text-[#64748B]">Start Date</label>
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-[#F8F5FA] border border-[#E7DFEF] text-xs font-mono text-[#1C1326] focus:bg-white focus:border-[#8E3EAF] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#F8FAFC] border border-[#BAE6FD] text-xs font-mono text-[#0F172A] focus:bg-white focus:border-[#0288D1] focus:outline-none"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-mono text-[#8D7E9E]">End Date (Optional)</label>
+                <label className="text-[11px] font-mono text-[#64748B]">End Date (Optional)</label>
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-[#F8F5FA] border border-[#E7DFEF] text-xs font-mono text-[#1C1326] focus:bg-white focus:border-[#8E3EAF] focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#F8FAFC] border border-[#BAE6FD] text-xs font-mono text-[#0F172A] focus:bg-white focus:border-[#0288D1] focus:outline-none"
                 />
               </div>
             </div>
 
             {/* 6. Notes */}
             <div className="space-y-1">
-              <label className="text-xs font-mono font-bold uppercase text-[#8D7E9E]">
+              <label className="text-xs font-mono font-bold uppercase text-[#64748B]">
                 Optional Instructions / Notes
               </label>
               <input
@@ -335,16 +335,16 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
                 placeholder="e.g. Take with breakfast, dissolve in water"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] text-xs font-sans text-[#1C1326] focus:bg-white focus:border-[#8E3EAF] focus:outline-none"
+                className="w-full px-4 py-2.5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs font-sans text-[#0F172A] focus:bg-white focus:border-[#0288D1] focus:outline-none"
               />
             </div>
 
             {/* Submit Footer */}
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E7DFEF]">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E2E8F0]">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-5 py-2.5 rounded-2xl border border-[#E7DFEF] text-xs font-bold text-[#584B68] hover:bg-[#FAF5FF] transition-all cursor-pointer"
+                className="px-5 py-2.5 rounded-2xl border border-[#E2E8F0] text-xs font-bold text-[#475569] hover:bg-[#F8FAFC] transition-all cursor-pointer"
               >
                 Cancel
               </button>
@@ -352,7 +352,7 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-6 py-2.5 rounded-2xl bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#FB7185] hover:brightness-110 text-white text-xs font-bold shadow-md shadow-purple-950/20 flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                className="px-6 py-2.5 rounded-2xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
               >
                 {successToast ? (
                   <>
@@ -361,7 +361,7 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
                   </>
                 ) : (
                   <>
-                    <Plus className="w-4 h-4 text-[#FDA4AF]" />
+                    <Plus className="w-4 h-4 text-white" />
                     <span>{editingMedication ? 'Save Changes' : 'Save Medicine'}</span>
                   </>
                 )}

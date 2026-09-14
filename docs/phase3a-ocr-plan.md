@@ -43,7 +43,7 @@ However, the text extraction layer in `apps/web/src/services/ocrService.ts` curr
 ## 9. PaddleOCR Integration Plan
 1. **Engine**: Self-hosted local PaddleOCR PP-OCRv4 via ONNX Runtime (`rapidocr-onnxruntime`). 100% free, offline, zero cloud API dependencies, zero per-page charges.
 2. **PDF Pipeline**:
-   - Inspect PDF with PyMuPDF (`fitz`).
+   - Inspect PDF with PyMuPDF (`pymupdf`).
    - If digital text layer is present and high-quality, extract text directly with coordinate preservation.
    - If scanned / raster PDF, render pages to high-resolution (300 DPI) images and run PaddleOCR text detection + recognition.
 3. **Image Pipeline**:

@@ -1,12 +1,8 @@
 export { AboutHeroSection } from './AboutHeroSection';
-export { TwoPathwaysOneEcosystemSection } from './TwoPathwaysOneEcosystemSection';
-export { BiologicalChainSection } from './BiologicalChainSection';
-export { InteractiveBiologySection } from './InteractiveBiologySection';
 export { DisconnectedProblemSection } from './DisconnectedProblemSection';
-export { IntelligenceLayerSection } from './IntelligenceLayerSection';
-export { WhyDifferentSection } from './WhyDifferentSection';
-export { FourPillarsSection } from './FourPillarsSection';
+export { OurApproachSection } from './OurApproachSection';
+export { TwoPathwaysOneEcosystemSection } from './TwoPathwaysOneEcosystemSection';
 export { LocalizedPakistanSection } from './LocalizedPakistanSection';
 export { AboutResponsibleAISection } from './AboutResponsibleAISection';
-export { ClinicalFoundationSection } from './ClinicalFoundationSection';
 export { AboutCTASection } from './AboutCTASection';
+

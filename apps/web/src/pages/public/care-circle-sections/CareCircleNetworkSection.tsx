@@ -94,7 +94,7 @@ export const CareCircleNetworkSection: React.FC = () => {
     },
     ai: {
       id: 'ai',
-      title: 'VITASense AI Engine',
+      title: 'BIOPulse AI Engine',
       subtitle: 'Longitudinal Intelligence',
       role: 'Private Analysis & Synthesis',
       icon: <Cpu className="w-6 h-6 text-[#38BDF8]" />,

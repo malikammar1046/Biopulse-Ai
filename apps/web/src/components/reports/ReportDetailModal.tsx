@@ -136,8 +136,8 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
     switch (status) {
       case 'within_range':
         return (
-          <span className="text-[11px] font-mono font-bold px-2.5 py-1 rounded-full bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0]/60 flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3 text-[#047857]" />
+          <span className="text-[11px] font-mono font-bold px-2.5 py-1 rounded-full bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0] flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3 text-[#059669]" />
             Within typical range
           </span>
         );
@@ -158,7 +158,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
       case 'insufficient_info':
       default:
         return (
-          <span className="text-[11px] font-mono font-medium px-2.5 py-1 rounded-full bg-[#F8F5FA] text-[#584B68] border border-[#E7DFEF]">
+          <span className="text-[11px] font-mono font-medium px-2.5 py-1 rounded-full bg-[#F8FAFC] text-[#64748B] border border-[#E2E8F0]">
             Recorded observation
           </span>
         );
@@ -174,7 +174,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="fixed inset-0 bg-[#10071A]/75 backdrop-blur-sm"
+          className="fixed inset-0 bg-[#0F172A]/70 backdrop-blur-xs"
         />
 
         {/* Modal Window */}
@@ -183,26 +183,26 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.2 }}
-          className="relative w-full max-w-3xl rounded-[32px] bg-white border border-[#E7DFEF] shadow-2xl p-6 sm:p-8 text-left space-y-5 z-10 select-none my-6 max-h-[90vh] overflow-y-auto"
+          className="relative w-full max-w-3xl rounded-[32px] bg-white border border-[#BAE6FD] shadow-2xl p-6 sm:p-8 text-left space-y-5 z-10 select-none my-6 max-h-[90vh] overflow-y-auto"
         >
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#F0EAF5]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-2xl bg-[#EDE4F7] text-[#6E2D8B] shrink-0 shadow-xs">
-                <FileText className="w-6 h-6 text-[#8E3EAF]" />
+              <div className="p-3 rounded-2xl bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD]/60 shrink-0 shadow-xs">
+                <FileText className="w-6 h-6 text-[#0288D1]" />
               </div>
               <div className="space-y-0.5">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-xl sm:text-2xl font-bold font-display text-[#1C1326]">
+                  <h2 className="text-xl sm:text-2xl font-bold font-display text-[#0F172A]">
                     {currentReport.title}
                   </h2>
                   <span
-                    className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${categoryMeta.badgeClass}`}
+                    className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border bg-[#F0F9FF] text-[#0288D1] border-[#BAE6FD]"
                   >
                     {categoryMeta.label}
                   </span>
                 </div>
-                <p className="text-xs text-[#584B68]">
+                <p className="text-xs text-[#64748B]">
                   Report Date: <strong>{currentReport.reportDate}</strong> • {currentReport.fileName}
                 </p>
               </div>
@@ -211,7 +211,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-xl text-[#8D7E9E] hover:text-[#1C1326] hover:bg-[#F8F5FA] transition-colors cursor-pointer self-start sm:self-center"
+              className="p-2 rounded-xl text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] transition-colors cursor-pointer self-start sm:self-center"
             >
               <X className="w-5 h-5" />
             </button>
@@ -229,7 +229,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
           {isAllVerified ? (
             <div className="p-4 rounded-2xl bg-[#ECFDF5] border border-[#A7F3D0] flex items-center justify-between gap-3 text-xs text-[#065F46]">
               <div className="flex items-center gap-2.5">
-                <CheckCircle2 className="w-5 h-5 text-[#047857] shrink-0" />
+                <CheckCircle2 className="w-5 h-5 text-[#059669] shrink-0" />
                 <div>
                   <span className="font-bold block text-sm">Verified Report</span>
                   <span>
@@ -256,7 +256,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                 type="button"
                 onClick={handleConfirmAllRemaining}
                 disabled={loadingActionId === 'all'}
-                className="px-3.5 py-2 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF] hover:brightness-110 shadow-xs flex items-center justify-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
+                className="px-3.5 py-2 rounded-xl font-bold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-xs flex items-center justify-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
               >
                 {loadingActionId === 'all' ? (
                   <>
@@ -274,9 +274,9 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
           )}
 
           {/* Document Attachment Bar */}
-          <div className="p-3.5 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] flex items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2 text-[#584B68] min-w-0">
-              <FileText className="w-4 h-4 text-[#8E3EAF] shrink-0" />
+          <div className="p-3.5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2 text-[#64748B] min-w-0">
+              <FileText className="w-4 h-4 text-[#0288D1] shrink-0" />
               <span className="truncate">Original Document: {currentReport.fileName}</span>
             </div>
 
@@ -285,7 +285,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                 href={currentReport.filePath}
                 target="_blank"
                 rel="noreferrer"
-                className="px-3 py-1.5 rounded-xl bg-white border border-[#E7DFEF] text-xs font-bold text-[#6E2D8B] hover:bg-[#EDE4F7] transition-colors flex items-center gap-1.5 shrink-0"
+                className="px-3 py-1.5 rounded-xl bg-white border border-[#BAE6FD] text-xs font-bold text-[#0288D1] hover:bg-[#E0F2FE] transition-colors flex items-center gap-1.5 shrink-0"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
                 <span>Open File</span>
@@ -296,10 +296,10 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
           {/* Extracted Results Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold font-display text-[#1C1326]">
+              <h3 className="text-base font-bold font-display text-[#0F172A]">
                 Extracted Test Results ({currentReport.results.length})
               </h3>
-              <span className="text-xs font-mono text-[#8D7E9E]">
+              <span className="text-xs font-mono text-[#64748B]">
                 {currentReport.results.filter((r) => r.userVerified).length} of {currentReport.results.length} verified
               </span>
             </div>
@@ -315,36 +315,36 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                 return (
                   <div
                     key={res.id}
-                    className={`p-5 rounded-3xl bg-white border transition-all shadow-2xs space-y-3 text-left ${
+                    className={`p-5 rounded-3xl bg-white border transition-all shadow-xs space-y-3 text-left ${
                       res.userVerified
-                        ? 'border-[#E7DFEF]'
+                        ? 'border-[#E2E8F0]'
                         : 'border-[#FDE68A] bg-[#FFFDF7]'
                     }`}
                   >
                     {/* Top Row: Test Name, Result, Status, and Verification Action */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-[#F0EAF5]">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-[#E2E8F0]">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-[#1C1326] font-display">
+                          <span className="text-sm font-bold text-[#0F172A] font-display">
                             {res.testName}
                           </span>
                           {res.ocrConfidence && (
-                            <span className="text-[10px] font-mono text-[#8D7E9E] bg-[#F8F5FA] px-1.5 py-0.5 rounded border border-[#E7DFEF]">
+                            <span className="text-[10px] font-mono text-[#64748B] bg-[#F8FAFC] px-1.5 py-0.5 rounded border border-[#E2E8F0]">
                               OCR: {Math.round(res.ocrConfidence * 100)}%
                             </span>
                           )}
                         </div>
-                        <span className="text-xs text-[#584B68]">
+                        <span className="text-xs text-[#64748B]">
                           Typical range: <strong>{res.referenceRange || 'Not specified'}</strong>
                         </span>
                       </div>
 
                       <div className="flex items-center gap-3">
                         <div className="text-right">
-                          <span className="text-base font-extrabold font-display text-[#1C1326]">
+                          <span className="text-base font-extrabold font-display text-[#0F172A]">
                             {res.resultValue}
                           </span>
-                          <span className="text-xs text-[#8D7E9E] font-medium ml-1">
+                          <span className="text-xs text-[#64748B] font-medium ml-1">
                             {res.unit}
                           </span>
                         </div>
@@ -355,8 +355,8 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                     {/* Verification Controls Bar */}
                     <div className="flex flex-wrap items-center justify-between gap-2 pt-1 pb-1">
                       {res.userVerified ? (
-                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#ECFDF5] border border-[#A7F3D0]/70 text-[#047857] text-xs font-medium font-sans">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-[#047857]" />
+                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#ECFDF5] border border-[#A7F3D0]/70 text-[#059669] text-xs font-medium font-sans">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-[#059669]" />
                           <span>Verified by you ✓</span>
                         </div>
                       ) : (
@@ -375,9 +375,9 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                             type="button"
                             onClick={() => handleStartEdit(res)}
                             disabled={isLoadingThis}
-                            className="px-2.5 py-1 rounded-xl bg-white border border-[#E7DFEF] hover:bg-[#F8F5FA] text-xs font-semibold text-[#584B68] flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                            className="px-2.5 py-1 rounded-xl bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] text-xs font-semibold text-[#64748B] flex items-center gap-1 cursor-pointer disabled:opacity-50"
                           >
-                            <Edit2 className="w-3 h-3 text-[#8D7E9E]" />
+                            <Edit2 className="w-3 h-3 text-[#64748B]" />
                             <span>Edit</span>
                           </button>
 
@@ -386,7 +386,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                               type="button"
                               onClick={() => handleConfirmSingle(res.id)}
                               disabled={isLoadingThis}
-                              className="px-3.5 py-1 rounded-xl bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF] text-white text-xs font-bold shadow-xs hover:brightness-110 flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              className="px-3.5 py-1 rounded-xl bg-[#0288D1] text-white text-xs font-bold shadow-xs hover:bg-[#0277BD] flex items-center gap-1 cursor-pointer disabled:opacity-50"
                             >
                               {isLoadingThis ? (
                                 <Loader2 className="w-3 h-3 animate-spin" />
@@ -402,13 +402,13 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
 
                     {/* Inline Editing Form */}
                     {isEditing && (
-                      <div className="p-4 rounded-2xl bg-[#F8F5FA] border border-[#D8B4FE]/80 space-y-3">
-                        <span className="text-xs font-bold text-[#1C1326] block">
+                      <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-[#BAE6FD] space-y-3">
+                        <span className="text-xs font-bold text-[#0F172A] block">
                           Edit Test Value Before Verifying:
                         </span>
                         <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
                           <div className="sm:col-span-2">
-                            <label className="text-[10px] font-mono text-[#8D7E9E] block">
+                            <label className="text-[10px] font-mono text-[#64748B] block">
                               Test Name
                             </label>
                             <input
@@ -417,11 +417,11 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                               onChange={(e) =>
                                 setEditForm({ ...editForm, testName: e.target.value })
                               }
-                              className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#E7DFEF] text-xs font-bold text-[#1C1326] focus:outline-none focus:border-[#8E3EAF]"
+                              className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#E2E8F0] text-xs font-bold text-[#0F172A] focus:outline-none focus:border-[#0288D1]"
                             />
                           </div>
                           <div>
-                            <label className="text-[10px] font-mono text-[#8D7E9E] block">
+                            <label className="text-[10px] font-mono text-[#64748B] block">
                               Result Value
                             </label>
                             <input
@@ -430,24 +430,24 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                               onChange={(e) =>
                                 setEditForm({ ...editForm, resultValue: e.target.value })
                               }
-                              className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#E7DFEF] text-xs font-bold text-[#1C1326] focus:outline-none focus:border-[#8E3EAF]"
+                              className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#E2E8F0] text-xs font-bold text-[#0F172A] focus:outline-none focus:border-[#0288D1]"
                             />
                           </div>
                           <div>
-                            <label className="text-[10px] font-mono text-[#8D7E9E] block">
+                            <label className="text-[10px] font-mono text-[#64748B] block">
                               Unit
                             </label>
                             <input
                               type="text"
                               value={editForm.unit}
                               onChange={(e) => setEditForm({ ...editForm, unit: e.target.value })}
-                              className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#E7DFEF] text-xs text-[#584B68] focus:outline-none focus:border-[#8E3EAF]"
+                              className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#E2E8F0] text-xs text-[#475569] focus:outline-none focus:border-[#0288D1]"
                             />
                           </div>
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-mono text-[#8D7E9E] block">
+                          <label className="text-[10px] font-mono text-[#64748B] block">
                             Typical Range
                           </label>
                           <input
@@ -456,7 +456,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                             onChange={(e) =>
                               setEditForm({ ...editForm, referenceRange: e.target.value })
                             }
-                            className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#E7DFEF] text-xs text-[#584B68] focus:outline-none focus:border-[#8E3EAF]"
+                            className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#E2E8F0] text-xs text-[#475569] focus:outline-none focus:border-[#0288D1]"
                           />
                         </div>
 
@@ -465,7 +465,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                             type="button"
                             onClick={handleCancelEdit}
                             disabled={isLoadingThis}
-                            className="px-3 py-1.5 rounded-xl text-xs font-semibold text-[#584B68] hover:text-[#1C1326] cursor-pointer"
+                            className="px-3 py-1.5 rounded-xl text-xs font-semibold text-[#64748B] hover:text-[#0F172A] cursor-pointer"
                           >
                             Cancel
                           </button>
@@ -473,7 +473,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                             type="button"
                             onClick={() => handleSaveEdit(res.id)}
                             disabled={isLoadingThis}
-                            className="px-4 py-1.5 rounded-xl bg-[#6E2D8B] hover:bg-[#8E3EAF] text-white text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                            className="px-4 py-1.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                           >
                             {isLoadingThis ? (
                               <Loader2 className="w-3 h-3 animate-spin" />
@@ -490,12 +490,12 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
                       {/* What is this? */}
                       {explanation && (
-                        <div className="p-3.5 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF]/60 space-y-1">
-                          <span className="text-[11px] font-mono font-bold text-[#6E2D8B] uppercase tracking-wider flex items-center gap-1.5">
-                            <HelpCircle className="w-3.5 h-3.5 text-[#8E3EAF]" />
+                        <div className="p-3.5 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD]/60 space-y-1">
+                          <span className="text-[11px] font-mono font-bold text-[#01579B] uppercase tracking-wider flex items-center gap-1.5">
+                            <HelpCircle className="w-3.5 h-3.5 text-[#0288D1]" />
                             What is this test?
                           </span>
-                          <p className="text-xs text-[#584B68] leading-relaxed font-sans">
+                          <p className="text-xs text-[#475569] leading-relaxed font-sans">
                             {explanation}
                           </p>
                         </div>
@@ -503,12 +503,12 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
 
                       {/* Connection to Health Timeline */}
                       {timelineText && (
-                        <div className="p-3.5 rounded-2xl bg-[#FAF8FC] border border-[#D8B4FE]/40 space-y-1">
-                          <span className="text-[11px] font-mono font-bold text-[#8E3EAF] uppercase tracking-wider flex items-center gap-1.5">
-                            <Sparkles className="w-3.5 h-3.5 text-[#FB7185]" />
+                        <div className="p-3.5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-1">
+                          <span className="text-[11px] font-mono font-bold text-[#0288D1] uppercase tracking-wider flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-[#0288D1]" />
                             Related to your health journey
                           </span>
-                          <p className="text-xs text-[#584B68] leading-relaxed font-sans">
+                          <p className="text-xs text-[#64748B] leading-relaxed font-sans">
                             {timelineText}
                           </p>
                         </div>
@@ -521,10 +521,10 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
           </div>
 
           {/* Safety & Non-Diagnostic Reassurance */}
-          <div className="p-4 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] flex items-start gap-3 text-xs text-[#584B68] leading-relaxed">
-            <ShieldCheck className="w-4 h-4 text-[#8E3EAF] shrink-0 mt-0.5" />
+          <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] flex items-start gap-3 text-xs text-[#64748B] leading-relaxed">
+            <ShieldCheck className="w-4 h-4 text-[#0288D1] shrink-0 mt-0.5" />
             <span>
-              This result alone cannot tell us the cause. OvaSense helps organize and explain health information; it does not replace medical advice. This report should be reviewed together with your healthcare professional.
+              This result alone cannot tell us the cause. BioPulse AI helps organize and explain health information; it does not replace medical advice. This report should be reviewed together with your healthcare professional.
             </span>
           </div>
         </motion.div>

@@ -3,6 +3,7 @@
 @theme {
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   --font-display: 'Outfit', system-ui, -apple-system, sans-serif;
+  --font-script: 'Caveat', cursive, sans-serif;
 
   /* Brand Primary: Deep Orchid */
   --color-brand-primary: #6E2D8B;
@@ -54,12 +55,37 @@
   --color-brand-info: #4338CA;
   --color-brand-info-soft: #EEF2FF;
   --color-brand-info-border: #C7D2FE;
+
+  /* ── Medical Dashboard Design System (Brand: #29B6F6) ── */
+  --color-medical-primary: #29B6F6;
+  --color-medical-primary-hover: #0288D1;
+  --color-medical-primary-active: #0277BD;
+  --color-medical-primary-dark: #01579B;
+  --color-medical-primary-medium: #4FC3F7;
+  --color-medical-primary-light: #B3E5FC;
+  --color-medical-primary-muted: #E1F5FE;
+  --color-medical-primary-soft: #F0F9FF;
+  --color-medical-primary-border: #BAE6FD;
+  --color-medical-bg: #F8FAFC;
+  --color-medical-card-bg: #FFFFFF;
+  --color-medical-text-primary: #0F172A;
+  --color-medical-text-secondary: #475569;
+  --color-medical-text-muted: #64748B;
+
+  /* ── BioPulse Clinical Tokens ── */
+  --color-primary-teal: #0E9EAA;
+  --color-primary-teal-dark: #073B72;
+  --color-primary-teal-light: #16B8C4;
+  --color-primary-teal-soft: #DDF7F7;
+  --color-primary-teal-tint: #EAFBFC;
+  --color-accent-pink: #F43F7D;
+  --color-accent-pink-soft: #FDE6EF;
 }
 
 @layer base {
   body {
-    background-color: #10071A;
-    color: #FFFFFF;
+    background-color: #FAFCFF;
+    color: #162A45;
     font-family: var(--font-sans);
     overflow-x: hidden;
   }

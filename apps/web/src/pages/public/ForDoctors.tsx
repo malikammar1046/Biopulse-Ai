@@ -30,7 +30,7 @@ export const ForDoctors: React.FC = () => {
       icon: ShieldCheck,
       title: 'Non-Prescriptive & Non-Diagnostic',
       description:
-        'VITASense does not diagnose, prescribe treatment, or replace clinical judgment. We organize patient-generated health data and verified reports to inform clinical discussion.',
+        'BIOPulse AI does not diagnose, prescribe treatment, or replace clinical judgment. We organize patient-generated health data and verified reports to inform clinical discussion.',
     },
     {
       icon: Share2,
@@ -63,7 +63,7 @@ export const ForDoctors: React.FC = () => {
             </h1>
 
             <p className="text-base md:text-lg text-[#B4A6C7] leading-relaxed font-sans max-w-2xl mx-auto">
-              VITASense organizes patient-reported symptoms, hormonal markers, circadian factors, and multi-source lab reports
+              BIOPulse AI organizes patient-reported symptoms, hormonal markers, circadian factors, and multi-source lab reports
               into structured, objective summaries that support clinical workflow and clinician judgment.
             </p>
 
@@ -144,7 +144,7 @@ export const ForDoctors: React.FC = () => {
             <div className="p-6 md:p-8 rounded-3xl bg-gradient-to-br from-[#1E0B30] to-[#0E0317] border border-white/15 shadow-2xl space-y-6">
               <div className="flex items-center justify-between border-b border-white/10 pb-4">
                 <span className="text-xs font-mono font-bold text-[#38BDF8] uppercase tracking-wider">
-                  VITASense Clinical Summary Card
+                  BIOPulse AI Clinical Summary Card
                 </span>
                 <span className="text-xs text-[#B4A6C7] font-mono">Patient-Controlled Authorization</span>
               </div>
@@ -185,7 +185,7 @@ export const ForDoctors: React.FC = () => {
         <Container size="xl">
           <div className="max-w-4xl mx-auto text-center p-8 md:p-12 rounded-3xl bg-gradient-to-br from-[#290E42] via-[#1B082D] to-[#10031B] border border-white/20 shadow-2xl space-y-6">
             <h2 className="text-3xl md:text-4xl font-extrabold font-display text-white">
-              Partner With VITASense Research
+              Partner With BIOPulse AI Research
             </h2>
             <p className="text-sm md:text-base text-[#B4A6C7] max-w-xl mx-auto leading-relaxed">
               We collaborate with academic medical centers, reproductive specialists, and digital health researchers to validate explainable algorithms and improve patient outcomes.

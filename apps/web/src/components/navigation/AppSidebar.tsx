@@ -1,21 +1,21 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard,
-  LayoutGrid,
   Calendar,
   Activity,
   Utensils,
   Dumbbell,
   FileText,
   Pill,
-  Users,
   Stethoscope,
-  GitBranch,
   Settings,
   LogOut,
   Sparkles,
   ClipboardCheck,
+  TrendingUp,
+  ChevronDown,
 } from 'lucide-react';
 import { ROUTES, getPathwayDashboardRoute } from '../../constants/routes';
 import { resolvePathway } from '../../types/onboarding';
@@ -23,10 +23,23 @@ import { Logo } from '../brand/Logo';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { useAuth } from '../../context/AuthContext';
 
+interface NavItem {
+  label: string;
+  path: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+interface NavGroup {
+  id: string;
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  items: NavItem[];
+}
+
 export const AppSidebar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { userProfile, openAiChatWithPrompt } = useUserHealth();
+  const { userProfile } = useUserHealth();
   const { logout } = useAuth();
 
   const handleLogout = async () => {
@@ -38,149 +51,297 @@ export const AppSidebar: React.FC = () => {
   const pathway = resolvePathway(userProfile.gender, userProfile.pathway);
   const brandTagline =
     pathway === 'male'
-      ? 'AndroSense AI'
+      ? "Men's Health Intelligence"
       : pathway === 'female'
-      ? 'OvaSense AI'
-      : 'VITASense';
+      ? "Women's Health Intelligence"
+      : 'Unified Health Intelligence';
 
-  const mainNavItems = [
-    { label: 'Overview', path: overviewPath, icon: LayoutDashboard },
-    { label: 'Master Health Hub', path: ROUTES.APP.HUB, icon: LayoutGrid },
-    {
-      label: pathway === 'male' ? 'AndroSense AI' : pathway === 'female' ? 'OvaSense AI' : 'VITASense AI',
-      path: ROUTES.APP.CHAT,
-      icon: Sparkles,
-    },
-    { label: 'Assessment', path: ROUTES.APP.ASSESSMENT, icon: ClipboardCheck },
-    { label: 'Health Timeline', path: ROUTES.APP.TIMELINE, icon: GitBranch },
-    ...(pathway === 'female'
-      ? [{ label: 'Your Cycle', path: ROUTES.APP.CYCLE, icon: Calendar }]
-      : []),
-    { label: 'Symptoms', path: ROUTES.APP.SYMPTOMS, icon: Activity },
-    { label: 'Food & Meals', path: ROUTES.APP.DIET, icon: Utensils },
-    { label: 'Movement', path: ROUTES.APP.FITNESS, icon: Dumbbell },
-    { label: 'Lab Reports', path: ROUTES.APP.REPORTS, icon: FileText },
-    { label: 'Medications', path: ROUTES.APP.MEDICATIONS, icon: Pill },
-    { label: 'Care Circle', path: ROUTES.APP.CARE_CIRCLE, icon: Users },
-    { label: 'Appointments', path: ROUTES.APP.APPOINTMENTS, icon: Stethoscope },
-  ];
+  const isOverviewActive =
+    location.pathname === overviewPath ||
+    location.pathname === ROUTES.APP.ROOT ||
+    location.pathname === ROUTES.APP.DASHBOARD;
 
-  const bottomNavItems = [
-    { label: 'Settings', path: ROUTES.APP.SETTINGS, icon: Settings },
-  ];
-
-  const isActive = (path: string) => {
+  const isItemActive = (path: string) => {
     if (path === overviewPath) {
-      return (
-        location.pathname === overviewPath ||
-        location.pathname === ROUTES.APP.ROOT ||
-        location.pathname === ROUTES.APP.DASHBOARD
-      );
+      return isOverviewActive;
     }
     return location.pathname === path;
   };
 
-  return (
-    <aside className="w-64 bg-[#180A26] border-r border-white/10 text-white flex flex-col justify-between p-4 hidden md:flex shrink-0 select-none z-30">
-      <div className="space-y-6">
-        {/* Brand Logo at Top */}
-        <div className="px-3 py-3">
-          <Link to={overviewPath} className="flex items-center">
-            <Logo size="sm" theme="dark" showTagline tagline={brandTagline} />
-          </Link>
-        </div>
+  // Section 1: MAIN
+  const mainItems: NavItem[] = [
+    { label: 'Overview', path: overviewPath, icon: LayoutDashboard },
+    { label: 'Nutrition Plan', path: ROUTES.APP.DIET, icon: Utensils },
+    { label: 'Screening', path: ROUTES.APP.ASSESSMENT, icon: ClipboardCheck },
+    { label: 'Progress', path: ROUTES.APP.PROGRESS, icon: TrendingUp },
+  ];
 
-        {/* Primary Navigation Menu */}
+  // Section 2: HEALTH
+  const healthItems: NavItem[] = [
+    { label: 'Reports', path: ROUTES.APP.REPORTS, icon: FileText },
+    { label: 'Appointments', path: ROUTES.APP.APPOINTMENTS, icon: Stethoscope },
+  ];
+
+  // Section 3: DAILY TRACKING (Collapsible, female gets Cycle, male never gets Cycle)
+  const trackingGroup: NavGroup = {
+    id: 'tracking',
+    title: 'Daily Tracking',
+    icon: Activity,
+    items: [
+      ...(pathway === 'female'
+        ? [{ label: 'Cycle', path: ROUTES.APP.CYCLE, icon: Calendar }]
+        : []),
+      { label: 'Symptoms', path: ROUTES.APP.SYMPTOMS, icon: Activity },
+      { label: 'Fitness', path: ROUTES.APP.FITNESS, icon: Dumbbell },
+      { label: 'Medications', path: ROUTES.APP.MEDICATIONS, icon: Pill },
+    ],
+  };
+
+  // Section 4: TOOLS
+  const toolItems: NavItem[] = [
+    { label: 'AI Assistant', path: ROUTES.APP.CHAT, icon: Sparkles },
+  ];
+
+  // Section 5: ACCOUNT
+  const accountItems: NavItem[] = [
+    { label: 'Profile & Settings', path: ROUTES.APP.SETTINGS, icon: Settings },
+  ];
+
+  // Collapsible tracking open/closed state (auto-opens if on a tracking page)
+  const isTrackingActive = trackingGroup.items.some((i) => isItemActive(i.path));
+  const [isTrackingOpen, setIsTrackingOpen] = useState(isTrackingActive);
+
+  useEffect(() => {
+    if (isTrackingActive) {
+      setIsTrackingOpen(true);
+    }
+  }, [location.pathname, isTrackingActive]);
+
+  return (
+    <aside className="w-64 bg-[#F0F9FF] border-r border-[#BAE6FD] text-[#0F172A] flex flex-col h-screen sticky top-0 p-4 hidden md:flex shrink-0 select-none z-30 shadow-xs">
+      {/* Brand Logo at Top */}
+      <div className="px-2 py-2 shrink-0">
+        <Link to={overviewPath} className="flex items-center">
+          <Logo size="sm" theme="light" showTagline tagline={brandTagline} />
+        </Link>
+      </div>
+
+      {/* Navigation Links Area */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden my-3 pr-1 space-y-4 scrollbar-thin scrollbar-thumb-sky-200 hover:scrollbar-thumb-sky-300">
+        {/* ── 1. MAIN Section ── */}
         <nav className="space-y-1">
-          <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#D8B4FE] px-3 mb-2 block">
-            Health Portal
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#0288D1] px-2.5 block mb-1">
+            Main
           </span>
-          {mainNavItems.map((item) => {
-            const active = isActive(item.path);
+
+          {mainItems.map((item) => {
+            const active = isItemActive(item.path);
             const Icon = item.icon;
+
             return (
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all duration-200 group ${
+                className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-200 group border ${
                   active
-                    ? 'bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF] text-white shadow-md shadow-purple-950/50'
-                    : 'text-[#A797BD] hover:bg-white/[0.06] hover:text-white'
+                    ? 'bg-[#0288D1] text-white border-[#0288D1] font-bold shadow-xs'
+                    : 'border-transparent text-[#334155] hover:bg-[#E0F2FE] hover:text-[#0288D1]'
                 }`}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5">
                   <Icon
                     className={`w-4 h-4 transition-colors ${
-                      active ? 'text-white' : 'text-[#A797BD] group-hover:text-white'
+                      active ? 'text-white' : 'text-[#0288D1] group-hover:text-[#0288D1]'
                     }`}
                   />
                   <span>{item.label}</span>
                 </div>
-                {active && <span className="w-1.5 h-1.5 rounded-full bg-[#FB7185]" />}
+                {active && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
               </Link>
             );
           })}
         </nav>
 
-        {/* Digital Twin AI Quick Launcher in Sidebar */}
-        <div className="px-1">
-          <div
-            onClick={() =>
-              openAiChatWithPrompt(
-                pathway === 'male'
-                  ? 'Explain what my hormone health and recent logs mean'
-                  : pathway === 'female'
-                  ? 'Explain what my current cycle day and logs mean'
-                  : 'Explain what my baseline health patterns and logs mean'
-              )
-            }
-            className="p-3.5 rounded-2xl bg-gradient-to-b from-[#250E3E] to-[#140624] border border-[#8E3EAF]/30 hover:border-[#FB7185] text-left cursor-pointer transition-all duration-200 group shadow-md"
-          >
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="flex items-center gap-2 text-xs font-bold text-white">
-                <Sparkles className="w-3.5 h-3.5 text-[#FB7185]" />
-                <span>AI That Explains</span>
+        {/* ── 2. HEALTH Section ── */}
+        <nav className="space-y-1 pt-1">
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#0288D1] px-2.5 block mb-1">
+            Health
+          </span>
+
+          {healthItems.map((item) => {
+            const active = isItemActive(item.path);
+            const Icon = item.icon;
+
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-200 group border ${
+                  active
+                    ? 'bg-[#0288D1] text-white border-[#0288D1] font-bold shadow-xs'
+                    : 'border-transparent text-[#334155] hover:bg-[#E0F2FE] hover:text-[#0288D1]'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Icon
+                    className={`w-4 h-4 transition-colors ${
+                      active ? 'text-white' : 'text-[#0288D1] group-hover:text-[#0288D1]'
+                    }`}
+                  />
+                  <span>{item.label}</span>
+                </div>
+                {active && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* ── 3. DAILY TRACKING (Collapsible) ── */}
+        <div className="pt-1">
+          <div className="rounded-xl overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setIsTrackingOpen(!isTrackingOpen)}
+              className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer select-none group border ${
+                isTrackingActive && !isTrackingOpen
+                  ? 'bg-[#E0F2FE] text-[#0288D1] border-[#BAE6FD]'
+                  : 'border-transparent text-[#334155] hover:text-[#0288D1] hover:bg-[#E0F2FE]'
+              }`}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <Activity className="w-4 h-4 text-[#0288D1] shrink-0" />
+                <span className="truncate">Daily Tracking</span>
+                {isTrackingActive && !isTrackingOpen && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#29B6F6] shrink-0" />
+                )}
               </div>
-              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-[#34D399]/20 text-[#34D399] font-bold">
-                Online
-              </span>
-            </div>
-            <p className="text-[11px] text-[#A797BD] leading-tight group-hover:text-white transition-colors">
-              Your health insights are ready. Ask a question.
-            </p>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-white text-[#0288D1] border border-[#BAE6FD]">
+                  {trackingGroup.items.length}
+                </span>
+                <ChevronDown
+                  className={`w-3.5 h-3.5 text-[#64748B] transition-transform duration-200 ${
+                    isTrackingOpen ? 'rotate-180 text-[#0288D1]' : ''
+                  }`}
+                />
+              </div>
+            </button>
+
+            <AnimatePresence initial={false}>
+              {isTrackingOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.18, ease: 'easeInOut' }}
+                  className="overflow-hidden"
+                >
+                  <div className="ml-3 pl-2.5 my-1 border-l-2 border-[#BAE6FD] space-y-0.5">
+                    {trackingGroup.items.map((item) => {
+                      const active = isItemActive(item.path);
+                      const ItemIcon = item.icon;
+
+                      return (
+                        <Link
+                          key={item.path}
+                          to={item.path}
+                          className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-150 group border ${
+                            active
+                              ? 'bg-[#0288D1] text-white border-[#0288D1] font-semibold shadow-xs'
+                              : 'border-transparent text-[#475569] hover:bg-[#E0F2FE] hover:text-[#0288D1]'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <ItemIcon
+                              className={`w-3.5 h-3.5 shrink-0 transition-colors ${
+                                active
+                                  ? 'text-white'
+                                  : 'text-[#0288D1] group-hover:text-[#0288D1]'
+                              }`}
+                            />
+                            <span className="truncate">{item.label}</span>
+                          </div>
+                          {active && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
+
+        {/* ── 4. TOOLS Section ── */}
+        <nav className="space-y-1 pt-1">
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#0288D1] px-2.5 block mb-1">
+            Tools
+          </span>
+
+          {toolItems.map((item) => {
+            const active = isItemActive(item.path);
+            const Icon = item.icon;
+
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-200 group border ${
+                  active
+                    ? 'bg-[#0288D1] text-white border-[#0288D1] font-bold shadow-xs'
+                    : 'border-transparent text-[#334155] hover:bg-[#E0F2FE] hover:text-[#0288D1]'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Icon
+                    className={`w-4 h-4 transition-colors ${
+                      active ? 'text-white' : 'text-[#0288D1] group-hover:text-[#0288D1]'
+                    }`}
+                  />
+                  <span>{item.label}</span>
+                </div>
+                {active && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+              </Link>
+            );
+          })}
+        </nav>
       </div>
 
-      {/* Bottom Area: Settings, Help & User Profile Card */}
-      <div className="pt-4 border-t border-white/10 space-y-3">
+      {/* ── 5. ACCOUNT & Bottom Area ── */}
+      <div className="pt-3 border-t border-[#BAE6FD] space-y-2.5 shrink-0">
         <nav className="space-y-1">
-          {bottomNavItems.map((item) => {
-            const active = isActive(item.path);
+          {accountItems.map((item) => {
+            const active = isItemActive(item.path);
             const Icon = item.icon;
             return (
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors ${
+                className={`flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors border ${
                   active
-                    ? 'bg-white/10 text-white'
-                    : 'text-[#A797BD] hover:bg-white/5 hover:text-white'
+                    ? 'bg-[#0288D1] text-white border-[#0288D1]'
+                    : 'border-transparent text-[#475569] hover:bg-[#E0F2FE] hover:text-[#0288D1]'
                 }`}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className="w-4 h-4 text-[#0288D1]" />
                 <span>{item.label}</span>
               </Link>
             );
           })}
         </nav>
 
-        {/* User Card at bottom of sidebar */}
-        <div className="p-3 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-full overflow-hidden border border-[#D8B4FE] bg-[#6E2D8B] flex items-center justify-center shrink-0">
+        {/* User Profile Card */}
+        <div className="p-2.5 rounded-xl bg-white border border-[#BAE6FD] flex items-center justify-between gap-2.5 shadow-xs">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-7 h-7 rounded-full overflow-hidden border border-[#BAE6FD] bg-[#0288D1] flex items-center justify-center shrink-0">
               {userProfile.avatarUrl ? (
-                <img src={userProfile.avatarUrl} alt={userProfile.fullName} className="w-full h-full object-cover" />
+                <img
+                  src={userProfile.avatarUrl}
+                  alt={userProfile.fullName}
+                  className="w-full h-full object-cover"
+                />
               ) : (
                 <span className="text-xs font-bold text-white font-mono">
                   {userProfile.fullName.charAt(0)}
@@ -188,10 +349,10 @@ export const AppSidebar: React.FC = () => {
               )}
             </div>
             <div className="min-w-0">
-              <span className="text-xs font-bold text-white block truncate">
+              <span className="text-xs font-bold text-[#0F172A] block truncate">
                 {userProfile.fullName}
               </span>
-              <span className="text-[10px] text-[#A797BD] block truncate">
+              <span className="text-[9px] text-[#64748B] block truncate">
                 {userProfile.email}
               </span>
             </div>
@@ -201,12 +362,14 @@ export const AppSidebar: React.FC = () => {
             type="button"
             onClick={handleLogout}
             title="Sign Out"
-            className="p-1.5 rounded-lg text-[#A797BD] hover:text-[#FB7185] hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+            className="p-1.5 rounded-lg text-[#64748B] hover:text-[#DC2626] hover:bg-[#E0F2FE] transition-colors cursor-pointer shrink-0"
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
     </aside>
   );
 };
+
+export default AppSidebar;

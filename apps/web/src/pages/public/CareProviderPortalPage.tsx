@@ -102,7 +102,7 @@ export const CareProviderPortalPage: React.FC = () => {
               className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-sans font-bold text-xs text-white bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF] hover:brightness-110 transition-all"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Return to VITASense Home</span>
+              <span>Return to BIOPulse AI Home</span>
             </Link>
           </div>
         </motion.div>
@@ -158,7 +158,7 @@ export const CareProviderPortalPage: React.FC = () => {
                 </h3>
               </div>
               <p className="text-xs text-[#F5EEFB] max-w-xl">
-                {patient?.name || 'Your patient'} has invited you to join their VITASense Care Circle. Accept this invitation to confirm your connection.
+                {patient?.name || 'Your patient'} has invited you to join their BIOPulse AI Care Circle. Accept this invitation to confirm your connection.
               </p>
             </div>
 
@@ -582,7 +582,7 @@ export const CareProviderPortalPage: React.FC = () => {
             </div>
 
             <p className="text-xs text-[#584B68] leading-relaxed">
-              Topics discussed by the patient with VITASense AI this week. (Zero raw chat transcripts are ever recorded or exposed).
+              Topics discussed by the patient with BIOPulse AI this week. (Zero raw chat transcripts are ever recorded or exposed).
             </p>
 
             <div className="p-4 rounded-2xl bg-[#FAF5FF] border border-[#D8B4FE]/50 space-y-2">

@@ -29,35 +29,32 @@ export const TimelineHeader: React.FC<TimelineHeaderProps> = ({
       : 'Follicular Phase');
 
   return (
-    <div className="relative overflow-hidden rounded-[36px] bg-gradient-to-br from-[#1C0D2E] via-[#2A1343] to-[#12071F] p-6 sm:p-8 text-white border border-[#8E3EAF]/30 shadow-xl select-none">
-      {/* Background Decorative Glow */}
-      <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-gradient-to-br from-[#FB7185]/20 to-[#8E3EAF]/30 blur-3xl pointer-events-none" />
-
+    <div className="relative overflow-hidden rounded-2xl bg-[#01579B] p-6 sm:p-7 text-white border border-[#0288D1] shadow-md select-none">
       <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
         {/* Left Title & Longitudinal Explainer */}
-        <div className="space-y-3 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-xs font-mono text-[#D8B4FE]">
-            <GitBranch className="w-3.5 h-3.5 text-[#FB7185]" />
+        <div className="space-y-3 max-w-2xl text-left">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 border border-white/20 text-xs font-mono text-white">
+            <GitBranch className="w-3.5 h-3.5 text-[#29B6F6]" />
             <span>Unified Longitudinal Health Journey</span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-extrabold font-display tracking-tight text-white">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
             {userName}’s Health Timeline
           </h1>
 
-          <p className="text-xs sm:text-sm text-[#CDBDD8] leading-relaxed">
-            OvaSense brings together your cycle rhythm, daily symptoms, Pakistani nutrition, movement, lab biomarkers, and medical consultations into one connected longitudinal story.
+          <p className="text-xs sm:text-sm text-[#E0F2FE] leading-relaxed">
+            BIOPulse AI synthesizes your physiological rhythms, reported symptoms, nutrition, movement, lab biomarkers, and clinical consultations into one connected longitudinal story.
           </p>
 
           {/* Quick Metrics Badges */}
           <div className="flex flex-wrap items-center gap-2.5 pt-1">
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/10 text-xs font-semibold text-white border border-white/10">
-              <Calendar className="w-3.5 h-3.5 text-[#FB7185]" />
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/15 text-xs font-semibold text-white border border-white/20">
+              <Calendar className="w-3.5 h-3.5 text-[#29B6F6]" />
               <span>Day {currentCycleDay} • {currentPhase}</span>
             </div>
 
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/10 text-xs font-semibold text-[#D8B4FE] border border-white/10">
-              <Activity className="w-3.5 h-3.5 text-[#34D399]" />
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/15 text-xs font-semibold text-white border border-white/20">
+              <Activity className="w-3.5 h-3.5 text-[#29B6F6]" />
               <span>
                 {filteredEventsCount} of {totalEvents} events shown
               </span>
@@ -71,12 +68,12 @@ export const TimelineHeader: React.FC<TimelineHeaderProps> = ({
             <button
               type="button"
               onClick={onExportPdf}
-              className="inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-white text-[#1C0D2E] hover:bg-[#F8F5FA] hover:shadow-xl text-xs font-bold shadow-lg shadow-black/20 transition-all duration-200 cursor-pointer"
+              className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-white text-[#01579B] hover:bg-[#F0F9FF] text-xs font-semibold shadow-sm transition-all duration-200 cursor-pointer"
             >
-              <Download className="w-4 h-4 text-[#6E2D8B]" />
+              <Download className="w-4 h-4 text-[#0288D1]" />
               <div className="text-left">
                 <span className="block font-bold leading-tight">Download Health Journey</span>
-                <span className="block text-[10px] text-[#584B68] font-normal leading-tight">Doctor-ready summary</span>
+                <span className="block text-[10px] text-[#64748B] font-normal leading-tight">Doctor-ready summary</span>
               </div>
             </button>
           )}
@@ -85,9 +82,9 @@ export const TimelineHeader: React.FC<TimelineHeaderProps> = ({
             <button
               type="button"
               onClick={onOpenAiInsights}
-              className="inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF] hover:brightness-110 text-white text-xs font-bold shadow-lg shadow-purple-950/50 hover:shadow-purple-900/60 border border-white/15 transition-all duration-200 cursor-pointer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#29B6F6] hover:bg-[#4FC3F7] text-[#0F172A] text-xs font-bold shadow-sm transition-all duration-200 cursor-pointer"
             >
-              <Sparkles className="w-4 h-4 text-[#FB7185] animate-pulse" />
+              <Sparkles className="w-4 h-4 text-[#0F172A]" />
               <span>Ask AI Patterns</span>
             </button>
           )}

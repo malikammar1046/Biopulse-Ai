@@ -20,13 +20,13 @@ export const MensHealth: React.FC = () => {
       icon: Clock,
       title: '90-Day Longitudinal Tracking',
       description:
-        'Spermatogenesis operates on a roughly 10-to-12 week cycle. VITASense tracks your metrics across biological cycles so you can observe genuine trends rather than single isolated fluctuations.',
+        'Spermatogenesis operates on a roughly 10-to-12 week cycle. BIOPulse AI tracks your metrics across biological cycles so you can observe genuine trends rather than single isolated fluctuations.',
     },
     {
       icon: FileText,
       title: 'Semen Analysis OCR Reader',
       description:
-        'Scan laboratory semen reports with precision. VITASense organizes volume, motility, morphology, and concentration into patient-friendly charts with reference bounds.',
+        'Scan laboratory semen reports with precision. BIOPulse AI organizes volume, motility, morphology, and concentration into patient-friendly charts with reference bounds.',
     },
     {
       icon: Activity,
@@ -161,7 +161,7 @@ export const MensHealth: React.FC = () => {
           <div className="max-w-4xl mx-auto space-y-12">
             <div className="text-center space-y-3">
               <h2 className="text-3xl md:text-4xl font-bold font-display text-white">
-                How Men Use VITASense
+                How Men Use BIOPulse AI
               </h2>
               <p className="text-sm text-[#B4A6C7]">
                 A discreet, longitudinal, and scientifically grounded pathway.

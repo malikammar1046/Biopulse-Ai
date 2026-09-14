@@ -61,10 +61,10 @@ export const ReportsPage: React.FC = () => {
   if (reportsLoading && reports.length === 0) {
     return (
       <div className="py-24 flex flex-col items-center justify-center text-center space-y-3">
-        <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#6E2D8B] via-[#8E3EAF] to-[#FB7185] flex items-center justify-center animate-pulse">
+        <div className="w-10 h-10 rounded-2xl bg-[#0288D1] flex items-center justify-center animate-pulse shadow-md">
           <div className="w-3 h-3 rounded-full bg-white animate-ping" />
         </div>
-        <p className="text-xs font-mono font-bold tracking-widest text-[#B4A6C7] uppercase">
+        <p className="text-xs font-mono font-bold tracking-widest text-[#64748B] uppercase">
           Loading Your Health Reports...
         </p>
       </div>

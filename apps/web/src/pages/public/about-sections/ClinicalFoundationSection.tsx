@@ -22,7 +22,7 @@ export const ClinicalFoundationSection: React.FC = () => {
           </h2>
 
           <p className="text-base sm:text-lg text-[#EDE4F7] leading-relaxed font-sans max-w-2xl mx-auto">
-            VITASense grounds its models in peer-reviewed clinical guidelines — including the Rotterdam Consensus for PCOS and Endocrine Society Clinical Practice Guidelines for Male Hypogonadism — combined with transparent SHAP explainability and human-centered design.
+            BIOPulse AI grounds its models in peer-reviewed clinical guidelines — including the Rotterdam Consensus for PCOS and Endocrine Society Clinical Practice Guidelines for Male Hypogonadism — combined with transparent SHAP explainability and human-centered design.
           </p>
         </div>
 

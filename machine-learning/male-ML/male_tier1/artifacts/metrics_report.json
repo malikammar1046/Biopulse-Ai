@@ -1,0 +1,182 @@
+{
+  "model_name": "Logistic Regression (Balanced)",
+  "target_population": "Men aged 19-60",
+  "sample_size": {
+    "total_men_19_60": 3575,
+    "train_n": 2860,
+    "test_n": 715,
+    "prevalence_percent": 23.8
+  },
+  "features": [
+    "age",
+    "height_cm",
+    "weight_kg",
+    "bmi",
+    "waist_cm",
+    "low_energy",
+    "sleep_trouble",
+    "low_mood",
+    "low_interest",
+    "high_blood_pressure",
+    "diabetes"
+  ],
+  "cross_validation_benchmark": {
+    "Logistic Regression (Balanced)": {
+      "roc_auc_mean": 0.7225,
+      "roc_auc_std": 0.0295,
+      "pr_auc_mean": 0.4661,
+      "sensitivity_default_mean": 0.621,
+      "brier_score_mean": 0.2106
+    },
+    "Random Forest (Balanced)": {
+      "roc_auc_mean": 0.7141,
+      "roc_auc_std": 0.0264,
+      "pr_auc_mean": 0.4626,
+      "sensitivity_default_mean": 0.6284,
+      "brier_score_mean": 0.2083
+    },
+    "HistGradientBoosting": {
+      "roc_auc_mean": 0.6897,
+      "roc_auc_std": 0.0218,
+      "pr_auc_mean": 0.4278,
+      "sensitivity_default_mean": 0.5814,
+      "brier_score_mean": 0.2078
+    }
+  },
+  "test_evaluation": {
+    "roc_auc": 0.7044,
+    "pr_auc": 0.4201,
+    "brier_score": 0.165,
+    "screening_threshold": 0.1808,
+    "metrics_at_screening_threshold": {
+      "threshold": 0.1808,
+      "sensitivity": 0.8059,
+      "specificity": 0.4459,
+      "precision": 0.3121,
+      "npv": 0.8804,
+      "f1": 0.4499,
+      "accuracy": 0.5315,
+      "confusion_matrix": {
+        "TN": 243,
+        "FP": 302,
+        "FN": 33,
+        "TP": 137
+      }
+    },
+    "metrics_at_default_0_5": {
+      "threshold": 0.5,
+      "sensitivity": 0.1471,
+      "specificity": 0.9651,
+      "precision": 0.5682,
+      "npv": 0.7839,
+      "f1": 0.2336,
+      "accuracy": 0.7706,
+      "confusion_matrix": {
+        "TN": 526,
+        "FP": 19,
+        "FN": 145,
+        "TP": 25
+      }
+    },
+    "age_subpopulation_breakdown": {
+      "19-30": {
+        "n_samples": 197,
+        "positive_count": 38,
+        "positive_prevalence": 0.1929,
+        "roc_auc": 0.812,
+        "sensitivity": 0.6842,
+        "specificity": 0.7673,
+        "precision": 0.4127,
+        "npv": 0.9104
+      },
+      "31-40": {
+        "n_samples": 170,
+        "positive_count": 44,
+        "positive_prevalence": 0.2588,
+        "roc_auc": 0.6587,
+        "sensitivity": 0.75,
+        "specificity": 0.3889,
+        "precision": 0.3,
+        "npv": 0.8167
+      },
+      "41-50": {
+        "n_samples": 177,
+        "positive_count": 49,
+        "positive_prevalence": 0.2768,
+        "roc_auc": 0.654,
+        "sensitivity": 0.898,
+        "specificity": 0.2656,
+        "precision": 0.3188,
+        "npv": 0.8718
+      },
+      "51-60": {
+        "n_samples": 171,
+        "positive_count": 39,
+        "positive_prevalence": 0.2281,
+        "roc_auc": 0.6758,
+        "sensitivity": 0.8718,
+        "specificity": 0.2879,
+        "precision": 0.2656,
+        "npv": 0.8837
+      }
+    }
+  },
+  "feature_weights": {
+    "age": {
+      "coefficient": 0.1023,
+      "odds_ratio": 1.1077,
+      "risk_direction": "Increases Risk"
+    },
+    "height_cm": {
+      "coefficient": -0.0802,
+      "odds_ratio": 0.9229,
+      "risk_direction": "Decreases Risk"
+    },
+    "weight_kg": {
+      "coefficient": -0.0053,
+      "odds_ratio": 0.9947,
+      "risk_direction": "Decreases Risk"
+    },
+    "bmi": {
+      "coefficient": 0.2257,
+      "odds_ratio": 1.2533,
+      "risk_direction": "Increases Risk"
+    },
+    "waist_cm": {
+      "coefficient": 0.6082,
+      "odds_ratio": 1.8371,
+      "risk_direction": "Increases Risk"
+    },
+    "low_energy": {
+      "coefficient": -0.0261,
+      "odds_ratio": 0.9742,
+      "risk_direction": "Decreases Risk"
+    },
+    "sleep_trouble": {
+      "coefficient": 0.0004,
+      "odds_ratio": 1.0004,
+      "risk_direction": "Increases Risk"
+    },
+    "low_mood": {
+      "coefficient": -0.047,
+      "odds_ratio": 0.9541,
+      "risk_direction": "Decreases Risk"
+    },
+    "low_interest": {
+      "coefficient": 0.0047,
+      "odds_ratio": 1.0047,
+      "risk_direction": "Increases Risk"
+    },
+    "high_blood_pressure": {
+      "coefficient": 0.0142,
+      "odds_ratio": 1.0143,
+      "risk_direction": "Increases Risk"
+    },
+    "diabetes": {
+      "coefficient": 0.1267,
+      "odds_ratio": 1.1351,
+      "risk_direction": "Increases Risk"
+    }
+  },
+  "safety_disclaimer": "This model is an educational risk screening tool, NOT a diagnostic device. A clinical diagnosis of male hypogonadism requires repeated morning fasting blood serum testosterone laboratory tests and clinical evaluation by a licensed healthcare provider."
+}

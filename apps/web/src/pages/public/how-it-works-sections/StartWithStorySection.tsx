@@ -29,7 +29,7 @@ export const StartWithStorySection: React.FC = () => {
             </h3>
 
             <p className="text-sm sm:text-base text-[#584B68] leading-relaxed font-sans">
-              VITASense begins with information that is already available to you. You are never required to obtain expensive, invasive tests before getting meaningful educational feedback.
+              BIOPulse AI begins with information that is already available to you. You are never required to obtain expensive, invasive tests before getting meaningful educational feedback.
             </p>
 
             <div className="space-y-3 pt-2">
@@ -69,7 +69,7 @@ export const StartWithStorySection: React.FC = () => {
               {/* Core Tree Node */}
               <div className="flex flex-col items-center space-y-2">
                 <div className="px-5 py-2.5 rounded-2xl bg-[#1C1326] text-white text-xs font-mono font-bold shadow-md">
-                  VITASense AI Platform
+                  BIOPulse AI Platform
                 </div>
                 <ArrowDown className="w-4 h-4 text-[#8D7E9E]" />
               </div>

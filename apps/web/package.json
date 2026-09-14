@@ -25,6 +25,8 @@
     "three": "^0.185.1"
   },
   "devDependencies": {
+    "@reticlehq/react": "^2.13.1",
+    "@reticlehq/vite-plugin": "^2.13.1",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",

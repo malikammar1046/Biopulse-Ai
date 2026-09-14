@@ -33,7 +33,7 @@ export const VerifyControlSection: React.FC = () => {
             </h2>
 
             <p className="text-base sm:text-lg text-[#584B68] leading-relaxed font-sans">
-              Algorithmic document reading is helpful, but healthcare decisions demand uncompromising accuracy. In VITASense, every single parsed number must be inspected and verified by you before it enters your screening profile.
+              Algorithmic document reading is helpful, but healthcare decisions demand uncompromising accuracy. In BIOPulse AI, every single parsed number must be inspected and verified by you before it enters your screening profile.
             </p>
 
             <div className="space-y-3">
@@ -56,7 +56,7 @@ export const VerifyControlSection: React.FC = () => {
                 <div className="space-y-1 text-xs text-[#584B68]">
                   <strong className="text-[#1C1326] block">Contextual Specimen Timing</strong>
                   <p className="leading-relaxed">
-                    For sensitive biomarkers — such as morning testosterone draws (men) or cycle day-3 gonadotropins (women) — VITASense records testing conditions so the evaluation reflects accurate clinical realities.
+                    For sensitive biomarkers — such as morning testosterone draws (men) or cycle day-3 gonadotropins (women) — BIOPulse AI records testing conditions so the evaluation reflects accurate clinical realities.
                   </p>
                 </div>
               </div>

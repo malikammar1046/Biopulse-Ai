@@ -83,7 +83,7 @@ export const WhyCareCircleDifferentSection: React.FC = () => {
               Traditional Fragmented Healthcare
             </span>
             <span className="text-[#6E2D8B] uppercase tracking-wider">
-              The VITASense Care Circle Experience
+              The BIOPulse AI Care Circle Experience
             </span>
           </div>
 
@@ -102,7 +102,7 @@ export const WhyCareCircleDifferentSection: React.FC = () => {
                   <span>{row.traditional}</span>
                 </div>
 
-                {/* VITASense */}
+                {/* BIOPulse AI */}
                 <div className="flex items-start gap-3 text-[#1C1326] font-medium pl-0 sm:pl-2">
                   <div className="w-5 h-5 rounded-full bg-[#047857]/15 text-[#047857] flex items-center justify-center shrink-0 mt-0.5">
                     <Check className="w-3.5 h-3.5 stroke-[2.5]" />

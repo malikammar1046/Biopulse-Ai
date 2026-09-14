@@ -1,87 +1,159 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
-  Settings,
-  User,
-  HeartPulse,
-  Calendar,
-  Utensils,
-  Target,
-  ShieldCheck,
-  Save,
   CheckCircle2,
-  RefreshCw,
-  Plus,
+  AlertCircle,
   X,
+  Trash2,
+  ChevronRight,
+  Loader2,
 } from 'lucide-react';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { useAuth } from '../../context/AuthContext';
 import { ROUTES } from '../../constants/routes';
-import type { UserProfile, EmergencyContact, MedicationItem } from '../../types/onboarding';
+import type { UserProfile } from '../../types/onboarding';
 import {
-  DEFAULT_ALLERGY_OPTIONS,
-  DEFAULT_CONDITION_OPTIONS,
-  DEFAULT_SYMPTOM_OPTIONS,
-  DIETARY_PREFERENCE_OPTIONS,
-  EXERCISE_PREFERENCE_OPTIONS,
-  HEALTH_GOAL_OPTIONS,
-} from '../../data/mockOnboardingData';
+  validateDateOfBirth,
+  validatePakistaniPhone,
+} from '../../utils/profileValidation';
 
-const TABS = [
-  { id: 'personal', label: 'Personal & Basics', icon: User },
-  { id: 'emergency', label: 'Safety & Contacts', icon: ShieldCheck },
-  { id: 'medical', label: 'Medical History', icon: HeartPulse },
-  { id: 'cycle', label: "Women's Health", icon: Calendar },
-  { id: 'lifestyle', label: 'Lifestyle & Diet', icon: Utensils },
-  { id: 'goals', label: 'Goals & Preferences', icon: Target },
-];
+import type { SettingsTabId } from './settings/settingsTypes';
+import {
+  getSettingsTabs,
+  hasAssessmentRelevantEdits,
+  calculateProfileCompleteness,
+} from './settings/settingsTypes';
+import { AssessmentStatusHeader } from './settings/AssessmentStatusHeader';
+import { CompletenessCard } from './settings/CompletenessCard';
+import { StickySaveBar } from './settings/StickySaveBar';
+import { ReassessmentModal } from './settings/ReassessmentModal';
 
-const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Not Sure'];
-
-const PRESET_AVATARS = [
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150&auto=format&fit=crop&q=80',
-];
+// Tabs
+import { PersonalTab } from './settings/tabs/PersonalTab';
+import { HealthProfileTab } from './settings/tabs/HealthProfileTab';
+import { FemaleScreeningTab } from './settings/tabs/FemaleScreeningTab';
+import { MaleScreeningTab } from './settings/tabs/MaleScreeningTab';
+import { LifestyleTab } from './settings/tabs/LifestyleTab';
+import { NutritionTab } from './settings/tabs/NutritionTab';
+import { GoalsTab } from './settings/tabs/GoalsTab';
+import { AccountTab } from './settings/tabs/AccountTab';
 
 export const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
-  const { userProfile, updateUserProfile, resetToDefaultProfile } = useUserHealth();
-  const { logout } = useAuth();
+  const { userProfile, updateUserProfile, submitTier1 } = useUserHealth();
+  const { logout, deleteAccountAndData } = useAuth();
 
-  const [activeTab, setActiveTab] = useState('personal');
-  const [draft, setDraft] = useState<UserProfile>(() => JSON.parse(JSON.stringify(userProfile)));
+  const isMale = userProfile?.pathway === 'male' || userProfile?.gender === 'male';
+
+  const [activeTab, setActiveTab] = useState<SettingsTabId>('personal');
+  const [draft, setDraft] = useState<UserProfile>(() =>
+    JSON.parse(JSON.stringify(userProfile || {}))
+  );
+
+  // Sync draft when userProfile changes initially or after a server update
+  useEffect(() => {
+    if (userProfile && !isSaving) {
+      setDraft(JSON.parse(JSON.stringify(userProfile)));
+    }
+  }, [userProfile?.id, userProfile?.updatedAt]);
+
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [saveError, setSaveError] = useState<string | undefined>(undefined);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Sub-form temp inputs
-  const [customAllergy, setCustomAllergy] = useState('');
-  const [customCondition, setCustomCondition] = useState('');
-  const [newMedName, setNewMedName] = useState('');
-  const [newMedDosage, setNewMedDosage] = useState('');
-  const [newMedFreq, setNewMedFreq] = useState('');
-  const [showAddMed, setShowAddMed] = useState(false);
+  // Validation state
+  const [validationErrors, setValidationErrors] = useState<{
+    dateOfBirth?: string;
+    phone?: string;
+  }>({});
 
-  const handleSave = async () => {
+  // Reassessment prompt modal state
+  const [showReassessPrompt, setShowReassessPrompt] = useState(false);
+
+  // Account & Data Deletion modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // Calculate change status
+  const hasChanges = useMemo(() => {
+    if (!userProfile) return false;
+    return JSON.stringify(draft) !== JSON.stringify(userProfile);
+  }, [draft, userProfile]);
+
+  const hasAssessmentChanges = useMemo(() => {
+    if (!userProfile) return false;
+    return hasAssessmentRelevantEdits(draft, userProfile, isMale);
+  }, [draft, userProfile, isMale]);
+
+  // Genuine completeness score
+  const completeness = useMemo(() => {
+    return calculateProfileCompleteness(draft, isMale);
+  }, [draft, isMale]);
+
+  const tabs = useMemo(() => getSettingsTabs(isMale), [isMale]);
+
+  // Validation
+  const validateForm = (): boolean => {
+    const dobCheck = validateDateOfBirth(draft.dateOfBirth);
+    const phoneCheck = validatePakistaniPhone(draft.phone);
+
+    const errors: { dateOfBirth?: string; phone?: string } = {};
+    if (!dobCheck.isValid) {
+      errors.dateOfBirth = dobCheck.error;
+    }
+    if (!phoneCheck.isValid) {
+      errors.phone = phoneCheck.error;
+    }
+
+    setValidationErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      setActiveTab('personal');
+      setSaveError('Please correct demographic validation errors before saving.');
+      return false;
+    }
+    return true;
+  };
+
+  // Save handler
+  const handleSave = async (withReassessment = false) => {
+    if (!validateForm()) return;
+
     setIsSaving(true);
-    setSaveError(undefined);
+    setSaveError(null);
     setSaveSuccess(false);
 
     try {
+      const hadAssessmentChanges = hasAssessmentChanges;
       const res = await updateUserProfile(draft);
       if (res.success) {
         setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 3000);
+        setTimeout(() => setSaveSuccess(false), 4000);
+
+        if (withReassessment) {
+          // Direct Save & Recalculate
+          await submitTier1();
+        } else if (hadAssessmentChanges) {
+          // Open prompt offering user reassessment
+          setShowReassessPrompt(true);
+        }
       } else {
-        setSaveError(res.error || 'Failed to update profile.');
+        setSaveError(res.error || 'Failed to save profile changes.');
       }
-    } catch {
-      setSaveError('A connection error occurred while saving profile.');
+    } catch (err: any) {
+      setSaveError(err?.message || 'A network error occurred while saving profile.');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDiscard = () => {
+    if (userProfile) {
+      setDraft(JSON.parse(JSON.stringify(userProfile)));
+      setValidationErrors({});
+      setSaveError(null);
     }
   };
 
@@ -94,892 +166,297 @@ export const SettingsPage: React.FC = () => {
     navigate(ROUTES.LOGIN);
   };
 
-  const handleReset = () => {
-    resetToDefaultProfile();
-    setTimeout(() => {
-      window.location.reload();
-    }, 100);
-  };
-
-  const primaryContact: EmergencyContact = draft.emergencyContacts?.[0] || {
-    name: '',
-    relationship: 'Partner / Spouse',
-    phone: '',
-    isPrimary: true,
-  };
-
-  const updatePrimary = (field: keyof EmergencyContact, val: string) => {
-    const list = [...(draft.emergencyContacts || [])];
-    list[0] = { ...primaryContact, [field]: val, isPrimary: true };
-    setDraft((prev) => ({ ...prev, emergencyContacts: list }));
-  };
-
-  const toggleAllergy = (allergy: string) => {
-    const list = [...(draft.medical?.allergies || [])];
-    if (allergy === 'None') {
-      setDraft((prev) => ({ ...prev, medical: { ...prev.medical, allergies: ['None'] } }));
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText.trim().toUpperCase() !== 'DELETE') {
+      setDeleteError('Please type DELETE to confirm.');
       return;
     }
-    const filtered = list.filter((a) => a !== 'None');
-    if (filtered.includes(allergy)) {
-      setDraft((prev) => ({ ...prev, medical: { ...prev.medical, allergies: filtered.filter((a) => a !== allergy) } }));
-    } else {
-      setDraft((prev) => ({ ...prev, medical: { ...prev.medical, allergies: [...filtered, allergy] } }));
-    }
-  };
 
-  const addCustomAllergy = () => {
-    if (!customAllergy.trim()) return;
-    const list = (draft.medical?.allergies || []).filter((a) => a !== 'None');
-    if (!list.includes(customAllergy.trim())) {
-      setDraft((prev) => ({ ...prev, medical: { ...prev.medical, allergies: [...list, customAllergy.trim()] } }));
-    }
-    setCustomAllergy('');
-  };
+    setIsDeleting(true);
+    setDeleteError(null);
 
-  const toggleCondition = (cond: string) => {
-    const list = [...(draft.medical?.conditions || [])];
-    if (cond === 'None') {
-      setDraft((prev) => ({ ...prev, medical: { ...prev.medical, conditions: ['None'] } }));
-      return;
-    }
-    const filtered = list.filter((c) => c !== 'None');
-    if (filtered.includes(cond)) {
-      setDraft((prev) => ({ ...prev, medical: { ...prev.medical, conditions: filtered.filter((c) => c !== cond) } }));
-    } else {
-      setDraft((prev) => ({ ...prev, medical: { ...prev.medical, conditions: [...filtered, cond] } }));
-    }
-  };
-
-  const addCustomCondition = () => {
-    if (!customCondition.trim()) return;
-    const list = (draft.medical?.conditions || []).filter((c) => c !== 'None');
-    if (!list.includes(customCondition.trim())) {
-      setDraft((prev) => ({ ...prev, medical: { ...prev.medical, conditions: [...list, customCondition.trim()] } }));
-    }
-    setCustomCondition('');
-  };
-
-  const handleAddMed = () => {
-    if (!newMedName.trim()) return;
-    const item: MedicationItem = {
-      id: `med_${Date.now()}`,
-      name: newMedName.trim(),
-      dosage: newMedDosage.trim() || 'Standard Dose',
-      frequency: newMedFreq.trim() || 'Daily',
-      takenToday: false,
-    };
-    setDraft((prev) => ({
-      ...prev,
-      medical: { ...prev.medical, medications: [...(prev.medical?.medications || []), item] },
-    }));
-    setNewMedName('');
-    setNewMedDosage('');
-    setNewMedFreq('');
-    setShowAddMed(false);
-  };
-
-  const removeMed = (id: string) => {
-    setDraft((prev) => ({
-      ...prev,
-      medical: {
-        ...prev.medical,
-        medications: (prev.medical?.medications || []).filter((m) => m.id !== id),
-      },
-    }));
-  };
-
-  const toggleSymptom = (sym: string) => {
-    const list = [...(draft.womensHealth?.commonSymptoms || [])];
-    if (list.includes(sym)) {
-      setDraft((prev) => ({ ...prev, womensHealth: { ...prev.womensHealth, commonSymptoms: list.filter((s) => s !== sym) } }));
-    } else {
-      setDraft((prev) => ({ ...prev, womensHealth: { ...prev.womensHealth, commonSymptoms: [...list, sym] } }));
-    }
-  };
-
-  const toggleExercise = (ex: string) => {
-    const list = [...(draft.lifestyle?.exercisePreferences || [])];
-    if (list.includes(ex)) {
-      setDraft((prev) => ({ ...prev, lifestyle: { ...prev.lifestyle, exercisePreferences: list.filter((e) => e !== ex) } }));
-    } else {
-      setDraft((prev) => ({ ...prev, lifestyle: { ...prev.lifestyle, exercisePreferences: [...list, ex] } }));
-    }
-  };
-
-  const toggleGoal = (goal: string) => {
-    const list = [...(draft.goals?.selectedGoals || [])];
-    if (list.includes(goal)) {
-      setDraft((prev) => ({ ...prev, goals: { ...prev.goals, selectedGoals: list.filter((g) => g !== goal) } }));
-    } else {
-      setDraft((prev) => ({ ...prev, goals: { ...prev.goals, selectedGoals: [...list, goal] } }));
+    try {
+      const res = await deleteAccountAndData();
+      if (res.success) {
+        setShowDeleteModal(false);
+        navigate(ROUTES.LOGIN, { replace: true });
+        window.location.reload();
+      } else {
+        setDeleteError(res.error || 'Failed to delete account and data.');
+        setIsDeleting(false);
+      }
+    } catch (err: any) {
+      setDeleteError(err?.message || 'An unexpected error occurred during deletion.');
+      setIsDeleting(false);
     }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="max-w-6xl mx-auto space-y-6 text-left select-none pb-16"
-    >
-      {/* ── Page Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E7DFEF]">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-xl bg-[#EDE4F7] text-[#6E2D8B]">
-              <Settings className="w-5 h-5" />
-            </span>
-            <h1 className="text-2xl font-bold font-display text-[#1C1326]">
-              Personal Health Profile & Settings
+    <div className="min-h-screen bg-slate-50/50 pb-28 pt-4 sm:pt-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      {/* ── 1. PAGE HEADER ── */}
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs font-bold text-primary-teal uppercase tracking-wider">
+                Clinical Health Center
+              </span>
+              <span className="text-slate-300">•</span>
+              <span className="text-xs font-medium text-slate-500">
+                {isMale ? 'Male Hypogonadism Protocol' : 'PCOS Screening Protocol'}
+              </span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+              Profile & Settings
             </h1>
+            <p className="text-sm text-slate-500 mt-1">
+              Manage your personal biometrics, clinical symptoms, and AI model inputs
+            </p>
           </div>
-          <p className="text-xs text-[#584B68] mt-1">
-            Update your medical baselines, lifestyle rhythms, and emergency preferences. Changes dynamically update your dashboard.
-          </p>
-        </div>
 
-        <div className="flex items-center gap-2.5 self-start sm:self-auto">
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="px-4 py-2.5 rounded-2xl font-sans font-bold text-xs text-[#584B68] bg-white border border-[#E7DFEF] hover:bg-[#FDF2F8] hover:text-[#FB7185] transition-all cursor-pointer"
-          >
-            Sign Out
-          </button>
-
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={isSaving}
-            className="px-5 py-2.5 rounded-2xl font-sans font-bold text-xs text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#E87084] hover:brightness-110 shadow-md shadow-purple-950/20 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-70"
-          >
-            {isSaving ? (
-              <>
-                <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                <span>Saving...</span>
-              </>
-            ) : saveSuccess ? (
-              <>
-                <CheckCircle2 className="w-4 h-4 text-[#34D399]" />
-                <span>Changes Saved ✓</span>
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4" />
-                <span>Save Profile Changes</span>
-              </>
+          {/* Top Status Indicators */}
+          <div className="flex items-center gap-2">
+            {saveSuccess && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-xs"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Changes saved</span>
+              </motion.div>
             )}
-          </button>
-        </div>
-      </div>
 
-      {/* Save Error Alert */}
-      {saveError && (
-        <div className="p-4 rounded-2xl bg-[#E87084]/15 border border-[#E87084]/40 text-xs text-[#FDA4AF]">
-          {saveError}
+            {hasChanges && (
+              <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <span>Unsaved changes</span>
+              </div>
+            )}
+          </div>
         </div>
-      )}
 
-      {/* ── Tabs Navigation ── */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {TABS.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
+        {/* Global Error Banner */}
+        {saveError && (
+          <div className="mt-4 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-between text-xs text-rose-700 font-medium">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+              <span>{saveError}</span>
+            </div>
             <button
-              key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${
-                isActive
-                  ? 'bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF] text-white shadow-md'
-                  : 'bg-white border border-[#E7DFEF] text-[#584B68] hover:bg-[#F2ECF7]'
-              }`}
+              onClick={() => setSaveError(null)}
+              className="p-1 hover:bg-rose-100 rounded-md"
             >
-              <Icon className="w-4 h-4" />
-              <span>{tab.label}</span>
+              <X className="w-3.5 h-3.5" />
             </button>
-          );
-        })}
+          </div>
+        )}
       </div>
 
-      {/* ── Active Tab Form Card ── */}
-      <div className="p-6 sm:p-8 rounded-[32px] bg-white border border-[#E7DFEF] shadow-sm space-y-6">
-        <AnimatePresence mode="wait">
-          {/* TAB 1: PERSONAL */}
-          {activeTab === 'personal' && (
-            <motion.div
-              key="tab-personal"
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              className="space-y-6"
-            >
-              <div className="flex items-center justify-between pb-3 border-b border-[#F0EAF5]">
-                <h3 className="text-base font-bold font-display text-[#1C1326]">
-                  Personal Identifiers & Biometrics
-                </h3>
-                <span className="text-[10px] font-mono text-[#8D7E9E]">Step 1 Baseline</span>
-              </div>
+      {/* ── 2. ASSESSMENT STATUS & COMPLETENESS ROW ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-8">
+        <div className="lg:col-span-7">
+          <AssessmentStatusHeader isMale={isMale} />
+        </div>
+        <div className="lg:col-span-5">
+          <CompletenessCard completeness={completeness} isMale={isMale} />
+        </div>
+      </div>
 
-              {/* Avatar Chooser */}
-              <div className="p-4 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] flex flex-col sm:flex-row items-center gap-4">
-                <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#8E3EAF] bg-[#EDE4F7] flex items-center justify-center shrink-0">
-                  {draft.avatarUrl ? (
-                    <img src={draft.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    <User className="w-8 h-8 text-[#6E2D8B]" />
-                  )}
-                </div>
-                <div className="space-y-1.5 flex-1 text-center sm:text-left">
-                  <span className="text-xs font-bold text-[#1C1326] block font-mono uppercase">Profile Photo</span>
-                  <div className="flex items-center gap-2 justify-center sm:justify-start">
-                    {PRESET_AVATARS.map((url, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => setDraft((p) => ({ ...p, avatarUrl: url }))}
-                        className={`w-7 h-7 rounded-full overflow-hidden border-2 transition-transform cursor-pointer ${
-                          draft.avatarUrl === url ? 'border-[#8E3EAF] scale-110 shadow-sm' : 'border-[#E7DFEF]'
-                        }`}
-                      >
-                        <img src={url} alt={`Preset ${idx}`} className="w-full h-full object-cover" />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
+      {/* ── 3. MAIN WORKSPACE: LEFT-TAB NAVIGATION + CONTENT ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left-Rail Segmented Tab Navigation */}
+        <div className="lg:col-span-4 xl:col-span-3 sticky top-6 z-10">
+          <div className="bg-white rounded-3xl p-3 border border-slate-200/80 shadow-xs space-y-1">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+              const Icon = tab.icon;
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5 sm:col-span-2">
-                  <label className="text-xs font-bold font-mono text-[#1C1326] uppercase">Full Name *</label>
-                  <input
-                    type="text"
-                    value={draft.fullName}
-                    onChange={(e) => setDraft((p) => ({ ...p, fullName: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] text-sm text-[#1C1326] focus:outline-none focus:ring-2 focus:ring-[#8E3EAF]"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold font-mono text-[#1C1326] uppercase">Date of Birth *</label>
-                  <input
-                    type="date"
-                    value={draft.dateOfBirth}
-                    onChange={(e) => setDraft((p) => ({ ...p, dateOfBirth: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] text-sm text-[#1C1326] focus:outline-none focus:ring-2 focus:ring-[#8E3EAF]"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold font-mono text-[#1C1326] uppercase">Phone Number *</label>
-                  <input
-                    type="tel"
-                    value={draft.phone}
-                    onChange={(e) => setDraft((p) => ({ ...p, phone: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] text-sm text-[#1C1326] focus:outline-none focus:ring-2 focus:ring-[#8E3EAF]"
-                  />
-                </div>
-
-                <div className="space-y-1.5 sm:col-span-2">
-                  <label className="text-xs font-bold font-mono text-[#1C1326] uppercase">Email Address *</label>
-                  <input
-                    type="email"
-                    value={draft.email}
-                    onChange={(e) => setDraft((p) => ({ ...p, email: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] text-sm text-[#1C1326] focus:outline-none focus:ring-2 focus:ring-[#8E3EAF]"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold font-mono text-[#1C1326] uppercase">Height (cm)</label>
-                  <input
-                    type="number"
-                    placeholder="e.g. 165"
-                    value={draft.heightCm ?? ''}
-                    onChange={(e) => setDraft((p) => ({ ...p, heightCm: e.target.value ? parseFloat(e.target.value) : null }))}
-                    className="w-full px-4 py-3 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] text-sm text-[#1C1326] focus:outline-none focus:ring-2 focus:ring-[#8E3EAF]"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold font-mono text-[#1C1326] uppercase">Weight (kg)</label>
-                  <input
-                    type="number"
-                    placeholder="e.g. 62"
-                    step="0.5"
-                    value={draft.weightKg ?? ''}
-                    onChange={(e) => setDraft((p) => ({ ...p, weightKg: e.target.value ? parseFloat(e.target.value) : null }))}
-                    className="w-full px-4 py-3 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] text-sm text-[#1C1326] focus:outline-none focus:ring-2 focus:ring-[#8E3EAF]"
-                  />
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* TAB 2: EMERGENCY */}
-          {activeTab === 'emergency' && (
-            <motion.div
-              key="tab-emergency"
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              className="space-y-6"
-            >
-              <div className="flex items-center justify-between pb-3 border-b border-[#F0EAF5]">
-                <h3 className="text-base font-bold font-display text-[#1C1326]">
-                  Primary Emergency Contact
-                </h3>
-                <span className="text-[10px] font-mono text-[#047857] font-bold">Encrypted & Accessible</span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5 sm:col-span-2">
-                  <label className="text-xs font-bold font-mono text-[#1C1326] uppercase">Contact Full Name *</label>
-                  <input
-                    type="text"
-                    value={primaryContact.name}
-                    onChange={(e) => updatePrimary('name', e.target.value)}
-                    placeholder="e.g. Zubair Khan"
-                    className="w-full px-4 py-3 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] text-sm text-[#1C1326] focus:outline-none focus:ring-2 focus:ring-[#8E3EAF]"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold font-mono text-[#1C1326] uppercase">Relationship *</label>
-                  <input
-                    type="text"
-                    value={primaryContact.relationship}
-                    onChange={(e) => updatePrimary('relationship', e.target.value)}
-                    placeholder="e.g. Partner / Spouse, Sibling"
-                    className="w-full px-4 py-3 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] text-sm text-[#1C1326] focus:outline-none focus:ring-2 focus:ring-[#8E3EAF]"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold font-mono text-[#1C1326] uppercase">Phone Number *</label>
-                  <input
-                    type="tel"
-                    value={primaryContact.phone}
-                    onChange={(e) => updatePrimary('phone', e.target.value)}
-                    placeholder="+92 321 7654321"
-                    className="w-full px-4 py-3 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] text-sm text-[#1C1326] focus:outline-none focus:ring-2 focus:ring-[#8E3EAF]"
-                  />
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* TAB 3: MEDICAL */}
-          {activeTab === 'medical' && (
-            <motion.div
-              key="tab-medical"
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              className="space-y-6"
-            >
-              <div className="flex items-center justify-between pb-3 border-b border-[#F0EAF5]">
-                <h3 className="text-base font-bold font-display text-[#1C1326]">
-                  Medical History & Medications
-                </h3>
-                <span className="text-[10px] font-mono text-[#8D7E9E]">Optional Baselines</span>
-              </div>
-
-              {/* Blood Type */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold font-mono text-[#1C1326] uppercase block">Blood Type</label>
-                <div className="flex flex-wrap gap-2">
-                  {BLOOD_TYPES.map((bt) => {
-                    const isSelected = draft.medical?.bloodType === bt;
-                    return (
-                      <button
-                        key={bt}
-                        type="button"
-                        onClick={() => setDraft((p) => ({ ...p, medical: { ...p.medical, bloodType: bt } }))}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
-                          isSelected
-                            ? 'bg-[#6E2D8B] text-white shadow-xs'
-                            : 'bg-[#F8F5FA] border border-[#E7DFEF] text-[#584B68] hover:bg-[#EDE4F7]'
-                        }`}
-                      >
-                        {bt}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Allergies */}
-              <div className="space-y-2 pt-2 border-t border-[#F0EAF5]">
-                <label className="text-xs font-bold font-mono text-[#1C1326] uppercase block">Known Allergies</label>
-                <div className="flex flex-wrap gap-2">
-                  {DEFAULT_ALLERGY_OPTIONS.map((a) => {
-                    const isSelected = draft.medical?.allergies?.includes(a);
-                    return (
-                      <button
-                        key={a}
-                        type="button"
-                        onClick={() => toggleAllergy(a)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-                          isSelected
-                            ? 'bg-[#FB7185] text-white shadow-xs'
-                            : 'bg-[#F8F5FA] border border-[#E7DFEF] text-[#584B68] hover:bg-[#FDF2F8]'
-                        }`}
-                      >
-                        {isSelected && '✓ '}
-                        {a}
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className="flex gap-2 pt-1 max-w-sm">
-                  <input
-                    type="text"
-                    placeholder="Add custom allergy"
-                    value={customAllergy}
-                    onChange={(e) => setCustomAllergy(e.target.value)}
-                    className="flex-1 px-3 py-1.5 rounded-xl bg-[#F8F5FA] border border-[#E7DFEF] text-xs text-[#1C1326]"
-                  />
-                  <button
-                    type="button"
-                    onClick={addCustomAllergy}
-                    className="px-3 py-1.5 rounded-xl bg-[#6E2D8B] text-white text-xs font-bold"
-                  >
-                    Add
-                  </button>
-                </div>
-              </div>
-
-              {/* Medications List */}
-              <div className="space-y-3 pt-2 border-t border-[#F0EAF5]">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold font-mono text-[#1C1326] uppercase">
-                    Current Medications & Supplements
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setShowAddMed(true)}
-                    className="text-xs font-bold text-[#6E2D8B] hover:underline inline-flex items-center gap-1"
-                  >
-                    <Plus className="w-3.5 h-3.5" /> Add Medication
-                  </button>
-                </div>
-
-                {draft.medical?.medications?.length > 0 && (
-                  <div className="space-y-2">
-                    {draft.medical.medications.map((med) => (
-                      <div
-                        key={med.id}
-                        className="p-3 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] flex items-center justify-between gap-3"
-                      >
-                        <div>
-                          <span className="text-xs font-bold text-[#1C1326] block">{med.name}</span>
-                          <span className="text-[11px] text-[#8D7E9E]">
-                            {med.dosage} • {med.frequency}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeMed(med.id)}
-                          className="p-1 text-[#FB7185] hover:opacity-75"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {showAddMed && (
-                  <div className="p-3.5 rounded-2xl bg-[#F2ECF7] border border-[#D8B4FE]/50 space-y-2">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      <input
-                        type="text"
-                        placeholder="Medication name"
-                        value={newMedName}
-                        onChange={(e) => setNewMedName(e.target.value)}
-                        className="px-3 py-2 rounded-xl bg-white border border-[#E7DFEF] text-xs text-[#1C1326]"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Dosage (e.g. 500mg)"
-                        value={newMedDosage}
-                        onChange={(e) => setNewMedDosage(e.target.value)}
-                        className="px-3 py-2 rounded-xl bg-white border border-[#E7DFEF] text-xs text-[#1C1326]"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Frequency (e.g. Daily)"
-                        value={newMedFreq}
-                        onChange={(e) => setNewMedFreq(e.target.value)}
-                        className="px-3 py-2 rounded-xl bg-white border border-[#E7DFEF] text-xs text-[#1C1326]"
-                      />
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setShowAddMed(false)}
-                        className="px-3 py-1 text-xs text-[#584B68]"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleAddMed}
-                        className="px-3.5 py-1 rounded-xl bg-[#6E2D8B] text-white text-xs font-bold"
-                      >
-                        Save
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Conditions */}
-              <div className="space-y-2 pt-2 border-t border-[#F0EAF5]">
-                <label className="text-xs font-bold font-mono text-[#1C1326] uppercase block">Diagnosed Conditions</label>
-                <div className="flex flex-wrap gap-2">
-                  {DEFAULT_CONDITION_OPTIONS.map((c) => {
-                    const isSelected = draft.medical?.conditions?.includes(c);
-                    return (
-                      <button
-                        key={c}
-                        type="button"
-                        onClick={() => toggleCondition(c)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-                          isSelected
-                            ? 'bg-[#8E3EAF] text-white shadow-xs'
-                            : 'bg-[#F8F5FA] border border-[#E7DFEF] text-[#584B68] hover:bg-[#EDE4F7]'
-                        }`}
-                      >
-                        {isSelected && '✓ '}
-                        {c}
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className="flex gap-2 pt-1 max-w-sm">
-                  <input
-                    type="text"
-                    placeholder="Add custom condition"
-                    value={customCondition}
-                    onChange={(e) => setCustomCondition(e.target.value)}
-                    className="flex-1 px-3 py-1.5 rounded-xl bg-[#F8F5FA] border border-[#E7DFEF] text-xs text-[#1C1326]"
-                  />
-                  <button
-                    type="button"
-                    onClick={addCustomCondition}
-                    className="px-3 py-1.5 rounded-xl bg-[#6E2D8B] text-white text-xs font-bold"
-                  >
-                    Add
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* TAB 4: WOMEN'S HEALTH & CYCLE */}
-          {activeTab === 'cycle' && (
-            <motion.div
-              key="tab-cycle"
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              className="space-y-6"
-            >
-              <div className="flex items-center justify-between pb-3 border-b border-[#F0EAF5]">
-                <h3 className="text-base font-bold font-display text-[#1C1326]">
-                  Cycle Length, Last Period & Symptoms
-                </h3>
-                <span className="text-[10px] font-mono text-[#6E2D8B] font-bold">Core Rhythm Engine</span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2 p-4 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF]">
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs font-bold font-mono text-[#1C1326] uppercase">Cycle Length (Days)</label>
-                    <span className="text-xs font-mono font-bold text-[#6E2D8B]">
-                      {draft.womensHealth?.cycleLength} Days
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="21"
-                    max="45"
-                    value={typeof draft.womensHealth?.cycleLength === 'number' ? draft.womensHealth.cycleLength : 28}
-                    onChange={(e) =>
-                      setDraft((p) => ({
-                        ...p,
-                        womensHealth: { ...p.womensHealth, cycleLength: parseInt(e.target.value, 10) },
-                      }))
-                    }
-                    className="w-full accent-[#6E2D8B]"
-                  />
-                </div>
-
-                <div className="space-y-1.5 p-4 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF]">
-                  <label className="text-xs font-bold font-mono text-[#1C1326] uppercase block">Last Period Start Date</label>
-                  <input
-                    type="date"
-                    value={draft.womensHealth?.lastPeriodDate || ''}
-                    onChange={(e) =>
-                      setDraft((p) => ({
-                        ...p,
-                        womensHealth: { ...p.womensHealth, lastPeriodDate: e.target.value },
-                      }))
-                    }
-                    className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#E7DFEF] text-sm text-[#1C1326]"
-                  />
-                </div>
-              </div>
-
-              {/* Symptoms Checklist */}
-              <div className="space-y-2 pt-2 border-t border-[#F0EAF5]">
-                <label className="text-xs font-bold font-mono text-[#1C1326] uppercase block">
-                  Recorded Common Symptoms
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {DEFAULT_SYMPTOM_OPTIONS.map((sym) => {
-                    const isSelected = draft.womensHealth?.commonSymptoms?.includes(sym.label);
-                    return (
-                      <button
-                        key={sym.id}
-                        type="button"
-                        onClick={() => toggleSymptom(sym.label)}
-                        className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between ${
-                          isSelected
-                            ? 'bg-[#FDF2F8] border-[#FB7185] text-[#1C1326] shadow-2xs'
-                            : 'bg-[#F8F5FA] border-[#E7DFEF] text-[#584B68]'
-                        }`}
-                      >
-                        <div>
-                          <span className="text-xs font-bold block">{sym.label}</span>
-                          <span className="text-[10px] text-[#8D7E9E]">{sym.desc}</span>
-                        </div>
-                        {isSelected && <CheckCircle2 className="w-4 h-4 text-[#FB7185]" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* TAB 5: LIFESTYLE & DIET */}
-          {activeTab === 'lifestyle' && (
-            <motion.div
-              key="tab-lifestyle"
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              className="space-y-6"
-            >
-              <div className="flex items-center justify-between pb-3 border-b border-[#F0EAF5]">
-                <h3 className="text-base font-bold font-display text-[#1C1326]">
-                  Nutrition, Water & Movement
-                </h3>
-                <span className="text-[10px] font-mono text-[#047857] font-bold">Daily Biometric Modulators</span>
-              </div>
-
-              {/* Dietary Preference */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold font-mono text-[#1C1326] uppercase block">Primary Dietary Preference</label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {DIETARY_PREFERENCE_OPTIONS.map((diet) => {
-                    const isSelected = draft.lifestyle?.dietaryPreference === diet.label;
-                    return (
-                      <button
-                        key={diet.id}
-                        type="button"
-                        onClick={() => setDraft((p) => ({ ...p, lifestyle: { ...p.lifestyle, dietaryPreference: diet.label } }))}
-                        className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between ${
-                          isSelected
-                            ? 'bg-[#ECFDF5] border-[#34D399] text-[#1C1326] shadow-2xs'
-                            : 'bg-[#F8F5FA] border-[#E7DFEF] text-[#584B68]'
-                        }`}
-                      >
-                        <div>
-                          <span className="text-xs font-bold block">{diet.label}</span>
-                          <span className="text-[10px] text-[#8D7E9E]">{diet.desc}</span>
-                        </div>
-                        {isSelected && <CheckCircle2 className="w-4 h-4 text-[#047857]" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Water & Sleep Sliders */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[#F0EAF5]">
-                <div className="p-4 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] space-y-2">
-                  <div className="flex justify-between">
-                    <label className="text-xs font-bold font-mono text-[#1C1326] uppercase">Daily Water Target</label>
-                    <span className="text-xs font-mono font-bold text-[#6E2D8B]">
-                      {draft.lifestyle?.dailyWaterGlasses} Glasses ({((draft.lifestyle?.dailyWaterGlasses || 8) * 0.25).toFixed(1)}L)
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="4"
-                    max="16"
-                    value={draft.lifestyle?.dailyWaterGlasses || 8}
-                    onChange={(e) =>
-                      setDraft((p) => ({
-                        ...p,
-                        lifestyle: { ...p.lifestyle, dailyWaterGlasses: parseInt(e.target.value, 10) },
-                      }))
-                    }
-                    className="w-full accent-[#6E2D8B]"
-                  />
-                </div>
-
-                <div className="p-4 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] space-y-2">
-                  <div className="flex justify-between">
-                    <label className="text-xs font-bold font-mono text-[#1C1326] uppercase">Average Sleep (Hours)</label>
-                    <span className="text-xs font-mono font-bold text-[#8E3EAF]">
-                      {draft.lifestyle?.sleepHours}h / night
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="5"
-                    max="10"
-                    step="0.5"
-                    value={draft.lifestyle?.sleepHours || 7.5}
-                    onChange={(e) =>
-                      setDraft((p) => ({
-                        ...p,
-                        lifestyle: { ...p.lifestyle, sleepHours: parseFloat(e.target.value) },
-                      }))
-                    }
-                    className="w-full accent-[#8E3EAF]"
-                  />
-                </div>
-              </div>
-
-              {/* Exercise Preferences */}
-              <div className="space-y-2 pt-2 border-t border-[#F0EAF5]">
-                <label className="text-xs font-bold font-mono text-[#1C1326] uppercase block">Preferred Exercise Styles</label>
-                <div className="flex flex-wrap gap-2">
-                  {EXERCISE_PREFERENCE_OPTIONS.map((ex) => {
-                    const isSelected = draft.lifestyle?.exercisePreferences?.includes(ex.label);
-                    return (
-                      <button
-                        key={ex.id}
-                        type="button"
-                        onClick={() => toggleExercise(ex.label)}
-                        className={`px-3.5 py-2 rounded-2xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-                          isSelected
-                            ? 'bg-[#6E2D8B] text-white shadow-xs'
-                            : 'bg-[#F8F5FA] border border-[#E7DFEF] text-[#584B68] hover:bg-[#EDE4F7]'
-                        }`}
-                      >
-                        {isSelected && '✓ '}
-                        {ex.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* TAB 6: GOALS */}
-          {activeTab === 'goals' && (
-            <motion.div
-              key="tab-goals"
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              className="space-y-6"
-            >
-              <div className="flex items-center justify-between pb-3 border-b border-[#F0EAF5]">
-                <h3 className="text-base font-bold font-display text-[#1C1326]">
-                  Health Goals & Support Preferences
-                </h3>
-                <span className="text-[10px] font-mono text-[#8E3EAF] font-bold">Personalized Coaching Alignment</span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {HEALTH_GOAL_OPTIONS.map((goal) => {
-                  const isSelected = draft.goals?.selectedGoals?.includes(goal.title);
-                  return (
-                    <button
-                      key={goal.id}
-                      type="button"
-                      onClick={() => toggleGoal(goal.title)}
-                      className={`p-4 rounded-3xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 ${
-                        isSelected
-                          ? 'bg-[#FDF2F8] border-[#FB7185] shadow-xs'
-                          : 'bg-[#F8F5FA] border-[#E7DFEF] text-[#584B68]'
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`w-full p-3 rounded-2xl text-left transition-all flex items-center justify-between group ${
+                    isActive
+                      ? isMale
+                        ? 'bg-gradient-to-r from-teal-500/10 to-teal-600/5 text-teal-800 font-bold shadow-xs border border-teal-200/80'
+                        : 'bg-gradient-to-r from-teal-500/10 to-rose-500/5 text-slate-900 font-bold shadow-xs border border-primary-teal/30'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                        isActive
+                          ? 'bg-primary-teal text-white shadow-xs'
+                          : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200/80 group-hover:text-slate-700'
                       }`}
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-[#1C1326]">{goal.title}</span>
-                        {isSelected && <CheckCircle2 className="w-4 h-4 text-[#FB7185]" />}
-                      </div>
-                      <p className="text-[11px] text-[#8D7E9E]">{goal.desc}</p>
-                    </button>
-                  );
-                })}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                      <Icon className="w-4 h-4" />
+                    </div>
 
-        {/* Action Bar */}
-        <div className="pt-4 border-t border-[#F0EAF5] flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={handleRestartOnboarding}
-              className="text-xs text-[#6E2D8B] font-bold hover:underline inline-flex items-center gap-1.5 cursor-pointer"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              <span>Launch 7-Step Onboarding Wizard</span>
-            </button>
+                    <div className="min-w-0">
+                      <p className="text-xs truncate">{tab.label}</p>
+                      <p className="text-[10px] text-slate-400 font-normal truncate">
+                        {tab.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  <ChevronRight
+                    className={`w-4 h-4 shrink-0 transition-transform ${
+                      isActive ? 'text-primary-teal translate-x-0.5' : 'text-slate-300'
+                    }`}
+                  />
+                </button>
+              );
+            })}
           </div>
+        </div>
 
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={isSaving}
-            className="w-full sm:w-auto px-6 py-3 rounded-2xl font-sans font-bold text-xs text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#E87084] hover:brightness-110 shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70"
-          >
-            {isSaving ? (
-              <>
-                <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                <span>Saving Changes...</span>
-              </>
-            ) : saveSuccess ? (
-              <>
-                <CheckCircle2 className="w-4 h-4 text-[#34D399]" />
-                <span>Saved & Synced ✓</span>
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4" />
-                <span>Save Profile Changes</span>
-              </>
-            )}
-          </button>
+        {/* Right Tab Content Panels */}
+        <div className="lg:col-span-8 xl:col-span-9">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.18 }}
+            >
+              {activeTab === 'personal' && (
+                <PersonalTab
+                  draft={draft}
+                  setDraft={setDraft}
+                  validationErrors={validationErrors}
+                  isMale={isMale}
+                />
+              )}
+
+              {activeTab === 'health' && (
+                <HealthProfileTab draft={draft} setDraft={setDraft} isMale={isMale} />
+              )}
+
+              {activeTab === 'screening' &&
+                (isMale ? (
+                  <MaleScreeningTab draft={draft} setDraft={setDraft} />
+                ) : (
+                  <FemaleScreeningTab draft={draft} setDraft={setDraft} />
+                ))}
+
+              {activeTab === 'lifestyle' && (
+                <LifestyleTab draft={draft} setDraft={setDraft} isMale={isMale} />
+              )}
+
+              {activeTab === 'nutrition' && (
+                <NutritionTab draft={draft} setDraft={setDraft} isMale={isMale} />
+              )}
+
+              {activeTab === 'goals' && (
+                <GoalsTab draft={draft} setDraft={setDraft} isMale={isMale} />
+              )}
+
+              {activeTab === 'account' && (
+                <AccountTab
+                  draft={draft}
+                  setDraft={setDraft}
+                  onLogout={handleLogout}
+                  onRestartOnboarding={handleRestartOnboarding}
+                  onOpenDeleteModal={() => {
+                    setShowDeleteModal(true);
+                    setDeleteConfirmText('');
+                    setDeleteError(null);
+                  }}
+                />
+              )}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
 
-      {/* ── Demo / Reset Options ── */}
-      <div className="p-4 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] flex items-center justify-between text-xs text-[#8D7E9E]">
-        <span>Reset demo state back to default Ayesha Khan sample profile</span>
-        <button
-          type="button"
-          onClick={handleReset}
-          className="text-[#FB7185] font-bold hover:underline cursor-pointer"
-        >
-          Reset Demo Data
-        </button>
-      </div>
-    </motion.div>
+      {/* ── 4. STICKY SAVE ACTION BAR ── */}
+      <StickySaveBar
+        hasChanges={hasChanges}
+        hasAssessmentChanges={hasAssessmentChanges}
+        isSaving={isSaving}
+        isMale={isMale}
+        onDiscard={handleDiscard}
+        onSave={handleSave}
+      />
+
+      {/* ── 5. REASSESSMENT OFFER MODAL ── */}
+      <ReassessmentModal
+        isOpen={showReassessPrompt}
+        isMale={isMale}
+        onClose={() => setShowReassessPrompt(false)}
+      />
+
+      {/* ── 6. DANGER ZONE: DELETE ACCOUNT MODAL ── */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border border-slate-100"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                className="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <h3 className="text-lg font-bold text-slate-900">Delete Account & Health Data</h3>
+            <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+              This will permanently delete your user profile, verified assessments, reports, and meal plans from Supabase.
+            </p>
+
+            <div className="mt-4 p-3 rounded-2xl bg-rose-50/70 border border-rose-200">
+              <label className="block text-xs font-semibold text-rose-900 mb-1">
+                Type <span className="font-mono font-bold">DELETE</span> to confirm:
+              </label>
+              <input
+                type="text"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="DELETE"
+                className="w-full px-3 py-2 rounded-xl border border-rose-300 text-xs font-bold text-rose-900 focus:outline-none focus:ring-2 focus:ring-rose-400/20"
+              />
+            </div>
+
+            {deleteError && (
+              <p className="text-xs text-rose-600 font-medium mt-2">{deleteError}</p>
+            )}
+
+            <div className="mt-6 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={isDeleting || deleteConfirmText.trim().toUpperCase() !== 'DELETE'}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl disabled:opacity-40"
+              >
+                {isDeleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                <span>Permanently Delete</span>
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </div>
   );
 };
-
-export default SettingsPage;

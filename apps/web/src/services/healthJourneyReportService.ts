@@ -188,7 +188,7 @@ class HealthJourneyReportService {
         doc.setFontSize(8);
         doc.setTextColor(COLOR_TEXT_MUTED[0], COLOR_TEXT_MUTED[1], COLOR_TEXT_MUTED[2]);
         doc.setFont('helvetica', 'normal');
-        doc.text('OvaSense • Complete Health Journey (Clinical Brief)', margin, 10);
+        doc.text('BioPulse AI • Complete Health Journey (Clinical Brief)', margin, 10);
         doc.text(`Patient: ${patientName}`, pageWidth - margin, 10, { align: 'right' });
         doc.setDrawColor(COLOR_BORDER[0], COLOR_BORDER[1], COLOR_BORDER[2]);
         doc.setLineWidth(0.3);
@@ -216,7 +216,7 @@ class HealthJourneyReportService {
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
-    doc.text('OvaSense', margin + 6, cursorY + 12);
+    doc.text('BioPulse AI', margin + 6, cursorY + 12);
 
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
@@ -346,7 +346,7 @@ class HealthJourneyReportService {
 
     doc.setFont('helvetica', 'normal');
     doc.text(
-      'This clinical brief compiles self-reported and laboratory data recorded in OvaSense. It is compiled to support conversations with a qualified healthcare professional and does not constitute a clinical diagnosis, medical evaluation, or treatment plan.',
+      'This clinical brief compiles self-reported and laboratory data recorded in BioPulse AI. It is compiled to support conversations with a qualified healthcare professional and does not constitute a clinical diagnosis, medical evaluation, or treatment plan.',
       margin + 4,
       cursorY + 9,
       { maxWidth: contentWidth - 8 }
@@ -573,7 +573,7 @@ class HealthJourneyReportService {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(14);
       doc.setTextColor(COLOR_PRIMARY[0], COLOR_PRIMARY[1], COLOR_PRIMARY[2]);
-      doc.text('4. Patterns OvaSense Found & Doctor Questions', margin, cursorY);
+      doc.text('4. Patterns BioPulse AI Found & Doctor Questions', margin, cursorY);
       cursorY += 8;
 
       // Patterns
@@ -738,7 +738,7 @@ class HealthJourneyReportService {
     const blob = doc.output('blob');
     const url = URL.createObjectURL(blob);
     const sanitizedPatientName = patientName.replace(/[^a-zA-Z0-9]/g, '_');
-    const fileName = `OvaSense_Health_Journey_${sanitizedPatientName}_${now.toISOString().split('T')[0]}.pdf`;
+    const fileName = `BioPulse_AI_Health_Journey_${sanitizedPatientName}_${now.toISOString().split('T')[0]}.pdf`;
 
     onProgress?.({
       stage: 'ready',

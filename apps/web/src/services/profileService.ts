@@ -2,6 +2,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { UserProfile } from '../types/onboarding';
 import { resolvePathway } from '../types/onboarding';
 import { createEmptyUserProfile, DEFAULT_USER_PROFILE } from '../data/mockDashboardData';
+import { validateDateOfBirth } from '../utils/profileValidation';
 
 export interface DatabaseProfileRow {
   id: string;
@@ -231,6 +232,14 @@ class ProfileService {
    * Upserts the full profile into Supabase.
    */
   async upsertUserProfile(profile: UserProfile, userId: string): Promise<{ success: boolean; error?: string }> {
+    // If onboarding is being completed or date of birth is supplied, validate age boundary (>= 13)
+    if (profile.isOnboarded || (profile.dateOfBirth && profile.dateOfBirth.trim())) {
+      const dobCheck = validateDateOfBirth(profile.dateOfBirth);
+      if (!dobCheck.isValid) {
+        return { success: false, error: dobCheck.error || 'You must be at least 13 years old to use BioPulse AI.' };
+      }
+    }
+
     if (!isSupabaseConfigured()) {
       try {
         localStorage.setItem('ovasense_user_profile_v1', JSON.stringify(profile));
@@ -241,7 +250,7 @@ class ProfileService {
     }
 
     try {
-      // Persist pathway, gender, waist_cm to auth user metadata so it is safely stored
+      // Persist pathway, gender, waist_cm, mens_health to auth user metadata so it is safely stored
       try {
         await supabase.auth.updateUser({
           data: {
@@ -250,6 +259,8 @@ class ProfileService {
             gender: profile.gender || null,
             pathway: profile.pathway || null,
             waist_cm: profile.waistCm ?? null,
+            mens_health: profile.mensHealth ?? null,
+            general_health: profile.generalHealth ?? null,
           },
         });
       } catch {
@@ -311,6 +322,25 @@ class ProfileService {
     }
 
     return { success: true, profile: merged };
+  }
+
+  /**
+   * Permanently deletes user profile and associated record from Supabase.
+   */
+  async deleteUserProfile(userId: string): Promise<{ success: boolean; error?: string }> {
+    if (!isSupabaseConfigured() || !userId) {
+      return { success: true };
+    }
+
+    try {
+      const { error } = await supabase.from('profiles').delete().eq('id', userId);
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Failed to delete user profile from database.' };
+    }
   }
 }
 

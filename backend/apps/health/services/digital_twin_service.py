@@ -49,10 +49,11 @@ class DigitalTwinService:
         age_years = None
         if getattr(profile, "date_of_birth", None):
             try:
-                b_year = int(str(profile.date_of_birth)[:4])
-                c_year = datetime.date.today().year
-                if 10 <= (c_year - b_year) <= 120:
-                    age_years = c_year - b_year
+                dob = datetime.date.fromisoformat(str(profile.date_of_birth).strip())
+                today = datetime.date.today()
+                calc_age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+                if 0 <= calc_age <= 120:
+                    age_years = calc_age
             except (ValueError, TypeError):
                 pass
 

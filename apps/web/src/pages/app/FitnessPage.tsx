@@ -56,6 +56,8 @@ export const FitnessPage: React.FC = () => {
     return await logFitnessActivity(input);
   };
 
+  const isMale = userProfile?.pathway === 'male' || userProfile?.gender === 'male';
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -65,21 +67,23 @@ export const FitnessPage: React.FC = () => {
       {/* ── 1. PERSONALIZED HEADER ── */}
       <PersonalizedFitnessHeader
         userProfile={userProfile}
-        cycleDay={snapshotMetrics.cycleDay}
-        cyclePhaseName={snapshotMetrics.phaseName}
+        cycleDay={isMale ? 0 : snapshotMetrics.cycleDay}
+        cyclePhaseName={isMale ? 'Vitality & Stamina' : snapshotMetrics.phaseName}
         todayMinutes={todayFitnessMinutes}
         weeklyTotalMinutes={weeklyFitnessStats.totalMinutesThisWeek}
         onOpenLogModal={handleOpenNewLog}
         onAskAi={() =>
           openAiChatWithPrompt(
-            `What gentle movement routines are best for my ${snapshotMetrics.phaseName} and daily energy level today?`
+            isMale
+              ? 'What functional movement and resistance routines are best for male vitality, strength, and stamina today?'
+              : `What gentle movement routines are best for my ${snapshotMetrics.phaseName} and daily energy level today?`
           )
         }
       />
 
-      {/* ── 2. SUGGESTED PHASE ROUTINES ── */}
+      {/* ── 2. SUGGESTED ROUTINES ── */}
       <SuggestedRoutinesSection
-        phaseName={snapshotMetrics.phaseName}
+        phaseName={isMale ? 'Vitality & Stamina' : snapshotMetrics.phaseName}
         routines={suggestedFitnessRoutines}
         onQuickComplete={handleQuickCompleteRoutine}
       />

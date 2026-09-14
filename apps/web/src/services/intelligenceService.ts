@@ -19,20 +19,28 @@ import type {
   IntelligenceAssessment,
   IntelligenceServiceStatus,
   HealthSnapshot,
+  ProgressiveAssessment,
 } from '../types/intelligence';
 
 // ---------------------------------------------------------------------------
 // Configuration
 // ---------------------------------------------------------------------------
 
-const BACKEND_API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://127.0.0.1:8000/api';
+const BACKEND_API_URL = (typeof import.meta !== 'undefined' && (import.meta as any)?.env?.VITE_BACKEND_API_URL) || 'http://127.0.0.1:8000/api';
 const ASSESSMENT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/assessment/`;
+const ACTIVE_ASSESSMENT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/assessment/active/`;
+const HISTORY_ASSESSMENT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/assessment/history/`;
+const TIER1_ASSESSMENT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/assessment/tier1/`;
+const TIER2_ASSESSMENT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/assessment/tier2/`;
+const MALE_TIER1_ASSESSMENT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/assessment/male/tier1/`;
+const MALE_TIER2_ASSESSMENT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/assessment/male/tier2/`;
+const ULTRASOUND_ASSESSMENT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/assessment/ultrasound/`;
 const HEALTH_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/health/`;
 const STATUS_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/status/`;
 const CHAT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/chat/`;
 
 /** Timeout in milliseconds for backend requests */
-const REQUEST_TIMEOUT_MS = 12000;
+const REQUEST_TIMEOUT_MS = 15000;
 
 // ---------------------------------------------------------------------------
 // Token helper
@@ -258,6 +266,235 @@ export async function fetchBackendAssessment(
 }
 
 // ---------------------------------------------------------------------------
+// PCOS-ML Progressive Assessment API Methods
+// ---------------------------------------------------------------------------
+// PCOS-ML & Male-ML Progressive Assessment API Methods
+// ---------------------------------------------------------------------------
+
+/**
+ * Fetches the currently active progressive assessment for the authenticated patient.
+ */
+export async function fetchActiveAssessment(_forceRefresh = false, module?: string): Promise<ProgressiveAssessment | null> {
+  try {
+    const token = await getAccessToken();
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    else headers['Authorization'] = 'Bearer guest-demo-session-token';
+
+    const url = module
+      ? `${ACTIVE_ASSESSMENT_ENDPOINT}?module=${encodeURIComponent(module)}`
+      : ACTIVE_ASSESSMENT_ENDPOINT;
+
+    const response = await fetchWithTimeout(url, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) {
+      console.warn('[Intelligence API] Active assessment request failed with status:', response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    return data as ProgressiveAssessment;
+  } catch (err) {
+    console.warn('[Intelligence API] Active assessment error:', err);
+    return null;
+  }
+}
+
+/**
+ * Fetches the currently active male hypogonadism assessment.
+ */
+export async function fetchActiveMaleAssessment(): Promise<ProgressiveAssessment | null> {
+  return fetchActiveAssessment(false, 'male_hypogonadism');
+}
+
+/**
+ * Fetches the chronological history of all progressive assessments.
+ */
+export async function fetchAssessmentHistory(module?: string): Promise<ProgressiveAssessment[]> {
+  try {
+    const token = await getAccessToken();
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    else headers['Authorization'] = 'Bearer guest-demo-session-token';
+
+    const url = module
+      ? `${HISTORY_ASSESSMENT_ENDPOINT}?module=${encodeURIComponent(module)}`
+      : HISTORY_ASSESSMENT_ENDPOINT;
+
+    const response = await fetchWithTimeout(url, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) return [];
+    const data = await response.json();
+    return (data.history || []) as ProgressiveAssessment[];
+  } catch (err) {
+    console.warn('[Intelligence API] Assessment history error:', err);
+    return [];
+  }
+}
+
+/**
+ * Executes Female PCOS Tier 1 Assessment and sets it as the active result.
+ */
+export async function submitTier1Assessment(inputs: Record<string, any> = {}): Promise<ProgressiveAssessment | null> {
+  try {
+    const token = await getAccessToken();
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    else headers['Authorization'] = 'Bearer guest-demo-session-token';
+
+    const response = await fetchWithTimeout(TIER1_ASSESSMENT_ENDPOINT, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(inputs),
+    });
+
+    if (!response.ok) {
+      console.error('[PCOS-ML] Tier 1 submission failed:', response.status);
+      return null;
+    }
+
+    clearAssessmentCache();
+    return (await response.json()) as ProgressiveAssessment;
+  } catch (err) {
+    console.error('[PCOS-ML] Tier 1 error:', err);
+    return null;
+  }
+}
+
+/**
+ * Executes Female PCOS Cumulative Tier 2 Assessment (Tier 1 + Clinical Labs) and replaces active result.
+ */
+export async function submitTier2Assessment(inputs: Record<string, any>): Promise<ProgressiveAssessment | null> {
+  try {
+    const token = await getAccessToken();
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    else headers['Authorization'] = 'Bearer guest-demo-session-token';
+
+    const response = await fetchWithTimeout(TIER2_ASSESSMENT_ENDPOINT, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(inputs),
+    });
+
+    if (!response.ok) {
+      console.error('[PCOS-ML] Tier 2 submission failed:', response.status);
+      return null;
+    }
+
+    clearAssessmentCache();
+    return (await response.json()) as ProgressiveAssessment;
+  } catch (err) {
+    console.error('[PCOS-ML] Tier 2 error:', err);
+    return null;
+  }
+}
+
+/**
+ * Executes Male Hypogonadism Tier 1 Assessment (Questionnaire/Biometrics) and sets it as active.
+ */
+export async function submitMaleTier1Assessment(inputs: Record<string, any> = {}): Promise<ProgressiveAssessment | null> {
+  try {
+    const token = await getAccessToken();
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    else headers['Authorization'] = 'Bearer guest-demo-session-token';
+
+    const response = await fetchWithTimeout(MALE_TIER1_ASSESSMENT_ENDPOINT, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(inputs),
+    });
+
+    if (!response.ok) {
+      console.error('[Male-ML] Tier 1 submission failed:', response.status);
+      return null;
+    }
+
+    clearAssessmentCache();
+    return (await response.json()) as ProgressiveAssessment;
+  } catch (err) {
+    console.error('[Male-ML] Tier 1 error:', err);
+    return null;
+  }
+}
+
+/**
+ * Executes Male Hypogonadism Tier 2 Assessment (Clinical Labs + Hormone pattern) and replaces active result.
+ */
+export async function submitMaleTier2Assessment(inputs: Record<string, any>): Promise<ProgressiveAssessment | null> {
+  try {
+    const token = await getAccessToken();
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    else headers['Authorization'] = 'Bearer guest-demo-session-token';
+
+    const response = await fetchWithTimeout(MALE_TIER2_ASSESSMENT_ENDPOINT, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(inputs),
+    });
+
+    if (!response.ok) {
+      console.error('[Male-ML] Tier 2 submission failed:', response.status);
+      return null;
+    }
+
+    clearAssessmentCache();
+    return (await response.json()) as ProgressiveAssessment;
+  } catch (err) {
+    console.error('[Male-ML] Tier 2 error:', err);
+    return null;
+  }
+}
+
+/**
+ * Uploads an ultrasound image for morphological analysis (PCOM) and multimodal fusion.
+ */
+export async function uploadUltrasoundAssessment(
+  imageFile: File,
+  reportId?: string
+): Promise<ProgressiveAssessment | null> {
+  try {
+    const token = await getAccessToken();
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    else headers['Authorization'] = 'Bearer guest-demo-session-token';
+
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    if (reportId) formData.append('report_id', reportId);
+
+    const response = await fetchWithTimeout(
+      ULTRASOUND_ASSESSMENT_ENDPOINT,
+      {
+        method: 'POST',
+        headers,
+        body: formData,
+      },
+      30000 // 30s timeout for deep vision model inference
+    );
+
+    if (!response.ok) {
+      console.error('[PCOS-ML] Ultrasound upload failed:', response.status);
+      return null;
+    }
+
+    clearAssessmentCache();
+    return (await response.json()) as ProgressiveAssessment;
+  } catch (err) {
+    console.error('[PCOS-ML] Ultrasound error:', err);
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Fetch Health Snapshot from Django backend
 // ---------------------------------------------------------------------------
 
@@ -315,30 +552,94 @@ export const RISK_PATTERN_DISPLAY: Record<string, {
     badgeClass: 'text-purple-300 bg-purple-400/15 border-purple-400/30',
     description: 'More logged health records are needed for a reliable AI screening estimate.',
   },
-  // Backwards compatibility aliases
+  // Aliases for diverse backend responses
+  lower: {
+    label: 'Lower Screening Risk',
+    color: '#059669',
+    badgeClass: 'text-emerald-700 bg-emerald-50 border-emerald-300',
+    description: 'Your recorded biometrics and symptom profile currently fall in the lower screening risk tier.',
+  },
+  low: {
+    label: 'Lower Screening Risk',
+    color: '#059669',
+    badgeClass: 'text-emerald-700 bg-emerald-50 border-emerald-300',
+    description: 'Your recorded biometrics and symptom profile currently fall in the lower screening risk tier.',
+  },
+  low_risk: {
+    label: 'Lower Screening Risk',
+    color: '#059669',
+    badgeClass: 'text-emerald-700 bg-emerald-50 border-emerald-300',
+    description: 'Your recorded biometrics and symptom profile currently fall in the lower screening risk tier.',
+  },
+  moderate: {
+    label: 'Intermediate Risk',
+    color: '#D97706',
+    badgeClass: 'text-amber-700 bg-amber-50 border-amber-300',
+    description: 'Your recorded patterns indicate an intermediate screening risk profile. Continued tracking is recommended.',
+  },
+  intermediate: {
+    label: 'Intermediate Risk',
+    color: '#D97706',
+    badgeClass: 'text-amber-700 bg-amber-50 border-amber-300',
+    description: 'Your recorded patterns indicate an intermediate screening risk profile. Continued tracking is recommended.',
+  },
+  higher: {
+    label: 'Higher Screening Risk',
+    color: '#E11D48',
+    badgeClass: 'text-rose-700 bg-rose-50 border-rose-300',
+    description: 'Your recorded patterns cross the screening threshold. Discussing these findings with your doctor is advised.',
+  },
+  high: {
+    label: 'Higher Screening Risk',
+    color: '#E11D48',
+    badgeClass: 'text-rose-700 bg-rose-50 border-rose-300',
+    description: 'Your recorded patterns cross the screening threshold. Discussing these findings with your doctor is advised.',
+  },
+  high_risk: {
+    label: 'Higher Screening Risk',
+    color: '#E11D48',
+    badgeClass: 'text-rose-700 bg-rose-50 border-rose-300',
+    description: 'Your recorded patterns cross the screening threshold. Discussing these findings with your doctor is advised.',
+  },
   lower_pattern: {
     label: 'Lower Screening Risk',
-    color: '#34D399',
-    badgeClass: 'text-emerald-400 bg-emerald-400/15 border-emerald-400/30',
+    color: '#059669',
+    badgeClass: 'text-emerald-700 bg-emerald-50 border-emerald-300',
     description: 'Your recorded patterns suggest a lower screening risk profile.',
   },
   moderate_pattern: {
     label: 'Intermediate Risk',
-    color: '#FBBF24',
-    badgeClass: 'text-amber-400 bg-amber-400/15 border-amber-400/30',
+    color: '#D97706',
+    badgeClass: 'text-amber-700 bg-amber-50 border-amber-300',
     description: 'Your recorded patterns suggest an intermediate screening risk profile.',
   },
   higher_pattern: {
     label: 'Higher Screening Risk',
-    color: '#FB7185',
-    badgeClass: 'text-rose-400 bg-rose-400/15 border-rose-400/30',
+    color: '#E11D48',
+    badgeClass: 'text-rose-700 bg-rose-50 border-rose-300',
     description: 'Your recorded patterns cross the screening risk threshold.',
   },
 };
 
-export function getRiskPatternDisplay(categoryOrPattern: string | undefined) {
-  if (!categoryOrPattern) return RISK_PATTERN_DISPLAY['insufficient_data'];
-  return RISK_PATTERN_DISPLAY[categoryOrPattern] ?? RISK_PATTERN_DISPLAY['insufficient_data'];
+export function getRiskPatternDisplay(categoryOrPattern: string | undefined, label?: string) {
+  if (!categoryOrPattern && !label) return RISK_PATTERN_DISPLAY['insufficient_data'];
+  const raw = (categoryOrPattern || label || '').toLowerCase().trim().replace(/[\s-]/g, '_');
+
+  if (raw in RISK_PATTERN_DISPLAY) {
+    return RISK_PATTERN_DISPLAY[raw];
+  }
+
+  if (raw.includes('lower') || raw.includes('low')) {
+    return RISK_PATTERN_DISPLAY['lower_risk'];
+  }
+  if (raw.includes('intermediate') || raw.includes('moderate')) {
+    return RISK_PATTERN_DISPLAY['intermediate_risk'];
+  }
+  if (raw.includes('higher') || raw.includes('high')) {
+    return RISK_PATTERN_DISPLAY['higher_risk'];
+  }
+
+  return RISK_PATTERN_DISPLAY['insufficient_data'];
 }
 
 /**

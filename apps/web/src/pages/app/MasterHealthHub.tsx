@@ -82,32 +82,32 @@ export const MasterHealthHub: React.FC = () => {
       className="max-w-7xl mx-auto space-y-6 sm:space-y-8 pb-16 text-left select-none"
     >
       {/* ── Top Header Banner for Master Health Hub ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 sm:p-8 rounded-[32px] bg-gradient-to-r from-[#180A26] via-[#240F38] to-[#12071F] border border-white/10 text-white shadow-xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 sm:p-8 rounded-[32px] bg-[#01579B] border border-[#0288D1] text-white shadow-md">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#6E2D8B]/30 border border-[#8E3EAF]/40 text-xs font-mono text-[#FDA4AF] mb-1">
-            <LayoutGrid className="w-3.5 h-3.5 text-[#FB7185]" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0288D1]/40 border border-[#BAE6FD]/40 text-xs font-mono text-[#E0F2FE] mb-1">
+            <LayoutGrid className="w-3.5 h-3.5 text-[#29B6F6]" />
             <span>Master Clinical Hub</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold font-display tracking-tight text-white">
             Comprehensive Health Hub
           </h1>
-          <p className="text-xs sm:text-sm text-[#CDBDD8] font-sans">
-            Full multi-module intelligence snapshot uniting your AI Digital Twin, cycle markers, nutrition, medications, and clinical care.
+          <p className="text-xs sm:text-sm text-[#E0F2FE] font-sans">
+            Full multi-module intelligence snapshot uniting your longitudinal health profile, cycle rhythms, nutrition, medications, and clinical care.
           </p>
         </div>
 
         <button
           type="button"
           onClick={() => openAiChatWithPrompt('Generate a comprehensive health summary across all my logged modules.')}
-          className="px-5 py-3 rounded-2xl bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#FB7185] hover:brightness-110 text-white font-sans text-xs font-bold shadow-lg shadow-purple-950/40 transition-all flex items-center gap-2 self-start sm:self-auto cursor-pointer"
+          className="px-5 py-3 rounded-2xl bg-[#0288D1] hover:bg-[#0277BD] text-white font-sans text-xs font-bold shadow-md transition-all flex items-center gap-2 self-start sm:self-auto cursor-pointer"
         >
           <Sparkles className="w-4 h-4 text-white" />
           <span>Ask Health Hub AI</span>
         </button>
       </div>
 
-      {/* ── 2. Primary Showcase: OvaSense PCOS ML Screening Assessment ── */}
-      <section id="hub-ml-screening-section" aria-label="OvaSense PCOS ML Screening Assessment" className="w-full">
+      {/* ── 2. Primary Showcase: BIOPulse AI Screening Assessment ── */}
+      <section id="hub-ml-screening-section" aria-label="BIOPulse AI Screening Assessment" className="w-full">
         <DigitalTwinInsightCard
           insight={digitalTwinInsight}
           onOpenChat={openAiChatWithPrompt}

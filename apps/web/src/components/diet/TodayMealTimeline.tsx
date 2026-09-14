@@ -23,11 +23,11 @@ interface TodayMealTimelineProps {
 }
 
 const MEAL_ICONS: Record<MealType, React.ReactNode> = {
-  breakfast: <Sun className="w-4 h-4 text-[#F59E0B]" />,
-  morning_snack: <Coffee className="w-4 h-4 text-[#8E3EAF]" />,
-  lunch: <Utensils className="w-4 h-4 text-[#10B981]" />,
-  afternoon_snack: <CupSoda className="w-4 h-4 text-[#EC4899]" />,
-  dinner: <Moon className="w-4 h-4 text-[#6366F1]" />,
+  breakfast: <Sun className="w-4 h-4 text-amber-500" />,
+  morning_snack: <Coffee className="w-4 h-4 text-[#0288D1]" />,
+  lunch: <Utensils className="w-4 h-4 text-emerald-600" />,
+  afternoon_snack: <CupSoda className="w-4 h-4 text-[#0288D1]" />,
+  dinner: <Moon className="w-4 h-4 text-sky-600" />,
 };
 
 const MEAL_LABELS: Record<MealType, string> = {
@@ -50,15 +50,15 @@ export const TodayMealTimeline: React.FC<TodayMealTimelineProps> = ({
     <div className="space-y-4 text-left select-none">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="p-1.5 rounded-xl bg-[#EDE4F7] text-[#6E2D8B]">
+          <span className="p-1.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
             <Sparkles className="w-4 h-4" />
           </span>
-          <h2 className="text-lg font-bold font-display text-[#1C1326]">
+          <h2 className="text-lg font-bold text-[#0F172A]">
             Today’s Food Plan
           </h2>
         </div>
 
-        <span className="text-xs font-mono text-[#584B68]">
+        <span className="text-xs font-mono text-[#64748B]">
           5 Balanced Food Touchpoints
         </span>
       </div>
@@ -74,27 +74,27 @@ export const TodayMealTimeline: React.FC<TodayMealTimelineProps> = ({
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="p-5 sm:p-6 rounded-[28px] bg-white border border-[#E7DFEF] hover:border-[#D8B4FE] shadow-sm hover:shadow-md transition-all space-y-4 relative overflow-hidden"
+              className="p-5 sm:p-6 rounded-2xl bg-white border border-[#BAE6FD] hover:border-[#0288D1] shadow-none transition-all space-y-4 relative overflow-hidden"
             >
               {/* Top Row: Meal Slot Name & Action Buttons */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#F5F0FA]">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E2E8F0]">
                 <div className="flex items-center gap-2.5">
-                  <span className="p-2 rounded-xl bg-[#F8F5FA] border border-[#E7DFEF]">
+                  <span className="p-2 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
                     {MEAL_ICONS[mKey]}
                   </span>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold font-mono uppercase tracking-wider text-[#8E3EAF]">
+                      <span className="text-xs font-bold font-mono uppercase tracking-wider text-[#0288D1]">
                         {MEAL_LABELS[mKey]}
                       </span>
                       {isLogged && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                           <CheckCircle2 className="w-3 h-3" />
                           <span>Logged</span>
                         </span>
                       )}
                     </div>
-                    <h3 className="text-base font-bold font-display text-[#1C1326] mt-0.5">
+                    <h3 className="text-base font-bold text-[#0F172A] mt-0.5">
                       {meal.title}
                     </h3>
                   </div>
@@ -102,13 +102,13 @@ export const TodayMealTimeline: React.FC<TodayMealTimelineProps> = ({
 
                 {/* Macro summary pills */}
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-xl bg-[#F8F5FA] text-[#1C1326] border border-[#E7DFEF]">
+                  <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-xl bg-[#F8FAFC] text-[#0F172A] border border-[#E2E8F0]">
                     {meal.calories} kcal
                   </span>
-                  <span className="text-xs font-mono font-semibold px-2 py-1 rounded-xl bg-[#EDE4F7] text-[#6E2D8B]">
+                  <span className="text-xs font-mono font-semibold px-2 py-1 rounded-xl bg-[#E0F2FE] text-[#01579B]">
                     {meal.proteinG}g Protein
                   </span>
-                  <span className="text-xs font-mono font-semibold px-2 py-1 rounded-xl bg-[#FDF2F8] text-[#BE185D]">
+                  <span className="text-xs font-mono font-semibold px-2 py-1 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200">
                     {meal.fiberG}g Fiber
                   </span>
                 </div>
@@ -118,13 +118,13 @@ export const TodayMealTimeline: React.FC<TodayMealTimelineProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Items list */}
                 <div className="space-y-2">
-                  <span className="text-[11px] font-mono font-bold text-[#8D7E9E] uppercase tracking-wider block">
+                  <span className="text-[11px] font-mono font-bold text-[#64748B] uppercase tracking-wider block">
                     Included Items & Portion
                   </span>
                   <ul className="space-y-1.5">
                     {meal.items.map((item, iIdx) => (
-                      <li key={iIdx} className="text-xs text-[#2D213F] flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#8E3EAF] mt-1.5 shrink-0" />
+                      <li key={iIdx} className="text-xs text-[#334155] flex items-start gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#0288D1] mt-1.5 shrink-0" />
                         <span className="leading-snug">{item}</span>
                       </li>
                     ))}
@@ -132,20 +132,20 @@ export const TodayMealTimeline: React.FC<TodayMealTimelineProps> = ({
                 </div>
 
                 {/* "Why this may work for you" */}
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-[#F8F5FA] to-[#FAF5FF] border border-[#E7DFEF] space-y-1.5 flex flex-col justify-between">
+                <div className="p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-1.5 flex flex-col justify-between">
                   <div className="space-y-1">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#6E2D8B] flex items-center gap-1">
-                      <Info className="w-3 h-3 text-[#8E3EAF]" />
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#0288D1] flex items-center gap-1">
+                      <Info className="w-3 h-3 text-[#0288D1]" />
                       <span>Why this may work for you</span>
                     </span>
-                    <p className="text-xs text-[#584B68] leading-relaxed font-sans">
+                    <p className="text-xs text-[#475569] leading-relaxed font-sans">
                       {meal.whyItWorks}
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-3 pt-2 text-[10px] font-mono text-[#8D7E9E]">
+                  <div className="flex items-center gap-3 pt-2 text-[10px] font-mono text-[#64748B]">
                     <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-[#8E3EAF]" />
+                      <Clock className="w-3 h-3 text-[#0288D1]" />
                       <span>~{meal.prepTimeMinutes} mins prep</span>
                     </span>
                     <span>•</span>
@@ -156,8 +156,8 @@ export const TodayMealTimeline: React.FC<TodayMealTimelineProps> = ({
 
               {/* Allergy Warning if applicable */}
               {!meal.isAllergySafe && meal.allergyWarning && (
-                <div className="p-3 rounded-2xl bg-[#FFF1F2] border border-[#FECDD3] text-[11px] text-[#9F1239] flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-[#E11D48] shrink-0 mt-0.5" />
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-[11px] text-rose-800 flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                   <span>{meal.allergyWarning}</span>
                 </div>
               )}
@@ -167,7 +167,7 @@ export const TodayMealTimeline: React.FC<TodayMealTimelineProps> = ({
                 <button
                   type="button"
                   onClick={() => onSelectMealDetail(meal)}
-                  className="text-xs font-bold text-[#6E2D8B] hover:text-[#A21CAF] transition-colors cursor-pointer"
+                  className="text-xs font-semibold text-[#0288D1] hover:text-[#01579B] transition-colors cursor-pointer"
                 >
                   View Ingredients & Simple Prep →
                 </button>
@@ -175,7 +175,7 @@ export const TodayMealTimeline: React.FC<TodayMealTimelineProps> = ({
                 <button
                   type="button"
                   onClick={() => onQuickLogMeal(meal)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold font-sans text-white bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF] hover:brightness-110 shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold font-sans text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>{isLogged ? 'Log Another Serving' : `Log This ${MEAL_LABELS[mKey]}`}</span>

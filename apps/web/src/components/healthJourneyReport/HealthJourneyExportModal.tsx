@@ -88,7 +88,7 @@ export const HealthJourneyExportModal: React.FC<HealthJourneyExportModalProps> =
     { key: 'medications', label: 'Medications & Adherence', icon: Pill, desc: availability.medications.description, available: availability.medications.hasData },
     { key: 'nutrition', label: 'Nutrition & Daily Hydration', icon: Utensils, desc: availability.nutrition.description, available: availability.nutrition.hasData },
     { key: 'fitness', label: 'Fitness & Movement Sessions', icon: Dumbbell, desc: availability.fitness.description, available: availability.fitness.hasData },
-    { key: 'patterns', label: 'Patterns OvaSense Found', icon: Brain, desc: 'Observed correlations & doctor prompts', available: true },
+    { key: 'patterns', label: 'Observed Clinical Patterns', icon: Brain, desc: 'AI-assisted correlations & doctor prompts', available: true },
     { key: 'appointments', label: 'Consultations & Doctor Questions', icon: Stethoscope, desc: availability.appointments.description, available: availability.appointments.hasData },
   ] as const;
 

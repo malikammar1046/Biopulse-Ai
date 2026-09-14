@@ -42,17 +42,17 @@ export const CareCircleMemberCard: React.FC<CareCircleMemberCardProps> = ({
   const perms = member.permissions;
 
   return (
-    <div className="p-6 sm:p-7 rounded-[32px] bg-white border border-[#E7DFEF] shadow-sm flex flex-col justify-between select-none text-left space-y-6 hover:shadow-md transition-shadow">
+    <div className="p-6 sm:p-7 rounded-2xl bg-white border border-[#BAE6FD] shadow-sm flex flex-col justify-between select-none text-left space-y-6 hover:shadow-md transition-shadow">
       {/* Top Header & Identity */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3.5 min-w-0">
           <div
-            className={`w-13 h-13 rounded-2xl flex items-center justify-center shrink-0 shadow-xs ${
+            className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
               isDoctor
-                ? 'bg-[#EDE4F7] text-[#6E2D8B]'
+                ? 'bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD]'
                 : isFamily
-                ? 'bg-[#FFE4E6] text-[#E11D48]'
-                : 'bg-[#EDE4F7] text-[#8E3EAF]'
+                ? 'bg-[#FFE4E6] text-[#E11D48] border border-[#FFE4E6]'
+                : 'bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD]'
             }`}
           >
             <Icon className="w-6 h-6" />
@@ -60,7 +60,7 @@ export const CareCircleMemberCard: React.FC<CareCircleMemberCardProps> = ({
 
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="text-base font-bold font-display text-[#1C1326] truncate">
+              <h3 className="text-base font-bold font-display text-[#0F172A] truncate">
                 {member.name}
               </h3>
               <span
@@ -76,12 +76,12 @@ export const CareCircleMemberCard: React.FC<CareCircleMemberCardProps> = ({
               </span>
             </div>
 
-            <span className="text-xs text-[#584B68] block truncate mt-0.5">
+            <span className="text-xs text-[#475569] block truncate mt-0.5">
               {member.relationship || (isDoctor ? 'Healthcare Professional' : 'Trusted Contact')}
             </span>
 
             {member.clinicOrganization && (
-              <span className="text-[11px] text-[#8D7E9E] inline-flex items-center gap-1 mt-0.5 truncate">
+              <span className="text-[11px] text-[#64748B] inline-flex items-center gap-1 mt-0.5 truncate">
                 <Building2 className="w-3 h-3" />
                 {member.clinicOrganization}
               </span>
@@ -91,18 +91,18 @@ export const CareCircleMemberCard: React.FC<CareCircleMemberCardProps> = ({
 
         {/* Last Viewed Indicator */}
         <div className="text-right shrink-0">
-          <span className="text-[10px] font-mono text-[#8D7E9E] block uppercase">
+          <span className="text-[10px] font-mono text-[#64748B] block uppercase">
             Activity
           </span>
-          <span className="text-[11px] font-mono font-bold text-[#6E2D8B] block mt-0.5">
+          <span className="text-[11px] font-mono font-bold text-[#0288D1] block mt-0.5">
             {formatLastViewed(member.lastViewedAt)}
           </span>
         </div>
       </div>
 
       {/* Permissions Breakdown Checklist */}
-      <div className="p-4 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] space-y-2.5">
-        <span className="text-[10px] font-mono font-bold text-[#8D7E9E] uppercase tracking-wider block">
+      <div className="p-4 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] space-y-2.5">
+        <span className="text-[10px] font-mono font-bold text-[#0369A1] uppercase tracking-wider block">
           Access Granted by You
         </span>
 
@@ -112,9 +112,9 @@ export const CareCircleMemberCard: React.FC<CareCircleMemberCardProps> = ({
             {perms.reports ? (
               <Check className="w-3.5 h-3.5 text-[#047857] shrink-0 font-bold" />
             ) : (
-              <X className="w-3.5 h-3.5 text-[#9CA3AF] shrink-0" />
+              <X className="w-3.5 h-3.5 text-[#94A3B8] shrink-0" />
             )}
-            <span className={perms.reports ? 'text-[#1C1326] font-medium' : 'text-[#9CA3AF]'}>
+            <span className={perms.reports ? 'text-[#0F172A] font-medium' : 'text-[#94A3B8]'}>
               Lab Reports
             </span>
           </div>
@@ -124,9 +124,9 @@ export const CareCircleMemberCard: React.FC<CareCircleMemberCardProps> = ({
             {perms.symptoms ? (
               <Check className="w-3.5 h-3.5 text-[#047857] shrink-0 font-bold" />
             ) : (
-              <X className="w-3.5 h-3.5 text-[#9CA3AF] shrink-0" />
+              <X className="w-3.5 h-3.5 text-[#94A3B8] shrink-0" />
             )}
-            <span className={perms.symptoms ? 'text-[#1C1326] font-medium' : 'text-[#9CA3AF]'}>
+            <span className={perms.symptoms ? 'text-[#0F172A] font-medium' : 'text-[#94A3B8]'}>
               Symptoms
             </span>
           </div>
@@ -136,9 +136,9 @@ export const CareCircleMemberCard: React.FC<CareCircleMemberCardProps> = ({
             {perms.cycle ? (
               <Check className="w-3.5 h-3.5 text-[#047857] shrink-0 font-bold" />
             ) : (
-              <X className="w-3.5 h-3.5 text-[#9CA3AF] shrink-0" />
+              <X className="w-3.5 h-3.5 text-[#94A3B8] shrink-0" />
             )}
-            <span className={perms.cycle ? 'text-[#1C1326] font-medium' : 'text-[#9CA3AF]'}>
+            <span className={perms.cycle ? 'text-[#0F172A] font-medium' : 'text-[#94A3B8]'}>
               Cycle Rhythm
             </span>
           </div>
@@ -148,9 +148,9 @@ export const CareCircleMemberCard: React.FC<CareCircleMemberCardProps> = ({
             {perms.weekly_summary ? (
               <Check className="w-3.5 h-3.5 text-[#047857] shrink-0 font-bold" />
             ) : (
-              <X className="w-3.5 h-3.5 text-[#9CA3AF] shrink-0" />
+              <X className="w-3.5 h-3.5 text-[#94A3B8] shrink-0" />
             )}
-            <span className={perms.weekly_summary ? 'text-[#1C1326] font-medium' : 'text-[#9CA3AF]'}>
+            <span className={perms.weekly_summary ? 'text-[#0F172A] font-medium' : 'text-[#94A3B8]'}>
               Weekly Summary
             </span>
           </div>
@@ -160,9 +160,9 @@ export const CareCircleMemberCard: React.FC<CareCircleMemberCardProps> = ({
             {perms.medications ? (
               <Check className="w-3.5 h-3.5 text-[#047857] shrink-0 font-bold" />
             ) : (
-              <X className="w-3.5 h-3.5 text-[#9CA3AF] shrink-0" />
+              <X className="w-3.5 h-3.5 text-[#94A3B8] shrink-0" />
             )}
-            <span className={perms.medications ? 'text-[#1C1326] font-medium' : 'text-[#9CA3AF]'}>
+            <span className={perms.medications ? 'text-[#0F172A] font-medium' : 'text-[#94A3B8]'}>
               Medications
             </span>
           </div>
@@ -172,9 +172,9 @@ export const CareCircleMemberCard: React.FC<CareCircleMemberCardProps> = ({
             {perms.chat_summary ? (
               <Check className="w-3.5 h-3.5 text-[#047857] shrink-0 font-bold" />
             ) : (
-              <X className="w-3.5 h-3.5 text-[#9CA3AF] shrink-0" />
+              <X className="w-3.5 h-3.5 text-[#94A3B8] shrink-0" />
             )}
-            <span className={perms.chat_summary ? 'text-[#1C1326] font-medium' : 'text-[#9CA3AF]'}>
+            <span className={perms.chat_summary ? 'text-[#0F172A] font-medium' : 'text-[#94A3B8]'}>
               Topics Summary
             </span>
           </div>
@@ -182,12 +182,12 @@ export const CareCircleMemberCard: React.FC<CareCircleMemberCardProps> = ({
       </div>
 
       {/* Action Footer Buttons */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#F0EAF5]">
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#E2E8F0]">
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => onManageAccess(member)}
-            className="px-4 py-2 rounded-xl text-xs font-bold text-[#6E2D8B] bg-[#EDE4F7] hover:bg-[#E7DFEF] transition-colors flex items-center gap-1.5 cursor-pointer"
+            className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"
           >
             <Settings className="w-3.5 h-3.5" />
             <span>Manage Access</span>
@@ -197,17 +197,17 @@ export const CareCircleMemberCard: React.FC<CareCircleMemberCardProps> = ({
             href={`/care-provider/${member.inviteToken}`}
             target="_blank"
             rel="noreferrer"
-            className="px-3.5 py-2 rounded-xl text-xs font-bold text-[#584B68] bg-[#F8F5FA] hover:bg-[#EDE4F7] border border-[#E7DFEF] transition-colors flex items-center gap-1.5 cursor-pointer"
+            className="px-3.5 py-2 rounded-xl text-xs font-semibold text-[#0288D1] bg-white hover:bg-[#F0F9FF] border border-[#BAE6FD] transition-colors flex items-center gap-1.5 cursor-pointer"
           >
             <span>View Portal</span>
-            <ExternalLink className="w-3 h-3 text-[#8D7E9E]" />
+            <ExternalLink className="w-3 h-3 text-[#0288D1]" />
           </a>
         </div>
 
         <button
           type="button"
           onClick={() => onRevokeAccess(member)}
-          className="p-2 rounded-xl text-[#9CA3AF] hover:text-[#E11D48] hover:bg-[#FFE4E6]/50 transition-colors cursor-pointer"
+          className="p-2 rounded-xl text-[#94A3B8] hover:text-[#E11D48] hover:bg-[#FFE4E6]/50 transition-colors cursor-pointer"
           title="Remove Access"
         >
           <Trash2 className="w-4 h-4" />

@@ -7,31 +7,31 @@ export const WhyDifferentSection: React.FC = () => {
   const comparisonData = [
     {
       conventional: 'Single-purpose trackers with siloed data',
-      vitasense: 'Connected multimodal screening for Women, Men & Baseline users',
+      biopulse: 'Connected multimodal screening for Women, Men & Baseline users',
     },
     {
       conventional: 'Data remains fragmented across paper slips & memos',
-      vitasense: 'Unified, structured 4-tier longitudinal record',
+      biopulse: 'Unified, structured 4-tier longitudinal record',
     },
     {
       conventional: 'One-time isolated snapshot prediction',
-      vitasense: 'Multi-month trend monitoring & progressive reassessment',
+      biopulse: 'Multi-month trend monitoring & progressive reassessment',
     },
     {
       conventional: 'Opaque black-box AI risk percentages',
-      vitasense: 'Transparent SHAP feature attribution explaining model weights',
+      biopulse: 'Transparent SHAP feature attribution explaining model weights',
     },
     {
       conventional: 'Indiscriminate batteries of expensive tests',
-      vitasense: 'Value-driven information prioritization (cost vs estimated gain)',
+      biopulse: 'Value-driven information prioritization (cost vs estimated gain)',
     },
     {
       conventional: 'Generic, one-size-fits-all health advice',
-      vitasense: 'Context-aware, non-curative supportive lifestyle guidance',
+      biopulse: 'Context-aware, non-curative supportive lifestyle guidance',
     },
     {
       conventional: 'Automated AI claims attempting to replace doctors',
-      vitasense: 'Human-supervised summaries designed for collaborative doctor visits',
+      biopulse: 'Human-supervised summaries designed for collaborative doctor visits',
     },
   ];
 
@@ -57,21 +57,21 @@ export const WhyDifferentSection: React.FC = () => {
 
         {/* Factual Comparison Table */}
         <div className="max-w-4xl mx-auto rounded-3xl bg-white border border-[#E7DFEF] shadow-xl overflow-hidden">
-          <div className="grid grid-cols-2 bg-[#EDE4F7]/60 border-b border-[#E7DFEF] p-5 font-display font-bold text-xs sm:text-sm">
+          <div className="hidden sm:grid sm:grid-cols-2 bg-[#EDE4F7]/60 border-b border-[#E7DFEF] p-5 font-display font-bold text-xs sm:text-sm">
             <span className="text-[#8D7E9E] uppercase tracking-wider">Conventional Health Trackers</span>
-            <span className="text-[#6E2D8B] uppercase tracking-wider">The VITASense Platform</span>
+            <span className="text-[#6E2D8B] uppercase tracking-wider">The BIOPulse AI Platform</span>
           </div>
 
           <div className="divide-y divide-[#E7DFEF]">
             {comparisonData.map((row, idx) => (
-              <div key={idx} className="grid grid-cols-2 p-4 sm:p-5 text-xs sm:text-sm items-center hover:bg-[#FAF7FD] transition-colors">
-                <div className="flex items-center gap-2.5 text-[#584B68] pr-4">
-                  <X className="w-4 h-4 text-[#FB7185] shrink-0" />
+              <div key={idx} className="flex flex-col sm:grid sm:grid-cols-2 p-4 sm:p-5 text-xs sm:text-sm gap-2.5 sm:gap-0 sm:items-center hover:bg-[#FAF7FD] transition-colors">
+                <div className="flex items-start sm:items-center gap-2.5 text-[#584B68] sm:pr-4">
+                  <X className="w-4 h-4 text-[#FB7185] shrink-0 mt-0.5 sm:mt-0" />
                   <span>{row.conventional}</span>
                 </div>
-                <div className="flex items-center gap-2.5 text-[#1C1326] font-semibold pl-2">
-                  <Check className="w-4 h-4 text-[#047857] shrink-0" />
-                  <span>{row.vitasense}</span>
+                <div className="flex items-start sm:items-center gap-2.5 text-[#1C1326] font-semibold sm:pl-2 bg-purple-50/50 sm:bg-transparent p-2.5 sm:p-0 rounded-xl sm:rounded-none">
+                  <Check className="w-4 h-4 text-[#047857] shrink-0 mt-0.5 sm:mt-0" />
+                  <span>{row.biopulse}</span>
                 </div>
               </div>
             ))}

@@ -121,7 +121,7 @@ export const UploadReportsSection: React.FC = () => {
             </h2>
 
             <p className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans">
-              Whether you have hormone blood tests, metabolic panels, or structured ultrasound report text, VITASense accepts standard PDFs, JPGs, and mobile scans without tedious manual typing.
+              Whether you have hormone blood tests, metabolic panels, or structured ultrasound report text, BIOPulse AI accepts standard PDFs, JPGs, and mobile scans without tedious manual typing.
             </p>
 
             {/* 5-Step Flow Explanation */}

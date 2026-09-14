@@ -45,7 +45,7 @@ export const InformationGapSection: React.FC = () => {
       estimatedGain: 'Specific Contextual Improvement',
       relativeBurden: 'Clinical Ultrasound Appointment',
       gainValue: 46,
-      reason: 'Structured follicle count from an existing radiologist report (VITASense reads text reports, not raw images).',
+      reason: 'Structured follicle count from an existing radiologist report (BIOPulse AI reads text reports, not raw images).',
     },
   ];
 
@@ -106,7 +106,7 @@ export const InformationGapSection: React.FC = () => {
           </h2>
 
           <p className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans max-w-2xl mx-auto">
-            Not all additional information has the same clinical value. VITASense compares your current information with higher tiers to identify what could most effectively clarify your assessment without unnecessary testing.
+            Not all additional information has the same clinical value. BIOPulse AI compares your current information with higher tiers to identify what could most effectively clarify your assessment without unnecessary testing.
           </p>
 
           {/* Pathway Selector */}
@@ -199,7 +199,7 @@ export const InformationGapSection: React.FC = () => {
                 "Based on the evaluated model, this additional information could provide the greatest estimated improvement in screening performance relative to its estimated cost. This information is intended to support discussion with a healthcare professional and does not constitute a medical recommendation."
               </p>
               <p className="text-[11px] text-[#B4A6C7] pt-1">
-                VITASense never prescribes lab investigations or medical procedures. You and your clinician decide which steps are clinically and financially appropriate for your personal circumstances.
+                BIOPulse AI never prescribes lab investigations or medical procedures. You and your clinician decide which steps are clinically and financially appropriate for your personal circumstances.
               </p>
             </div>
           </div>

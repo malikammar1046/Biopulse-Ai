@@ -44,23 +44,23 @@ export const DashboardHeader: React.FC = () => {
   ];
 
   return (
-    <header className="relative w-full flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-[#E7DFEF] select-none">
+    <header className="relative w-full flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-[#E2E8F0] select-none">
       {/* ── Left: Greeting & Date Subtitle ── */}
       <div className="space-y-1 text-left">
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-[#1C1326] tracking-tight">
-            {greeting} <span className="inline-block animate-bounce">👋</span>
+          <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-[#0F172A] tracking-tight">
+            {greeting} <span className="inline-block">👋</span>
           </h1>
         </div>
-        <p className="text-xs sm:text-sm text-[#584B68] font-sans">
-          Here’s your health summary today.
+        <p className="text-xs sm:text-sm text-[#64748B] font-sans">
+          Here’s your clinical health summary today.
         </p>
       </div>
 
       {/* ── Right: Date, Search, Notifications & Quick Actions ── */}
       <div className="flex items-center gap-3 self-start md:self-auto">
         {/* Date Display Pill */}
-        <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-[#EDE4F7]/60 border border-[#D8B4FE]/40 text-xs font-mono font-bold text-[#6E2D8B]">
+        <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-[#E0F2FE] border border-[#BAE6FD] text-xs font-mono font-bold text-[#0288D1]">
           <CalendarIcon className="w-3.5 h-3.5" />
           <span>{todayFormatted}</span>
         </div>
@@ -70,9 +70,9 @@ export const DashboardHeader: React.FC = () => {
           <input
             type="text"
             placeholder="Search symptoms, lab reports, meals..."
-            className="w-56 px-3.5 py-2 pl-9 rounded-2xl bg-white border border-[#E7DFEF] text-xs text-[#1C1326] placeholder-[#8D7E9E] focus:outline-none focus:ring-2 focus:ring-[#8E3EAF] transition-all"
+            className="w-56 px-3.5 py-2 pl-9 rounded-2xl bg-white border border-[#E2E8F0] text-xs text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#0288D1] transition-all"
           />
-          <Search className="w-3.5 h-3.5 text-[#8D7E9E] absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-3.5 h-3.5 text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" />
         </div>
 
         {/* Notification Bell with Unread Badge */}
@@ -80,30 +80,30 @@ export const DashboardHeader: React.FC = () => {
           <button
             type="button"
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-2.5 rounded-2xl bg-white border border-[#E7DFEF] text-[#584B68] hover:text-[#6E2D8B] hover:bg-[#F2ECF7] transition-all cursor-pointer shadow-xs"
+            className="relative p-2.5 rounded-2xl bg-white border border-[#E2E8F0] text-[#64748B] hover:text-[#0288D1] hover:bg-[#F8FAFC] transition-all cursor-pointer shadow-xs"
             aria-label="Notifications"
           >
             <Bell className="w-4 h-4" />
-            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#E87084] text-white text-[9px] font-mono font-bold flex items-center justify-center shadow-xs">
+            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#0288D1] text-white text-[9px] font-mono font-bold flex items-center justify-center shadow-xs">
               3
             </span>
           </button>
 
           {/* Notifications Dropdown Panel */}
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 rounded-3xl bg-white border border-[#E7DFEF] shadow-2xl p-4 z-50 text-left space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-[#F0EAF5]">
-                <span className="text-xs font-bold font-mono text-[#1C1326] uppercase">Notifications</span>
-                <span className="text-[10px] font-mono text-[#8E3EAF] font-bold">3 New</span>
+            <div className="absolute right-0 mt-2 w-80 rounded-3xl bg-white border border-[#E2E8F0] shadow-2xl p-4 z-50 text-left space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
+                <span className="text-xs font-bold font-mono text-[#0F172A] uppercase">Notifications</span>
+                <span className="text-[10px] font-mono text-[#0288D1] font-bold">3 New</span>
               </div>
               <div className="space-y-2">
                 {notifications.map((n) => (
-                  <div key={n.id} className="p-2.5 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF]/60 space-y-1">
+                  <div key={n.id} className="p-2.5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-[#1C1326]">{n.title}</span>
-                      <span className="text-[9px] font-mono text-[#8D7E9E]">{n.time}</span>
+                      <span className="text-xs font-bold text-[#0F172A]">{n.title}</span>
+                      <span className="text-[9px] font-mono text-[#64748B]">{n.time}</span>
                     </div>
-                    <p className="text-[11px] text-[#584B68] leading-tight">{n.desc}</p>
+                    <p className="text-[11px] text-[#64748B] leading-tight">{n.desc}</p>
                   </div>
                 ))}
               </div>
@@ -115,18 +115,18 @@ export const DashboardHeader: React.FC = () => {
         <button
           type="button"
           onClick={() => setShowQuickLogModal(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-2xl font-sans font-bold text-xs text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#E87084] hover:brightness-110 shadow-md shadow-purple-950/20 transition-all cursor-pointer"
+          className="flex items-center gap-2 px-4 py-2 rounded-2xl font-sans font-bold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-xs transition-all cursor-pointer"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
           <span>Log Today</span>
         </button>
 
         {/* User Profile Avatar */}
-        <div className="w-9 h-9 rounded-2xl overflow-hidden border border-[#D8B4FE] bg-[#EDE4F7] flex items-center justify-center shrink-0 shadow-xs">
+        <div className="w-9 h-9 rounded-2xl overflow-hidden border border-[#BAE6FD] bg-[#E0F2FE] flex items-center justify-center shrink-0 shadow-xs">
           {userProfile.avatarUrl ? (
             <img src={userProfile.avatarUrl} alt={userProfile.fullName} className="w-full h-full object-cover" />
           ) : (
-            <span className="text-xs font-bold font-mono text-[#6E2D8B]">
+            <span className="text-xs font-bold font-mono text-[#0288D1]">
               {userProfile.fullName.charAt(0)}
             </span>
           )}
@@ -136,29 +136,29 @@ export const DashboardHeader: React.FC = () => {
       {/* Quick Log Modal Overlay */}
       {showQuickLogModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-3xl bg-white border border-[#E7DFEF] p-6 text-left shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#F0EAF5]">
+          <div className="w-full max-w-md rounded-3xl bg-white border border-[#E2E8F0] p-6 text-left shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-[#8E3EAF]" />
-                <h3 className="text-sm font-bold font-display text-[#1C1326]">Quick Daily Log</h3>
+                <Sparkles className="w-4 h-4 text-[#0288D1]" />
+                <h3 className="text-sm font-bold font-display text-[#0F172A]">Quick Daily Log</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setShowQuickLogModal(false)}
-                className="text-xs text-[#8D7E9E] hover:text-[#1C1326] cursor-pointer"
+                className="text-xs text-[#64748B] hover:text-[#0F172A] cursor-pointer"
               >
                 Close
               </button>
             </div>
 
-            <p className="text-xs text-[#584B68]">
+            <p className="text-xs text-[#64748B]">
               What would you like to log for today ({todayFormatted})?
             </p>
 
             <div className="grid grid-cols-2 gap-2.5">
               {[
-                { title: '🩸 Period Flow', desc: 'Light, Medium, or Heavy' },
-                { title: '⚡ Symptoms', desc: 'Cramps, Acne, Bloating' },
+                { title: '🩸 Cycle Details', desc: 'Flow or symptoms' },
+                { title: '⚡ Symptoms', desc: 'Energy, Fatigue, Mood' },
                 { title: '🥗 Food & Meals', desc: 'Breakfast, Lunch, Dinner' },
                 { title: '🏃 Movement', desc: 'Walking or home exercise' },
                 { title: '💊 Medications', desc: 'Prescriptions & vitamins' },
@@ -171,10 +171,10 @@ export const DashboardHeader: React.FC = () => {
                     setShowQuickLogModal(false);
                     openAiChatWithPrompt(`I would like to log: ${item.title}`);
                   }}
-                  className="p-3 rounded-2xl bg-[#F8F5FA] hover:bg-[#EDE4F7] border border-[#E7DFEF] text-left transition-colors cursor-pointer"
+                  className="p-3 rounded-2xl bg-[#F8FAFC] hover:bg-[#E0F2FE] border border-[#E2E8F0] text-left transition-colors cursor-pointer"
                 >
-                  <span className="text-xs font-bold text-[#1C1326] block">{item.title}</span>
-                  <span className="text-[10px] text-[#8D7E9E]">{item.desc}</span>
+                  <span className="text-xs font-bold text-[#0F172A] block">{item.title}</span>
+                  <span className="text-[10px] text-[#64748B]">{item.desc}</span>
                 </button>
               ))}
             </div>

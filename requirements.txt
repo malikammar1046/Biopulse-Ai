@@ -12,6 +12,7 @@ Django>=5.0,<6.0
 djangorestframework>=3.14.0
 django-cors-headers>=4.3.0
 python-dotenv>=1.0.0
+PyJWT>=2.8.0
 
 # Supabase & Cloud Database
 supabase>=2.3.0
@@ -23,6 +24,10 @@ scipy>=1.10.0
 scikit-learn>=1.4.0
 openpyxl>=3.1.0
 
+# Deep Learning (PCOS-ML Multimodal Ultrasound EfficientNet-B0 & Grad-CAM)
+torch>=2.2.0
+torchvision>=0.17.0
+
 # Model Explainability (TreeSHAP)
 shap>=0.45.0
 
@@ -30,6 +35,9 @@ shap>=0.45.0
 opencv-python-headless>=4.9.0
 pytesseract>=0.3.10
 Pillow>=10.2.0
+pypdf>=3.17.0
+pymupdf>=1.23.8
+rapidocr-onnxruntime>=1.2.0
 
 # Testing & Code Quality
 pytest>=8.0.0

@@ -9,6 +9,7 @@ import {
   cmToInches,
   inchesToCm,
 } from '../../utils/unitConversions';
+import { getDobInputBounds } from '../../utils/profileValidation';
 
 interface Step1Props {
   data: {
@@ -39,6 +40,7 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg');
   const [waistUnit, setWaistUnit] = useState<'cm' | 'in'>('cm');
 
+  const dobBounds = getDobInputBounds();
   const { feet, inches } = cmToFtIn(data.heightCm);
   const displayLbs = kgToLbs(data.weightKg);
   const displayWaistInches = cmToInches(data.waistCm);
@@ -58,7 +60,7 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
           Let’s start with your basics.
         </h2>
         <p className="text-sm text-[#CDBDD8] font-sans">
-          This helps VITASense personalize your health pathway, calendar, and secure your profile.
+          This helps BioPulse AI personalize your health pathway, calendar, and secure your profile.
         </p>
       </div>
 
@@ -91,7 +93,7 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
               </div>
               <div>
                 <span className="text-sm font-bold text-white block">Female</span>
-                <span className="text-[11px] text-[#FDA4AF] font-medium block">OvaSense AI</span>
+                <span className="text-[11px] text-[#FDA4AF] font-medium block">PCOS Pathway</span>
                 <span className="text-[10px] text-[#A797BD] leading-tight block mt-1">
                   PCOS screening, period rhythms & women's health
                 </span>
@@ -118,7 +120,7 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
               </div>
               <div>
                 <span className="text-sm font-bold text-white block">Male</span>
-                <span className="text-[11px] text-[#38BDF8] font-medium block">AndroSense AI</span>
+                <span className="text-[11px] text-[#38BDF8] font-medium block">Hypogonadism Pathway</span>
                 <span className="text-[10px] text-[#A797BD] leading-tight block mt-1">
                   Hormone vitality, hypogonadism screening & energy
                 </span>
@@ -145,7 +147,7 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
               </div>
               <div>
                 <span className="text-sm font-bold text-white block">Other / General</span>
-                <span className="text-[11px] text-[#A78BFA] font-medium block">VITASense Baseline</span>
+                <span className="text-[11px] text-[#A78BFA] font-medium block">General Baseline</span>
                 <span className="text-[10px] text-[#A797BD] leading-tight block mt-1">
                   General wellness, lifestyle, reports & monitoring
                 </span>
@@ -241,11 +243,13 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
         <div className="space-y-1.5">
           <label className="text-xs font-bold font-mono text-[#EDE4F7] uppercase tracking-wider flex items-center justify-between">
             <span>Date of Birth <span className="text-[#FB7185]">*</span></span>
-            <span className="text-[10px] text-[#A797BD] font-normal lowercase">required</span>
+            <span className="text-[10px] text-[#A797BD] font-normal lowercase">min. 13 years</span>
           </label>
           <div className="relative">
             <input
               type="date"
+              min={dobBounds.min}
+              max={dobBounds.max}
               value={data.dateOfBirth}
               onChange={(e) => onChange('dateOfBirth', e.target.value)}
               className={`w-full px-4 py-3 pl-10 rounded-2xl bg-[#140924] border text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#8E3EAF] transition-all ${
@@ -261,12 +265,12 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
         <div className="space-y-1.5">
           <label className="text-xs font-bold font-mono text-[#EDE4F7] uppercase tracking-wider flex items-center justify-between">
             <span>Phone Number <span className="text-[#FB7185]">*</span></span>
-            <span className="text-[10px] text-[#A797BD] font-normal lowercase">required</span>
+            <span className="text-[10px] text-[#A797BD] font-normal lowercase">11 digits (03xx or +92)</span>
           </label>
           <div className="relative">
             <input
               type="tel"
-              placeholder="+92 300 1234567"
+              placeholder="03001234567 or +923001234567"
               value={data.phone}
               onChange={(e) => onChange('phone', e.target.value)}
               className={`w-full px-4 py-3 pl-10 rounded-2xl bg-[#140924] border text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#8E3EAF] transition-all ${

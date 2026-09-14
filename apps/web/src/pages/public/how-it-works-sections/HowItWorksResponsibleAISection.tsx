@@ -12,7 +12,7 @@ export const HowItWorksResponsibleAISection: React.FC = () => {
     },
     {
       title: 'Limitations',
-      desc: 'Screening is not diagnosis. VITASense evaluates statistical pattern alignment rather than providing definitive clinical labels.',
+      desc: 'Screening is not diagnosis. BIOPulse AI evaluates statistical pattern alignment rather than providing definitive clinical labels.',
       icon: AlertCircle,
       accent: '#E87084',
     },
@@ -62,7 +62,7 @@ export const HowItWorksResponsibleAISection: React.FC = () => {
           </h2>
 
           <p className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans max-w-2xl mx-auto">
-            VITASense applies six core governance principles across both health pathways and baseline monitoring to safeguard patient safety and user agency.
+            BIOPulse AI applies six core governance principles across both health pathways and baseline monitoring to safeguard patient safety and user agency.
           </p>
         </div>
 

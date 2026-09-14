@@ -81,50 +81,25 @@ export const TodayActionsCard: React.FC<TodayActionsCardProps> = ({
 
   const displayActions = showAll ? actions : actions.slice(0, 4);
 
-  // Pathway specific color accents
-  const pathwayAccent = {
-    female: {
-      badge: 'bg-[#EDE4F7] text-[#6E2D8B]',
-      border: 'border-[#E7DFEF]',
-      progress: 'from-[#6E2D8B] to-[#FB7185]',
-      glow: 'shadow-[#6E2D8B]/5',
-      primaryBtn: 'bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF] text-white hover:opacity-95',
-    },
-    male: {
-      badge: 'bg-sky-50 text-sky-700',
-      border: 'border-sky-100',
-      progress: 'from-sky-600 to-teal-500',
-      glow: 'shadow-sky-500/5',
-      primaryBtn: 'bg-gradient-to-r from-sky-600 to-teal-600 text-white hover:opacity-95',
-    },
-    general: {
-      badge: 'bg-violet-50 text-violet-700',
-      border: 'border-violet-100',
-      progress: 'from-violet-600 to-indigo-500',
-      glow: 'shadow-violet-500/5',
-      primaryBtn: 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:opacity-95',
-    },
-  }[pathway];
-
   const getPriorityBadge = (priority: DashboardAction['priority']) => {
     switch (priority) {
       case 'critical':
         return (
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 border border-rose-500/20">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
             <AlertCircle className="w-2.5 h-2.5" />
             CRITICAL
           </span>
         );
       case 'high':
         return (
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 border border-amber-500/20">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
             <AlertTriangle className="w-2.5 h-2.5" />
             HIGH
           </span>
         );
       case 'medium':
         return (
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-700 border border-blue-500/20">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200">
             ACTION
           </span>
         );
@@ -139,41 +114,42 @@ export const TodayActionsCard: React.FC<TodayActionsCardProps> = ({
 
   return (
     <div
-      className={`p-6 sm:p-7 rounded-[32px] bg-white border ${pathwayAccent.border} shadow-sm ${pathwayAccent.glow} transition-all space-y-6 text-left`}
+      className="p-6 sm:p-7 rounded-[24px] bg-white border border-[#E2E8F0] shadow-sm transition-all space-y-6 text-left"
       id="today-actions-section"
+      data-pathway={pathway}
     >
       {/* ── Card Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-mono uppercase tracking-widest text-[#8A7A99] font-bold">
+            <span className="text-[11px] font-mono uppercase tracking-widest text-[#64748B] font-bold">
               Personalized Plan
             </span>
             {criticalCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 border border-rose-200 animate-pulse">
+              <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
                 <AlertCircle className="w-2.5 h-2.5" />
                 {criticalCount} Urgent
               </span>
             )}
           </div>
-          <h2 className="text-xl sm:text-2xl font-bold font-display text-[#1C1326] tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-bold font-display text-[#0F172A] tracking-tight">
             Today's Priorities
           </h2>
         </div>
 
         {/* Progress pill */}
-        <div className="flex items-center gap-3 bg-[#FAF7FD] border border-[#E7DFEF] rounded-2xl px-4 py-2 self-start sm:self-auto">
+        <div className="flex items-center gap-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl px-4 py-2 self-start sm:self-auto">
           <div className="text-right">
-            <div className="text-xs font-mono font-bold text-[#1C1326]">
+            <div className="text-xs font-mono font-bold text-[#0F172A]">
               {completedCount} / {totalCount} Done
             </div>
-            <div className="text-[10px] font-sans text-[#8A7A99]">
+            <div className="text-[10px] font-sans text-[#64748B]">
               {progressPercent}% completed
             </div>
           </div>
-          <div className="w-10 h-2 bg-[#E7DFEF] rounded-full overflow-hidden">
+          <div className="w-12 h-2 bg-[#E2E8F0] rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full bg-gradient-to-r ${pathwayAccent.progress} transition-all duration-500`}
+              className="h-full rounded-full bg-[#29B6F6] transition-all duration-500"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -186,8 +162,8 @@ export const TodayActionsCard: React.FC<TodayActionsCardProps> = ({
           <div className="w-12 h-12 mx-auto rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
             <CheckCircle2 className="w-6 h-6" />
           </div>
-          <h4 className="text-sm font-bold font-display text-[#1C1326]">All Caught Up!</h4>
-          <p className="text-xs text-[#8A7A99] max-w-sm mx-auto">
+          <h4 className="text-sm font-bold font-display text-[#0F172A]">All Caught Up!</h4>
+          <p className="text-xs text-[#64748B] max-w-sm mx-auto">
             You've completed all prioritized health actions for today. Check back tomorrow or log ad-hoc updates below.
           </p>
         </div>
@@ -209,7 +185,7 @@ export const TodayActionsCard: React.FC<TodayActionsCardProps> = ({
                       ? 'bg-slate-50/60 border-slate-200/60 opacity-60'
                       : action.priority === 'critical'
                       ? 'bg-rose-50/40 border-rose-200 hover:border-rose-300'
-                      : 'bg-[#FCFAFF] border-[#EAE2F2] hover:border-[#D6C4E6] hover:shadow-xs'
+                      : 'bg-[#F8FAFC] border-[#E2E8F0] hover:border-[#BAE6FD] hover:shadow-xs'
                   }`}
                 >
                   <div className="flex items-start gap-3.5 min-w-0">
@@ -220,7 +196,7 @@ export const TodayActionsCard: React.FC<TodayActionsCardProps> = ({
                           ? 'bg-emerald-100 text-emerald-700'
                           : action.priority === 'critical'
                           ? 'bg-rose-100 text-rose-700'
-                          : 'bg-[#EDE4F7] text-[#6E2D8B]'
+                          : 'bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD]'
                       }`}
                     >
                       {isDone ? (
@@ -234,14 +210,14 @@ export const TodayActionsCard: React.FC<TodayActionsCardProps> = ({
                       <div className="flex flex-wrap items-center gap-2">
                         <span
                           className={`text-sm font-bold font-display ${
-                            isDone ? 'line-through text-slate-500' : 'text-[#1C1326]'
+                            isDone ? 'line-through text-slate-500' : 'text-[#0F172A]'
                           }`}
                         >
                           {action.title}
                         </span>
                         {getPriorityBadge(action.priority)}
                       </div>
-                      <p className="text-xs text-[#7A6B88] font-sans leading-relaxed line-clamp-2">
+                      <p className="text-xs text-[#64748B] font-sans leading-relaxed line-clamp-2">
                         {action.description}
                       </p>
                     </div>
@@ -255,7 +231,7 @@ export const TodayActionsCard: React.FC<TodayActionsCardProps> = ({
                         className={`text-xs font-bold font-sans px-3.5 py-1.5 rounded-xl transition-all inline-flex items-center gap-1.5 cursor-pointer ${
                           action.priority === 'critical'
                             ? 'bg-rose-600 hover:bg-rose-700 text-white'
-                            : pathwayAccent.primaryBtn
+                            : 'bg-[#0288D1] hover:bg-[#0277BD] text-white shadow-sm'
                         }`}
                       >
                         <span>{action.actionLabel}</span>
@@ -280,7 +256,7 @@ export const TodayActionsCard: React.FC<TodayActionsCardProps> = ({
         <div className="pt-2 text-center">
           <button
             onClick={() => setShowAll(!showAll)}
-            className="text-xs font-bold font-sans text-[#6E2D8B] hover:text-[#8E3EAF] inline-flex items-center gap-1.5 px-4 py-2 rounded-xl hover:bg-[#FAF7FD] transition-colors cursor-pointer"
+            className="text-xs font-bold font-sans text-[#0288D1] hover:text-[#0277BD] inline-flex items-center gap-1.5 px-4 py-2 rounded-xl hover:bg-[#F0F9FF] transition-colors cursor-pointer"
           >
             {showAll ? (
               <>

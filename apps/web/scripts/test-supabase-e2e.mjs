@@ -1,7 +1,8 @@
+import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = 'https://dqqrqwjeebecmgfsihtv.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_rZfbhMCOuoCGq4TVmjiEbA_wnlcutJP';
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://dqqrqwjeebecmgfsihtv.supabase.co';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_rZfbhMCOuoCGq4TVmjiEbA_wnlcutJP';
 
 const runEndToEndTests = async () => {
   console.log('================================================================');
@@ -11,7 +12,7 @@ const runEndToEndTests = async () => {
   const randomSuffix = Date.now() + Math.random().toString(36).substring(2, 6);
   const user1Email = `fatima.test.${randomSuffix}@gmail.com`;
   const user2Email = `amina.test.${randomSuffix}@gmail.com`;
-  const password = 'TestSecurePassword123!';
+  const password = process.env.TEST_USER_PASSWORD || (crypto.randomBytes(16).toString('hex') + 'Aa1!');
 
   // Client 1 (for User 1)
   const client1 = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {

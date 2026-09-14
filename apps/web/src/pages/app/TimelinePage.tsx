@@ -180,10 +180,10 @@ export const TimelinePage: React.FC = () => {
       {/* 6. Chronological Timeline Feed */}
       <div className="space-y-2">
         <div className="flex items-center justify-between px-2 pb-2">
-          <h2 className="text-base sm:text-lg font-bold font-display text-[#1C1326]">
+          <h2 className="text-base sm:text-lg font-bold font-display text-[#0F172A]">
             Chronological Events Feed
           </h2>
-          <span className="text-xs font-mono text-[#8D7E9E]">
+          <span className="text-xs font-mono text-[#64748B]">
             {filteredEvents.length} Event{filteredEvents.length !== 1 ? 's' : ''} Listed
           </span>
         </div>

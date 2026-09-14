@@ -39,7 +39,7 @@ export const HowItWorksHeroSection: React.FC = () => {
             transition={{ duration: 0.8, delay: 0.1 }}
             className="text-4xl sm:text-6xl md:text-7.5xl font-extrabold font-display tracking-tight text-white leading-[1.08]"
           >
-            How VITASense{' '}
+            How BIOPulse AI{' '}
             <span className="bg-gradient-to-r from-[#38BDF8] via-[#C084FC] to-[#FB7185] bg-clip-text text-transparent">
               Works.
             </span>
@@ -52,7 +52,7 @@ export const HowItWorksHeroSection: React.FC = () => {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="text-base sm:text-xl md:text-2xl text-[#CDBDD8] max-w-3xl mx-auto font-sans leading-relaxed"
           >
-            VITASense turns the health information you already have into a clearer picture — helping you{' '}
+            BIOPulse AI turns the health information you already have into a clearer picture — helping you{' '}
             <span className="text-white font-medium">understand, assess, prioritize, and track</span> your health over time.
           </motion.p>
 

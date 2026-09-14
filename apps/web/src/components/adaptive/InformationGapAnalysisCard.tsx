@@ -10,23 +10,23 @@ export const InformationGapAnalysisCard: React.FC<InformationGapAnalysisCardProp
   gaps,
 }) => {
   return (
-    <div className="p-6 sm:p-8 rounded-[32px] bg-white border border-[#E7DFEF] shadow-sm space-y-6 text-left select-none">
+    <div className="p-6 sm:p-8 rounded-[32px] bg-white border border-[#BAE6FD] shadow-xs space-y-6 text-left select-none">
       {/* Top Title Row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#F0EAF5] pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#E2E8F0] pb-4">
         <div>
-          <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-[#EDE4F7] text-[#6E2D8B] text-xs font-mono font-bold mb-1">
-            <Layers className="w-3.5 h-3.5 text-[#8E3EAF]" />
+          <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-[#E0F2FE] text-[#01579B] text-xs font-mono font-bold mb-1">
+            <Layers className="w-3.5 h-3.5 text-[#0288D1]" />
             <span>Information Architecture</span>
           </div>
-          <h3 className="text-xl sm:text-2xl font-bold font-display text-[#1C1326]">
+          <h3 className="text-xl sm:text-2xl font-bold font-display text-[#01579B]">
             Information Gap Analysis
           </h3>
-          <p className="text-xs text-[#584B68] mt-0.5 leading-relaxed">
+          <p className="text-xs text-[#475569] mt-0.5 leading-relaxed">
             Identify what health information is currently available and what optional details could enhance screening depth.
           </p>
         </div>
 
-        <div className="text-xs font-mono text-[#584B68] self-start sm:self-auto flex items-center gap-2">
+        <div className="text-xs font-mono text-[#475569] self-start sm:self-auto flex items-center gap-2">
           <span className="text-[#047857] font-bold bg-[#ECFDF5] px-2.5 py-1 rounded-full border border-[#A7F3D0]/60">
             {gaps.totalAvailableCount} Available
           </span>
@@ -49,7 +49,7 @@ export const InformationGapAnalysisCard: React.FC<InformationGapAnalysisCardProp
           </div>
 
           {gaps.availableItems.length === 0 ? (
-            <p className="text-xs text-[#584B68] italic py-4 text-center">
+            <p className="text-xs text-[#475569] italic py-4 text-center">
               No health data recorded yet. Complete Tier 1 intake to begin.
             </p>
           ) : (
@@ -57,11 +57,11 @@ export const InformationGapAnalysisCard: React.FC<InformationGapAnalysisCardProp
               {gaps.availableItems.map((item) => (
                 <div
                   key={item.id}
-                  className="p-3 rounded-xl bg-white border border-[#DCFCE7] shadow-2xs flex items-center justify-between gap-2 text-xs"
+                  className="p-3 rounded-xl bg-white border border-[#DCFCE7] shadow-xs flex items-center justify-between gap-2 text-xs"
                 >
                   <div className="space-y-0.5">
-                    <span className="font-semibold text-[#1C1326] block">{item.label}</span>
-                    <span className="text-[10px] text-[#584B68] font-mono capitalize">
+                    <span className="font-semibold text-[#0F172A] block">{item.label}</span>
+                    <span className="text-[10px] text-[#64748B] font-mono capitalize">
                       {item.category.replace(/_/g, ' ')} • {item.source || 'Self-Reported'}
                     </span>
                   </div>
@@ -77,15 +77,15 @@ export const InformationGapAnalysisCard: React.FC<InformationGapAnalysisCardProp
         </div>
 
         {/* ── Right Column: Not Yet Available (○) ─────────────────────────── */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF7FC] border border-[#E7DFEF] space-y-3">
+        <div className="p-4 sm:p-5 rounded-2xl bg-[#F8FAFC] border border-[#BAE6FD]/80 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#6E2D8B] flex items-center gap-1.5">
+            <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#01579B] flex items-center gap-1.5">
               <span className="w-3.5 h-3.5 rounded-full border border-current flex items-center justify-center text-[10px] font-bold">
                 ○
               </span>
               <span>Not Yet Available ({gaps.missingPrioritizedItems.length})</span>
             </span>
-            <span className="text-[10px] text-[#8D7E9E] font-medium">Optional Depth</span>
+            <span className="text-[10px] text-[#64748B] font-medium">Optional Depth</span>
           </div>
 
           {gaps.missingPrioritizedItems.length === 0 ? (
@@ -97,15 +97,15 @@ export const InformationGapAnalysisCard: React.FC<InformationGapAnalysisCardProp
               {gaps.missingPrioritizedItems.map((item) => (
                 <div
                   key={item.id}
-                  className="p-3 rounded-xl bg-white border border-[#E7DFEF] shadow-2xs flex items-center justify-between gap-2 text-xs hover:border-[#D8B4FE] transition-colors"
+                  className="p-3 rounded-xl bg-white border border-[#BAE6FD]/80 shadow-xs flex items-center justify-between gap-2 text-xs hover:border-[#0288D1] transition-colors"
                 >
                   <div className="space-y-0.5">
-                    <span className="font-medium text-[#1C1326] block">{item.label}</span>
-                    <span className="text-[10px] text-[#736384] font-mono capitalize">
+                    <span className="font-medium text-[#0F172A] block">{item.label}</span>
+                    <span className="text-[10px] text-[#64748B] font-mono capitalize">
                       {item.tier.replace(/_/g, ' ')} • {item.category.replace(/_/g, ' ')}
                     </span>
                   </div>
-                  <span className="text-[10px] font-mono text-[#8D7E9E] bg-[#F8F5FA] border border-[#E7DFEF] px-2 py-0.5 rounded-md shrink-0">
+                  <span className="text-[10px] font-mono text-[#64748B] bg-[#F8FAFC] border border-[#BAE6FD]/60 px-2 py-0.5 rounded-md shrink-0">
                     Unrecorded
                   </span>
                 </div>
@@ -116,10 +116,10 @@ export const InformationGapAnalysisCard: React.FC<InformationGapAnalysisCardProp
       </div>
 
       {/* Reassurance text */}
-      <div className="text-xs text-[#584B68] leading-relaxed bg-[#F8F5FA] p-3.5 rounded-xl border border-[#E7DFEF] flex items-start gap-2.5">
-        <HelpCircle className="w-4 h-4 text-[#8E3EAF] shrink-0 mt-0.5" />
+      <div className="text-xs text-[#475569] leading-relaxed bg-[#F8FAFC] p-3.5 rounded-xl border border-[#BAE6FD]/80 flex items-start gap-2.5">
+        <HelpCircle className="w-4 h-4 text-[#0288D1] shrink-0 mt-0.5" />
         <p>
-          <strong className="text-[#1C1326]">Unknown ≠ Normal:</strong> Missing fields are treated strictly as unknown rather than assumed healthy or unhealthy. When you visit a healthcare professional or complete routine lab work, newly verified tests can be uploaded to enrich your profile.
+          <strong className="text-[#01579B]">Unknown ≠ Normal:</strong> Missing fields are treated strictly as unknown rather than assumed healthy or unhealthy. When you visit a healthcare professional or complete routine lab work, newly verified tests can be uploaded to enrich your profile.
         </p>
       </div>
     </div>

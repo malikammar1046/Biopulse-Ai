@@ -232,3 +232,113 @@ export interface ChatResponsePayload {
   needs_clinician: boolean;
   model?: string;
 }
+
+// ---------------------------------------------------------------------------
+// PCOS-ML Progressive Assessment Types
+// ---------------------------------------------------------------------------
+
+export type AssessmentLevel = 'tier_1' | 'tier_1_2' | 'tier_1_2_3';
+
+export type ProgressiveRiskCategory = 'lower' | 'intermediate' | 'higher' | 'insufficient_data';
+
+export type PCOMStatus = 'PCOM Detected' | 'PCOM Not Visible' | 'Not Assessed';
+
+export interface FusionDetails {
+  clinical_probability: number;
+  ultrasound_pcom_probability: number;
+  clinical_weight: number;
+  ultrasound_weight: number;
+  combined_score: number;
+  threshold: number;
+}
+
+export interface HormonePatternInterpretation {
+  is_hypogonadal: boolean;
+  pattern_type: string;
+  pattern_name: string;
+  pattern_description: string;
+  pattern_code: string;
+  total_testosterone_recorded?: number | null;
+  lh_recorded?: number | null;
+  fsh_recorded?: number | null;
+  prolactin_recorded?: number | null;
+  direct_measurements?: Record<string, { value: number; unit?: string; [key: string]: any }>;
+  [key: string]: any;
+}
+
+export interface DirectLaboratoryValue {
+  analyte_key: string;
+  label: string;
+  value: number;
+  unit?: string;
+}
+
+export interface ProgressiveAssessment {
+  assessment_id: string;
+  id?: string;
+  module?: 'female_pcos' | 'male_hypogonadism' | string;
+  assessment_level: AssessmentLevel;
+  tiers_included: number[];
+  model_version: string;
+  model_name: string;
+  probability: number;
+  probability_percent: number;
+  threshold: number;
+  risk_category: ProgressiveRiskCategory | string;
+  risk_label?: string;
+  summary_text?: string;
+  is_active: boolean;
+  replaced_assessment_id?: string | null;
+  available_features?: string[];
+  missing_features?: string[];
+  explanations: ShapExplanation[];
+  limitations: string[];
+  next_step?: string;
+  next_available_tier?: number | null;
+  pcom_status?: string | null;
+  pcom_probability?: number | null;
+  gradcam_url?: string | null;
+  gradcam_b64?: string | null;
+  fusion_details?: FusionDetails;
+  tier_2_available_count?: number;
+  tier_2_total_count?: number;
+  tier_2_available_fields?: string[];
+  tier_2_missing_fields?: string[];
+  evidence_completeness_percent?: number;
+  evidence_completeness?: {
+    available: number;
+    total: number;
+    percentage: number;
+  };
+  hormone_pattern_interpretation?: HormonePatternInterpretation;
+  direct_laboratory_values?: DirectLaboratoryValue[];
+  tier_2_inputs?: Record<string, any>;
+  input_features?: Record<string, any>;
+  status_code?: string;
+  notice?: string;
+  disclaimer: string;
+  created_at?: string;
+}
+
+export interface MaleClinicalLabInputs {
+  shbg_nmol_l?: number | null;
+  estradiol_pg_ml?: number | null;
+  albumin_g_dl?: number | null;
+  hba1c_pct?: number | null;
+  glucose_mg_dl?: number | null;
+  hemoglobin_g_dl?: number | null;
+  hematocrit_pct?: number | null;
+  rbc_count?: number | null;
+  alt_u_l?: number | null;
+  ast_u_l?: number | null;
+  total_bilirubin_mg_dl?: number | null;
+  creatinine_mg_dl?: number | null;
+  bun_mg_dl?: number | null;
+  uric_acid_mg_dl?: number | null;
+  hdl_mg_dl?: number | null;
+  total_testosterone?: number | null;
+  lh?: number | null;
+  fsh?: number | null;
+  prolactin?: number | null;
+  [key: string]: any;
+}

@@ -1,0 +1,48 @@
+{
+  "model_name": "ovasense_metabolic_pattern_classifier",
+  "model_version": "0.1.0",
+  "algorithm": "RandomForestClassifier",
+  "pipeline_steps": [
+    "SimpleImputer(median)",
+    "StandardScaler",
+    "RandomForestClassifier"
+  ],
+  "training_type": "research_prototype",
+  "clinical_validation": false,
+  "training_dataset": "RESEARCH PROTOTYPE \u2014 SYNTHETIC TRAINING DATA \u2014 NOT CLINICALLY VALIDATED",
+  "feature_count": 22,
+  "feature_names": [
+    "cycle_length_mean",
+    "cycle_length_variability",
+    "cycle_irregularity_rate",
+    "cycle_record_count",
+    "symptom_total_count",
+    "symptom_severity_mean",
+    "fatigue_frequency",
+    "pelvic_pain_frequency",
+    "acne_frequency",
+    "mood_symptom_frequency",
+    "hirsutism_frequency",
+    "average_water_intake_glasses",
+    "average_sleep_hours",
+    "average_daily_movement_mins",
+    "workout_frequency_per_week",
+    "food_logging_frequency",
+    "medication_adherence_rate",
+    "active_prescription_count",
+    "homa_ir_value",
+    "vitamin_d_value",
+    "testosterone_value",
+    "lh_fsh_ratio"
+  ],
+  "classes": [
+    "lower_pattern",
+    "moderate_pattern",
+    "higher_pattern"
+  ],
+  "n_estimators": 200,
+  "max_depth": 10,
+  "n_samples_train": 720,
+  "created_at": "2026-09-08T15:53:19.277375+00:00",
+  "disclaimer": "OvaSense provides educational health-pattern insights based on the information available in your account. It does not provide a medical diagnosis. Discuss concerning or persistent results with a qualified healthcare professional."
+}

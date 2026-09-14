@@ -65,43 +65,40 @@ export const ReportHeroUpload: React.FC<ReportHeroUploadProps> = ({
   };
 
   return (
-    <div className="p-6 sm:p-8 rounded-[32px] bg-gradient-to-br from-white via-[#FDFBFD] to-[#F8F5FA] border border-[#E7DFEF] shadow-sm text-left select-none relative overflow-hidden space-y-6">
-      {/* Ambient background glow */}
-      <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-bl from-[#EDE4F7]/60 via-[#FDF2F8]/40 to-transparent rounded-full blur-3xl pointer-events-none -z-0" />
-
+    <div className="p-6 sm:p-8 rounded-[32px] bg-white border border-[#BAE6FD] shadow-sm text-left select-none relative overflow-hidden space-y-6">
       {/* Header Bar */}
       <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1.5 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EDE4F7] text-[#6E2D8B] text-xs font-mono font-bold">
-            <Sparkles className="w-3.5 h-3.5 text-[#8E3EAF]" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD] text-xs font-mono font-bold">
+            <Sparkles className="w-3.5 h-3.5 text-[#0288D1]" />
             <span>Health Document Hub</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-[#1C1326] tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-[#0F172A] tracking-tight">
             Your Health Reports
           </h1>
-          <p className="text-xs sm:text-sm text-[#584B68] font-sans leading-relaxed">
-            Keep your important health reports in one secure place. OvaSense can help you understand what the numbers and terms mean in simple language.
+          <p className="text-xs sm:text-sm text-[#64748B] font-sans leading-relaxed">
+            Keep your important health reports in one secure place. BioPulse AI can help you understand what the numbers and terms mean in simple language.
           </p>
         </div>
 
         {/* Quick Metric Pills */}
         <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
-          <div className="p-3 rounded-2xl bg-white border border-[#E7DFEF] shadow-2xs text-left">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-[#8D7E9E] block">
+          <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] shadow-xs text-left">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-[#64748B] block">
               Total Reports
             </span>
-            <span className="text-lg font-bold font-display text-[#1C1326]">
+            <span className="text-lg font-bold font-display text-[#0F172A]">
               {stats.totalReportsCount}
             </span>
           </div>
 
-          <div className="p-3 rounded-2xl bg-white border border-[#E7DFEF] shadow-2xs text-left">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-[#8D7E9E] block">
+          <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] shadow-xs text-left">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-[#64748B] block">
               Needs a closer look
             </span>
             <span
               className={`text-lg font-bold font-display ${
-                stats.needsReviewCount > 0 ? 'text-[#D97706]' : 'text-[#047857]'
+                stats.needsReviewCount > 0 ? 'text-[#D97706]' : 'text-[#059669]'
               }`}
             >
               {stats.needsReviewCount} {stats.needsReviewCount === 1 ? 'test' : 'tests'}
@@ -118,8 +115,8 @@ export const ReportHeroUpload: React.FC<ReportHeroUploadProps> = ({
         onClick={() => fileInputRef.current?.click()}
         className={`relative z-10 p-6 sm:p-8 rounded-3xl border-2 border-dashed transition-all duration-300 text-center cursor-pointer flex flex-col items-center justify-center gap-3 ${
           isDragOver
-            ? 'border-[#8E3EAF] bg-[#EDE4F7]/40 scale-[0.99]'
-            : 'border-[#D8B4FE]/70 bg-white/70 hover:bg-white hover:border-[#8E3EAF]'
+            ? 'border-[#0288D1] bg-[#E0F2FE] scale-[0.99]'
+            : 'border-[#BAE6FD] bg-[#F8FAFC] hover:bg-[#F0F9FF] hover:border-[#0288D1]'
         }`}
       >
         <input
@@ -130,36 +127,36 @@ export const ReportHeroUpload: React.FC<ReportHeroUploadProps> = ({
           className="hidden"
         />
 
-        <div className="w-12 h-12 rounded-2xl bg-[#EDE4F7] text-[#6E2D8B] flex items-center justify-center shadow-xs">
-          <Upload className="w-6 h-6 text-[#8E3EAF]" />
+        <div className="w-12 h-12 rounded-2xl bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD] flex items-center justify-center shadow-xs">
+          <Upload className="w-6 h-6 text-[#0288D1]" />
         </div>
 
         <div className="space-y-1">
-          <p className="text-sm font-bold text-[#1C1326]">
-            Drag & drop your lab or ultrasound document here, or <span className="text-[#8E3EAF] underline">browse files</span>
+          <p className="text-sm font-bold text-[#0F172A]">
+            Drag & drop your lab or ultrasound document here, or <span className="text-[#0288D1] underline">browse files</span>
           </p>
-          <p className="text-xs text-[#8D7E9E]">
+          <p className="text-xs text-[#64748B]">
             Supports PDF, JPG, PNG up to 10MB • Secured with authenticated access
           </p>
         </div>
 
         <div className="flex items-center gap-2 pt-1">
-          <span className="text-[10px] font-mono font-semibold px-2.5 py-1 rounded-full bg-[#F8F5FA] text-[#584B68] border border-[#E7DFEF]">
+          <span className="text-[10px] font-mono font-semibold px-2.5 py-1 rounded-full bg-white text-[#475569] border border-[#BAE6FD]">
             PDF Documents
           </span>
-          <span className="text-[10px] font-mono font-semibold px-2.5 py-1 rounded-full bg-[#F8F5FA] text-[#584B68] border border-[#E7DFEF]">
+          <span className="text-[10px] font-mono font-semibold px-2.5 py-1 rounded-full bg-white text-[#475569] border border-[#BAE6FD]">
             Phone Photos / Scans
           </span>
-          <span className="text-[10px] font-mono font-semibold px-2.5 py-1 rounded-full bg-[#F8F5FA] text-[#584B68] border border-[#E7DFEF]">
+          <span className="text-[10px] font-mono font-semibold px-2.5 py-1 rounded-full bg-white text-[#475569] border border-[#BAE6FD]">
             Ultrasound Images
           </span>
         </div>
       </div>
 
       {/* Trust & Privacy Assurance Banner */}
-      <div className="relative z-10 pt-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-[#584B68] border-t border-[#F0EAF5]">
+      <div className="relative z-10 pt-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-[#64748B] border-t border-[#E2E8F0]">
         <div className="flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-[#047857]" />
+          <ShieldCheck className="w-4 h-4 text-[#059669]" />
           <span>Your medical reports are stored in your private, encrypted account. Only you have access.</span>
         </div>
 
@@ -169,7 +166,7 @@ export const ReportHeroUpload: React.FC<ReportHeroUploadProps> = ({
             e.stopPropagation();
             onOpenUploadWizard();
           }}
-          className="text-xs font-bold text-[#6E2D8B] hover:text-[#A21CAF] underline"
+          className="text-xs font-bold text-[#0288D1] hover:text-[#01579B] underline cursor-pointer"
         >
           Open manual report wizard
         </button>

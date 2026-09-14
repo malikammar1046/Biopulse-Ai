@@ -4,28 +4,25 @@ import {
   ContactFormSection,
   ContactReasonsSection,
   ContactFAQSection,
-  ContactCTASection,
 } from './contact-sections';
 
 export const Contact: React.FC = () => {
   return (
-    <div className="min-h-screen bg-[#10071A] selection:bg-[#E87084]/30 selection:text-white">
+    <div className="min-h-screen bg-transparent">
       {/* 1. HERO SECTION */}
       <ContactHeroSection />
 
-      {/* 2. MAIN CONTACT EXPERIENCE (TWO-COLUMN FORM & TOPICS) */}
+      {/* 2. MAIN CONTACT EXPERIENCE (FORM & DIRECT CHANNELS) */}
       <ContactFormSection />
 
-      {/* 3. WHY CONTACT OVASENSE */}
+      {/* 3. REASONS TO CONTACT BIOPULSE AI */}
       <ContactReasonsSection />
 
       {/* 4. FAQ SECTION */}
       <ContactFAQSection />
-
-      {/* 5. FINAL CTA */}
-      <ContactCTASection />
     </div>
   );
 };
 
 export default Contact;
+

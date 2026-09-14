@@ -70,17 +70,17 @@ export const CyclePage: React.FC = () => {
       className="max-w-6xl mx-auto space-y-6 sm:space-y-8 text-left select-none pb-16"
     >
       {/* ── 1. Page Header Bar ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E7DFEF]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#BAE6FD]">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-xl bg-[#EDE4F7] text-[#6E2D8B]">
+            <span className="p-1.5 rounded-xl bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD]">
               <Calendar className="w-5 h-5" />
             </span>
-            <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-[#1C1326] tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-[#0F172A] tracking-tight">
               Your Cycle & Period Tracker
             </h1>
           </div>
-          <p className="text-xs text-[#584B68]">
+          <p className="text-xs text-[#64748B]">
             Track your period dates, see your estimated cycle phases, and understand your natural rhythm.
           </p>
         </div>
@@ -89,7 +89,7 @@ export const CyclePage: React.FC = () => {
           <button
             type="button"
             onClick={() => refreshCycleRecords()}
-            className="p-2.5 rounded-2xl bg-white border border-[#E7DFEF] text-[#584B68] hover:text-[#6E2D8B] hover:bg-[#F8F5FA] transition-colors cursor-pointer"
+            className="p-2.5 rounded-xl bg-white border border-[#BAE6FD] text-[#475569] hover:text-[#0288D1] hover:bg-[#F0F9FF] transition-colors cursor-pointer"
             title="Refresh cycle records"
           >
             <RefreshCw className={`w-4 h-4 ${cycleLoading ? 'animate-spin' : ''}`} />
@@ -98,7 +98,7 @@ export const CyclePage: React.FC = () => {
           <button
             type="button"
             onClick={handleOpenLogModal}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl font-sans font-bold text-xs text-white bg-gradient-to-r from-[#6E2D8B] via-[#8E3EAF] to-[#E87084] hover:brightness-110 shadow-md shadow-purple-950/20 transition-all cursor-pointer"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-sans font-semibold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>Log Period</span>
@@ -108,9 +108,9 @@ export const CyclePage: React.FC = () => {
 
       {/* ── 2. Loading State ── */}
       {cycleLoading && cycleRecords.length === 0 ? (
-        <div className="p-12 rounded-[32px] bg-white border border-[#E7DFEF] flex flex-col items-center justify-center space-y-3">
-          <Loader2 className="w-8 h-8 text-[#8E3EAF] animate-spin" />
-          <span className="text-xs font-mono text-[#8D7E9E]">Loading your cycle records...</span>
+        <div className="p-12 rounded-2xl bg-white border border-[#BAE6FD] flex flex-col items-center justify-center space-y-3">
+          <Loader2 className="w-8 h-8 text-[#0288D1] animate-spin" />
+          <span className="text-xs font-mono text-[#64748B]">Loading your cycle records...</span>
         </div>
       ) : !cycleStats.hasData ? (
         /* ── 3. Empty State for Brand New Users ── */
@@ -137,12 +137,12 @@ export const CyclePage: React.FC = () => {
       )}
 
       {/* ── 5. Responsible Clinical Boundary Notice ── */}
-      <div className="p-4 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] text-center max-w-3xl mx-auto text-xs text-[#8D7E9E] space-y-1">
-        <p className="font-semibold text-[#584B68]">
+      <div className="p-4 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] text-center max-w-3xl mx-auto text-xs text-[#0369A1] space-y-1">
+        <p className="font-semibold text-[#01579B]">
           Responsible Health & Non-Diagnostic Framing
         </p>
         <p>
-          OvaSense cycle projections, estimated phases, and fertile windows are calculated from your self-reported dates and historical rhythm. They are informational estimations and do not constitute diagnostic ovulation detection or medical birth control.
+          BioPulse AI cycle projections, estimated phases, and fertile windows are calculated from your self-reported dates and historical rhythm. They are informational estimations and do not constitute diagnostic ovulation detection or medical birth control.
         </p>
       </div>
 

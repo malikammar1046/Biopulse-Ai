@@ -1,0 +1,1663 @@
+{
+  "pdf_name": "fct",
+  "page_num": 67,
+  "img_path": "Meal/data/raw/rendered_pages/fct_page_067.png",
+  "boxes": [
+    {
+      "text": "(Appendix-18)",
+      "confidence": 0.9002070639814649,
+      "box": [
+        [
+          1334.0,
+          74.0
+        ],
+        [
+          1468.0,
+          71.0
+        ],
+        [
+          1469.0,
+          97.0
+        ],
+        [
+          1334.0,
+          100.0
+        ]
+      ],
+      "x_center": 1401.25,
+      "y_center": 85.5
+    },
+    {
+      "text": "STATISTICAL ANALYSIS OF FOOD COMPOSITION TABLE FOR PAKISTAN",
+      "confidence": 0.8904783507188161,
+      "box": [
+        [
+          367.0,
+          104.0
+        ],
+        [
+          1242.0,
+          97.0
+        ],
+        [
+          1243.0,
+          122.0
+        ],
+        [
+          367.0,
+          128.0
+        ]
+      ],
+      "x_center": 804.75,
+      "y_center": 112.75
+    },
+    {
+      "text": "2OO1 AND ITS COMPARISON WITH THAT OF 1985",
+      "confidence": 0.8838640337898618,
+      "box": [
+        [
+          501.0,
+          132.0
+        ],
+        [
+          1108.0,
+          129.0
+        ],
+        [
+          1108.0,
+          153.0
+        ],
+        [
+          501.0,
+          156.0
+        ]
+      ],
+      "x_center": 804.5,
+      "y_center": 142.5
+    },
+    {
+      "text": "The statistical analysis of the different food",
+      "confidence": 0.9044904214270572,
+      "box": [
+        [
+          221.0,
+          191.0
+        ],
+        [
+          771.0,
+          187.0
+        ],
+        [
+          771.0,
+          213.0
+        ],
+        [
+          221.0,
+          217.0
+        ]
+      ],
+      "x_center": 496.0,
+      "y_center": 202.0
+    },
+    {
+      "text": "& cereal products and condiments that showed significant",
+      "confidence": 0.9051511747795239,
+      "box": [
+        [
+          843.0,
+          189.0
+        ],
+        [
+          1468.0,
+          186.0
+        ],
+        [
+          1468.0,
+          209.0
+        ],
+        [
+          843.0,
+          212.0
+        ]
+      ],
+      "x_center": 1155.5,
+      "y_center": 199.0
+    },
+    {
+      "text": "constituents in various food commodities were carried out",
+      "confidence": 0.8837196343931658,
+      "box": [
+        [
+          143.0,
+          221.0
+        ],
+        [
+          770.0,
+          217.0
+        ],
+        [
+          770.0,
+          241.0
+        ],
+        [
+          144.0,
+          245.0
+        ]
+      ],
+      "x_center": 456.75,
+      "y_center": 231.0
+    },
+    {
+      "text": "difference in fibre contents while ash contents also",
+      "confidence": 0.9206599638147174,
+      "box": [
+        [
+          841.0,
+          215.0
+        ],
+        [
+          1469.0,
+          212.0
+        ],
+        [
+          1469.0,
+          238.0
+        ],
+        [
+          841.0,
+          241.0
+        ]
+      ],
+      "x_center": 1155.0,
+      "y_center": 226.5
+    },
+    {
+      "text": "in SPSS statistical software and excel spreadsheet with",
+      "confidence": 0.9182362875768116,
+      "box": [
+        [
+          144.0,
+          247.0
+        ],
+        [
+          769.0,
+          244.0
+        ],
+        [
+          769.0,
+          271.0
+        ],
+        [
+          145.0,
+          274.0
+        ]
+      ],
+      "x_center": 456.75,
+      "y_center": 259.0
+    },
+    {
+      "text": "significantly differed in case of nuts and dry fruits.",
+      "confidence": 0.9427524414929477,
+      "box": [
+        [
+          842.0,
+          243.0
+        ],
+        [
+          1383.0,
+          239.0
+        ],
+        [
+          1383.0,
+          266.0
+        ],
+        [
+          842.0,
+          270.0
+        ]
+      ],
+      "x_center": 1112.5,
+      "y_center": 254.5
+    },
+    {
+      "text": "main emphasis on determining the mean values, standard",
+      "confidence": 0.9087683114138516,
+      "box": [
+        [
+          144.0,
+          276.0
+        ],
+        [
+          770.0,
+          271.0
+        ],
+        [
+          770.0,
+          297.0
+        ],
+        [
+          145.0,
+          303.0
+        ]
+      ],
+      "x_center": 457.25,
+      "y_center": 286.75
+    },
+    {
+      "text": "II.",
+      "confidence": 0.6737741529941559,
+      "box": [
+        [
+          842.0,
+          279.0
+        ],
+        [
+          872.0,
+          279.0
+        ],
+        [
+          872.0,
+          304.0
+        ],
+        [
+          842.0,
+          304.0
+        ]
+      ],
+      "x_center": 857.0,
+      "y_center": 291.5
+    },
+    {
+      "text": "MINERALS AND VITAMINS COMPOSITION:",
+      "confidence": 0.8967569010598319,
+      "box": [
+        [
+          916.0,
+          279.0
+        ],
+        [
+          1432.0,
+          276.0
+        ],
+        [
+          1432.0,
+          299.0
+        ],
+        [
+          916.0,
+          303.0
+        ]
+      ],
+      "x_center": 1174.0,
+      "y_center": 289.25
+    },
+    {
+      "text": "deviations, coefficient of variations, means differences and",
+      "confidence": 0.9506812164040862,
+      "box": [
+        [
+          144.0,
+          304.0
+        ],
+        [
+          771.0,
+          298.0
+        ],
+        [
+          771.0,
+          325.0
+        ],
+        [
+          145.0,
+          330.0
+        ]
+      ],
+      "x_center": 457.75,
+      "y_center": 314.25
+    },
+    {
+      "text": "Our results also indicated that calcium contents",
+      "confidence": 0.896188558364401,
+      "box": [
+        [
+          917.0,
+          316.0
+        ],
+        [
+          1466.0,
+          314.0
+        ],
+        [
+          1466.0,
+          338.0
+        ],
+        [
+          917.0,
+          340.0
+        ]
+      ],
+      "x_center": 1191.5,
+      "y_center": 327.0
+    },
+    {
+      "text": "testing their significance using paired comparison T test.",
+      "confidence": 0.9313200813228801,
+      "box": [
+        [
+          143.0,
+          333.0
+        ],
+        [
+          770.0,
+          329.0
+        ],
+        [
+          770.0,
+          355.0
+        ],
+        [
+          144.0,
+          359.0
+        ]
+      ],
+      "x_center": 456.75,
+      "y_center": 344.0
+    },
+    {
+      "text": "have changed significantly in vegetables and meat and",
+      "confidence": 0.9383955697218577,
+      "box": [
+        [
+          839.0,
+          342.0
+        ],
+        [
+          1468.0,
+          339.0
+        ],
+        [
+          1468.0,
+          368.0
+        ],
+        [
+          839.0,
+          371.0
+        ]
+      ],
+      "x_center": 1153.5,
+      "y_center": 355.0
+    },
+    {
+      "text": "Results indicated some changes (both positive as well as",
+      "confidence": 0.9500842523156551,
+      "box": [
+        [
+          143.0,
+          360.0
+        ],
+        [
+          772.0,
+          356.0
+        ],
+        [
+          772.0,
+          383.0
+        ],
+        [
+          144.0,
+          387.0
+        ]
+      ],
+      "x_center": 457.75,
+      "y_center": 371.5
+    },
+    {
+      "text": "meat products. Phosphorus was found to have changes",
+      "confidence": 0.9216086096488513,
+      "box": [
+        [
+          841.0,
+          370.0
+        ],
+        [
+          1468.0,
+          369.0
+        ],
+        [
+          1468.0,
+          396.0
+        ],
+        [
+          841.0,
+          397.0
+        ]
+      ],
+      "x_center": 1154.5,
+      "y_center": 383.0
+    },
+    {
+      "text": "negative) in year 2001compared to the base period 1985.",
+      "confidence": 0.9125999861529895,
+      "box": [
+        [
+          144.0,
+          388.0
+        ],
+        [
+          769.0,
+          383.0
+        ],
+        [
+          769.0,
+          409.0
+        ],
+        [
+          145.0,
+          414.0
+        ]
+      ],
+      "x_center": 456.75,
+      "y_center": 398.5
+    },
+    {
+      "text": "significantly in condiments, nuts & dry fruits and meat &",
+      "confidence": 0.9240785287371998,
+      "box": [
+        [
+          842.0,
+          400.0
+        ],
+        [
+          1468.0,
+          395.0
+        ],
+        [
+          1468.0,
+          421.0
+        ],
+        [
+          842.0,
+          426.0
+        ]
+      ],
+      "x_center": 1155.0,
+      "y_center": 410.5
+    },
+    {
+      "text": "The results are briefly summarized as follows:",
+      "confidence": 0.8956237498750078,
+      "box": [
+        [
+          144.0,
+          414.0
+        ],
+        [
+          636.0,
+          411.0
+        ],
+        [
+          636.0,
+          437.0
+        ],
+        [
+          145.0,
+          440.0
+        ]
+      ],
+      "x_center": 390.25,
+      "y_center": 425.5
+    },
+    {
+      "text": "meat products. Fruits in iron contents, legumes in thiamin",
+      "confidence": 0.8802206511214629,
+      "box": [
+        [
+          841.0,
+          427.0
+        ],
+        [
+          1468.0,
+          423.0
+        ],
+        [
+          1468.0,
+          449.0
+        ],
+        [
+          841.0,
+          453.0
+        ]
+      ],
+      "x_center": 1154.5,
+      "y_center": 438.0
+    },
+    {
+      "text": "I.",
+      "confidence": 0.6283962726593018,
+      "box": [
+        [
+          141.0,
+          448.0
+        ],
+        [
+          166.0,
+          448.0
+        ],
+        [
+          166.0,
+          475.0
+        ],
+        [
+          141.0,
+          475.0
+        ]
+      ],
+      "x_center": 153.5,
+      "y_center": 461.5
+    },
+    {
+      "text": "PROXIMATE COMPOSITION:",
+      "confidence": 0.924075362475022,
+      "box": [
+        [
+          222.0,
+          449.0
+        ],
+        [
+          558.0,
+          447.0
+        ],
+        [
+          558.0,
+          471.0
+        ],
+        [
+          222.0,
+          473.0
+        ]
+      ],
+      "x_center": 390.0,
+      "y_center": 460.0
+    },
+    {
+      "text": "content; vegetables in riboflavin and vegetables, meat &",
+      "confidence": 0.9215447777195981,
+      "box": [
+        [
+          841.0,
+          454.0
+        ],
+        [
+          1468.0,
+          450.0
+        ],
+        [
+          1468.0,
+          476.0
+        ],
+        [
+          841.0,
+          480.0
+        ]
+      ],
+      "x_center": 1154.5,
+      "y_center": 465.0
+    },
+    {
+      "text": "As far as cereal and cereal products are concerned,",
+      "confidence": 0.9299307654683406,
+      "box": [
+        [
+          222.0,
+          485.0
+        ],
+        [
+          770.0,
+          482.0
+        ],
+        [
+          770.0,
+          506.0
+        ],
+        [
+          222.0,
+          510.0
+        ]
+      ],
+      "x_center": 496.0,
+      "y_center": 495.75
+    },
+    {
+      "text": "meat products in niacin contents were found to have",
+      "confidence": 0.9065821520411051,
+      "box": [
+        [
+          841.0,
+          481.0
+        ],
+        [
+          1468.0,
+          477.0
+        ],
+        [
+          1468.0,
+          503.0
+        ],
+        [
+          841.0,
+          508.0
+        ]
+      ],
+      "x_center": 1154.5,
+      "y_center": 492.25
+    },
+    {
+      "text": "mean value of food energy in Kcal decreased from 324.52 in",
+      "confidence": 0.9361121179693837,
+      "box": [
+        [
+          142.0,
+          514.0
+        ],
+        [
+          772.0,
+          507.0
+        ],
+        [
+          772.0,
+          537.0
+        ],
+        [
+          143.0,
+          543.0
+        ]
+      ],
+      "x_center": 457.25,
+      "y_center": 525.25
+    },
+    {
+      "text": "significant mean differences. Nuts & dry fruits, dairy",
+      "confidence": 0.9472090244293213,
+      "box": [
+        [
+          841.0,
+          508.0
+        ],
+        [
+          1467.0,
+          504.0
+        ],
+        [
+          1467.0,
+          535.0
+        ],
+        [
+          841.0,
+          538.0
+        ]
+      ],
+      "x_center": 1154.0,
+      "y_center": 521.25
+    },
+    {
+      "text": "1985 to 320.91 in 2001; however, the change of 3.61. is",
+      "confidence": 0.883038617670536,
+      "box": [
+        [
+          143.0,
+          541.0
+        ],
+        [
+          770.0,
+          537.0
+        ],
+        [
+          770.0,
+          563.0
+        ],
+        [
+          144.0,
+          567.0
+        ]
+      ],
+      "x_center": 456.75,
+      "y_center": 552.0
+    },
+    {
+      "text": "products and fish showed significant difference in Vitamin",
+      "confidence": 0.8964850245896032,
+      "box": [
+        [
+          842.0,
+          537.0
+        ],
+        [
+          1467.0,
+          531.0
+        ],
+        [
+          1467.0,
+          558.0
+        ],
+        [
+          842.0,
+          564.0
+        ]
+      ],
+      "x_center": 1154.5,
+      "y_center": 547.5
+    },
+    {
+      "text": "statistically insignificant as indicated by a small t value of",
+      "confidence": 0.8976924059882997,
+      "box": [
+        [
+          143.0,
+          569.0
+        ],
+        [
+          772.0,
+          563.0
+        ],
+        [
+          772.0,
+          589.0
+        ],
+        [
+          144.0,
+          595.0
+        ]
+      ],
+      "x_center": 457.75,
+      "y_center": 579.0
+    },
+    {
+      "text": "C. contents No significant difference in means for β-",
+      "confidence": 0.9527394506666396,
+      "box": [
+        [
+          841.0,
+          565.0
+        ],
+        [
+          1466.0,
+          562.0
+        ],
+        [
+          1466.0,
+          588.0
+        ],
+        [
+          841.0,
+          591.0
+        ]
+      ],
+      "x_center": 1153.5,
+      "y_center": 576.5
+    },
+    {
+      "text": "just 0.89. The coefficient of Variation (C.V) of 19.45 in year",
+      "confidence": 0.9534949556229606,
+      "box": [
+        [
+          142.0,
+          595.0
+        ],
+        [
+          772.0,
+          589.0
+        ],
+        [
+          772.0,
+          618.0
+        ],
+        [
+          143.0,
+          624.0
+        ]
+      ],
+      "x_center": 457.25,
+      "y_center": 606.5
+    },
+    {
+      "text": "Carotene was observed in any of the food commodities.",
+      "confidence": 0.8830708165963491,
+      "box": [
+        [
+          841.0,
+          592.0
+        ],
+        [
+          1467.0,
+          589.0
+        ],
+        [
+          1467.0,
+          615.0
+        ],
+        [
+          841.0,
+          618.0
+        ]
+      ],
+      "x_center": 1154.0,
+      "y_center": 603.5
+    },
+    {
+      "text": "2001 is a little higher than that of 1985 (17.94) sh0wing a bit",
+      "confidence": 0.9005119577050209,
+      "box": [
+        [
+          142.0,
+          623.0
+        ],
+        [
+          776.0,
+          619.0
+        ],
+        [
+          776.0,
+          646.0
+        ],
+        [
+          143.0,
+          650.0
+        ]
+      ],
+      "x_center": 459.25,
+      "y_center": 634.5
+    },
+    {
+      "text": "The means paired comparison T tests have not been",
+      "confidence": 0.8887230777740478,
+      "box": [
+        [
+          840.0,
+          621.0
+        ],
+        [
+          1468.0,
+          616.0
+        ],
+        [
+          1468.0,
+          642.0
+        ],
+        [
+          840.0,
+          647.0
+        ]
+      ],
+      "x_center": 1154.0,
+      "y_center": 631.5
+    },
+    {
+      "text": "higher variability in the year under study compared to the",
+      "confidence": 0.9153764601481162,
+      "box": [
+        [
+          144.0,
+          652.0
+        ],
+        [
+          772.0,
+          647.0
+        ],
+        [
+          772.0,
+          673.0
+        ],
+        [
+          145.0,
+          678.0
+        ]
+      ],
+      "x_center": 458.25,
+      "y_center": 662.5
+    },
+    {
+      "text": "performed in case of Zn, Iodine, Vitamin A and cholesterol",
+      "confidence": 0.9308061458296695,
+      "box": [
+        [
+          841.0,
+          648.0
+        ],
+        [
+          1469.0,
+          642.0
+        ],
+        [
+          1469.0,
+          668.0
+        ],
+        [
+          841.0,
+          674.0
+        ]
+      ],
+      "x_center": 1155.0,
+      "y_center": 658.0
+    },
+    {
+      "text": "base period. In other food commodities, we observed the",
+      "confidence": 0.9243647472134658,
+      "box": [
+        [
+          144.0,
+          679.0
+        ],
+        [
+          772.0,
+          673.0
+        ],
+        [
+          772.0,
+          699.0
+        ],
+        [
+          145.0,
+          706.0
+        ]
+      ],
+      "x_center": 458.25,
+      "y_center": 689.25
+    },
+    {
+      "text": "for they have not been reported for the year 1985.",
+      "confidence": 0.9089332637833614,
+      "box": [
+        [
+          841.0,
+          673.0
+        ],
+        [
+          1360.0,
+          671.0
+        ],
+        [
+          1360.0,
+          698.0
+        ],
+        [
+          841.0,
+          700.0
+        ]
+      ],
+      "x_center": 1100.5,
+      "y_center": 685.5
+    },
+    {
+      "text": "same pattern with the exception of legumes and nuts & dry",
+      "confidence": 0.9225034076592018,
+      "box": [
+        [
+          143.0,
+          707.0
+        ],
+        [
+          770.0,
+          701.0
+        ],
+        [
+          770.0,
+          728.0
+        ],
+        [
+          144.0,
+          733.0
+        ]
+      ],
+      "x_center": 456.75,
+      "y_center": 717.25
+    },
+    {
+      "text": "III.",
+      "confidence": 0.6013050079345703,
+      "box": [
+        [
+          841.0,
+          710.0
+        ],
+        [
+          881.0,
+          710.0
+        ],
+        [
+          881.0,
+          734.0
+        ],
+        [
+          841.0,
+          734.0
+        ]
+      ],
+      "x_center": 861.0,
+      "y_center": 722.0
+    },
+    {
+      "text": "CONCLUSIONS:",
+      "confidence": 0.8674068496777461,
+      "box": [
+        [
+          918.0,
+          709.0
+        ],
+        [
+          1105.0,
+          709.0
+        ],
+        [
+          1105.0,
+          733.0
+        ],
+        [
+          918.0,
+          733.0
+        ]
+      ],
+      "x_center": 1011.5,
+      "y_center": 721.0
+    },
+    {
+      "text": "fruits where the change in the mean values appeared to be",
+      "confidence": 0.9033481417031124,
+      "box": [
+        [
+          144.0,
+          734.0
+        ],
+        [
+          771.0,
+          730.0
+        ],
+        [
+          771.0,
+          757.0
+        ],
+        [
+          145.0,
+          761.0
+        ]
+      ],
+      "x_center": 457.75,
+      "y_center": 745.5
+    },
+    {
+      "text": "Some of the significant statistical differences found",
+      "confidence": 0.9178593903779984,
+      "box": [
+        [
+          918.0,
+          746.0
+        ],
+        [
+          1468.0,
+          741.0
+        ],
+        [
+          1468.0,
+          767.0
+        ],
+        [
+          919.0,
+          772.0
+        ]
+      ],
+      "x_center": 1193.25,
+      "y_center": 756.5
+    },
+    {
+      "text": "statistically significant a 5% and 10% respectively.",
+      "confidence": 0.9065581537642569,
+      "box": [
+        [
+          144.0,
+          762.0
+        ],
+        [
+          671.0,
+          758.0
+        ],
+        [
+          672.0,
+          784.0
+        ],
+        [
+          145.0,
+          788.0
+        ]
+      ],
+      "x_center": 408.0,
+      "y_center": 773.0
+    },
+    {
+      "text": "in proximate and minerals & vitamins compositions may",
+      "confidence": 0.9360669034498709,
+      "box": [
+        [
+          841.0,
+          772.0
+        ],
+        [
+          1467.0,
+          771.0
+        ],
+        [
+          1467.0,
+          798.0
+        ],
+        [
+          841.0,
+          799.0
+        ]
+      ],
+      "x_center": 1154.0,
+      "y_center": 785.0
+    },
+    {
+      "text": "Moisture contents have highly significantly",
+      "confidence": 0.918168768286705,
+      "box": [
+        [
+          220.0,
+          795.0
+        ],
+        [
+          771.0,
+          793.0
+        ],
+        [
+          771.0,
+          820.0
+        ],
+        [
+          220.0,
+          822.0
+        ]
+      ],
+      "x_center": 495.5,
+      "y_center": 807.5
+    },
+    {
+      "text": "be due to the varietal differences of the samples used for",
+      "confidence": 0.9127243944143845,
+      "box": [
+        [
+          841.0,
+          800.0
+        ],
+        [
+          1469.0,
+          797.0
+        ],
+        [
+          1469.0,
+          823.0
+        ],
+        [
+          841.0,
+          826.0
+        ]
+      ],
+      "x_center": 1155.0,
+      "y_center": 811.5
+    },
+    {
+      "text": "changed in roots & tubers and dairy products while",
+      "confidence": 0.9373772226127923,
+      "box": [
+        [
+          143.0,
+          822.0
+        ],
+        [
+          773.0,
+          819.0
+        ],
+        [
+          773.0,
+          849.0
+        ],
+        [
+          144.0,
+          852.0
+        ]
+      ],
+      "x_center": 458.25,
+      "y_center": 835.5
+    },
+    {
+      "text": "analysis in 2001 as compared to that of 1985. Different",
+      "confidence": 0.9079232141375542,
+      "box": [
+        [
+          841.0,
+          829.0
+        ],
+        [
+          1470.0,
+          824.0
+        ],
+        [
+          1470.0,
+          850.0
+        ],
+        [
+          841.0,
+          855.0
+        ]
+      ],
+      "x_center": 1155.5,
+      "y_center": 839.5
+    },
+    {
+      "text": "insignificant changes have occurred .in all other",
+      "confidence": 0.8971157312393189,
+      "box": [
+        [
+          144.0,
+          852.0
+        ],
+        [
+          773.0,
+          846.0
+        ],
+        [
+          773.0,
+          873.0
+        ],
+        [
+          145.0,
+          879.0
+        ]
+      ],
+      "x_center": 458.75,
+      "y_center": 862.5
+    },
+    {
+      "text": "methods of analysis and errors during the estimation",
+      "confidence": 0.9052056501496513,
+      "box": [
+        [
+          842.0,
+          855.0
+        ],
+        [
+          1468.0,
+          852.0
+        ],
+        [
+          1468.0,
+          879.0
+        ],
+        [
+          842.0,
+          882.0
+        ]
+      ],
+      "x_center": 1155.0,
+      "y_center": 867.0
+    },
+    {
+      "text": "commodities. As far as proteins are concerned, there has",
+      "confidence": 0.9304467816101877,
+      "box": [
+        [
+          143.0,
+          879.0
+        ],
+        [
+          772.0,
+          873.0
+        ],
+        [
+          772.0,
+          902.0
+        ],
+        [
+          144.0,
+          909.0
+        ]
+      ],
+      "x_center": 457.75,
+      "y_center": 890.75
+    },
+    {
+      "text": "process 'might have also contributed to these significant",
+      "confidence": 0.9038183694255764,
+      "box": [
+        [
+          841.0,
+          883.0
+        ],
+        [
+          1470.0,
+          878.0
+        ],
+        [
+          1470.0,
+          908.0
+        ],
+        [
+          841.0,
+          914.0
+        ]
+      ],
+      "x_center": 1155.5,
+      "y_center": 895.75
+    },
+    {
+      "text": "been significant changes occurred in two food commodities",
+      "confidence": 0.9458073644802488,
+      "box": [
+        [
+          145.0,
+          910.0
+        ],
+        [
+          771.0,
+          902.0
+        ],
+        [
+          771.0,
+          928.0
+        ],
+        [
+          146.0,
+          936.0
+        ]
+      ],
+      "x_center": 458.25,
+      "y_center": 919.0
+    },
+    {
+      "text": "differences. Additionally, the time period i.e.16 years is",
+      "confidence": 0.9322363865577569,
+      "box": [
+        [
+          843.0,
+          910.0
+        ],
+        [
+          1468.0,
+          908.0
+        ],
+        [
+          1468.0,
+          935.0
+        ],
+        [
+          843.0,
+          937.0
+        ]
+      ],
+      "x_center": 1155.5,
+      "y_center": 922.5
+    },
+    {
+      "text": "namely nuts & dry fruits and eggs. Lipids & fats and",
+      "confidence": 0.940447358590252,
+      "box": [
+        [
+          144.0,
+          936.0
+        ],
+        [
+          773.0,
+          929.0
+        ],
+        [
+          773.0,
+          959.0
+        ],
+        [
+          145.0,
+          965.0
+        ]
+      ],
+      "x_center": 458.75,
+      "y_center": 947.25
+    },
+    {
+      "text": "also large enough during which different changes to the",
+      "confidence": 0.9270206902708326,
+      "box": [
+        [
+          842.0,
+          939.0
+        ],
+        [
+          1468.0,
+          936.0
+        ],
+        [
+          1468.0,
+          965.0
+        ],
+        [
+          842.0,
+          968.0
+        ]
+      ],
+      "x_center": 1155.0,
+      "y_center": 952.0
+    },
+    {
+      "text": "carbohydrates contents both have changed significantly in",
+      "confidence": 0.937761405418659,
+      "box": [
+        [
+          145.0,
+          964.0
+        ],
+        [
+          771.0,
+          959.0
+        ],
+        [
+          771.0,
+          986.0
+        ],
+        [
+          146.0,
+          991.0
+        ]
+      ],
+      "x_center": 458.25,
+      "y_center": 975.0
+    },
+    {
+      "text": "food commodities and its surroundings might have taken",
+      "confidence": 0.9420390324159102,
+      "box": [
+        [
+          842.0,
+          966.0
+        ],
+        [
+          1466.0,
+          964.0
+        ],
+        [
+          1466.0,
+          990.0
+        ],
+        [
+          842.0,
+          992.0
+        ]
+      ],
+      "x_center": 1154.0,
+      "y_center": 978.0
+    },
+    {
+      "text": "fruits and condiments while sweets also showed",
+      "confidence": 0.8781782325277937,
+      "box": [
+        [
+          144.0,
+          991.0
+        ],
+        [
+          772.0,
+          986.0
+        ],
+        [
+          772.0,
+          1012.0
+        ],
+        [
+          145.0,
+          1017.0
+        ]
+      ],
+      "x_center": 458.25,
+      "y_center": 1001.5
+    },
+    {
+      "text": "place resulting in the significant differences we have",
+      "confidence": 0.9432226560332558,
+      "box": [
+        [
+          843.0,
+          996.0
+        ],
+        [
+          1468.0,
+          991.0
+        ],
+        [
+          1468.0,
+          1017.0
+        ],
+        [
+          843.0,
+          1022.0
+        ]
+      ],
+      "x_center": 1155.5,
+      "y_center": 1006.5
+    },
+    {
+      "text": "significant difference in fats contents. No significant",
+      "confidence": 0.9284960946866444,
+      "box": [
+        [
+          145.0,
+          1019.0
+        ],
+        [
+          773.0,
+          1013.0
+        ],
+        [
+          773.0,
+          1040.0
+        ],
+        [
+          146.0,
+          1046.0
+        ]
+      ],
+      "x_center": 459.25,
+      "y_center": 1029.5
+    },
+    {
+      "text": "observed in our analysis.",
+      "confidence": 0.8933078417411218,
+      "box": [
+        [
+          844.0,
+          1022.0
+        ],
+        [
+          1108.0,
+          1022.0
+        ],
+        [
+          1108.0,
+          1045.0
+        ],
+        [
+          844.0,
+          1045.0
+        ]
+      ],
+      "x_center": 976.0,
+      "y_center": 1033.5
+    },
+    {
+      "text": "change has occurred in majority of the food commodities in",
+      "confidence": 0.8921257217051619,
+      "box": [
+        [
+          145.0,
+          1047.0
+        ],
+        [
+          772.0,
+          1041.0
+        ],
+        [
+          772.0,
+          1067.0
+        ],
+        [
+          146.0,
+          1073.0
+        ]
+      ],
+      "x_center": 458.75,
+      "y_center": 1057.0
+    },
+    {
+      "text": "terms of fibre and ash contents with the exception of cereal",
+      "confidence": 0.9248887618057063,
+      "box": [
+        [
+          145.0,
+          1074.0
+        ],
+        [
+          772.0,
+          1069.0
+        ],
+        [
+          772.0,
+          1095.0
+        ],
+        [
+          146.0,
+          1100.0
+        ]
+      ],
+      "x_center": 458.75,
+      "y_center": 1084.5
+    },
+    {
+      "text": "6D",
+      "confidence": 0.615112841129303,
+      "box": [
+        [
+          796.0,
+          1111.0
+        ],
+        [
+          831.0,
+          1111.0
+        ],
+        [
+          831.0,
+          1130.0
+        ],
+        [
+          796.0,
+          1130.0
+        ]
+      ],
+      "x_center": 813.5,
+      "y_center": 1120.5
+    }
+  ]
+}

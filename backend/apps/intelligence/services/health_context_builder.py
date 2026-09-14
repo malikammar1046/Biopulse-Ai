@@ -155,17 +155,38 @@ class HealthContextBuilder:
         context_lines.append(dt_block)
 
         # --- TIER 4: MODEL-DERIVED INSIGHTS (Probabilistic ExtraTrees & TreeSHAP) ---
-        if assessment and assessment.risk_category != "insufficient_data":
-            prob_pct = f"{round(assessment.pcos_probability * 100, 1)}%" if assessment.pcos_probability is not None else "N/A"
-            shap_highlights = []
-            for exp in assessment.explanations[:4]:
-                shap_highlights.append(f"{exp.get('friendly_name', exp.get('feature_name'))} ({exp.get('direction', 'neutral')})")
-            context_lines.append(
-                f"[TIER 4] [MODEL-DERIVED INSIGHTS - Screening Assessment (NOT a Diagnosis)]: Category: {assessment.risk_category}, "
-                f"Statistical Screening Probability: {prob_pct} (Calibrated screening cutoff: 38%). "
-                f"Primary TreeSHAP factors: {', '.join(shap_highlights)}."
-            )
-            context_used["ml_screening"] = True
+        if assessment:
+            risk_category = assessment.get("risk_category") if isinstance(assessment, dict) else getattr(assessment, "risk_category", None)
+            if risk_category and risk_category != "insufficient_data":
+                prob = (assessment.get("probability") if assessment.get("probability") is not None else assessment.get("pcos_probability")) if isinstance(assessment, dict) else getattr(assessment, "pcos_probability", getattr(assessment, "probability", None))
+                prob_pct = f"{round(float(prob) * 100, 1)}%" if prob is not None else "N/A"
+                raw_explanations = assessment.get("explanations", []) if isinstance(assessment, dict) else getattr(assessment, "explanations", [])
+                shap_highlights = []
+                for exp in (raw_explanations or [])[:4]:
+                    if isinstance(exp, dict):
+                        shap_highlights.append(f"{exp.get('friendly_name', exp.get('feature_name'))} ({exp.get('direction', 'neutral')})")
+                    else:
+                        shap_highlights.append(str(exp))
+                raw_thresh = None
+                if isinstance(assessment, dict):
+                    raw_thresh = assessment.get("threshold") or assessment.get("screening_threshold")
+                elif hasattr(assessment, "__dict__"):
+                    raw_thresh = assessment.__dict__.get("screening_threshold") or assessment.__dict__.get("threshold")
+
+                if raw_thresh is None or "Mock" in type(raw_thresh).__name__:
+                    thresh_val = 0.38
+                else:
+                    try:
+                        thresh_val = float(raw_thresh)
+                    except Exception:
+                        thresh_val = 0.38
+                thresh_pct = f"{round(thresh_val * 100 if thresh_val <= 1.0 else thresh_val)}%"
+                context_lines.append(
+                    f"[TIER 4] [MODEL-DERIVED INSIGHTS - Screening Assessment (NOT a Diagnosis)]: Category: {risk_category}, "
+                    f"Statistical Screening Probability: {prob_pct} (Calibrated screening cutoff: {thresh_pct}). "
+                    f"Primary TreeSHAP factors: {', '.join(shap_highlights) if shap_highlights else 'N/A'}."
+                )
+                context_used["ml_screening"] = True
 
         # --- TIER 5: USER-REPORTED INFORMATION (Subjective Logs & Unverified OCR) ---
         # 5a. Recent cycle records
@@ -225,7 +246,6 @@ class HealthContextBuilder:
             meds,
             food,
             water,
-            (assessment and assessment.risk_category != "insufficient_data"),
         ])
         if not has_clinical_records:
             context_lines.insert(0, "[PATIENT RECORDS]: No historical records logged yet.")

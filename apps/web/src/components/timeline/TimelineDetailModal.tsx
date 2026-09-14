@@ -35,22 +35,22 @@ export const TimelineDetailModal: React.FC<TimelineDetailModalProps> = ({
   const getCategoryIcon = (cat: TimelineCategory) => {
     switch (cat) {
       case 'cycle':
-        return <Calendar className="w-5 h-5 text-[#E11D48]" />;
+        return <Calendar className="w-5 h-5 text-rose-600" />;
       case 'symptom':
-        return <Activity className="w-5 h-5 text-[#6E2D8B]" />;
+        return <Activity className="w-5 h-5 text-[#0288D1]" />;
       case 'report':
-        return <FileText className="w-5 h-5 text-[#2563EB]" />;
+        return <FileText className="w-5 h-5 text-[#0288D1]" />;
       case 'medication':
-        return <Pill className="w-5 h-5 text-[#D97706]" />;
+        return <Pill className="w-5 h-5 text-amber-600" />;
       case 'nutrition':
-        return <Utensils className="w-5 h-5 text-[#059669]" />;
+        return <Utensils className="w-5 h-5 text-emerald-600" />;
       case 'fitness':
-        return <Dumbbell className="w-5 h-5 text-[#DB2777]" />;
+        return <Dumbbell className="w-5 h-5 text-orange-600" />;
       case 'appointment':
-        return <Stethoscope className="w-5 h-5 text-[#7C3AED]" />;
+        return <Stethoscope className="w-5 h-5 text-[#01579B]" />;
       case 'care_circle':
       default:
-        return <Users className="w-5 h-5 text-[#0284C7]" />;
+        return <Users className="w-5 h-5 text-[#0288D1]" />;
     }
   };
 
@@ -90,85 +90,85 @@ export const TimelineDetailModal: React.FC<TimelineDetailModalProps> = ({
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#10071A]/70 backdrop-blur-xs select-none">
-      <div className="relative w-full max-w-lg rounded-[36px] bg-white border border-[#E7DFEF] shadow-2xl p-6 sm:p-8 space-y-6 animate-in fade-in zoom-in-95 duration-200 text-left">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs select-none">
+      <div className="relative w-full max-w-lg rounded-2xl bg-white border border-[#BAE6FD] shadow-xl p-6 sm:p-7 space-y-5 animate-in fade-in zoom-in-95 duration-200 text-left">
         {/* Close Button */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-6 right-6 p-2 rounded-full text-[#8D7E9E] hover:text-[#1C1326] hover:bg-[#F8F5FA] transition-colors cursor-pointer"
+          className="absolute top-5 right-5 p-2 rounded-xl text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] transition-colors cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Header with Icon & Category */}
         <div className="flex items-start gap-4">
-          <div className="p-3 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] shrink-0">
+          <div className="p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] shrink-0">
             {getCategoryIcon(event.category)}
           </div>
 
-          <div className="space-y-1 pr-6">
-            <span className="text-[10px] font-mono text-[#8D7E9E] uppercase font-bold tracking-wider">
+          <div className="space-y-0.5 pr-6">
+            <span className="text-[10px] font-mono text-[#64748B] uppercase font-bold tracking-wider">
               {event.sourceModule} • {event.category.toUpperCase()}
             </span>
-            <h2 className="text-lg sm:text-xl font-bold font-display text-[#1C1326] leading-snug">
+            <h2 className="text-lg sm:text-xl font-bold text-[#0F172A] leading-snug">
               {event.title}
             </h2>
           </div>
         </div>
 
         {/* Meta Pills: Date, Time, Cycle Day, Metric */}
-        <div className="p-4 rounded-2xl bg-[#FAF5FF] border border-[#EDE4F7] flex flex-wrap items-center gap-3 text-xs">
-          <div className="flex items-center gap-1.5 text-[#1C1326] font-semibold">
-            <Calendar className="w-3.5 h-3.5 text-[#6E2D8B]" />
+        <div className="p-3.5 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] flex flex-wrap items-center gap-3 text-xs">
+          <div className="flex items-center gap-1.5 text-[#0F172A] font-semibold">
+            <Calendar className="w-3.5 h-3.5 text-[#0288D1]" />
             <span>{formattedDate}</span>
           </div>
 
           {event.time && (
-            <div className="flex items-center gap-1.5 text-[#584B68]">
-              <Clock className="w-3.5 h-3.5 text-[#8D7E9E]" />
+            <div className="flex items-center gap-1.5 text-[#64748B]">
+              <Clock className="w-3.5 h-3.5 text-[#64748B]" />
               <span>{event.time}</span>
             </div>
           )}
 
           {event.cycleDay && (
-            <span className="px-2.5 py-1 rounded-full bg-[#EDE4F7] text-[#6E2D8B] font-mono font-bold text-[10px]">
+            <span className="px-2.5 py-0.5 rounded-full bg-[#E0F2FE] text-[#01579B] font-mono font-bold text-[10px]">
               Cycle Day {event.cycleDay} {event.cyclePhase ? `(${event.cyclePhase})` : ''}
             </span>
           )}
 
           {event.metric && (
-            <div className="px-2.5 py-1 rounded-xl bg-white border border-[#E7DFEF] font-mono font-bold text-[#1C1326]">
-              <span className="text-[10px] text-[#8D7E9E] mr-1">{event.metric.label}:</span>
+            <div className="px-2.5 py-0.5 rounded-lg bg-white border border-[#E2E8F0] font-mono font-bold text-[#0F172A]">
+              <span className="text-[10px] text-[#64748B] mr-1">{event.metric.label}:</span>
               <span>{event.metric.value}</span>
             </div>
           )}
         </div>
 
         {/* Description & Clinical Context */}
-        <div className="space-y-2">
-          <span className="text-[10px] font-mono uppercase font-bold text-[#8D7E9E]">
+        <div className="space-y-1.5">
+          <span className="text-[10px] font-mono uppercase font-bold text-[#64748B]">
             Event Summary & Record
           </span>
-          <p className="text-xs sm:text-sm text-[#1C1326] leading-relaxed bg-[#F8F5FA] p-4 rounded-2xl border border-[#E7DFEF]">
+          <p className="text-xs sm:text-sm text-[#0F172A] leading-relaxed bg-[#F8FAFC] p-3.5 rounded-xl border border-[#E2E8F0]">
             {event.description}
           </p>
         </div>
 
         {/* Metadata Details if present */}
         {event.metadata && Object.keys(event.metadata).length > 0 && (
-          <div className="space-y-2">
-            <span className="text-[10px] font-mono uppercase font-bold text-[#8D7E9E]">
+          <div className="space-y-1.5">
+            <span className="text-[10px] font-mono uppercase font-bold text-[#64748B]">
               Additional Health Attributes
             </span>
-            <div className="p-3 rounded-xl bg-white border border-[#E7DFEF] space-y-1 text-xs">
+            <div className="p-3 rounded-xl bg-white border border-[#E2E8F0] space-y-1 text-xs">
               {Object.entries(event.metadata).map(([k, v]) => {
-                if (v === undefined || v === null || Array.isArray(v) && v.length === 0) return null;
+                if (v === undefined || v === null || (Array.isArray(v) && v.length === 0)) return null;
                 const displayVal = Array.isArray(v) ? v.join(', ') : typeof v === 'object' ? JSON.stringify(v) : String(v);
                 return (
-                  <div key={k} className="flex items-center justify-between text-[#584B68]">
-                    <span className="capitalize text-[#8D7E9E]">{k.replace(/([A-Z])/g, ' $1')}:</span>
-                    <span className="font-semibold text-[#1C1326]">{displayVal}</span>
+                  <div key={k} className="flex items-center justify-between text-[#475569]">
+                    <span className="capitalize text-[#64748B]">{k.replace(/([A-Z])/g, ' $1')}:</span>
+                    <span className="font-semibold text-[#0F172A]">{displayVal}</span>
                   </div>
                 );
               })}
@@ -177,19 +177,19 @@ export const TimelineDetailModal: React.FC<TimelineDetailModalProps> = ({
         )}
 
         {/* Educational Safe Guard Notice */}
-        <div className="p-3.5 rounded-2xl bg-[#FFFBEB] border border-[#FEF3C7] flex items-start gap-2.5 text-xs text-[#B45309]">
-          <Sparkles className="w-4 h-4 shrink-0 text-[#D97706] mt-0.5" />
+        <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-2 text-xs text-amber-800">
+          <Sparkles className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
           <p className="text-[11px] leading-relaxed">
-            Longitudinal records help build patterns for discussion with your healthcare provider. OvaSense provides educational synthesis, not clinical diagnosis.
+            Longitudinal records help build patterns for discussion with your healthcare provider. BIOPulse AI provides educational synthesis, not clinical diagnosis.
           </p>
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between gap-3 pt-2 border-t border-[#F0EAF5]">
+        <div className="flex items-center justify-between gap-3 pt-2 border-t border-[#E2E8F0]">
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 rounded-2xl text-xs font-bold text-[#584B68] bg-[#F8F5FA] hover:bg-[#EDE4F7] transition-all cursor-pointer"
+            className="px-4 py-2 rounded-xl text-xs font-semibold text-[#64748B] bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-[#E0F2FE] hover:text-[#0288D1] transition-all cursor-pointer"
           >
             Close
           </button>
@@ -197,7 +197,7 @@ export const TimelineDetailModal: React.FC<TimelineDetailModalProps> = ({
           <button
             type="button"
             onClick={handleNavigateToSource}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold text-white bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF] hover:brightness-110 shadow-xs transition-all cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm transition-all cursor-pointer"
           >
             <span>Open in {event.sourceModule}</span>
             <ExternalLink className="w-3.5 h-3.5" />

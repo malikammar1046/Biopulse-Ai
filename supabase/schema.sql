@@ -1162,7 +1162,104 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- ==============================================================================
+-- Module: Progressive Cumulative PCOS Assessments (pcos_assessments)
+-- ==============================================================================
+
+-- 68. PCOS Progressive Assessments Table
+CREATE TABLE IF NOT EXISTS public.pcos_assessments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  assessment_level TEXT NOT NULL CHECK (assessment_level IN ('tier_1', 'tier_1_2', 'tier_1_3', 'tier_1_2_3')),
+  tiers_included JSONB NOT NULL DEFAULT '[]'::jsonb,
+  model_name TEXT NOT NULL,
+  model_version TEXT NOT NULL,
+  probability NUMERIC NOT NULL,
+  probability_percent NUMERIC NOT NULL,
+  threshold NUMERIC NOT NULL,
+  risk_category TEXT NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  replaced_assessment_id UUID REFERENCES public.pcos_assessments(id) ON DELETE SET NULL,
+  input_availability JSONB DEFAULT '{}'::jsonb,
+  input_features JSONB DEFAULT '{}'::jsonb,
+  explanations JSONB DEFAULT '[]'::jsonb,
+  limitations JSONB DEFAULT '[]'::jsonb,
+  next_available_tier INTEGER NULL,
+  pcom_status TEXT NULL,
+  pcom_probability NUMERIC NULL,
+  gradcam_url TEXT NULL,
+  ultrasound_report_id UUID REFERENCES public.medical_reports(id) ON DELETE SET NULL,
+  disclaimer TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 69. Indexes for pcos_assessments
+CREATE INDEX IF NOT EXISTS idx_pcos_assessments_user_active ON public.pcos_assessments(user_id, is_active);
+CREATE INDEX IF NOT EXISTS idx_pcos_assessments_user_created ON public.pcos_assessments(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_pcos_assessments_level ON public.pcos_assessments(user_id, assessment_level);
+
+-- 70. Enable RLS on pcos_assessments
+ALTER TABLE public.pcos_assessments ENABLE ROW LEVEL SECURITY;
+
+-- 71. RLS Policies for pcos_assessments (authenticated user full control over own assessments)
+DROP POLICY IF EXISTS "Users can select own pcos assessments" ON public.pcos_assessments;
+CREATE POLICY "Users can select own pcos assessments"
+  ON public.pcos_assessments FOR SELECT
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert own pcos assessments" ON public.pcos_assessments;
+CREATE POLICY "Users can insert own pcos assessments"
+  ON public.pcos_assessments FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update own pcos assessments" ON public.pcos_assessments;
+CREATE POLICY "Users can update own pcos assessments"
+  ON public.pcos_assessments FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Care circle members can select permitted pcos assessments" ON public.pcos_assessments;
+CREATE POLICY "Care circle members can select permitted pcos assessments"
+  ON public.pcos_assessments FOR SELECT
+  TO authenticated
+  USING (
+    public.has_care_circle_permission(user_id, 'reports')
+  );
 
 
+-- 72. Nutrition Plans Table (BioPulse Meal Module Persistence)
+CREATE TABLE IF NOT EXISTS public.nutrition_plans (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  plan_type TEXT NOT NULL DEFAULT 'WEEKLY_7_DAY',
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  replaced_plan_id UUID NULL REFERENCES public.nutrition_plans(id),
+  profile_snapshot JSONB NOT NULL DEFAULT '{}'::jsonb,
+  target_profile JSONB NOT NULL DEFAULT '{}'::jsonb,
+  condition_context JSONB NOT NULL DEFAULT '{}'::jsonb,
+  plan_data JSONB NOT NULL DEFAULT '{}'::jsonb,
+  audit_diagnostics JSONB NOT NULL DEFAULT '{}'::jsonb,
+  meal_module_version TEXT NOT NULL DEFAULT '1.0.0',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
 
+-- 73. Indexes for Nutrition Plans
+CREATE INDEX IF NOT EXISTS idx_nutrition_plans_user_active ON public.nutrition_plans(user_id, is_active);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_nutrition_plans_one_active_per_user ON public.nutrition_plans(user_id) WHERE is_active = TRUE;
+CREATE INDEX IF NOT EXISTS idx_nutrition_plans_user_created ON public.nutrition_plans(user_id, created_at DESC);
 
+-- 74. Enable RLS on nutrition_plans
+ALTER TABLE public.nutrition_plans ENABLE ROW LEVEL SECURITY;
+
+-- 75. RLS Policies for nutrition_plans
+DROP POLICY IF EXISTS "Users can view own nutrition plans" ON public.nutrition_plans;
+CREATE POLICY "Users can view own nutrition plans"
+  ON public.nutrition_plans FOR SELECT
+  TO authenticated
+  USING (auth.uid() = user_id);

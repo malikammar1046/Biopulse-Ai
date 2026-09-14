@@ -38,7 +38,7 @@ export const DeleteSymptomConfirmationModal: React.FC<DeleteSymptomConfirmationM
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="fixed inset-0 bg-[#10071A]/70 backdrop-blur-sm"
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
         />
 
         <motion.div
@@ -46,36 +46,36 @@ export const DeleteSymptomConfirmationModal: React.FC<DeleteSymptomConfirmationM
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.2 }}
-          className="relative w-full max-w-md rounded-[32px] bg-white border border-[#E7DFEF] shadow-2xl p-6 text-left space-y-5 z-10 select-none"
+          className="relative w-full max-w-md rounded-2xl bg-white border border-[#BAE6FD] shadow-xl p-6 text-left space-y-5 z-10 select-none"
         >
           <div className="flex items-center justify-between">
-            <div className="p-3 rounded-2xl bg-[#FFF1F2] text-[#E11D48] flex items-center justify-center">
-              <AlertTriangle className="w-6 h-6" />
+            <div className="p-3 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5" />
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-xl text-[#8D7E9E] hover:text-[#1C1326] hover:bg-[#F8F5FA] transition-colors cursor-pointer"
+              className="p-2 rounded-xl text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
           <div className="space-y-1.5">
-            <h3 className="text-xl font-bold font-display text-[#1C1326]">
+            <h3 className="text-lg font-bold text-[#0F172A]">
               Delete Symptom Entry?
             </h3>
-            <p className="text-xs text-[#584B68] leading-relaxed">
-              Are you sure you want to remove this <strong className="text-[#1C1326]">{symptom.symptomType}</strong> ({symptom.severity}) entry logged on {symptom.occurredAt}? This action cannot be undone.
+            <p className="text-xs text-[#64748B] leading-relaxed">
+              Are you sure you want to remove this <strong className="text-[#0F172A]">{symptom.symptomType}</strong> ({symptom.severity}) entry logged on {symptom.occurredAt}? This action cannot be undone.
             </p>
           </div>
 
-          <div className="pt-2 flex items-center justify-end gap-3 border-t border-[#F0EAF5]">
+          <div className="pt-2 flex items-center justify-end gap-3 border-t border-[#E2E8F0]">
             <button
               type="button"
               onClick={onClose}
               disabled={isDeleting}
-              className="px-5 py-2.5 rounded-2xl border border-[#E7DFEF] text-xs font-bold text-[#584B68] hover:bg-[#F8F5FA] transition-colors cursor-pointer disabled:opacity-50"
+              className="px-4 py-2 rounded-xl border border-[#E2E8F0] text-xs font-semibold text-[#64748B] hover:bg-[#F8FAFC] transition-colors cursor-pointer disabled:opacity-50"
             >
               Cancel
             </button>
@@ -84,7 +84,7 @@ export const DeleteSymptomConfirmationModal: React.FC<DeleteSymptomConfirmationM
               type="button"
               onClick={handleDelete}
               disabled={isDeleting}
-              className="px-5 py-2.5 rounded-2xl font-sans font-bold text-xs text-white bg-[#E11D48] hover:bg-[#BE123C] shadow-md shadow-rose-950/20 transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50"
+              className="px-4 py-2 rounded-xl font-semibold text-xs text-white bg-rose-600 hover:bg-rose-700 transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50 shadow-sm"
             >
               {isDeleting ? (
                 <>

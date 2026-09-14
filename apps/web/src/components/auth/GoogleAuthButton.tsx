@@ -30,11 +30,11 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({
       aria-label={loading ? loadingText : text}
       className={`
         w-full min-h-[48px] px-6 py-3 rounded-2xl
-        font-sans font-medium text-sm
-        text-[#EDE4F7] hover:text-white
-        bg-[#140924]/90 hover:bg-[#1D0E33]
-        border border-[#8E3EAF]/35 hover:border-[#8E3EAF]/70
-        shadow-md shadow-purple-950/30 hover:shadow-purple-950/50
+        font-sans font-semibold text-sm
+        text-slate-700 hover:text-slate-900
+        bg-white hover:bg-slate-50
+        border border-slate-200 hover:border-slate-300
+        shadow-xs hover:shadow-sm
         transition-all duration-200
         flex items-center justify-center gap-3
         cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed
