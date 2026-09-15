@@ -313,6 +313,7 @@ def run_tier2_assessment(
     supporting partial clinical inputs, PATCH-style progressive merging,
     replaces active Tier 1 result, and preserves history.
     """
+    logger.info(f"[ASSESSMENT_PIPELINE] STAGE: ASSESSMENT_REQUEST_RECEIVED | type=pcos_tier2 | patient={patient_uuid}")
     health_data = health_service.fetch_all(patient_uuid, auth_token=auth_token, client_health_data=client_health_data)
     base_tier1_inputs = extract_patient_raw_inputs(health_data, client_health_data)
 
@@ -395,27 +396,39 @@ def run_ultrasound_assessment(
     - If user only has Tier 1 (no clinical labs): processes ultrasound for PCOM/Grad-CAM, notes tier_1_3_model_unavailable,
       and leaves previous Tier 1 as active assessment.
     """
+    logger.info(f"[ASSESSMENT_PIPELINE] STAGE: ASSESSMENT_REQUEST_RECEIVED | type=ultrasound | patient={patient_uuid}")
     health_data = health_service.fetch_all(patient_uuid, auth_token=auth_token, client_health_data=client_health_data)
     inputs = extract_patient_raw_inputs(health_data, client_health_data)
 
     # Check if clinical labs / Tier 2 are present
     active_prev = assessment_repository.get_active_assessment(patient_uuid, auth_token=auth_token)
     has_clinical = (
-        (active_prev and active_prev.get('assessment_level') in ('tier_1_2', 'tier_1_2_3'))
+        (active_prev and (active_prev.get('tier_2_inputs') or active_prev.get('assessment_level') in ('tier_1_2', 'tier_1_2_3')))
         or ('fsh' in inputs and 'lh' in inputs and 'amh' in inputs)
     )
 
     if has_clinical:
+        # Carry forward prior tier_2_inputs if available
+        if active_prev and active_prev.get('tier_2_inputs'):
+            inputs.update(active_prev['tier_2_inputs'])
+        elif active_prev and active_prev.get('input_features'):
+            for k, v in active_prev['input_features'].items():
+                if k in CLINICAL_FIELD_RANGES and v is not None:
+                    inputs[k] = v
+
         # Full Multimodal Fusion (Tier 1 + 2 + 3)
         res = pcos_ml_service.predict_tier1_2_3_multimodal(inputs, pil_image)
         res['ultrasound_report_id'] = report_id
         res['input_features'] = inputs
+        if active_prev and active_prev.get('tier_2_inputs'):
+            res['tier_2_inputs'] = active_prev['tier_2_inputs']
         res['input_availability'] = {
             'tier_1_complete': True,
             'tier_2_clinical_available': True,
             'tier_3_ultrasound_available': True,
         }
         saved = assessment_repository.save_assessment(patient_uuid, res, make_active=True, auth_token=auth_token)
+        logger.info(f"[ASSESSMENT_PIPELINE] STAGE: ULTRASOUND_ASSESSMENT_SAVED | patient={patient_uuid} | level=tier_1_2_3")
         return format_assessment_response(saved)
     else:
         # Safe Tier 1+3 Handling: Ultrasound analyzed for morphology, but combined ML requires clinical labs
@@ -434,7 +447,14 @@ def run_ultrasound_assessment(
             "Please add your clinical lab results for a complete Tier 1 + Clinical + Ultrasound assessment."
         )
         response['next_available_tier'] = 2
-        return response
+        input_avail = dict(response.get('input_availability') or {})
+        input_avail['tier_3_ultrasound_available'] = True
+        response['input_availability'] = input_avail
+
+        # Persist so refreshing or reloading doesn't wipe ultrasound analysis
+        saved = assessment_repository.save_assessment(patient_uuid, response, make_active=True, auth_token=auth_token)
+        logger.info(f"[ASSESSMENT_PIPELINE] STAGE: ULTRASOUND_ASSESSMENT_SAVED | patient={patient_uuid} | level=tier_1_3_partial")
+        return format_assessment_response(saved)
 
 
 def _get_val(obj: Any, key: str, default: Any = None) -> Any:
@@ -537,6 +557,7 @@ def run_male_tier2_assessment(
     Executes Male Hypogonadism Tier 2 clinical & laboratory assessment.
     Merges with previous inputs using PATCH semantics.
     """
+    logger.info(f"[ASSESSMENT_PIPELINE] STAGE: ASSESSMENT_REQUEST_RECEIVED | type=male_tier2 | patient={patient_uuid}")
     actual_inputs = lab_inputs or clinical_inputs or {}
 
     active_prev = assessment_repository.get_active_assessment(patient_uuid, module="male_hypogonadism", auth_token=auth_token)
@@ -573,6 +594,7 @@ def run_male_tier2_assessment(
         make_active=True,
         auth_token=auth_token,
     )
+    logger.info(f"[ASSESSMENT_PIPELINE] STAGE: MALE_TIER2_SAVED | patient={patient_uuid}")
     return format_assessment_response(record)
 
 
@@ -586,6 +608,17 @@ def run_assessment(
     Unified assessment endpoint: returns the active assessment if present,
     or executes Tier 1 / Tier 2 based on available health data.
     """
+    if not module:
+        try:
+            health_data = health_service.fetch_all(patient_uuid, auth_token=auth_token, client_health_data=client_health_data)
+            p = getattr(health_data, 'profile', None)
+            if p and getattr(p, 'gender', None) == 'male':
+                module = "male_hypogonadism"
+            else:
+                module = "female_pcos"
+        except Exception:
+            module = "female_pcos"
+
     active = assessment_repository.get_active_assessment(patient_uuid, module=module, auth_token=auth_token)
     if active:
         return format_assessment_response(active)

@@ -7,6 +7,7 @@ import {
   Plus,
   Trash2,
   CheckCircle2,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { useUserHealth } from '../../context/UserHealthContext';
 import type { MealType, PlannedMeal, BuildMealResult, DailyNutritionTargets } from '../../types/diet';
@@ -19,6 +20,7 @@ import { MealBuilderModal } from '../../components/diet/MealBuilderModal';
 import { MealDetailModal } from '../../components/diet/MealDetailModal';
 import { WeeklyDietView } from '../../components/diet/WeeklyDietView';
 import { NutritionReadinessBanner } from '../../components/diet/NutritionReadinessBanner';
+import { NutritionPreferencesModal } from '../../components/diet/NutritionPreferencesModal';
 import { nutritionService } from '../../services/nutritionService';
 import type { NutritionReadiness, NutritionTargets, WeeklyNutritionPlan } from '../../types/nutrition';
 
@@ -116,12 +118,22 @@ export const DietPage: React.FC = () => {
   }, [activePlan, backendTargets, dailyNutritionTargets]);
 
   // Modals state
+  const [isPreferencesModalOpen, setIsPreferencesModalOpen] = useState(false);
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [logModalMealType, setLogModalMealType] = useState<MealType>('breakfast');
   const [logModalFoodName, setLogModalFoodName] = useState<string>('');
 
   const [isMealBuilderOpen, setIsMealBuilderOpen] = useState(false);
   const [selectedMealForDetail, setSelectedMealForDetail] = useState<PlannedMeal | null>(null);
+
+  const handlePreferencesUpdated = async () => {
+    try {
+      const r = await nutritionService.getReadiness();
+      setReadiness(r);
+    } catch {
+      // ignore
+    }
+  };
 
   const handleOpenLogForMeal = (meal: PlannedMeal) => {
     setLogModalMealType(meal.mealType);
@@ -212,14 +224,25 @@ export const DietPage: React.FC = () => {
           </button>
         </div>
 
-        <button
-          type="button"
-          onClick={handleOpenGeneralLog}
-          className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-[#0288D1] hover:bg-[#E0F2FE] transition-all cursor-pointer"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>Quick Log</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsPreferencesModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-[#0288D1] bg-[#F0F9FF] border border-[#BAE6FD] hover:bg-[#E0F2FE] transition-all cursor-pointer"
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <span>Preferences & Safety</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleOpenGeneralLog}
+            className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-[#0288D1] hover:bg-[#E0F2FE] transition-all cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Quick Log</span>
+          </button>
+        </div>
       </div>
 
       {/* ── 3. MAIN CONTENT: 7-DAY PLAN vs DAILY LOGGING ── */}
@@ -444,6 +467,13 @@ export const DietPage: React.FC = () => {
         isOpen={Boolean(selectedMealForDetail)}
         onClose={() => setSelectedMealForDetail(null)}
         onLogMeal={handleOpenLogForMeal}
+      />
+
+      {/* 4. Nutrition Preferences & Safety Modal */}
+      <NutritionPreferencesModal
+        isOpen={isPreferencesModalOpen}
+        onClose={() => setIsPreferencesModalOpen(false)}
+        onPreferencesUpdated={handlePreferencesUpdated}
       />
     </motion.div>
   );

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Activity, AlertTriangle, Check, Loader2, Sparkles } from 'lucide-react';
 import {
-  SYMPTOM_CATALOG,
+  getSymptomCatalog,
   CATEGORY_METADATA,
   type SymptomRecord,
   type SymptomRecordInput,
@@ -20,6 +20,7 @@ interface SymptomLogModalProps {
   initialData?: SymptomRecord | null;
   preselectedSymptom?: SymptomDefinition | null;
   cycleRecords: CycleRecord[];
+  isMale?: boolean;
 }
 
 export const SymptomLogModal: React.FC<SymptomLogModalProps> = ({
@@ -29,12 +30,18 @@ export const SymptomLogModal: React.FC<SymptomLogModalProps> = ({
   initialData,
   preselectedSymptom,
   cycleRecords,
+  isMale,
 }) => {
   const isEditing = Boolean(initialData?.id);
+  const catalog = getSymptomCatalog(Boolean(isMale));
 
   // Form State
-  const [selectedCategory, setSelectedCategory] = useState<SymptomCategory>('cycle_body');
-  const [symptomType, setSymptomType] = useState('Cramps');
+  const [selectedCategory, setSelectedCategory] = useState<SymptomCategory>(
+    isMale ? 'energy_mood' : 'cycle_body'
+  );
+  const [symptomType, setSymptomType] = useState(
+    isMale ? 'Daytime Fatigue & Low Stamina' : 'Cramps'
+  );
   const [customSymptomName, setCustomSymptomName] = useState('');
   const [severity, setSeverity] = useState<SymptomSeverity>('moderate');
   const [occurredAt, setOccurredAt] = useState('');
@@ -44,8 +51,8 @@ export const SymptomLogModal: React.FC<SymptomLogModalProps> = ({
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Automatically calculate cycle day for the selected date
-  const calculatedCycleDay = deriveCycleDayForDate(occurredAt, cycleRecords);
+  // Automatically calculate cycle day for the selected date (female only)
+  const calculatedCycleDay = isMale ? null : deriveCycleDayForDate(occurredAt, cycleRecords);
 
   // Reset or initialize state
   useEffect(() => {
@@ -56,7 +63,7 @@ export const SymptomLogModal: React.FC<SymptomLogModalProps> = ({
         setSeverity(initialData.severity);
         setOccurredAt(initialData.occurredAt);
         setNotes(initialData.notes || '');
-        const isPreset = SYMPTOM_CATALOG.some((s) => s.name === initialData.symptomType);
+        const isPreset = catalog.some((s) => s.name === initialData.symptomType);
         if (!isPreset) {
           setCustomSymptomName(initialData.symptomType);
         } else {
@@ -70,8 +77,13 @@ export const SymptomLogModal: React.FC<SymptomLogModalProps> = ({
         setNotes('');
         setCustomSymptomName('');
       } else {
-        setSymptomType('Cramps');
-        setSelectedCategory('cycle_body');
+        if (isMale) {
+          setSymptomType('Daytime Fatigue & Low Stamina');
+          setSelectedCategory('energy_mood');
+        } else {
+          setSymptomType('Cramps');
+          setSelectedCategory('cycle_body');
+        }
         setSeverity('moderate');
         setOccurredAt(new Date().toISOString().split('T')[0]);
         setNotes('');
@@ -80,13 +92,14 @@ export const SymptomLogModal: React.FC<SymptomLogModalProps> = ({
       setGeneralError(null);
       setIsSubmitting(false);
     }
-  }, [isOpen, initialData, preselectedSymptom]);
+  }, [isOpen, initialData, preselectedSymptom, isMale]);
 
   const handleCategoryChange = (cat: SymptomCategory) => {
     setSelectedCategory(cat);
-    const firstInCat = SYMPTOM_CATALOG.find((s) => s.category === cat);
+    const firstInCat = catalog.find((s) => s.category === cat);
     if (firstInCat) {
       setSymptomType(firstInCat.name);
+      setCustomSymptomName('');
     }
   };
 
@@ -135,7 +148,7 @@ export const SymptomLogModal: React.FC<SymptomLogModalProps> = ({
 
   if (!isOpen) return null;
 
-  const currentCategorySymptoms = SYMPTOM_CATALOG.filter((s) => s.category === selectedCategory);
+  const currentCategorySymptoms = catalog.filter((s: SymptomDefinition) => s.category === selectedCategory);
 
   return (
     <AnimatePresence>
@@ -198,9 +211,12 @@ export const SymptomLogModal: React.FC<SymptomLogModalProps> = ({
                 Category <span className="text-rose-500">*</span>
               </label>
               <div className="flex flex-wrap gap-1.5">
-                {(Object.keys(CATEGORY_METADATA) as SymptomCategory[]).map((cat) => {
+                {(Object.keys(CATEGORY_METADATA) as SymptomCategory[])
+                  .filter((cat) => !(isMale && cat === 'cycle_body'))
+                  .map((cat) => {
                   const meta = CATEGORY_METADATA[cat];
                   const isSelected = selectedCategory === cat;
+
                   return (
                     <button
                       key={cat}
@@ -225,7 +241,7 @@ export const SymptomLogModal: React.FC<SymptomLogModalProps> = ({
                 Select Symptom <span className="text-rose-500">*</span>
               </label>
               <div className="grid grid-cols-2 gap-2">
-                {currentCategorySymptoms.map((s) => {
+                {currentCategorySymptoms.map((s: SymptomDefinition) => {
                   const isSelected = symptomType === s.name;
                   return (
                     <button
@@ -325,16 +341,18 @@ export const SymptomLogModal: React.FC<SymptomLogModalProps> = ({
                   required
                 />
 
-                {/* Automatic Cycle Day Pill */}
-                <div className="p-2 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] text-xs flex items-center justify-between">
-                  <span className="text-[#0288D1] font-medium flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-[#0288D1]" />
-                    Cycle Day:
-                  </span>
-                  <span className="font-mono font-bold text-[#01579B]">
-                    {calculatedCycleDay !== null ? `Day ${calculatedCycleDay}` : 'Not in cycle'}
-                  </span>
-                </div>
+                {/* Automatic Cycle Day Pill (Female Pathway Only) */}
+                {!isMale && (
+                  <div className="p-2 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] text-xs flex items-center justify-between">
+                    <span className="text-[#0288D1] font-medium flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-[#0288D1]" />
+                      Cycle Day:
+                    </span>
+                    <span className="font-mono font-bold text-[#01579B]">
+                      {calculatedCycleDay !== null ? `Day ${calculatedCycleDay}` : 'Not in cycle'}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 

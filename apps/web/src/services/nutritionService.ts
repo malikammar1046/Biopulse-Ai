@@ -8,6 +8,7 @@
 import { supabase } from '../lib/supabase';
 import type {
   NutritionPlanSummary,
+  NutritionPreferences,
   NutritionReadiness,
   NutritionTargets,
   WeeklyNutritionPlan,
@@ -145,6 +146,39 @@ class NutritionService {
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || `Failed to retrieve plan ${planId} (${res.status})`);
+    }
+    return res.json();
+  }
+
+  /**
+   * Retrieve normalized saved nutrition preferences for current user.
+   */
+  async getPreferences(): Promise<NutritionPreferences> {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${NUTRITION_BASE_URL}/preferences/`, {
+      method: 'GET',
+      headers,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to fetch nutrition preferences (${res.status})`);
+    }
+    return res.json();
+  }
+
+  /**
+   * Update and normalize saved nutrition preferences for current user.
+   */
+  async updatePreferences(preferences: Partial<NutritionPreferences>): Promise<NutritionPreferences> {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${NUTRITION_BASE_URL}/preferences/`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(preferences),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to update nutrition preferences (${res.status})`);
     }
     return res.json();
   }

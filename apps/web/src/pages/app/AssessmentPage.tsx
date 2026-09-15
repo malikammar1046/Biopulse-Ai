@@ -7,6 +7,9 @@ import {
   CheckCircle2,
   Save,
   Loader2,
+  ImageIcon,
+  Sparkles,
+  ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useUserHealth } from '../../context/UserHealthContext';
@@ -149,6 +152,116 @@ export const AssessmentPage: React.FC = () => {
             onOpenHistoryModal={() => setIsHistoryModalOpen(true)}
             onRefresh={refreshActiveAssessment}
           />
+
+          {/* Dedicated Ultrasound AI Analysis Card (Side-by-Side Original & Grad-CAM) */}
+          {activeAssessment?.gradcam_b64 && (
+            <div className="p-6 sm:p-8 rounded-[32px] bg-white border border-[#BAE6FD] text-[#0F172A] shadow-xs space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E2E8F0] pb-4">
+                <div className="space-y-1">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E0F2FE] border border-[#BAE6FD] text-xs font-mono text-[#0288D1] font-bold">
+                    <ImageIcon className="w-3.5 h-3.5" />
+                    <span>Tier 3 Pelvic Ultrasound Spatial Inspection</span>
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-bold font-display text-[#01579B]">
+                    Ultrasound AI Analysis & Neural Focus Heatmap
+                  </h3>
+                  <p className="text-xs sm:text-sm text-[#475569]">
+                    Visual interpretation of deep learning morphological assessment for polycystic ovarian features.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`px-3 py-1 rounded-xl text-xs font-bold font-mono border ${
+                      activeAssessment.pcom_status === 'PCOM Detected'
+                        ? 'bg-rose-50 text-rose-700 border-rose-200'
+                        : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    }`}
+                  >
+                    {activeAssessment.pcom_status || 'Ovarian Morphology Evaluated'}
+                  </span>
+                  {activeAssessment.pcom_probability !== undefined && activeAssessment.pcom_probability !== null && (
+                    <span className="px-3 py-1 rounded-xl text-xs font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                      Probability: {(activeAssessment.pcom_probability * 100).toFixed(1)}%
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Side-by-side display */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                {/* Original Image */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#0F172A] flex items-center gap-1.5">
+                      <Layers className="w-4 h-4 text-[#0288D1]" />
+                      Original Pelvic Ultrasound Scan
+                    </span>
+                    <span className="text-[11px] font-mono text-[#64748B]">B-mode Grayscale</span>
+                  </div>
+                  <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-950 border border-slate-200 flex items-center justify-center shadow-inner">
+                    <img
+                      src={
+                        localStorage.getItem('biopulse_original_ultrasound_preview') ||
+                        (activeAssessment.gradcam_b64.startsWith('data:')
+                          ? activeAssessment.gradcam_b64
+                          : `data:image/png;base64,${activeAssessment.gradcam_b64}`)
+                      }
+                      alt="Pelvic Ultrasound Scan"
+                      className="w-full h-full object-contain"
+                    />
+                    <div className="absolute bottom-2 left-2 px-2 py-1 rounded-md bg-black/60 text-[10px] font-mono text-white/80">
+                      Source Scan
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-[#64748B] leading-relaxed">
+                    Input transvaginal or transabdominal scan processed for acoustic and ovarian boundary attributes.
+                  </p>
+                </div>
+
+                {/* Grad-CAM Heatmap */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#01579B] flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4 text-[#0288D1]" />
+                      AI Attention Heatmap (Grad-CAM)
+                    </span>
+                    <span className="text-[11px] font-mono text-[#0288D1] font-bold">Jet Colormap</span>
+                  </div>
+                  <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-950 border border-[#BAE6FD] flex items-center justify-center shadow-inner">
+                    <img
+                      src={
+                        activeAssessment.gradcam_b64.startsWith('data:')
+                          ? activeAssessment.gradcam_b64
+                          : `data:image/png;base64,${activeAssessment.gradcam_b64}`
+                      }
+                      alt="Grad-CAM Neural Focus Heatmap"
+                      className="w-full h-full object-contain"
+                    />
+                    <div className="absolute bottom-2 left-2 px-2.5 py-1 rounded-md bg-[#01579B]/80 backdrop-blur-xs text-[10px] font-mono text-white font-semibold">
+                      Red / Warm = Higher Neural Attention
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-[#64748B] leading-relaxed">
+                    Grad-CAM highlights specific follicle clusters and stromal tissue regions that most strongly drove the morphological screening result.
+                  </p>
+                </div>
+              </div>
+
+              {/* Clinical Non-Diagnostic Safety Callout */}
+              <div className="p-4 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-start gap-3 text-xs text-[#0F172A]">
+                <ShieldCheck className="w-4 h-4 text-[#0288D1] shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-bold text-[#01579B]">
+                    Informational Explainability & Spatial Visualization Only
+                  </p>
+                  <p className="text-[#475569] leading-relaxed">
+                    This heatmap shows internal machine learning attention to assist user understanding of visual screening features. It is not an automated medical diagnosis, biopsy, or radiologist report. Clinical correlation with a gynecologist or sonographer is essential.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Master Profile Completeness & Readiness Card */}
           <ProfileCompletenessCard

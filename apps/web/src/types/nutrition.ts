@@ -17,11 +17,31 @@ export interface PlanningInputsReadiness {
 
 export interface NutritionReadiness {
   ready: boolean;
+  overall_status?: 'READY' | 'WARNINGS' | 'NOT_READY' | string;
+  blocking_issues?: string[];
+  warning_issues?: string[];
+  optional_issues?: string[];
   required_biometrics: ReadinessGroup;
   safety_confirmations: ReadinessGroup;
   planning_inputs: PlanningInputsReadiness;
   optional_personalization?: Record<string, any>;
   warnings: string[];
+}
+
+export type DietaryPattern = 'omnivore' | 'halal_omnivore' | 'vegetarian' | 'vegan' | 'pescatarian';
+export type BudgetTier = 'low' | 'medium' | 'flexible';
+export type CookingTimePreference = 'quick' | 'moderate' | 'flexible';
+
+export interface NutritionPreferences {
+  food_allergies: string[];
+  food_intolerances: string[];
+  dietary_pattern: DietaryPattern | string;
+  favorite_ingredients: string[];
+  disliked_ingredients: string[];
+  preferred_cuisines: string[];
+  budget_tier: BudgetTier | string;
+  cooking_time_preference: CookingTimePreference | string;
+  meals_per_day: number;
 }
 
 export interface MacroRange {

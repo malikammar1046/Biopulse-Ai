@@ -7,6 +7,7 @@ import { timelineService } from '../../services/timelineService';
 import { HealthProfileSummaryCard } from '../../components/dashboard/HealthProfileSummaryCard';
 import { HealthSnapshotCard } from '../../components/dashboard/HealthSnapshotCard';
 import { CycleProgressDial } from '../../components/dashboard/CycleProgressDial';
+import { MaleHormoneRhythmCard } from '../../components/dashboard/overview/MaleHormoneRhythmCard';
 import { DigitalTwinInsightCard } from '../../components/dashboard/DigitalTwinInsightCard';
 import { TodayRemindersCard } from '../../components/dashboard/TodayRemindersCard';
 import { NutritionSnapshotCard } from '../../components/dashboard/NutritionSnapshotCard';
@@ -16,6 +17,7 @@ import { CareCircleCard } from '../../components/dashboard/CareCircleCard';
 import { HealthPatternsChart } from '../../components/dashboard/HealthPatternsChart';
 import { WeeklyHealthSummary } from '../../components/dashboard/WeeklyHealthSummary';
 import { HealthJourneyTimelineCard } from '../../components/dashboard/HealthJourneyTimelineCard';
+import { resolvePathway } from '../../types/onboarding';
 
 export const MasterHealthHub: React.FC = () => {
   const navigate = useNavigate();
@@ -74,6 +76,9 @@ export const MasterHealthHub: React.FC = () => {
     return timelineService.synthesizeTimelineEvents(timelineInputs).slice(0, 4);
   }, [timelineInputs]);
 
+  const pathway = resolvePathway(userProfile.gender, userProfile.pathway);
+  const isMale = pathway === 'male';
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -92,7 +97,9 @@ export const MasterHealthHub: React.FC = () => {
             Comprehensive Health Hub
           </h1>
           <p className="text-xs sm:text-sm text-[#E0F2FE] font-sans">
-            Full multi-module intelligence snapshot uniting your longitudinal health profile, cycle rhythms, nutrition, medications, and clinical care.
+            {isMale
+              ? 'Full multi-module intelligence snapshot uniting your longitudinal health profile, endocrine rhythms, nutrition, medications, and clinical care.'
+              : 'Full multi-module intelligence snapshot uniting your longitudinal health profile, cycle rhythms, nutrition, medications, and clinical care.'}
           </p>
         </div>
 
@@ -120,18 +127,26 @@ export const MasterHealthHub: React.FC = () => {
       {/* ── 4. Top Metric Snapshot Cards (4 Columns) ── */}
       <HealthSnapshotCard
         metrics={snapshotMetrics}
+        isMale={isMale}
         onViewSymptoms={() => navigate('/app/symptoms')}
-        onViewCycle={() => navigate('/app/cycle')}
+        onViewCycle={isMale ? undefined : () => navigate('/app/cycle')}
       />
 
-      {/* ── 5. Core Health Triad (Cycle Progress & Reminders) ── */}
+      {/* ── 5. Core Health Triad (Cycle Progress or Male Rhythm & Reminders) ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Cycle Progress Segmented Ring */}
-        <CycleProgressDial
-          currentDay={snapshotMetrics.cycleDay}
-          totalDays={snapshotMetrics.totalCycleDays}
-          phaseName={snapshotMetrics.phaseName}
-        />
+        {/* Cycle Progress Segmented Ring for Female, Male Hormone Rhythm for Male */}
+        {isMale ? (
+          <MaleHormoneRhythmCard
+            energyLevel={userProfile.mensHealth?.energyLevel || 'moderate'}
+            sleepHours={userProfile.lifestyle?.sleepHours || 7.5}
+          />
+        ) : (
+          <CycleProgressDial
+            currentDay={snapshotMetrics.cycleDay}
+            totalDays={snapshotMetrics.totalCycleDays}
+            phaseName={snapshotMetrics.phaseName}
+          />
+        )}
 
         {/* Today's Checkable Reminders */}
         <TodayRemindersCard

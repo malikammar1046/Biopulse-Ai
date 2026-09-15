@@ -66,6 +66,26 @@ export const TodayMealTimeline: React.FC<TodayMealTimelineProps> = ({
       <div className="space-y-4">
         {mealKeys.map((mKey, index) => {
           const meal = meals[mKey];
+          if (!meal) {
+            return (
+              <div
+                key={mKey}
+                className="p-4 sm:p-5 rounded-2xl bg-[#F8FAFC] border border-dashed border-[#CBD5E1] text-left space-y-2"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 rounded-xl bg-white border border-[#E2E8F0]">
+                    {MEAL_ICONS[mKey]}
+                  </span>
+                  <span className="text-xs font-bold font-mono uppercase tracking-wider text-[#64748B]">
+                    {MEAL_LABELS[mKey]}
+                  </span>
+                </div>
+                <p className="text-xs text-[#64748B] font-sans">
+                  No recommendation available for this slot because candidate meals conflicted with your food allergy profile.
+                </p>
+              </div>
+            );
+          }
           const isLogged = loggedLogs.some((l) => l.mealType === mKey);
 
           return (

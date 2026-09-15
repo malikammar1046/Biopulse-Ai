@@ -120,6 +120,7 @@ export const SymptomsPage: React.FC = () => {
         onSelectSymptom={handleSelectQuickSymptom}
         onOpenGeneralModal={handleOpenGeneralModal}
         loggedTodayCount={symptomStats.loggedTodayCount}
+        isMale={isMale}
       />
 
       {/* ── 3. Pattern Observations Section ── */}
@@ -152,6 +153,7 @@ export const SymptomsPage: React.FC = () => {
         initialData={editingRecord}
         preselectedSymptom={preselectedSymptom}
         cycleRecords={cycleRecords}
+        isMale={isMale}
       />
 
       <DeleteSymptomConfirmationModal

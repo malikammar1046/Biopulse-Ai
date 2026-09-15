@@ -58,6 +58,15 @@ class EntitySafetyResult:
         return self
 
 
+ALLERGEN_ALIASES = {
+    "milk": ("dairy", "milk"),
+    "dairy": ("milk", "dairy"),
+    "peanut": ("nuts", "peanut", "peanuts", "groundnut"),
+    "tree_nut": ("nuts", "tree_nut", "tree_nuts"),
+    "nuts": ("peanut", "tree_nut", "nuts"),
+}
+
+
 def check_entity_allergen_safety(
     entity_id: str,
     entity_name: str,
@@ -76,6 +85,13 @@ def check_entity_allergen_safety(
     complete = _explicit_bool(allergen_assessment_complete) is True
     for allergen in sorted({_key(a) for a in user_allergens}):
         status = _status(statuses.get(allergen))
+        if status == "UNKNOWN":
+            for alias in ALLERGEN_ALIASES.get(allergen, ()):
+                if alias in statuses:
+                    cand_status = _status(statuses.get(alias))
+                    if cand_status != "UNKNOWN":
+                        status = cand_status
+                        break
         if status == "ABSENT" and complete:
             continue
         code = (SafetyOutcome.EXCLUDED_KNOWN_ALLERGEN if status == "PRESENT"
@@ -119,12 +135,18 @@ def check_entity_dietary_safety(
 
 
 def _catalog_allergen_map(entity):
-    return {
+    res = {
         name: {True: "PRESENT", False: "ABSENT"}.get(
             _explicit_bool(entity.get(f"known_contains_{name}")), "UNKNOWN"
         )
         for name in ("dairy", "egg", "fish", "wheat", "nuts")
     }
+    if "dairy" in res:
+        res["milk"] = res["dairy"]
+    if "nuts" in res:
+        res["peanut"] = res["nuts"]
+        res["tree_nut"] = res["nuts"]
+    return res
 
 
 def _catalog_dietary_map(entity):

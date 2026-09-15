@@ -65,6 +65,12 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
 
   const [showGradCamModal, setShowGradCamModal] = useState(false);
 
+  const getGradcamSrc = (b64?: string | null) => {
+    if (!b64) return '';
+    if (b64.startsWith('data:')) return b64;
+    return `data:image/png;base64,${b64}`;
+  };
+
   if (loading && !assessment) {
     return (
       <div className="p-8 rounded-[32px] bg-[#01579B] border border-[#BAE6FD] text-white shadow-sm flex items-center justify-center min-h-[220px]">
@@ -294,7 +300,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
             {assessment.gradcam_b64 && (
               <div className="relative group cursor-pointer overflow-hidden rounded-xl border border-white/15" onClick={() => setShowGradCamModal(true)}>
                 <img
-                  src={`data:image/jpeg;base64,${assessment.gradcam_b64}`}
+                  src={getGradcamSrc(assessment.gradcam_b64)}
                   alt="Grad-CAM spatial heatmap"
                   className="w-full h-28 object-cover group-hover:scale-105 transition-transform duration-300"
                 />
@@ -550,7 +556,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
               </div>
 
               <img
-                src={`data:image/jpeg;base64,${assessment.gradcam_b64}`}
+                src={getGradcamSrc(assessment.gradcam_b64)}
                 alt="Enlarged Grad-CAM Heatmap"
                 className="w-full h-auto rounded-2xl border border-white/15"
               />

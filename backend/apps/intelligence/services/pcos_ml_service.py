@@ -390,6 +390,8 @@ class PCOSMLService:
     def __init__(self):
         self._lock = threading.Lock()
         self._loaded = False
+        self._vision_lock = threading.Lock()
+        self._vision_loaded = False
 
         # Model artifacts
         self._t1_model = None
@@ -416,8 +418,12 @@ class PCOSMLService:
     def is_ready(self) -> bool:
         return self._loaded
 
+    @property
+    def is_vision_ready(self) -> bool:
+        return self._vision_loaded
+
     def load(self) -> None:
-        """Loads all serialized model artifacts once and caches them safely."""
+        """Loads serialized tabular model artifacts and TreeSHAP explainers quickly (<1s)."""
         if self._loaded:
             return
 
@@ -425,7 +431,7 @@ class PCOSMLService:
             if self._loaded:
                 return
 
-            logger.info("Initializing PCOS-ML Assessment Engine from %s...", MODELS_DIR)
+            logger.info("Initializing PCOS-ML Tabular Assessment Engine from %s...", MODELS_DIR)
 
             # Ensure PCOS-ML root is on sys.path
             pcos_ml_str = str(PCOS_ML_DIR)
@@ -447,7 +453,7 @@ class PCOSMLService:
                 else self._t2_model_data
             )
 
-            # 3. Load Tier 3 Ultrasound Models & Multimodal Fusion
+            # 3. Load Tier 3 joblib models (PCOM & Multimodal fusion weights)
             if TIER3_PCOM_PATH.exists():
                 self._t3_pcom_data = joblib.load(TIER3_PCOM_PATH)
             if TIER3_CLINICAL_PCOS_PATH.exists():
@@ -455,17 +461,27 @@ class PCOSMLService:
             if TIER3_MULTIMODAL_FINAL_PATH.exists():
                 self._t3_final_fusion_data = joblib.load(TIER3_MULTIMODAL_FINAL_PATH)
 
-            # 4. Lazy-load PyTorch Vision Backbone for Ultrasound processing
-            self._init_vision_pipeline()
-
-            # 5. Initialize TreeSHAP explainers
+            # 4. Initialize TreeSHAP explainers
             self._init_shap_explainers()
 
-            # 6. Load reference population medians from dataset if available
+            # 5. Load reference population medians
             self._init_reference_medians()
 
             self._loaded = True
-            logger.info("PCOS-ML Assessment Engine successfully loaded and ready.")
+            logger.info("PCOS-ML Tabular Assessment Engine successfully loaded and ready.")
+
+    def load_vision(self) -> None:
+        """Loads PyTorch vision backbone and GradCAM engine lazily or during background warmup."""
+        if self._vision_loaded:
+            return
+
+        with self._vision_lock:
+            if self._vision_loaded:
+                return
+            logger.info("Initializing PCOS-ML PyTorch Vision Backbone & GradCAM Engine...")
+            self._init_vision_pipeline()
+            self._vision_loaded = True
+            logger.info("PCOS-ML PyTorch Vision Backbone & GradCAM ready.")
 
     def _init_vision_pipeline(self) -> None:
         """Initializes PyTorch vision transforms and EfficientNet backbone."""
@@ -754,6 +770,7 @@ class PCOSMLService:
         Returns PCOM visibility, exploratory PCOS probability, and Grad-CAM spatial overlay.
         """
         self.load()
+        self.load_vision()
         if self._eff_backbone is None or self._eval_transform is None:
             raise ModelLoadError("PyTorch vision pipeline is not initialized.")
 

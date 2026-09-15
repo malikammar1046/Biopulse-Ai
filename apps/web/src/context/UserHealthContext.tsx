@@ -1612,22 +1612,47 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       tags: [l.serving, `${l.proteinG}g Protein`],
     }));
 
-    const suggested = [
-      {
+    const suggested: {
+      name: string;
+      desc: string;
+      calories: number;
+      benefits: string;
+      culturalTag: string;
+    }[] = [];
+
+    if (dailyMealPlan?.meals?.lunch) {
+      suggested.push({
         name: dailyMealPlan.meals.lunch.title,
         desc: dailyMealPlan.meals.lunch.whyItWorks,
         calories: dailyMealPlan.meals.lunch.calories,
         benefits: 'High fiber and protein for steady metabolic energy',
         culturalTag: 'Pakistani Nutrition',
-      },
-      {
+      });
+    }
+
+    if (dailyMealPlan?.meals?.dinner) {
+      suggested.push({
         name: dailyMealPlan.meals.dinner.title,
         desc: dailyMealPlan.meals.dinner.whyItWorks,
         calories: dailyMealPlan.meals.dinner.calories,
         benefits: 'Lean protein and restorative evening minerals',
         culturalTag: 'Traditional Balanced',
-      },
-    ];
+      });
+    }
+
+    // Fallback if lunch or dinner was excluded by active allergy constraints
+    if (suggested.length === 0 && dailyMealPlan?.meals) {
+      const anyMeal = Object.values(dailyMealPlan.meals).find((m) => m && m.title);
+      if (anyMeal) {
+        suggested.push({
+          name: anyMeal.title,
+          desc: anyMeal.whyItWorks,
+          calories: anyMeal.calories,
+          benefits: 'Nutrient-rich meal aligned with your active dietary profile',
+          culturalTag: 'Nutritious Choice',
+        });
+      }
+    }
 
     return {
       caloriesLogged: totalCalories,

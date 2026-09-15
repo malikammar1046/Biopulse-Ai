@@ -226,3 +226,125 @@ export const CATEGORY_METADATA: Record<SymptomCategory, { label: string; color: 
     badgeClass: 'bg-[#F8F5FA] text-[#584B68] border-[#E7DFEF]',
   },
 };
+
+/**
+ * Dedicated Male Hypogonadism / Vitality Symptom Catalog (Zero Menstrual/Cycle/Cramps leakage)
+ */
+export const MALE_SYMPTOM_CATALOG: SymptomDefinition[] = [
+  // 1. Energy & Stamina
+  {
+    id: 'fatigue',
+    name: 'Daytime Fatigue & Low Stamina',
+    category: 'energy_mood',
+    categoryLabel: 'Energy & Stamina',
+    iconName: 'Moon',
+    description: 'Sluggishness, low physical drive, or reduced stamina',
+    color: '#0E9EAA',
+  },
+  {
+    id: 'low_energy',
+    name: 'Afternoon Energy Slump',
+    category: 'energy_mood',
+    categoryLabel: 'Energy & Stamina',
+    iconName: 'BatteryLow',
+    description: 'Noticeable drop in energy or post-dinner sleepiness',
+    color: '#0E9EAA',
+  },
+  {
+    id: 'reduced_strength',
+    name: 'Muscle Fullness / Strength Dip',
+    category: 'energy_mood',
+    categoryLabel: 'Energy & Stamina',
+    iconName: 'Activity',
+    description: 'Reduction in physical strength, muscle tone, or gym performance',
+    color: '#0E9EAA',
+  },
+  {
+    id: 'headache',
+    name: 'Headache & Tension',
+    category: 'other',
+    categoryLabel: 'Physical Sensation',
+    iconName: 'Flame',
+    description: 'Tension, screen fatigue, or sinus pressure',
+    color: '#0E9EAA',
+  },
+
+  // 2. Libido & Mood (ADAM Key Indicators)
+  {
+    id: 'reduced_libido',
+    name: 'Reduced Libido / Sex Drive',
+    category: 'energy_mood',
+    categoryLabel: 'Endocrine & Libido',
+    iconName: 'Heart',
+    description: 'Noticeable decrease in spontaneous sexual desire or intimacy interest',
+    color: '#073B72',
+  },
+  {
+    id: 'mood_changes',
+    name: 'Irritability & Grumpiness',
+    category: 'energy_mood',
+    categoryLabel: 'Mood & Drive',
+    iconName: 'Smile',
+    description: 'Unusual irritability, feeling on edge, or mood dips',
+    color: '#8E3EAF',
+  },
+  {
+    id: 'stress',
+    name: 'Mental Stress & Brain Fog',
+    category: 'energy_mood',
+    categoryLabel: 'Mood & Drive',
+    iconName: 'CloudRain',
+    description: 'Difficulty concentrating, mental fog, or elevated daily stress',
+    color: '#8E3EAF',
+  },
+
+  // 3. Sleep Disruption
+  {
+    id: 'difficulty_sleeping',
+    name: 'Difficulty Falling Asleep',
+    category: 'sleep',
+    categoryLabel: 'Sleep Disruption',
+    iconName: 'Clock',
+    description: 'Taking a long time to sleep or restlessness at night',
+    color: '#6E2D8B',
+  },
+  {
+    id: 'poor_sleep_quality',
+    name: 'Unrefreshing Morning Sleep',
+    category: 'sleep',
+    categoryLabel: 'Sleep Disruption',
+    iconName: 'BedDouble',
+    description: 'Waking unrefreshed, fragmented sleep, or frequent nighttime waking',
+    color: '#6E2D8B',
+  },
+
+  // 4. Skin & Hair
+  {
+    id: 'hair_thinning',
+    name: 'Beard or Body Hair Thinning',
+    category: 'skin_hair',
+    categoryLabel: 'Skin & Hair',
+    iconName: 'Scissors',
+    description: 'Slowing growth rate or thinning along beard line or body hair',
+    color: '#A21CAF',
+  },
+
+  // 5. Other
+  {
+    id: 'other',
+    name: 'Other Body Sensation',
+    category: 'other',
+    categoryLabel: 'Other',
+    iconName: 'HelpCircle',
+    description: 'Any other sensation or symptom you wish to remember',
+    color: '#584B68',
+  },
+];
+
+/**
+ * Returns pathway-appropriate symptom taxonomy.
+ */
+export function getSymptomCatalog(isMale: boolean): SymptomDefinition[] {
+  return isMale ? MALE_SYMPTOM_CATALOG : SYMPTOM_CATALOG;
+}
+

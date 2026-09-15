@@ -1,7 +1,7 @@
 import React from 'react';
 import { Check, Bell, Calendar, MessageSquare } from 'lucide-react';
 import type { UserProfile, HealthGoals } from '../../../../types/onboarding';
-import { HEALTH_GOAL_OPTIONS } from '../../../../data/mockOnboardingData';
+import { HEALTH_GOAL_OPTIONS, DEFAULT_MALE_HEALTH_GOAL_OPTIONS } from '../../../../data/mockOnboardingData';
 
 interface GoalsTabProps {
   draft: UserProfile;
@@ -39,18 +39,9 @@ export const GoalsTab: React.FC<GoalsTabProps> = ({
     }
   };
 
-  // Filter out female-only goals if male (e.g. "Regulate Period / Ovulation")
-  const filteredGoalOptions = HEALTH_GOAL_OPTIONS.filter((g) => {
-    if (
-      isMale &&
-      (g.title.toLowerCase().includes('period') ||
-        g.title.toLowerCase().includes('ovulation') ||
-        g.id.includes('cycle'))
-    ) {
-      return false;
-    }
-    return true;
-  });
+  // Dedicated pathway-isolated goals list
+  const filteredGoalOptions = isMale ? DEFAULT_MALE_HEALTH_GOAL_OPTIONS : HEALTH_GOAL_OPTIONS;
+
 
   return (
     <div className="space-y-6">

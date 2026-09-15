@@ -39,8 +39,31 @@ const HEALTH_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/health/`;
 const STATUS_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/status/`;
 const CHAT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/chat/`;
 
-/** Timeout in milliseconds for backend requests */
-const REQUEST_TIMEOUT_MS = 15000;
+/** Timeout in milliseconds for backend requests (60s for deterministic model inference / vision) */
+const REQUEST_TIMEOUT_MS = 60000;
+
+// ---------------------------------------------------------------------------
+// LocalStorage Caching Helpers for Resilient Hydration
+// ---------------------------------------------------------------------------
+const LOCAL_STORAGE_ACTIVE_ASSESSMENT_PREFIX = 'biopulse_active_assessment_';
+
+export function getLocalActiveAssessment(module = 'female_pcos'): ProgressiveAssessment | null {
+  try {
+    const raw = localStorage.getItem(`${LOCAL_STORAGE_ACTIVE_ASSESSMENT_PREFIX}${module}`);
+    if (!raw) return null;
+    return JSON.parse(raw) as ProgressiveAssessment;
+  } catch {
+    return null;
+  }
+}
+
+export function saveLocalActiveAssessment(module: string, assessment: ProgressiveAssessment): void {
+  try {
+    localStorage.setItem(`${LOCAL_STORAGE_ACTIVE_ASSESSMENT_PREFIX}${module}`, JSON.stringify(assessment));
+  } catch {
+    // ignore storage errors
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Token helper
@@ -275,6 +298,7 @@ export async function fetchBackendAssessment(
  * Fetches the currently active progressive assessment for the authenticated patient.
  */
 export async function fetchActiveAssessment(_forceRefresh = false, module?: string): Promise<ProgressiveAssessment | null> {
+  const modKey = module || 'female_pcos';
   try {
     const token = await getAccessToken();
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -288,18 +312,21 @@ export async function fetchActiveAssessment(_forceRefresh = false, module?: stri
     const response = await fetchWithTimeout(url, {
       method: 'GET',
       headers,
-    });
+    }, 30000);
 
     if (!response.ok) {
       console.warn('[Intelligence API] Active assessment request failed with status:', response.status);
-      return null;
+      return getLocalActiveAssessment(modKey);
     }
 
-    const data = await response.json();
-    return data as ProgressiveAssessment;
+    const data = (await response.json()) as ProgressiveAssessment;
+    if (data && typeof data === 'object') {
+      saveLocalActiveAssessment(modKey, data);
+    }
+    return data;
   } catch (err) {
     console.warn('[Intelligence API] Active assessment error:', err);
-    return null;
+    return getLocalActiveAssessment(modKey);
   }
 }
 
@@ -352,7 +379,7 @@ export async function submitTier1Assessment(inputs: Record<string, any> = {}): P
       method: 'POST',
       headers,
       body: JSON.stringify(inputs),
-    });
+    }, REQUEST_TIMEOUT_MS);
 
     if (!response.ok) {
       console.error('[PCOS-ML] Tier 1 submission failed:', response.status);
@@ -360,7 +387,11 @@ export async function submitTier1Assessment(inputs: Record<string, any> = {}): P
     }
 
     clearAssessmentCache();
-    return (await response.json()) as ProgressiveAssessment;
+    const data = (await response.json()) as ProgressiveAssessment;
+    if (data) {
+      saveLocalActiveAssessment('female_pcos', data);
+    }
+    return data;
   } catch (err) {
     console.error('[PCOS-ML] Tier 1 error:', err);
     return null;
@@ -381,7 +412,7 @@ export async function submitTier2Assessment(inputs: Record<string, any>): Promis
       method: 'POST',
       headers,
       body: JSON.stringify(inputs),
-    });
+    }, 60000);
 
     if (!response.ok) {
       console.error('[PCOS-ML] Tier 2 submission failed:', response.status);
@@ -389,7 +420,11 @@ export async function submitTier2Assessment(inputs: Record<string, any>): Promis
     }
 
     clearAssessmentCache();
-    return (await response.json()) as ProgressiveAssessment;
+    const data = (await response.json()) as ProgressiveAssessment;
+    if (data) {
+      saveLocalActiveAssessment('female_pcos', data);
+    }
+    return data;
   } catch (err) {
     console.error('[PCOS-ML] Tier 2 error:', err);
     return null;
@@ -410,7 +445,7 @@ export async function submitMaleTier1Assessment(inputs: Record<string, any> = {}
       method: 'POST',
       headers,
       body: JSON.stringify(inputs),
-    });
+    }, REQUEST_TIMEOUT_MS);
 
     if (!response.ok) {
       console.error('[Male-ML] Tier 1 submission failed:', response.status);
@@ -418,7 +453,11 @@ export async function submitMaleTier1Assessment(inputs: Record<string, any> = {}
     }
 
     clearAssessmentCache();
-    return (await response.json()) as ProgressiveAssessment;
+    const data = (await response.json()) as ProgressiveAssessment;
+    if (data) {
+      saveLocalActiveAssessment('male_hypogonadism', data);
+    }
+    return data;
   } catch (err) {
     console.error('[Male-ML] Tier 1 error:', err);
     return null;
@@ -439,7 +478,7 @@ export async function submitMaleTier2Assessment(inputs: Record<string, any>): Pr
       method: 'POST',
       headers,
       body: JSON.stringify(inputs),
-    });
+    }, 60000);
 
     if (!response.ok) {
       console.error('[Male-ML] Tier 2 submission failed:', response.status);
@@ -447,7 +486,11 @@ export async function submitMaleTier2Assessment(inputs: Record<string, any>): Pr
     }
 
     clearAssessmentCache();
-    return (await response.json()) as ProgressiveAssessment;
+    const data = (await response.json()) as ProgressiveAssessment;
+    if (data) {
+      saveLocalActiveAssessment('male_hypogonadism', data);
+    }
+    return data;
   } catch (err) {
     console.error('[Male-ML] Tier 2 error:', err);
     return null;
@@ -478,7 +521,7 @@ export async function uploadUltrasoundAssessment(
         headers,
         body: formData,
       },
-      30000 // 30s timeout for deep vision model inference
+      60000 // 60s timeout for deep vision model inference
     );
 
     if (!response.ok) {
@@ -487,7 +530,11 @@ export async function uploadUltrasoundAssessment(
     }
 
     clearAssessmentCache();
-    return (await response.json()) as ProgressiveAssessment;
+    const data = (await response.json()) as ProgressiveAssessment;
+    if (data) {
+      saveLocalActiveAssessment('female_pcos', data);
+    }
+    return data;
   } catch (err) {
     console.error('[PCOS-ML] Ultrasound error:', err);
     return null;

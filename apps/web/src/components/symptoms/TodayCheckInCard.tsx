@@ -1,22 +1,27 @@
 import React from 'react';
 import { Sparkles, Plus, Activity, Moon, Droplets, Flame, Smile, HelpCircle } from 'lucide-react';
-import { SYMPTOM_CATALOG, type SymptomDefinition } from '../../types/symptom';
+import { getSymptomCatalog, type SymptomDefinition } from '../../types/symptom';
 
 interface TodayCheckInCardProps {
   onSelectSymptom: (symptom: SymptomDefinition) => void;
   onOpenGeneralModal: () => void;
   loggedTodayCount: number;
+  isMale?: boolean;
 }
 
 export const TodayCheckInCard: React.FC<TodayCheckInCardProps> = ({
   onSelectSymptom,
   onOpenGeneralModal,
   loggedTodayCount,
+  isMale,
 }) => {
-  // Select 6 common quick-check-in symptoms
-  const quickSymptoms = SYMPTOM_CATALOG.filter((s) =>
-    ['cramps', 'fatigue', 'acne', 'bloating', 'mood_changes', 'headache'].includes(s.id)
-  );
+  // Select 6 common quick-check-in symptoms (strictly pathway-isolated)
+  const catalog = getSymptomCatalog(Boolean(isMale));
+  const targetIds = isMale
+    ? ['fatigue', 'low_energy', 'reduced_strength', 'reduced_libido', 'mood_changes', 'headache']
+    : ['cramps', 'fatigue', 'acne', 'bloating', 'mood_changes', 'headache'];
+
+  const quickSymptoms = catalog.filter((s) => targetIds.includes(s.id));
 
   const getQuickIcon = (id: string) => {
     switch (id) {
@@ -24,6 +29,9 @@ export const TodayCheckInCard: React.FC<TodayCheckInCardProps> = ({
         return <Sparkles className="w-3.5 h-3.5 text-[#0288D1]" />;
       case 'fatigue':
         return <Moon className="w-3.5 h-3.5 text-[#0288D1]" />;
+      case 'low_energy':
+      case 'reduced_strength':
+      case 'reduced_libido':
       case 'acne':
         return <Activity className="w-3.5 h-3.5 text-[#0288D1]" />;
       case 'bloating':
@@ -35,6 +43,7 @@ export const TodayCheckInCard: React.FC<TodayCheckInCardProps> = ({
         return <Flame className="w-3.5 h-3.5 text-[#0288D1]" />;
     }
   };
+
 
   return (
     <div className="p-6 sm:p-8 rounded-[28px] bg-white border border-[#E2E8F0] shadow-xs text-left select-none relative overflow-hidden space-y-6">

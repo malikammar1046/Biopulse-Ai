@@ -134,8 +134,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ pathway: pathwayProp }) =>
 
   // Profile completion status
   const profileCompletion = useMemo(
-    () => calculateProfileCompletion(userProfile),
-    [userProfile]
+    () => calculateProfileCompletion(userProfile, isMale),
+    [userProfile, isMale]
   );
 
   // Unverified reports count
@@ -234,6 +234,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ pathway: pathwayProp }) =>
               isMale && hasAssessment ? 'Add Hormone Labs' : undefined
             }
             loading={screeningLoading}
+            gradcamB64={activeAssessment?.gradcam_b64}
+            pcomStatus={activeAssessment?.pcom_status}
           />
         </div>
 

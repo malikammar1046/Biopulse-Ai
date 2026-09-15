@@ -14,6 +14,7 @@ from apps.health.views_nutrition import (
     NutritionPlanDetailView,
     NutritionPlanHistoryView,
     NutritionPlanRegenerateView,
+    NutritionPreferencesView,
     NutritionReadinessView,
     NutritionTargetsView,
     WeeklyPlanGenerateView,
@@ -25,6 +26,7 @@ urlpatterns = [
     path("profile/validate/", ProfileValidationView.as_view(), name="health-profile-validate"),
     path("onboarding/validate/", OnboardingValidationView.as_view(), name="health-onboarding-validate"),
     # BioPulse Nutrition & Meal Planning Endpoints
+    path("nutrition/preferences/", NutritionPreferencesView.as_view(), name="nutrition-preferences"),
     path("nutrition/readiness/", NutritionReadinessView.as_view(), name="nutrition-readiness"),
     path("nutrition/targets/", NutritionTargetsView.as_view(), name="nutrition-targets"),
     path("nutrition/plan/weekly/", WeeklyPlanGenerateView.as_view(), name="nutrition-plan-weekly"),

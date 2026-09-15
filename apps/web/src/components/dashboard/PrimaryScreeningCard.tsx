@@ -17,6 +17,8 @@ interface PrimaryScreeningCardProps {
   onSecondaryAction?: () => void;
   secondaryActionLabel?: string;
   loading?: boolean;
+  gradcamB64?: string | null;
+  pcomStatus?: string | null;
 }
 
 export const PrimaryScreeningCard: React.FC<PrimaryScreeningCardProps> = ({
@@ -32,6 +34,8 @@ export const PrimaryScreeningCard: React.FC<PrimaryScreeningCardProps> = ({
   onSecondaryAction,
   secondaryActionLabel,
   loading = false,
+  gradcamB64,
+  pcomStatus,
 }) => {
   const isMale = pathway === 'male';
   const title = isMale ? 'Hypogonadism Screening' : 'PCOS Screening';
@@ -236,6 +240,36 @@ export const PrimaryScreeningCard: React.FC<PrimaryScreeningCardProps> = ({
 
         {/* Dynamic Tier Progress Bar */}
         {renderTierIndicator()}
+
+        {/* Ultrasound Grad-CAM Preview */}
+        {gradcamB64 && (
+          <div className="pt-3 border-t border-[#E2E8F0]">
+            <div className="p-3 rounded-2xl bg-sky-50/70 border border-sky-100 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <img
+                  src={gradcamB64.startsWith('data:') ? gradcamB64 : `data:image/png;base64,${gradcamB64}`}
+                  alt="Ultrasound Grad-CAM Heatmap"
+                  className="w-12 h-12 rounded-xl object-cover border border-sky-200 shrink-0"
+                />
+                <div className="min-w-0">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#0288D1] block">
+                    Ultrasound AI Heatmap
+                  </span>
+                  <p className="text-xs font-semibold text-[#0F172A] truncate">
+                    {pcomStatus || 'Ovarian Morphology Processed'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={onViewAssessment}
+                className="text-xs font-bold text-[#0288D1] hover:underline shrink-0"
+              >
+                View Analysis →
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Action Buttons & Clinical Non-Diagnostic Disclaimer */}

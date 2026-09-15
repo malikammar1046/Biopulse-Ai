@@ -129,3 +129,61 @@ export const GENERAL_HEALTH_FOCUS_OPTIONS = [
   'Longitudinal Preventive Wellness',
 ];
 
+export const DEFAULT_MALE_CONDITION_OPTIONS = [
+  'High Blood Pressure (Hypertension)',
+  'Type 2 Diabetes / Prediabetes',
+  'Difficulty responding to insulin (Insulin Resistance)',
+  'Thyroid Conditions (Hypothyroidism)',
+  'Erectile Dysfunction',
+  'Cardiovascular Disease',
+  'Low Iron / Anemia',
+  'Asthma',
+  'None',
+];
+
+export const DEFAULT_MALE_HEALTH_GOAL_OPTIONS = [
+  {
+    id: 'support_hormones',
+    title: 'Support Testosterone & Hormone Health',
+    desc: 'Maintain healthy androgen balance, vitality, and metabolic stability.',
+    icon: 'Zap',
+  },
+  {
+    id: 'boost_energy',
+    title: 'Boost Energy & Stamina',
+    desc: 'Counter afternoon slumps, fatigue, and build lasting physical endurance.',
+    icon: 'Activity',
+  },
+  {
+    id: 'improve_nutrition',
+    title: 'Enjoy Metabolic-Friendly Meals',
+    desc: 'Get practical Pakistani food ideas to keep blood sugar, testosterone, and energy steady.',
+    icon: 'Utensils',
+  },
+  {
+    id: 'build_fitness',
+    title: 'Build Strength & Movement Habits',
+    desc: 'Resistance training and low-stress cardio routines tailored to stamina.',
+    icon: 'Dumbbell',
+  },
+  {
+    id: 'organize_reports',
+    title: 'Organize Hormone & Lab Reports',
+    desc: 'Keep testosterone tests, metabolic panels, and clinical notes in one private place.',
+    icon: 'FileText',
+  },
+  {
+    id: 'doctor_prep',
+    title: 'Prepare for Doctor Visits',
+    desc: 'Generate a clean 1-page summary to share with your endocrinologist or physician.',
+    icon: 'Stethoscope',
+  },
+  {
+    id: 'digital_twin_ai',
+    title: 'Get AI Health Insights',
+    desc: 'Ask questions in plain English and discover patterns from your logs anytime.',
+    icon: 'Bot',
+  },
+];
+
+

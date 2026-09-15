@@ -4,14 +4,24 @@ import type { UserProfile, MedicationItem } from '../../../../types/onboarding';
 import {
   DEFAULT_ALLERGY_OPTIONS,
   DEFAULT_CONDITION_OPTIONS,
+  DEFAULT_MALE_CONDITION_OPTIONS,
 } from '../../../../data/mockOnboardingData';
 
 const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Not Sure'];
 
-const COMMON_FAMILY_CONDITIONS = [
+const FEMALE_FAMILY_CONDITIONS = [
   'Type 2 Diabetes',
   'Hypertension',
   'Polycystic Ovary Syndrome (PCOS)',
+  'Thyroid Disorder',
+  'Cardiovascular Disease',
+  'Early Heart Attack',
+];
+
+const MALE_FAMILY_CONDITIONS = [
+  'Type 2 Diabetes',
+  'Hypertension',
+  'Low Testosterone / Hypogonadism',
   'Thyroid Disorder',
   'Cardiovascular Disease',
   'Early Heart Attack',
@@ -22,6 +32,7 @@ interface HealthProfileTabProps {
   setDraft: React.Dispatch<React.SetStateAction<UserProfile>>;
   isMale: boolean;
 }
+
 
 export const HealthProfileTab: React.FC<HealthProfileTabProps> = ({
   draft,
@@ -214,10 +225,11 @@ export const HealthProfileTab: React.FC<HealthProfileTabProps> = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 mt-3">
-            {DEFAULT_CONDITION_OPTIONS.map((c) => {
+            {(isMale ? DEFAULT_MALE_CONDITION_OPTIONS : DEFAULT_CONDITION_OPTIONS).map((c) => {
               const isSelected = conditionsList.includes(c);
               const isHypogonadismFeature =
                 isMale && (c.toLowerCase().includes('hypertension') || c.toLowerCase().includes('diabetes'));
+
 
               return (
                 <button
@@ -442,8 +454,9 @@ export const HealthProfileTab: React.FC<HealthProfileTabProps> = ({
         </p>
 
         <div className="flex flex-wrap gap-2">
-          {COMMON_FAMILY_CONDITIONS.map((cond) => {
+          {(isMale ? MALE_FAMILY_CONDITIONS : FEMALE_FAMILY_CONDITIONS).map((cond) => {
             const isSelected = familyList.includes(cond);
+
             return (
               <button
                 key={cond}

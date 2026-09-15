@@ -341,17 +341,28 @@ export const MaleClinicalLabsModal: React.FC<MaleClinicalLabsModalProps> = ({
     try {
       const payload: Record<string, any> = {};
       const removeFields: string[] = [];
+      const existing =
+        activeAssessment?.tier_2_inputs ||
+        activeAssessment?.input_features ||
+        {};
 
       for (const fc of MALE_FIELD_CONFIGS) {
         const val = formValues[fc.key];
         if (val !== undefined && val !== null && val.trim() !== '') {
           payload[fc.key] = parseFloat(val);
-        } else {
+        } else if (
+          existing[fc.key] !== undefined &&
+          existing[fc.key] !== null &&
+          String(existing[fc.key]).trim() !== ''
+        ) {
+          // Only mark as removed if it previously existed and was cleared
           removeFields.push(fc.key);
         }
       }
 
-      payload['remove_fields'] = removeFields;
+      if (removeFields.length > 0) {
+        payload['remove_fields'] = removeFields;
+      }
 
       const res = await submitMaleTier2(payload);
       if (!res) {

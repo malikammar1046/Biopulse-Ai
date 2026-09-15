@@ -414,16 +414,61 @@ class DietService {
       };
     }
 
-    // Check allergy safety for each meal
+    // LEGACY STATIC FALLBACK MEAL SYSTEM
+    // The backend weekly planner is the authoritative source of truth.
+    // In this fallback, unsafe meals are NEVER rendered with an informational warning badge.
+    // Conflicted meals are strictly excluded. If a verified safe replacement exists in
+    // our static templates, it is substituted. Otherwise, no recommendation is returned for that slot.
+    const safePlanned: Partial<Record<MealType, PlannedMeal>> = {};
+
     (Object.keys(planned) as MealType[]).forEach((mType) => {
       const meal = planned[mType];
-      const conflicts = meal.allergens.filter((alg) =>
-        userAllergies.some((userAlg) => userAlg.includes(alg))
-      );
+      if (!meal) return;
 
-      if (conflicts.length > 0) {
-        meal.isAllergySafe = false;
-        meal.allergyWarning = `Contains ${conflicts.join(', ')} (conflicts with your saved allergy profile). Consider alternatives below.`;
+      const hasConflict = (candidate: PlannedMeal) =>
+        candidate.allergens.some((alg) =>
+          userAllergies.some((userAlg) => userAlg.includes(alg) || alg.includes(userAlg))
+        );
+
+      if (!hasConflict(meal)) {
+        meal.isAllergySafe = true;
+        delete meal.allergyWarning;
+        safePlanned[mType] = meal;
+      } else {
+        // Attempt to find a safe fallback replacement from existing templates
+        let replacement: PlannedMeal | null = null;
+
+        if (mType === 'breakfast' && meal.id !== 'plan_veg_besan_chilla') {
+          const altBreakfast: PlannedMeal = {
+            id: 'plan_veg_besan_chilla',
+            mealType: 'breakfast',
+            title: 'Besan & Saunf Chilla with Mint Dahi Raita',
+            urduTitle: 'بیسن کا چیلا اور پودینہ رائتہ',
+            items: ['2 Savory Chickpea Pancakes with onions and spinach', '1 Bowl Mint Dahi', '1 Cup Cardamom Green Tea'],
+            approxServing: '1 plate (approx 320g)',
+            calories: 340,
+            proteinG: 15,
+            carbsG: 38,
+            fatG: 10,
+            fiberG: 6.5,
+            whyItWorks: 'Plant-powered chickpea protein with gut-nourishing probiotic yogurt.',
+            prepTimeMinutes: 15,
+            budgetCategory: 'low',
+            ingredients: ['1 cup besan (gram flour)', '1/2 cup chopped spinach', '1/4 cup dahi', 'Cumin & mint'],
+            simpleSteps: ['Mix besan with water and spices to a pancake batter.', 'Pour onto hot tawa and cook 3 mins each side.', 'Serve warm with fresh dahi raita.'],
+            allergens: ['dairy'],
+            isAllergySafe: true,
+          };
+          if (!hasConflict(altBreakfast)) {
+            replacement = altBreakfast;
+          }
+        }
+
+        if (replacement) {
+          replacement.isAllergySafe = true;
+          safePlanned[mType] = replacement;
+        }
+        // If no safe replacement exists, slot is omitted (no recommendation for this slot).
       }
     });
 
@@ -438,7 +483,7 @@ class DietService {
       date: today,
       cycleStageName: currentPhaseName || 'Balanced Cycle Rhythm',
       symptomNotice,
-      meals: planned,
+      meals: safePlanned as Record<MealType, PlannedMeal>,
     };
   }
 

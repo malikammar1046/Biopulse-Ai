@@ -11,6 +11,7 @@ import { PublicOnlyRoute } from './components/auth/PublicOnlyRoute';
 import { PathwayRouteGuard } from './components/auth/PathwayRouteGuard';
 import { useUserHealth } from './context/UserHealthContext';
 import { getPathwayDashboardRoute } from './constants/routes';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 // Dynamic redirection to user's authorized pathway dashboard
 const DashboardRedirect: React.FC = () => {
@@ -89,8 +90,9 @@ const ProgressPage = lazy(() => import('./pages/app/ProgressPage').then((m) => (
 export function App() {
   return (
     <AuthProvider>
-      <UserHealthProvider>
-        <BrowserRouter>
+      <ErrorBoundary>
+        <UserHealthProvider>
+          <BrowserRouter>
           <Suspense fallback={<PageLoadingFallback />}>
             <Routes>
               {/* Public Marketing Website */}
@@ -206,8 +208,9 @@ export function App() {
               <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
             </Routes>
           </Suspense>
-        </BrowserRouter>
-      </UserHealthProvider>
+          </BrowserRouter>
+        </UserHealthProvider>
+      </ErrorBoundary>
     </AuthProvider>
   );
 }

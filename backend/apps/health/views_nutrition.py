@@ -30,6 +30,7 @@ from rest_framework.views import APIView
 
 from apps.authentication.supabase_auth import SupabaseAuthentication
 from apps.health.serializers_nutrition import (
+    NutritionPreferencesSerializer,
     NutritionReadinessSerializer,
     NutritionTargetsSerializer,
     PlanHistoryItemSerializer,
@@ -39,6 +40,13 @@ from apps.health.services.meal_plan_service import (
     NutritionReadinessException,
     meal_plan_service,
 )
+from apps.health.nutrition_vocabularies import (
+    normalize_food_allergens,
+    normalize_food_intolerances,
+    normalize_dietary_pattern,
+    normalize_ingredient_name,
+)
+from apps.health.services.meal_profile_builder import MealProfileBuilder
 from apps.health.services.supabase_health_service import health_service
 
 logger = logging.getLogger(__name__)
@@ -295,3 +303,104 @@ class NutritionPlanRegenerateView(APIView):
                 {"error": "Failed to regenerate weekly meal plan.", "details": str(exc)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class NutritionPreferencesView(APIView):
+    """
+    GET  /api/v1/health/nutrition/preferences/
+    PUT  /api/v1/health/nutrition/preferences/
+
+    Reads and updates authoritative nutrition preferences:
+    - food_allergies (canonical IDs)
+    - food_intolerances (canonical IDs)
+    - dietary_pattern (omnivore, halal_omnivore, vegetarian, vegan, pescatarian)
+    - favorite_ingredients
+    - disliked_ingredients
+    - preferred_cuisines
+    - budget_tier (low, medium, flexible)
+    - cooking_time_preference (quick, moderate, flexible)
+    - meals_per_day (3-5)
+    """
+    authentication_classes = [SupabaseAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user_id = str(request.user.id)
+        raw_meta, profile_data, _ = _extract_user_context(request)
+
+        # 1. Food Allergies
+        food_allergies_raw = profile_data.get("food_allergies")
+        allergies_raw = profile_data.get("allergies") or raw_meta.get("allergies")
+        if food_allergies_raw is not None and isinstance(food_allergies_raw, list):
+            norm_allergies, _, _ = normalize_food_allergens(food_allergies_raw)
+        elif allergies_raw is not None and isinstance(allergies_raw, list):
+            norm_allergies, _, _ = normalize_food_allergens(allergies_raw)
+        else:
+            norm_allergies = []
+
+        # 2. Food Intolerances
+        intolerances_raw = profile_data.get("food_intolerances", [])
+        if isinstance(intolerances_raw, list):
+            norm_intolerances, _ = normalize_food_intolerances(intolerances_raw)
+        else:
+            norm_intolerances = []
+
+        # 3. Dietary Pattern
+        diet_raw = profile_data.get("dietary_preference") or raw_meta.get("dietary_preference") or "halal_omnivore"
+        dietary_pattern = normalize_dietary_pattern(diet_raw)
+
+        # 4. Ingredients & Cuisines
+        fav_raw = profile_data.get("favorite_ingredients") or []
+        dis_raw = profile_data.get("disliked_ingredients") or []
+        cuisines_raw = profile_data.get("preferred_cuisines") or ["pakistani"]
+
+        response_data = {
+            "food_allergies": norm_allergies,
+            "food_intolerances": norm_intolerances,
+            "dietary_pattern": dietary_pattern.value,
+            "favorite_ingredients": [normalize_ingredient_name(x) for x in fav_raw if normalize_ingredient_name(x)],
+            "disliked_ingredients": [normalize_ingredient_name(x) for x in dis_raw if normalize_ingredient_name(x)],
+            "preferred_cuisines": cuisines_raw if isinstance(cuisines_raw, list) else ["pakistani"],
+            "budget_tier": profile_data.get("budget_tier", "medium") or "medium",
+            "cooking_time_preference": profile_data.get("cooking_time_preference", "moderate") or "moderate",
+            "meals_per_day": int(profile_data.get("meals_per_day", 4) or 4),
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    def put(self, request):
+        user_id = str(request.user.id)
+        serializer = NutritionPreferencesSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        validated = serializer.validated_data
+        raw_token = getattr(request.user, "raw_token", None) or getattr(request, "auth", None)
+        client = None
+        try:
+            client = health_service._client_or_raise(auth_token=raw_token)
+        except Exception:
+            pass
+
+        update_fields = {
+            "food_allergies": validated.get("food_allergies", []),
+            "food_intolerances": validated.get("food_intolerances", []),
+            "dietary_preference": validated.get("dietary_pattern", "halal_omnivore"),
+            "favorite_ingredients": validated.get("favorite_ingredients", []),
+            "disliked_ingredients": validated.get("disliked_ingredients", []),
+            "preferred_cuisines": validated.get("preferred_cuisines", ["pakistani"]),
+            "budget_tier": validated.get("budget_tier", "medium"),
+            "cooking_time_preference": validated.get("cooking_time_preference", "moderate"),
+            "meals_per_day": validated.get("meals_per_day", 4),
+        }
+
+        if client is not None:
+            try:
+                client.table("profiles").update(update_fields).eq("id", user_id).execute()
+            except Exception as exc:
+                logger.error("Failed to persist nutrition preferences for user %s: %s", user_id[:8] + "***", exc)
+                return Response(
+                    {"error": "Failed to persist nutrition preferences.", "details": str(exc)},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
+        return Response(validated, status=status.HTTP_200_OK)

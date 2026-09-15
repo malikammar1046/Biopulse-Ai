@@ -162,8 +162,11 @@ export function calculateCycleMetrics(
  * Reusable weighted profile completion calculator.
  * Strictly adheres to non-diagnostic terminology and required/optional demarcations.
  */
-export function calculateProfileCompletion(profile: UserProfile): ProfileCompletionResult {
+export function calculateProfileCompletion(profile: UserProfile, isMaleParam?: boolean): ProfileCompletionResult {
   const missingFields: MissingFieldItem[] = [];
+  const isMale = isMaleParam !== undefined 
+    ? isMaleParam 
+    : (profile.pathway === 'male' || profile.gender === 'male');
 
   let personalScore = 0;
   const personalTotal = 20;
@@ -196,19 +199,37 @@ export function calculateProfileCompletion(profile: UserProfile): ProfileComplet
     emergencyScore += 3;
   }
 
-  let womensHealthScore = 0;
-  const womensHealthTotal = 25;
-  if (profile.womensHealth?.cycleLength) womensHealthScore += 8;
-  else missingFields.push({ id: 'cycleLength', label: 'Cycle Length', section: "Women's Health", stepNumber: 4, actionText: 'Set average cycle length', isRequired: true });
+  // Pathway-Specific Clinical Section (25 points)
+  let specificHealthScore = 0;
+  const specificHealthTotal = 25;
 
-  if (profile.womensHealth?.lastPeriodDate?.trim()) womensHealthScore += 8;
-  else missingFields.push({ id: 'lastPeriodDate', label: 'Last Period Date', section: "Women's Health", stepNumber: 4, actionText: 'Record last period start date', isRequired: true });
+  if (isMale) {
+    // Male Hypogonadism / Vitality Profile
+    if (profile.waistCm && profile.waistCm > 0) specificHealthScore += 6;
+    else missingFields.push({ id: 'waistCm', label: 'Waist Circumference', section: "Men's Health", stepNumber: 4, actionText: 'Record waist circumference', isRequired: true });
 
-  if (profile.womensHealth?.periodRegularity) womensHealthScore += 5;
-  else missingFields.push({ id: 'periodRegularity', label: 'Cycle Regularity', section: "Women's Health", stepNumber: 4, actionText: 'Specify period regularity', isRequired: true });
+    if (profile.mensHealth?.energyLevel) specificHealthScore += 7;
+    else missingFields.push({ id: 'energyLevel', label: 'Energy Level', section: "Men's Health", stepNumber: 4, actionText: 'Record daily energy level', isRequired: true });
 
-  if (profile.womensHealth?.commonSymptoms?.length > 0) womensHealthScore += 4;
-  else missingFields.push({ id: 'commonSymptoms', label: 'Common Symptoms', section: "Women's Health", stepNumber: 4, actionText: 'Record common symptoms', isRequired: false });
+    if (profile.mensHealth?.sexDrive) specificHealthScore += 6;
+    else missingFields.push({ id: 'sexDrive', label: 'Libido / Sex Drive', section: "Men's Health", stepNumber: 4, actionText: 'Record sexual desire baseline', isRequired: true });
+
+    if (profile.mensHealth?.sleepQuality) specificHealthScore += 6;
+    else missingFields.push({ id: 'sleepQuality', label: 'Sleep Quality', section: "Men's Health", stepNumber: 4, actionText: 'Record sleep pattern and quality', isRequired: false });
+  } else {
+    // Female PCOS / Gynecological Profile
+    if (profile.womensHealth?.cycleLength) specificHealthScore += 8;
+    else missingFields.push({ id: 'cycleLength', label: 'Cycle Length', section: "Women's Health", stepNumber: 4, actionText: 'Set average cycle length', isRequired: true });
+
+    if (profile.womensHealth?.lastPeriodDate?.trim()) specificHealthScore += 8;
+    else missingFields.push({ id: 'lastPeriodDate', label: 'Last Period Date', section: "Women's Health", stepNumber: 4, actionText: 'Record last period start date', isRequired: true });
+
+    if (profile.womensHealth?.periodRegularity) specificHealthScore += 5;
+    else missingFields.push({ id: 'periodRegularity', label: 'Cycle Regularity', section: "Women's Health", stepNumber: 4, actionText: 'Specify period regularity', isRequired: true });
+
+    if (profile.womensHealth?.commonSymptoms && profile.womensHealth.commonSymptoms.length > 0) specificHealthScore += 4;
+    else missingFields.push({ id: 'commonSymptoms', label: 'Common Symptoms', section: "Women's Health", stepNumber: 4, actionText: 'Record common symptoms', isRequired: false });
+  }
 
   let medicalScore = 0;
   const medicalTotal = 15;
@@ -239,23 +260,23 @@ export function calculateProfileCompletion(profile: UserProfile): ProfileComplet
   if (profile.lifestyle?.dietaryPreference) lifestyleScore += 4;
   else missingFields.push({ id: 'dietaryPreference', label: 'Dietary Preference', section: 'Lifestyle', stepNumber: 5, actionText: 'Choose dietary preference', isRequired: true });
 
-  if (profile.lifestyle?.dailyWaterGlasses > 0) lifestyleScore += 4;
+  if (profile.lifestyle?.dailyWaterGlasses && profile.lifestyle.dailyWaterGlasses > 0) lifestyleScore += 4;
   else missingFields.push({ id: 'dailyWaterGlasses', label: 'Daily Hydration Target', section: 'Lifestyle', stepNumber: 5, actionText: 'Set hydration target', isRequired: true });
 
   if (profile.lifestyle?.activityLevel) lifestyleScore += 4;
   else missingFields.push({ id: 'activityLevel', label: 'Activity Level', section: 'Lifestyle', stepNumber: 5, actionText: 'Set physical activity baseline', isRequired: true });
 
-  if (profile.lifestyle?.sleepHours > 0) lifestyleScore += 3;
+  if (profile.lifestyle?.sleepHours && profile.lifestyle.sleepHours > 0) lifestyleScore += 3;
 
   let goalsScore = 0;
   const goalsTotal = 10;
-  if (profile.goals?.selectedGoals?.length > 0) goalsScore += 7;
+  if (profile.goals?.selectedGoals && profile.goals.selectedGoals.length > 0) goalsScore += 7;
   else missingFields.push({ id: 'selectedGoals', label: 'Health Goals', section: 'Goals', stepNumber: 6, actionText: 'Select health priorities', isRequired: true });
 
   if (profile.goals?.supportPreference) goalsScore += 3;
 
-  const totalScore = personalScore + emergencyScore + womensHealthScore + medicalScore + lifestyleScore + goalsScore;
-  const maxTotalScore = personalTotal + emergencyTotal + womensHealthTotal + medicalTotal + lifestyleTotal + goalsTotal;
+  const totalScore = personalScore + emergencyScore + specificHealthScore + medicalScore + lifestyleScore + goalsScore;
+  const maxTotalScore = personalTotal + emergencyTotal + specificHealthTotal + medicalTotal + lifestyleTotal + goalsTotal;
   const percentage = Math.min(100, Math.max(0, Math.round((totalScore / maxTotalScore) * 100)));
 
   // Pick top priority missing action (required first, then optional)
@@ -272,10 +293,12 @@ export function calculateProfileCompletion(profile: UserProfile): ProfileComplet
     sectionScores: {
       personal: { earned: personalScore, total: personalTotal, percentage: Math.round((personalScore / personalTotal) * 100) },
       emergency: { earned: emergencyScore, total: emergencyTotal, percentage: Math.round((emergencyScore / emergencyTotal) * 100) },
-      womensHealth: { earned: womensHealthScore, total: womensHealthTotal, percentage: Math.round((womensHealthScore / womensHealthTotal) * 100) },
+      womensHealth: { earned: isMale ? 0 : specificHealthScore, total: specificHealthTotal, percentage: isMale ? 100 : Math.round((specificHealthScore / specificHealthTotal) * 100) },
+      mensHealth: { earned: isMale ? specificHealthScore : 0, total: specificHealthTotal, percentage: isMale ? Math.round((specificHealthScore / specificHealthTotal) * 100) : 100 },
       medical: { earned: medicalScore, total: medicalTotal, percentage: Math.round((medicalScore / medicalTotal) * 100) },
       lifestyle: { earned: lifestyleScore, total: lifestyleTotal, percentage: Math.round((lifestyleScore / lifestyleTotal) * 100) },
       goals: { earned: goalsScore, total: goalsTotal, percentage: Math.round((goalsScore / goalsTotal) * 100) },
     },
   };
 }
+

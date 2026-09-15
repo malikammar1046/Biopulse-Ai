@@ -71,6 +71,11 @@ export const UltrasoundUploadModal: React.FC<UltrasoundUploadModalProps> = ({
       if (!result) {
         throw new Error('No assessment response received from server.');
       }
+      if (previewUrl) {
+        try {
+          localStorage.setItem('biopulse_original_ultrasound_preview', previewUrl);
+        } catch {}
+      }
       if (result.status_code === 'tier_1_3_model_unavailable') {
         setSuccessNotice(
           'Ultrasound morphology evaluated. To calculate the combined multimodal AI score, please complete your Tier 2 Clinical Laboratory data.'
