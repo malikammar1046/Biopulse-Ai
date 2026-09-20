@@ -80,6 +80,7 @@ import type { IntelligenceAssessment, ProgressiveAssessment } from '../types/int
 import {
   fetchBackendAssessment,
   clearAssessmentCache,
+  clearAllLocalAssessments,
   fetchActiveAssessment,
   fetchAssessmentHistory,
   submitTier1Assessment,
@@ -87,11 +88,22 @@ import {
   submitMaleTier1Assessment,
   submitMaleTier2Assessment,
   uploadUltrasoundAssessment,
+  clearTier2Assessment,
+  fetchPatientClinicalState,
 } from '../services/intelligenceService';
+
 import { useAuth } from './AuthContext';
 import type { AdaptiveHealthProfile, ADAMQuestionnaireState } from '../types/adaptiveScreening';
 import { adaptiveProfileService } from '../services/adaptiveProfileService';
 import { resolvePathway } from '../types/onboarding';
+import {
+  applyMutationResult,
+  applyFetchActiveResult,
+  applyExplicitReset,
+  logAssessmentFlow,
+  deduplicateHistory,
+  type AssessmentSyncState,
+} from '../utils/assessmentStateSync';
 
 interface UserHealthContextType {
   userProfile: UserProfile;
@@ -181,11 +193,13 @@ interface UserHealthContextType {
   assessmentNotification: { message: string; type: 'success' | 'error' } | null;
   triggerAssessmentNotification: (message: string, type?: 'success' | 'error') => void;
   dismissAssessmentNotification: () => void;
-  refreshActiveAssessment: () => Promise<void>;
+  refreshActiveAssessment: (options?: { isExplicitReset?: boolean; force?: boolean }) => Promise<void>;
   submitTier1: (inputs?: Record<string, any>) => Promise<ProgressiveAssessment | null>;
   submitTier2: (inputs: Record<string, any>) => Promise<ProgressiveAssessment | null>;
   submitMaleTier1: (inputs?: Record<string, any>) => Promise<ProgressiveAssessment | null>;
   submitMaleTier2: (inputs: Record<string, any>) => Promise<ProgressiveAssessment | null>;
+  clearTier2: (module?: string) => Promise<ProgressiveAssessment | null>;
+  fetchClinicalState: (module?: string) => Promise<{ user_id: string; module: string; tier_1_inputs: Record<string, any>; tier_2_inputs: Record<string, any>; ultrasound_inputs: Record<string, any> } | null>;
   submitUltrasound: (imageFile: File, reportId?: string) => Promise<ProgressiveAssessment | null>;
   mlAssessment: IntelligenceAssessment | null;
   mlAssessmentLoading: boolean;
@@ -220,12 +234,16 @@ const UserHealthContext = createContext<UserHealthContextType | undefined>(undef
 
 export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const {
+    user: authUser,
+    loading: authLoading,
     userProfile,
     saveOnboardingProfile,
     updateUserProfile: authUpdateProfile,
     resetToDefaultProfile,
     logout,
   } = useAuth();
+
+  const authoritativeUserId = authUser?.id || userProfile?.id;
 
   // Cycle Records State
   const [cycleRecords, setCycleRecords] = useState<CycleRecord[]>([]);
@@ -1724,32 +1742,122 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [mlAssessmentLoading, setMlAssessmentLoading] = useState<boolean>(false);
   const [mlAssessmentError, setMlAssessmentError] = useState<boolean>(false);
 
-  // PCOS-ML Progressive Assessment State
+  // PCOS-ML Progressive Assessment State & Sequence Refs
   const [activeAssessment, setActiveAssessment] = useState<ProgressiveAssessment | null>(null);
   const [assessmentHistory, setAssessmentHistory] = useState<ProgressiveAssessment[]>([]);
-  const [assessmentLoading, setAssessmentLoading] = useState<boolean>(false);
+  const [assessmentLoading, setAssessmentLoading] = useState<boolean>(true);
+  const latestSequenceIdRef = React.useRef<number>(0);
+  const activeProgressionIdRef = React.useRef<string | null>(null);
 
-  const refreshActiveAssessment = useCallback(async () => {
-    if (!userProfile?.id) return;
-    setAssessmentLoading(true);
-    const isMale = resolvePathway(userProfile?.gender, userProfile?.pathway) === 'male';
-    const targetModule = isMale ? 'male_hypogonadism' : 'female_pcos';
-    try {
-      const [active, history] = await Promise.all([
-        fetchActiveAssessment(true, targetModule),
-        fetchAssessmentHistory(targetModule),
-      ]);
-      if (active) {
-        setActiveAssessment(active);
-        setMlAssessment(active as unknown as IntelligenceAssessment);
+  const refreshActiveAssessment = useCallback(
+    async (options?: { isExplicitReset?: boolean; force?: boolean }) => {
+      if (authLoading) {
+        setAssessmentLoading(true);
+        return;
       }
-      setAssessmentHistory(history || []);
-    } catch (err) {
-      console.warn('[Assessment Context] Error fetching progressive assessment:', err);
-    } finally {
-      setAssessmentLoading(false);
+      if (!authoritativeUserId) {
+        setActiveAssessment(null);
+        setMlAssessment(null);
+        setAssessmentHistory([]);
+        setAssessmentLoading(false);
+        return;
+      }
+
+      const seqId = ++latestSequenceIdRef.current;
+      setAssessmentLoading(true);
+      const isMale = resolvePathway(userProfile?.gender, userProfile?.pathway) === 'male';
+      const targetModule = isMale ? 'male_hypogonadism' : 'female_pcos';
+
+      logAssessmentFlow({
+        userId: authoritativeUserId,
+        seqId,
+        op: 'fetchActiveAssessment',
+        level: activeAssessment?.assessment_level,
+        hasAssessment: Boolean(activeAssessment),
+      });
+
+      try {
+        const [active, history] = await Promise.all([
+          fetchActiveAssessment(options?.force ?? true, targetModule, authoritativeUserId),
+          fetchAssessmentHistory(targetModule),
+        ]);
+
+        const currentState: AssessmentSyncState = {
+          activeAssessment,
+          assessmentHistory,
+          latestSequenceId: latestSequenceIdRef.current,
+          activeProgressionId: activeProgressionIdRef.current,
+        };
+
+        const result = applyFetchActiveResult(
+          currentState,
+          seqId,
+          active,
+          history,
+          {
+            isExplicitReset: options?.isExplicitReset,
+            authoritativeUserId,
+          }
+        );
+
+        logAssessmentFlow({
+          userId: authoritativeUserId,
+          seqId,
+          op: result.accepted ? 'setActiveAssessment' : `fetchActiveAssessment:${result.reason}`,
+          assessmentId: result.nextState.activeAssessment?.id,
+          level: result.nextState.activeAssessment?.assessment_level,
+          hasAssessment: Boolean(result.nextState.activeAssessment),
+        });
+
+        if (result.accepted) {
+          setActiveAssessment(result.nextState.activeAssessment);
+          setMlAssessment(result.nextState.activeAssessment as unknown as IntelligenceAssessment);
+          setAssessmentHistory(result.nextState.assessmentHistory);
+          activeProgressionIdRef.current = result.nextState.activeProgressionId;
+        } else {
+          setAssessmentHistory(result.nextState.assessmentHistory);
+        }
+      } catch (err) {
+        if (seqId === latestSequenceIdRef.current) {
+          console.warn('[Assessment Context] Error fetching progressive assessment:', err);
+        }
+      } finally {
+        if (seqId === latestSequenceIdRef.current) {
+          setAssessmentLoading(false);
+        }
+      }
+    },
+    [authLoading, authoritativeUserId, userProfile?.gender, userProfile?.pathway, activeAssessment, assessmentHistory]
+  );
+
+  // Synchronize active progressive assessment when user authentication is ready
+  useEffect(() => {
+    if (authLoading) {
+      setAssessmentLoading(true);
+      return;
     }
-  }, [userProfile]);
+
+    if (!authoritativeUserId) {
+      setActiveAssessment(null);
+      setMlAssessment(null);
+      setAssessmentHistory([]);
+      clearAssessmentCache();
+      setAssessmentLoading(false);
+      return;
+    }
+
+    refreshActiveAssessment();
+  }, [authLoading, authoritativeUserId]);
+
+  // Enforce zero cross-user assessment contamination when user switches or logs out
+  useEffect(() => {
+    if (!authoritativeUserId) {
+      setActiveAssessment(null);
+      setMlAssessment(null);
+      setAssessmentHistory([]);
+      clearAssessmentCache();
+    }
+  }, [authoritativeUserId]);
 
   // Transient in-memory assessment notification state (never persisted to DB, storage, or URL)
   const [assessmentNotification, setAssessmentNotification] = useState<{
@@ -1770,13 +1878,53 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const submitMaleTier1 = useCallback(
     async (inputs: Record<string, any> = {}): Promise<ProgressiveAssessment | null> => {
+      const mutationSeq = ++latestSequenceIdRef.current;
       setAssessmentLoading(true);
+      logAssessmentFlow({
+        userId: authoritativeUserId,
+        seqId: mutationSeq,
+        op: 'runTier1Assessment',
+      });
       try {
-        const res = await submitMaleTier1Assessment(inputs);
+        const res = await submitMaleTier1Assessment(inputs, authoritativeUserId);
         if (res) {
-          setActiveAssessment(res);
-          setMlAssessment(res as unknown as IntelligenceAssessment);
-          await refreshActiveAssessment();
+          const currentState: AssessmentSyncState = {
+            activeAssessment,
+            assessmentHistory,
+            latestSequenceId: latestSequenceIdRef.current,
+            activeProgressionId: activeProgressionIdRef.current,
+          };
+          const transition = applyMutationResult(currentState, mutationSeq, res, authoritativeUserId);
+          if (transition.accepted) {
+            logAssessmentFlow({
+              userId: authoritativeUserId,
+              seqId: mutationSeq,
+              op: 'setActiveAssessment',
+              assessmentId: transition.nextState.activeAssessment?.id,
+              level: transition.nextState.activeAssessment?.assessment_level,
+              hasAssessment: true,
+            });
+            setActiveAssessment(transition.nextState.activeAssessment);
+            logAssessmentFlow({
+              userId: authoritativeUserId,
+              seqId: mutationSeq,
+              op: 'setMlAssessment',
+              assessmentId: transition.nextState.activeAssessment?.id,
+              level: transition.nextState.activeAssessment?.assessment_level,
+              hasAssessment: true,
+            });
+            setMlAssessment(transition.nextState.activeAssessment as unknown as IntelligenceAssessment);
+            setAssessmentHistory(transition.nextState.assessmentHistory);
+            activeProgressionIdRef.current = transition.nextState.activeProgressionId;
+          }
+
+          // Background sync for assessment history only (does not overwrite activeAssessment)
+          fetchAssessmentHistory('male_hypogonadism')
+            .then((history) => {
+              setAssessmentHistory((prev) => deduplicateHistory(history, transition.nextState.activeAssessment || prev[0]));
+            })
+            .catch(() => {});
+
           triggerAssessmentNotification(
             'Updated Result: Your initial hypogonadism screening assessment has been generated.',
             'success'
@@ -1784,21 +1932,62 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
         return res;
       } finally {
-        setAssessmentLoading(false);
+        if (mutationSeq === latestSequenceIdRef.current) {
+          setAssessmentLoading(false);
+        }
       }
     },
-    [refreshActiveAssessment, triggerAssessmentNotification]
+    [authoritativeUserId, activeAssessment, assessmentHistory, triggerAssessmentNotification]
   );
 
   const submitMaleTier2 = useCallback(
     async (inputs: Record<string, any>): Promise<ProgressiveAssessment | null> => {
+      const mutationSeq = ++latestSequenceIdRef.current;
       setAssessmentLoading(true);
+      logAssessmentFlow({
+        userId: authoritativeUserId,
+        seqId: mutationSeq,
+        op: 'runTier2Assessment',
+      });
       try {
-        const res = await submitMaleTier2Assessment(inputs);
+        const res = await submitMaleTier2Assessment(inputs, authoritativeUserId);
         if (res) {
-          setActiveAssessment(res);
-          setMlAssessment(res as unknown as IntelligenceAssessment);
-          await refreshActiveAssessment();
+          const currentState: AssessmentSyncState = {
+            activeAssessment,
+            assessmentHistory,
+            latestSequenceId: latestSequenceIdRef.current,
+            activeProgressionId: activeProgressionIdRef.current,
+          };
+          const transition = applyMutationResult(currentState, mutationSeq, res, authoritativeUserId);
+          if (transition.accepted) {
+            logAssessmentFlow({
+              userId: authoritativeUserId,
+              seqId: mutationSeq,
+              op: 'setActiveAssessment',
+              assessmentId: transition.nextState.activeAssessment?.id,
+              level: transition.nextState.activeAssessment?.assessment_level,
+              hasAssessment: true,
+            });
+            setActiveAssessment(transition.nextState.activeAssessment);
+            logAssessmentFlow({
+              userId: authoritativeUserId,
+              seqId: mutationSeq,
+              op: 'setMlAssessment',
+              assessmentId: transition.nextState.activeAssessment?.id,
+              level: transition.nextState.activeAssessment?.assessment_level,
+              hasAssessment: true,
+            });
+            setMlAssessment(transition.nextState.activeAssessment as unknown as IntelligenceAssessment);
+            setAssessmentHistory(transition.nextState.assessmentHistory);
+            activeProgressionIdRef.current = transition.nextState.activeProgressionId;
+          }
+
+          fetchAssessmentHistory('male_hypogonadism')
+            .then((history) => {
+              setAssessmentHistory((prev) => deduplicateHistory(history, transition.nextState.activeAssessment || prev[0]));
+            })
+            .catch(() => {});
+
           triggerAssessmentNotification(
             'Updated Result: Your hypogonadism screening assessment has been updated with clinical evidence.',
             'success'
@@ -1806,10 +1995,12 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
         return res;
       } finally {
-        setAssessmentLoading(false);
+        if (mutationSeq === latestSequenceIdRef.current) {
+          setAssessmentLoading(false);
+        }
       }
     },
-    [refreshActiveAssessment, triggerAssessmentNotification]
+    [authoritativeUserId, activeAssessment, assessmentHistory, triggerAssessmentNotification]
   );
 
   const submitTier1 = useCallback(
@@ -1817,20 +2008,66 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (resolvePathway(userProfile?.gender, userProfile?.pathway) === 'male') {
         return submitMaleTier1(inputs);
       }
+      const mutationSeq = ++latestSequenceIdRef.current;
       setAssessmentLoading(true);
+      logAssessmentFlow({
+        userId: authoritativeUserId,
+        seqId: mutationSeq,
+        op: 'runTier1Assessment',
+      });
       try {
-        const res = await submitTier1Assessment(inputs);
+        const res = await submitTier1Assessment(inputs, authoritativeUserId);
         if (res) {
-          setActiveAssessment(res);
-          setMlAssessment(res as unknown as IntelligenceAssessment);
-          await refreshActiveAssessment();
+          const currentState: AssessmentSyncState = {
+            activeAssessment,
+            assessmentHistory,
+            latestSequenceId: latestSequenceIdRef.current,
+            activeProgressionId: activeProgressionIdRef.current,
+          };
+          const transition = applyMutationResult(currentState, mutationSeq, res, authoritativeUserId);
+          if (transition.accepted) {
+            logAssessmentFlow({
+              userId: authoritativeUserId,
+              seqId: mutationSeq,
+              op: 'setActiveAssessment',
+              assessmentId: transition.nextState.activeAssessment?.id,
+              level: transition.nextState.activeAssessment?.assessment_level,
+              hasAssessment: true,
+            });
+            setActiveAssessment(transition.nextState.activeAssessment);
+            logAssessmentFlow({
+              userId: authoritativeUserId,
+              seqId: mutationSeq,
+              op: 'setMlAssessment',
+              assessmentId: transition.nextState.activeAssessment?.id,
+              level: transition.nextState.activeAssessment?.assessment_level,
+              hasAssessment: true,
+            });
+            setMlAssessment(transition.nextState.activeAssessment as unknown as IntelligenceAssessment);
+            setAssessmentHistory(transition.nextState.assessmentHistory);
+            activeProgressionIdRef.current = transition.nextState.activeProgressionId;
+          }
+
+          // Background sync for assessment history only (does not overwrite activeAssessment)
+          fetchAssessmentHistory('female_pcos')
+            .then((history) => {
+              setAssessmentHistory((prev) => deduplicateHistory(history, transition.nextState.activeAssessment || prev[0]));
+            })
+            .catch(() => {});
+
+          triggerAssessmentNotification(
+            'Updated Result: Your initial screening assessment has been generated.',
+            'success'
+          );
         }
         return res;
       } finally {
-        setAssessmentLoading(false);
+        if (mutationSeq === latestSequenceIdRef.current) {
+          setAssessmentLoading(false);
+        }
       }
     },
-    [userProfile, submitMaleTier1, refreshActiveAssessment]
+    [userProfile?.gender, userProfile?.pathway, authoritativeUserId, submitMaleTier1, activeAssessment, assessmentHistory, triggerAssessmentNotification]
   );
 
   const submitTier2 = useCallback(
@@ -1839,13 +2076,52 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         return submitMaleTier2(inputs);
       }
 
+      const mutationSeq = ++latestSequenceIdRef.current;
       setAssessmentLoading(true);
+      logAssessmentFlow({
+        userId: authoritativeUserId,
+        seqId: mutationSeq,
+        op: 'runTier2Assessment',
+      });
       try {
-        const res = await submitTier2Assessment(inputs);
+        const res = await submitTier2Assessment(inputs, authoritativeUserId);
         if (res) {
-          setActiveAssessment(res);
-          setMlAssessment(res as unknown as IntelligenceAssessment);
-          await refreshActiveAssessment();
+          const currentState: AssessmentSyncState = {
+            activeAssessment,
+            assessmentHistory,
+            latestSequenceId: latestSequenceIdRef.current,
+            activeProgressionId: activeProgressionIdRef.current,
+          };
+          const transition = applyMutationResult(currentState, mutationSeq, res, authoritativeUserId);
+          if (transition.accepted) {
+            logAssessmentFlow({
+              userId: authoritativeUserId,
+              seqId: mutationSeq,
+              op: 'setActiveAssessment',
+              assessmentId: transition.nextState.activeAssessment?.id,
+              level: transition.nextState.activeAssessment?.assessment_level,
+              hasAssessment: true,
+            });
+            setActiveAssessment(transition.nextState.activeAssessment);
+            logAssessmentFlow({
+              userId: authoritativeUserId,
+              seqId: mutationSeq,
+              op: 'setMlAssessment',
+              assessmentId: transition.nextState.activeAssessment?.id,
+              level: transition.nextState.activeAssessment?.assessment_level,
+              hasAssessment: true,
+            });
+            setMlAssessment(transition.nextState.activeAssessment as unknown as IntelligenceAssessment);
+            setAssessmentHistory(transition.nextState.assessmentHistory);
+            activeProgressionIdRef.current = transition.nextState.activeProgressionId;
+          }
+
+          fetchAssessmentHistory('female_pcos')
+            .then((history) => {
+              setAssessmentHistory((prev) => deduplicateHistory(history, transition.nextState.activeAssessment || prev[0]));
+            })
+            .catch(() => {});
+
           triggerAssessmentNotification(
             'Updated Result: Your assessment has been updated using additional clinical evidence.',
             'success'
@@ -1853,23 +2129,64 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
         return res;
       } finally {
-        setAssessmentLoading(false);
+        if (mutationSeq === latestSequenceIdRef.current) {
+          setAssessmentLoading(false);
+        }
       }
     },
-    [userProfile, submitMaleTier2, refreshActiveAssessment, triggerAssessmentNotification]
+    [userProfile?.gender, userProfile?.pathway, authoritativeUserId, submitMaleTier2, activeAssessment, assessmentHistory, triggerAssessmentNotification]
   );
 
   const submitUltrasound = useCallback(
     async (imageFile: File, reportId?: string): Promise<ProgressiveAssessment | null> => {
+      const mutationSeq = ++latestSequenceIdRef.current;
       setAssessmentLoading(true);
+      logAssessmentFlow({
+        userId: authoritativeUserId,
+        seqId: mutationSeq,
+        op: 'runUltrasoundAssessment',
+      });
       try {
-        const res = await uploadUltrasoundAssessment(imageFile, reportId);
+        const res = await uploadUltrasoundAssessment(imageFile, reportId, authoritativeUserId);
         if (res) {
+          const currentState: AssessmentSyncState = {
+            activeAssessment,
+            assessmentHistory,
+            latestSequenceId: latestSequenceIdRef.current,
+            activeProgressionId: activeProgressionIdRef.current,
+          };
           if (res.is_active) {
-            setActiveAssessment(res);
-            setMlAssessment(res as unknown as IntelligenceAssessment);
+            const transition = applyMutationResult(currentState, mutationSeq, res, authoritativeUserId);
+            if (transition.accepted) {
+              logAssessmentFlow({
+                userId: authoritativeUserId,
+                seqId: mutationSeq,
+                op: 'setActiveAssessment',
+                assessmentId: transition.nextState.activeAssessment?.id,
+                level: transition.nextState.activeAssessment?.assessment_level,
+                hasAssessment: true,
+              });
+              setActiveAssessment(transition.nextState.activeAssessment);
+              logAssessmentFlow({
+                userId: authoritativeUserId,
+                seqId: mutationSeq,
+                op: 'setMlAssessment',
+                assessmentId: transition.nextState.activeAssessment?.id,
+                level: transition.nextState.activeAssessment?.assessment_level,
+                hasAssessment: true,
+              });
+              setMlAssessment(transition.nextState.activeAssessment as unknown as IntelligenceAssessment);
+              setAssessmentHistory(transition.nextState.assessmentHistory);
+              activeProgressionIdRef.current = transition.nextState.activeProgressionId;
+            }
           }
-          await refreshActiveAssessment();
+
+          fetchAssessmentHistory('female_pcos')
+            .then((history) => {
+              setAssessmentHistory(deduplicateHistory(history, res));
+            })
+            .catch(() => {});
+
           if (res.is_active && (res.assessment_level === 'tier_1_2' || res.assessment_level === 'tier_1_2_3')) {
             triggerAssessmentNotification(
               'Updated Result: Your assessment has been updated using additional clinical evidence.',
@@ -1879,15 +2196,78 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
         return res;
       } finally {
-        setAssessmentLoading(false);
+        if (mutationSeq === latestSequenceIdRef.current) {
+          setAssessmentLoading(false);
+        }
       }
     },
-    [refreshActiveAssessment, triggerAssessmentNotification]
+    [authoritativeUserId, activeAssessment, assessmentHistory, triggerAssessmentNotification]
+  );
+
+  const clearTier2 = useCallback(
+    async (module?: string): Promise<ProgressiveAssessment | null> => {
+      const pathway = resolvePathway(userProfile?.gender, userProfile?.pathway);
+      const mod = module || (pathway === 'male' ? 'male_hypogonadism' : 'female_pcos');
+      const resetSeq = ++latestSequenceIdRef.current;
+      setAssessmentLoading(true);
+      try {
+        const res = await clearTier2Assessment(mod, authoritativeUserId);
+        if (res) {
+          const currentState: AssessmentSyncState = {
+            activeAssessment,
+            assessmentHistory,
+            latestSequenceId: latestSequenceIdRef.current,
+            activeProgressionId: activeProgressionIdRef.current,
+          };
+          const transition = applyExplicitReset(currentState, resetSeq, res, authoritativeUserId);
+          logAssessmentFlow({
+            userId: authoritativeUserId,
+            seqId: resetSeq,
+            op: 'setActiveAssessment',
+            assessmentId: transition.nextState.activeAssessment?.id,
+            level: transition.nextState.activeAssessment?.assessment_level,
+            hasAssessment: Boolean(transition.nextState.activeAssessment),
+          });
+          setActiveAssessment(transition.nextState.activeAssessment);
+          logAssessmentFlow({
+            userId: authoritativeUserId,
+            seqId: resetSeq,
+            op: 'setMlAssessment',
+            assessmentId: transition.nextState.activeAssessment?.id,
+            level: transition.nextState.activeAssessment?.assessment_level,
+            hasAssessment: Boolean(transition.nextState.activeAssessment),
+          });
+          setMlAssessment(transition.nextState.activeAssessment as unknown as IntelligenceAssessment);
+          setAssessmentHistory(transition.nextState.assessmentHistory);
+          activeProgressionIdRef.current = transition.nextState.activeProgressionId;
+
+          triggerAssessmentNotification(
+            'Tier 2 clinical data has been cleared. Assessment reverted to Tier 1 screening.',
+            'success'
+          );
+        }
+        return res;
+      } finally {
+        if (resetSeq === latestSequenceIdRef.current) {
+          setAssessmentLoading(false);
+        }
+      }
+    },
+    [userProfile?.gender, userProfile?.pathway, authoritativeUserId, activeAssessment, assessmentHistory, triggerAssessmentNotification]
+  );
+
+  const fetchClinicalState = useCallback(
+    async (module?: string) => {
+      const pathway = resolvePathway(userProfile?.gender, userProfile?.pathway);
+      const mod = module || (pathway === 'male' ? 'male_hypogonadism' : 'female_pcos');
+      return await fetchPatientClinicalState(mod);
+    },
+    [userProfile]
   );
 
   const refreshMlAssessment = useCallback(
     async (force = false) => {
-      if (!userProfile?.id) return;
+      if (!authoritativeUserId) return;
       setMlAssessmentLoading(true);
       setMlAssessmentError(false);
       try {
@@ -1904,7 +2284,6 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         } else {
           setMlAssessmentError(true);
         }
-        await refreshActiveAssessment();
       } catch (err) {
         console.warn('[OvaSense ML Context] Assessment error:', err);
         setMlAssessmentError(true);
@@ -1912,15 +2291,15 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setMlAssessmentLoading(false);
       }
     },
-    [userProfile, cycleRecords, symptomRecords, foodLogs, fitnessLogs, refreshActiveAssessment]
+    [authoritativeUserId, userProfile, cycleRecords, symptomRecords, foodLogs, fitnessLogs]
   );
 
   // Automatically trigger assessment on profile load or when health factors change
   useEffect(() => {
-    if (userProfile?.id) {
+    if (authoritativeUserId) {
       refreshMlAssessment(false);
     }
-  }, [refreshMlAssessment, userProfile?.id]);
+  }, [refreshMlAssessment, authoritativeUserId]);
 
   const registerUser = useCallback(
     (_data: { fullName: string; email: string; dateOfBirth?: string }) => {
@@ -1936,12 +2315,38 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     async (data: Partial<UserProfile>): Promise<{ success: boolean; error?: string }> => {
       const res = await saveOnboardingProfile(data);
       if (res.success) {
+        // Bridge onboarding intake medications into structured public.medications table
+        const targetUserId = userProfile?.id || data.id;
+        if (targetUserId && data.medical?.medications && Array.isArray(data.medical.medications)) {
+          try {
+            for (const med of (data.medical.medications as any[])) {
+              const medName = typeof med === 'string' ? (med as string).trim() : (med && typeof med === 'object' && 'name' in med ? String((med as any).name).trim() : '');
+              if (medName) {
+                const dose = typeof med === 'object' && (med as any).dosage ? String((med as any).dosage).trim() : '';
+                const frequency = typeof med === 'object' && (med as any).frequency ? String((med as any).frequency).trim() : 'daily';
+                const validFrequencies = ['once_daily', 'twice_daily', 'three_times_daily', 'every_other_day', 'as_needed'];
+                const freqCandidate = frequency.toLowerCase().replace(/[-\s]+/g, '_');
+                const safeFreq = validFrequencies.includes(freqCandidate) ? (freqCandidate as any) : 'once_daily';
+                await medicationService.createMedication(targetUserId, {
+                  name: medName,
+                  dose: dose || 'Standard',
+                  unit: 'mg',
+                  frequency: safeFreq,
+                  scheduledTimes: ['08:00'],
+                  isActive: true,
+                });
+              }
+            }
+          } catch (bridgeErr) {
+            console.warn('Could not bridge onboarding medications to public.medications:', bridgeErr);
+          }
+        }
         // Force refresh assessment upon completing onboarding with new data
         setTimeout(() => refreshMlAssessment(true), 100);
       }
       return res;
     },
-    [saveOnboardingProfile, refreshMlAssessment]
+    [saveOnboardingProfile, refreshMlAssessment, userProfile?.id]
   );
 
   /**
@@ -1960,7 +2365,10 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const clearUserData = useCallback(() => {
     clearAssessmentCache();
+    clearAllLocalAssessments();
+    setActiveAssessment(null);
     setMlAssessment(null);
+    setAssessmentHistory([]);
     logout();
   }, [logout]);
 
@@ -1970,6 +2378,8 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setIsAiChatOpen(true);
   };
   const closeAiChat = () => setIsAiChatOpen(false);
+
+  const effectiveAssessmentLoading = authLoading || assessmentLoading;
 
   return (
     <UserHealthContext.Provider
@@ -2057,7 +2467,7 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         digitalTwinInsight,
         activeAssessment,
         assessmentHistory,
-        assessmentLoading,
+        assessmentLoading: effectiveAssessmentLoading,
         assessmentNotification,
         triggerAssessmentNotification,
         dismissAssessmentNotification,
@@ -2066,6 +2476,8 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         submitTier2,
         submitMaleTier1,
         submitMaleTier2,
+        clearTier2,
+        fetchClinicalState,
         submitUltrasound,
         mlAssessment,
         mlAssessmentLoading,

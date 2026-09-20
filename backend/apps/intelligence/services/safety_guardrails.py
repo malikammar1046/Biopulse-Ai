@@ -32,7 +32,7 @@ INJECTION_PATTERNS = [
 
 # Mandatory medical disclaimer
 MEDICAL_SAFETY_FOOTER = (
-    "\n\n*Note: OvaSense AI provides health monitoring information and educational support. "
+    "\n\n*Note: BioPulse AI Companion provides health monitoring information and educational support. "
     "It does not provide medical diagnoses or prescribe treatment. Please consult a qualified healthcare provider for clinical care.*"
 )
 
@@ -52,7 +52,7 @@ class SafetyGuardrails:
                 return (
                     "⚠️ **Immediate Medical Attention Recommended**\n\n"
                     "The symptoms you described may indicate a medical situation that requires urgent professional evaluation. "
-                    "OvaSense is not an emergency service and cannot diagnose or treat acute conditions.\n\n"
+                    "BioPulse AI is not an emergency service and cannot diagnose or treat acute conditions.\n\n"
                     "• **Action**: Please call your local emergency services (e.g. 911, 112, or local helpline) or go to the "
                     "nearest hospital emergency department immediately.\n"
                     "• If you have a trusted friend, family member, or care circle contact nearby, alert them right away."
@@ -69,7 +69,7 @@ class SafetyGuardrails:
         for pattern in INJECTION_PATTERNS:
             if re.search(pattern, msg_lower, re.IGNORECASE):
                 return (
-                    "OvaSense AI is an educational health monitoring companion and operates strictly within clinical safety guidelines. "
+                    "BioPulse AI Companion is an educational health literacy companion and operates strictly within clinical safety guidelines. "
                     "I cannot provide a formal medical diagnosis, prescribe medications, or override healthcare safety boundaries.\n\n"
                     "I am happy to help you understand your logged symptoms, explain laboratory reference intervals, or prepare a structured "
                     "list of questions for your next doctor's appointment."
@@ -85,10 +85,16 @@ class SafetyGuardrails:
         """
         cleaned = text
 
-        # 1. Reframe assertive diagnostic claims
+        # 1. Reframe assertive diagnostic claims (PCOS and Hypogonadism)
         cleaned = re.sub(
             r"\byou\s+(?:definitely|certainly)\s+have\s+pcos\b",
             "some of your recorded features can be associated with PCOS patterns",
+            cleaned,
+            flags=re.IGNORECASE,
+        )
+        cleaned = re.sub(
+            r"\byou\s+(?:definitely|certainly)\s+have\s+hypogonadism\b",
+            "some of your recorded features can be associated with hypogonadism screening patterns",
             cleaned,
             flags=re.IGNORECASE,
         )
@@ -101,8 +107,8 @@ class SafetyGuardrails:
 
         # 2. Prevent treating ML screening probability or model output as confirmed diagnosis
         cleaned = re.sub(
-            r"\b(?:the\s+model|the\s+screening\s+score|your\s+score)\s+(?:confirms|diagnoses|proves)\s+(?:that\s+you\s+have\s+)?pcos\b",
-            "the OvaSense screening model identifies statistical risk indicators for discussion with your doctor",
+            r"\b(?:the\s+model|the\s+screening\s+score|your\s+score)\s+(?:confirms|diagnoses|proves)\s+(?:that\s+you\s+have\s+)?(?:pcos|hypogonadism)\b",
+            "the BioPulse AI screening model identifies statistical risk indicators for discussion with your doctor",
             cleaned,
             flags=re.IGNORECASE,
         )
@@ -115,7 +121,7 @@ class SafetyGuardrails:
             flags=re.IGNORECASE,
         )
 
-        # 4. Block any suggestions to alter medication dosage
+        # 4. Block any suggestions to alter or stop medication
         cleaned = re.sub(
             r"\b(?:increase|decrease|stop|change)\s+your\s+(?:medication|dosage|dose|prescription)\b",
             "discuss any adjustments to your medication or dosage with your prescribing physician",

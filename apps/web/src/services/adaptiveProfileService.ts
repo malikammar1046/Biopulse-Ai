@@ -63,17 +63,30 @@ interface MatchedBiomarker {
 
 function findBiomarkerInReports(
   reports: MedicalReport[],
-  candidateNames: string[]
+  candidateNames: string[],
+  excludedTokens: string[] = []
 ): MatchedBiomarker | null {
   const normalizedCandidates = candidateNames.map((n) => n.toLowerCase().trim());
+  const normalizedExcluded = excludedTokens.map((n) => n.toLowerCase().trim());
 
   for (const report of reports) {
     if (!report.results || !Array.isArray(report.results)) continue;
     for (const res of report.results) {
       const testName = res.testName?.toLowerCase().trim() || '';
-      const match = normalizedCandidates.some(
-        (candidate) => testName.includes(candidate) || candidate.includes(testName)
-      );
+      const canonical = ((res as any).canonicalCode || (res as any).canonical_code || '').toLowerCase().trim();
+
+      // If excluded token present (e.g. "free" when searching for total testosterone), skip
+      if (normalizedExcluded.some((ex) => testName.includes(ex))) {
+        continue;
+      }
+
+      const match = normalizedCandidates.some((candidate) => {
+        if (canonical && canonical === candidate) return true;
+        if (testName === candidate) return true;
+        const regex = new RegExp(`(^|\\b)${candidate.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}(\\b|$)`, 'i');
+        return regex.test(testName);
+      });
+
       if (match) {
         return {
           value: res.resultValue,

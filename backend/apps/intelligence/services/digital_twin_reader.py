@@ -147,18 +147,19 @@ class DigitalTwinReader:
         }
 
     @classmethod
-    def format_as_context_block(cls, observations: Dict[str, Any]) -> str:
+    def format_as_context_block(cls, observations: Dict[str, Any], pathway: str = "female") -> str:
         """
         Formats Digital Twin observations into a concise, token-efficient,
         read-only summary string for the LLM prompt.
         """
         lines = ["[DIGITAL TWIN OBSERVATIONS - READ ONLY]:"]
-        if observations.get("cycle_day", 0) > 0:
-            lines.append(
-                f"• Menstrual Status: Day {observations['cycle_day']} ({observations['phase_name']}) — {observations['hormonal_curve_status']}."
-            )
-        else:
-            lines.append(f"• Menstrual Status: {observations.get('phase_name', 'Cycle not active')}.")
+        if pathway != "male":
+            if observations.get("cycle_day", 0) > 0:
+                lines.append(
+                    f"• Menstrual Status: Day {observations['cycle_day']} ({observations['phase_name']}) — {observations['hormonal_curve_status']}."
+                )
+            else:
+                lines.append(f"• Menstrual Status: {observations.get('phase_name', 'Cycle not active')}.")
 
         if observations.get("top_symptoms"):
             lines.append(f"• 30-Day Symptom Pattern: {', '.join(observations['top_symptoms'])}.")
@@ -171,3 +172,4 @@ class DigitalTwinReader:
         lines.append("• Notice: Structured rule-based physiological metrics. Read-only; LLM cannot alter this state.")
 
         return "\n".join(lines)
+

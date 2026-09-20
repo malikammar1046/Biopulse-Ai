@@ -427,145 +427,145 @@ class CareCircleService {
     return { success: true };
   }
 
-  // --- Accept Invitation ---
-  async acceptInvitation(token: string): Promise<{ success: boolean; member?: CareCircleMember; error?: string }> {
-    let foundMember: CareCircleMember | null = null;
-    let foundTargetUserId = '';
 
-    // 1. Search in members storage
-    const memberKeys = Object.keys(localStorage).filter((k) => k.startsWith(STORAGE_MEMBERS_KEY_PREFIX));
-    for (const key of memberKeys) {
-      try {
-        const list: CareCircleMember[] = JSON.parse(localStorage.getItem(key) || '[]');
-        const target = list.find((m) => m.inviteToken === token);
-        if (target) {
-          foundMember = { ...target, status: 'active', updatedAt: new Date().toISOString() };
-          foundTargetUserId = key.replace(STORAGE_MEMBERS_KEY_PREFIX, '');
-          const updatedList = list.map((m) => (m.id === target.id ? foundMember! : m));
-          localStorage.setItem(key, JSON.stringify(updatedList));
-          break;
-        }
-      } catch {
-        // ignore
-      }
+  // --- Non-Clinical Public Invitation Metadata RPC ---
+  async getCareInvitationInfo(token: string): Promise<{
+    isValid: boolean;
+    role?: string;
+    relationship?: string;
+    memberName?: string;
+    status?: string;
+    expiresAt?: string;
+    error?: string;
+  }> {
+    if (!token || token.trim().length < 16) {
+      return { isValid: false, error: 'Invalid invitation token' };
     }
-
-    // 2. Search in invitations storage
-    const inviteKeys = Object.keys(localStorage).filter((k) => k.startsWith(STORAGE_INVITES_KEY_PREFIX));
-    for (const key of inviteKeys) {
-      try {
-        const list: CareCircleInvitation[] = JSON.parse(localStorage.getItem(key) || '[]');
-        const targetInv = list.find((i) => i.token === token);
-        if (targetInv) {
-          foundTargetUserId = key.replace(STORAGE_INVITES_KEY_PREFIX, '');
-          // Remove from pending invites
-          const updatedInvites = list.filter((i) => i.token !== token);
-          localStorage.setItem(key, JSON.stringify(updatedInvites));
-
-          // Ensure member exists as active
-          const memStorageKey = `${STORAGE_MEMBERS_KEY_PREFIX}${foundTargetUserId}`;
-          const currentMems: CareCircleMember[] = JSON.parse(localStorage.getItem(memStorageKey) || '[]');
-          const existingMemIdx = currentMems.findIndex((m) => m.inviteToken === token);
-
-          const activeMem: CareCircleMember = {
-            id: targetInv.id,
-            patientId: foundTargetUserId,
-            email: targetInv.inviteEmail,
-            name: targetInv.memberName,
-            role: targetInv.role,
-            relationship: targetInv.relationship,
-            clinicOrganization: targetInv.clinicOrganization,
-            status: 'active',
-            inviteToken: targetInv.token,
-            permissions: targetInv.initialPermissions || PRESET_PERMISSIONS.doctor,
-            createdAt: targetInv.createdAt,
-            updatedAt: new Date().toISOString(),
-          };
-
-          if (existingMemIdx >= 0) {
-            currentMems[existingMemIdx] = activeMem;
-          } else {
-            currentMems.unshift(activeMem);
-          }
-          localStorage.setItem(memStorageKey, JSON.stringify(currentMems));
-          foundMember = activeMem;
-          break;
-        }
-      } catch {
-        // ignore
-      }
-    }
-
-    // 3. Fallback: If not found in storage, bind to active patient profile
-    if (!foundMember) {
-      try {
-        const profileRaw = localStorage.getItem('ovasense_user_profile_v1');
-        const activeProfile = profileRaw ? JSON.parse(profileRaw) : DEFAULT_USER_PROFILE;
-        const patientId = activeProfile.id || 'default';
-        const memStorageKey = `${STORAGE_MEMBERS_KEY_PREFIX}${patientId}`;
-        const currentMems: CareCircleMember[] = JSON.parse(localStorage.getItem(memStorageKey) || '[]');
-
-        const activeMem: CareCircleMember = {
-          id: 'mem_' + Date.now().toString(36),
-          patientId,
-          email: 'dr.sarah.malik@womenshealthclinic.org',
-          name: 'Dr. Sarah Malik',
-          role: 'doctor',
-          relationship: 'Reproductive Endocrinologist',
-          clinicOrganization: 'Harley St. Women’s Health',
-          status: 'active',
-          inviteToken: token,
-          permissions: { ...PRESET_PERMISSIONS.doctor, chat_summary: true },
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-
-        const existingIdx = currentMems.findIndex((m) => m.inviteToken === token);
-        if (existingIdx >= 0) {
-          currentMems[existingIdx] = activeMem;
-        } else {
-          currentMems.unshift(activeMem);
-        }
-        localStorage.setItem(memStorageKey, JSON.stringify(currentMems));
-        foundMember = activeMem;
-      } catch {
-        // ignore
-      }
-    }
-
     if (isSupabaseConfigured()) {
       try {
-        await supabase
-          .from('care_circle_members')
-          .update({ status: 'active', updated_at: new Date().toISOString() })
-          .eq('invite_token', token);
-
-        await supabase
-          .from('care_circle_invitations')
-          .update({ status: 'accepted' })
-          .eq('token', token);
-      } catch (err) {
-        console.warn('Supabase accept invitation error:', err);
+        const { data, error } = await supabase.rpc('get_care_invitation_info', {
+          p_token: token.trim(),
+        });
+        if (error) {
+          return { isValid: false, error: error.message };
+        }
+        return data as any;
+      } catch (err: any) {
+        return { isValid: false, error: err?.message || 'Failed to query invitation metadata' };
       }
     }
-
-    // Broadcast across all open tabs
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new Event('storage'));
-      window.dispatchEvent(new CustomEvent('ovasense_care_circle_updated'));
-    }
-
-    return { success: true, member: foundMember || undefined };
+    return { isValid: false, error: 'Supabase is not configured' };
   }
 
-  // --- Fetch Care Provider View Data (Protected By Token & Permissions with LIVE Data) ---
+  // --- Authenticated Invitation Claim RPC ---
+  async acceptInvitation(token: string): Promise<{ success: boolean; memberId?: string; error?: string }> {
+    if (!token) {
+      return { success: false, error: 'Invitation token is required' };
+    }
+    if (isSupabaseConfigured()) {
+      try {
+        const { data, error } = await supabase.rpc('accept_care_circle_invitation', {
+          p_token: token.trim(),
+        });
+        if (error) {
+          return { success: false, error: error.message };
+        }
+        if (data && (data as any).success) {
+          return { success: true, memberId: (data as any).memberId };
+        }
+        return { success: false, error: (data as any)?.error || 'Failed to claim invitation' };
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to claim invitation' };
+      }
+    }
+    return { success: true };
+  }
+
+  // --- Fetch Care Provider View Data (Protected By Authenticated RLS with Legacy RPC Fallback) ---
   async fetchCareProviderData(token: string): Promise<CareProviderViewData> {
     if (!token) {
       return { isValid: false, member: null, patient: null, summary: null };
     }
 
-    // 1. Try Supabase Security Definer RPC first (supports cross-browser anonymous resolution)
+    // 1. If user is authenticated, query care_circle_members and permitted clinical data via authenticated RLS
     if (isSupabaseConfigured()) {
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        const user = authData?.user;
+
+        if (user) {
+          const { data: memberRows } = await supabase
+            .from('care_circle_members')
+            .select('*')
+            .eq('member_user_id', user.id)
+            .eq('status', 'active');
+
+          const activeMember = memberRows?.[0];
+          if (activeMember) {
+            const { data: permRows } = await supabase
+              .from('care_circle_permissions')
+              .select('*')
+              .eq('member_id', activeMember.id);
+
+            const permsMap = (permRows || []).reduce((acc: any, p: any) => {
+              acc[p.permission_key] = p.enabled;
+              return acc;
+            }, { ...PRESET_PERMISSIONS.doctor });
+
+            const { data: patientProfile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', activeMember.patient_id)
+              .maybeSingle();
+
+            if (patientProfile) {
+              let rpcReports: any[] = [];
+              if (permsMap.reports) {
+                const { data: reportRows } = await supabase
+                  .from('medical_reports')
+                  .select('*, results:report_results(*)')
+                  .eq('user_id', activeMember.patient_id);
+                rpcReports = reportRows || [];
+              }
+
+              let rpcSymptoms: any[] = [];
+              if (permsMap.symptoms) {
+                const { data: symptomRows } = await supabase
+                  .from('symptom_records')
+                  .select('*')
+                  .eq('user_id', activeMember.patient_id);
+                rpcSymptoms = symptomRows || [];
+              }
+
+              return {
+                isValid: true,
+                member: {
+                  id: activeMember.id,
+                  name: activeMember.member_name,
+                  email: activeMember.member_email,
+                  role: activeMember.role,
+                  relationship: activeMember.relationship,
+                  clinicOrganization: activeMember.clinic_organization,
+                  status: activeMember.status,
+                  permissions: permsMap,
+                },
+                patient: {
+                  name: patientProfile.full_name,
+                  bloodType: patientProfile.blood_type,
+                  conditions: Array.isArray(patientProfile.conditions) ? patientProfile.conditions : [],
+                },
+                summary: null,
+                reports: rpcReports,
+                symptoms: rpcSymptoms,
+              };
+            }
+          }
+        }
+      } catch (authErr) {
+        console.warn('Authenticated RLS query error in fetchCareProviderData:', authErr);
+      }
+
+      // 2. Legacy RPC attempt (active until Stage 6 revocation)
       try {
         const { data: rpcData, error: rpcErr } = await supabase.rpc('get_care_provider_view', {
           p_token: token,

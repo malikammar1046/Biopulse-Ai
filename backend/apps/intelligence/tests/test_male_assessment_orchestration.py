@@ -12,7 +12,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 import django
 django.setup()
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 from unittest.mock import patch, MagicMock
 
@@ -32,12 +32,41 @@ from apps.intelligence.services.intelligence_orchestrator import (
 from apps.intelligence.services.assessment_repository import assessment_repository
 
 
+@override_settings(ALLOW_LOCAL_SQLITE_FALLBACK=True)
 class MaleAssessmentOrchestrationTests(TestCase):
     def setUp(self):
+        self.sb_patcher1 = patch("apps.intelligence.services.clinical_state_repository.get_supabase_client", return_value=None)
+        self.sb_patcher2 = patch("apps.intelligence.services.assessment_repository.get_supabase_client", return_value=None)
+        self.sb_patcher3 = patch("apps.health.services.supabase_health_service.health_service.fetch_all")
+        mock_fetch = self.sb_patcher3.start()
+
+        class MockProfile:
+            gender = "male"
+            age = 48
+            height_cm = None
+            weight_kg = None
+            cycle_length = None
+            period_regularity = None
+            date_of_birth = None
+            common_symptoms = []
+            fast_food_intake = None
+            regular_exercise = None
+
+        class MockHealthData:
+            profile = MockProfile()
+            reports = []
+            symptom_records = []
+            medical_reports = []
+
+        mock_fetch.return_value = MockHealthData()
+        self.sb_patcher1.start()
+        self.sb_patcher2.start()
+
         male_ml_service.load()
         pcos_ml_service.load()
-        self.patient_uuid = "test-male-patient-uuid-101"
-        self.female_patient_uuid = "test-female-patient-uuid-202"
+        import uuid
+        self.patient_uuid = f"test-male-patient-uuid-{uuid.uuid4().hex[:8]}"
+        self.female_patient_uuid = f"test-female-patient-uuid-{uuid.uuid4().hex[:8]}"
 
         self.male_tier1_profile = {
             "age": 48,
@@ -184,3 +213,8 @@ class MaleAssessmentOrchestrationTests(TestCase):
 
         with self.assertRaises(ValueError):
             validate_male_clinical_value("hba1c_pct", "abc")
+
+    def tearDown(self):
+        self.sb_patcher1.stop()
+        self.sb_patcher2.stop()
+        self.sb_patcher3.stop()

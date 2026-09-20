@@ -23,6 +23,8 @@ import { Logo } from '../../components/brand/Logo';
 export const CareProviderPortalPage: React.FC = () => {
   const { token } = useParams<{ token: string }>();
   const [data, setData] = useState<CareProviderViewData | null>(null);
+  const [inviteInfo, setInviteInfo] = useState<any>(null);
+  const [claimError, setClaimError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [accepting, setAccepting] = useState(false);
   const [acceptedSuccess, setAcceptedSuccess] = useState(false);
@@ -36,7 +38,15 @@ export const CareProviderPortalPage: React.FC = () => {
       setLoading(true);
       try {
         const viewData = await careCircleService.fetchCareProviderData(token);
-        setData(viewData);
+        if (viewData && viewData.isValid && viewData.member) {
+          setData(viewData);
+        } else {
+          const info = await careCircleService.getCareInvitationInfo(token);
+          if (info && info.isValid) {
+            setInviteInfo(info);
+          }
+          setData(viewData);
+        }
       } catch (err) {
         console.warn('Error loading provider portal data:', err);
       } finally {
@@ -49,13 +59,16 @@ export const CareProviderPortalPage: React.FC = () => {
   const handleAcceptInvitation = async () => {
     if (!token) return;
     setAccepting(true);
+    setClaimError(null);
     const res = await careCircleService.acceptInvitation(token);
     setAccepting(false);
     if (res.success) {
       setAcceptedSuccess(true);
-      // Refresh view data
+      // Refresh view data via authenticated RLS
       const viewData = await careCircleService.fetchCareProviderData(token);
       setData(viewData);
+    } else {
+      setClaimError(res.error || 'Failed to claim invitation. Please ensure you are logged in with the invited email address.');
     }
   };
 
@@ -70,6 +83,58 @@ export const CareProviderPortalPage: React.FC = () => {
             Verifying Care Provider Authorization...
           </span>
         </div>
+      </div>
+    );
+  }
+
+  // If invitation is valid but not yet claimed by authenticated member
+  if (inviteInfo && inviteInfo.isValid && (!data || !data.isValid || !data.member)) {
+    return (
+      <div className="min-h-screen bg-[#10071A] text-white flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="max-w-md w-full p-8 rounded-[36px] bg-[#180A26] border border-white/10 text-center space-y-5 shadow-2xl"
+        >
+          <div className="w-16 h-16 rounded-3xl bg-[#EDE4FF] text-[#6E2D8B] flex items-center justify-center mx-auto shadow-inner">
+            <Sparkles className="w-8 h-8" />
+          </div>
+
+          <div className="space-y-2">
+            <h2 className="text-xl font-bold font-display text-white">
+              Care Circle Invitation
+            </h2>
+            <p className="text-xs text-[#CDBDD8] leading-relaxed">
+              You have been invited as a <strong>{inviteInfo.role || 'care circle member'}</strong> ({inviteInfo.relationship || 'Support'}) for <strong>{inviteInfo.memberName || 'a patient'}</strong>.
+            </p>
+          </div>
+
+          {claimError && (
+            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs text-left">
+              {claimError}
+            </div>
+          )}
+
+          <div className="pt-2 flex flex-col gap-3">
+            <button
+              onClick={handleAcceptInvitation}
+              disabled={accepting}
+              className="w-full py-3.5 px-6 rounded-2xl font-sans font-bold text-xs text-white bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF] hover:brightness-110 transition-all flex items-center justify-center gap-2"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span>{accepting ? 'Claiming Access...' : 'Accept & Claim Access'}</span>
+            </button>
+            <p className="text-[11px] text-[#A392B7]">
+              Note: You must be signed in with the invited email address to view clinical records.
+            </p>
+            <Link
+              to="/login"
+              className="text-xs text-purple-400 hover:underline"
+            >
+              Sign In to Your Account
+            </Link>
+          </div>
+        </motion.div>
       </div>
     );
   }

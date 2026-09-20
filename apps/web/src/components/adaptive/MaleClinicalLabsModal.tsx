@@ -207,12 +207,14 @@ export const MaleClinicalLabsModal: React.FC<MaleClinicalLabsModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { activeAssessment, submitMaleTier2 } = useUserHealth();
+  const { activeAssessment, submitMaleTier2, clearTier2, fetchClinicalState } = useUserHealth();
 
   const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showConfirmClear, setShowConfirmClear] = useState(false);
+  const [clearingTier2, setClearingTier2] = useState(false);
 
   // OCR state
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -220,32 +222,57 @@ export const MaleClinicalLabsModal: React.FC<MaleClinicalLabsModalProps> = ({
   const [ocrSuccessMsg, setOcrSuccessMsg] = useState<string | null>(null);
   const [ocrError, setOcrError] = useState<string | null>(null);
 
-  // Pre-populate with existing Tier 2 values if present
+  // Pre-populate with authoritative Tier 2 clinical values if present
   useEffect(() => {
     if (!isOpen) return;
 
-    const initial: Record<string, string> = {};
-    const existing =
-      activeAssessment?.tier_2_inputs ||
-      activeAssessment?.input_features ||
-      {};
+    let isMounted = true;
+    const hydrateState = async () => {
+      let existing =
+        activeAssessment?.tier_2_inputs ||
+        (activeAssessment as any)?.authoritative_tier_2_inputs ||
+        activeAssessment?.input_features ||
+        {};
 
-    for (const fc of MALE_FIELD_CONFIGS) {
-      if (
-        existing[fc.key] !== undefined &&
-        existing[fc.key] !== null &&
-        existing[fc.key] !== ''
-      ) {
-        initial[fc.key] = String(existing[fc.key]);
+      try {
+        if (fetchClinicalState) {
+          const state = await fetchClinicalState('male_hypogonadism');
+          if (state?.tier_2_inputs && Object.keys(state.tier_2_inputs).length > 0) {
+            existing = state.tier_2_inputs;
+          }
+        }
+      } catch (err) {
+        console.warn('Male clinical state hydration notice:', err);
       }
-    }
 
-    setFormValues(initial);
-    setFieldErrors({});
-    setSubmitError(null);
-    setOcrSuccessMsg(null);
-    setOcrError(null);
-  }, [isOpen, activeAssessment]);
+      if (!isMounted) return;
+
+      const initial: Record<string, string> = {};
+      for (const fc of MALE_FIELD_CONFIGS) {
+        if (
+          existing[fc.key] !== undefined &&
+          existing[fc.key] !== null &&
+          existing[fc.key] !== ''
+        ) {
+          initial[fc.key] = String(existing[fc.key]);
+        }
+      }
+
+      setFormValues(initial);
+      setFieldErrors({});
+      setSubmitError(null);
+      setOcrSuccessMsg(null);
+      setOcrError(null);
+      setShowConfirmClear(false);
+    };
+
+    hydrateState();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, activeAssessment, fetchClinicalState]);
+
 
   // Handle value change
   const handleChange = (key: string, val: string) => {
@@ -379,7 +406,22 @@ export const MaleClinicalLabsModal: React.FC<MaleClinicalLabsModalProps> = ({
     }
   };
 
+  const handleConfirmClearTier2 = async () => {
+    setClearingTier2(true);
+    setSubmitError(null);
+    try {
+      await clearTier2('male_hypogonadism');
+      setShowConfirmClear(false);
+      onClose();
+    } catch (err: any) {
+      setSubmitError(err?.message || 'Failed to clear male Tier 2 laboratory data.');
+    } finally {
+      setClearingTier2(false);
+    }
+  };
+
   if (!isOpen) return null;
+
 
   const categories = [
     { id: 'hormones', title: 'Hormonal & Signaling Panel', desc: 'Direct hormones & binding proteins' },
@@ -595,33 +637,71 @@ export const MaleClinicalLabsModal: React.FC<MaleClinicalLabsModalProps> = ({
             </div>
 
             {/* Modal Footer Controls */}
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={submitting}
-                className="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={submitting || activeValuesCount === 0}
-                className="inline-flex items-center gap-2 px-5 py-2 text-xs font-semibold text-white bg-[#0288D1] hover:bg-[#0277BD] rounded-xl shadow-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    Computing Screening Model...
-                  </>
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                {showConfirmClear ? (
+                  <div className="flex items-center gap-2 p-1.5 rounded-xl bg-rose-500/15 border border-rose-400/30">
+                    <span className="text-[11px] text-rose-700 dark:text-rose-300 font-medium">Revert to Tier 1?</span>
+                    <button
+                      type="button"
+                      onClick={handleConfirmClearTier2}
+                      disabled={clearingTier2}
+                      className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1"
+                    >
+                      {clearingTier2 ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                      <span>Confirm</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmClear(false)}
+                      className="px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 ) : (
-                  <>
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    Update Assessment Result
-                  </>
+                  (activeAssessment?.tier_2_inputs && Object.keys(activeAssessment.tier_2_inputs).length > 0) && (
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmClear(true)}
+                      className="px-3 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                      title="Explicitly remove all stored Tier 2 laboratory data and revert to Tier 1 screening"
+                    >
+                      <span>Clear Tier 2 Data</span>
+                    </button>
+                  )
                 )}
-              </button>
+              </div>
+
+              <div className="flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  disabled={submitting || clearingTier2}
+                  className="px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting || clearingTier2 || activeValuesCount === 0}
+                  className="inline-flex items-center gap-2 px-5 py-2 text-xs font-semibold text-white bg-[#0288D1] hover:bg-[#0277BD] rounded-xl shadow-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Computing Screening Model...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Update Assessment Result
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
+
           </form>
         </motion.div>
       </div>

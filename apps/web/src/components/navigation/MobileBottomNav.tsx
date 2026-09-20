@@ -33,8 +33,12 @@ export const MobileBottomNav: React.FC = () => {
     return location.pathname === path;
   };
 
+  const isFemale = pathway === 'female';
+
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-[#E2E8F0] shadow-lg z-30 flex items-center justify-around px-2 select-none pb-[env(safe-area-inset-bottom,0px)]">
+    <nav className={`md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t shadow-lg z-30 flex items-center justify-around px-2 select-none pb-[env(safe-area-inset-bottom,0px)] ${
+      isFemale ? 'border-[#EAECF0]' : 'border-[#E2E8F0]'
+    }`}>
       {navItems.map((item) => {
         const active = isActive(item.path);
         const Icon = item.icon;
@@ -44,7 +48,11 @@ export const MobileBottomNav: React.FC = () => {
             to={item.path}
             className={`flex flex-col items-center justify-center gap-1 w-14 py-1 rounded-xl transition-all active:scale-95 cursor-pointer ${
               active
-                ? 'text-[#0288D1] font-bold'
+                ? isFemale
+                  ? 'text-[#E84A8A] font-bold'
+                  : 'text-[#0288D1] font-bold'
+                : isFemale
+                ? 'text-[#667085] hover:text-[#111318]'
                 : 'text-[#64748B] hover:text-[#0F172A]'
             }`}
           >

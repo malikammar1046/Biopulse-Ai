@@ -28,6 +28,7 @@ import {
   UltrasoundUploadModal,
   AssessmentHistoryModal,
 } from '../../components/adaptive';
+import { FemaleScreeningWorkspace } from '../../components/female';
 
 export const AssessmentPage: React.FC = () => {
   const { userProfile, updateUserProfile } = useAuth();
@@ -40,6 +41,8 @@ export const AssessmentPage: React.FC = () => {
     activeAssessment,
     assessmentLoading,
     refreshActiveAssessment,
+    submitTier1,
+    submitMaleTier1,
   } = useUserHealth();
 
   // Active view tab: 'overview' (4-tier progressive profile) or 'intake' (quick update)
@@ -62,6 +65,19 @@ export const AssessmentPage: React.FC = () => {
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   const pathway = adaptiveProfile.pathway;
+  const isMale = pathway === 'male' || adaptiveProfile.pathway === 'male' || activeAssessment?.module === 'male_hypogonadism';
+  const hasUltrasoundEvidence =
+    !isMale &&
+    (activeAssessment?.assessment_level === 'tier_1_3' || activeAssessment?.assessment_level === 'tier_1_2_3') &&
+    Boolean(activeAssessment?.gradcam_b64);
+
+  const handleInitializeTier1 = async () => {
+    if (isMale) {
+      await submitMaleTier1();
+    } else {
+      await submitTier1();
+    }
+  };
 
   const handleSaveIntake = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,6 +104,10 @@ export const AssessmentPage: React.FC = () => {
       setIsSaving(false);
     }
   };
+
+  if (!isMale) {
+    return <FemaleScreeningWorkspace />;
+  }
 
   return (
     <motion.div
@@ -150,11 +170,11 @@ export const AssessmentPage: React.FC = () => {
             onOpenClinicalModal={() => setIsClinicalModalOpen(true)}
             onOpenUltrasoundModal={() => setIsUltrasoundModalOpen(true)}
             onOpenHistoryModal={() => setIsHistoryModalOpen(true)}
-            onRefresh={refreshActiveAssessment}
+            onRefresh={handleInitializeTier1}
           />
 
           {/* Dedicated Ultrasound AI Analysis Card (Side-by-Side Original & Grad-CAM) */}
-          {activeAssessment?.gradcam_b64 && (
+          {hasUltrasoundEvidence && (
             <div className="p-6 sm:p-8 rounded-[32px] bg-white border border-[#BAE6FD] text-[#0F172A] shadow-xs space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E2E8F0] pb-4">
                 <div className="space-y-1">
@@ -202,10 +222,11 @@ export const AssessmentPage: React.FC = () => {
                   <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-950 border border-slate-200 flex items-center justify-center shadow-inner">
                     <img
                       src={
-                        localStorage.getItem('biopulse_original_ultrasound_preview') ||
-                        (activeAssessment.gradcam_b64.startsWith('data:')
+                        (userProfile?.id && activeAssessment?.assessment_id && localStorage.getItem(`biopulse_original_ultrasound_${userProfile.id}_${activeAssessment.assessment_id}`)) ||
+                        (userProfile?.id && activeAssessment?.id && localStorage.getItem(`biopulse_original_ultrasound_${userProfile.id}_${activeAssessment.id}`)) ||
+                        (activeAssessment?.gradcam_b64?.startsWith('data:')
                           ? activeAssessment.gradcam_b64
-                          : `data:image/png;base64,${activeAssessment.gradcam_b64}`)
+                          : `data:image/png;base64,${activeAssessment?.gradcam_b64 || ''}`)
                       }
                       alt="Pelvic Ultrasound Scan"
                       className="w-full h-full object-contain"
@@ -231,9 +252,9 @@ export const AssessmentPage: React.FC = () => {
                   <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-950 border border-[#BAE6FD] flex items-center justify-center shadow-inner">
                     <img
                       src={
-                        activeAssessment.gradcam_b64.startsWith('data:')
+                        activeAssessment?.gradcam_b64?.startsWith('data:')
                           ? activeAssessment.gradcam_b64
-                          : `data:image/png;base64,${activeAssessment.gradcam_b64}`
+                          : `data:image/png;base64,${activeAssessment?.gradcam_b64 || ''}`
                       }
                       alt="Grad-CAM Neural Focus Heatmap"
                       className="w-full h-full object-contain"

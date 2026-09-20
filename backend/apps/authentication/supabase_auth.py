@@ -19,8 +19,10 @@ Security guarantees:
 import logging
 import os
 from dataclasses import dataclass
+from typing import Optional
 
 import jwt
+from jwt import PyJWKClient, PyJWKClientError
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
@@ -50,17 +52,28 @@ class SupabaseUser:
 class SupabaseAuthentication(BaseAuthentication):
     """
     DRF Authentication class that validates Supabase JWT bearer tokens.
+    DRF Authentication class that validates Supabase JWTs.
 
-    Configuration (env vars):
-      SUPABASE_JWT_SECRET  — the JWT secret from Supabase project settings
-                             (Settings → API → JWT Secret)
-      SUPABASE_URL         — the Supabase project URL (used as audience fallback)
+    Supports:
+      1. Asymmetric verification via Supabase JWKS (ES256 / RS256)
+      2. Symmetric verification via project JWT secret (HS256)
 
-    The class uses PyJWT to verify the token locally without a network call,
-    which is fast and does not require the Supabase admin SDK.
+    SECURITY INVARIANT:
+      No request may ever authenticate with an unverified signature, even in DEBUG mode.
     """
 
     BEARER_PREFIX = "Bearer "
+    _jwks_client: Optional[PyJWKClient] = None
+
+    @classmethod
+    def _get_jwks_client(cls) -> Optional[PyJWKClient]:
+        """Returns or lazily initializes the cached PyJWKClient for Supabase JWKS endpoint."""
+        if cls._jwks_client is None:
+            supabase_url = os.environ.get("SUPABASE_URL", "").strip().rstrip("/")
+            if supabase_url:
+                jwks_url = f"{supabase_url}/auth/v1/.well-known/jwks.json"
+                cls._jwks_client = PyJWKClient(jwks_url, cache_keys=True)
+        return cls._jwks_client
 
     def authenticate(self, request) -> tuple | None:
         """
@@ -88,37 +101,36 @@ class SupabaseAuthentication(BaseAuthentication):
 
     def _verify_token(self, token: str) -> SupabaseUser:
         """
-        Verify the Supabase JWT and return a SupabaseUser.
+        Verify the Supabase JWT signature and claims, returning a SupabaseUser.
 
-        Supabase signs JWTs with HS256 using the project JWT secret.
-        The audience is typically "authenticated" for user sessions.
+        Enforces strict signature verification, expiration, audience, issuer,
+        and subject (sub) claims.
         """
-        jwt_secret = os.environ.get("SUPABASE_JWT_SECRET", "")
-        if not jwt_secret:
-            from django.conf import settings
-            if getattr(settings, "DEBUG", False):
-                logger.info("SUPABASE_JWT_SECRET unset in DEBUG mode: decoding payload without signature verification")
-                try:
-                    payload = jwt.decode(token, options={"verify_signature": False})
-                except Exception as exc:
-                    logger.warning("Dev JWT decode error: %s", exc)
-                    raise AuthenticationFailed("Token is malformed.")
-            else:
-                logger.error(
-                    "SUPABASE_JWT_SECRET is not configured. "
-                    "Set this environment variable to enable JWT authentication."
-                )
-                raise AuthenticationFailed(
-                    "Authentication service is not configured. Please contact support."
-                )
-        else:
+        try:
+            unverified_header = jwt.get_unverified_header(token)
+        except Exception as exc:
+            logger.warning("JWT header decode error: %s", exc)
+            raise AuthenticationFailed("Token is malformed.") from exc
+
+        alg = unverified_header.get("alg")
+        if not alg or alg.lower() == "none":
+            raise AuthenticationFailed("Unsigned tokens are strictly rejected.")
+
+        payload = None
+
+        # 1. Asymmetric verification via Supabase JWKS (ES256, RS256)
+        if alg in ("ES256", "RS256"):
+            jwks_client = self._get_jwks_client()
+            if not jwks_client:
+                logger.error("SUPABASE_URL is not configured for asymmetric JWT validation.")
+                raise AuthenticationFailed("Authentication service is not properly configured.")
             try:
+                signing_key = jwks_client.get_signing_key_from_jwt(token)
                 payload = jwt.decode(
                     token,
-                    jwt_secret,
-                    algorithms=["HS256"],
-                    # Supabase sets audience = "authenticated" for valid user sessions
-                    options={"verify_aud": False},  # audience varies by Supabase version
+                    signing_key.key,
+                    algorithms=[alg],
+                    options={"verify_signature": True, "verify_exp": True, "verify_aud": False},
                 )
             except jwt.ExpiredSignatureError:
                 raise AuthenticationFailed("Session has expired. Please sign in again.")
@@ -127,19 +139,64 @@ class SupabaseAuthentication(BaseAuthentication):
             except jwt.DecodeError as exc:
                 logger.warning("JWT decode error: %s", exc)
                 raise AuthenticationFailed("Token is malformed.")
-            except jwt.InvalidTokenError as exc:
+            except PyJWKClientError as exc:
+                logger.warning("JWKS client error: %s", exc)
+                raise AuthenticationFailed("Token validation failed.") from exc
+            except Exception as exc:
+                logger.warning("JWKS token validation error: %s", exc)
+                raise AuthenticationFailed("Token validation failed.")
+
+        # 2. Symmetric verification via project JWT secret (HS256)
+        elif alg == "HS256":
+            jwt_secret = os.environ.get("SUPABASE_JWT_SECRET", "").strip()
+            if not jwt_secret:
+                logger.error("SUPABASE_JWT_SECRET is not configured for HS256 JWT validation.")
+                raise AuthenticationFailed("Authentication service is not configured. Please contact support.")
+            try:
+                payload = jwt.decode(
+                    token,
+                    jwt_secret,
+                    algorithms=["HS256"],
+                    options={"verify_signature": True, "verify_exp": True, "verify_aud": False},
+                )
+            except jwt.ExpiredSignatureError:
+                raise AuthenticationFailed("Session has expired. Please sign in again.")
+            except jwt.InvalidSignatureError:
+                raise AuthenticationFailed("Token signature is invalid.")
+            except jwt.DecodeError as exc:
+                logger.warning("JWT decode error: %s", exc)
+                raise AuthenticationFailed("Token is malformed.")
+            except Exception as exc:
                 logger.warning("JWT validation error: %s", exc)
                 raise AuthenticationFailed("Token validation failed.")
 
+        else:
+            raise AuthenticationFailed(f"Unsupported token algorithm '{alg}'.")
+
+        # Validate essential claims
         user_id: str | None = payload.get("sub")
-        if not user_id:
-            raise AuthenticationFailed("Token does not contain a user identity (sub claim).")
+        if not user_id or not isinstance(user_id, str) or not user_id.strip():
+            raise AuthenticationFailed("Token does not contain a valid user identity (sub claim).")
+
+        # Validate issuer if SUPABASE_URL is configured
+        supabase_url = os.environ.get("SUPABASE_URL", "").strip().rstrip("/")
+        if supabase_url:
+            expected_iss = f"{supabase_url}/auth/v1"
+            iss = payload.get("iss")
+            if iss and iss.rstrip("/") != expected_iss:
+                raise AuthenticationFailed("Token issuer does not match expected Supabase project.")
+
+        # Validate audience
+        aud = payload.get("aud")
+        expected_aud = os.environ.get("SUPABASE_JWT_AUDIENCE", "authenticated").strip()
+        if aud and aud != expected_aud:
+            raise AuthenticationFailed("Token audience does not match expected audience.")
 
         email: str = payload.get("email", "")
         role: str = payload.get("role", "authenticated")
 
         return SupabaseUser(
-            id=user_id,
+            id=str(user_id).strip(),
             email=email,
             role=role,
             raw_token=token,

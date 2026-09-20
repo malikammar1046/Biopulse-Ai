@@ -13,8 +13,12 @@ export const AppLayout: React.FC = () => {
   const { userProfile } = useUserHealth();
   const overviewRoute = getPathwayDashboardRoute(userProfile);
 
+  const isFemale = userProfile.gender === 'female' || userProfile.pathway === 'female';
+
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC] text-[#0F172A] antialiased relative">
+    <div className={`flex min-h-screen antialiased relative ${
+      isFemale ? 'bg-[#FAFAFC] text-[#111318]' : 'bg-[#F8FAFC] text-[#0F172A]'
+    }`}>
       <ScrollToTop />
 
       {/* Desktop Medical Sidebar */}
@@ -23,13 +27,17 @@ export const AppLayout: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 pb-20 md:pb-0">
         {/* Mobile Top Header (hidden on desktop) */}
-        <header className="md:hidden sticky top-0 z-30 h-14 bg-white border-b border-[#E2E8F0] px-4 flex items-center justify-between shrink-0 text-[#0F172A] select-none shadow-xs">
+        <header className={`md:hidden sticky top-0 z-30 h-14 bg-white border-b px-4 flex items-center justify-between shrink-0 select-none shadow-xs ${
+          isFemale ? 'border-[#EAECF0] text-[#111318]' : 'border-[#E2E8F0] text-[#0F172A]'
+        }`}>
           <Link to={overviewRoute} className="flex items-center">
             <Logo size="xs" theme="light" showTagline={false} />
           </Link>
           <Link
             to={ROUTES.HOME}
-            className="text-[11px] font-mono text-[#0288D1] hover:text-[#01579B] flex items-center gap-1 font-semibold"
+            className={`text-[11px] font-mono flex items-center gap-1 font-semibold ${
+              isFemale ? 'text-[#E84A8A] hover:text-[#D93B7A]' : 'text-[#0288D1] hover:text-[#01579B]'
+            }`}
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Public Site</span>

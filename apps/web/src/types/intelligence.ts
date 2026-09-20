@@ -226,6 +226,7 @@ export interface ChatMessage {
 export interface ChatResponsePayload {
   success: boolean;
   message: string;
+  reply?: string;
   conversation_id: string;
   context_used: ChatContextUsage;
   safety_level: ChatSafetyLevel;
@@ -237,11 +238,23 @@ export interface ChatResponsePayload {
 // PCOS-ML Progressive Assessment Types
 // ---------------------------------------------------------------------------
 
-export type AssessmentLevel = 'tier_1' | 'tier_1_2' | 'tier_1_2_3';
+export type AssessmentLevel = 'tier_1' | 'tier_1_2' | 'tier_1_3' | 'tier_1_2_3';
 
 export type ProgressiveRiskCategory = 'lower' | 'intermediate' | 'higher' | 'insufficient_data';
 
 export type PCOMStatus = 'PCOM Detected' | 'PCOM Not Visible' | 'Not Assessed';
+
+export interface AssessmentEvidenceUsed {
+  tier_1: boolean;
+  tier_2: boolean;
+  tier_3_ultrasound: boolean;
+}
+
+export interface AvailableHistoricalEvidence {
+  tier_1: boolean;
+  tier_2: boolean;
+  tier_3_ultrasound: boolean;
+}
 
 export interface FusionDetails {
   clinical_probability: number;
@@ -274,11 +287,15 @@ export interface DirectLaboratoryValue {
 }
 
 export interface ProgressiveAssessment {
+  has_assessment?: boolean;
+  patient_id?: string;
   assessment_id: string;
   id?: string;
   module?: 'female_pcos' | 'male_hypogonadism' | string;
   assessment_level: AssessmentLevel;
   tiers_included: number[];
+  evidence_used?: AssessmentEvidenceUsed;
+  available_historical_evidence?: AvailableHistoricalEvidence;
   model_version: string;
   model_name: string;
   probability: number;
@@ -313,7 +330,9 @@ export interface ProgressiveAssessment {
   hormone_pattern_interpretation?: HormonePatternInterpretation;
   direct_laboratory_values?: DirectLaboratoryValue[];
   tier_2_inputs?: Record<string, any>;
+  authoritative_tier_2_inputs?: Record<string, any>;
   input_features?: Record<string, any>;
+  authoritative_tier_1_inputs?: Record<string, any>;
   status_code?: string;
   notice?: string;
   disclaimer: string;

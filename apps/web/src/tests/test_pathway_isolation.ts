@@ -6,7 +6,7 @@ import type { UserProfile } from '../types/onboarding';
 function assert(condition: boolean, message: string) {
   if (!condition) {
     console.error(`❌ Assertion Failed: ${message}`);
-    process.exit(1);
+    throw new Error(`Assertion Failed: ${message}`);
   } else {
     console.log(`✅ ${message}`);
   }
@@ -26,19 +26,24 @@ const maleProfile: UserProfile = {
   waistCm: 88,
   gender: 'male',
   pathway: 'male',
+  isOnboarded: true,
   mensHealth: {
     energyLevel: 'moderate',
     sexDrive: 'normal',
-    sleepQuality: 'good',
+    sleepQuality: 'restful',
+    erectileDifficulties: 'none',
+    muscleStrengthChanges: 'stable',
+    bodyHairChanges: 'no_change',
+    moodChanges: ['stable'],
   },
   emergencyContacts: [
-    { name: 'Fatima Khan', phone: '03009876543', relation: 'Spouse' },
-    { name: 'Ali Khan', phone: '03001112223', relation: 'Brother' },
+    { name: 'Fatima Khan', phone: '03009876543', relationship: 'Spouse', isPrimary: true },
+    { name: 'Ali Khan', phone: '03001112223', relationship: 'Brother', isPrimary: false },
   ],
-  medical: { bloodType: 'O+', allergies: ['None'], medications: ['Vitamin D'], conditions: ['None'] },
-  lifestyle: { dietaryPreference: 'halal_omnivore', dailyWaterGlasses: 8, activityLevel: 'moderately_active', sleepHours: 8 },
+  medical: { bloodType: 'O+', allergies: ['None'], medications: [{ id: '1', name: 'Vitamin D', dosage: '1000IU', frequency: 'daily' }], conditions: ['None'], surgeries: [], familyHistory: [] },
+  lifestyle: { dietaryPreference: 'halal_omnivore', dailyWaterGlasses: 8, activityLevel: 'moderate', exercisePreferences: ['walking'], sleepHours: 8 },
   goals: { selectedGoals: ['Improve Daily Energy & Stamina'], supportPreference: 'gentle_nudges' },
-};
+} as unknown as UserProfile;
 
 const maleCompletion = calculateProfileCompletion(maleProfile, true);
 assert(maleCompletion.percentage >= 80, `Male completion is high: ${maleCompletion.percentage}%`);

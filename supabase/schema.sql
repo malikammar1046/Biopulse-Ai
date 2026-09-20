@@ -1263,3 +1263,49 @@ CREATE POLICY "Users can view own nutrition plans"
   ON public.nutrition_plans FOR SELECT
   TO authenticated
   USING (auth.uid() = user_id);
+
+-- ==============================================================================
+-- 76. Patient Clinical State Table (Authoritative Tier 1 & Tier 2 Input Persistence)
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.patient_clinical_state (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  module TEXT NOT NULL CHECK (module IN ('female_pcos', 'male_hypogonadism')),
+  tier_1_inputs JSONB NOT NULL DEFAULT '{}'::jsonb,
+  tier_2_inputs JSONB NOT NULL DEFAULT '{}'::jsonb,
+  ultrasound_inputs JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  CONSTRAINT unique_patient_clinical_state UNIQUE (user_id, module)
+);
+
+CREATE INDEX IF NOT EXISTS idx_patient_clinical_state_user_module 
+  ON public.patient_clinical_state(user_id, module);
+
+ALTER TABLE public.patient_clinical_state ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can select own clinical state" ON public.patient_clinical_state;
+CREATE POLICY "Users can select own clinical state"
+  ON public.patient_clinical_state FOR SELECT
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert own clinical state" ON public.patient_clinical_state;
+CREATE POLICY "Users can insert own clinical state"
+  ON public.patient_clinical_state FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update own clinical state" ON public.patient_clinical_state;
+CREATE POLICY "Users can update own clinical state"
+  ON public.patient_clinical_state FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can delete own clinical state" ON public.patient_clinical_state;
+CREATE POLICY "Users can delete own clinical state"
+  ON public.patient_clinical_state FOR DELETE
+  TO authenticated
+  USING (auth.uid() = user_id);
+

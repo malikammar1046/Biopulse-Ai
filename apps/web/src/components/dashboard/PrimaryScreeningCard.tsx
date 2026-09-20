@@ -156,6 +156,49 @@ export const PrimaryScreeningCard: React.FC<PrimaryScreeningCardProps> = ({
   };
 
   // ---------------------------------------------------------------------------
+  // Loading State: Synchronizing / Fetching clinical assessment
+  // ---------------------------------------------------------------------------
+  if (loading && (!hasAssessment || probabilityPercent === null)) {
+    return (
+      <div className="p-6 sm:p-7 rounded-[24px] bg-white border border-[#E2E8F0] shadow-sm flex flex-col justify-between text-left space-y-6 h-full select-none animate-pulse">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center text-[#0288D1]">
+                <Activity className="w-4 h-4 animate-spin" />
+              </div>
+              <h2 className="text-base sm:text-lg font-bold text-[#0F172A]">
+                {title}
+              </h2>
+            </div>
+            <span className="text-[11px] font-semibold text-[#0288D1] px-2.5 py-0.5 rounded-full bg-sky-50 border border-sky-200">
+              Synchronizing...
+            </span>
+          </div>
+
+          <div className="py-8 flex flex-col items-center justify-center space-y-3">
+            <div className="w-12 h-12 rounded-full border-4 border-sky-100 border-t-[#0288D1] animate-spin" />
+            <div className="text-center space-y-1">
+              <p className="text-xs font-semibold text-[#0F172A]">
+                Checking Screening Status
+              </p>
+              <p className="text-[11px] text-[#64748B]">
+                Synchronizing authoritative clinical assessment...
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-4 border-t border-[#E2E8F0]">
+          <p className="text-[10px] text-[#64748B] leading-relaxed">
+            Evidence-based screening indicator · Does not constitute a medical diagnosis.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ---------------------------------------------------------------------------
   // Empty State: No assessment yet
   // ---------------------------------------------------------------------------
   if (!hasAssessment || probabilityPercent === null) {
@@ -242,7 +285,7 @@ export const PrimaryScreeningCard: React.FC<PrimaryScreeningCardProps> = ({
         {renderTierIndicator()}
 
         {/* Ultrasound Grad-CAM Preview */}
-        {gradcamB64 && (
+        {pathway !== 'male' && (assessmentLevel === 'tier_1_3' || assessmentLevel === 'tier_1_2_3') && gradcamB64 && (
           <div className="pt-3 border-t border-[#E2E8F0]">
             <div className="p-3 rounded-2xl bg-sky-50/70 border border-sky-100 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">

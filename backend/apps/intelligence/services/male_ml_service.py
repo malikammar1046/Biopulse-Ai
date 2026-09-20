@@ -149,8 +149,16 @@ class MaleMLService:
                 raise FileNotFoundError(f"Male Tier 2 model artifact not found at: {t2_path}")
 
             try:
-                self._tier1_artifact = joblib.load(t1_path)
-                self._tier2_artifact = joblib.load(t2_path)
+                import warnings
+                try:
+                    from sklearn.exceptions import InconsistentVersionWarning
+                except ImportError:
+                    InconsistentVersionWarning = UserWarning
+
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", InconsistentVersionWarning)
+                    self._tier1_artifact = joblib.load(t1_path)
+                    self._tier2_artifact = joblib.load(t2_path)
                 self._is_ready = True
                 logger.info("Male-ML Assessment Engine initialized successfully.")
             except Exception as e:
@@ -387,6 +395,31 @@ class MaleMLService:
     # -----------------------------------------------------------------------
     # Tier 2 Inference (Indirect Laboratory Markers + Hormone Pattern Rules)
     # -----------------------------------------------------------------------
+
+    def can_predict_tier2(self, lab_inputs: Optional[Dict[str, Any]]) -> bool:
+        """
+        Determines whether sufficient clinical/laboratory inputs exist to run male Tier 2 assessment.
+        Returns True if at least one direct hormone marker or indirect laboratory marker is provided.
+        """
+        if not lab_inputs or not isinstance(lab_inputs, dict):
+            return False
+        candidate_fields = [
+            "total_testosterone", "total_t", "lh", "fsh", "prolactin",
+            "shbg_nmol_l", "estradiol_pg_ml", "albumin_g_dl", "hba1c_pct",
+            "glucose_mg_dl", "hemoglobin_g_dl", "hematocrit_pct", "rbc_count",
+            "alt_u_l", "ast_u_l", "total_bilirubin_mg_dl", "creatinine_mg_dl",
+            "bun_mg_dl", "uric_acid_mg_dl", "hdl_mg_dl",
+        ]
+        for f in candidate_fields:
+            val = lab_inputs.get(f)
+            if val is not None and str(val).strip() != "":
+                if not (isinstance(val, float) and np.isnan(val)):
+                    try:
+                        float(val)
+                        return True
+                    except (ValueError, TypeError):
+                        pass
+        return False
 
     def prepare_tier2_features(
         self,

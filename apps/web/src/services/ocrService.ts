@@ -1,7 +1,6 @@
 import { supabase } from '../lib/supabase';
 import type { ReportResultInput, ReportType } from '../types/report';
 import { findTestKnowledge } from '../utils/reportKnowledge';
-import { evaluateResultStatus, parseNumericValue } from '../utils/reportCalculations';
 
 export interface ExtractedReportData {
   title: string;
@@ -21,10 +20,10 @@ const BACKEND_API_URL = (typeof import.meta !== 'undefined' && (import.meta as a
 const OCR_ENDPOINT = `${BACKEND_API_URL}/v1/health/ocr/`;
 
 /**
- * Standard Lab Templates for local offline fallback only.
- * When used, extractionMethod is strictly marked as 'fallback'.
+ * Standard Lab Templates for isolated demo / sample exploration fixtures only.
+ * SAFETY INVARIANT: These templates are never injected into the live patient upload pipeline.
  */
-const FALLBACK_TEMPLATES: Record<ReportType, ReportResultInput[]> = {
+export const DEMO_SAMPLE_TEMPLATES: Record<ReportType, ReportResultInput[]> = {
   hormone_test: [
     {
       testName: 'LH (Luteinizing Hormone)',
@@ -389,107 +388,86 @@ class OcrService {
         .replace(/[-_]/g, ' ')
         .replace(/\b\w/g, (c) => c.toUpperCase()) || 'Medical Lab Report';
 
-    // 1. Attempt real PaddleOCR extraction via Django backend
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
+    // 1. Validate user session
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
 
-      if (token) {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const response = await fetch(OCR_ENDPOINT, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        });
-
-        if (response.ok) {
-          const resJson = await response.json();
-          if (resJson.success && Array.isArray(resJson.results)) {
-            const mappedResults: ReportResultInput[] = resJson.results.map((r: any) => {
-              const kb = findTestKnowledge(r.test_name);
-              return {
-                testName: r.test_name,
-                resultValue: String(r.result_value),
-                resultNumeric: r.result_numeric,
-                unit: r.unit || '',
-                referenceRange: r.reference_range || '',
-                referenceLow: r.reference_low,
-                referenceHigh: r.reference_high,
-                status: r.status,
-                ocrConfidence: r.confidence,
-                userVerified: false, // Prominently encourage human verification
-                verificationState: 'extracted' as const,
-                requiresReview: r.requires_review,
-                sourceText: r.source_text,
-                extractionMethod: r.extraction_method || 'paddleocr',
-                pageNumber: r.page_number || 1,
-                explanation: kb?.whatIsIt || r.explanation,
-                timelineConnection: kb?.timelineConnection,
-              };
-            });
-
-            return {
-              title: cleanTitle,
-              reportType: preferredType,
-              reportDate: todayStr,
-              extractedResults: mappedResults,
-              rawTextSnippet: resJson.raw_text_snippet,
-              ocrConfidenceAvg: resJson.document?.avg_confidence || 0.95,
-              engine: resJson.document?.engine || 'PaddleOCR PP-OCRv4 (ONNX)',
-              hasSelectableText: resJson.document?.has_selectable_text || false,
-              extractionMethod: resJson.document?.has_selectable_text ? 'selectable_text' : 'paddleocr',
-              requiresReview: resJson.requires_review || false,
-              disclaimer: resJson.disclaimer,
-            };
-          }
-        }
-      }
-    } catch (err) {
-      console.warn('Backend PaddleOCR endpoint unreachable, utilizing client fallback:', err);
+    if (!token) {
+      throw new Error('Authentication required. Please sign in to upload and extract medical reports.');
     }
 
-    // 2. Offline / local fallback (strictly tagged as 'fallback')
-    const baseResults = FALLBACK_TEMPLATES[preferredType] || FALLBACK_TEMPLATES.blood_test;
-    const fallbackResults: ReportResultInput[] = baseResults.map((item) => {
-      const kb = findTestKnowledge(item.testName);
-      const numericVal = item.resultNumeric ?? parseNumericValue(item.resultValue);
-      const computedStatus = evaluateResultStatus(
-        item.resultValue,
-        item.referenceLow,
-        item.referenceHigh
-      );
+    // 2. Transmit document to backend PaddleOCR service
+    const formData = new FormData();
+    formData.append('file', file);
 
+    let response: Response;
+    try {
+      response = await fetch(OCR_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+    } catch (netErr: any) {
+      throw new Error(
+        `Unable to reach the medical document OCR service (${netErr?.message || 'Network error'}). Please check your connection or enter lab values manually.`
+      );
+    }
+
+    if (!response.ok) {
+      let serverErrorMsg = '';
+      try {
+        const errJson = await response.json();
+        serverErrorMsg = errJson.error || errJson.details || '';
+      } catch {
+        // Non-JSON response
+      }
+      throw new Error(
+        `Document OCR extraction failed (${response.status}${serverErrorMsg ? `: ${serverErrorMsg}` : ''}). Please enter values manually or try re-uploading.`
+      );
+    }
+
+    const resJson = await response.json();
+    if (!resJson.success || !Array.isArray(resJson.results)) {
+      throw new Error('The OCR engine was unable to extract structured test data from this document. Please enter values manually.');
+    }
+
+    const mappedResults: ReportResultInput[] = resJson.results.map((r: any) => {
+      const kb = findTestKnowledge(r.test_name);
       return {
-        ...item,
-        resultNumeric: numericVal,
-        status: computedStatus,
-        userVerified: false,
+        testName: r.test_name,
+        resultValue: String(r.result_value),
+        resultNumeric: r.result_numeric,
+        unit: r.unit || '',
+        referenceRange: r.reference_range || '',
+        referenceLow: r.reference_low,
+        referenceHigh: r.reference_high,
+        status: r.status,
+        ocrConfidence: r.confidence,
+        userVerified: false, // Prominently encourage human verification
         verificationState: 'extracted' as const,
-        extractionMethod: 'fallback',
-        explanation: kb?.whatIsIt || item.explanation,
-        timelineConnection: kb?.timelineConnection || item.timelineConnection,
+        requiresReview: r.requires_review,
+        sourceText: r.source_text,
+        extractionMethod: r.extraction_method || 'paddleocr',
+        pageNumber: r.page_number || 1,
+        explanation: kb?.whatIsIt || r.explanation,
+        timelineConnection: kb?.timelineConnection,
       };
     });
-
-    const confidenceSum = fallbackResults.reduce((acc, r) => acc + (r.ocrConfidence || 0.90), 0);
-    const avgConf = fallbackResults.length > 0 ? confidenceSum / fallbackResults.length : 0.90;
 
     return {
       title: cleanTitle,
       reportType: preferredType,
       reportDate: todayStr,
-      extractedResults: fallbackResults,
-      rawTextSnippet: `Offline Mode — Processed ${file.name} (${Math.round(file.size / 1024)} KB).`,
-      ocrConfidenceAvg: avgConf,
-      engine: 'Client Local Engine (Fallback)',
-      hasSelectableText: false,
-      extractionMethod: 'fallback',
-      requiresReview: true,
-      disclaimer: 'OvaSense local fallback. Please connect the Django backend for full PaddleOCR pipeline.',
+      extractedResults: mappedResults,
+      rawTextSnippet: resJson.raw_text_snippet,
+      ocrConfidenceAvg: resJson.document?.avg_confidence || (mappedResults.length > 0 ? 0.95 : 0.0),
+      engine: resJson.document?.engine || 'PaddleOCR PP-OCRv4 (ONNX)',
+      hasSelectableText: resJson.document?.has_selectable_text || false,
+      extractionMethod: resJson.document?.has_selectable_text ? 'selectable_text' : 'paddleocr',
+      requiresReview: resJson.requires_review || mappedResults.length === 0,
+      disclaimer: resJson.disclaimer,
     };
   }
 }

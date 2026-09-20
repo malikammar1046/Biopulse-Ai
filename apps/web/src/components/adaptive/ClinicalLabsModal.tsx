@@ -241,13 +241,15 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { activeAssessment, submitTier2 } = useUserHealth();
+  const { activeAssessment, submitTier2, clearTier2, fetchClinicalState } = useUserHealth();
 
   // Form state
   const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [removedFields, setRemovedFields] = useState<string[]>([]);
   const [ocrExtractedFields, setOcrExtractedFields] = useState<string[]>([]);
   const [entryMode, setEntryMode] = useState<'manual' | 'mock'>('manual');
+  const [showConfirmClear, setShowConfirmClear] = useState(false);
+  const [clearingTier2, setClearingTier2] = useState(false);
 
   // OCR Upload / Processing state
   const [isScanningReport, setIsScanningReport] = useState(false);
@@ -263,30 +265,53 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // Prepopulate form when modal opens or activeAssessment updates
+  // Prepopulate form when modal opens from authoritative clinical state
   useEffect(() => {
     if (!isOpen) return;
 
-    const savedInputs = activeAssessment?.tier_2_inputs || activeAssessment?.input_features || {};
-    const initial: Record<string, string> = {};
+    let isMounted = true;
+    const hydrateState = async () => {
+      let savedInputs = activeAssessment?.tier_2_inputs || (activeAssessment as any)?.authoritative_tier_2_inputs || activeAssessment?.input_features || {};
 
-    FIELD_CONFIGS.forEach((cfg) => {
-      const val = savedInputs[cfg.key];
-      if (val !== undefined && val !== null && val !== '') {
-        initial[cfg.key] = String(val);
-      } else {
-        initial[cfg.key] = '';
+      try {
+        if (fetchClinicalState) {
+          const state = await fetchClinicalState('female_pcos');
+          if (state?.tier_2_inputs && Object.keys(state.tier_2_inputs).length > 0) {
+            savedInputs = state.tier_2_inputs;
+          }
+        }
+      } catch (err) {
+        console.warn('Authoritative state hydration notice:', err);
       }
-    });
 
-    setFormValues(initial);
-    setRemovedFields([]);
-    setOcrExtractedFields([]);
-    setOcrBanner(null);
-    setEntryMode('manual');
-    setError(null);
-    setSuccess(false);
-  }, [isOpen, activeAssessment]);
+      if (!isMounted) return;
+
+      const initial: Record<string, string> = {};
+      FIELD_CONFIGS.forEach((cfg) => {
+        const val = savedInputs[cfg.key];
+        if (val !== undefined && val !== null && val !== '') {
+          initial[cfg.key] = String(val);
+        } else {
+          initial[cfg.key] = '';
+        }
+      });
+
+      setFormValues(initial);
+      setRemovedFields([]);
+      setOcrExtractedFields([]);
+      setOcrBanner(null);
+      setEntryMode('manual');
+      setError(null);
+      setSuccess(false);
+      setShowConfirmClear(false);
+    };
+
+    hydrateState();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, activeAssessment, fetchClinicalState]);
 
   if (!isOpen) return null;
 
@@ -477,7 +502,22 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
     }
   };
 
+  const handleConfirmClearTier2 = async () => {
+    setClearingTier2(true);
+    setError(null);
+    try {
+      await clearTier2('female_pcos');
+      setShowConfirmClear(false);
+      onClose();
+    } catch (err: any) {
+      setError(err?.message || 'Failed to clear Tier 2 clinical data.');
+    } finally {
+      setClearingTier2(false);
+    }
+  };
+
   const renderSection = (category: 'hormonal' | 'metabolic' | 'vitals', title: string) => {
+
     const fields = FIELD_CONFIGS.filter((f) => f.category === category);
     return (
       <div className="space-y-3">
@@ -767,23 +807,59 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
             {renderSection('vitals', 'Clinical Vitals')}
 
             {/* Form Actions */}
-            <div className="flex items-center justify-between gap-3 pt-4 border-t border-white/15">
-              <span className="text-[11px] font-mono text-sky-200">
-                {enteredCount > 0 ? `${enteredCount} measurement(s) ready` : 'No measurements entered'}
-              </span>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-white/15">
+              <div className="flex items-center gap-2 flex-wrap">
+                {showConfirmClear ? (
+                  <div className="flex items-center gap-2 p-1.5 rounded-xl bg-rose-500/20 border border-rose-400/30">
+                    <span className="text-[11px] text-rose-200">Revert to Tier 1?</span>
+                    <button
+                      type="button"
+                      onClick={handleConfirmClearTier2}
+                      disabled={clearingTier2}
+                      className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1"
+                    >
+                      {clearingTier2 ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                      <span>Confirm</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmClear(false)}
+                      className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-[11px] transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  ((activeAssessment?.tier_2_inputs && Object.keys(activeAssessment.tier_2_inputs).length > 0) ||
+                   ((activeAssessment as any)?.authoritative_tier_2_inputs && Object.keys((activeAssessment as any).authoritative_tier_2_inputs).length > 0)) && (
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmClear(true)}
+                      className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-300 text-xs font-sans flex items-center gap-1.5 transition-colors cursor-pointer"
+                      title="Explicitly remove all stored Tier 2 laboratory data and revert to Tier 1 screening"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Clear Tier 2 Data</span>
+                    </button>
+                  )
+                )}
+                <span className="text-[11px] font-mono text-sky-200">
+                  {enteredCount > 0 ? `${enteredCount} measurement(s) ready` : 'No measurements entered'}
+                </span>
+              </div>
 
               <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={onClose}
-                  disabled={loading}
+                  disabled={loading || clearingTier2}
                   className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-sans text-white transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || clearingTier2}
                   className="px-6 py-2.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold font-sans transition-all flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
                 >
                   {loading ? (
@@ -800,6 +876,7 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
                 </button>
               </div>
             </div>
+
           </form>
         </motion.div>
       </div>

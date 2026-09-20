@@ -1,6 +1,5 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { UserProfile } from '../types/onboarding';
-import { resolvePathway } from '../types/onboarding';
 import { createEmptyUserProfile, DEFAULT_USER_PROFILE } from '../data/mockDashboardData';
 import { validateDateOfBirth } from '../utils/profileValidation';
 
@@ -67,8 +66,8 @@ export function mapDbRowToUserProfile(
       ? parseInt(row.cycle_length, 10)
       : base.womensHealth.cycleLength;
 
-  const resolvedGender = (row.gender as any) || fallback?.gender || base.gender || 'female';
-  const resolvedPathway = (row.pathway as any) || fallback?.pathway || resolvePathway(resolvedGender, row.pathway, 'female');
+  const resolvedGender = (row.gender as any) || fallback?.gender || base.gender || undefined;
+  const resolvedPathway = (row.pathway as any) || fallback?.pathway || base.pathway || undefined;
 
   return {
     id: row.id || base.id,
@@ -134,15 +133,19 @@ export function mapDbRowToUserProfile(
  * Maps a camelCase UserProfile object to snake_case for Supabase insertion/updating.
  */
 export function mapUserProfileToDbRow(profile: UserProfile, userId: string): Record<string, any> {
+  const isMale = profile.gender === 'male' || profile.pathway === 'male';
   const row: Record<string, any> = {
     id: userId || profile.id,
     full_name: profile.fullName || '',
     email: profile.email || '',
     phone: profile.phone || '',
     date_of_birth: profile.dateOfBirth || null,
+    gender: profile.gender || null,
+    pathway: profile.pathway || null,
     avatar_url: profile.avatarUrl || null,
     height_cm: profile.heightCm ?? null,
     weight_kg: profile.weightKg ?? null,
+    waist_cm: profile.waistCm ?? null,
     emergency_contacts: profile.emergencyContacts || [],
     blood_type: profile.medical?.bloodType || '',
     allergies: profile.medical?.allergies || [],
@@ -151,17 +154,19 @@ export function mapUserProfileToDbRow(profile: UserProfile, userId: string): Rec
     surgeries: profile.medical?.surgeries || [],
     family_history: profile.medical?.familyHistory || [],
     cycle_length:
-      profile.womensHealth?.cycleLength !== undefined
+      isMale
+        ? null
+        : profile.womensHealth?.cycleLength !== undefined
         ? String(profile.womensHealth.cycleLength)
-        : '28',
-    period_duration: profile.womensHealth?.periodDuration || 5,
-    last_period_date: profile.womensHealth?.lastPeriodDate || null,
-    period_regularity: profile.womensHealth?.periodRegularity || 'mostly_regular',
-    common_symptoms: profile.womensHealth?.commonSymptoms || [],
-    marital_status: profile.womensHealth?.maritalStatus || 'unmarried',
-    marriage_years: profile.womensHealth?.marriageYears ?? 0,
-    is_pregnant: profile.womensHealth?.isPregnant ?? false,
-    abortions_count: profile.womensHealth?.abortionsCount ?? 0,
+        : null,
+    period_duration: isMale ? null : profile.womensHealth?.periodDuration ?? null,
+    last_period_date: isMale ? null : profile.womensHealth?.lastPeriodDate || null,
+    period_regularity: isMale ? null : profile.womensHealth?.periodRegularity || null,
+    common_symptoms: isMale ? [] : profile.womensHealth?.commonSymptoms || [],
+    marital_status: isMale ? null : profile.womensHealth?.maritalStatus || null,
+    marriage_years: isMale ? 0 : profile.womensHealth?.marriageYears ?? 0,
+    is_pregnant: isMale ? false : profile.womensHealth?.isPregnant ?? false,
+    abortions_count: isMale ? 0 : profile.womensHealth?.abortionsCount ?? 0,
     dietary_preference: profile.lifestyle?.dietaryPreference || 'Balanced',
     fast_food_intake: profile.lifestyle?.fastFoodIntake || 'occasional',
     regular_exercise: profile.lifestyle?.regularExercise ?? true,
@@ -293,8 +298,8 @@ class ProfileService {
     const merged: UserProfile = {
       ...currentProfile,
       ...partialData,
-      gender: partialData.gender || currentProfile.gender || 'female',
-      pathway: partialData.pathway || currentProfile.pathway || 'female',
+      gender: partialData.gender !== undefined ? partialData.gender : currentProfile.gender,
+      pathway: partialData.pathway !== undefined ? partialData.pathway : currentProfile.pathway,
       medical: partialData.medical ? { ...currentProfile.medical, ...partialData.medical } : currentProfile.medical,
       womensHealth: partialData.womensHealth
         ? { ...currentProfile.womensHealth, ...partialData.womensHealth }

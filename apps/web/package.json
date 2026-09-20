@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "type-check": "tsc -b",
+    "test:sequencing": "node --experimental-strip-types scripts/test-out-of-order-assessments.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

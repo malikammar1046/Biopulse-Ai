@@ -55,7 +55,8 @@ export const FloatingOvaSenseAI: React.FC = () => {
   );
 
   const pathway = resolvePathway(userProfile.gender, userProfile.pathway);
-  const aiBrandName = 'BioPulse AI Assistant';
+  const aiBrandName = 'BioPulse AI Companion';
+
 
   const quickPrompts =
     pathway === 'male'
@@ -126,8 +127,9 @@ export const FloatingOvaSenseAI: React.FC = () => {
         text.trim(),
         conversationId.current,
         historyPayload,
-        snapshotMetrics
+        { ...snapshotMetrics, pathway }
       );
+
 
       if (resp && resp.success) {
         if (resp.conversation_id) {

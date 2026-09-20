@@ -173,7 +173,8 @@ def _get_supabase_client():
 
     url: str = os.environ.get("SUPABASE_URL", "") or os.environ.get("VITE_SUPABASE_URL", "")
     key: str = (
-        os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+        os.environ.get("SUPABASE_SECRET_KEY", "")
+        or os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
         or os.environ.get("SUPABASE_ANON_KEY", "")
         or os.environ.get("VITE_SUPABASE_ANON_KEY", "")
     )

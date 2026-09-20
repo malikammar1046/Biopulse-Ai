@@ -141,7 +141,8 @@ CORS_ALLOW_CREDENTIALS = True
 # Supabase configuration (server-side only — never returned to frontend)
 # ---------------------------------------------------------------------------
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
-SUPABASE_SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+SUPABASE_SECRET_KEY = os.environ.get("SUPABASE_SECRET_KEY", "")
+SUPABASE_SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SECRET_KEY", "") or os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
 SUPABASE_JWT_SECRET = os.environ.get("SUPABASE_JWT_SECRET", "")
 
 if not SUPABASE_URL and not DEBUG:
@@ -155,6 +156,31 @@ ML_ARTIFACTS_DIR = os.environ.get(
     "ML_MODEL_ARTIFACTS_DIR",
     str(PCOS_ML_DIR / "models"),
 )
+
+# ---------------------------------------------------------------------------
+# Ollama & BioPulse AI Companion (Qwen3 1.7B)
+# ---------------------------------------------------------------------------
+OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
+OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen3:1.7b").strip()
+OLLAMA_TIMEOUT_SECONDS = int(os.environ.get("OLLAMA_TIMEOUT_SECONDS", "30"))
+LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "qwen").strip().lower()
+
+# ---------------------------------------------------------------------------
+# BioPulse Assessment Maintenance Mode (Enforces 503 on writes & suppresses auto-reassess)
+# ---------------------------------------------------------------------------
+BIOPULSE_ASSESSMENT_MAINTENANCE = os.environ.get(
+    "BIOPULSE_ASSESSMENT_MAINTENANCE", "false"
+).lower() in ("true", "1", "yes")
+
+# ---------------------------------------------------------------------------
+# Local SQLite Fallback Policy
+# By default (False), production persistence failures to Supabase will raise
+# an error rather than silently saving to ephemeral local SQLite.
+# ---------------------------------------------------------------------------
+ALLOW_LOCAL_SQLITE_FALLBACK = os.environ.get(
+    "ALLOW_LOCAL_SQLITE_FALLBACK", "false"
+).lower() in ("true", "1", "yes")
+
 
 # ---------------------------------------------------------------------------
 # Internationalization

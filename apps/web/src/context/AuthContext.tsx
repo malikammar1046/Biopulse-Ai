@@ -5,6 +5,7 @@ import { authService, type LoginPayload, type RegisterPayload } from '../service
 import { profileService } from '../services/profileService';
 import type { UserProfile } from '../types/onboarding';
 import { DEFAULT_USER_PROFILE, createEmptyUserProfile } from '../data/mockDashboardData';
+import { clearAllLocalAssessments } from '../services/intelligenceService';
 
 interface AuthContextType {
   user: SupabaseUser | null;
@@ -173,7 +174,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await loadProfile(currentUser);
       } else {
         // Logged out
-        setUserProfile(DEFAULT_USER_PROFILE);
+        setUserProfile(createEmptyUserProfile());
       }
       setLoading(false);
     });
@@ -287,9 +288,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await authService.logout();
     setUser(null);
     setSession(null);
-    setUserProfile(DEFAULT_USER_PROFILE);
-    localStorage.removeItem(STORAGE_PROFILE_KEY);
-    localStorage.removeItem('ovasense_user_reminders_v1');
+    setUserProfile(createEmptyUserProfile());
+    clearAllLocalAssessments();
+    try {
+      localStorage.removeItem(STORAGE_PROFILE_KEY);
+      localStorage.removeItem('ovasense_user_reminders_v1');
+    } catch {}
   };
 
   const refreshProfile = async () => {
@@ -313,7 +317,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updatedAt: new Date().toISOString(),
     };
 
-    const targetUserId = user?.id || userProfile.id || 'demo-user-id';
+    const targetUserId = user?.id || userProfile.id;
+    if (!targetUserId) {
+      return { success: false, error: 'User ID is required to save profile.' };
+    }
     const res = await profileService.upsertUserProfile(updated, targetUserId);
 
     if (!res.success) {
@@ -348,7 +355,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // ignore
     }
 
-    const targetUserId = user?.id || userProfile.id || 'demo-user-id';
+    const targetUserId = user?.id || userProfile.id;
+    if (!targetUserId) {
+      return { success: false, error: 'User ID is required to update profile.' };
+    }
     const res = await profileService.updateProfileFields(targetUserId, optimistic, data);
 
     if (!res.success) {

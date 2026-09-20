@@ -182,30 +182,37 @@ def extract_patient_raw_inputs(health_data: Any, client_data: dict | None = None
     p = getattr(health_data, 'profile', None)
 
     if p:
-        if p.height_cm:
-            inputs['height_cm'] = float(p.height_cm)
-        if p.weight_kg:
-            inputs['weight_kg'] = float(p.weight_kg)
-        if p.cycle_length:
+        if getattr(p, 'height_cm', None) is not None:
+            try:
+                inputs['height_cm'] = float(p.height_cm)
+            except Exception:
+                pass
+        if getattr(p, 'weight_kg', None) is not None:
+            try:
+                inputs['weight_kg'] = float(p.weight_kg)
+            except Exception:
+                pass
+        if getattr(p, 'cycle_length', None) is not None:
             try:
                 inputs['cycle_length_raw'] = float(p.cycle_length)
             except Exception:
                 inputs['cycle_length_raw'] = 28.0
-        if p.period_regularity:
-            inputs['cycle_regularity'] = 1 if 'irreg' in p.period_regularity.lower() else 0
+        if getattr(p, 'period_regularity', None):
+            inputs['cycle_regularity'] = 1 if 'irreg' in str(p.period_regularity).lower() else 0
 
         # Calculate approximate age from date of birth
-        if p.date_of_birth:
+        dob_val = getattr(p, 'date_of_birth', None)
+        if dob_val:
             try:
                 from datetime import date
-                dob = date.fromisoformat(str(p.date_of_birth))
+                dob = date.fromisoformat(str(dob_val))
                 today = date.today()
                 inputs['age'] = float(today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day)))
             except Exception:
                 inputs['age'] = 25.0
 
         # Common symptoms list parsing
-        symptoms = [s.lower() for s in getattr(p, 'common_symptoms', []) or []]
+        symptoms = [str(s).lower() for s in getattr(p, 'common_symptoms', []) or []]
         inputs['hirsutism'] = 1 if any('hair' in s or 'hirsutism' in s for s in symptoms) else 0
         inputs['skin_darkening'] = 1 if any('dark' in s or 'acanthosis' in s for s in symptoms) else 0
         inputs['hair_loss'] = 1 if any('loss' in s or 'thinning' in s or 'alopecia' in s for s in symptoms) else 0
@@ -213,10 +220,12 @@ def extract_patient_raw_inputs(health_data: Any, client_data: dict | None = None
         inputs['weight_gain'] = 1 if any('weight' in s or 'gain' in s for s in symptoms) else 0
 
         # Lifestyle flags
-        if p.fast_food_intake:
-            inputs['fast_food'] = 1 if p.fast_food_intake in ('frequent', 'daily', 'often') else 0
-        if p.regular_exercise is not None:
-            inputs['regular_exercise'] = 1 if p.regular_exercise else 0
+        fast_food_val = getattr(p, 'fast_food_intake', None)
+        if fast_food_val:
+            inputs['fast_food'] = 1 if str(fast_food_val).lower() in ('frequent', 'daily', 'often') else 0
+        reg_ex = getattr(p, 'regular_exercise', None)
+        if reg_ex is not None:
+            inputs['regular_exercise'] = 1 if reg_ex else 0
 
     # Also inspect symptom records for logged indicators
     symptom_records = getattr(health_data, 'symptom_records', []) or []
@@ -275,8 +284,335 @@ def extract_patient_raw_inputs(health_data: Any, client_data: dict | None = None
 
 
 # ---------------------------------------------------------------------------
-# Progressive Assessment Execution Functions
-# ---------------------------------------------------------------------------
+def _get_val(obj: Any, key: str, default: Any = None) -> Any:
+    """Helper to safely get an attribute or key from either a dict or object."""
+    if obj is None:
+        return default
+    if isinstance(obj, dict):
+        return obj.get(key, default)
+    return getattr(obj, key, default)
+
+
+def extract_male_patient_raw_inputs(health_data: Any, passed_data: dict | None = None) -> dict[str, Any]:
+    raw_inputs: dict[str, Any] = {}
+    passed = passed_data or {}
+    direct_keys = {
+        'age', 'height_cm', 'weight_kg', 'waist_cm', 'low_energy',
+        'sleep_trouble', 'low_mood', 'low_interest', 'high_blood_pressure', 'diabetes'
+    }
+
+    if "userProfile" in passed:
+        p = passed["userProfile"]
+    else:
+        p = getattr(health_data, "profile", {}) or {}
+
+    dob = _get_val(p, "date_of_birth") or _get_val(p, "dateOfBirth")
+    age = 35.0
+    if dob:
+        try:
+            from datetime import date
+            bdate = date.fromisoformat(str(dob)[:10])
+            today = date.today()
+            age = float(today.year - bdate.year - ((today.month, today.day) < (bdate.month, bdate.day)))
+        except Exception:
+            age = 35.0
+
+    h_cm = _get_val(p, "height_cm") or _get_val(p, "heightCm")
+    w_kg = _get_val(p, "weight_kg") or _get_val(p, "weightKg")
+    waist = _get_val(p, "waist_cm") or _get_val(p, "waistCm") or _get_val(p, "waist_inch")
+    mh = _get_val(p, "mensHealth") or _get_val(p, "mens_health") or {}
+    lifestyle = _get_val(p, "lifestyle") or {}
+    conds = _get_val(p, "conditions") or _get_val(p, "diagnosedConditions") or []
+
+    low_energy = 1 if (_get_val(mh, "energyLevel") in ["low", "very_low"] or "fatigue" in str(conds).lower()) else 0
+    sleep_trouble = 1 if (_get_val(mh, "sleepQuality") in ["poor", "fair"] or float(_get_val(lifestyle, "sleepHours", _get_val(p, "sleep_hours", 7.5)) or 7.5) < 6.0) else 0
+    low_mood = 1 if ("mood" in str(_get_val(mh, "moodFactors", "")).lower() or "depression" in str(conds).lower()) else 0
+    low_interest = 1 if (_get_val(mh, "sexDrive") in ["low", "very_low"]) else 0
+    hbp = 1 if ("hypertension" in str(conds).lower() or "blood pressure" in str(conds).lower()) else 0
+    dm = 1 if ("diabetes" in str(conds).lower() or "prediabetes" in str(conds).lower()) else 0
+
+    raw_inputs = {
+        "age": age,
+        "height_cm": h_cm,
+        "weight_kg": w_kg,
+        "waist_cm": waist,
+        "low_energy": low_energy,
+        "sleep_trouble": sleep_trouble,
+        "low_mood": low_mood,
+        "low_interest": low_interest,
+        "high_blood_pressure": hbp,
+        "diabetes": dm,
+    }
+
+    for k in direct_keys:
+        if k in passed and passed[k] is not None and passed[k] != '':
+            try:
+                raw_inputs[k] = float(passed[k])
+            except (ValueError, TypeError):
+                raw_inputs[k] = passed[k]
+
+    return raw_inputs
+
+
+def reassess_from_current_patient_state(
+    patient_uuid: str,
+    module: str | None = None,
+    incoming_tier1: dict[str, Any] | None = None,
+    incoming_tier2: dict[str, Any] | None = None,
+    remove_tier2_fields: list[str] | None = None,
+    clear_tier2: bool = False,
+    auth_token: str | None = None,
+    client_health_data: dict | None = None,
+    requested_tier: int | None = None,
+) -> dict[str, Any]:
+    """
+    Authoritative, non-destructive reassessment engine.
+    1. Loads persisted patient clinical state (Tier 1 & Tier 2).
+    2. Merges incoming updates using true PATCH semantics (omitted fields preserved).
+    3. Respects requested_tier if provided (Tier 1 execution never claims Tier 2/3 evidence).
+       If requested_tier is None (e.g. profile update), preserves the active assessment tier level
+       so a profile change never promotes a Tier 1 user to Tier 2 without explicit intent.
+    4. Executes inference without destroying stored hormonal/lab values.
+    5. Saves updated patient clinical state and sets new assessment active with explicit evidence provenance.
+    """
+    from apps.intelligence.maintenance import is_assessment_maintenance_active
+    if is_assessment_maintenance_active():
+        raise RuntimeError("Assessment writes blocked: BIOPULSE_ASSESSMENT_MAINTENANCE is active.")
+
+    health_data = health_service.fetch_all(patient_uuid, auth_token=auth_token, client_health_data=client_health_data)
+    p = getattr(health_data, 'profile', None)
+
+    if not module:
+        is_male_profile = (
+            (p and getattr(p, 'gender', None) == 'male')
+            or (isinstance(client_health_data, dict) and client_health_data.get('gender') == 'male')
+            or (isinstance(incoming_tier1, dict) and incoming_tier1.get('gender') == 'male')
+        )
+        module = "male_hypogonadism" if is_male_profile else "female_pcos"
+
+    # 1. Retrieve authoritative patient clinical state
+    current_state = assessment_repository.get_patient_clinical_state(patient_uuid, module=module, auth_token=auth_token)
+    stored_tier1 = dict(current_state.get("tier_1_inputs") or {})
+    stored_tier2 = dict(current_state.get("tier_2_inputs") or {})
+    stored_ultrasound = dict(current_state.get("ultrasound_inputs") or {})
+
+    # 2. Extract baseline Tier 1 inputs & PATCH merge incoming
+    if module == "male_hypogonadism":
+        baseline_t1 = extract_male_patient_raw_inputs(health_data, client_health_data or incoming_tier1)
+        merged_tier1 = {**baseline_t1, **stored_tier1}
+        if incoming_tier1 and isinstance(incoming_tier1, dict):
+            for k, v in incoming_tier1.items():
+                if v is not None and str(v).strip() != "":
+                    try:
+                        merged_tier1[k] = float(v)
+                    except (ValueError, TypeError):
+                        merged_tier1[k] = v
+    else:
+        baseline_t1 = extract_patient_raw_inputs(health_data, client_health_data or incoming_tier1)
+        merged_tier1 = {**baseline_t1, **stored_tier1}
+        if incoming_tier1 and isinstance(incoming_tier1, dict):
+            for k, v in incoming_tier1.items():
+                if v is not None and str(v).strip() != "":
+                    try:
+                        merged_tier1[k] = float(v)
+                    except (ValueError, TypeError):
+                        merged_tier1[k] = v
+
+    # 3. PATCH Merge Tier 2 inputs
+    if clear_tier2:
+        merged_tier2: dict[str, Any] = {}
+        assessment_repository.clear_patient_tier2_state(patient_uuid, module=module, auth_token=auth_token)
+    else:
+        merged_tier2 = dict(stored_tier2)
+        rems = list(remove_tier2_fields or [])
+        if incoming_tier2 and isinstance(incoming_tier2, dict):
+            rems.extend(incoming_tier2.get('remove_fields') or [])
+            rems.extend(incoming_tier2.get('removed_fields') or [])
+        for rf in rems:
+            merged_tier2.pop(rf, None)
+
+        if incoming_tier2 and isinstance(incoming_tier2, dict):
+            for k, v in incoming_tier2.items():
+                if k in ('remove_fields', 'removed_fields'):
+                    continue
+                # Sanitize: empty strings or None must NEVER wipe stored lab values!
+                if v is None or str(v).strip() == "":
+                    continue
+                if module == "male_hypogonadism":
+                    parsed = validate_male_clinical_value(k, v)
+                    if parsed is not None:
+                        merged_tier2[k] = parsed
+                else:
+                    if k in CLINICAL_FIELD_RANGES:
+                        parsed = validate_clinical_value(k, v)
+                        if parsed is not None:
+                            merged_tier2[k] = parsed
+
+    # 4. Resolve target tier:
+    # If requested_tier is explicitly provided, adhere strictly to it.
+    # Otherwise, infer from active assessment so a profile update (e.g. weight change) preserves the active tier!
+    if requested_tier is not None:
+        target_tier = int(requested_tier)
+    else:
+        active_prev = assessment_repository.get_active_assessment(patient_uuid, module=module, auth_token=auth_token)
+        if active_prev:
+            prev_level = active_prev.get("assessment_level", "tier_1")
+            if prev_level in ("tier_1_2", "tier_1_2_3"):
+                can_run_t2 = (
+                    male_ml_service.can_predict_tier2(merged_tier2)
+                    if module == "male_hypogonadism"
+                    else pcos_ml_service.can_predict_tier2(merged_tier2)
+                )
+                target_tier = 2 if can_run_t2 else 1
+            else:
+                target_tier = 1
+        else:
+            target_tier = 1
+
+    # 5. Execute ML inference strictly matching target tier
+    if module == "male_hypogonadism":
+        if target_tier >= 2:
+            can_run_t2 = male_ml_service.can_predict_tier2(merged_tier2)
+            if not can_run_t2:
+                if requested_tier == 2:
+                    raise ValueError("Please provide at least one clinical or laboratory result to run a male Tier 2 assessment.")
+                target_tier = 1
+
+        if target_tier >= 2:
+            res = male_ml_service.predict_tier2(merged_tier2, tier1_inputs=merged_tier1)
+            res["assessment_level"] = "tier_1_2"
+            res["tiers_included"] = [1, 2]
+            res["tier_2_inputs"] = merged_tier2
+            res["input_features"] = {**merged_tier1, **merged_tier2}
+            res["pcom_status"] = None
+            res["pcom_probability"] = None
+            res["gradcam_url"] = None
+            res["gradcam_b64"] = None
+            res["ultrasound_report_id"] = None
+            res["evidence_used"] = {
+                "tier_1": True,
+                "tier_2": True,
+                "tier_3_ultrasound": False,
+            }
+            res["input_availability"] = {
+                "tier_1_complete": True,
+                "tier_2_clinical_available": True,
+                "tier_3_ultrasound_available": False,
+            }
+        else:
+            res = male_ml_service.predict_tier1(merged_tier1)
+            res["assessment_level"] = "tier_1"
+            res["tiers_included"] = [1]
+            res["tier_2_inputs"] = {}
+            res["input_features"] = merged_tier1
+            res["pcom_status"] = None
+            res["pcom_probability"] = None
+            res["gradcam_url"] = None
+            res["gradcam_b64"] = None
+            res["ultrasound_report_id"] = None
+            res["status_code"] = None
+            res["notice"] = None
+            res["direct_laboratory_values"] = []
+            res["hormone_pattern_interpretation"] = None
+            res["tier_2_available_count"] = 0
+            res["tier_2_total_count"] = None
+            res["tier_2_available_fields"] = []
+            res["tier_2_missing_fields"] = []
+            res["evidence_used"] = {
+                "tier_1": True,
+                "tier_2": False,
+                "tier_3_ultrasound": False,
+            }
+            res["input_availability"] = {
+                "tier_1_complete": True,
+                "tier_2_clinical_available": False,
+                "tier_3_ultrasound_available": False,
+            }
+    else:  # female_pcos
+        if target_tier >= 2:
+            can_run_t2 = pcos_ml_service.can_predict_tier2(merged_tier2)
+            if not can_run_t2:
+                if requested_tier == 2:
+                    raise ValueError("At least one valid clinical or laboratory measurement is required to run a Tier 2 assessment.")
+                target_tier = 1
+
+        if target_tier >= 2:
+            combined = {**merged_tier1, **merged_tier2}
+            res = pcos_ml_service.predict_tier2_cumulative(combined)
+            res["assessment_level"] = "tier_1_2"
+            res["tiers_included"] = [1, 2]
+            res["tier_2_inputs"] = merged_tier2
+            res["input_features"] = combined
+            res["pcom_status"] = None
+            res["pcom_probability"] = None
+            res["gradcam_url"] = None
+            res["gradcam_b64"] = None
+            res["ultrasound_report_id"] = None
+            res["evidence_used"] = {
+                "tier_1": True,
+                "tier_2": True,
+                "tier_3_ultrasound": False,
+            }
+            res["input_availability"] = {
+                "tier_1_complete": True,
+                "tier_2_clinical_available": True,
+                "tier_3_ultrasound_available": False,
+            }
+        else:
+            res = pcos_ml_service.predict_tier1(merged_tier1)
+            res["assessment_level"] = "tier_1"
+            res["tiers_included"] = [1]
+            res["tier_2_inputs"] = {}
+            res["input_features"] = merged_tier1
+            res["pcom_status"] = None
+            res["pcom_probability"] = None
+            res["gradcam_url"] = None
+            res["gradcam_b64"] = None
+            res["ultrasound_report_id"] = None
+            res["status_code"] = None
+            res["notice"] = None
+            res["direct_laboratory_values"] = []
+            res["hormone_pattern_interpretation"] = None
+            res["tier_2_available_count"] = 0
+            res["tier_2_total_count"] = None
+            res["tier_2_available_fields"] = []
+            res["tier_2_missing_fields"] = []
+            res["evidence_used"] = {
+                "tier_1": True,
+                "tier_2": False,
+                "tier_3_ultrasound": False,
+            }
+            res["input_availability"] = {
+                "tier_1_complete": True,
+                "tier_2_clinical_available": False,
+                "tier_3_ultrasound_available": False,
+            }
+
+    res["module"] = module
+    res["available_historical_evidence"] = {
+        "tier_1": bool(stored_tier1 or merged_tier1),
+        "tier_2": bool(stored_tier2 or merged_tier2),
+        "tier_3_ultrasound": False if module == "male_hypogonadism" else bool(stored_ultrasound),
+    }
+
+    # 6. Persist authoritative patient clinical state (preserves stored labs/ultrasound)
+    assessment_repository.save_patient_clinical_state(
+        user_id=patient_uuid,
+        module=module,
+        tier_1_inputs=merged_tier1,
+        tier_2_inputs=merged_tier2,
+        ultrasound_inputs=stored_ultrasound,
+        auth_token=auth_token,
+    )
+
+    # 7. Save assessment to repository and format
+    saved = assessment_repository.save_assessment(patient_uuid, res, make_active=True, auth_token=auth_token)
+    formatted = format_assessment_response(saved)
+    formatted["authoritative_tier_2_inputs"] = merged_tier2
+    formatted["authoritative_tier_1_inputs"] = merged_tier1
+    formatted["available_historical_evidence"] = res["available_historical_evidence"]
+    return formatted
+
 
 def run_tier1_assessment(
     patient_uuid: str,
@@ -284,22 +620,16 @@ def run_tier1_assessment(
     client_health_data: dict | None = None,
 ) -> dict[str, Any]:
     """
-    Executes Tier 1 assessment, saves it as the active assessment, and returns standardized response.
+    Executes non-destructive reassessment for female PCOS strictly at Tier 1 without wiping stored Tier 2 values.
     """
-    health_data = health_service.fetch_all(patient_uuid, auth_token=auth_token, client_health_data=client_health_data)
-    inputs = extract_patient_raw_inputs(health_data, client_health_data)
-
-    res = pcos_ml_service.predict_tier1(inputs)
-    res['input_features'] = inputs
-    res['input_availability'] = {
-        'tier_1_complete': True,
-        'tier_2_clinical_available': False,
-        'tier_3_ultrasound_available': False,
-    }
-
-    # Save as active in repository (transactional replacement)
-    saved = assessment_repository.save_assessment(patient_uuid, res, make_active=True, auth_token=auth_token)
-    return format_assessment_response(saved)
+    return reassess_from_current_patient_state(
+        patient_uuid=patient_uuid,
+        module="female_pcos",
+        incoming_tier1=client_health_data,
+        auth_token=auth_token,
+        client_health_data=client_health_data,
+        requested_tier=1,
+    )
 
 
 def run_tier2_assessment(
@@ -309,78 +639,27 @@ def run_tier2_assessment(
     clinical_inputs: dict | None = None,
 ) -> dict[str, Any]:
     """
-    Executes cumulative Tier 2 assessment (Tier 1 + Clinical Labs),
-    supporting partial clinical inputs, PATCH-style progressive merging,
-    replaces active Tier 1 result, and preserves history.
+    Executes cumulative Tier 2 assessment (Tier 1 + Clinical Labs) for female PCOS,
+    merging with persisted inputs using PATCH semantics.
     """
-    logger.info(f"[ASSESSMENT_PIPELINE] STAGE: ASSESSMENT_REQUEST_RECEIVED | type=pcos_tier2 | patient={patient_uuid}")
-    health_data = health_service.fetch_all(patient_uuid, auth_token=auth_token, client_health_data=client_health_data)
-    base_tier1_inputs = extract_patient_raw_inputs(health_data, client_health_data)
-
-    # 1. Fetch previously active assessment to support PATCH merge semantics
-    active_prev = assessment_repository.get_active_assessment(patient_uuid, auth_token=auth_token)
-    merged_clinical: dict[str, float] = {}
-
-    if active_prev:
-        prev_inputs = active_prev.get('tier_2_inputs')
-        if not prev_inputs and isinstance(active_prev.get('input_features'), dict):
-            prev_inputs = {
-                k: v for k, v in active_prev['input_features'].items()
-                if k in CLINICAL_FIELD_RANGES and v is not None and v != '' and not (isinstance(v, float) and np.isnan(v))
-            }
-        if isinstance(prev_inputs, dict):
-            for k, v in prev_inputs.items():
-                if k in CLINICAL_FIELD_RANGES and v is not None and v != '':
-                    try:
-                        fval = float(v)
-                        if not np.isnan(fval):
-                            merged_clinical[k] = fval
-                    except (ValueError, TypeError):
-                        pass
-
-    # 2. Extract explicit removals (e.g. remove_fields: ['tsh'])
-    remove_fields: list[str] = []
-    if clinical_inputs:
-        if isinstance(clinical_inputs.get('remove_fields'), list):
-            remove_fields.extend(clinical_inputs['remove_fields'])
-        if isinstance(clinical_inputs.get('removed_fields'), list):
-            remove_fields.extend(clinical_inputs['removed_fields'])
-
-        for rf in remove_fields:
-            merged_clinical.pop(rf, None)
-
-        # 3. Validate and merge incoming clinical inputs
-        for k, v in clinical_inputs.items():
-            if k in ('remove_fields', 'removed_fields'):
-                continue
-            if k in CLINICAL_FIELD_RANGES:
-                if k in remove_fields:
-                    continue
-                parsed = validate_clinical_value(k, v)
-                if parsed is not None:
-                    merged_clinical[k] = parsed
-                # If parsed is None and not in remove_fields, do not erase previously saved value!
-
-    # 4. Require at least one valid Tier 2 clinical/laboratory value
-    if not merged_clinical:
+    st = assessment_repository.get_patient_clinical_state(patient_uuid, module="female_pcos", auth_token=auth_token)
+    existing_t2 = st.get("tier_2_inputs") or {}
+    has_any = (
+        pcos_ml_service.can_predict_tier2(clinical_inputs)
+        or pcos_ml_service.can_predict_tier2(existing_t2)
+    )
+    if not has_any:
         raise ValueError("At least one valid clinical or laboratory measurement is required to run a Tier 2 assessment.")
 
-    # 5. Synthesize Tier 1 + merged Tier 2 data
-    combined_inputs = {**base_tier1_inputs, **merged_clinical}
-
-    # 6. Execute cumulative model inference
-    res = pcos_ml_service.predict_tier2_cumulative(combined_inputs)
-    res['tier_2_inputs'] = merged_clinical
-    res['input_features'] = combined_inputs
-    res['input_availability'] = {
-        'tier_1_complete': True,
-        'tier_2_clinical_available': True,
-        'tier_3_ultrasound_available': False,
-    }
-
-    # 7. Save as active in repository, replacing Tier 1 (or prior partial Tier 2) while keeping history
-    saved = assessment_repository.save_assessment(patient_uuid, res, make_active=True, auth_token=auth_token)
-    return format_assessment_response(saved)
+    return reassess_from_current_patient_state(
+        patient_uuid=patient_uuid,
+        module="female_pcos",
+        incoming_tier1=client_health_data,
+        incoming_tier2=clinical_inputs,
+        auth_token=auth_token,
+        client_health_data=client_health_data,
+        requested_tier=2,
+    )
 
 
 def run_ultrasound_assessment(
@@ -394,14 +673,18 @@ def run_ultrasound_assessment(
     Processes an uploaded ultrasound image:
     - If user has completed Tier 2 (clinical labs): runs complete Tier 1+2+3 multimodal fusion and activates it.
     - If user only has Tier 1 (no clinical labs): processes ultrasound for PCOM/Grad-CAM, notes tier_1_3_model_unavailable,
-      and leaves previous Tier 1 as active assessment.
+      and records Tier 1+3 assessment.
     """
     logger.info(f"[ASSESSMENT_PIPELINE] STAGE: ASSESSMENT_REQUEST_RECEIVED | type=ultrasound | patient={patient_uuid}")
     health_data = health_service.fetch_all(patient_uuid, auth_token=auth_token, client_health_data=client_health_data)
+    profile = getattr(health_data, 'profile', None)
+    if profile and getattr(profile, 'gender', None) == 'male':
+        raise ValueError("Ultrasound assessment is not applicable to the male hypogonadism pathway.")
+
     inputs = extract_patient_raw_inputs(health_data, client_health_data)
 
     # Check if clinical labs / Tier 2 are present
-    active_prev = assessment_repository.get_active_assessment(patient_uuid, auth_token=auth_token)
+    active_prev = assessment_repository.get_active_assessment(patient_uuid, module="female_pcos", auth_token=auth_token)
     has_clinical = (
         (active_prev and (active_prev.get('tier_2_inputs') or active_prev.get('assessment_level') in ('tier_1_2', 'tier_1_2_3')))
         or ('fsh' in inputs and 'lh' in inputs and 'amh' in inputs)
@@ -418,15 +701,32 @@ def run_ultrasound_assessment(
 
         # Full Multimodal Fusion (Tier 1 + 2 + 3)
         res = pcos_ml_service.predict_tier1_2_3_multimodal(inputs, pil_image)
+        res['module'] = 'female_pcos'
+        res['assessment_level'] = 'tier_1_2_3'
+        res['tiers_included'] = [1, 2, 3]
         res['ultrasound_report_id'] = report_id
         res['input_features'] = inputs
         if active_prev and active_prev.get('tier_2_inputs'):
             res['tier_2_inputs'] = active_prev['tier_2_inputs']
+        res['evidence_used'] = {
+            'tier_1': True,
+            'tier_2': True,
+            'tier_3_ultrasound': True,
+        }
         res['input_availability'] = {
             'tier_1_complete': True,
             'tier_2_clinical_available': True,
             'tier_3_ultrasound_available': True,
         }
+        # Also store ultrasound inputs in clinical state so it's tracked
+        assessment_repository.save_patient_clinical_state(
+            user_id=patient_uuid,
+            module="female_pcos",
+            tier_1_inputs=inputs,
+            tier_2_inputs=res.get('tier_2_inputs'),
+            ultrasound_inputs={'pcom_status': res.get('pcom_status'), 'pcom_probability': res.get('pcom_probability'), 'ultrasound_report_id': report_id},
+            auth_token=auth_token,
+        )
         saved = assessment_repository.save_assessment(patient_uuid, res, make_active=True, auth_token=auth_token)
         logger.info(f"[ASSESSMENT_PIPELINE] STAGE: ULTRASOUND_ASSESSMENT_SAVED | patient={patient_uuid} | level=tier_1_2_3")
         return format_assessment_response(saved)
@@ -435,11 +735,15 @@ def run_ultrasound_assessment(
         img_res = pcos_ml_service.process_ultrasound_image(pil_image)
         active_t1 = active_prev or run_tier1_assessment(patient_uuid, auth_token=auth_token, client_health_data=client_health_data)
 
-        # Build response with morphology details while keeping Tier 1 active
+        # Build response with morphology details while isolating as tier_1_3
         response = dict(active_t1)
+        response['module'] = 'female_pcos'
+        response['assessment_level'] = 'tier_1_3'
+        response['tiers_included'] = [1, 3]
         response['pcom_status'] = img_res['pcom_status']
         response['pcom_probability'] = img_res['pcom_probability']
         response['gradcam_b64'] = img_res['gradcam_b64']
+        response['ultrasound_report_id'] = report_id
         response['status_code'] = 'tier_1_3_model_unavailable'
         response['notice'] = (
             "Ultrasound image was successfully processed and analyzed for polycystic ovarian morphology (PCOM). "
@@ -447,23 +751,27 @@ def run_ultrasound_assessment(
             "Please add your clinical lab results for a complete Tier 1 + Clinical + Ultrasound assessment."
         )
         response['next_available_tier'] = 2
+        response['evidence_used'] = {
+            'tier_1': True,
+            'tier_2': False,
+            'tier_3_ultrasound': True,
+        }
         input_avail = dict(response.get('input_availability') or {})
         input_avail['tier_3_ultrasound_available'] = True
         response['input_availability'] = input_avail
 
+        # Persist clinical state with ultrasound inputs
+        assessment_repository.save_patient_clinical_state(
+            user_id=patient_uuid,
+            module="female_pcos",
+            ultrasound_inputs={'pcom_status': img_res.get('pcom_status'), 'pcom_probability': img_res.get('pcom_probability'), 'ultrasound_report_id': report_id},
+            auth_token=auth_token,
+        )
+
         # Persist so refreshing or reloading doesn't wipe ultrasound analysis
         saved = assessment_repository.save_assessment(patient_uuid, response, make_active=True, auth_token=auth_token)
-        logger.info(f"[ASSESSMENT_PIPELINE] STAGE: ULTRASOUND_ASSESSMENT_SAVED | patient={patient_uuid} | level=tier_1_3_partial")
+        logger.info(f"[ASSESSMENT_PIPELINE] STAGE: ULTRASOUND_ASSESSMENT_SAVED | patient={patient_uuid} | level=tier_1_3")
         return format_assessment_response(saved)
-
-
-def _get_val(obj: Any, key: str, default: Any = None) -> Any:
-    """Helper to safely get an attribute or key from either a dict or object."""
-    if obj is None:
-        return default
-    if isinstance(obj, dict):
-        return obj.get(key, default)
-    return getattr(obj, key, default)
 
 
 def run_male_tier1_assessment(
@@ -473,77 +781,17 @@ def run_male_tier1_assessment(
     client_health_data: dict | None = None,
 ) -> dict[str, Any]:
     """
-    Executes Male Hypogonadism Tier 1 screening assessment.
+    Executes non-destructive reassessment for Male Hypogonadism without wiping stored Tier 2 lab values.
+    Strictly assesses at Tier 1.
     """
-    raw_inputs: dict[str, Any] = {}
-    passed_data = input_data or client_health_data or {}
-
-    direct_keys = {
-        'age', 'height_cm', 'weight_kg', 'waist_cm', 'low_energy',
-        'sleep_trouble', 'low_mood', 'low_interest', 'high_blood_pressure', 'diabetes'
-    }
-
-    # If any direct features were passed at top level
-    if any(k in passed_data for k in direct_keys):
-        raw_inputs.update(passed_data)
-    else:
-        # Extract from profile / health service
-        if "userProfile" in passed_data:
-            p = passed_data["userProfile"]
-        else:
-            hd = health_service.fetch_all(patient_uuid, auth_token=auth_token)
-            p = getattr(hd, "profile", {}) or {}
-
-        # Calculate age from date of birth
-        dob = _get_val(p, "date_of_birth") or _get_val(p, "dateOfBirth")
-        age = 35.0
-        if dob:
-            try:
-                from datetime import date
-                bdate = date.fromisoformat(str(dob)[:10])
-                today = date.today()
-                age = float(today.year - bdate.year - ((today.month, today.day) < (bdate.month, bdate.day)))
-            except Exception:
-                age = 35.0
-
-        h_cm = _get_val(p, "height_cm") or _get_val(p, "heightCm")
-        w_kg = _get_val(p, "weight_kg") or _get_val(p, "weightKg")
-        waist = _get_val(p, "waist_cm") or _get_val(p, "waistCm") or _get_val(p, "waist_inch")
-        mh = _get_val(p, "mensHealth") or _get_val(p, "mens_health") or {}
-        lifestyle = _get_val(p, "lifestyle") or {}
-        conds = _get_val(p, "conditions") or _get_val(p, "diagnosedConditions") or []
-
-        low_energy = 1 if (_get_val(mh, "energyLevel") in ["low", "very_low"] or "fatigue" in str(conds).lower()) else 0
-        sleep_trouble = 1 if (_get_val(mh, "sleepQuality") in ["poor", "fair"] or float(_get_val(lifestyle, "sleepHours", _get_val(p, "sleep_hours", 7.5)) or 7.5) < 6.0) else 0
-        low_mood = 1 if ("mood" in str(_get_val(mh, "moodFactors", "")).lower() or "depression" in str(conds).lower()) else 0
-        low_interest = 1 if (_get_val(mh, "sexDrive") in ["low", "very_low"]) else 0
-        hbp = 1 if ("hypertension" in str(conds).lower() or "blood pressure" in str(conds).lower()) else 0
-        dm = 1 if ("diabetes" in str(conds).lower() or "prediabetes" in str(conds).lower()) else 0
-
-        raw_inputs = {
-            "age": age,
-            "height_cm": h_cm,
-            "weight_kg": w_kg,
-            "waist_cm": waist,
-            "low_energy": low_energy,
-            "sleep_trouble": sleep_trouble,
-            "low_mood": low_mood,
-            "low_interest": low_interest,
-            "high_blood_pressure": hbp,
-            "diabetes": dm,
-        }
-
-    # Run inference via male_ml_service
-    result = male_ml_service.predict_tier1(raw_inputs)
-
-    # Save to assessment repository as active male assessment
-    record = assessment_repository.save_assessment(
-        user_id=patient_uuid,
-        assessment_data=result,
-        make_active=True,
+    return reassess_from_current_patient_state(
+        patient_uuid=patient_uuid,
+        module="male_hypogonadism",
+        incoming_tier1=(input_data or client_health_data),
         auth_token=auth_token,
+        client_health_data=client_health_data,
+        requested_tier=1,
     )
-    return format_assessment_response(record)
 
 
 def run_male_tier2_assessment(
@@ -554,48 +802,45 @@ def run_male_tier2_assessment(
     client_health_data: dict | None = None,
 ) -> dict[str, Any]:
     """
-    Executes Male Hypogonadism Tier 2 clinical & laboratory assessment.
-    Merges with previous inputs using PATCH semantics.
+    Executes Male Hypogonadism Tier 2 clinical & laboratory assessment,
+    merging with persisted inputs using PATCH semantics.
     """
-    logger.info(f"[ASSESSMENT_PIPELINE] STAGE: ASSESSMENT_REQUEST_RECEIVED | type=male_tier2 | patient={patient_uuid}")
-    actual_inputs = lab_inputs or clinical_inputs or {}
-
-    active_prev = assessment_repository.get_active_assessment(patient_uuid, module="male_hypogonadism", auth_token=auth_token)
-    prev_tier2_inputs = active_prev.get("tier_2_inputs", {}) if active_prev else {}
-    prev_input_features = active_prev.get("input_features", {}) if active_prev else {}
-
-    validated_new_inputs: dict[str, Any] = {}
-    remove_fields = actual_inputs.get("remove_fields", []) or actual_inputs.get("removed_fields", []) or []
-
-    for k, v in actual_inputs.items():
-        if k in ["remove_fields", "removed_fields"]:
-            continue
-        validated_val = validate_male_clinical_value(k, v)
-        if validated_val is not None:
-            validated_new_inputs[k] = validated_val
-
-    # PATCH Merge
-    merged_labs: dict[str, Any] = dict(prev_tier2_inputs)
-    for k in remove_fields:
-        merged_labs.pop(k, None)
-    merged_labs.update(validated_new_inputs)
-
-    # Check that at least 1 lab measurement is present
-    if not merged_labs:
+    inputs = lab_inputs or clinical_inputs or {}
+    st = assessment_repository.get_patient_clinical_state(patient_uuid, module="male_hypogonadism", auth_token=auth_token)
+    existing_t2 = st.get("tier_2_inputs") or {}
+    has_any = (
+        male_ml_service.can_predict_tier2(inputs)
+        or male_ml_service.can_predict_tier2(existing_t2)
+    )
+    if not has_any:
         raise ValueError("Please provide at least one clinical or laboratory result to run a male Tier 2 assessment.")
 
-    # Run Tier 2 inference
-    result = male_ml_service.predict_tier2(merged_labs, tier1_inputs=prev_input_features)
-
-    # Save as active male assessment
-    record = assessment_repository.save_assessment(
-        user_id=patient_uuid,
-        assessment_data=result,
-        make_active=True,
+    return reassess_from_current_patient_state(
+        patient_uuid=patient_uuid,
+        module="male_hypogonadism",
+        incoming_tier1=client_health_data,
+        incoming_tier2=inputs,
         auth_token=auth_token,
+        client_health_data=client_health_data,
+        requested_tier=2,
     )
-    logger.info(f"[ASSESSMENT_PIPELINE] STAGE: MALE_TIER2_SAVED | patient={patient_uuid}")
-    return format_assessment_response(record)
+
+
+def clear_tier2_assessment(
+    patient_uuid: str,
+    module: str | None = None,
+    auth_token: str | None = None,
+) -> dict[str, Any]:
+    """
+    Explicitly clears Tier 2 clinical state and downgrades active assessment to Tier 1.
+    """
+    return reassess_from_current_patient_state(
+        patient_uuid=patient_uuid,
+        module=module,
+        clear_tier2=True,
+        auth_token=auth_token,
+        requested_tier=1,
+    )
 
 
 def run_assessment(
@@ -606,7 +851,7 @@ def run_assessment(
 ) -> dict[str, Any]:
     """
     Unified assessment endpoint: returns the active assessment if present,
-    or executes Tier 1 / Tier 2 based on available health data.
+    or executes reassess_from_current_patient_state.
     """
     if not module:
         try:
@@ -623,11 +868,16 @@ def run_assessment(
     if active:
         return format_assessment_response(active)
 
-    if module == "male_hypogonadism":
-        return run_male_tier1_assessment(patient_uuid, auth_token=auth_token, client_health_data=client_health_data)
+    from apps.intelligence.maintenance import is_assessment_maintenance_active
+    if is_assessment_maintenance_active():
+        raise RuntimeError("Assessment writes blocked: BIOPULSE_ASSESSMENT_MAINTENANCE is active.")
 
-    # If no active assessment exists, run female Tier 1
-    return run_tier1_assessment(patient_uuid, auth_token=auth_token, client_health_data=client_health_data)
+    return reassess_from_current_patient_state(
+        patient_uuid=patient_uuid,
+        module=module,
+        auth_token=auth_token,
+        client_health_data=client_health_data,
+    )
 
 
 def get_health_snapshot(patient_uuid: str, auth_token: str | None = None) -> dict[str, Any]:
@@ -647,7 +897,8 @@ def get_health_snapshot(patient_uuid: str, auth_token: str | None = None) -> dic
 
 def format_assessment_response(record: dict[str, Any]) -> dict[str, Any]:
     """
-    Ensures the response dictionary strictly adheres to the unified specification.
+    Ensures the response dictionary strictly adheres to the unified specification
+    with explicit tier isolation and evidence provenance.
     """
     prob = float(record.get('probability', 0.0) or 0.0)
     threshold = float(record.get('threshold', 0.38) or 0.38)
@@ -665,6 +916,74 @@ def format_assessment_response(record: dict[str, Any]) -> dict[str, Any]:
     risk_cat = record.get('risk_category', 'lower')
     default_risk_label = "Lower Screening Risk" if prob < threshold else "Higher Screening Risk"
     risk_lbl = record.get('risk_label') or default_risk_label
+
+    is_male = module_name == 'male_hypogonadism'
+
+    # Determine or normalize evidence_used
+    raw_evidence_used = record.get('evidence_used')
+    if isinstance(raw_evidence_used, dict):
+        evidence_used = {
+            'tier_1': bool(raw_evidence_used.get('tier_1', True)),
+            'tier_2': bool(raw_evidence_used.get('tier_2', False)),
+            'tier_3_ultrasound': False if is_male else bool(raw_evidence_used.get('tier_3_ultrasound', False)),
+        }
+    else:
+        has_t1 = 1 in tiers_inc or level in ('tier_1', 'tier_1_2', 'tier_1_3', 'tier_1_2_3')
+        has_t2 = 2 in tiers_inc or level in ('tier_1_2', 'tier_1_2_3')
+        has_t3 = (3 in tiers_inc or level in ('tier_1_3', 'tier_1_2_3')) and not is_male
+        evidence_used = {
+            'tier_1': has_t1,
+            'tier_2': has_t2,
+            'tier_3_ultrasound': has_t3,
+        }
+
+    # Strict evidence isolation based on what was used in THIS assessment
+    has_t2_evidence = bool(evidence_used.get('tier_2'))
+    has_t3_evidence = bool(evidence_used.get('tier_3_ultrasound')) and not is_male
+
+    if not has_t2_evidence:
+        tier_2_inputs = {}
+        authoritative_tier_2 = {}
+        direct_laboratory_values = []
+        hormone_pattern_interpretation = None
+        tier_2_available_count = 0
+        tier_2_total_count = None
+        tier_2_available_fields = []
+        tier_2_missing_fields = []
+    else:
+        tier_2_inputs = record.get('tier_2_inputs', {})
+        authoritative_tier_2 = record.get('authoritative_tier_2_inputs', tier_2_inputs)
+        direct_laboratory_values = record.get('direct_laboratory_values', [])
+        hormone_pattern_interpretation = record.get('hormone_pattern_interpretation')
+        tier_2_available_count = record.get('tier_2_available_count')
+        tier_2_total_count = record.get('tier_2_total_count')
+        tier_2_available_fields = record.get('tier_2_available_fields', [])
+        tier_2_missing_fields = record.get('tier_2_missing_fields', [])
+
+    if not has_t3_evidence or is_male:
+        pcom_status = None
+        pcom_probability = None
+        gradcam_url = None
+        gradcam_b64 = None
+        ultrasound_report_id = None
+    else:
+        pcom_status = record.get('pcom_status')
+        pcom_probability = record.get('pcom_probability')
+        gradcam_url = record.get('gradcam_url')
+        gradcam_b64 = record.get('gradcam_b64')
+        ultrasound_report_id = record.get('ultrasound_report_id')
+
+    input_features = record.get('input_features', {})
+    authoritative_tier_1 = record.get('authoritative_tier_1_inputs', input_features)
+
+    # Historical availability
+    avail_hist = record.get('available_historical_evidence')
+    if not isinstance(avail_hist, dict):
+        avail_hist = {
+            'tier_1': bool(authoritative_tier_1),
+            'tier_2': bool(authoritative_tier_2 or record.get('tier_2_inputs')),
+            'tier_3_ultrasound': False if is_male else bool(pcom_status or record.get('pcom_status')),
+        }
 
     return {
         'assessment_id': str(record.get('assessment_id') or record.get('id', '')),
@@ -686,21 +1005,26 @@ def format_assessment_response(record: dict[str, Any]) -> dict[str, Any]:
         'explanations': record.get('explanations', []),
         'limitations': record.get('limitations', []),
         'next_available_tier': record.get('next_available_tier'),
-        'pcom_status': record.get('pcom_status'),
-        'pcom_probability': record.get('pcom_probability'),
-        'gradcam_url': record.get('gradcam_url'),
-        'gradcam_b64': record.get('gradcam_b64'),
+        'pcom_status': pcom_status,
+        'pcom_probability': pcom_probability,
+        'gradcam_url': gradcam_url,
+        'gradcam_b64': gradcam_b64,
+        'ultrasound_report_id': ultrasound_report_id,
         'is_active': bool(record.get('is_active', True)),
-        'tier_2_available_count': record.get('tier_2_available_count'),
-        'tier_2_total_count': record.get('tier_2_total_count'),
-        'tier_2_available_fields': record.get('tier_2_available_fields', []),
-        'tier_2_missing_fields': record.get('tier_2_missing_fields', []),
+        'tier_2_available_count': tier_2_available_count,
+        'tier_2_total_count': tier_2_total_count,
+        'tier_2_available_fields': tier_2_available_fields,
+        'tier_2_missing_fields': tier_2_missing_fields,
         'evidence_completeness_percent': record.get('evidence_completeness_percent'),
         'evidence_completeness': record.get('evidence_completeness', {}),
-        'hormone_pattern_interpretation': record.get('hormone_pattern_interpretation'),
-        'direct_laboratory_values': record.get('direct_laboratory_values', []),
-        'tier_2_inputs': record.get('tier_2_inputs', {}),
-        'input_features': record.get('input_features', {}),
+        'hormone_pattern_interpretation': hormone_pattern_interpretation,
+        'direct_laboratory_values': direct_laboratory_values,
+        'tier_2_inputs': tier_2_inputs,
+        'authoritative_tier_2_inputs': authoritative_tier_2,
+        'input_features': input_features,
+        'authoritative_tier_1_inputs': authoritative_tier_1,
+        'evidence_used': evidence_used,
+        'available_historical_evidence': avail_hist,
         'status_code': record.get('status_code'),
         'notice': record.get('notice'),
         'next_step': record.get('next_step', ''),

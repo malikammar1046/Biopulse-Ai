@@ -76,10 +76,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           
-      - name: Run ML Stack Validation Tests
+      - name: Run Legacy ML Stack Validation Tests
         run: |
           cd machine-learning/ml
           pytest test_imports.py -v
+
+      - name: Validate Production Models (PCOS-ML & male-ML)
+        run: |
+          python -m pytest machine-learning/test_production_models.py -v
 
   web-checks:
     name: Web Dashboard (React & Vite)

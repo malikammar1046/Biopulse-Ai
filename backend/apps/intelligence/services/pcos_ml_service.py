@@ -20,6 +20,7 @@ import logging
 import os
 import sys
 import threading
+import warnings
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -438,28 +439,31 @@ class PCOSMLService:
             if pcos_ml_str not in sys.path:
                 sys.path.insert(0, pcos_ml_str)
 
-            # 1. Load Tier 1 Model
-            if not TIER1_MODEL_PATH.exists():
-                raise ModelLoadError(f"Tier 1 model artifact missing at {TIER1_MODEL_PATH}")
-            self._t1_model = joblib.load(TIER1_MODEL_PATH)
+            with warnings.catch_warnings():
+                from sklearn.exceptions import InconsistentVersionWarning
+                warnings.simplefilter("ignore", InconsistentVersionWarning)
+                # 1. Load Tier 1 Model
+                if not TIER1_MODEL_PATH.exists():
+                    raise ModelLoadError(f"Tier 1 model artifact missing at {TIER1_MODEL_PATH}")
+                self._t1_model = joblib.load(TIER1_MODEL_PATH)
 
-            # 2. Load Cumulative Tier 2 Model
-            if not TIER2_MODEL_PATH.exists():
-                raise ModelLoadError(f"Tier 2 model artifact missing at {TIER2_MODEL_PATH}")
-            self._t2_model_data = joblib.load(TIER2_MODEL_PATH)
-            self._t2_pipeline = (
-                self._t2_model_data['pipeline']
-                if isinstance(self._t2_model_data, dict) and 'pipeline' in self._t2_model_data
-                else self._t2_model_data
-            )
+                # 2. Load Cumulative Tier 2 Model
+                if not TIER2_MODEL_PATH.exists():
+                    raise ModelLoadError(f"Tier 2 model artifact missing at {TIER2_MODEL_PATH}")
+                self._t2_model_data = joblib.load(TIER2_MODEL_PATH)
+                self._t2_pipeline = (
+                    self._t2_model_data['pipeline']
+                    if isinstance(self._t2_model_data, dict) and 'pipeline' in self._t2_model_data
+                    else self._t2_model_data
+                )
 
-            # 3. Load Tier 3 joblib models (PCOM & Multimodal fusion weights)
-            if TIER3_PCOM_PATH.exists():
-                self._t3_pcom_data = joblib.load(TIER3_PCOM_PATH)
-            if TIER3_CLINICAL_PCOS_PATH.exists():
-                self._t3_clinical_pcos_data = joblib.load(TIER3_CLINICAL_PCOS_PATH)
-            if TIER3_MULTIMODAL_FINAL_PATH.exists():
-                self._t3_final_fusion_data = joblib.load(TIER3_MULTIMODAL_FINAL_PATH)
+                # 3. Load Tier 3 joblib models (PCOM & Multimodal fusion weights)
+                if TIER3_PCOM_PATH.exists():
+                    self._t3_pcom_data = joblib.load(TIER3_PCOM_PATH)
+                if TIER3_CLINICAL_PCOS_PATH.exists():
+                    self._t3_clinical_pcos_data = joblib.load(TIER3_CLINICAL_PCOS_PATH)
+                if TIER3_MULTIMODAL_FINAL_PATH.exists():
+                    self._t3_final_fusion_data = joblib.load(TIER3_MULTIMODAL_FINAL_PATH)
 
             # 4. Initialize TreeSHAP explainers
             self._init_shap_explainers()
@@ -703,6 +707,24 @@ class PCOSMLService:
             'disclaimer': MEDICAL_DISCLAIMER,
         }
 
+    def can_predict_tier2(self, raw_inputs: dict[str, Any] | None) -> bool:
+        """
+        Determines whether sufficient clinical/laboratory inputs exist to run Tier 2 cumulative prediction.
+        Returns True if at least one valid clinical/laboratory biomarker is provided.
+        """
+        if not raw_inputs or not isinstance(raw_inputs, dict):
+            return False
+        for f in TIER2_CLINICAL_INPUT_FIELDS:
+            val = raw_inputs.get(f)
+            if val is not None and str(val).strip() != "":
+                if not (isinstance(val, float) and np.isnan(val)):
+                    try:
+                        float(val)
+                        return True
+                    except (ValueError, TypeError):
+                        pass
+        return False
+
     def predict_tier2_cumulative(self, raw_inputs: dict[str, Any]) -> dict[str, Any]:
         """
         Executes cumulative Tier 2 inference using the 32-feature Extra Trees model.
@@ -911,6 +933,32 @@ class PCOSMLService:
             return "intermediate"
         return "lower"
 
+    def _extract_preprocessor(self, pipeline_or_model: Any) -> Any:
+        """Extracts the fitted ColumnTransformer from Pipeline or CalibratedClassifierCV."""
+        if hasattr(pipeline_or_model, 'named_steps') and 'preprocessor' in pipeline_or_model.named_steps:
+            return pipeline_or_model.named_steps['preprocessor']
+        if hasattr(pipeline_or_model, 'estimator') and hasattr(pipeline_or_model.estimator, 'named_steps') and 'preprocessor' in pipeline_or_model.estimator.named_steps:
+            return pipeline_or_model.estimator.named_steps['preprocessor']
+        if hasattr(pipeline_or_model, 'calibrated_classifiers_') and len(pipeline_or_model.calibrated_classifiers_) > 0:
+            cc = pipeline_or_model.calibrated_classifiers_[0]
+            if hasattr(cc, 'estimator') and hasattr(cc.estimator, 'named_steps') and 'preprocessor' in cc.estimator.named_steps:
+                return cc.estimator.named_steps['preprocessor']
+        return None
+
+    def _get_feature_mapping(self, pipeline_or_model: Any, fallback_features: list[str]) -> list[str]:
+        """
+        Extracts the exact ordered output feature names from the fitted ColumnTransformer.
+        Strips transformer prefixes (e.g. 'num__', 'bin__') to map directly back to source columns.
+        """
+        preprocessor = self._extract_preprocessor(pipeline_or_model)
+        if preprocessor is not None and hasattr(preprocessor, 'get_feature_names_out'):
+            try:
+                names = list(preprocessor.get_feature_names_out())
+                return [n.split('__', 1)[-1] if '__' in n else n for n in names]
+            except Exception as e:
+                logger.debug("Could not get feature names out: %s", e)
+        return fallback_features
+
     def _generate_tree_explanations(
         self,
         pipeline_or_model: Any,
@@ -927,10 +975,14 @@ class PCOSMLService:
         try:
             # 1. Try TreeSHAP
             if explainer is not None:
-                # Preprocess DataFrame if model is a pipeline
-                X_transformed = df_input
-                if hasattr(pipeline_or_model, 'named_steps') and 'preprocessor' in pipeline_or_model.named_steps:
-                    X_transformed = pipeline_or_model.named_steps['preprocessor'].transform(df_input)
+                # Preprocess DataFrame through the pipeline's ColumnTransformer
+                preprocessor = self._extract_preprocessor(pipeline_or_model)
+                if preprocessor is not None:
+                    X_transformed = preprocessor.transform(df_input)
+                    aligned_feature_names = self._get_feature_mapping(pipeline_or_model, feature_names)
+                else:
+                    X_transformed = df_input
+                    aligned_feature_names = feature_names
 
                 shap_vals = explainer.shap_values(X_transformed)
                 # Handle binary classification shapes (list of arrays or 2D array)
@@ -941,10 +993,10 @@ class PCOSMLService:
                 else:
                     shap_arr = np.array(shap_vals)[0]
 
-                for i, feat in enumerate(feature_names):
+                for i, feat in enumerate(aligned_feature_names):
                     if i < len(shap_arr):
-                        raw_val = df_input[feat].iloc[0]
-                        is_provided = not pd.isna(raw_val)
+                        raw_val = df_input[feat].iloc[0] if feat in df_input.columns else None
+                        is_provided = raw_val is not None and not pd.isna(raw_val)
                         val = float(raw_val) if is_provided else None
                         sv = float(shap_arr[i])
                         meta = FEATURE_HUMAN_METADATA.get(feat, {'label': feat.replace('_', ' ').title(), 'pos_desc': '', 'neg_desc': ''})
@@ -973,10 +1025,11 @@ class PCOSMLService:
             tree_clf = self._extract_tree_estimator(pipeline_or_model)
             if tree_clf is not None and hasattr(tree_clf, 'feature_importances_'):
                 imps = tree_clf.feature_importances_
-                for i, feat in enumerate(feature_names):
+                aligned_feature_names = self._get_feature_mapping(pipeline_or_model, feature_names)
+                for i, feat in enumerate(aligned_feature_names):
                     if i < len(imps):
-                        raw_val = df_input[feat].iloc[0]
-                        is_provided = not pd.isna(raw_val)
+                        raw_val = df_input[feat].iloc[0] if feat in df_input.columns else None
+                        is_provided = raw_val is not None and not pd.isna(raw_val)
                         if is_provided:
                             val = float(raw_val)
                             med = float(self._reference_medians.get(feat, val))

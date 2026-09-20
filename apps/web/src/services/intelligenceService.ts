@@ -21,6 +21,10 @@ import type {
   HealthSnapshot,
   ProgressiveAssessment,
 } from '../types/intelligence';
+import type {
+  LongitudinalHealthResponse,
+  MonitoringPeriodFilter,
+} from '../types/longitudinalHealth';
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -32,12 +36,17 @@ const ACTIVE_ASSESSMENT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/assessmen
 const HISTORY_ASSESSMENT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/assessment/history/`;
 const TIER1_ASSESSMENT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/assessment/tier1/`;
 const TIER2_ASSESSMENT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/assessment/tier2/`;
+const CLEAR_TIER2_ASSESSMENT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/assessment/clear-tier2/`;
 const MALE_TIER1_ASSESSMENT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/assessment/male/tier1/`;
 const MALE_TIER2_ASSESSMENT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/assessment/male/tier2/`;
 const ULTRASOUND_ASSESSMENT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/assessment/ultrasound/`;
-const HEALTH_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/health/`;
 const STATUS_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/status/`;
-const CHAT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/chat/`;
+const CLINICAL_STATE_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/clinical-state/`;
+const LONGITUDINAL_HEALTH_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/longitudinal-health/`;
+const HEALTH_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/health/`;
+const CHAT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/companion/chat/`;
+const COMPANION_HEALTH_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/companion/health/`;
+
 
 /** Timeout in milliseconds for backend requests (60s for deterministic model inference / vision) */
 const REQUEST_TIMEOUT_MS = 60000;
@@ -47,21 +56,56 @@ const REQUEST_TIMEOUT_MS = 60000;
 // ---------------------------------------------------------------------------
 const LOCAL_STORAGE_ACTIVE_ASSESSMENT_PREFIX = 'biopulse_active_assessment_';
 
-export function getLocalActiveAssessment(module = 'female_pcos'): ProgressiveAssessment | null {
+export function getLocalActiveAssessment(userId?: string, module = 'female_pcos'): ProgressiveAssessment | null {
+  if (!userId) return null;
   try {
-    const raw = localStorage.getItem(`${LOCAL_STORAGE_ACTIVE_ASSESSMENT_PREFIX}${module}`);
+    const raw = localStorage.getItem(`${LOCAL_STORAGE_ACTIVE_ASSESSMENT_PREFIX}${userId}_${module}`);
     if (!raw) return null;
-    return JSON.parse(raw) as ProgressiveAssessment;
+    const parsed = JSON.parse(raw) as ProgressiveAssessment;
+    if (parsed && parsed.patient_id && parsed.patient_id !== userId) {
+      return null;
+    }
+    return parsed;
   } catch {
     return null;
   }
 }
 
-export function saveLocalActiveAssessment(module: string, assessment: ProgressiveAssessment): void {
+export function saveLocalActiveAssessment(userId: string | undefined, module: string, assessment: ProgressiveAssessment): void {
+  if (!userId || !assessment) return;
   try {
-    localStorage.setItem(`${LOCAL_STORAGE_ACTIVE_ASSESSMENT_PREFIX}${module}`, JSON.stringify(assessment));
+    assessment.patient_id = userId;
+    localStorage.setItem(`${LOCAL_STORAGE_ACTIVE_ASSESSMENT_PREFIX}${userId}_${module}`, JSON.stringify(assessment));
   } catch {
     // ignore storage errors
+  }
+}
+
+export function clearLocalActiveAssessment(userId?: string, module = 'female_pcos'): void {
+  if (!userId) return;
+  try {
+    localStorage.removeItem(`${LOCAL_STORAGE_ACTIVE_ASSESSMENT_PREFIX}${userId}_${module}`);
+  } catch {
+    // ignore
+  }
+}
+
+export function clearAllLocalAssessments(): void {
+  try {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (
+        key &&
+        (key.startsWith(LOCAL_STORAGE_ACTIVE_ASSESSMENT_PREFIX) ||
+          key.startsWith('biopulse_original_ultrasound_'))
+      ) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach((k) => localStorage.removeItem(k));
+  } catch (e) {
+    console.warn('Failed to clear local assessments:', e);
   }
 }
 
@@ -213,14 +257,14 @@ export async function fetchBackendAssessment(
       console.log('[OvaSense ML] API URL:', ASSESSMENT_ENDPOINT);
       console.log('[OvaSense ML] Auth token present:', Boolean(token));
 
+      if (!token) {
+        console.debug('[OvaSense ML] No access token available; skipping backend assessment fetch');
+        return null;
+      }
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      } else {
-        headers['Authorization'] = 'Bearer guest-demo-session-token';
-      }
 
       const response = await fetchWithTimeout(
         ASSESSMENT_ENDPOINT,
@@ -297,13 +341,21 @@ export async function fetchBackendAssessment(
 /**
  * Fetches the currently active progressive assessment for the authenticated patient.
  */
-export async function fetchActiveAssessment(_forceRefresh = false, module?: string): Promise<ProgressiveAssessment | null> {
+export async function fetchActiveAssessment(
+  _forceRefresh = false,
+  module?: string,
+  userId?: string
+): Promise<ProgressiveAssessment | null> {
   const modKey = module || 'female_pcos';
   try {
     const token = await getAccessToken();
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-    else headers['Authorization'] = 'Bearer guest-demo-session-token';
+    if (!token) {
+      return getLocalActiveAssessment(userId, modKey);
+    }
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    };
 
     const url = module
       ? `${ACTIVE_ASSESSMENT_ENDPOINT}?module=${encodeURIComponent(module)}`
@@ -314,27 +366,37 @@ export async function fetchActiveAssessment(_forceRefresh = false, module?: stri
       headers,
     }, 30000);
 
+    if (response.status === 401 || response.status === 403) {
+      console.warn('[Intelligence API] Active assessment unauthorized (401/403).');
+      return null;
+    }
+
     if (!response.ok) {
       console.warn('[Intelligence API] Active assessment request failed with status:', response.status);
-      return getLocalActiveAssessment(modKey);
+      return getLocalActiveAssessment(userId, modKey);
     }
 
     const data = (await response.json()) as ProgressiveAssessment;
     if (data && typeof data === 'object') {
-      saveLocalActiveAssessment(modKey, data);
+      if (data.has_assessment === false) {
+        clearLocalActiveAssessment(userId, modKey);
+        return null;
+      }
+      saveLocalActiveAssessment(userId, modKey, data);
+      return data;
     }
-    return data;
+    return null;
   } catch (err) {
     console.warn('[Intelligence API] Active assessment error:', err);
-    return getLocalActiveAssessment(modKey);
+    return getLocalActiveAssessment(userId, modKey);
   }
 }
 
 /**
  * Fetches the currently active male hypogonadism assessment.
  */
-export async function fetchActiveMaleAssessment(): Promise<ProgressiveAssessment | null> {
-  return fetchActiveAssessment(false, 'male_hypogonadism');
+export async function fetchActiveMaleAssessment(userId?: string): Promise<ProgressiveAssessment | null> {
+  return fetchActiveAssessment(false, 'male_hypogonadism', userId);
 }
 
 /**
@@ -343,9 +405,11 @@ export async function fetchActiveMaleAssessment(): Promise<ProgressiveAssessment
 export async function fetchAssessmentHistory(module?: string): Promise<ProgressiveAssessment[]> {
   try {
     const token = await getAccessToken();
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-    else headers['Authorization'] = 'Bearer guest-demo-session-token';
+    if (!token) return [];
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    };
 
     const url = module
       ? `${HISTORY_ASSESSMENT_ENDPOINT}?module=${encodeURIComponent(module)}`
@@ -368,12 +432,17 @@ export async function fetchAssessmentHistory(module?: string): Promise<Progressi
 /**
  * Executes Female PCOS Tier 1 Assessment and sets it as the active result.
  */
-export async function submitTier1Assessment(inputs: Record<string, any> = {}): Promise<ProgressiveAssessment | null> {
+export async function submitTier1Assessment(inputs: Record<string, any> = {}, userId?: string): Promise<ProgressiveAssessment | null> {
   try {
     const token = await getAccessToken();
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-    else headers['Authorization'] = 'Bearer guest-demo-session-token';
+    if (!token) {
+      console.warn('[PCOS-ML] No access token available for Tier 1 submission.');
+      return null;
+    }
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    };
 
     const response = await fetchWithTimeout(TIER1_ASSESSMENT_ENDPOINT, {
       method: 'POST',
@@ -389,7 +458,7 @@ export async function submitTier1Assessment(inputs: Record<string, any> = {}): P
     clearAssessmentCache();
     const data = (await response.json()) as ProgressiveAssessment;
     if (data) {
-      saveLocalActiveAssessment('female_pcos', data);
+      saveLocalActiveAssessment(userId || data.patient_id, 'female_pcos', data);
     }
     return data;
   } catch (err) {
@@ -398,20 +467,40 @@ export async function submitTier1Assessment(inputs: Record<string, any> = {}): P
   }
 }
 
+function sanitizeClinicalInputs(inputs: Record<string, any>): Record<string, any> {
+  const sanitized: Record<string, any> = {};
+  for (const [key, value] of Object.entries(inputs)) {
+    if (key === 'remove_fields' || key === 'removed_fields') {
+      sanitized[key] = value;
+      continue;
+    }
+    if (value !== null && value !== undefined && String(value).trim() !== '') {
+      sanitized[key] = value;
+    }
+  }
+  return sanitized;
+}
+
 /**
  * Executes Female PCOS Cumulative Tier 2 Assessment (Tier 1 + Clinical Labs) and replaces active result.
  */
-export async function submitTier2Assessment(inputs: Record<string, any>): Promise<ProgressiveAssessment | null> {
+export async function submitTier2Assessment(inputs: Record<string, any>, userId?: string): Promise<ProgressiveAssessment | null> {
   try {
     const token = await getAccessToken();
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-    else headers['Authorization'] = 'Bearer guest-demo-session-token';
+    if (!token) {
+      console.warn('[PCOS-ML] No access token available for Tier 2 submission.');
+      return null;
+    }
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    };
 
+    const payload = sanitizeClinicalInputs(inputs);
     const response = await fetchWithTimeout(TIER2_ASSESSMENT_ENDPOINT, {
       method: 'POST',
       headers,
-      body: JSON.stringify(inputs),
+      body: JSON.stringify(payload),
     }, 60000);
 
     if (!response.ok) {
@@ -422,7 +511,7 @@ export async function submitTier2Assessment(inputs: Record<string, any>): Promis
     clearAssessmentCache();
     const data = (await response.json()) as ProgressiveAssessment;
     if (data) {
-      saveLocalActiveAssessment('female_pcos', data);
+      saveLocalActiveAssessment(userId || data.patient_id, 'female_pcos', data);
     }
     return data;
   } catch (err) {
@@ -434,12 +523,17 @@ export async function submitTier2Assessment(inputs: Record<string, any>): Promis
 /**
  * Executes Male Hypogonadism Tier 1 Assessment (Questionnaire/Biometrics) and sets it as active.
  */
-export async function submitMaleTier1Assessment(inputs: Record<string, any> = {}): Promise<ProgressiveAssessment | null> {
+export async function submitMaleTier1Assessment(inputs: Record<string, any> = {}, userId?: string): Promise<ProgressiveAssessment | null> {
   try {
     const token = await getAccessToken();
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-    else headers['Authorization'] = 'Bearer guest-demo-session-token';
+    if (!token) {
+      console.warn('[Male-ML] No access token available for Male Tier 1 submission.');
+      return null;
+    }
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    };
 
     const response = await fetchWithTimeout(MALE_TIER1_ASSESSMENT_ENDPOINT, {
       method: 'POST',
@@ -455,7 +549,7 @@ export async function submitMaleTier1Assessment(inputs: Record<string, any> = {}
     clearAssessmentCache();
     const data = (await response.json()) as ProgressiveAssessment;
     if (data) {
-      saveLocalActiveAssessment('male_hypogonadism', data);
+      saveLocalActiveAssessment(userId || data.patient_id, 'male_hypogonadism', data);
     }
     return data;
   } catch (err) {
@@ -467,17 +561,23 @@ export async function submitMaleTier1Assessment(inputs: Record<string, any> = {}
 /**
  * Executes Male Hypogonadism Tier 2 Assessment (Clinical Labs + Hormone pattern) and replaces active result.
  */
-export async function submitMaleTier2Assessment(inputs: Record<string, any>): Promise<ProgressiveAssessment | null> {
+export async function submitMaleTier2Assessment(inputs: Record<string, any>, userId?: string): Promise<ProgressiveAssessment | null> {
   try {
     const token = await getAccessToken();
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-    else headers['Authorization'] = 'Bearer guest-demo-session-token';
+    if (!token) {
+      console.warn('[Male-ML] No access token available for Male Tier 2 submission.');
+      return null;
+    }
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    };
 
+    const payload = sanitizeClinicalInputs(inputs);
     const response = await fetchWithTimeout(MALE_TIER2_ASSESSMENT_ENDPOINT, {
       method: 'POST',
       headers,
-      body: JSON.stringify(inputs),
+      body: JSON.stringify(payload),
     }, 60000);
 
     if (!response.ok) {
@@ -488,7 +588,7 @@ export async function submitMaleTier2Assessment(inputs: Record<string, any>): Pr
     clearAssessmentCache();
     const data = (await response.json()) as ProgressiveAssessment;
     if (data) {
-      saveLocalActiveAssessment('male_hypogonadism', data);
+      saveLocalActiveAssessment(userId || data.patient_id, 'male_hypogonadism', data);
     }
     return data;
   } catch (err) {
@@ -498,17 +598,93 @@ export async function submitMaleTier2Assessment(inputs: Record<string, any>): Pr
 }
 
 /**
+ * Explicitly clears Tier 2 stored clinical/lab data and recalculates Tier 1 active assessment.
+ */
+export async function clearTier2Assessment(module: string = 'female_pcos', userId?: string): Promise<ProgressiveAssessment | null> {
+  try {
+    const token = await getAccessToken();
+    if (!token) {
+      console.warn('[Intelligence API] No access token available to clear Tier 2.');
+      return null;
+    }
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    };
+
+    const response = await fetchWithTimeout(CLEAR_TIER2_ASSESSMENT_ENDPOINT, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ module }),
+    }, REQUEST_TIMEOUT_MS);
+
+    if (!response.ok) {
+      console.error('[Intelligence API] Clear Tier 2 failed:', response.status);
+      return null;
+    }
+
+    clearAssessmentCache();
+    const data = (await response.json()) as ProgressiveAssessment;
+    if (data) {
+      saveLocalActiveAssessment(userId || data.patient_id, module, data);
+    }
+    return data;
+  } catch (err) {
+    console.error('[Intelligence API] Clear Tier 2 error:', err);
+    return null;
+  }
+}
+
+/**
+ * Retrieves the authoritative persistent patient clinical state (Tier 1 & Tier 2 inputs).
+ */
+export async function fetchPatientClinicalState(
+  module: string = 'female_pcos'
+): Promise<{
+  user_id: string;
+  module: string;
+  tier_1_inputs: Record<string, any>;
+  tier_2_inputs: Record<string, any>;
+  ultrasound_inputs: Record<string, any>;
+} | null> {
+  try {
+    const token = await getAccessToken();
+    if (!token) return null;
+    const headers: Record<string, string> = {
+      'Authorization': `Bearer ${token}`,
+    };
+
+    const url = `${CLINICAL_STATE_ENDPOINT}?module=${encodeURIComponent(module)}`;
+    const response = await fetchWithTimeout(url, {
+      method: 'GET',
+      headers,
+    });
+    if (!response.ok) return null;
+    return await response.json();
+  } catch (err) {
+    console.warn('[Intelligence API] fetchPatientClinicalState error:', err);
+    return null;
+  }
+}
+
+/**
  * Uploads an ultrasound image for morphological analysis (PCOM) and multimodal fusion.
  */
+
 export async function uploadUltrasoundAssessment(
   imageFile: File,
-  reportId?: string
+  reportId?: string,
+  userId?: string
 ): Promise<ProgressiveAssessment | null> {
   try {
     const token = await getAccessToken();
-    const headers: Record<string, string> = {};
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-    else headers['Authorization'] = 'Bearer guest-demo-session-token';
+    if (!token) {
+      console.warn('[PCOS-ML] No access token available for ultrasound upload.');
+      return null;
+    }
+    const headers: Record<string, string> = {
+      'Authorization': `Bearer ${token}`,
+    };
 
     const formData = new FormData();
     formData.append('image', imageFile);
@@ -532,7 +708,7 @@ export async function uploadUltrasoundAssessment(
     clearAssessmentCache();
     const data = (await response.json()) as ProgressiveAssessment;
     if (data) {
-      saveLocalActiveAssessment('female_pcos', data);
+      saveLocalActiveAssessment(userId || data.patient_id, 'female_pcos', data);
     }
     return data;
   } catch (err) {
@@ -755,7 +931,11 @@ export async function sendChatMessage(
     // If 200 OK or 503 Service Unavailable with a structured payload, parse JSON
     if (response.ok || response.status === 503) {
       try {
-        return (await response.json()) as import('../types/intelligence').ChatResponsePayload;
+        const data = await response.json();
+        return {
+          ...data,
+          message: data.reply || data.message || '',
+        } as import('../types/intelligence').ChatResponsePayload;
       } catch {
         // Continue to fallback
       }
@@ -768,3 +948,58 @@ export async function sendChatMessage(
     return null;
   }
 }
+
+/**
+ * Health check for the BioPulse AI Companion (Qwen3 1.7B).
+ * Verifies Ollama connectivity and configured model availability without generating chat completions.
+ */
+export async function checkCompanionHealth(): Promise<{
+  status: string;
+  ollama_reachable: boolean;
+  configured_model?: string;
+  model_available?: boolean;
+  available_models?: string[];
+  error?: string | null;
+} | null> {
+  try {
+    const response = await fetchWithTimeout(COMPANION_HEALTH_ENDPOINT, { method: 'GET' }, 5000);
+    if (!response.ok && response.status !== 503) return null;
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fetches authoritative longitudinal health summary and historical trends.
+ * Supports period filtering ('30d' | '90d' | '180d' | '1y' | 'all') and pathway scoping.
+ */
+export async function getLongitudinalHealth(
+  period: MonitoringPeriodFilter = '90d',
+  module?: string
+): Promise<LongitudinalHealthResponse | null> {
+  try {
+    const token = await getAccessToken();
+    if (!token) return null;
+    const headers: Record<string, string> = {
+      'Authorization': `Bearer ${token}`,
+    };
+
+    const params = new URLSearchParams();
+    if (period) params.set('period', period);
+    if (module) params.set('module', module);
+
+    const url = `${LONGITUDINAL_HEALTH_ENDPOINT}?${params.toString()}`;
+    const response = await fetchWithTimeout(url, { method: 'GET', headers }, 30000);
+    if (!response.ok) {
+      console.warn(`[Intelligence API] getLongitudinalHealth failed with status ${response.status}`);
+      return null;
+    }
+    return (await response.json()) as LongitudinalHealthResponse;
+  } catch (err) {
+    console.error('[Intelligence API] getLongitudinalHealth error:', err);
+    return null;
+  }
+}
+
+

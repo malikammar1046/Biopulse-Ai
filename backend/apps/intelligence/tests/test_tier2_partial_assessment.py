@@ -4,9 +4,11 @@ Unit tests for Partial Tier 2 Clinical & Laboratory Assessment Integration in PC
 """
 
 import math
+import uuid
 import numpy as np
 import pandas as pd
-from django.test import TestCase
+from unittest.mock import patch, MagicMock
+from django.test import TestCase, override_settings
 
 from apps.intelligence.services.pcos_ml_service import (
     pcos_ml_service,
@@ -22,6 +24,7 @@ from apps.intelligence.services.intelligence_orchestrator import (
 from apps.intelligence.services.assessment_repository import assessment_repository
 
 
+@override_settings(ALLOW_LOCAL_SQLITE_FALLBACK=True)
 class Tier2PartialAssessmentTests(TestCase):
     """
     Test suite for partial Tier 2 clinical and laboratory features,
@@ -29,8 +32,34 @@ class Tier2PartialAssessmentTests(TestCase):
     """
 
     def setUp(self):
+        self.sb_patcher1 = patch("apps.intelligence.services.clinical_state_repository.get_supabase_client", return_value=None)
+        self.sb_patcher2 = patch("apps.intelligence.services.assessment_repository.get_supabase_client", return_value=None)
+        self.sb_patcher3 = patch("apps.health.services.supabase_health_service.health_service.fetch_all")
+        self.mock_fetch = self.sb_patcher3.start()
+        class MockProfile:
+            gender = "female"
+            age = 26
+            height_cm = None
+            weight_kg = None
+            cycle_length = None
+            period_regularity = None
+            date_of_birth = None
+            common_symptoms = []
+            fast_food_intake = None
+            regular_exercise = None
+
+        class MockHealthData:
+            profile = MockProfile()
+            reports = []
+            symptom_records = []
+            medical_reports = []
+
+        self.mock_fetch.return_value = MockHealthData()
+        self.sb_patcher1.start()
+        self.sb_patcher2.start()
+
         pcos_ml_service.load()
-        self.patient_uuid = "test-patient-partial-tier2-uuid-001"
+        self.patient_uuid = f"test-patient-partial-tier2-{uuid.uuid4().hex[:8]}"
         self.tier1_profile = {
             "age": 26,
             "weight_kg": 68.0,
@@ -150,7 +179,7 @@ class Tier2PartialAssessmentTests(TestCase):
         """Submitting Tier 2 with no clinical measurements raises a clean validation error."""
         with self.assertRaises(ValueError) as cm:
             run_tier2_assessment(
-                "patient-no-tier2",
+                f"patient-no-tier2-{uuid.uuid4().hex[:8]}",
                 client_health_data=self.tier1_profile,
                 clinical_inputs={},
             )
@@ -158,7 +187,7 @@ class Tier2PartialAssessmentTests(TestCase):
 
     def test_patch_style_merge_and_progressive_completion(self):
         """Adding additional laboratory tests progressively merges with previous Tier 2 data without wiping omitted fields."""
-        patient_id = "test-patient-patch-merge-002"
+        patient_id = f"test-patient-patch-merge-{uuid.uuid4().hex[:8]}"
 
         # Step 1: Initial Tier 2 submission with TSH and AMH
         t2_step1 = run_tier2_assessment(
@@ -197,7 +226,7 @@ class Tier2PartialAssessmentTests(TestCase):
 
     def test_explicit_field_removal(self):
         """User can explicitly remove a previously saved value using remove_fields."""
-        patient_id = "test-patient-explicit-remove-003"
+        patient_id = f"test-patient-explicit-remove-{uuid.uuid4().hex[:8]}"
 
         # Step 1: Submit TSH and AMH
         run_tier2_assessment(
@@ -233,3 +262,8 @@ class Tier2PartialAssessmentTests(TestCase):
         # Probability is the model's calibrated probability (e.g. > 0.50), not 6.67%
         self.assertNotEqual(res["probability"], res["evidence_completeness_percent"])
         self.assertTrue(0.0 <= res["probability"] <= 1.0)
+
+    def tearDown(self):
+        self.sb_patcher1.stop()
+        self.sb_patcher2.stop()
+        self.sb_patcher3.stop()

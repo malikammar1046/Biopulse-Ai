@@ -111,7 +111,7 @@ class MedicationService {
     input: MedicationInput
   ): Promise<{ success: boolean; medication?: MedicationItem; error?: string }> {
     const newMed: MedicationItem = {
-      id: `med_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`,
+      id: crypto.randomUUID(),
       userId,
       name: input.name.trim(),
       dose: input.dose.trim(),
@@ -318,7 +318,7 @@ class MedicationService {
       current[existingIdx] = logEntry;
     } else {
       logEntry = {
-        id: `log_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`,
+        id: crypto.randomUUID(),
         userId,
         medicationId: input.medicationId,
         scheduledFor: input.scheduledFor,

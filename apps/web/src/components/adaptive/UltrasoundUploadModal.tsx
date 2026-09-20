@@ -22,7 +22,7 @@ export const UltrasoundUploadModal: React.FC<UltrasoundUploadModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { activeAssessment, submitUltrasound } = useUserHealth();
+  const { activeAssessment, submitUltrasound, userProfile } = useUserHealth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -73,7 +73,11 @@ export const UltrasoundUploadModal: React.FC<UltrasoundUploadModalProps> = ({
       }
       if (previewUrl) {
         try {
-          localStorage.setItem('biopulse_original_ultrasound_preview', previewUrl);
+          const assessId = (result as any)?.assessment_id || (result as any)?.id;
+          const uid = userProfile?.id || (result as any)?.patient_id;
+          if (assessId && uid) {
+            localStorage.setItem(`biopulse_original_ultrasound_${uid}_${assessId}`, previewUrl);
+          }
         } catch {}
       }
       if (result.status_code === 'tier_1_3_model_unavailable') {

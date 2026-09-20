@@ -12,6 +12,7 @@ import { NextBestActionCard } from '../../components/dashboard/NextBestActionCar
 import { TopFactorsCard } from '../../components/dashboard/TopFactorsCard';
 import { RecentActivityRow } from '../../components/dashboard/RecentActivityRow';
 import { DashboardNutritionCard } from '../../components/dashboard/DashboardNutritionCard';
+import { FemaleDashboardOverview } from '../../components/female/FemaleDashboardOverview';
 
 // Clinical Modals
 import { MaleClinicalLabsModal } from '../../components/adaptive/MaleClinicalLabsModal';
@@ -197,6 +198,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ pathway: pathwayProp }) =>
 
   const screeningLoading = assessmentLoading || mlAssessmentLoading || maleScreeningStarting;
 
+  if (!isMale) {
+    return <FemaleDashboardOverview />;
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
@@ -234,8 +239,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ pathway: pathwayProp }) =>
               isMale && hasAssessment ? 'Add Hormone Labs' : undefined
             }
             loading={screeningLoading}
-            gradcamB64={activeAssessment?.gradcam_b64}
-            pcomStatus={activeAssessment?.pcom_status}
+            gradcamB64={
+              !isMale && (assessmentLevel === 'tier_1_3' || assessmentLevel === 'tier_1_2_3')
+                ? activeAssessment?.gradcam_b64
+                : undefined
+            }
+            pcomStatus={
+              !isMale && (assessmentLevel === 'tier_1_3' || assessmentLevel === 'tier_1_2_3')
+                ? activeAssessment?.pcom_status
+                : undefined
+            }
           />
         </div>
 

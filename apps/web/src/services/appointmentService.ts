@@ -70,7 +70,7 @@ class AppointmentService {
           providerId: row.provider_id || undefined,
           careCircleMemberId: row.care_circle_member_id || undefined,
           providerName: row.provider_name,
-          providerSpecialty: row.provider_specialty || 'Gynecologist / Specialist',
+          providerSpecialty: row.provider_specialty || undefined,
           title: row.title,
           appointmentType: row.appointment_type,
           scheduledAt: row.scheduled_at,
@@ -105,11 +105,11 @@ class AppointmentService {
     const scheduledAtIso = `${input.scheduledDate}T${input.scheduledTime || '15:30'}:00.000Z`;
 
     const newAppointment: AppointmentItem = {
-      id: `apt_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`,
+      id: crypto.randomUUID(),
       patientId,
       careCircleMemberId: input.careCircleMemberId,
       providerName: input.providerName.trim() || 'Healthcare Professional',
-      providerSpecialty: input.providerSpecialty || 'Specialist Gynecologist',
+      providerSpecialty: input.providerSpecialty ? input.providerSpecialty.trim() : undefined,
       title: input.title.trim() || 'Medical Consultation',
       appointmentType: input.appointmentType,
       scheduledAt: scheduledAtIso,
@@ -139,7 +139,7 @@ class AppointmentService {
           patient_id: patientId,
           care_circle_member_id: newAppointment.careCircleMemberId || null,
           provider_name: newAppointment.providerName,
-          provider_specialty: newAppointment.providerSpecialty,
+          provider_specialty: newAppointment.providerSpecialty || null,
           title: newAppointment.title,
           appointment_type: newAppointment.appointmentType,
           scheduled_at: newAppointment.scheduledAt,

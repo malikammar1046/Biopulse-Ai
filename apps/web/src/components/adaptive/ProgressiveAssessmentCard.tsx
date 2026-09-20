@@ -111,9 +111,10 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
   const level = assessment.assessment_level;
   const isTier1 = level === 'tier_1';
   const isTier2 = level === 'tier_1_2';
+  const isTier1_3 = level === 'tier_1_3';
   const isTier3Multimodal = level === 'tier_1_2_3';
   const hasUltrasoundOnly = Boolean(
-    !isMale && (assessment.status_code === 'tier_1_3_model_unavailable' || (!isTier3Multimodal && assessment.pcom_status))
+    !isMale && (isTier1_3 || assessment.status_code === 'tier_1_3_model_unavailable')
   );
 
   // Determine if Tier 2 was evaluated with partial clinical evidence
@@ -278,8 +279,8 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
           </div>
         </div>
 
-        {/* Right: Ultrasound / PCOM Snapshot (if processed) */}
-        {!isMale && assessment.pcom_status && (
+        {/* Right: Ultrasound / PCOM Snapshot (if processed for Tier 3 or Tier 1+3) */}
+        {!isMale && (isTier3Multimodal || hasUltrasoundOnly) && assessment.pcom_status && (
           <div className="lg:col-span-5 p-4 rounded-2xl bg-white/10 border border-white/15 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-mono text-sky-200 flex items-center gap-1.5">
@@ -327,8 +328,8 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
           </div>
         )}
 
-        {/* Right: Male Pituitary-Gonadal Hormone Evaluator (if available) */}
-        {isMale && assessment.hormone_pattern_interpretation && (
+        {/* Right: Male Pituitary-Gonadal Hormone Evaluator (Tier 2 only) */}
+        {isMale && isTier2 && assessment.hormone_pattern_interpretation && (
           <div className="lg:col-span-5 p-4 rounded-2xl bg-white/10 border border-white/15 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-mono text-sky-200 flex items-center gap-1.5">
@@ -376,7 +377,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
           <div className="flex items-center justify-between">
             <h4 className="text-xs font-mono uppercase tracking-wider text-sky-200 flex items-center gap-2">
               <Sparkles className="w-3.5 h-3.5 text-[#BAE6FD]" />
-              <span>Primary Contributing Factors (TreeSHAP)</span>
+              <span>Primary Contributing Factors {isMale ? '(Clinical Rules)' : '(TreeSHAP)'}</span>
             </h4>
             <span className="text-[10px] font-mono text-sky-200">
               Direction of influence
@@ -535,7 +536,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
 
       {/* Grad-CAM Modal */}
       <AnimatePresence>
-        {showGradCamModal && assessment.gradcam_b64 && (
+        {showGradCamModal && !isMale && (isTier3Multimodal || hasUltrasoundOnly) && assessment.gradcam_b64 && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setShowGradCamModal(false)}>
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}

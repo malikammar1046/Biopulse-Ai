@@ -567,24 +567,109 @@ class OpenAIProvider(LLMProvider):
             raise LLMProviderError(f"OpenAI LLM provider error: {exc}") from exc
 
 
+class QwenOllamaProvider(LLMProvider):
+    """
+    BioPulse AI Primary Local Provider: Qwen3 1.7B via Ollama /api/chat.
+
+    Connects to local Ollama runtime, supports non-streaming responses, enforces /no_think,
+    and strips <think>...</think> tags.
+    """
+
+    def __init__(
+        self,
+        base_url: Optional[str] = None,
+        model_name: Optional[str] = None,
+        timeout: Optional[int] = None,
+    ) -> None:
+        from apps.intelligence.services.qwen_service import QwenOllamaService
+        self.service = QwenOllamaService(
+            base_url=base_url,
+            model_name=model_name,
+            timeout_seconds=timeout,
+        )
+        self.model_name = self.service.model_name
+
+    def generate_chat_response(
+        self,
+        system_instruction: str,
+        user_message: str,
+        health_context: str,
+        conversation_history: Optional[List[dict[str, str]]] = None,
+    ) -> LLMResponse:
+        messages: List[dict[str, str]] = []
+
+        # System message containing role, guidelines, and patient health context
+        full_system_prompt = system_instruction
+        if health_context:
+            full_system_prompt += f"\n\n--- AUTHORITATIVE PATIENT BIOPULSE STATE ---\n{health_context}"
+
+        messages.append({"role": "system", "content": full_system_prompt})
+
+        # Bounded conversation history (last 8 messages)
+        if conversation_history:
+            for item in conversation_history[-8:]:
+                role = "user" if item.get("sender") == "user" else "assistant"
+                text = item.get("text", "")
+                if text:
+                    messages.append({"role": role, "content": text})
+
+        # Current user query
+        messages.append({"role": "user", "content": user_message})
+
+        try:
+            from apps.intelligence.services.qwen_service import QwenServiceError
+            answer = self.service.generate_chat(messages, append_no_think=True)
+
+            # Determine safety level and clinician escalation
+            needs_clinician = any(
+                term in user_message.lower()
+                for term in ["doctor", "physician", "prescribe", "medication", "dose", "severe", "pain"]
+            )
+
+            return LLMResponse(
+                answer=answer,
+                confidence="high",
+                used_context=["profile", "ml_screening", "clinical_state"],
+                needs_clinician=needs_clinician,
+                safety_level="normal",
+                model_name=self.model_name,
+            )
+        except Exception as exc:
+            logger.error("QwenOllamaProvider failed: %s", exc)
+            raise LLMProviderError(f"Qwen3 1.7B companion request failed: {exc}") from exc
+
+
 def get_llm_provider() -> LLMProvider:
     """
-    Factory function: returns the configured LLM provider according to environment variables.
+    Factory function: returns the configured LLM provider according to environment variables and Django settings.
 
-    Defaults to MedGemmaProvider (local self-hosted inference) to guarantee patient privacy
-    and minimize recurring API costs.
+    Defaults to QwenOllamaProvider (local self-hosted Qwen3 1.7B via Ollama) to guarantee patient privacy,
+    zero recurring API costs, and compliance with the BioPulse AI Companion specification.
 
     OfflineDeterministicProvider is returned ONLY when LLM_PROVIDER is explicitly set to 'offline'.
-    It must NEVER silently replace MedGemma or cloud providers.
     """
-    provider_name = os.environ.get("LLM_PROVIDER", "medgemma").lower().strip()
+    from django.conf import settings
+
+    default_provider = getattr(settings, "LLM_PROVIDER", "qwen")
+    provider_name = os.environ.get("LLM_PROVIDER", default_provider).lower().strip()
 
     # 1. Offline Deterministic (Strictly for automated tests and offline sandbox dev)
     if provider_name == "offline":
         return OfflineDeterministicProvider()
 
-    # 2. MedGemma (Primary Self-Hosted Provider)
-    if provider_name == "medgemma" or not provider_name:
+    # 2. Qwen3 1.7B via Ollama (Primary BioPulse AI Companion Provider)
+    if provider_name in ("qwen", "ollama", ""):
+        base_url = getattr(settings, "OLLAMA_BASE_URL", None) or os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
+        model_name = getattr(settings, "OLLAMA_MODEL", None) or os.environ.get("OLLAMA_MODEL", "qwen3:1.7b")
+        timeout = getattr(settings, "OLLAMA_TIMEOUT_SECONDS", None) or int(os.environ.get("OLLAMA_TIMEOUT_SECONDS", "30"))
+        return QwenOllamaProvider(
+            base_url=base_url,
+            model_name=model_name,
+            timeout=timeout,
+        )
+
+    # 3. MedGemma (Legacy Self-Hosted Provider)
+    if provider_name == "medgemma":
         base_url = os.environ.get("MEDGEMMA_BASE_URL", "http://127.0.0.1:11434/v1").strip()
         model_name = os.environ.get("MEDGEMMA_MODEL", "medgemma:4b").strip()
         api_key = os.environ.get("MEDGEMMA_API_KEY", "local").strip()
@@ -596,7 +681,7 @@ def get_llm_provider() -> LLMProvider:
             timeout=timeout,
         )
 
-    # 3. Optional Cloud Providers (Preserved behind LLMProvider abstraction)
+    # 4. Optional Cloud Providers (Preserved behind LLMProvider abstraction)
     model_name = os.environ.get("LLM_MODEL", "").strip()
 
     if provider_name == "gemini":
@@ -618,3 +703,4 @@ def get_llm_provider() -> LLMProvider:
         return OpenAIProvider(api_key, model_name=model_name or "gpt-4o-mini")
 
     raise LLMProviderError(f"Unsupported LLM_PROVIDER configured: '{provider_name}'.")
+

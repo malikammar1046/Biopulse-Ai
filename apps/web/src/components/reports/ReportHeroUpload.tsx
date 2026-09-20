@@ -1,6 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { Upload, Sparkles, ShieldCheck } from 'lucide-react';
 import type { ReportSummaryStats } from '../../types/report';
+import { useUserHealth } from '../../context/UserHealthContext';
+import { resolvePathway } from '../../types/onboarding';
 
 interface ReportHeroUploadProps {
   stats: ReportSummaryStats;
@@ -13,6 +15,10 @@ export const ReportHeroUpload: React.FC<ReportHeroUploadProps> = ({
   onFileSelected,
   onOpenUploadWizard,
 }) => {
+  const { userProfile } = useUserHealth();
+  const pathway = resolvePathway(userProfile.gender, userProfile.pathway);
+  const isFemale = pathway === 'female';
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
@@ -65,40 +71,64 @@ export const ReportHeroUpload: React.FC<ReportHeroUploadProps> = ({
   };
 
   return (
-    <div className="p-6 sm:p-8 rounded-[32px] bg-white border border-[#BAE6FD] shadow-sm text-left select-none relative overflow-hidden space-y-6">
+    <div className={`p-6 sm:p-8 shadow-xs text-left select-none relative overflow-hidden space-y-6 ${
+      isFemale
+        ? 'rounded-[24px] bg-white border border-[#EAECF0]'
+        : 'rounded-[32px] bg-white border border-[#BAE6FD]'
+    }`}>
       {/* Header Bar */}
       <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1.5 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD] text-xs font-mono font-bold">
-            <Sparkles className="w-3.5 h-3.5 text-[#0288D1]" />
+          <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-bold ${
+            isFemale
+              ? 'bg-[#FBE7F0] text-[#A92D61] border border-[#FCE1ED]'
+              : 'bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD]'
+          }`}>
+            <Sparkles className={`w-3.5 h-3.5 ${isFemale ? 'text-[#E84A8A]' : 'text-[#0288D1]'}`} />
             <span>Health Document Hub</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-[#0F172A] tracking-tight">
+          <h1 className={`text-2xl sm:text-3xl font-bold font-display tracking-tight ${
+            isFemale ? 'text-[#111318]' : 'text-[#0F172A]'
+          }`}>
             Your Health Reports
           </h1>
-          <p className="text-xs sm:text-sm text-[#64748B] font-sans leading-relaxed">
+          <p className={`text-xs sm:text-sm font-sans leading-relaxed ${
+            isFemale ? 'text-[#667085]' : 'text-[#64748B]'
+          }`}>
             Keep your important health reports in one secure place. BioPulse AI can help you understand what the numbers and terms mean in simple language.
           </p>
         </div>
 
         {/* Quick Metric Pills */}
         <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
-          <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] shadow-xs text-left">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-[#64748B] block">
+          <div className={`p-3 rounded-xl border shadow-xs text-left ${
+            isFemale ? 'bg-[#FAFAFC] border-[#EAECF0]' : 'bg-[#F8FAFC] border-[#E2E8F0]'
+          }`}>
+            <span className={`text-[10px] font-mono uppercase tracking-wider block ${
+              isFemale ? 'text-[#98A2B3]' : 'text-[#64748B]'
+            }`}>
               Total Reports
             </span>
-            <span className="text-lg font-bold font-display text-[#0F172A]">
+            <span className={`text-lg font-bold font-display ${
+              isFemale ? 'text-[#111318]' : 'text-[#0F172A]'
+            }`}>
               {stats.totalReportsCount}
             </span>
           </div>
 
-          <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] shadow-xs text-left">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-[#64748B] block">
+          <div className={`p-3 rounded-xl border shadow-xs text-left ${
+            isFemale ? 'bg-[#FAFAFC] border-[#EAECF0]' : 'bg-[#F8FAFC] border-[#E2E8F0]'
+          }`}>
+            <span className={`text-[10px] font-mono uppercase tracking-wider block ${
+              isFemale ? 'text-[#98A2B3]' : 'text-[#64748B]'
+            }`}>
               Needs a closer look
             </span>
             <span
               className={`text-lg font-bold font-display ${
-                stats.needsReviewCount > 0 ? 'text-[#D97706]' : 'text-[#059669]'
+                stats.needsReviewCount > 0
+                  ? isFemale ? 'text-[#E8A23A]' : 'text-[#D97706]'
+                  : isFemale ? 'text-[#16A36A]' : 'text-[#059669]'
               }`}
             >
               {stats.needsReviewCount} {stats.needsReviewCount === 1 ? 'test' : 'tests'}
@@ -113,9 +143,13 @@ export const ReportHeroUpload: React.FC<ReportHeroUploadProps> = ({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
-        className={`relative z-10 p-6 sm:p-8 rounded-3xl border-2 border-dashed transition-all duration-300 text-center cursor-pointer flex flex-col items-center justify-center gap-3 ${
+        className={`relative z-10 p-6 sm:p-8 rounded-2xl border-2 border-dashed transition-all duration-300 text-center cursor-pointer flex flex-col items-center justify-center gap-3 ${
           isDragOver
-            ? 'border-[#0288D1] bg-[#E0F2FE] scale-[0.99]'
+            ? isFemale
+              ? 'border-[#E84A8A] bg-[#FFF5F9] scale-[0.99]'
+              : 'border-[#0288D1] bg-[#E0F2FE] scale-[0.99]'
+            : isFemale
+            ? 'border-[#EAECF0] bg-[#FAFAFC] hover:bg-[#FFF5F9] hover:border-[#E84A8A]'
             : 'border-[#BAE6FD] bg-[#F8FAFC] hover:bg-[#F0F9FF] hover:border-[#0288D1]'
         }`}
       >
@@ -127,36 +161,48 @@ export const ReportHeroUpload: React.FC<ReportHeroUploadProps> = ({
           className="hidden"
         />
 
-        <div className="w-12 h-12 rounded-2xl bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD] flex items-center justify-center shadow-xs">
-          <Upload className="w-6 h-6 text-[#0288D1]" />
+        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-2xs ${
+          isFemale
+            ? 'bg-[#FBE7F0] text-[#E84A8A] border border-[#FCE1ED]'
+            : 'bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD]'
+        }`}>
+          <Upload className="w-6 h-6" />
         </div>
 
         <div className="space-y-1">
-          <p className="text-sm font-bold text-[#0F172A]">
-            Drag & drop your lab or ultrasound document here, or <span className="text-[#0288D1] underline">browse files</span>
+          <p className={`text-sm font-semibold ${isFemale ? 'text-[#111318]' : 'text-[#0F172A]'}`}>
+            Drag & drop your lab or ultrasound document here, or <span className={`underline ${isFemale ? 'text-[#E84A8A]' : 'text-[#0288D1]'}`}>browse files</span>
           </p>
-          <p className="text-xs text-[#64748B]">
+          <p className={`text-xs ${isFemale ? 'text-[#667085]' : 'text-[#64748B]'}`}>
             Supports PDF, JPG, PNG up to 10MB • Secured with authenticated access
           </p>
         </div>
 
         <div className="flex items-center gap-2 pt-1">
-          <span className="text-[10px] font-mono font-semibold px-2.5 py-1 rounded-full bg-white text-[#475569] border border-[#BAE6FD]">
+          <span className={`text-[10px] font-mono font-semibold px-2.5 py-1 rounded-full bg-white border ${
+            isFemale ? 'text-[#667085] border-[#EAECF0]' : 'text-[#475569] border-[#BAE6FD]'
+          }`}>
             PDF Documents
           </span>
-          <span className="text-[10px] font-mono font-semibold px-2.5 py-1 rounded-full bg-white text-[#475569] border border-[#BAE6FD]">
+          <span className={`text-[10px] font-mono font-semibold px-2.5 py-1 rounded-full bg-white border ${
+            isFemale ? 'text-[#667085] border-[#EAECF0]' : 'text-[#475569] border-[#BAE6FD]'
+          }`}>
             Phone Photos / Scans
           </span>
-          <span className="text-[10px] font-mono font-semibold px-2.5 py-1 rounded-full bg-white text-[#475569] border border-[#BAE6FD]">
+          <span className={`text-[10px] font-mono font-semibold px-2.5 py-1 rounded-full bg-white border ${
+            isFemale ? 'text-[#667085] border-[#EAECF0]' : 'text-[#475569] border-[#BAE6FD]'
+          }`}>
             Ultrasound Images
           </span>
         </div>
       </div>
 
       {/* Trust & Privacy Assurance Banner */}
-      <div className="relative z-10 pt-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-[#64748B] border-t border-[#E2E8F0]">
+      <div className={`relative z-10 pt-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs border-t ${
+        isFemale ? 'text-[#667085] border-[#EAECF0]' : 'text-[#64748B] border-[#E2E8F0]'
+      }`}>
         <div className="flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-[#059669]" />
+          <ShieldCheck className={`w-4 h-4 ${isFemale ? 'text-[#16A36A]' : 'text-[#059669]'}`} />
           <span>Your medical reports are stored in your private, encrypted account. Only you have access.</span>
         </div>
 
@@ -166,7 +212,9 @@ export const ReportHeroUpload: React.FC<ReportHeroUploadProps> = ({
             e.stopPropagation();
             onOpenUploadWizard();
           }}
-          className="text-xs font-bold text-[#0288D1] hover:text-[#01579B] underline cursor-pointer"
+          className={`text-xs font-semibold underline cursor-pointer ${
+            isFemale ? 'text-[#E84A8A] hover:text-[#D93B7A]' : 'text-[#0288D1] hover:text-[#01579B]'
+          }`}
         >
           Open manual report wizard
         </button>
