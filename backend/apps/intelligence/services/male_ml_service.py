@@ -722,5 +722,65 @@ class MaleMLService:
             "disclaimer": DISCLAIMER_TEXT,
         }
 
+    # -----------------------------------------------------------------------
+    # Progressive Evidence Engine (Phase 1 Integration)
+    # -----------------------------------------------------------------------
+
+    def progressive_assess(
+        self,
+        tier1_inputs: Optional[Dict[str, Any]] = None,
+        lab_inputs: Optional[Dict[str, Any]] = None,
+        patient_id: Optional[str] = None,
+        state: Optional[Any] = None,
+    ) -> Dict[str, Any]:
+        """
+        Executes unified progressive endocrine assessment using the Phase 1 Evidence Engine.
+        Seamlessly ingests Tier 1 and Tier 2 inputs, manages longitudinal evidence,
+        computes information completeness, evaluates deterministic evidence gaps,
+        and produces a unified non-diagnostic assessment.
+        """
+        import sys
+        t1_path, t2_path = self._resolve_paths()
+        engine_dir = os.path.join(self._models_dir, "evidence_engine")
+        if engine_dir not in sys.path:
+            sys.path.insert(0, engine_dir)
+
+        from evidence_state import EvidenceState
+        from assessment_engine import ProgressiveAssessmentEngine
+
+        if state is None:
+            t1 = tier1_inputs or {}
+            age = t1.get("age") or (lab_inputs.get("age") if lab_inputs else None) or 35.0
+            st = EvidenceState(patient_id=patient_id, age=float(age))
+            st.set_tier1_inputs(
+                age=age,
+                height_cm=t1.get("height_cm"),
+                weight_kg=t1.get("weight_kg"),
+                waist_cm=t1.get("waist_cm"),
+                low_energy=t1.get("low_energy"),
+                sleep_trouble=t1.get("sleep_trouble"),
+                low_mood=t1.get("low_mood"),
+                low_interest=t1.get("low_interest"),
+                high_blood_pressure=t1.get("high_blood_pressure"),
+                diabetes=t1.get("diabetes"),
+                bmi=t1.get("bmi"),
+            )
+            if lab_inputs:
+                for k, v in lab_inputs.items():
+                    if v is not None and str(v).strip() != "":
+                        try:
+                            val_f = float(v)
+                            st.add_analyte(k, val_f, verified=True)
+                        except (ValueError, TypeError):
+                            pass
+        else:
+            st = state
+
+        t1_path, t2_path = self._resolve_paths()
+        engine = ProgressiveAssessmentEngine(tier1_artifact_path=t1_path, tier2_artifact_path=t2_path)
+        res = engine.generate_assessment(st)
+        return res.to_dict()
+
 
 male_ml_service = MaleMLService()
+

@@ -1,0 +1,206 @@
+[
+  {
+    "experiment_id": "EXP-001-TIER1",
+    "name": "Model A: Male Tier 1 Screening (Non-Invasive)",
+    "description": "Calibrated Logistic Regression on 11 demographic, physical, and symptom parameters.",
+    "timestamp": "2026-09-21T10:50:09.048707+00:00",
+    "random_seed": 42,
+    "dataset": "CDC NHANES 2013-2016 Men 19-60",
+    "sample_size": {
+      "total_cohort_n": 3575,
+      "train_n": 2860,
+      "test_n": 715,
+      "prevalence_percent": 23.8
+    },
+    "feature_count": 11,
+    "features": [
+      "age",
+      "height_cm",
+      "weight_kg",
+      "bmi",
+      "waist_cm",
+      "low_energy",
+      "sleep_trouble",
+      "low_mood",
+      "low_interest",
+      "high_blood_pressure",
+      "diabetes"
+    ],
+    "model_type": "LogisticRegression(penalty='l2', class_weight='balanced') + Platt Calibration",
+    "hyperparameters": {
+      "C": 0.1,
+      "screening_threshold": 0.1808
+    },
+    "metrics": {
+      "threshold": 0.1808,
+      "roc_auc": 0.7044,
+      "pr_auc": 0.4201,
+      "sensitivity": 0.8059,
+      "specificity": 0.4459,
+      "precision": 0.3121,
+      "npv": 0.8804,
+      "f1": 0.4499,
+      "brier_score": 0.165,
+      "confusion_matrix": {
+        "TN": 243,
+        "FP": 302,
+        "FN": 33,
+        "TP": 137
+      }
+    },
+    "notes": "Validated for adult men 19-60. Primary goal is sensitivity-oriented non-invasive triage."
+  },
+  {
+    "experiment_id": "EXP-002-TIER2",
+    "name": "Model B: Male Tier 2 Laboratory Screener (Anti-Leakage)",
+    "description": "Calibrated Random Forest on 16 indirect metabolic and carrier protein blood biomarkers (Total T excluded).",
+    "timestamp": "2026-09-21T10:50:09.050780+00:00",
+    "random_seed": 42,
+    "dataset": "CDC NHANES 2013-2016 Men 19-60",
+    "sample_size": {
+      "total_cohort_n": 3575,
+      "train_n": 2860,
+      "test_n": 715,
+      "prevalence_percent": 23.8
+    },
+    "feature_count": 16,
+    "features": [
+      "age",
+      "shbg_nmol_l",
+      "estradiol_pg_ml",
+      "albumin_g_dl",
+      "hba1c_pct",
+      "glucose_mg_dl",
+      "hemoglobin_g_dl",
+      "hematocrit_pct",
+      "rbc_count",
+      "alt_u_l",
+      "ast_u_l",
+      "total_bilirubin_mg_dl",
+      "creatinine_mg_dl",
+      "bun_mg_dl",
+      "uric_acid_mg_dl",
+      "hdl_mg_dl"
+    ],
+    "model_type": "RandomForestClassifier(n_estimators=300, max_depth=8) + CalibratedClassifierCV(sigmoid)",
+    "hyperparameters": {
+      "n_estimators": 300,
+      "max_depth": 8,
+      "screening_threshold": 0.3379
+    },
+    "metrics": {
+      "threshold": 0.3379,
+      "roc_auc": 0.8742,
+      "pr_auc": 0.6723,
+      "sensitivity": 0.7353,
+      "specificity": 0.8349,
+      "precision": 0.5814,
+      "npv": 0.91,
+      "f1": 0.6494,
+      "brier_score": 0.1164,
+      "confusion_matrix": {
+        "TN": 455,
+        "FP": 90,
+        "FN": 45,
+        "TP": 125
+      }
+    },
+    "notes": "Zero target leakage. Excludes Total Testosterone and Free Testosterone from feature matrix."
+  },
+  {
+    "experiment_id": "EXP-003-MULTIMODAL",
+    "name": "Model C: Tier 1 + Tier 2 Multimodal Combined Screener",
+    "description": "Calibrated Random Forest on 26 unified biometric, symptom, and laboratory features.",
+    "timestamp": "2026-09-21T10:50:09.052144+00:00",
+    "random_seed": 42,
+    "dataset": "CDC NHANES 2013-2016 Men 19-60 Paired",
+    "sample_size": {
+      "total_cohort_n": 3575,
+      "train_n": 2860,
+      "test_n": 715,
+      "prevalence_percent": 23.8
+    },
+    "feature_count": 26,
+    "features": [
+      "age",
+      "height_cm",
+      "weight_kg",
+      "bmi",
+      "waist_cm",
+      "low_energy",
+      "sleep_trouble",
+      "low_mood",
+      "low_interest",
+      "high_blood_pressure",
+      "diabetes",
+      "shbg_nmol_l",
+      "estradiol_pg_ml",
+      "albumin_g_dl",
+      "hba1c_pct",
+      "glucose_mg_dl",
+      "hemoglobin_g_dl",
+      "hematocrit_pct",
+      "rbc_count",
+      "alt_u_l",
+      "ast_u_l",
+      "total_bilirubin_mg_dl",
+      "creatinine_mg_dl",
+      "bun_mg_dl",
+      "uric_acid_mg_dl",
+      "hdl_mg_dl"
+    ],
+    "model_type": "Pipeline(SimpleImputer, StandardScaler, RandomForestClassifier) + CalibratedClassifierCV",
+    "hyperparameters": {
+      "n_estimators": 300,
+      "max_depth": 8,
+      "screening_threshold": 0.4086
+    },
+    "metrics": {
+      "threshold": 0.4086,
+      "roc_auc": 0.8902,
+      "pr_auc": 0.7053,
+      "sensitivity": 0.6882,
+      "specificity": 0.8807,
+      "precision": 0.6429,
+      "npv": 0.9006,
+      "f1": 0.6648,
+      "brier_score": 0.1094,
+      "confusion_matrix": {
+        "TN": 480,
+        "FP": 65,
+        "FN": 53,
+        "TP": 117
+      }
+    },
+    "notes": "Evaluates multimodal combination of non-invasive biometrics with clinical laboratory panel."
+  },
+  {
+    "experiment_id": "EXP-004-LONGITUDINAL",
+    "name": "Model D: Tier 1 + Tier 2 + Longitudinal Repeat Draw Audit",
+    "description": "Longitudinal evaluation audit in public cross-sectional NHANES cohort.",
+    "timestamp": "2026-09-21T10:50:09.053690+00:00",
+    "random_seed": 42,
+    "dataset": "CDC NHANES 2013-2016 Men 19-60",
+    "sample_size": {
+      "total_cohort_n": 3575,
+      "train_n": 2860,
+      "test_n": 715,
+      "prevalence_percent": 23.8
+    },
+    "feature_count": 3,
+    "features": [
+      "Tier 1 (11)",
+      "Tier 2 (16)",
+      "Longitudinal Repeat Draws (0 available)"
+    ],
+    "model_type": "Ablation Limitation Audit",
+    "hyperparameters": {
+      "status": "INCOMPATIBLE_CROSS_SECTIONAL_SURVEY"
+    },
+    "metrics": {
+      "roc_auc": null,
+      "note": "Cross-sectional survey lacks paired repeat morning draws."
+    },
+    "notes": "Documented limitation per scientific integrity guidelines. Longitudinal architecture implemented in software."
+  }
+]

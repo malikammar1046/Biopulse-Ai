@@ -1,0 +1,433 @@
+{
+  "metadata": {
+    "test_sample_size": 715,
+    "test_prevalence_pct": 23.78,
+    "calibration_bins": 10
+  },
+  "model_a_tier1": {
+    "discrimination": {
+      "roc_auc": 0.7044,
+      "concept": "Measures ranking ability: How effectively the model assigns higher scores to men with actual low testosterone than men with normal testosterone."
+    },
+    "calibration": {
+      "brier_score": 0.165,
+      "expected_calibration_error_ece": 0.0295,
+      "maximum_calibration_error_mce": 0.1667,
+      "concept": "Measures probability accuracy: When the model predicts a 20% risk, approximately 20 of 100 such men should truly have low testosterone."
+    },
+    "reliability_curve_points": [
+      {
+        "predicted": 0.0812,
+        "observed": 0.0253
+      },
+      {
+        "predicted": 0.1521,
+        "observed": 0.1508
+      },
+      {
+        "predicted": 0.2435,
+        "observed": 0.2741
+      },
+      {
+        "predicted": 0.3426,
+        "observed": 0.3667
+      },
+      {
+        "predicted": 0.4406,
+        "observed": 0.3396
+      },
+      {
+        "predicted": 0.5409,
+        "observed": 0.5556
+      },
+      {
+        "predicted": 0.6473,
+        "observed": 0.5
+      },
+      {
+        "predicted": 0.7382,
+        "observed": 0.5714
+      },
+      {
+        "predicted": 0.853,
+        "observed": 0.75
+      }
+    ],
+    "decile_table": [
+      {
+        "bin_index": 1,
+        "bin_range": "0.00 - 0.10",
+        "sample_count": 79,
+        "observed_positive_count": 2,
+        "mean_predicted_probability": 0.0812,
+        "observed_event_rate": 0.0253,
+        "calibration_error": 0.0558
+      },
+      {
+        "bin_index": 2,
+        "bin_range": "0.10 - 0.20",
+        "sample_count": 252,
+        "observed_positive_count": 38,
+        "mean_predicted_probability": 0.1521,
+        "observed_event_rate": 0.1508,
+        "calibration_error": 0.0013
+      },
+      {
+        "bin_index": 3,
+        "bin_range": "0.20 - 0.30",
+        "sample_count": 197,
+        "observed_positive_count": 54,
+        "mean_predicted_probability": 0.2435,
+        "observed_event_rate": 0.2741,
+        "calibration_error": 0.0306
+      },
+      {
+        "bin_index": 4,
+        "bin_range": "0.30 - 0.40",
+        "sample_count": 90,
+        "observed_positive_count": 33,
+        "mean_predicted_probability": 0.3426,
+        "observed_event_rate": 0.3667,
+        "calibration_error": 0.024
+      },
+      {
+        "bin_index": 5,
+        "bin_range": "0.40 - 0.50",
+        "sample_count": 53,
+        "observed_positive_count": 18,
+        "mean_predicted_probability": 0.4406,
+        "observed_event_rate": 0.3396,
+        "calibration_error": 0.101
+      },
+      {
+        "bin_index": 6,
+        "bin_range": "0.50 - 0.60",
+        "sample_count": 27,
+        "observed_positive_count": 15,
+        "mean_predicted_probability": 0.5409,
+        "observed_event_rate": 0.5556,
+        "calibration_error": 0.0146
+      },
+      {
+        "bin_index": 7,
+        "bin_range": "0.60 - 0.70",
+        "sample_count": 6,
+        "observed_positive_count": 3,
+        "mean_predicted_probability": 0.6473,
+        "observed_event_rate": 0.5,
+        "calibration_error": 0.1473
+      },
+      {
+        "bin_index": 8,
+        "bin_range": "0.70 - 0.80",
+        "sample_count": 7,
+        "observed_positive_count": 4,
+        "mean_predicted_probability": 0.7382,
+        "observed_event_rate": 0.5714,
+        "calibration_error": 0.1667
+      },
+      {
+        "bin_index": 9,
+        "bin_range": "0.80 - 0.90",
+        "sample_count": 4,
+        "observed_positive_count": 3,
+        "mean_predicted_probability": 0.853,
+        "observed_event_rate": 0.75,
+        "calibration_error": 0.103
+      },
+      {
+        "bin_index": 10,
+        "bin_range": "0.90 - 1.00",
+        "sample_count": 0,
+        "observed_positive_count": 0,
+        "mean_predicted_probability": 0.95,
+        "observed_event_rate": null,
+        "calibration_error": null
+      }
+    ]
+  },
+  "model_b_tier2": {
+    "discrimination": {
+      "roc_auc": 0.8742,
+      "concept": "Measures ranking ability: How effectively the model assigns higher scores to men with actual low testosterone than men with normal testosterone."
+    },
+    "calibration": {
+      "brier_score": 0.1164,
+      "expected_calibration_error_ece": 0.0245,
+      "maximum_calibration_error_mce": 0.112,
+      "concept": "Measures probability accuracy: When the model predicts a 20% risk, approximately 20 of 100 such men should truly have low testosterone."
+    },
+    "reliability_curve_points": [
+      {
+        "predicted": 0.0437,
+        "observed": 0.0273
+      },
+      {
+        "predicted": 0.1447,
+        "observed": 0.1414
+      },
+      {
+        "predicted": 0.2443,
+        "observed": 0.25
+      },
+      {
+        "predicted": 0.3507,
+        "observed": 0.4082
+      },
+      {
+        "predicted": 0.4502,
+        "observed": 0.4348
+      },
+      {
+        "predicted": 0.5466,
+        "observed": 0.561
+      },
+      {
+        "predicted": 0.6501,
+        "observed": 0.7234
+      },
+      {
+        "predicted": 0.7454,
+        "observed": 0.6333
+      },
+      {
+        "predicted": 0.8316,
+        "observed": 0.8571
+      }
+    ],
+    "decile_table": [
+      {
+        "bin_index": 1,
+        "bin_range": "0.00 - 0.10",
+        "sample_count": 330,
+        "observed_positive_count": 9,
+        "mean_predicted_probability": 0.0437,
+        "observed_event_rate": 0.0273,
+        "calibration_error": 0.0165
+      },
+      {
+        "bin_index": 2,
+        "bin_range": "0.10 - 0.20",
+        "sample_count": 99,
+        "observed_positive_count": 14,
+        "mean_predicted_probability": 0.1447,
+        "observed_event_rate": 0.1414,
+        "calibration_error": 0.0033
+      },
+      {
+        "bin_index": 3,
+        "bin_range": "0.20 - 0.30",
+        "sample_count": 52,
+        "observed_positive_count": 13,
+        "mean_predicted_probability": 0.2443,
+        "observed_event_rate": 0.25,
+        "calibration_error": 0.0057
+      },
+      {
+        "bin_index": 4,
+        "bin_range": "0.30 - 0.40",
+        "sample_count": 49,
+        "observed_positive_count": 20,
+        "mean_predicted_probability": 0.3507,
+        "observed_event_rate": 0.4082,
+        "calibration_error": 0.0574
+      },
+      {
+        "bin_index": 5,
+        "bin_range": "0.40 - 0.50",
+        "sample_count": 46,
+        "observed_positive_count": 20,
+        "mean_predicted_probability": 0.4502,
+        "observed_event_rate": 0.4348,
+        "calibration_error": 0.0154
+      },
+      {
+        "bin_index": 6,
+        "bin_range": "0.50 - 0.60",
+        "sample_count": 41,
+        "observed_positive_count": 23,
+        "mean_predicted_probability": 0.5466,
+        "observed_event_rate": 0.561,
+        "calibration_error": 0.0143
+      },
+      {
+        "bin_index": 7,
+        "bin_range": "0.60 - 0.70",
+        "sample_count": 47,
+        "observed_positive_count": 34,
+        "mean_predicted_probability": 0.6501,
+        "observed_event_rate": 0.7234,
+        "calibration_error": 0.0733
+      },
+      {
+        "bin_index": 8,
+        "bin_range": "0.70 - 0.80",
+        "sample_count": 30,
+        "observed_positive_count": 19,
+        "mean_predicted_probability": 0.7454,
+        "observed_event_rate": 0.6333,
+        "calibration_error": 0.112
+      },
+      {
+        "bin_index": 9,
+        "bin_range": "0.80 - 0.90",
+        "sample_count": 21,
+        "observed_positive_count": 18,
+        "mean_predicted_probability": 0.8316,
+        "observed_event_rate": 0.8571,
+        "calibration_error": 0.0255
+      },
+      {
+        "bin_index": 10,
+        "bin_range": "0.90 - 1.00",
+        "sample_count": 0,
+        "observed_positive_count": 0,
+        "mean_predicted_probability": 0.95,
+        "observed_event_rate": null,
+        "calibration_error": null
+      }
+    ]
+  },
+  "model_c_multimodal": {
+    "discrimination": {
+      "roc_auc": 0.8902,
+      "concept": "Measures ranking ability: How effectively the model assigns higher scores to men with actual low testosterone than men with normal testosterone."
+    },
+    "calibration": {
+      "brier_score": 0.1094,
+      "expected_calibration_error_ece": 0.0326,
+      "maximum_calibration_error_mce": 0.1147,
+      "concept": "Measures probability accuracy: When the model predicts a 20% risk, approximately 20 of 100 such men should truly have low testosterone."
+    },
+    "reliability_curve_points": [
+      {
+        "predicted": 0.0426,
+        "observed": 0.0321
+      },
+      {
+        "predicted": 0.1446,
+        "observed": 0.0899
+      },
+      {
+        "predicted": 0.2482,
+        "observed": 0.2941
+      },
+      {
+        "predicted": 0.3429,
+        "observed": 0.3488
+      },
+      {
+        "predicted": 0.4451,
+        "observed": 0.4
+      },
+      {
+        "predicted": 0.5475,
+        "observed": 0.6
+      },
+      {
+        "predicted": 0.6513,
+        "observed": 0.5366
+      },
+      {
+        "predicted": 0.7457,
+        "observed": 0.8148
+      },
+      {
+        "predicted": 0.8388,
+        "observed": 0.8421
+      }
+    ],
+    "decile_table": [
+      {
+        "bin_index": 1,
+        "bin_range": "0.00 - 0.10",
+        "sample_count": 343,
+        "observed_positive_count": 11,
+        "mean_predicted_probability": 0.0426,
+        "observed_event_rate": 0.0321,
+        "calibration_error": 0.0105
+      },
+      {
+        "bin_index": 2,
+        "bin_range": "0.10 - 0.20",
+        "sample_count": 89,
+        "observed_positive_count": 8,
+        "mean_predicted_probability": 0.1446,
+        "observed_event_rate": 0.0899,
+        "calibration_error": 0.0547
+      },
+      {
+        "bin_index": 3,
+        "bin_range": "0.20 - 0.30",
+        "sample_count": 51,
+        "observed_positive_count": 15,
+        "mean_predicted_probability": 0.2482,
+        "observed_event_rate": 0.2941,
+        "calibration_error": 0.0459
+      },
+      {
+        "bin_index": 4,
+        "bin_range": "0.30 - 0.40",
+        "sample_count": 43,
+        "observed_positive_count": 15,
+        "mean_predicted_probability": 0.3429,
+        "observed_event_rate": 0.3488,
+        "calibration_error": 0.0059
+      },
+      {
+        "bin_index": 5,
+        "bin_range": "0.40 - 0.50",
+        "sample_count": 30,
+        "observed_positive_count": 12,
+        "mean_predicted_probability": 0.4451,
+        "observed_event_rate": 0.4,
+        "calibration_error": 0.0451
+      },
+      {
+        "bin_index": 6,
+        "bin_range": "0.50 - 0.60",
+        "sample_count": 45,
+        "observed_positive_count": 27,
+        "mean_predicted_probability": 0.5475,
+        "observed_event_rate": 0.6,
+        "calibration_error": 0.0525
+      },
+      {
+        "bin_index": 7,
+        "bin_range": "0.60 - 0.70",
+        "sample_count": 41,
+        "observed_positive_count": 22,
+        "mean_predicted_probability": 0.6513,
+        "observed_event_rate": 0.5366,
+        "calibration_error": 0.1147
+      },
+      {
+        "bin_index": 8,
+        "bin_range": "0.70 - 0.80",
+        "sample_count": 54,
+        "observed_positive_count": 44,
+        "mean_predicted_probability": 0.7457,
+        "observed_event_rate": 0.8148,
+        "calibration_error": 0.0692
+      },
+      {
+        "bin_index": 9,
+        "bin_range": "0.80 - 0.90",
+        "sample_count": 19,
+        "observed_positive_count": 16,
+        "mean_predicted_probability": 0.8388,
+        "observed_event_rate": 0.8421,
+        "calibration_error": 0.0033
+      },
+      {
+        "bin_index": 10,
+        "bin_range": "0.90 - 1.00",
+        "sample_count": 0,
+        "observed_positive_count": 0,
+        "mean_predicted_probability": 0.95,
+        "observed_event_rate": null,
+        "calibration_error": null
+      }
+    ]
+  }
+}

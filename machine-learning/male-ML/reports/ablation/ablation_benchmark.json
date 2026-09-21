@@ -1,0 +1,288 @@
+{
+  "benchmark_metadata": {
+    "dataset": "CDC NHANES 2013-2014 & 2015-2016 Paired Cohort",
+    "cohort_filter": "Adult Men aged 19-60",
+    "total_participants": 3575,
+    "train_participants": 2860,
+    "test_participants": 715,
+    "prevalence_pct": 23.8,
+    "random_seed": 42,
+    "bootstrap_iterations": 1000
+  },
+  "models": {
+    "model_a_tier1_only": {
+      "name": "Model A: Tier 1 Evidence Only",
+      "feature_count": 11,
+      "features": [
+        "age",
+        "height_cm",
+        "weight_kg",
+        "bmi",
+        "waist_cm",
+        "low_energy",
+        "sleep_trouble",
+        "low_mood",
+        "low_interest",
+        "high_blood_pressure",
+        "diabetes"
+      ],
+      "model_type": "Calibrated Logistic Regression (L2 Balanced)",
+      "screening_threshold": 0.1808,
+      "metrics": {
+        "threshold": 0.1808,
+        "roc_auc": 0.7044,
+        "pr_auc": 0.4201,
+        "sensitivity": 0.8059,
+        "specificity": 0.4459,
+        "precision": 0.3121,
+        "npv": 0.8804,
+        "f1": 0.4499,
+        "brier_score": 0.165,
+        "confusion_matrix": {
+          "TN": 243,
+          "FP": 302,
+          "FN": 33,
+          "TP": 137
+        }
+      },
+      "confidence_intervals_95": {
+        "roc_auc": {
+          "ci_95_lower": 0.6571,
+          "ci_95_upper": 0.7466
+        },
+        "pr_auc": {
+          "ci_95_lower": 0.3533,
+          "ci_95_upper": 0.5029
+        },
+        "sensitivity": {
+          "ci_95_lower": 0.7438,
+          "ci_95_upper": 0.8662
+        },
+        "specificity": {
+          "ci_95_lower": 0.4043,
+          "ci_95_upper": 0.4899
+        },
+        "precision": {
+          "ci_95_lower": 0.2725,
+          "ci_95_upper": 0.3573
+        },
+        "npv": {
+          "ci_95_lower": 0.8414,
+          "ci_95_upper": 0.9164
+        },
+        "brier_score": {
+          "ci_95_lower": 0.15,
+          "ci_95_upper": 0.1814
+        }
+      }
+    },
+    "model_b_tier2_only": {
+      "name": "Model B: Tier 2 Laboratory Evidence Only",
+      "feature_count": 16,
+      "features": [
+        "age",
+        "shbg_nmol_l",
+        "estradiol_pg_ml",
+        "albumin_g_dl",
+        "hba1c_pct",
+        "glucose_mg_dl",
+        "hemoglobin_g_dl",
+        "hematocrit_pct",
+        "rbc_count",
+        "alt_u_l",
+        "ast_u_l",
+        "total_bilirubin_mg_dl",
+        "creatinine_mg_dl",
+        "bun_mg_dl",
+        "uric_acid_mg_dl",
+        "hdl_mg_dl"
+      ],
+      "model_type": "Calibrated Random Forest (Platt Sigmoid)",
+      "screening_threshold": 0.3379,
+      "metrics": {
+        "threshold": 0.3379,
+        "roc_auc": 0.8742,
+        "pr_auc": 0.6723,
+        "sensitivity": 0.7353,
+        "specificity": 0.8349,
+        "precision": 0.5814,
+        "npv": 0.91,
+        "f1": 0.6494,
+        "brier_score": 0.1164,
+        "confusion_matrix": {
+          "TN": 455,
+          "FP": 90,
+          "FN": 45,
+          "TP": 125
+        }
+      },
+      "confidence_intervals_95": {
+        "roc_auc": {
+          "ci_95_lower": 0.8442,
+          "ci_95_upper": 0.902
+        },
+        "pr_auc": {
+          "ci_95_lower": 0.5992,
+          "ci_95_upper": 0.7407
+        },
+        "sensitivity": {
+          "ci_95_lower": 0.6628,
+          "ci_95_upper": 0.8056
+        },
+        "specificity": {
+          "ci_95_lower": 0.8022,
+          "ci_95_upper": 0.8658
+        },
+        "precision": {
+          "ci_95_lower": 0.516,
+          "ci_95_upper": 0.6483
+        },
+        "npv": {
+          "ci_95_lower": 0.8843,
+          "ci_95_upper": 0.9349
+        },
+        "brier_score": {
+          "ci_95_lower": 0.1038,
+          "ci_95_upper": 0.1306
+        }
+      }
+    },
+    "model_c_multimodal_combined": {
+      "name": "Model C: Tier 1 + Tier 2 Multimodal Combined",
+      "feature_count": 26,
+      "features": [
+        "age",
+        "height_cm",
+        "weight_kg",
+        "bmi",
+        "waist_cm",
+        "low_energy",
+        "sleep_trouble",
+        "low_mood",
+        "low_interest",
+        "high_blood_pressure",
+        "diabetes",
+        "shbg_nmol_l",
+        "estradiol_pg_ml",
+        "albumin_g_dl",
+        "hba1c_pct",
+        "glucose_mg_dl",
+        "hemoglobin_g_dl",
+        "hematocrit_pct",
+        "rbc_count",
+        "alt_u_l",
+        "ast_u_l",
+        "total_bilirubin_mg_dl",
+        "creatinine_mg_dl",
+        "bun_mg_dl",
+        "uric_acid_mg_dl",
+        "hdl_mg_dl"
+      ],
+      "model_type": "Calibrated Random Forest (Platt Sigmoid)",
+      "screening_threshold": 0.4086,
+      "metrics": {
+        "threshold": 0.4086,
+        "roc_auc": 0.8902,
+        "pr_auc": 0.7053,
+        "sensitivity": 0.6882,
+        "specificity": 0.8807,
+        "precision": 0.6429,
+        "npv": 0.9006,
+        "f1": 0.6648,
+        "brier_score": 0.1094,
+        "confusion_matrix": {
+          "TN": 480,
+          "FP": 65,
+          "FN": 53,
+          "TP": 117
+        }
+      },
+      "confidence_intervals_95": {
+        "roc_auc": {
+          "ci_95_lower": 0.8621,
+          "ci_95_upper": 0.9157
+        },
+        "pr_auc": {
+          "ci_95_lower": 0.6327,
+          "ci_95_upper": 0.7764
+        },
+        "sensitivity": {
+          "ci_95_lower": 0.6182,
+          "ci_95_upper": 0.7561
+        },
+        "specificity": {
+          "ci_95_lower": 0.8546,
+          "ci_95_upper": 0.9068
+        },
+        "precision": {
+          "ci_95_lower": 0.573,
+          "ci_95_upper": 0.7119
+        },
+        "npv": {
+          "ci_95_lower": 0.8728,
+          "ci_95_upper": 0.9244
+        },
+        "brier_score": {
+          "ci_95_lower": 0.096,
+          "ci_95_upper": 0.1248
+        }
+      }
+    },
+    "model_d_longitudinal": {
+      "name": "Model D: Tier 1 + Tier 2 + Longitudinal Evidence",
+      "audit": {
+        "status": "DATASET_INCOMPATIBLE_LIMITATION",
+        "reason": "CDC NHANES is a cross-sectional epidemiologic survey. Each participant had a single blood laboratory visit in the Mobile Examination Center (MEC). Repeated morning draws on separate days do not exist in this public microdata cohort. Rather than manufacturing synthetic longitudinal points, this limitation is formally documented.",
+        "longitudinal_points_per_participant": 1,
+        "required_for_evaluation": "Prospective multi-point clinical cohort with paired repeat morning draws",
+        "future_architecture_readiness": "Supported by BioPulse EvidenceState longitudinal array and two-test gap engine."
+      }
+    }
+  },
+  "comparison_table": [
+    {
+      "model": "Model A (Tier 1 Only)",
+      "features": 11,
+      "threshold": 0.1808,
+      "roc_auc": 0.7044,
+      "pr_auc": 0.4201,
+      "sensitivity": 0.8059,
+      "specificity": 0.4459,
+      "npv": 0.8804,
+      "brier_score": 0.165
+    },
+    {
+      "model": "Model B (Tier 2 Only)",
+      "features": 16,
+      "threshold": 0.3379,
+      "roc_auc": 0.8742,
+      "pr_auc": 0.6723,
+      "sensitivity": 0.7353,
+      "specificity": 0.8349,
+      "npv": 0.91,
+      "brier_score": 0.1164
+    },
+    {
+      "model": "Model C (Tier 1 + Tier 2)",
+      "features": 26,
+      "threshold": 0.4086,
+      "roc_auc": 0.8902,
+      "pr_auc": 0.7053,
+      "sensitivity": 0.6882,
+      "specificity": 0.8807,
+      "npv": 0.9006,
+      "brier_score": 0.1094
+    },
+    {
+      "model": "Model D (Longitudinal)",
+      "features": "N/A",
+      "threshold": "N/A",
+      "roc_auc": "Unavailable (Cross-sectional NHANES)",
+      "pr_auc": "N/A",
+      "sensitivity": "N/A",
+      "specificity": "N/A",
+      "npv": "N/A",
+      "brier_score": "N/A"
+    }
+  ]
+}

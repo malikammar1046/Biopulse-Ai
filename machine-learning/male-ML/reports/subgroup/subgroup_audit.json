@@ -1,0 +1,372 @@
+{
+  "metadata": {
+    "total_test_samples": 715,
+    "test_positive_prevalence_pct": 23.78
+  },
+  "age_subgroups": {
+    "19-30": {
+      "model_a_tier1": {
+        "sample_size_total": 197,
+        "positive_count": 38,
+        "negative_count": 159,
+        "prevalence_percent": 19.29,
+        "insufficient_sample_size_flag": false,
+        "screening_threshold": 0.1808,
+        "roc_auc": 0.812,
+        "sensitivity": 0.6842,
+        "specificity": 0.7673,
+        "precision_ppv": 0.4127,
+        "npv": 0.9104,
+        "confusion_matrix": {
+          "TN": 122,
+          "FP": 37,
+          "FN": 12,
+          "TP": 26
+        }
+      },
+      "model_b_tier2": {
+        "sample_size_total": 197,
+        "positive_count": 38,
+        "negative_count": 159,
+        "prevalence_percent": 19.29,
+        "insufficient_sample_size_flag": false,
+        "screening_threshold": 0.3379,
+        "roc_auc": 0.9219,
+        "sensitivity": 0.7895,
+        "specificity": 0.8931,
+        "precision_ppv": 0.6383,
+        "npv": 0.9467,
+        "confusion_matrix": {
+          "TN": 142,
+          "FP": 17,
+          "FN": 8,
+          "TP": 30
+        }
+      }
+    },
+    "31-40": {
+      "model_a_tier1": {
+        "sample_size_total": 170,
+        "positive_count": 44,
+        "negative_count": 126,
+        "prevalence_percent": 25.88,
+        "insufficient_sample_size_flag": false,
+        "screening_threshold": 0.1808,
+        "roc_auc": 0.6587,
+        "sensitivity": 0.75,
+        "specificity": 0.3889,
+        "precision_ppv": 0.3,
+        "npv": 0.8167,
+        "confusion_matrix": {
+          "TN": 49,
+          "FP": 77,
+          "FN": 11,
+          "TP": 33
+        }
+      },
+      "model_b_tier2": {
+        "sample_size_total": 170,
+        "positive_count": 44,
+        "negative_count": 126,
+        "prevalence_percent": 25.88,
+        "insufficient_sample_size_flag": false,
+        "screening_threshold": 0.3379,
+        "roc_auc": 0.8902,
+        "sensitivity": 0.8409,
+        "specificity": 0.7698,
+        "precision_ppv": 0.5606,
+        "npv": 0.9327,
+        "confusion_matrix": {
+          "TN": 97,
+          "FP": 29,
+          "FN": 7,
+          "TP": 37
+        }
+      }
+    },
+    "41-50": {
+      "model_a_tier1": {
+        "sample_size_total": 177,
+        "positive_count": 49,
+        "negative_count": 128,
+        "prevalence_percent": 27.68,
+        "insufficient_sample_size_flag": false,
+        "screening_threshold": 0.1808,
+        "roc_auc": 0.654,
+        "sensitivity": 0.898,
+        "specificity": 0.2656,
+        "precision_ppv": 0.3188,
+        "npv": 0.8718,
+        "confusion_matrix": {
+          "TN": 34,
+          "FP": 94,
+          "FN": 5,
+          "TP": 44
+        }
+      },
+      "model_b_tier2": {
+        "sample_size_total": 177,
+        "positive_count": 49,
+        "negative_count": 128,
+        "prevalence_percent": 27.68,
+        "insufficient_sample_size_flag": false,
+        "screening_threshold": 0.3379,
+        "roc_auc": 0.9093,
+        "sensitivity": 0.8571,
+        "specificity": 0.7891,
+        "precision_ppv": 0.6087,
+        "npv": 0.9352,
+        "confusion_matrix": {
+          "TN": 101,
+          "FP": 27,
+          "FN": 7,
+          "TP": 42
+        }
+      }
+    },
+    "51-60": {
+      "model_a_tier1": {
+        "sample_size_total": 171,
+        "positive_count": 39,
+        "negative_count": 132,
+        "prevalence_percent": 22.81,
+        "insufficient_sample_size_flag": false,
+        "screening_threshold": 0.1808,
+        "roc_auc": 0.6758,
+        "sensitivity": 0.8718,
+        "specificity": 0.2879,
+        "precision_ppv": 0.2656,
+        "npv": 0.8837,
+        "confusion_matrix": {
+          "TN": 38,
+          "FP": 94,
+          "FN": 5,
+          "TP": 34
+        }
+      },
+      "model_b_tier2": {
+        "sample_size_total": 171,
+        "positive_count": 39,
+        "negative_count": 132,
+        "prevalence_percent": 22.81,
+        "insufficient_sample_size_flag": false,
+        "screening_threshold": 0.3379,
+        "roc_auc": 0.7793,
+        "sensitivity": 0.4103,
+        "specificity": 0.8712,
+        "precision_ppv": 0.4848,
+        "npv": 0.8333,
+        "confusion_matrix": {
+          "TN": 115,
+          "FP": 17,
+          "FN": 23,
+          "TP": 16
+        }
+      }
+    }
+  },
+  "diabetes_subgroups": {
+    "Diabetes": {
+      "model_a_tier1": {
+        "sample_size_total": 78,
+        "positive_count": 25,
+        "negative_count": 53,
+        "prevalence_percent": 32.05,
+        "insufficient_sample_size_flag": false,
+        "screening_threshold": 0.1808,
+        "roc_auc": 0.7358,
+        "sensitivity": 1.0,
+        "specificity": 0.0755,
+        "precision_ppv": 0.3378,
+        "npv": 1.0,
+        "confusion_matrix": {
+          "TN": 4,
+          "FP": 49,
+          "FN": 0,
+          "TP": 25
+        }
+      },
+      "model_b_tier2": {
+        "sample_size_total": 78,
+        "positive_count": 25,
+        "negative_count": 53,
+        "prevalence_percent": 32.05,
+        "insufficient_sample_size_flag": false,
+        "screening_threshold": 0.3379,
+        "roc_auc": 0.7804,
+        "sensitivity": 0.76,
+        "specificity": 0.6792,
+        "precision_ppv": 0.5278,
+        "npv": 0.8571,
+        "confusion_matrix": {
+          "TN": 36,
+          "FP": 17,
+          "FN": 6,
+          "TP": 19
+        }
+      }
+    },
+    "No Diabetes": {
+      "model_a_tier1": {
+        "sample_size_total": 637,
+        "positive_count": 145,
+        "negative_count": 492,
+        "prevalence_percent": 22.76,
+        "insufficient_sample_size_flag": false,
+        "screening_threshold": 0.1808,
+        "roc_auc": 0.702,
+        "sensitivity": 0.7724,
+        "specificity": 0.4858,
+        "precision_ppv": 0.3068,
+        "npv": 0.8787,
+        "confusion_matrix": {
+          "TN": 239,
+          "FP": 253,
+          "FN": 33,
+          "TP": 112
+        }
+      },
+      "model_b_tier2": {
+        "sample_size_total": 637,
+        "positive_count": 145,
+        "negative_count": 492,
+        "prevalence_percent": 22.76,
+        "insufficient_sample_size_flag": false,
+        "screening_threshold": 0.3379,
+        "roc_auc": 0.8862,
+        "sensitivity": 0.731,
+        "specificity": 0.8516,
+        "precision_ppv": 0.5922,
+        "npv": 0.9148,
+        "confusion_matrix": {
+          "TN": 419,
+          "FP": 73,
+          "FN": 39,
+          "TP": 106
+        }
+      }
+    }
+  },
+  "bmi_subgroups": {
+    "Normal (<25)": {
+      "model_a_tier1": {
+        "sample_size_total": 193,
+        "positive_count": 12,
+        "negative_count": 181,
+        "prevalence_percent": 6.22,
+        "insufficient_sample_size_flag": false,
+        "screening_threshold": 0.1808,
+        "roc_auc": 0.6487,
+        "sensitivity": 0.0833,
+        "specificity": 0.9337,
+        "precision_ppv": 0.0769,
+        "npv": 0.9389,
+        "confusion_matrix": {
+          "TN": 169,
+          "FP": 12,
+          "FN": 11,
+          "TP": 1
+        }
+      },
+      "model_b_tier2": {
+        "sample_size_total": 193,
+        "positive_count": 12,
+        "negative_count": 181,
+        "prevalence_percent": 6.22,
+        "insufficient_sample_size_flag": false,
+        "screening_threshold": 0.3379,
+        "roc_auc": 0.8425,
+        "sensitivity": 0.4167,
+        "specificity": 0.9282,
+        "precision_ppv": 0.2778,
+        "npv": 0.96,
+        "confusion_matrix": {
+          "TN": 168,
+          "FP": 13,
+          "FN": 7,
+          "TP": 5
+        }
+      }
+    },
+    "Overweight (25-29.9)": {
+      "model_a_tier1": {
+        "sample_size_total": 259,
+        "positive_count": 60,
+        "negative_count": 199,
+        "prevalence_percent": 23.17,
+        "insufficient_sample_size_flag": false,
+        "screening_threshold": 0.1808,
+        "roc_auc": 0.5591,
+        "sensitivity": 0.65,
+        "specificity": 0.3518,
+        "precision_ppv": 0.2321,
+        "npv": 0.7692,
+        "confusion_matrix": {
+          "TN": 70,
+          "FP": 129,
+          "FN": 21,
+          "TP": 39
+        }
+      },
+      "model_b_tier2": {
+        "sample_size_total": 259,
+        "positive_count": 60,
+        "negative_count": 199,
+        "prevalence_percent": 23.17,
+        "insufficient_sample_size_flag": false,
+        "screening_threshold": 0.3379,
+        "roc_auc": 0.8703,
+        "sensitivity": 0.75,
+        "specificity": 0.804,
+        "precision_ppv": 0.5357,
+        "npv": 0.9143,
+        "confusion_matrix": {
+          "TN": 160,
+          "FP": 39,
+          "FN": 15,
+          "TP": 45
+        }
+      }
+    },
+    "Obese (>=30)": {
+      "model_a_tier1": {
+        "sample_size_total": 258,
+        "positive_count": 95,
+        "negative_count": 163,
+        "prevalence_percent": 36.82,
+        "insufficient_sample_size_flag": false,
+        "screening_threshold": 0.1808,
+        "roc_auc": 0.6049,
+        "sensitivity": 1.0,
+        "specificity": 0.0184,
+        "precision_ppv": 0.3725,
+        "npv": 1.0,
+        "confusion_matrix": {
+          "TN": 3,
+          "FP": 160,
+          "FN": 0,
+          "TP": 95
+        }
+      },
+      "model_b_tier2": {
+        "sample_size_total": 258,
+        "positive_count": 95,
+        "negative_count": 163,
+        "prevalence_percent": 36.82,
+        "insufficient_sample_size_flag": false,
+        "screening_threshold": 0.3379,
+        "roc_auc": 0.8478,
+        "sensitivity": 0.7789,
+        "specificity": 0.7669,
+        "precision_ppv": 0.6607,
+        "npv": 0.8562,
+        "confusion_matrix": {
+          "TN": 125,
+          "FP": 38,
+          "FN": 21,
+          "TP": 74
+        }
+      }
+    }
+  }
+}

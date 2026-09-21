@@ -1,0 +1,66 @@
+{
+  "name": "Model A: Tier 1 Evidence Only",
+  "feature_count": 11,
+  "features": [
+    "age",
+    "height_cm",
+    "weight_kg",
+    "bmi",
+    "waist_cm",
+    "low_energy",
+    "sleep_trouble",
+    "low_mood",
+    "low_interest",
+    "high_blood_pressure",
+    "diabetes"
+  ],
+  "model_type": "Calibrated Logistic Regression (L2 Balanced)",
+  "screening_threshold": 0.1808,
+  "metrics": {
+    "threshold": 0.1808,
+    "roc_auc": 0.7044,
+    "pr_auc": 0.4201,
+    "sensitivity": 0.8059,
+    "specificity": 0.4459,
+    "precision": 0.3121,
+    "npv": 0.8804,
+    "f1": 0.4499,
+    "brier_score": 0.165,
+    "confusion_matrix": {
+      "TN": 243,
+      "FP": 302,
+      "FN": 33,
+      "TP": 137
+    }
+  },
+  "confidence_intervals_95": {
+    "roc_auc": {
+      "ci_95_lower": 0.6571,
+      "ci_95_upper": 0.7466
+    },
+    "pr_auc": {
+      "ci_95_lower": 0.3533,
+      "ci_95_upper": 0.5029
+    },
+    "sensitivity": {
+      "ci_95_lower": 0.7438,
+      "ci_95_upper": 0.8662
+    },
+    "specificity": {
+      "ci_95_lower": 0.4043,
+      "ci_95_upper": 0.4899
+    },
+    "precision": {
+      "ci_95_lower": 0.2725,
+      "ci_95_upper": 0.3573
+    },
+    "npv": {
+      "ci_95_lower": 0.8414,
+      "ci_95_upper": 0.9164
+    },
+    "brier_score": {
+      "ci_95_lower": 0.15,
+      "ci_95_upper": 0.1814
+    }
+  }
+}

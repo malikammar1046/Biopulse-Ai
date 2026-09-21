@@ -1,0 +1,36 @@
+{
+  "external_validation_conducted": false,
+  "reason": "No compatible independent dataset with paired Tier 1 and Tier 2 variables exists in the repository.",
+  "datasets_examined": [
+    {
+      "dataset_name": "ptestost.xlsx (Elderly Taiwanese Male Health Exam Cohort)",
+      "sample_size": 3397,
+      "age_range": "45-85 (Mean: 62.4 years)",
+      "compatible": false,
+      "incompatibility_reasons": [
+        "Missing all Tier 1 symptom questions (low energy, sleep trouble, low mood, low interest).",
+        "Missing 14 of 16 Tier 2 laboratory features (SHBG, Estradiol, Albumin, HbA1c, Liver enzymes, Kidney markers, CBC).",
+        "Population age distribution is severely skewed towards geriatric men (60-85), failing the 19-60 target window."
+      ]
+    },
+    {
+      "dataset_name": "horm.csv (Occupational BPA Chemical Cohort)",
+      "sample_size": 560,
+      "compatible": false,
+      "incompatibility_reasons": [
+        "Lacks standard clinical questionnaire features.",
+        "Lacks broader metabolic panel (liver, kidney, glycemic, hematologic biomarkers).",
+        "Occupational chemical exposure population with non-representative endocrine confounders."
+      ]
+    },
+    {
+      "dataset_name": "Dataset+DEXA.xls (Body Composition Scan Study)",
+      "sample_size": "Unknown",
+      "compatible": false,
+      "incompatibility_reasons": [
+        "Body composition / radiology focus without multi-biomarker laboratory endocrine panel."
+      ]
+    }
+  ],
+  "conclusion": "External validation must be performed on an authentic, prospective clinical cohort rather than forced onto incompatible datasets."
+}

@@ -1,0 +1,71 @@
+{
+  "name": "Model B: Tier 2 Laboratory Evidence Only",
+  "feature_count": 16,
+  "features": [
+    "age",
+    "shbg_nmol_l",
+    "estradiol_pg_ml",
+    "albumin_g_dl",
+    "hba1c_pct",
+    "glucose_mg_dl",
+    "hemoglobin_g_dl",
+    "hematocrit_pct",
+    "rbc_count",
+    "alt_u_l",
+    "ast_u_l",
+    "total_bilirubin_mg_dl",
+    "creatinine_mg_dl",
+    "bun_mg_dl",
+    "uric_acid_mg_dl",
+    "hdl_mg_dl"
+  ],
+  "model_type": "Calibrated Random Forest (Platt Sigmoid)",
+  "screening_threshold": 0.3379,
+  "metrics": {
+    "threshold": 0.3379,
+    "roc_auc": 0.8742,
+    "pr_auc": 0.6723,
+    "sensitivity": 0.7353,
+    "specificity": 0.8349,
+    "precision": 0.5814,
+    "npv": 0.91,
+    "f1": 0.6494,
+    "brier_score": 0.1164,
+    "confusion_matrix": {
+      "TN": 455,
+      "FP": 90,
+      "FN": 45,
+      "TP": 125
+    }
+  },
+  "confidence_intervals_95": {
+    "roc_auc": {
+      "ci_95_lower": 0.8442,
+      "ci_95_upper": 0.902
+    },
+    "pr_auc": {
+      "ci_95_lower": 0.5992,
+      "ci_95_upper": 0.7407
+    },
+    "sensitivity": {
+      "ci_95_lower": 0.6628,
+      "ci_95_upper": 0.8056
+    },
+    "specificity": {
+      "ci_95_lower": 0.8022,
+      "ci_95_upper": 0.8658
+    },
+    "precision": {
+      "ci_95_lower": 0.516,
+      "ci_95_upper": 0.6483
+    },
+    "npv": {
+      "ci_95_lower": 0.8843,
+      "ci_95_upper": 0.9349
+    },
+    "brier_score": {
+      "ci_95_lower": 0.1038,
+      "ci_95_upper": 0.1306
+    }
+  }
+}
