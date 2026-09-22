@@ -88,7 +88,7 @@ export const HealthProgressSection: React.FC<HealthProgressSectionProps> = ({
       isCurrent = false;
       controller.abort();
     };
-  }, [selectedPeriod, moduleName, retryTrigger, userProfile?.weight, userProfile?.height]);
+  }, [selectedPeriod, moduleName, retryTrigger, userProfile?.weightKg, userProfile?.heightCm]);
 
   // ---------------------------------------------------------------------------
   // 1. Loading Skeleton
