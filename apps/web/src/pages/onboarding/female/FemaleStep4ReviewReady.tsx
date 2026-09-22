@@ -1,10 +1,10 @@
 import React from 'react';
 import {
-  CheckCircle2,
-  ShieldCheck,
+  CheckCircle,
+  ShieldTick,
   Heart,
   AlertCircle,
-} from 'lucide-react';
+} from '@untitledui/icons';
 import type { UserProfile } from '../../../types/onboarding';
 import { WhyWeAskCard } from './WhyWeAskCard';
 
@@ -62,12 +62,12 @@ export const FemaleStep4ReviewReady: React.FC<FemaleStep4Props> = ({
     <div className="space-y-6 text-left">
       {/* ── Question Header ── */}
       <div className="flex items-start gap-4">
-        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#FDE6EF] flex items-center justify-center shrink-0 shadow-2xs">
-          <ShieldCheck className="w-6 h-6 sm:w-7 sm:h-7 text-[#F43F7D]" />
+        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#E0F2FE] flex items-center justify-center shrink-0 shadow-2xs">
+          <ShieldTick className="w-6 h-6 sm:w-7 sm:h-7 text-[#0288D1]" aria-hidden="true" />
         </div>
 
         <div className="space-y-1">
-          <span className="text-[11px] sm:text-xs font-bold font-mono text-[#F43F7D] uppercase tracking-wider block">
+          <span className="text-[11px] sm:text-xs font-bold font-mono text-[#0288D1] uppercase tracking-wider block">
             Final Confirmation
           </span>
           <h2 className="text-2xl sm:text-3xl font-extrabold font-display text-[#073B72] tracking-tight">
@@ -82,7 +82,7 @@ export const FemaleStep4ReviewReady: React.FC<FemaleStep4Props> = ({
       {/* ── Error Banner if Save Failed ── */}
       {saveError && (
         <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-center gap-2.5">
-          <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+          <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" aria-hidden="true" />
           <span>{saveError}</span>
         </div>
       )}
@@ -92,18 +92,18 @@ export const FemaleStep4ReviewReady: React.FC<FemaleStep4Props> = ({
         {/* Main Content Column */}
         <div className="lg:col-span-8 space-y-4">
           {/* Luminous Hero Card */}
-          <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-[#FAFCFF] via-[#FDF9FB] to-[#F5FAFC] border border-[#D7EAF2] flex flex-col sm:flex-row items-center gap-5">
-            <div className="relative w-20 h-20 rounded-full bg-gradient-to-tr from-[#0E9EAA] to-[#F43F7D] p-0.5 shadow-md flex items-center justify-center shrink-0">
+          <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-[#FAFCFF] via-[#F0F9FF] to-[#F5FAFC] border border-[#D7EAF2] flex flex-col sm:flex-row items-center gap-5">
+            <div className="relative w-20 h-20 rounded-full bg-gradient-to-tr from-[#0288D1] to-[#01579B] p-0.5 shadow-md flex items-center justify-center shrink-0">
               <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
-                <Heart className="w-8 h-8 text-[#F43F7D]" />
+                <Heart className="w-8 h-8 text-[#0288D1]" aria-hidden="true" />
               </div>
-              <span className="absolute top-0 right-0 w-3.5 h-3.5 rounded-full bg-[#0E9EAA] border-2 border-white shadow-2xs" />
+              <span className="absolute top-0 right-0 w-3.5 h-3.5 rounded-full bg-[#0288D1] border-2 border-white shadow-2xs" />
             </div>
 
             <div className="space-y-1 text-center sm:text-left">
               <h3 className="text-lg sm:text-xl font-bold font-display text-[#073B72]">
                 Your BioPulse AI profile is{' '}
-                <span className="text-[#F43F7D]">ready.</span>
+                <span className="text-[#0288D1]">ready.</span>
               </h3>
               <p className="text-xs sm:text-sm text-[#55718F] italic font-serif">
                 “Let’s understand your health, one pattern at a time.”
@@ -115,10 +115,10 @@ export const FemaleStep4ReviewReady: React.FC<FemaleStep4Props> = ({
           <div className="p-5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-[#D7EAF2] text-xs font-mono text-[#073B72]">
               <span className="flex items-center gap-1.5 uppercase font-bold tracking-wider">
-                <ShieldCheck className="w-4 h-4 text-[#0E9EAA]" />
+                <ShieldTick className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
                 Configured Baselines
               </span>
-              <span className="text-[#0E9EAA] font-bold">100% Complete</span>
+              <span className="text-[#0288D1] font-bold">100% Complete</span>
             </div>
 
             <div className="space-y-2.5">
@@ -128,7 +128,7 @@ export const FemaleStep4ReviewReady: React.FC<FemaleStep4Props> = ({
                   className="flex items-center justify-between text-xs py-1 border-b border-[#E8F1F5] last:border-none"
                 >
                   <div className="flex items-center gap-2 text-[#073B72] font-medium">
-                    <CheckCircle2 className="w-4 h-4 text-[#0E9EAA] shrink-0" />
+                    <CheckCircle className="w-4 h-4 text-[#0288D1] shrink-0" aria-hidden="true" />
                     <span>{item.label}</span>
                   </div>
                   <span className="text-[11px] text-[#55718F] font-mono truncate max-w-[220px] text-right">
@@ -147,7 +147,7 @@ export const FemaleStep4ReviewReady: React.FC<FemaleStep4Props> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#55718F]">
               {focusList.map((item, idx) => (
                 <div key={idx} className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#F43F7D] shrink-0" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#0288D1] shrink-0" />
                   <span className="leading-tight">{item}</span>
                 </div>
               ))}
@@ -162,8 +162,8 @@ export const FemaleStep4ReviewReady: React.FC<FemaleStep4Props> = ({
             description="Reviewing your baseline ensures maximum accuracy for non-diagnostic PCOS stratification. You can update your biometrics, cycle dates, and symptom logs at any point from your dashboard."
           />
 
-          <div className="p-4 rounded-2xl bg-[#DDF7F7]/50 border border-[#DDF7F7] text-xs text-[#073B72] space-y-1.5">
-            <span className="font-bold text-[#0E9EAA] block font-mono text-[11px] uppercase tracking-wide">
+          <div className="p-4 rounded-2xl bg-[#E0F2FE]/50 border border-[#BAE6FD] text-xs text-[#073B72] space-y-1.5">
+            <span className="font-bold text-[#0288D1] block font-mono text-[11px] uppercase tracking-wide">
               Clinical Disclaimer
             </span>
             <p className="text-[#55718F] text-[11px] leading-relaxed">

@@ -2,13 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
-  CheckCircle2,
+  CheckCircle,
   AlertCircle,
-  X,
-  Trash2,
+  XClose,
+  Trash01,
   ChevronRight,
-  Loader2,
-} from 'lucide-react';
+  RefreshCw01,
+} from '@untitledui/icons';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { useAuth } from '../../context/AuthContext';
 import { ROUTES } from '../../constants/routes';
@@ -169,7 +169,6 @@ export const SettingsPage: React.FC = () => {
   const handleDeleteAccount = async () => {
     if (deleteConfirmText.trim().toUpperCase() !== 'DELETE') {
       setDeleteError('Please type DELETE to confirm.');
-      return;
     }
 
     setIsDeleting(true);
@@ -192,13 +191,13 @@ export const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-28 pt-4 sm:pt-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-slate-50/50 pb-28 pt-4 sm:pt-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-left">
       {/* ── 1. PAGE HEADER ── */}
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-bold text-primary-teal uppercase tracking-wider">
+              <span className="text-xs font-bold text-[#0288D1] uppercase tracking-wider">
                 Clinical Health Center
               </span>
               <span className="text-slate-300">•</span>
@@ -222,7 +221,7 @@ export const SettingsPage: React.FC = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-xs"
               >
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
                 <span>Changes saved</span>
               </motion.div>
             )}
@@ -240,15 +239,15 @@ export const SettingsPage: React.FC = () => {
         {saveError && (
           <div className="mt-4 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-between text-xs text-rose-700 font-medium">
             <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" aria-hidden="true" />
               <span>{saveError}</span>
             </div>
             <button
               type="button"
               onClick={() => setSaveError(null)}
-              className="p-1 hover:bg-rose-100 rounded-md"
+              className="p-1 hover:bg-rose-100 rounded-md cursor-pointer"
             >
-              <X className="w-3.5 h-3.5" />
+              <XClose className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </div>
         )}
@@ -278,11 +277,9 @@ export const SettingsPage: React.FC = () => {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`w-full p-3 rounded-2xl text-left transition-all flex items-center justify-between group ${
+                  className={`w-full p-3 rounded-2xl text-left transition-all flex items-center justify-between group cursor-pointer ${
                     isActive
-                      ? isMale
-                        ? 'bg-gradient-to-r from-teal-500/10 to-teal-600/5 text-teal-800 font-bold shadow-xs border border-teal-200/80'
-                        : 'bg-gradient-to-r from-teal-500/10 to-rose-500/5 text-slate-900 font-bold shadow-xs border border-primary-teal/30'
+                      ? 'bg-[#F0F9FF] text-[#01579B] font-bold shadow-xs border border-[#BAE6FD]'
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'
                   }`}
                 >
@@ -290,11 +287,11 @@ export const SettingsPage: React.FC = () => {
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
                         isActive
-                          ? 'bg-primary-teal text-white shadow-xs'
+                          ? 'bg-[#0288D1] text-white shadow-xs'
                           : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200/80 group-hover:text-slate-700'
                       }`}
                     >
-                      <Icon className="w-4 h-4" />
+                      <Icon className="w-4 h-4" aria-hidden="true" />
                     </div>
 
                     <div className="min-w-0">
@@ -307,8 +304,9 @@ export const SettingsPage: React.FC = () => {
 
                   <ChevronRight
                     className={`w-4 h-4 shrink-0 transition-transform ${
-                      isActive ? 'text-primary-teal translate-x-0.5' : 'text-slate-300'
+                      isActive ? 'text-[#0288D1] translate-x-0.5' : 'text-slate-300'
                     }`}
+                    aria-hidden="true"
                   />
                 </button>
               );
@@ -403,14 +401,14 @@ export const SettingsPage: React.FC = () => {
           >
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center">
-                <Trash2 className="w-6 h-6" />
+                <Trash01 className="w-6 h-6 text-rose-600" aria-hidden="true" />
               </div>
               <button
                 type="button"
                 onClick={() => setShowDeleteModal(false)}
-                className="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                className="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                <XClose className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
 
@@ -440,7 +438,7 @@ export const SettingsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
               >
                 Cancel
               </button>
@@ -448,9 +446,9 @@ export const SettingsPage: React.FC = () => {
                 type="button"
                 onClick={handleDeleteAccount}
                 disabled={isDeleting || deleteConfirmText.trim().toUpperCase() !== 'DELETE'}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl disabled:opacity-40"
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl disabled:opacity-40 cursor-pointer"
               >
-                {isDeleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                {isDeleting && <RefreshCw01 className="w-3.5 h-3.5 animate-spin text-white" aria-hidden="true" />}
                 <span>Permanently Delete</span>
               </button>
             </div>
@@ -460,3 +458,5 @@ export const SettingsPage: React.FC = () => {
     </div>
   );
 };
+
+export default SettingsPage;

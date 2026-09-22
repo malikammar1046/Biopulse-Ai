@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Bell, Plus, Calendar as CalendarIcon, Sparkles } from 'lucide-react';
+import { SearchLg, Bell01, Plus, Calendar, Edit01 } from '@untitledui/icons';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { getTimeBasedGreeting } from '../../utils/profileCompletion';
 
@@ -49,7 +49,7 @@ export const DashboardHeader: React.FC = () => {
       <div className="space-y-1 text-left">
         <div className="flex items-center gap-2">
           <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-[#0F172A] tracking-tight">
-            {greeting} <span className="inline-block">👋</span>
+            {greeting}
           </h1>
         </div>
         <p className="text-xs sm:text-sm text-[#64748B] font-sans">
@@ -61,7 +61,7 @@ export const DashboardHeader: React.FC = () => {
       <div className="flex items-center gap-3 self-start md:self-auto">
         {/* Date Display Pill */}
         <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-[#E0F2FE] border border-[#BAE6FD] text-xs font-mono font-bold text-[#0288D1]">
-          <CalendarIcon className="w-3.5 h-3.5" />
+          <Calendar className="w-3.5 h-3.5" aria-hidden="true" />
           <span>{todayFormatted}</span>
         </div>
 
@@ -72,7 +72,7 @@ export const DashboardHeader: React.FC = () => {
             placeholder="Search symptoms, lab reports, meals..."
             className="w-56 px-3.5 py-2 pl-9 rounded-2xl bg-white border border-[#E2E8F0] text-xs text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#0288D1] transition-all"
           />
-          <Search className="w-3.5 h-3.5 text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" />
+          <SearchLg className="w-3.5 h-3.5 text-[#94A3B8] absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true" />
         </div>
 
         {/* Notification Bell with Unread Badge */}
@@ -83,7 +83,7 @@ export const DashboardHeader: React.FC = () => {
             className="relative p-2.5 rounded-2xl bg-white border border-[#E2E8F0] text-[#64748B] hover:text-[#0288D1] hover:bg-[#F8FAFC] transition-all cursor-pointer shadow-xs"
             aria-label="Notifications"
           >
-            <Bell className="w-4 h-4" />
+            <Bell01 className="w-4 h-4" aria-hidden="true" />
             <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#0288D1] text-white text-[9px] font-mono font-bold flex items-center justify-center shadow-xs">
               3
             </span>
@@ -117,7 +117,7 @@ export const DashboardHeader: React.FC = () => {
           onClick={() => setShowQuickLogModal(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-2xl font-sans font-bold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-xs transition-all cursor-pointer"
         >
-          <Plus className="w-4 h-4 stroke-[2.5]" />
+          <Plus className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />
           <span>Log Today</span>
         </button>
 
@@ -139,7 +139,7 @@ export const DashboardHeader: React.FC = () => {
           <div className="w-full max-w-md rounded-3xl bg-white border border-[#E2E8F0] p-6 text-left shadow-2xl space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-[#0288D1]" />
+                <Edit01 className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
                 <h3 className="text-sm font-bold font-display text-[#0F172A]">Quick Daily Log</h3>
               </div>
               <button
@@ -157,12 +157,12 @@ export const DashboardHeader: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-2.5">
               {[
-                { title: '🩸 Cycle Details', desc: 'Flow or symptoms' },
-                { title: '⚡ Symptoms', desc: 'Energy, Fatigue, Mood' },
-                { title: '🥗 Food & Meals', desc: 'Breakfast, Lunch, Dinner' },
-                { title: '🏃 Movement', desc: 'Walking or home exercise' },
-                { title: '💊 Medications', desc: 'Prescriptions & vitamins' },
-                { title: '💧 Water Intake', desc: '+1 Glass (250ml)' },
+                { title: 'Cycle Details', desc: 'Flow or symptoms' },
+                { title: 'Symptoms', desc: 'Energy, Fatigue, Mood' },
+                { title: 'Food & Meals', desc: 'Breakfast, Lunch, Dinner' },
+                { title: 'Movement', desc: 'Walking or home exercise' },
+                { title: 'Medications', desc: 'Prescriptions & vitamins' },
+                { title: 'Water Intake', desc: '+1 Glass (250ml)' },
               ].map((item, i) => (
                 <button
                   key={i}

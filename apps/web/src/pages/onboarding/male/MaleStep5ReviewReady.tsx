@@ -1,10 +1,10 @@
 import React from 'react';
 import {
-  CheckCircle2,
-  ShieldCheck,
+  CheckCircle,
+  ShieldTick,
   AlertCircle,
-  FlaskConical,
-} from 'lucide-react';
+  Beaker01,
+} from '@untitledui/icons';
 import type { UserProfile } from '../../../types/onboarding';
 import { MaleWhyWeAskCard } from './MaleWhyWeAskCard';
 
@@ -90,7 +90,7 @@ export const MaleStep5ReviewReady: React.FC<MaleStep5Props> = ({
       {/* ── Compact Question Header ── */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-full bg-[#DDF7F7] flex items-center justify-center shrink-0 shadow-2xs">
-          <ShieldCheck className="w-5 h-5 text-[#0E9EAA]" />
+          <ShieldTick className="w-5 h-5 text-[#0E9EAA]" aria-hidden="true" />
         </div>
 
         <div>
@@ -109,7 +109,7 @@ export const MaleStep5ReviewReady: React.FC<MaleStep5Props> = ({
       {/* ── Error Banner if Save Failed ── */}
       {saveError && (
         <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+          <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" aria-hidden="true" />
           <span>{saveError}</span>
         </div>
       )}
@@ -138,7 +138,7 @@ export const MaleStep5ReviewReady: React.FC<MaleStep5Props> = ({
           {/* Tier 2 Laboratory Blood Tests Notice */}
           <div className="p-3 rounded-xl bg-[#EAFBFC] border border-[#B2EBF2] flex items-start gap-2.5">
             <div className="w-6 h-6 rounded-lg bg-[#DDF7F7] flex items-center justify-center text-[#0E9EAA] shrink-0 mt-0.5">
-              <FlaskConical className="w-3.5 h-3.5" />
+              <Beaker01 className="w-3.5 h-3.5" aria-hidden="true" />
             </div>
             <div className="text-[11px] text-[#55718F] leading-snug">
               <span className="font-bold text-[#073B72] block">Clinical Lab Results (Tier 2):</span>
@@ -154,7 +154,7 @@ export const MaleStep5ReviewReady: React.FC<MaleStep5Props> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {exploreList.map((item, idx) => (
                 <div key={idx} className="flex items-center gap-2 text-xs text-[#55718F]">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#0E9EAA] shrink-0" />
+                  <CheckCircle className="w-3.5 h-3.5 text-[#0E9EAA] shrink-0" aria-hidden="true" />
                   <span>{item}</span>
                 </div>
               ))}
@@ -167,7 +167,7 @@ export const MaleStep5ReviewReady: React.FC<MaleStep5Props> = ({
           <MaleWhyWeAskCard
             title="Screening Confirmation"
             description="BioPulse AI calculates an initial non-diagnostic screening score calibrated against CDC epidemiological reference data. Your profile provides the foundation for progressive assessment."
-            icon={ShieldCheck}
+            icon={ShieldTick}
           />
 
           <div className="p-3.5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] text-[11px] text-[#55718F] space-y-1.5">

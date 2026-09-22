@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Bell, ChevronDown } from 'lucide-react';
+import { SearchLg, Bell01, ChevronDown } from '@untitledui/icons';
 import { useUserHealth } from '../../../context/UserHealthContext';
 import { resolvePathway, type HealthPathway } from '../../../types/onboarding';
 
@@ -24,19 +24,19 @@ export const ExecutiveDashboardHeader: React.FC<ExecutiveDashboardHeaderProps> =
 
   const pathwayMeta = {
     female: {
-      title: 'BIOPulse AI',
+      title: 'BioPulse AI',
       subtitle: "Your personalized women's health and PCOS companion",
       badge: "Women's Health & PCOS Screening",
       badgeClass: 'bg-[#E0F2FE] text-[#0288D1] border-[#BAE6FD]',
     },
     male: {
-      title: 'BIOPulse AI',
+      title: 'BioPulse AI',
       subtitle: "Your personalized men's health and hypogonadism screening companion",
       badge: "Men's Health • Hypogonadism Screening",
       badgeClass: 'bg-[#E0F2FE] text-[#0288D1] border-[#BAE6FD]',
     },
     general: {
-      title: 'BIOPulse AI',
+      title: 'BioPulse AI',
       subtitle: 'Your personalized health intelligence companion',
       badge: 'Baseline Health & Wellness',
       badgeClass: 'bg-[#E0F2FE] text-[#0288D1] border-[#BAE6FD]',
@@ -105,7 +105,7 @@ export const ExecutiveDashboardHeader: React.FC<ExecutiveDashboardHeaderProps> =
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
           {/* Search Bar Input */}
           <div className="relative flex-1 sm:flex-initial">
-            <Search className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <SearchLg className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2" aria-hidden="true" />
             <input
               type="text"
               placeholder="Search..."
@@ -124,8 +124,9 @@ export const ExecutiveDashboardHeader: React.FC<ExecutiveDashboardHeaderProps> =
             onClick={() => openAiChatWithPrompt('What are my upcoming health tasks and reminders for today?')}
             className="w-10 h-10 rounded-full bg-white border border-[#E2E8F0] flex items-center justify-center text-[#475569] hover:text-[#0288D1] hover:border-[#BAE6FD] shadow-xs relative transition-all cursor-pointer"
             title="Notifications"
+            aria-label="Notifications"
           >
-            <Bell className="w-4 h-4" />
+            <Bell01 className="w-4 h-4" aria-hidden="true" />
             <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#0288D1] border-2 border-white" />
           </button>
 

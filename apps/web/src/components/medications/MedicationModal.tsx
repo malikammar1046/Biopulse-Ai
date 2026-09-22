@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Pill, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { XClose, Plus, MedicalCross, Clock, CheckCircle, AlertCircle } from '@untitledui/icons';
 import type { MedicationItem, MedicationInput, MedicationFrequency } from '../../types/medication';
 
 interface MedicationModalProps {
@@ -8,6 +8,7 @@ interface MedicationModalProps {
   editingMedication?: MedicationItem | null;
   onClose: () => void;
   onSave: (input: MedicationInput) => Promise<{ success: boolean; error?: string }>;
+  isMale?: boolean;
 }
 
 const COMMON_SUPPLEMENTS = [
@@ -36,6 +37,7 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
   editingMedication,
   onClose,
   onSave,
+  isMale,
 }) => {
   const [name, setName] = useState('');
   const [dose, setDose] = useState('');
@@ -135,19 +137,23 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          className="w-full max-w-xl bg-white rounded-[28px] shadow-2xl border border-[#BAE6FD] overflow-hidden flex flex-col max-h-[90vh]"
+          className={`w-full max-w-xl bg-white rounded-2xl shadow-2xl border overflow-hidden flex flex-col max-h-[90vh] ${
+            isMale ? 'border-[#BAE6FD]' : 'border-[#EAECF0]'
+          }`}
         >
           {/* Header */}
-          <div className="p-6 pb-4 border-b border-[#E2E8F0] flex items-center justify-between bg-white">
+          <div className="p-6 pb-4 border-b border-[#EAECF0] flex items-center justify-between bg-white">
             <div className="flex items-center gap-2.5">
-              <span className="p-2 rounded-2xl bg-[#F0F9FF] text-[#0288D1]">
-                <Pill className="w-5 h-5" />
+              <span className={`p-2 rounded-xl ${
+                isMale ? 'bg-[#F0F9FF] text-[#0288D1]' : 'bg-[#FDE6EF] text-[#F43F7D]'
+              }`}>
+                <MedicalCross className="w-5 h-5" aria-hidden="true" />
               </span>
               <div>
                 <h2 className="text-lg font-bold font-display text-[#0F172A]">
                   {editingMedication ? 'Edit Medicine' : 'Add Medicine or Supplement'}
                 </h2>
-                <p className="text-xs text-[#475569]">
+                <p className="text-xs text-[#64748B]">
                   Keep track of what you take and when
                 </p>
               </div>
@@ -156,9 +162,10 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] transition-all cursor-pointer"
+              aria-label="Close modal"
+              className="p-2 rounded-xl text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] transition-all cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <XClose className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
 
@@ -166,7 +173,7 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
           <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-5">
             {errorMsg && (
               <div className="p-3 rounded-xl bg-[#FEF2F2] border border-[#FECACA] text-[#991B1B] text-xs flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 text-[#DC2626]" />
+                <AlertCircle className="w-4 h-4 shrink-0 text-[#DC2626]" aria-hidden="true" />
                 <span>{errorMsg}</span>
               </div>
             )}
@@ -198,7 +205,11 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
                           handleFrequencyChange('once_daily');
                         }
                       }}
-                      className="px-2.5 py-1 rounded-xl text-[11px] font-mono bg-[#F8FAFC] hover:bg-[#F0F9FF] text-[#0369A1] border border-[#BAE6FD] transition-all cursor-pointer"
+                      className={`px-2.5 py-1 rounded-xl text-[11px] font-mono border transition-all cursor-pointer ${
+                        isMale
+                          ? 'bg-[#F8FAFC] hover:bg-[#F0F9FF] text-[#0369A1] border-[#BAE6FD]'
+                          : 'bg-[#F8FAFC] hover:bg-[#FDE6EF]/40 text-[#DC326C] border-[rgba(244,63,125,0.25)]'
+                      }`}
                     >
                       + {item}
                     </button>
@@ -218,7 +229,9 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
                 placeholder="e.g. Metformin, Myo-Inositol, Spironolactone"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-2xl bg-[#F8FAFC] border border-[#BAE6FD] text-xs font-sans text-[#0F172A] focus:bg-white focus:border-[#0288D1] focus:outline-none"
+                className={`w-full px-4 py-2.5 rounded-xl bg-[#F8FAFC] border text-xs font-sans text-[#0F172A] focus:bg-white focus:outline-none ${
+                  isMale ? 'border-[#BAE6FD] focus:border-[#0288D1]' : 'border-[#EAECF0] focus:border-[#F43F7D]'
+                }`}
               />
             </div>
 
@@ -234,7 +247,9 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
                   placeholder="e.g. 500, 2000, 1"
                   value={dose}
                   onChange={(e) => setDose(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-2xl bg-[#F8FAFC] border border-[#BAE6FD] text-xs font-mono text-[#0F172A] focus:bg-white focus:border-[#0288D1] focus:outline-none"
+                  className={`w-full px-4 py-2.5 rounded-xl bg-[#F8FAFC] border text-xs font-mono text-[#0F172A] focus:bg-white focus:outline-none ${
+                    isMale ? 'border-[#BAE6FD] focus:border-[#0288D1]' : 'border-[#EAECF0] focus:border-[#F43F7D]'
+                  }`}
                 />
               </div>
 
@@ -245,7 +260,9 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
                 <select
                   value={unit}
                   onChange={(e) => setUnit(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-2xl bg-[#F8FAFC] border border-[#BAE6FD] text-xs font-mono text-[#0F172A] focus:bg-white focus:border-[#0288D1] focus:outline-none"
+                  className={`w-full px-4 py-2.5 rounded-xl bg-[#F8FAFC] border text-xs font-mono text-[#0F172A] focus:bg-white focus:outline-none ${
+                    isMale ? 'border-[#BAE6FD] focus:border-[#0288D1]' : 'border-[#EAECF0] focus:border-[#F43F7D]'
+                  }`}
                 >
                   {UNIT_OPTIONS.map((u) => (
                     <option key={u} value={u}>
@@ -269,10 +286,14 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
                       key={opt.key}
                       type="button"
                       onClick={() => handleFrequencyChange(opt.key)}
-                      className={`p-2.5 rounded-2xl text-xs font-semibold font-sans border transition-all cursor-pointer ${
+                      className={`p-2.5 rounded-xl text-xs font-semibold font-sans border transition-all cursor-pointer ${
                         isSelected
-                          ? 'bg-[#0288D1] text-white border-[#0288D1] shadow-xs'
-                          : 'bg-[#F8FAFC] text-[#475569] border-[#E2E8F0] hover:bg-[#F0F9FF] hover:border-[#BAE6FD]'
+                          ? isMale
+                            ? 'bg-[#0288D1] text-white border-[#0288D1] shadow-xs'
+                            : 'bg-[#F43F7D] text-white border-[#F43F7D] shadow-xs'
+                          : isMale
+                            ? 'bg-[#F8FAFC] text-[#475569] border-[#E2E8F0] hover:bg-[#F0F9FF] hover:border-[#BAE6FD]'
+                            : 'bg-[#F8FAFC] text-[#475569] border-[#EAECF0] hover:bg-[#FDE6EF]/40 hover:border-[rgba(244,63,125,0.3)]'
                       }`}
                     >
                       {opt.label}
@@ -289,13 +310,17 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
               </label>
               <div className="flex flex-wrap gap-2">
                 {scheduledTimes.map((time, idx) => (
-                  <div key={idx} className="flex items-center gap-1.5 bg-[#F8FAFC] border border-[#BAE6FD] p-2 rounded-2xl">
-                    <Clock className="w-3.5 h-3.5 text-[#0288D1]" />
+                  <div key={idx} className={`flex items-center gap-1.5 bg-[#F8FAFC] border p-2 rounded-xl ${
+                    isMale ? 'border-[#BAE6FD]' : 'border-[rgba(244,63,125,0.25)]'
+                  }`}>
+                    <Clock className={`w-3.5 h-3.5 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`} aria-hidden="true" />
                     <input
                       type="time"
                       value={time}
                       onChange={(e) => handleTimeChange(idx, e.target.value)}
-                      className="text-xs font-mono font-bold text-[#0288D1] bg-transparent focus:outline-none"
+                      className={`text-xs font-mono font-bold bg-transparent focus:outline-none ${
+                        isMale ? 'text-[#0288D1]' : 'text-[#DC326C]'
+                      }`}
                     />
                   </div>
                 ))}
@@ -310,7 +335,9 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-[#F8FAFC] border border-[#BAE6FD] text-xs font-mono text-[#0F172A] focus:bg-white focus:border-[#0288D1] focus:outline-none"
+                  className={`w-full px-3 py-2 rounded-xl bg-[#F8FAFC] border text-xs font-mono text-[#0F172A] focus:bg-white focus:outline-none ${
+                    isMale ? 'border-[#BAE6FD] focus:border-[#0288D1]' : 'border-[#EAECF0] focus:border-[#F43F7D]'
+                  }`}
                 />
               </div>
 
@@ -320,7 +347,9 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-[#F8FAFC] border border-[#BAE6FD] text-xs font-mono text-[#0F172A] focus:bg-white focus:border-[#0288D1] focus:outline-none"
+                  className={`w-full px-3 py-2 rounded-xl bg-[#F8FAFC] border text-xs font-mono text-[#0F172A] focus:bg-white focus:outline-none ${
+                    isMale ? 'border-[#BAE6FD] focus:border-[#0288D1]' : 'border-[#EAECF0] focus:border-[#F43F7D]'
+                  }`}
                 />
               </div>
             </div>
@@ -335,16 +364,18 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
                 placeholder="e.g. Take with breakfast, dissolve in water"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs font-sans text-[#0F172A] focus:bg-white focus:border-[#0288D1] focus:outline-none"
+                className={`w-full px-4 py-2.5 rounded-xl bg-[#F8FAFC] border text-xs font-sans text-[#0F172A] focus:bg-white focus:outline-none ${
+                  isMale ? 'border-[#E2E8F0] focus:border-[#0288D1]' : 'border-[#EAECF0] focus:border-[#F43F7D]'
+                }`}
               />
             </div>
 
             {/* Submit Footer */}
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E2E8F0]">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#EAECF0]">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-5 py-2.5 rounded-2xl border border-[#E2E8F0] text-xs font-bold text-[#475569] hover:bg-[#F8FAFC] transition-all cursor-pointer"
+                className="h-10 px-4 rounded-xl border border-[#EAECF0] text-xs font-semibold text-[#64748B] hover:bg-[#F8FAFC] transition-all cursor-pointer"
               >
                 Cancel
               </button>
@@ -352,16 +383,18 @@ export const MedicationModal: React.FC<MedicationModalProps> = ({
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-6 py-2.5 rounded-2xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                className={`h-10 px-5 rounded-xl text-white text-sm font-medium shadow-xs flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50 ${
+                  isMale ? 'bg-[#0288D1] hover:bg-[#0277BD]' : 'bg-[#F43F7D] hover:bg-[#DC326C]'
+                }`}
               >
                 {successToast ? (
                   <>
-                    <CheckCircle2 className="w-4 h-4 text-white" />
+                    <CheckCircle className="w-4 h-4 text-white" aria-hidden="true" />
                     <span>Saved!</span>
                   </>
                 ) : (
                   <>
-                    <Plus className="w-4 h-4 text-white" />
+                    <Plus className="w-4 h-4 text-white" aria-hidden="true" />
                     <span>{editingMedication ? 'Save Changes' : 'Save Medicine'}</span>
                   </>
                 )}

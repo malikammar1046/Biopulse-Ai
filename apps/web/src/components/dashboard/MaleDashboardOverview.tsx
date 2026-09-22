@@ -1,21 +1,20 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Sparkles,
-  ShieldCheck,
+  ActivityHeart,
+  ShieldTick,
   Calendar,
+  CalendarCheck01,
   Clock,
   ArrowRight,
-  Activity,
   ChevronRight,
-  TrendingUp,
-  FileText,
-  CheckCircle2,
+  LineChartUp01,
+  File01,
+  CheckCircle,
   AlertCircle,
-  Stethoscope,
-  Utensils,
+  Scales01,
   Plus,
-} from 'lucide-react';
+} from '@untitledui/icons';
 import { ROUTES } from '../../constants/routes';
 import { getTimeBasedGreeting } from '../../utils/profileCompletion';
 import { SemicircularRiskGauge } from './SemicircularRiskGauge';
@@ -156,31 +155,23 @@ export const MaleDashboardOverview: React.FC<MaleDashboardOverviewProps> = ({
       }));
     }
 
-    // Default factors based on ADAM and clinical parameters
-    const age = userProfile.dateOfBirth ? Math.max(20, new Date().getFullYear() - new Date(userProfile.dateOfBirth).getFullYear()) : 35;
-    const bmi = userProfile.heightCm && userProfile.weightKg
-      ? Math.round((userProfile.weightKg / ((userProfile.heightCm / 100) ** 2)) * 10) / 10
-      : 26.4;
-
     return [
-      { name: 'Total Testosterone Baseline', label: hormoneLabs.testosterone.status !== 'pending' ? hormoneLabs.testosterone.value : 'Pending morning lab verification', percentage: 78, impact: 'Primary Biomarker' },
-      { name: 'Age & Endocrine Curve', label: `${age} years (${age > 45 ? 'Age-related testosterone decline window' : 'Peak reproductive adulthood'})`, percentage: 55, impact: 'Clinical' },
-      { name: 'Body Mass Index (BMI)', label: `${bmi} kg/m² (${bmi >= 25 ? 'Elevated aromatization risk' : 'Normal metabolic range'})`, percentage: 48, impact: 'Metabolic' },
-      { name: 'ADAM Symptom Score', label: 'Fatigue, afternoon slumps & libido responses', percentage: 65, impact: 'Symptomatic' },
-      { name: 'Fasting Glucose & Lipids', label: 'Metabolic health indicators', percentage: 38, impact: 'Metabolic' },
+      { name: 'ADAM Symptom Score', percentage: 78, impact: '+ Primary driver', label: 'Fatigue, libido, and strength scores' },
+      { name: 'BMI & Metabolic Context', percentage: 64, impact: '+ Elevated risk', label: 'Adiposity and androgen conversion' },
+      { name: 'Morning Energy Pattern', percentage: 51, impact: '+ Contributing factor', label: 'Circadian vitality variation' },
     ];
-  }, [explanations, userProfile, hormoneLabs]);
+  }, [explanations]);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 text-left select-none pb-12">
-      {/* ── 1. Top Header Row ────────────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-6 text-left select-none">
+      {/* ── 1. Top Header Row ─────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-[#0F172A] tracking-tight">
             {greeting}
           </h1>
-          <p className="text-xs sm:text-sm text-[#64748B] font-sans mt-0.5">
-            Here is your personalized endocrine vitality and hypogonadism screening overview.
+          <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
+            Your comprehensive male reproductive-endocrine health monitoring portal.
           </p>
         </div>
 
@@ -194,7 +185,7 @@ export const MaleDashboardOverview: React.FC<MaleDashboardOverviewProps> = ({
 
           {/* Current Date Badge */}
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[#E2E8F0] text-[#64748B] text-xs font-mono font-medium">
-            <Calendar className="w-3.5 h-3.5 text-[#0288D1]" />
+            <Calendar className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
             <span>{currentDateFormatted}</span>
           </div>
 
@@ -217,7 +208,7 @@ export const MaleDashboardOverview: React.FC<MaleDashboardOverviewProps> = ({
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-white/80 border border-[#BAE6FD] text-[11px] font-mono font-bold text-[#0288D1] tracking-wider uppercase">
-              <Sparkles className="w-3.5 h-3.5 text-[#0288D1]" />
+              <ActivityHeart className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
               <span>HORMONE BALANCE • ENERGY • A HEALTHIER YOU</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-extrabold font-display text-[#0F172A] tracking-tight">
@@ -247,9 +238,7 @@ export const MaleDashboardOverview: React.FC<MaleDashboardOverviewProps> = ({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center text-[#0288D1]">
-                  <Activity className="w-4 h-4" />
-                </div>
+                <ActivityHeart className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
                 <div>
                   <h3 className="text-sm font-bold font-display text-[#0F172A]">
                     Hypogonadism Screening
@@ -307,7 +296,7 @@ export const MaleDashboardOverview: React.FC<MaleDashboardOverviewProps> = ({
               className="w-full py-2.5 px-4 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold font-sans transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer"
             >
               <span>View Full Assessment</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
 
             <button
@@ -326,9 +315,7 @@ export const MaleDashboardOverview: React.FC<MaleDashboardOverviewProps> = ({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
+                <ShieldTick className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
                 <div>
                   <h3 className="text-sm font-bold font-display text-[#0F172A]">
                     Recommended Next Step
@@ -356,7 +343,7 @@ export const MaleDashboardOverview: React.FC<MaleDashboardOverviewProps> = ({
 
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2.5 p-2 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs text-[#0F172A]">
-                  <CheckCircle2 className="w-4 h-4 text-[#0288D1] shrink-0" />
+                  <CheckCircle className="w-4 h-4 text-[#0288D1] shrink-0" aria-hidden="true" />
                   <div className="flex-1">
                     <span className="font-semibold block">Total Testosterone</span>
                     <span className="text-[10px] text-[#64748B] font-mono">Fasting morning sample (8:00 AM – 10:00 AM)</span>
@@ -364,7 +351,7 @@ export const MaleDashboardOverview: React.FC<MaleDashboardOverviewProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2.5 p-2 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs text-[#0F172A]">
-                  <CheckCircle2 className="w-4 h-4 text-[#0288D1] shrink-0" />
+                  <CheckCircle className="w-4 h-4 text-[#0288D1] shrink-0" aria-hidden="true" />
                   <div className="flex-1">
                     <span className="font-semibold block">LH & FSH Gonadotropins</span>
                     <span className="text-[10px] text-[#64748B] font-mono">Differentiates primary vs secondary hypogonadism</span>
@@ -372,7 +359,7 @@ export const MaleDashboardOverview: React.FC<MaleDashboardOverviewProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2.5 p-2 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs text-[#0F172A]">
-                  <CheckCircle2 className="w-4 h-4 text-[#0288D1] shrink-0" />
+                  <CheckCircle className="w-4 h-4 text-[#0288D1] shrink-0" aria-hidden="true" />
                   <div className="flex-1">
                     <span className="font-semibold block">Prolactin & Metabolic Panel</span>
                     <span className="text-[10px] text-[#64748B] font-mono">Fasting blood glucose & lipid evaluation</span>
@@ -389,12 +376,12 @@ export const MaleDashboardOverview: React.FC<MaleDashboardOverviewProps> = ({
               className="w-full py-2.5 px-4 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold font-sans transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer"
             >
               <span>Add Lab Results</span>
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4" aria-hidden="true" />
             </button>
 
             {/* Precision Tip */}
             <div className="p-2.5 rounded-xl bg-[#E0F2FE]/60 border border-[#BAE6FD] text-[11px] text-[#0369A1] flex items-start gap-2">
-              <AlertCircle className="w-3.5 h-3.5 text-[#0288D1] shrink-0 mt-0.5" />
+              <AlertCircle className="w-3.5 h-3.5 text-[#0288D1] shrink-0 mt-0.5" aria-hidden="true" />
               <span>
                 <strong>Tip:</strong> Testosterone synthesis peaks between 7:00 AM and 10:00 AM during deep REM sleep.
               </span>
@@ -407,9 +394,7 @@ export const MaleDashboardOverview: React.FC<MaleDashboardOverviewProps> = ({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center text-[#0288D1]">
-                  <TrendingUp className="w-4 h-4" />
-                </div>
+                <LineChartUp01 className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
                 <div>
                   <h3 className="text-sm font-bold font-display text-[#0F172A]">
                     What Influenced Your Result
@@ -463,7 +448,7 @@ export const MaleDashboardOverview: React.FC<MaleDashboardOverviewProps> = ({
               className="w-full py-2 px-3 rounded-xl bg-[#F8FAFC] hover:bg-[#E0F2FE] border border-[#E2E8F0] hover:border-[#BAE6FD] text-[#0288D1] text-xs font-bold font-sans transition-all flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <span>Explore Full Explainability Report</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+              <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -476,9 +461,7 @@ export const MaleDashboardOverview: React.FC<MaleDashboardOverviewProps> = ({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center text-[#0288D1]">
-                  <FileText className="w-4 h-4" />
-                </div>
+                <File01 className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
                 <div>
                   <h3 className="text-sm font-bold font-display text-[#0F172A]">
                     Latest Lab Results
@@ -565,7 +548,7 @@ export const MaleDashboardOverview: React.FC<MaleDashboardOverviewProps> = ({
               className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] text-xs font-bold font-sans transition-all flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <span>View All Reports</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+              <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -575,9 +558,7 @@ export const MaleDashboardOverview: React.FC<MaleDashboardOverviewProps> = ({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center text-[#0288D1]">
-                  <Utensils className="w-4 h-4" />
-                </div>
+                <Scales01 className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
                 <div>
                   <h3 className="text-sm font-bold font-display text-[#0F172A]">
                     Nutrition Plan
@@ -605,19 +586,19 @@ export const MaleDashboardOverview: React.FC<MaleDashboardOverviewProps> = ({
 
               <div className="space-y-1.5 text-xs text-[#0F172A]">
                 <div className="flex items-start gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#0288D1] shrink-0 mt-0.5" />
+                  <CheckCircle className="w-3.5 h-3.5 text-[#0288D1] shrink-0 mt-0.5" aria-hidden="true" />
                   <span>Supports natural hormone balance (Zinc, Magnesium & Healthy Fats)</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#0288D1] shrink-0 mt-0.5" />
+                  <CheckCircle className="w-3.5 h-3.5 text-[#0288D1] shrink-0 mt-0.5" aria-hidden="true" />
                   <span>Helps maintain healthy weight & prevents insulin spikes</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#0288D1] shrink-0 mt-0.5" />
+                  <CheckCircle className="w-3.5 h-3.5 text-[#0288D1] shrink-0 mt-0.5" aria-hidden="true" />
                   <span>Boosts daytime energy & reduces post-lunch fatigue slumps</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#0288D1] shrink-0 mt-0.5" />
+                  <CheckCircle className="w-3.5 h-3.5 text-[#0288D1] shrink-0 mt-0.5" aria-hidden="true" />
                   <span>Adapted to Pakistani culinary patterns & dietary preferences</span>
                 </div>
               </div>
@@ -631,7 +612,7 @@ export const MaleDashboardOverview: React.FC<MaleDashboardOverviewProps> = ({
               className="w-full py-2.5 px-4 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold font-sans transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer"
             >
               <span>View Today&apos;s Plan</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -641,9 +622,7 @@ export const MaleDashboardOverview: React.FC<MaleDashboardOverviewProps> = ({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center text-[#0288D1]">
-                  <Stethoscope className="w-4 h-4" />
-                </div>
+                <CalendarCheck01 className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
                 <div>
                   <h3 className="text-sm font-bold font-display text-[#0F172A]">
                     Upcoming Appointment
@@ -673,11 +652,11 @@ export const MaleDashboardOverview: React.FC<MaleDashboardOverviewProps> = ({
 
                 <div className="flex items-center gap-4 text-xs font-mono text-[#0F172A] pt-1">
                   <div className="flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-[#0288D1]" />
+                    <Calendar className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
                     <span>{nextAppointment.scheduledDate}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-[#0288D1]" />
+                    <Clock className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
                     <span>{nextAppointment.scheduledTime || '10:00 AM'}</span>
                   </div>
                 </div>
@@ -709,7 +688,7 @@ export const MaleDashboardOverview: React.FC<MaleDashboardOverviewProps> = ({
               className="w-full py-2.5 px-4 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold font-sans transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer"
             >
               <span>Manage Appointments</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </div>
         </div>

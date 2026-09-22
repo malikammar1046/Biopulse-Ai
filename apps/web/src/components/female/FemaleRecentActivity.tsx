@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, Calendar, ArrowRight } from 'lucide-react';
+import { File06, Calendar, ArrowRight } from '@untitledui/icons';
 import { ROUTES } from '../../constants/routes';
 import { FemaleCard } from './FemaleDesignPrimitives';
 import type { MedicalReport } from '../../types/report';
@@ -26,8 +26,8 @@ export const FemaleRecentActivity: React.FC<FemaleRecentActivityProps> = ({
         className="flex items-center justify-between p-4 sm:p-5"
       >
         <div className="flex items-center gap-3.5 min-w-0">
-          <div className="w-10 h-10 rounded-xl bg-[#FFF5F9] border border-[#FBE7F0] flex items-center justify-center text-[#E84A8A] shrink-0">
-            <FileText className="w-5 h-5" />
+          <div className="w-10 h-10 rounded-xl bg-[#FDE6EF] border border-[#F43F7D]/20 flex items-center justify-center text-[#F43F7D] shrink-0">
+            <File06 className="w-5 h-5" aria-hidden="true" />
           </div>
           <div className="space-y-0.5 min-w-0">
             <span className="text-[11px] font-medium text-[#667085] block">
@@ -48,7 +48,7 @@ export const FemaleRecentActivity: React.FC<FemaleRecentActivityProps> = ({
           </div>
         </div>
 
-        <ArrowRight className="w-4 h-4 text-[#98A2B3] shrink-0 ml-2" />
+        <ArrowRight className="w-4 h-4 text-[#98A2B3] shrink-0 ml-2" aria-hidden="true" />
       </FemaleCard>
 
       {/* 2. Upcoming Appointment Card */}
@@ -58,8 +58,8 @@ export const FemaleRecentActivity: React.FC<FemaleRecentActivityProps> = ({
         className="flex items-center justify-between p-4 sm:p-5"
       >
         <div className="flex items-center gap-3.5 min-w-0">
-          <div className="w-10 h-10 rounded-xl bg-[#FFF5F9] border border-[#FBE7F0] flex items-center justify-center text-[#E84A8A] shrink-0">
-            <Calendar className="w-5 h-5" />
+          <div className="w-10 h-10 rounded-xl bg-[#FDE6EF] border border-[#F43F7D]/20 flex items-center justify-center text-[#F43F7D] shrink-0">
+            <Calendar className="w-5 h-5" aria-hidden="true" />
           </div>
           <div className="space-y-0.5 min-w-0">
             <span className="text-[11px] font-medium text-[#667085] block">
@@ -78,7 +78,7 @@ export const FemaleRecentActivity: React.FC<FemaleRecentActivityProps> = ({
           </div>
         </div>
 
-        <ArrowRight className="w-4 h-4 text-[#98A2B3] shrink-0 ml-2" />
+        <ArrowRight className="w-4 h-4 text-[#98A2B3] shrink-0 ml-2" aria-hidden="true" />
       </FemaleCard>
     </div>
   );

@@ -1,13 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Sparkles,
+  LineChartUp01,
+  MessageChatCircle,
   ArrowRight,
   AlertCircle,
-  Loader2,
-  RefreshCw,
-  Layers,
-} from 'lucide-react';
+  RefreshCw01,
+  LayersThree01,
+} from '@untitledui/icons';
 import type { DigitalTwinInsight } from '../../types/dashboard';
 import { useUserHealth } from '../../context/UserHealthContext';
 import {
@@ -109,17 +109,15 @@ export const DigitalTwinInsightCard: React.FC<DigitalTwinProps> = ({
       {/* ── 1. Header Bar ─────────────────────────────────────────────────── */}
       <div className="relative z-10 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center text-[#0288D1] shrink-0">
-            {loadState === 'loading' ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Sparkles className="w-5 h-5" />
-            )}
-          </div>
+          {loadState === 'loading' ? (
+            <div className="w-5 h-5 rounded-full border-2 border-[#0288D1] border-t-transparent animate-spin shrink-0" aria-hidden="true" />
+          ) : (
+            <LineChartUp01 className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
+          )}
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-base font-bold font-display text-[#0F172A]">
-                OvaSense PCOS Screening
+                BioPulse AI PCOS Screening
               </h3>
               <span className="text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD]">
                 {getTierBadgeText()}
@@ -135,7 +133,7 @@ export const DigitalTwinInsightCard: React.FC<DigitalTwinProps> = ({
                 ? 'Health profile in progress — more data needed'
                 : loadState === 'error'
                 ? 'Could not connect to the ML assessment engine'
-                : 'Connecting to OvaSense intelligence engine…'}
+                : 'Connecting to BioPulse AI intelligence engine…'}
             </span>
           </div>
         </div>
@@ -154,7 +152,7 @@ export const DigitalTwinInsightCard: React.FC<DigitalTwinProps> = ({
             title="Retry assessment"
             className="p-1.5 rounded-xl bg-[#F8FAFC] hover:bg-slate-100 text-[#64748B] hover:text-[#0F172A] border border-[#E2E8F0] transition-colors cursor-pointer"
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw01 className="w-4 h-4" aria-hidden="true" />
           </button>
         )}
       </div>
@@ -163,7 +161,7 @@ export const DigitalTwinInsightCard: React.FC<DigitalTwinProps> = ({
       {loadState === 'loading' && (
         <div className="relative z-10 space-y-4 py-4">
           <div className="flex items-center gap-3 p-4 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] animate-pulse">
-            <Loader2 className="w-5 h-5 text-[#0288D1] animate-spin shrink-0" />
+            <div className="w-5 h-5 rounded-full border-2 border-[#0288D1] border-t-transparent animate-spin shrink-0" aria-hidden="true" />
             <div className="space-y-1">
               <p className="text-xs font-semibold text-[#0F172A] font-sans">
                 Analyzing your health profile...
@@ -180,11 +178,11 @@ export const DigitalTwinInsightCard: React.FC<DigitalTwinProps> = ({
       {loadState === 'error' && (
         <div className="relative z-10 space-y-3 p-4 rounded-2xl bg-rose-50 border border-rose-200">
           <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" aria-hidden="true" />
             <div className="space-y-1">
               <h4 className="text-sm font-bold text-[#0F172A]">Unable to generate screening result</h4>
               <p className="text-xs text-[#475569] leading-relaxed font-sans">
-                We couldn&apos;t retrieve your latest screening assessment from the OvaSense intelligence engine.
+                We couldn&apos;t retrieve your latest screening assessment from the BioPulse AI intelligence engine.
                 Please ensure the backend is running and try again.
               </p>
             </div>
@@ -195,7 +193,7 @@ export const DigitalTwinInsightCard: React.FC<DigitalTwinProps> = ({
               onClick={handleRetry}
               className="px-4 py-2 rounded-xl text-xs font-medium text-[#0F172A] bg-white border border-rose-200 hover:bg-rose-50 transition-all flex items-center gap-2 cursor-pointer"
             >
-              <RefreshCw className="w-3.5 h-3.5 text-[#0288D1]" />
+              <RefreshCw01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
               <span>Retry Assessment</span>
             </button>
           </div>
@@ -207,7 +205,7 @@ export const DigitalTwinInsightCard: React.FC<DigitalTwinProps> = ({
         <div className="relative z-10 space-y-4">
           <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-3">
             <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" aria-hidden="true" />
               <div className="space-y-1">
                 <h4 className="text-sm font-bold text-[#0F172A]">Build your health profile</h4>
                 <p className="text-xs text-[#475569] leading-relaxed font-sans">
@@ -287,9 +285,9 @@ export const DigitalTwinInsightCard: React.FC<DigitalTwinProps> = ({
             onClick={() => onOpenChat(insight.suggestedChatPrompt || 'Explain my PCOS screening assessment and key factors')}
             className="px-5 py-2.5 rounded-2xl font-sans font-bold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer group"
           >
-            <Sparkles className="w-4 h-4 text-white" />
-            <span>Discuss with OvaSense AI</span>
-            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+            <MessageChatCircle className="w-4 h-4 text-white" aria-hidden="true" />
+            <span>Discuss with BioPulse AI</span>
+            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
           </button>
 
           <button
@@ -297,7 +295,7 @@ export const DigitalTwinInsightCard: React.FC<DigitalTwinProps> = ({
             onClick={() => navigate('/app/assessment')}
             className="px-4 py-2.5 rounded-2xl font-sans font-bold text-xs text-[#0288D1] hover:text-[#01579B] bg-white hover:bg-[#F0F9FF] border border-[#BAE6FD] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
           >
-            <Layers className="w-4 h-4 text-[#0288D1]" />
+            <LayersThree01 className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
             <span>3-Tier Screening Profile</span>
           </button>
         </div>

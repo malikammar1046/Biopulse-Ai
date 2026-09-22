@@ -1,21 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Sparkles,
-  Layers,
-  FlaskConical,
-  ImageIcon,
-  History,
-  TrendingUp,
-  TrendingDown,
+  BarChart01,
+  LayersThree01,
+  Beaker01,
+  Image01,
+  Clock,
+  LineChartUp01,
+  LineChartDown01,
   AlertCircle,
-  CheckCircle2,
-  Info,
+  CheckCircle,
+  InfoCircle,
   Eye,
-  ShieldCheck,
-  RefreshCw,
-  X,
-} from 'lucide-react';
+  ShieldTick,
+  RefreshCw01,
+  XClose,
+} from '@untitledui/icons';
 import type { ProgressiveAssessment } from '../../types/intelligence';
 import { getRiskPatternDisplay } from '../../services/intelligenceService';
 import { useUserHealth } from '../../context/UserHealthContext';
@@ -75,7 +75,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
     return (
       <div className="p-8 rounded-[32px] bg-[#01579B] border border-[#BAE6FD] text-white shadow-sm flex items-center justify-center min-h-[220px]">
         <div className="flex flex-col items-center gap-3">
-          <RefreshCw className="w-8 h-8 text-[#BAE6FD] animate-spin" />
+          <RefreshCw01 className="w-8 h-8 text-[#BAE6FD] animate-spin" aria-hidden="true" />
           <p className="text-sm font-sans text-sky-100">Evaluating progressive clinical assessment...</p>
         </div>
       </div>
@@ -172,7 +172,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
       <div className="relative z-10 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <span className="px-3.5 py-1 rounded-full bg-white/15 border border-white/25 text-white text-xs font-mono font-bold flex items-center gap-1.5">
-            <Layers className="w-3.5 h-3.5 text-[#BAE6FD]" />
+            <LayersThree01 className="w-3.5 h-3.5 text-[#BAE6FD]" aria-hidden="true" />
             <span>{getLevelBadgeText()}</span>
           </span>
           <span className="text-[11px] font-mono text-sky-200">
@@ -185,7 +185,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
           onClick={onOpenHistoryModal}
           className="px-3.5 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/25 text-xs font-sans text-white transition-all flex items-center gap-1.5 cursor-pointer"
         >
-          <History className="w-3.5 h-3.5 text-[#BAE6FD]" />
+          <Clock className="w-3.5 h-3.5 text-[#BAE6FD]" aria-hidden="true" />
           <span>Assessment History</span>
         </button>
       </div>
@@ -208,9 +208,9 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
           >
             <div className="flex items-center gap-3">
               {activeNotification.type === 'error' ? (
-                <AlertCircle className="w-4 h-4 text-rose-300 shrink-0" />
+                <AlertCircle className="w-4 h-4 text-rose-300 shrink-0" aria-hidden="true" />
               ) : (
-                <CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" />
+                <CheckCircle className="w-4 h-4 text-emerald-300 shrink-0" aria-hidden="true" />
               )}
               <span>
                 <strong>{activeNotification.type === 'error' ? 'Notice:' : 'Updated Result:'}</strong>{' '}
@@ -223,7 +223,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
               aria-label="Dismiss notification"
               className="p-1 rounded-lg text-white/70 hover:text-white hover:bg-white/15 transition-colors cursor-pointer"
             >
-              <X className="w-3.5 h-3.5" />
+              <XClose className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </motion.div>
         )}
@@ -236,7 +236,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
           animate={{ opacity: 1, y: 0 }}
           className="relative z-10 p-4 rounded-2xl bg-amber-500/20 border border-amber-400/40 flex items-start gap-3 text-amber-100 text-xs font-sans"
         >
-          <Info className="w-4 h-4 text-amber-300 shrink-0 mt-0.5" />
+          <InfoCircle className="w-4 h-4 text-amber-300 shrink-0 mt-0.5" aria-hidden="true" />
           <div className="space-y-1">
             <p className="font-semibold text-white">Clinical Labs Required for Combined Multimodal Fusion</p>
             <p className="text-amber-100/90 leading-relaxed">{assessment.notice}</p>
@@ -284,7 +284,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
           <div className="lg:col-span-5 p-4 rounded-2xl bg-white/10 border border-white/15 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-mono text-sky-200 flex items-center gap-1.5">
-                <ImageIcon className="w-3.5 h-3.5 text-[#BAE6FD]" />
+                <Image01 className="w-3.5 h-3.5 text-[#BAE6FD]" aria-hidden="true" />
                 <span>Pelvic Ultrasound Analysis</span>
               </span>
               <span
@@ -307,7 +307,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
                 />
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <span className="px-2.5 py-1 rounded-lg bg-black/70 text-[11px] font-sans text-white flex items-center gap-1">
-                    <Eye className="w-3 h-3" /> Inspect Spatial Heatmap
+                    <Eye className="w-3 h-3" aria-hidden="true" /> Inspect Spatial Heatmap
                   </span>
                 </div>
               </div>
@@ -333,7 +333,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
           <div className="lg:col-span-5 p-4 rounded-2xl bg-white/10 border border-white/15 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-mono text-sky-200 flex items-center gap-1.5">
-                <FlaskConical className="w-3.5 h-3.5 text-[#BAE6FD]" />
+                <Beaker01 className="w-3.5 h-3.5 text-[#BAE6FD]" aria-hidden="true" />
                 <span>Pituitary-Gonadal Signaling</span>
               </span>
               <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-white/15 text-white border border-white/25">
@@ -376,7 +376,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
         <div className="relative z-10 pt-4 border-t border-white/15 space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="text-xs font-mono uppercase tracking-wider text-sky-200 flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-[#BAE6FD]" />
+              <BarChart01 className="w-3.5 h-3.5 text-[#BAE6FD]" aria-hidden="true" />
               <span>Primary Contributing Factors {isMale ? '(Clinical Rules)' : '(TreeSHAP)'}</span>
             </h4>
             <span className="text-[10px] font-mono text-sky-200">
@@ -398,9 +398,9 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
                       {factorName}
                     </span>
                     {isPositive ? (
-                      <TrendingUp className="w-3.5 h-3.5 text-rose-300 shrink-0" />
+                      <LineChartUp01 className="w-3.5 h-3.5 text-rose-300 shrink-0" aria-hidden="true" />
                     ) : (
-                      <TrendingDown className="w-3.5 h-3.5 text-emerald-300 shrink-0" />
+                      <LineChartDown01 className="w-3.5 h-3.5 text-emerald-300 shrink-0" aria-hidden="true" />
                     )}
                   </div>
                   <p className="text-[11px] text-sky-100 leading-tight line-clamp-2">
@@ -424,7 +424,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
                   onClick={onOpenClinicalModal}
                   className="px-4 py-2.5 rounded-2xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold font-sans shadow-xs flex items-center gap-2 cursor-pointer transition-all"
                 >
-                  <FlaskConical className="w-4 h-4" />
+                  <Beaker01 className="w-4 h-4" aria-hidden="true" />
                   <span>Add Clinical Labs (Tier 2)</span>
                 </button>
               )}
@@ -434,7 +434,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
                   onClick={onOpenClinicalModal}
                   className="px-4 py-2.5 rounded-2xl bg-white/15 hover:bg-white/20 border border-white/25 text-white text-xs font-bold font-sans flex items-center gap-2 cursor-pointer transition-all shadow-xs"
                 >
-                  <FlaskConical className="w-4 h-4 text-[#BAE6FD]" />
+                  <Beaker01 className="w-4 h-4 text-[#BAE6FD]" aria-hidden="true" />
                   <span>{isPartialTier2 ? 'Add More Clinical Results' : 'Update Clinical Labs'}</span>
                 </button>
               )}
@@ -448,7 +448,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
                     onClick={onOpenClinicalModal}
                     className="px-4 py-2.5 rounded-2xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold font-sans shadow-xs flex items-center gap-2 cursor-pointer transition-all"
                   >
-                    <FlaskConical className="w-4 h-4" />
+                    <Beaker01 className="w-4 h-4" aria-hidden="true" />
                     <span>Add Clinical Labs (Tier 2)</span>
                   </button>
 
@@ -457,7 +457,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
                     onClick={onOpenUltrasoundModal}
                     className="px-4 py-2.5 rounded-2xl bg-white/15 hover:bg-white/20 border border-white/25 text-white text-xs font-bold font-sans flex items-center gap-2 cursor-pointer transition-all"
                   >
-                    <ImageIcon className="w-4 h-4 text-[#BAE6FD]" />
+                    <Image01 className="w-4 h-4 text-[#BAE6FD]" aria-hidden="true" />
                     <span>Upload Ultrasound (Tier 3)</span>
                   </button>
                 </>
@@ -469,7 +469,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
                   onClick={onOpenClinicalModal}
                   className="px-5 py-2.5 rounded-2xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold font-sans shadow-xs flex items-center gap-2 cursor-pointer transition-all"
                 >
-                  <FlaskConical className="w-4 h-4" />
+                  <Beaker01 className="w-4 h-4" aria-hidden="true" />
                   <span>Add Clinical Labs for Complete Assessment</span>
                 </button>
               )}
@@ -481,7 +481,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
                     onClick={onOpenClinicalModal}
                     className="px-4 py-2.5 rounded-2xl bg-white/15 hover:bg-white/20 border border-white/25 text-white text-xs font-bold font-sans flex items-center gap-2 cursor-pointer transition-all"
                   >
-                    <FlaskConical className="w-4 h-4 text-[#BAE6FD]" />
+                    <Beaker01 className="w-4 h-4 text-[#BAE6FD]" aria-hidden="true" />
                     <span>{isPartialTier2 ? 'Add More Clinical Results' : 'Update Clinical Labs'}</span>
                   </button>
 
@@ -490,7 +490,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
                     onClick={onOpenUltrasoundModal}
                     className="px-5 py-2.5 rounded-2xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold font-sans shadow-xs flex items-center gap-2 cursor-pointer transition-all"
                   >
-                    <ImageIcon className="w-4 h-4" />
+                    <Image01 className="w-4 h-4" aria-hidden="true" />
                     <span>Add Ultrasound for Complete Multimodal Assessment</span>
                   </button>
                 </>
@@ -498,7 +498,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
 
               {isTier3Multimodal && (
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-sans font-bold">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  <ShieldTick className="w-4 h-4 text-emerald-400" aria-hidden="true" />
                   <span>Complete Multimodal Assessment Active</span>
                 </div>
               )}
@@ -531,7 +531,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
         {assessment.disclaimer ||
           (isMale
             ? 'This assessment is an AI-assisted screening estimate and does not diagnose hypogonadism. A qualified clinician and appropriate hormone testing are required for diagnosis.'
-            : 'OvaSense AI provides informational screening risk assessments. It does not provide medical diagnoses or prescribe treatment. Please consult a qualified healthcare provider for clinical evaluation.')}
+            : 'BioPulse AI provides informational screening risk assessments. It does not provide medical diagnoses or prescribe treatment. Please consult a qualified healthcare provider for clinical evaluation.')}
       </p>
 
       {/* Grad-CAM Modal */}
@@ -541,7 +541,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
+              exit={{ scale: 0.95, opacity: 1 }}
               className="relative max-w-lg w-full p-6 rounded-[32px] bg-[#01579B] border border-[#BAE6FD] text-white space-y-4 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
@@ -550,9 +550,10 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
                 <button
                   type="button"
                   onClick={() => setShowGradCamModal(false)}
+                  aria-label="Close modal"
                   className="p-1 rounded-lg hover:bg-white/15 text-white/70 hover:text-white"
                 >
-                  ✕
+                  <XClose className="w-5 h-5" aria-hidden="true" />
                 </button>
               </div>
 

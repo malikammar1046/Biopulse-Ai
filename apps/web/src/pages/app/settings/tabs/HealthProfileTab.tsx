@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Sparkles, Check } from 'lucide-react';
+import { Plus, Trash01, ActivityHeart, Check } from '@untitledui/icons';
 import type { UserProfile, MedicationItem } from '../../../../types/onboarding';
 import {
   DEFAULT_ALLERGY_OPTIONS,
@@ -32,7 +32,6 @@ interface HealthProfileTabProps {
   setDraft: React.Dispatch<React.SetStateAction<UserProfile>>;
   isMale: boolean;
 }
-
 
 export const HealthProfileTab: React.FC<HealthProfileTabProps> = ({
   draft,
@@ -195,7 +194,7 @@ export const HealthProfileTab: React.FC<HealthProfileTabProps> = ({
                   }
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                     isSelected
-                      ? 'bg-[#0E9EAA] text-white border-[#0E9EAA] shadow-xs ring-1 ring-[#0E9EAA]/30'
+                      ? 'bg-[#0288D1] text-white border-[#0288D1] shadow-xs ring-1 ring-[#0288D1]/30'
                       : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                   }`}
                 >
@@ -218,7 +217,7 @@ export const HealthProfileTab: React.FC<HealthProfileTabProps> = ({
               </p>
             </div>
             {isMale && (
-              <span className="text-[11px] font-semibold text-teal-800 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-full">
+              <span className="text-[11px] font-semibold text-sky-800 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded-full">
                 Hypertension & Diabetes feed screening
               </span>
             )}
@@ -230,7 +229,6 @@ export const HealthProfileTab: React.FC<HealthProfileTabProps> = ({
               const isHypogonadismFeature =
                 isMale && (c.toLowerCase().includes('hypertension') || c.toLowerCase().includes('diabetes'));
 
-
               return (
                 <button
                   key={c}
@@ -238,28 +236,28 @@ export const HealthProfileTab: React.FC<HealthProfileTabProps> = ({
                   onClick={() => toggleCondition(c)}
                   className={`p-3 rounded-2xl text-left border transition-all flex items-start justify-between gap-2 cursor-pointer ${
                     isSelected
-                      ? 'bg-[#EAFBFC] border-[#0E9EAA] ring-1.5 ring-[#0E9EAA] shadow-xs'
+                      ? 'bg-[#F0F9FF] border-[#0288D1] ring-1.5 ring-[#0288D1] shadow-xs'
                       : 'bg-slate-50/80 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
                   }`}
                 >
                   <div>
-                    <p className={`text-xs leading-snug ${isSelected ? 'font-bold text-[#073B72]' : 'font-medium text-slate-700'}`}>
+                    <p className={`text-xs leading-snug ${isSelected ? 'font-bold text-[#01579B]' : 'font-medium text-slate-700'}`}>
                       {c}
                     </p>
                     {isHypogonadismFeature && (
-                      <span className={`inline-flex items-center gap-1 text-[10px] font-medium mt-1 ${isSelected ? 'text-[#0E9EAA]' : 'text-teal-600'}`}>
-                        <Sparkles className="w-2.5 h-2.5" /> Screening risk factor
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-medium mt-1 ${isSelected ? 'text-[#0288D1]' : 'text-[#0369A1]'}`}>
+                        <ActivityHeart className="w-2.5 h-2.5" aria-hidden="true" /> Screening risk factor
                       </span>
                     )}
                   </div>
                   <div
                     className={`w-4 h-4 rounded-md flex items-center justify-center shrink-0 mt-0.5 border transition-all ${
                       isSelected
-                        ? 'bg-[#0E9EAA] border-[#0E9EAA] text-white shadow-xs'
+                        ? 'bg-[#0288D1] border-[#0288D1] text-white shadow-xs'
                         : 'border-slate-300 bg-white'
                     }`}
                   >
-                    {isSelected && <Check className="w-3 h-3 text-white stroke-[3]" />}
+                    {isSelected && <Check className="w-3 h-3 text-white stroke-[3]" aria-hidden="true" />}
                   </div>
                 </button>
               );
@@ -274,13 +272,13 @@ export const HealthProfileTab: React.FC<HealthProfileTabProps> = ({
               onChange={(e) => setCustomCondition(e.target.value)}
               placeholder="Other condition..."
               onKeyDown={(e) => e.key === 'Enter' && addCustomCondition()}
-              className="px-3 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-teal flex-1"
+              className="px-3 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-[#0288D1] flex-1"
             />
             <button
               type="button"
               onClick={addCustomCondition}
               disabled={!customCondition.trim()}
-              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium disabled:opacity-40"
+              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium disabled:opacity-40 cursor-pointer"
             >
               Add
             </button>
@@ -318,7 +316,7 @@ export const HealthProfileTab: React.FC<HealthProfileTabProps> = ({
                     : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                 }`}
               >
-                {isSelected && <Check className="w-3 h-3 text-rose-700 stroke-[2.5]" />}
+                {isSelected && <Check className="w-3 h-3 text-rose-700 stroke-[2.5]" aria-hidden="true" />}
                 <span>{alg}</span>
               </button>
             );
@@ -333,7 +331,7 @@ export const HealthProfileTab: React.FC<HealthProfileTabProps> = ({
             onChange={(e) => setCustomAllergy(e.target.value)}
             placeholder="Add specific food allergy..."
             onKeyDown={(e) => e.key === 'Enter' && addCustomAllergy()}
-            className="px-3 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0E9EAA]/20 focus:border-[#0E9EAA] flex-1"
+            className="px-3 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#0288D1]/20 focus:border-[#0288D1] flex-1"
           />
           <button
             type="button"
@@ -359,9 +357,9 @@ export const HealthProfileTab: React.FC<HealthProfileTabProps> = ({
           <button
             type="button"
             onClick={() => setShowAddMed(!showAddMed)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#0E9EAA]/10 text-[#0E9EAA] hover:bg-[#0E9EAA]/20 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#E0F2FE] text-[#0288D1] hover:bg-[#BAE6FD] transition-colors cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Add Medication</span>
           </button>
         </div>
@@ -375,19 +373,19 @@ export const HealthProfileTab: React.FC<HealthProfileTabProps> = ({
                 value={medName}
                 onChange={(e) => setMedName(e.target.value)}
                 placeholder="Medication name (e.g. Metformin)"
-                className="px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#0E9EAA]/20 focus:border-[#0E9EAA]"
+                className="px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#0288D1]/20 focus:border-[#0288D1]"
               />
               <input
                 type="text"
                 value={medDosage}
                 onChange={(e) => setMedDosage(e.target.value)}
                 placeholder="Dosage (e.g. 500mg)"
-                className="px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#0E9EAA]/20 focus:border-[#0E9EAA]"
+                className="px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#0288D1]/20 focus:border-[#0288D1]"
               />
               <select
                 value={medFreq}
                 onChange={(e) => setMedFreq(e.target.value)}
-                className="px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#0E9EAA]/20 focus:border-[#0E9EAA] text-slate-700"
+                className="px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#0288D1]/20 focus:border-[#0288D1] text-slate-700"
               >
                 <option value="Daily">Daily</option>
                 <option value="Twice Daily">Twice Daily</option>
@@ -407,7 +405,7 @@ export const HealthProfileTab: React.FC<HealthProfileTabProps> = ({
                 type="button"
                 onClick={handleAddMed}
                 disabled={!medName.trim()}
-                className="px-4 py-1.5 text-xs font-semibold bg-[#0E9EAA] text-white rounded-lg hover:bg-[#0C8B96] disabled:opacity-50 cursor-pointer shadow-xs"
+                className="px-4 py-1.5 text-xs font-semibold bg-[#0288D1] text-white rounded-lg hover:bg-[#0277BD] disabled:opacity-50 cursor-pointer shadow-xs"
               >
                 Save Medication
               </button>
@@ -438,7 +436,7 @@ export const HealthProfileTab: React.FC<HealthProfileTabProps> = ({
                   onClick={() => removeMed(m.id)}
                   className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash01 className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
               </div>
             ))}
@@ -464,11 +462,11 @@ export const HealthProfileTab: React.FC<HealthProfileTabProps> = ({
                 onClick={() => toggleFamilyHistory(cond)}
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all border flex items-center gap-1.5 cursor-pointer ${
                   isSelected
-                    ? 'bg-[#EAFBFC] text-[#073B72] border-[#0E9EAA] ring-1 ring-[#0E9EAA] font-bold shadow-xs'
+                    ? 'bg-[#F0F9FF] text-[#01579B] border-[#0288D1] ring-1 ring-[#0288D1] font-bold shadow-xs'
                     : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                 }`}
               >
-                {isSelected && <Check className="w-3 h-3 text-[#0E9EAA] stroke-[2.5]" />}
+                {isSelected && <Check className="w-3 h-3 text-[#0288D1] stroke-[2.5]" aria-hidden="true" />}
                 <span>{cond}</span>
               </button>
             );

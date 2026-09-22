@@ -1,15 +1,14 @@
 import React from 'react';
 import {
-  Sparkles,
-  Flame,
+  ActivityHeart,
+  AlertCircle,
   Activity,
-  Moon,
+  Moon01,
   Heart,
-  Scale,
+  Scales01,
   Check,
-  ShieldAlert,
-} from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+  ShieldTick,
+} from '@untitledui/icons';
 import type { WomensHealthProfile } from '../../../types/onboarding';
 import { DEFAULT_SYMPTOM_OPTIONS } from '../../../data/mockOnboardingData';
 import { WhyWeAskCard } from './WhyWeAskCard';
@@ -19,15 +18,15 @@ interface FemaleStep4Props {
   onChange: (profile: WomensHealthProfile) => void;
 }
 
-// Icon mapping for elegant visual cards
-const SYMPTOM_ICON_MAP: Record<string, LucideIcon> = {
-  acne: Flame,
+// Icon mapping for elegant clinical visual cards
+const SYMPTOM_ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>>> = {
+  acne: AlertCircle,
   hirsutism: Activity,
-  skin_darkening: Sparkles,
-  hair_loss: Flame,
-  weight_gain: Scale,
-  pelvic_cramps: Sparkles,
-  fatigue: Moon,
+  skin_darkening: ActivityHeart,
+  hair_loss: Activity,
+  weight_gain: Scales01,
+  pelvic_cramps: ActivityHeart,
+  fatigue: Moon01,
   mood_shifts: Heart,
 };
 
@@ -61,12 +60,12 @@ export const FemaleStep4Symptoms: React.FC<FemaleStep4Props> = ({ data, onChange
     <div className="space-y-4 text-left">
       {/* ── Compact Question Header ── */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-[#FDE6EF] flex items-center justify-center shrink-0 shadow-2xs">
-          <Sparkles className="w-5 h-5 text-[#F43F7D]" />
+        <div className="w-10 h-10 rounded-full bg-[#E0F2FE] flex items-center justify-center shrink-0 shadow-2xs">
+          <ActivityHeart className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
         </div>
 
         <div>
-          <span className="text-[10px] font-bold font-mono text-[#F43F7D] uppercase tracking-wider block leading-none">
+          <span className="text-[10px] font-bold font-mono text-[#0288D1] uppercase tracking-wider block leading-none">
             Symptoms & Patterns
           </span>
           <h2 className="text-xl sm:text-2xl font-extrabold font-display text-[#073B72] tracking-tight leading-tight mt-0.5">
@@ -85,7 +84,7 @@ export const FemaleStep4Symptoms: React.FC<FemaleStep4Props> = ({ data, onChange
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {DEFAULT_SYMPTOM_OPTIONS.map((sym) => {
               const isSelected = currentSymptoms.includes(sym.label);
-              const IconComp = SYMPTOM_ICON_MAP[sym.id] || Sparkles;
+              const IconComp = SYMPTOM_ICON_MAP[sym.id] || ActivityHeart;
 
               return (
                 <button
@@ -94,17 +93,17 @@ export const FemaleStep4Symptoms: React.FC<FemaleStep4Props> = ({ data, onChange
                   onClick={() => toggleSymptom(sym.label)}
                   className={`p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 ${
                     isSelected
-                      ? 'bg-[#FDE6EF]/60 border-[#F43F7D] shadow-2xs ring-1 ring-[#F43F7D]/40'
-                      : 'bg-white border-[#D7EAF2] hover:border-[#0E9EAA]/40 hover:bg-[#F5FBFD]/50'
+                      ? 'bg-[#E0F2FE]/60 border-[#0288D1] shadow-2xs ring-1 ring-[#0288D1]/40'
+                      : 'bg-white border-[#D7EAF2] hover:border-[#0288D1]/40 hover:bg-[#F5FBFD]/50'
                   }`}
                 >
                   <div className="flex items-start gap-2.5">
                     <div
                       className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
-                        isSelected ? 'bg-[#F43F7D] text-white' : 'bg-[#FAFCFF] border border-[#D7EAF2] text-[#0E9EAA]'
+                        isSelected ? 'bg-[#0288D1] text-white' : 'bg-[#FAFCFF] border border-[#D7EAF2] text-[#0288D1]'
                       }`}
                     >
-                      <IconComp className="w-3.5 h-3.5" />
+                      <IconComp className="w-3.5 h-3.5" aria-hidden="true" />
                     </div>
                     <div>
                       <span className="text-xs font-bold text-[#073B72] block leading-tight">
@@ -118,10 +117,10 @@ export const FemaleStep4Symptoms: React.FC<FemaleStep4Props> = ({ data, onChange
 
                   <div
                     className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-all ${
-                      isSelected ? 'border-[#F43F7D] bg-[#F43F7D] text-white shadow-2xs' : 'border-[#D7EAF2] bg-white'
+                      isSelected ? 'border-[#0288D1] bg-[#0288D1] text-white shadow-2xs' : 'border-[#D7EAF2] bg-white'
                     }`}
                   >
-                    {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                    {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" aria-hidden="true" />}
                   </div>
                 </button>
               );
@@ -135,16 +134,16 @@ export const FemaleStep4Symptoms: React.FC<FemaleStep4Props> = ({ data, onChange
               onClick={handleSelectNone}
               className={`w-full p-2.5 rounded-xl border text-center transition-all cursor-pointer text-xs font-semibold flex items-center justify-center gap-2 ${
                 isNoneSelected
-                  ? 'bg-[#DDF7F7] border-[#0E9EAA] text-[#073B72] font-bold shadow-2xs'
-                  : 'bg-white border-[#D7EAF2] text-[#55718F] hover:border-[#0E9EAA]/40'
+                  ? 'bg-[#E0F2FE] border-[#0288D1] text-[#073B72] font-bold shadow-2xs'
+                  : 'bg-white border-[#D7EAF2] text-[#55718F] hover:border-[#0288D1]/40'
               }`}
             >
               <div
                 className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
-                  isNoneSelected ? 'border-[#0E9EAA] bg-[#0E9EAA] text-white' : 'border-[#D7EAF2] bg-white'
+                  isNoneSelected ? 'border-[#0288D1] bg-[#0288D1] text-white' : 'border-[#D7EAF2] bg-white'
                 }`}
               >
-                {isNoneSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                {isNoneSelected && <Check className="w-2.5 h-2.5 stroke-[3]" aria-hidden="true" />}
               </div>
               <span>None of these / No noticeable symptoms</span>
             </button>
@@ -157,9 +156,9 @@ export const FemaleStep4Symptoms: React.FC<FemaleStep4Props> = ({ data, onChange
             description="PCOS can present differently from person to person. Looking at symptom patterns alongside other health information helps provide a more informed screening estimate."
           />
 
-          <div className="p-3.5 rounded-2xl bg-[#DDF7F7]/40 border border-[#DDF7F7] text-xs text-[#073B72] space-y-1">
-            <div className="flex items-center gap-1.5 text-[#0E9EAA] font-bold text-[11px] font-mono uppercase tracking-wide">
-              <ShieldAlert className="w-3.5 h-3.5" />
+          <div className="p-3.5 rounded-2xl bg-[#E0F2FE]/40 border border-[#BAE6FD] text-xs text-[#073B72] space-y-1">
+            <div className="flex items-center gap-1.5 text-[#0288D1] font-bold text-[11px] font-mono uppercase tracking-wide">
+              <ShieldTick className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
               <span>Non-Diagnostic</span>
             </div>
             <p className="text-[#55718F] text-[10px] leading-relaxed">

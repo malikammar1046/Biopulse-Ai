@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   ChevronDown,
   ChevronUp,
-} from 'lucide-react';
+} from '@untitledui/icons';
 import type { TierLevel, TierSummary } from '../../types/adaptiveScreening';
 import { AdaptiveInformationCard } from './AdaptiveInformationCard';
 
@@ -116,9 +116,9 @@ export const ScreeningTierNavigator: React.FC<ScreeningTierNavigatorProps> = ({
               >
                 <span>{isExpanded ? 'Collapse Tier' : 'Explore Tier Items'}</span>
                 {isExpanded ? (
-                  <ChevronUp className="w-3.5 h-3.5 text-[#01579B]" />
+                  <ChevronUp className="w-3.5 h-3.5 text-[#01579B]" aria-hidden="true" />
                 ) : (
-                  <ChevronDown className="w-3.5 h-3.5 text-[#01579B]" />
+                  <ChevronDown className="w-3.5 h-3.5 text-[#01579B]" aria-hidden="true" />
                 )}
               </button>
             </div>

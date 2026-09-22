@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Moon, ChevronDown, Calendar, ShieldCheck } from 'lucide-react';
+import { Moon01, ChevronDown, Calendar, ShieldTick } from '@untitledui/icons';
 import type { HealthPathway } from '../../../types/onboarding';
 
 interface SleepAnalysisBarChartCardProps {
@@ -38,9 +38,7 @@ export const SleepAnalysisBarChartCard: React.FC<SleepAnalysisBarChartCardProps>
       {/* ── Top Header Row ── */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <span className="p-2 rounded-xl bg-[#E0F2FE] border border-[#BAE6FD] text-[#0288D1]">
-            <Moon className="w-4 h-4" />
-          </span>
+          <Moon01 className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
           <div>
             <h3 className="text-base font-bold font-display text-[#0F172A]">
               Sleep & Hormone Recovery
@@ -93,12 +91,12 @@ export const SleepAnalysisBarChartCard: React.FC<SleepAnalysisBarChartCardProps>
         {/* Metric 3: Active Status Badge (Cycle Day for Female, Circadian Alignment for Male) */}
         {!isMale && currentCycleDay > 0 ? (
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs text-[#0288D1] font-mono ml-auto">
-            <Calendar className="w-3.5 h-3.5 text-[#0288D1]" />
+            <Calendar className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
             <span>{phaseName} (Day {currentCycleDay})</span>
           </div>
         ) : (
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs text-[#0288D1] font-mono ml-auto">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#0288D1]" />
+            <ShieldTick className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
             <span>{isMale ? 'Circadian Alignment' : 'Daily Recovery'}</span>
           </div>
         )}

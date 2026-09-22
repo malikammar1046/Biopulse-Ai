@@ -1,289 +1,213 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowUp, ArrowDown, ArrowRight, Minus, HelpCircle } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { BarChart01, HelpCircle } from '@untitledui/icons';
 import type { HealthPathway } from '../../types/onboarding';
-import type { ShapExplanation } from '../../types/intelligence';
-import { ROUTES } from '../../constants/routes';
+
+interface ExplanationFactor {
+  feature?: string;
+  feature_key?: string;
+  name?: string;
+  human_label?: string;
+  contribution?: number;
+  direction?: string;
+  display_name?: string;
+  description?: string;
+}
 
 interface TopFactorsCardProps {
-  pathway: HealthPathway;
-  explanations?: (ShapExplanation | Record<string, any>)[];
+  pathway?: HealthPathway;
+  explanations?: (ExplanationFactor | Record<string, any> | string)[];
   onViewExplanation?: () => void;
 }
 
-// ---------------------------------------------------------------------------
-// Patient-Friendly Feature Name Mapping
-// Maps both technical ML/dataset strings and snake_case keys to clear clinical terms
-// ---------------------------------------------------------------------------
-const FEATURE_NAME_MAP: Record<string, string> = {
-  // Female PCOS Technical / Dataset Keys
-  'hair growth(y/n)': 'Hair growth',
-  'hair growth': 'Hair growth',
-  'hirsutism': 'Hair growth',
-  'excess hair growth (hirsutism)': 'Hair growth',
-  'cycle(r/i)': 'Cycle regularity',
-  'cycle_regularity': 'Cycle regularity',
-  'menstrual regularity': 'Cycle regularity',
-  'cycle length(days)': 'Cycle length',
-  'cycle_length_raw': 'Cycle length',
-  'cycle length': 'Cycle length',
-  'reg.exercise(y/n)': 'Regular exercise',
-  'regular_exercise': 'Regular exercise',
-  'regular physical exercise': 'Regular exercise',
-  'skin darkening (y/n)': 'Skin darkening',
-  'skin_darkening': 'Skin darkening',
-  'skin darkening (acanthosis nigricans)': 'Skin darkening',
-  'weight gain(y/n)': 'Weight changes',
-  'weight_gain': 'Weight changes',
-  'recent weight gain': 'Weight changes',
-  'hair loss(y/n)': 'Hair thinning',
-  'hair_loss': 'Hair thinning',
-  'hair thinning / alopecia': 'Hair thinning',
-  'pimples(y/n)': 'Acne & breakouts',
-  'pimples_acne': 'Acne & breakouts',
-  'acne & skin breakouts': 'Acne & breakouts',
-  'fast food (y/n)': 'Dietary patterns',
-  'fast_food': 'Dietary patterns',
-  'fast food consumption': 'Dietary patterns',
-  'bmi': 'Body Mass Index (BMI)',
-  'body mass index (bmi)': 'Body Mass Index (BMI)',
-  'age': 'Age profile',
-  'age (yrs)': 'Age profile',
-  'weight (kg)': 'Body weight',
-  'weight_kg': 'Body weight',
-  'height(cm)': 'Height',
-  'height_cm': 'Height',
-  'hip(inch)': 'Hip circumference',
-  'hip_inch': 'Hip circumference',
-  'waist(inch)': 'Waist circumference',
-  'waist_inch': 'Waist circumference',
-  'waist:hip ratio': 'Waist-to-hip ratio',
-  'waist_hip_ratio': 'Waist-to-hip ratio',
-  'amh(ng/ml)': 'Anti-Müllerian Hormone (AMH)',
-  'amh': 'Anti-Müllerian Hormone (AMH)',
-  'lh(miu/ml)': 'Luteinizing Hormone (LH)',
-  'lh': 'Luteinizing Hormone (LH)',
-  'fsh(miu/ml)': 'Follicle-Stimulating Hormone (FSH)',
-  'fsh': 'Follicle-Stimulating Hormone (FSH)',
-  'fsh/lh': 'FSH:LH ratio',
-  'fsh_lh_ratio': 'FSH:LH ratio',
-  'tsh (miu/l)': 'Thyroid Stimulating Hormone (TSH)',
-  'tsh': 'Thyroid Stimulating Hormone (TSH)',
-  'prl(ng/ml)': 'Serum Prolactin',
-  'prolactin': 'Serum Prolactin',
-  'vit d3 (ng/ml)': 'Vitamin D3',
-  'vitamin_d3': 'Vitamin D3',
-  'prg(ng/ml)': 'Progesterone',
-  'progesterone': 'Progesterone',
-  'rbs(mg/dl)': 'Blood glucose (RBS)',
-  'rbs': 'Blood glucose (RBS)',
-  'bp _systolic (mmhg)': 'Systolic blood pressure',
-  'bp_systolic': 'Systolic blood pressure',
-  'bp _diastolic (mmhg)': 'Diastolic blood pressure',
-  'bp_diastolic': 'Diastolic blood pressure',
-  'follicle no. (l)': 'Left follicle count',
-  'follicle no. (r)': 'Right follicle count',
-  'avg. fsize (l) (mm)': 'Left follicle size',
-  'avg. fsize (r) (mm)': 'Right follicle size',
-  'endometrium (mm)': 'Endometrial thickness',
-
-  // Male Hypogonadism Technical / Dataset Keys
-  'low_energy': 'Energy & stamina level',
-  'energy_fatigue': 'Energy & stamina level',
-  'low energy / fatigue': 'Energy & stamina level',
-  'sleep_trouble': 'Sleep quality & recovery',
-  'sleep quality / post-dinner sleepiness': 'Sleep quality & recovery',
-  'low_mood': 'Mood & vitality pattern',
-  'mood dips / grumpiness': 'Mood & vitality pattern',
-  'low_interest': 'Physical drive & vigor',
-  'reduced libido / sex drive': 'Physical drive & vigor',
-  'waist_cm': 'Waist circumference',
-  'waist circumference (cm)': 'Waist circumference',
-  'high_blood_pressure': 'Blood pressure profile',
-  'hypertension history': 'Blood pressure profile',
-  'diabetes': 'Metabolic health history',
-  'diabetes / prediabetes history': 'Metabolic health history',
-  'shbg_nmol_l': 'Sex Hormone-Binding Globulin (SHBG)',
-  'shbg (sex hormone-binding globulin)': 'Sex Hormone-Binding Globulin (SHBG)',
-  'estradiol_pg_ml': 'Estradiol (E2)',
-  'albumin_g_dl': 'Serum Albumin',
-  'hba1c_pct': 'HbA1c (Glycated Hemoglobin)',
-  'glucose_mg_dl': 'Fasting / Random Glucose',
-  'hemoglobin_g_dl': 'Hemoglobin (Hb)',
-  'hematocrit_pct': 'Hematocrit (HCT)',
-  'rbc_count': 'Total RBC Count',
-  'alt_u_l': 'ALT Liver Enzyme',
-  'ast_u_l': 'AST Liver Enzyme',
-  'total_bilirubin_mg_dl': 'Total Bilirubin',
-  'creatinine_mg_dl': 'Serum Creatinine',
-  'bun_mg_dl': 'Blood Urea Nitrogen (BUN)',
-  'uric_acid_mg_dl': 'Serum Uric Acid',
-  'hdl_mg_dl': 'HDL Cholesterol',
+// Clinically validated patient-friendly translation map for Male Hypogonadism features
+const MALE_FACTOR_TRANSLATIONS: Record<string, { label: string; desc: string }> = {
+  energy_fatigue: {
+    label: 'Energy & Stamina Levels',
+    desc: 'Reported changes in day-to-day energy, fatigue, and physical vitality.',
+  },
+  low_energy: {
+    label: 'Energy & Stamina Levels',
+    desc: 'Reported changes in day-to-day energy, fatigue, and physical vitality.',
+  },
+  sleep_trouble: {
+    label: 'Sleep Quality & Recovery',
+    desc: 'Patterns of daytime sleepiness, post-meal fatigue, or sleep disruptions.',
+  },
+  low_mood: {
+    label: 'Mood & Vitality Pattern',
+    desc: 'Shifts in mood, drive, irritability, or general sense of well-being.',
+  },
+  low_interest: {
+    label: 'Physical Drive & Libido',
+    desc: 'Reported changes in physical vigor and sexual health indicators.',
+  },
+  waist_cm: {
+    label: 'Waist Circumference',
+    desc: 'Central adiposity distribution linked to metabolic hormone clearance.',
+  },
+  bmi: {
+    label: 'Body Mass Index (BMI)',
+    desc: 'Overall body composition and metabolic load metrics.',
+  },
+  age: {
+    label: 'Age Profile',
+    desc: 'Age-related physiological reference trajectories for androgen production.',
+  },
+  total_testosterone: {
+    label: 'Total Serum Testosterone',
+    desc: 'Primary circulating androgen measured via morning laboratory sample.',
+  },
+  testosterone: {
+    label: 'Total Serum Testosterone',
+    desc: 'Primary circulating androgen measured via morning laboratory sample.',
+  },
+  shbg: {
+    label: 'Sex Hormone-Binding Globulin (SHBG)',
+    desc: 'Carrier protein regulating circulating free and bioavailable testosterone.',
+  },
+  shbg_nmol_l: {
+    label: 'Sex Hormone-Binding Globulin (SHBG)',
+    desc: 'Carrier protein regulating circulating free and bioavailable testosterone.',
+  },
+  lh: {
+    label: 'Luteinizing Hormone (LH)',
+    desc: 'Pituitary signaling hormone regulating testicular testosterone synthesis.',
+  },
+  lh_miu_ml: {
+    label: 'Luteinizing Hormone (LH)',
+    desc: 'Pituitary signaling hormone regulating testicular testosterone synthesis.',
+  },
+  fsh: {
+    label: 'Pituitary Gonadotropin (FSH)',
+    desc: 'Pituitary signaling hormone supporting reproductive and testicular function.',
+  },
+  fsh_miu_ml: {
+    label: 'Pituitary Gonadotropin (FSH)',
+    desc: 'Pituitary signaling hormone supporting reproductive and testicular function.',
+  },
+  glucose: {
+    label: 'Fasting Glucose & HbA1c',
+    desc: 'Glycemic regulation and metabolic insulin sensitivity indicators.',
+  },
+  hba1c_pct: {
+    label: 'Fasting Glucose & HbA1c',
+    desc: 'Glycemic regulation and metabolic insulin sensitivity indicators.',
+  },
+  diabetes: {
+    label: 'Metabolic Health History',
+    desc: 'Clinical history of insulin resistance or metabolic conditions.',
+  },
+  high_blood_pressure: {
+    label: 'Blood Pressure Profile',
+    desc: 'Vascular health indicators associated with endocrine function.',
+  },
 };
 
-/**
- * Resolves a patient-friendly label from technical/raw feature representations.
- */
-function resolvePatientFriendlyName(factor: Record<string, any>): string {
-  const rawCandidate = factor.feature || factor.feature_key || '';
-  const humanCandidate = factor.human_label || factor.feature_name || factor.label || '';
-
-  // 1. Match against known mapping using lowercase key
-  const normRaw = String(rawCandidate).trim().toLowerCase();
-  if (normRaw && FEATURE_NAME_MAP[normRaw]) {
-    return FEATURE_NAME_MAP[normRaw];
-  }
-
-  const normHuman = String(humanCandidate).trim().toLowerCase();
-  if (normHuman && FEATURE_NAME_MAP[normHuman]) {
-    return FEATURE_NAME_MAP[normHuman];
-  }
-
-  // 2. If already human-readable and doesn't have dataset syntax like (Y/N), use it
-  if (humanCandidate && !humanCandidate.includes('(Y/N)') && !humanCandidate.includes('(R/I)')) {
-    return humanCandidate;
-  }
-
-  // 3. Clean up technical syntax fallback
-  const fallback = humanCandidate || rawCandidate || 'Health factor';
-  const cleaned = fallback
-    .replace(/\s*\([yY]\/[nN]\)/g, '')
-    .replace(/\s*\([rR]\/[iI]\)/g, '')
-    .replace(/_/g, ' ')
-    .trim();
-
-  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
-}
-
-type FactorDirection = 'increases_risk' | 'decreases_risk' | 'neutral';
-
-function resolveDirection(factor: Record<string, any>): FactorDirection {
-  const dir = String(factor.direction || '').toLowerCase();
-  if (dir === 'increases_risk' || dir === 'positive' || dir === 'increase') {
-    return 'increases_risk';
-  }
-  if (dir === 'decreases_risk' || dir === 'negative' || dir === 'decrease') {
-    return 'decreases_risk';
-  }
-  if (dir === 'neutral') {
-    return 'neutral';
-  }
-  // If magnitude is strictly 0
-  if (factor.magnitude === 0 || factor.impact_score === 0) {
-    return 'neutral';
-  }
-  return 'neutral';
-}
-
 export const TopFactorsCard: React.FC<TopFactorsCardProps> = ({
-  pathway,
   explanations = [],
   onViewExplanation,
 }) => {
-  // If no real explanations exist from the assessment, do NOT render
-  if (!explanations || explanations.length === 0) {
-    return null;
-  }
+  // Normalize explanations into max 3 plain-English factors
+  const factors = useMemo(() => {
+    const list: { label: string; desc: string }[] = [];
 
-  // Filter out completely neutral items if there are enough non-neutral items to show
-  const nonNeutral = explanations.filter((f) => resolveDirection(f) !== 'neutral');
-  const candidates = nonNeutral.length >= 2 ? nonNeutral : explanations;
+    for (const exp of explanations) {
+      if (list.length >= 3) break;
 
-  // Display top 3 factors by default (max 4 per spec)
-  const topFactors = candidates.slice(0, 3);
+      let key = '';
+      if (typeof exp === 'string') {
+        key = exp.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+      } else if (exp && typeof exp === 'object') {
+        key = (exp.feature || exp.feature_key || exp.name || exp.display_name || '')
+          .toLowerCase()
+          .replace(/[^a-z0-9_]/g, '_');
+      }
+
+      if (!key) continue;
+
+      // Match against male translation map
+      const matched = Object.entries(MALE_FACTOR_TRANSLATIONS).find(
+        ([k]) => key === k || key.startsWith(k) || k.startsWith(key)
+      );
+
+      if (matched) {
+        if (!list.some((item) => item.label === matched[1].label)) {
+          const expAny = exp as any;
+          list.push({
+            label: matched[1].label,
+            desc: (typeof exp === 'object' && expAny?.patient_summary) ? expAny.patient_summary : matched[1].desc,
+          });
+        }
+      } else if (typeof exp === 'object') {
+        const expAny = exp as any;
+        if (expAny.human_label || expAny.display_name || expAny.feature_name) {
+          list.push({
+            label: expAny.human_label || expAny.display_name || expAny.feature_name || 'Clinical Metric',
+            desc: expAny.patient_summary || expAny.description || 'Contributing clinical or metabolic factor.',
+          });
+        }
+      }
+    }
+
+    // Do not invent fallback clinical factors - strictly return verified factors or empty list
+    return list;
+  }, [explanations]);
 
   return (
-    <div className="p-5 sm:p-6 rounded-[24px] bg-white border border-[#E2E8F0] shadow-sm flex flex-col justify-between text-left space-y-4 select-none">
-      <div className="space-y-3">
-        {/* Card Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD]">
-              <HelpCircle className="w-4 h-4" />
-            </span>
-            <h3 className="text-sm sm:text-base font-bold text-[#0F172A]">
-              What influenced your result
-            </h3>
-          </div>
-
-          <span className="text-[11px] font-medium text-[#64748B]">
-            Top factors
-          </span>
+    <div className="bg-white border border-[#E2E8F0] rounded-[18px] p-5 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.03)] text-left transition-all duration-200 space-y-4 select-none">
+      {/* Card Header */}
+      <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+        <div className="flex items-center gap-2">
+          <BarChart01 className="w-5 h-5 text-medical-primary-hover shrink-0" aria-hidden="true" />
+          <h3 className="text-sm sm:text-base font-semibold text-medical-text-primary">
+            Key Contributing Factors
+          </h3>
         </div>
 
-        {/* Factors List: Factor name + Direction */}
-        <div className="space-y-2">
-          {topFactors.map((factor, index) => {
-            const displayName = resolvePatientFriendlyName(factor);
-            const direction = resolveDirection(factor);
-
-            return (
-              <div
-                key={index}
-                className="px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-between gap-3 transition-colors hover:bg-slate-50/80"
-              >
-                {/* Factor Name */}
-                <span className="text-xs sm:text-sm font-semibold text-[#0F172A] truncate">
-                  {displayName}
-                </span>
-
-                {/* Direction Badge */}
-                {direction === 'increases_risk' && (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/70 shrink-0">
-                    <ArrowUp className="w-3 h-3 text-rose-600" />
-                    <span>Increases risk</span>
-                  </span>
-                )}
-
-                {direction === 'decreases_risk' && (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/70 shrink-0">
-                    <ArrowDown className="w-3 h-3 text-emerald-600" />
-                    <span>Decreases risk</span>
-                  </span>
-                )}
-
-                {direction === 'neutral' && (
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200 shrink-0">
-                    <Minus className="w-3 h-3 text-slate-500" />
-                    <span>Neutral influence</span>
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Footer Link */}
-      <div className="pt-2 border-t border-[#E2E8F0] flex items-center justify-between">
-        <span className="text-[11px] text-[#64748B]">
-          {pathway === 'male'
-            ? 'Evaluated from male health profile'
-            : 'Evaluated from PCOS health profile'}
-        </span>
-
-        {onViewExplanation ? (
+        {onViewExplanation && (
           <button
             type="button"
             onClick={onViewExplanation}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-[#0288D1] hover:text-[#01579B] transition-colors cursor-pointer"
+            className="text-xs font-semibold text-medical-primary-hover hover:text-medical-primary-dark flex items-center gap-1 cursor-pointer transition-colors"
           >
-            <span>View full explanation</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <span>Why these factors?</span>
+            <HelpCircle className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
-        ) : (
-          <Link
-            to={ROUTES.APP.ASSESSMENT}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-[#0288D1] hover:text-[#01579B] transition-colors"
-          >
-            <span>View full explanation</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
         )}
       </div>
+
+      {/* Ranked Factor Rows or Empty State */}
+      {factors.length === 0 ? (
+        <div className="py-6 px-4 rounded-xl bg-medical-bg border border-dashed border-[#E2E8F0] text-center space-y-1">
+          <p className="text-xs font-semibold text-medical-text-primary">No Factor Data Available</p>
+          <p className="text-[11px] text-medical-text-muted leading-relaxed">
+            Factor contributions will be calibrated once clinical screening responses are recorded.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {factors.map((factor, idx) => (
+            <div
+              key={idx}
+              className="p-3 rounded-xl bg-medical-bg border border-[#E2E8F0] flex items-start gap-3"
+            >
+              <div className="w-5 h-5 rounded-full bg-medical-primary-muted text-medical-primary-hover flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5">
+                {idx + 1}
+              </div>
+              <div className="space-y-0.5 min-w-0">
+                <h4 className="text-xs sm:text-sm font-semibold text-medical-text-primary">
+                  {factor.label}
+                </h4>
+                <p className="text-[11px] sm:text-xs text-medical-text-muted leading-relaxed">
+                  {factor.desc}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
 
 export default TopFactorsCard;
-

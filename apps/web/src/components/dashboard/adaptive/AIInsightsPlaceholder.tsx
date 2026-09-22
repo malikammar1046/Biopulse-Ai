@@ -1,5 +1,5 @@
 import React from 'react';
-import { Brain, Cpu, Sparkles } from 'lucide-react';
+import { Sliders01, CpuChip01, BarChart01, MessageChatCircle, LineChartUp01 } from '@untitledui/icons';
 import type { HealthPathway } from '../../../types/onboarding';
 
 interface AIInsightsPlaceholderProps {
@@ -47,9 +47,7 @@ export const AIInsightsPlaceholder: React.FC<AIInsightsPlaceholderProps> = ({
       <div className="relative z-10 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center text-[#0288D1] shrink-0 shadow-xs">
-              <Brain className="w-4 h-4" />
-            </div>
+            <Sliders01 className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-mono uppercase tracking-widest text-[#64748B] font-bold">
@@ -66,7 +64,7 @@ export const AIInsightsPlaceholder: React.FC<AIInsightsPlaceholderProps> = ({
           </div>
 
           <div className="flex items-center gap-1.5 text-xs text-[#64748B] font-mono self-start sm:self-auto bg-[#F8FAFC] px-3 py-1.5 rounded-xl border border-[#E2E8F0]">
-            <Cpu className="w-3.5 h-3.5 text-emerald-600" />
+            <CpuChip01 className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
             <span>MedGemma & SHAP Pipeline</span>
           </div>
         </div>
@@ -82,7 +80,7 @@ export const AIInsightsPlaceholder: React.FC<AIInsightsPlaceholderProps> = ({
               <span className="text-[11px] font-mono text-[#0288D1] font-bold">
                 Feature Influence (SHAP)
               </span>
-              <Sparkles className="w-3.5 h-3.5 text-[#0288D1]" />
+              <BarChart01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
             </div>
             <p className="text-[11px] text-[#64748B] font-sans">
               Dynamic percentage ranking of clinical biomarkers driving your current assessment tier.
@@ -94,7 +92,7 @@ export const AIInsightsPlaceholder: React.FC<AIInsightsPlaceholderProps> = ({
               <span className="text-[11px] font-mono text-[#0288D1] font-bold">
                 MedGemma Clinical Narrative
               </span>
-              <Sparkles className="w-3.5 h-3.5 text-[#0288D1]" />
+              <MessageChatCircle className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
             </div>
             <p className="text-[11px] text-[#64748B] font-sans">
               Non-diagnostic, clinician-aligned plain English explanations of complex multi-panel lab correlations.
@@ -106,7 +104,7 @@ export const AIInsightsPlaceholder: React.FC<AIInsightsPlaceholderProps> = ({
               <span className="text-[11px] font-mono text-[#0288D1] font-bold">
                 Cost-Aware Gap Reduction
               </span>
-              <Sparkles className="w-3.5 h-3.5 text-[#0288D1]" />
+              <LineChartUp01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
             </div>
             <p className="text-[11px] text-[#64748B] font-sans">
               Prioritizes the lowest-cost, highest-value missing labs to advance your screening confidence.

@@ -1,9 +1,9 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { FileText, Calendar, ArrowRight, Upload, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { File06, Calendar, ArrowRight } from '@untitledui/icons';
+import { ROUTES } from '../../constants/routes';
 import type { MedicalReport } from '../../types/report';
 import type { AppointmentItem } from '../../types/appointment';
-import { ROUTES } from '../../constants/routes';
 
 interface RecentActivityRowProps {
   latestReport?: MedicalReport | null;
@@ -14,106 +14,68 @@ export const RecentActivityRow: React.FC<RecentActivityRowProps> = ({
   latestReport,
   upcomingAppointment,
 }) => {
+  const navigate = useNavigate();
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 select-none text-left">
-      {/* ── 1. Latest Lab Report Tile ── */}
-      <div className="p-4 sm:p-5 rounded-[20px] bg-white border border-[#E2E8F0] shadow-2xs flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center text-[#0288D1] shrink-0">
-            <FileText className="w-4 h-4" />
+      {/* 1. Latest Lab Report Card */}
+      <div
+        onClick={() => navigate(ROUTES.APP.REPORTS)}
+        className="rounded-[18px] bg-white border border-[#E2E8F0] shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:border-medical-primary-border hover:shadow-[0_4px_12px_rgba(2,136,209,0.06)] cursor-pointer transition-all duration-200 p-4 sm:p-5 flex items-center justify-between"
+      >
+        <div className="flex items-center gap-3.5 min-w-0">
+          <div className="w-10 h-10 rounded-xl bg-medical-primary-muted border border-medical-primary-border flex items-center justify-center text-medical-primary-hover shrink-0">
+            <File06 className="w-5 h-5" aria-hidden="true" />
           </div>
-
-          <div className="min-w-0">
-            <span className="text-[11px] font-semibold text-[#64748B] block">
-              Latest report
+          <div className="space-y-0.5 min-w-0">
+            <span className="text-[11px] font-medium text-medical-text-muted block">
+              Recent Clinical Report
             </span>
-
-            {latestReport ? (
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-xs sm:text-sm font-bold text-[#0F172A] truncate">
-                  {latestReport.title || latestReport.fileName}
-                </span>
-                <span className="text-[10px] text-[#64748B] shrink-0">
-                  {latestReport.reportDate}
-                </span>
-              </div>
-            ) : (
-              <p className="text-xs text-[#475569] mt-0.5">
-                No reports yet
-              </p>
-            )}
+            <h4 className="text-xs sm:text-sm font-semibold text-medical-text-primary truncate">
+              {latestReport?.title || latestReport?.fileName || 'No reports uploaded yet'}
+            </h4>
+            <p className="text-[11px] text-[#98A2B3]">
+              {latestReport
+                ? new Date(latestReport.reportDate || latestReport.createdAt).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })
+                : 'Upload lab work to extract biomarkers'}
+            </p>
           </div>
         </div>
 
-        <div>
-          {latestReport ? (
-            <Link
-              to={ROUTES.APP.REPORTS}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-[#0288D1] hover:text-[#01579B] shrink-0 transition-colors"
-            >
-              <span>View</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          ) : (
-            <Link
-              to={ROUTES.APP.REPORTS}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-[#0288D1] hover:text-[#01579B] shrink-0 transition-colors"
-            >
-              <Upload className="w-3 h-3" />
-              <span>Upload →</span>
-            </Link>
-          )}
-        </div>
+        <ArrowRight className="w-4 h-4 text-[#98A2B3] shrink-0 ml-2" aria-hidden="true" />
       </div>
 
-      {/* ── 2. Upcoming Appointment Tile ── */}
-      <div className="p-4 sm:p-5 rounded-[20px] bg-white border border-[#E2E8F0] shadow-2xs flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center text-[#0288D1] shrink-0">
-            <Calendar className="w-4 h-4" />
+      {/* 2. Upcoming Appointment Card */}
+      <div
+        onClick={() => navigate(ROUTES.APP.APPOINTMENTS)}
+        className="rounded-[18px] bg-white border border-[#E2E8F0] shadow-[0_1px_3px_rgba(0,0,0,0.03)] hover:border-medical-primary-border hover:shadow-[0_4px_12px_rgba(2,136,209,0.06)] cursor-pointer transition-all duration-200 p-4 sm:p-5 flex items-center justify-between"
+      >
+        <div className="flex items-center gap-3.5 min-w-0">
+          <div className="w-10 h-10 rounded-xl bg-medical-primary-muted border border-medical-primary-border flex items-center justify-center text-medical-primary-hover shrink-0">
+            <Calendar className="w-5 h-5" aria-hidden="true" />
           </div>
-
-          <div className="min-w-0">
-            <span className="text-[11px] font-semibold text-[#64748B] block">
-              Upcoming appointment
+          <div className="space-y-0.5 min-w-0">
+            <span className="text-[11px] font-medium text-medical-text-muted block">
+              Upcoming Appointment
             </span>
-
-            {upcomingAppointment ? (
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-xs sm:text-sm font-bold text-[#0F172A] truncate">
-                  {upcomingAppointment.providerName}
-                </span>
-                <span className="text-[10px] text-[#64748B] shrink-0">
-                  {upcomingAppointment.scheduledDate} · {upcomingAppointment.scheduledTime}
-                </span>
-              </div>
-            ) : (
-              <p className="text-xs text-[#475569] mt-0.5">
-                None scheduled
-              </p>
-            )}
+            <h4 className="text-xs sm:text-sm font-semibold text-medical-text-primary truncate">
+              {upcomingAppointment
+                ? `${upcomingAppointment.providerName || 'Physician'} · ${upcomingAppointment.appointmentType || 'Consultation'}`
+                : 'No appointments scheduled'}
+            </h4>
+            <p className="text-[11px] text-[#98A2B3]">
+              {upcomingAppointment
+                ? `${upcomingAppointment.scheduledDate} at ${upcomingAppointment.scheduledTime}`
+                : 'Prepare clinical questions for your doctor'}
+            </p>
           </div>
         </div>
 
-        <div>
-          {upcomingAppointment ? (
-            <Link
-              to={ROUTES.APP.APPOINTMENTS}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-[#0288D1] hover:text-[#01579B] shrink-0 transition-colors"
-            >
-              <span>View</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          ) : (
-            <Link
-              to={ROUTES.APP.APPOINTMENTS}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-[#0288D1] hover:text-[#01579B] shrink-0 transition-colors"
-            >
-              <Clock className="w-3 h-3" />
-              <span>Book →</span>
-            </Link>
-          )}
-        </div>
+        <ArrowRight className="w-4 h-4 text-[#98A2B3] shrink-0 ml-2" aria-hidden="true" />
       </div>
     </div>
   );

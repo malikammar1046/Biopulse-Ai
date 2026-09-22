@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Plus, Activity, Moon, Droplets, Flame, Smile, HelpCircle } from 'lucide-react';
+import { Plus, Activity, Moon01, Droplets01, ActivityHeart, FaceSmile, HelpCircle } from '@untitledui/icons';
 import { getSymptomCatalog, type SymptomDefinition } from '../../types/symptom';
 
 interface TodayCheckInCardProps {
@@ -24,34 +24,39 @@ export const TodayCheckInCard: React.FC<TodayCheckInCardProps> = ({
   const quickSymptoms = catalog.filter((s) => targetIds.includes(s.id));
 
   const getQuickIcon = (id: string) => {
+    const iconColor = isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]';
     switch (id) {
       case 'cramps':
-        return <Sparkles className="w-3.5 h-3.5 text-[#0288D1]" />;
+        return <ActivityHeart className={`w-3.5 h-3.5 ${iconColor}`} aria-hidden="true" />;
       case 'fatigue':
-        return <Moon className="w-3.5 h-3.5 text-[#0288D1]" />;
+        return <Moon01 className={`w-3.5 h-3.5 ${iconColor}`} aria-hidden="true" />;
       case 'low_energy':
       case 'reduced_strength':
       case 'reduced_libido':
       case 'acne':
-        return <Activity className="w-3.5 h-3.5 text-[#0288D1]" />;
+        return <Activity className={`w-3.5 h-3.5 ${iconColor}`} aria-hidden="true" />;
       case 'bloating':
-        return <Droplets className="w-3.5 h-3.5 text-[#0288D1]" />;
+        return <Droplets01 className={`w-3.5 h-3.5 ${iconColor}`} aria-hidden="true" />;
       case 'mood_changes':
-        return <Smile className="w-3.5 h-3.5 text-[#0288D1]" />;
+        return <FaceSmile className={`w-3.5 h-3.5 ${iconColor}`} aria-hidden="true" />;
       case 'headache':
       default:
-        return <Flame className="w-3.5 h-3.5 text-[#0288D1]" />;
+        return <ActivityHeart className={`w-3.5 h-3.5 ${iconColor}`} aria-hidden="true" />;
     }
   };
 
 
   return (
-    <div className="p-6 sm:p-8 rounded-[28px] bg-white border border-[#E2E8F0] shadow-xs text-left select-none relative overflow-hidden space-y-6">
+    <div className="p-6 sm:p-8 rounded-2xl bg-white border border-[#EAECF0] shadow-xs text-left select-none relative overflow-hidden space-y-6">
       {/* Header Info */}
       <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1.5 max-w-xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E0F2FE] text-[#0288D1] text-xs font-mono font-bold border border-[#BAE6FD]">
-            <Sparkles className="w-3.5 h-3.5 text-[#0288D1]" />
+          <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-bold border ${
+            isMale
+              ? 'bg-[#E0F2FE] text-[#0288D1] border-[#BAE6FD]'
+              : 'bg-[#FDE6EF] text-[#DC326C] border-[rgba(244,63,125,0.2)]'
+          }`}>
+            <Activity className={`w-3.5 h-3.5 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`} aria-hidden="true" />
             <span>Daily Check-In</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold font-display text-[#0F172A] tracking-tight">
@@ -70,7 +75,7 @@ export const TodayCheckInCard: React.FC<TodayCheckInCardProps> = ({
               {loggedTodayCount} logged today
             </span>
           ) : (
-            <span className="text-xs font-mono text-[#64748B] bg-[#F8FAFC] px-3 py-1.5 rounded-full border border-[#E2E8F0]">
+            <span className="text-xs font-mono text-[#64748B] bg-[#F8FAFC] px-3 py-1.5 rounded-full border border-[#EAECF0]">
               No check-in yet today
             </span>
           )}
@@ -89,18 +94,28 @@ export const TodayCheckInCard: React.FC<TodayCheckInCardProps> = ({
               key={symptom.id}
               type="button"
               onClick={() => onSelectSymptom(symptom)}
-              className="p-3 rounded-2xl bg-[#F8FAFC] hover:bg-[#E0F2FE] border border-[#E2E8F0] hover:border-[#BAE6FD] shadow-xs transition-all duration-200 text-left flex flex-col justify-between gap-2 cursor-pointer group"
+              className={`p-3 rounded-xl bg-[#F8FAFC] border border-[#EAECF0] shadow-xs transition-all duration-200 text-left flex flex-col justify-between gap-2 cursor-pointer group ${
+                isMale
+                  ? 'hover:bg-[#E0F2FE] hover:border-[#BAE6FD]'
+                  : 'hover:bg-[#FDE6EF]/40 hover:border-[rgba(244,63,125,0.3)]'
+              }`}
             >
               <div className="flex items-center justify-between">
-                <div className="p-1.5 rounded-xl bg-white border border-[#E2E8F0] group-hover:border-[#BAE6FD] transition-colors">
+                <div className={`p-1.5 rounded-lg bg-white border border-[#EAECF0] transition-colors ${
+                  isMale ? 'group-hover:border-[#BAE6FD]' : 'group-hover:border-[rgba(244,63,125,0.3)]'
+                }`}>
                   {getQuickIcon(symptom.id)}
                 </div>
-                <span className="text-[10px] font-mono text-[#64748B] group-hover:text-[#0288D1] transition-colors">
+                <span className={`text-[10px] font-mono text-[#64748B] transition-colors ${
+                  isMale ? 'group-hover:text-[#0288D1]' : 'group-hover:text-[#DC326C]'
+                }`}>
                   + Add
                 </span>
               </div>
               <div>
-                <span className="text-xs font-bold text-[#0F172A] group-hover:text-[#0288D1] block truncate transition-colors">
+                <span className={`text-xs font-bold text-[#0F172A] block truncate transition-colors ${
+                  isMale ? 'group-hover:text-[#0288D1]' : 'group-hover:text-[#DC326C]'
+                }`}>
                   {symptom.name}
                 </span>
               </div>
@@ -110,16 +125,18 @@ export const TodayCheckInCard: React.FC<TodayCheckInCardProps> = ({
       </div>
 
       {/* Footer Custom Action */}
-      <div className="relative z-10 pt-3 border-t border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="relative z-10 pt-3 border-t border-[#EAECF0] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-xs text-[#64748B]">
-          <HelpCircle className="w-3.5 h-3.5 text-[#0288D1]" />
+          <HelpCircle className={`w-3.5 h-3.5 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`} />
           <span>Experiencing something else? You can record any symptom.</span>
         </div>
 
         <button
           type="button"
           onClick={onOpenGeneralModal}
-          className="px-5 py-2 rounded-2xl font-sans font-bold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+          className={`h-10 px-4 rounded-xl font-medium text-sm text-white shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            isMale ? 'bg-[#0288D1] hover:bg-[#0277BD]' : 'bg-[#F43F7D] hover:bg-[#DC326C]'
+          }`}
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
           <span>Log Any Symptom</span>

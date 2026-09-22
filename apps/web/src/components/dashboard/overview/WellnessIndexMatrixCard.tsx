@@ -1,5 +1,5 @@
 import React from 'react';
-import { Percent, MoreVertical, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { Percent01, DotsVertical, ShieldTick, AlertTriangle } from '@untitledui/icons';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '../../../constants/routes';
 import type { HealthPathway } from '../../../types/onboarding';
@@ -46,7 +46,7 @@ export const WellnessIndexMatrixCard: React.FC<WellnessIndexMatrixCardProps> = (
     : {
         label: isMale ? 'Estimated Screening Risk' : 'Lower Risk',
         bg: 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]',
-        icon: ShieldCheck,
+        icon: ShieldTick,
       };
 
   const Icon = badgeConfig.icon;
@@ -57,9 +57,7 @@ export const WellnessIndexMatrixCard: React.FC<WellnessIndexMatrixCardProps> = (
       {/* ── Top Header ── */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="p-2 rounded-xl bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD]">
-            <Percent className="w-4 h-4" />
-          </span>
+          <Percent01 className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
           <h3 className="text-sm font-bold font-display text-[#0F172A]">
             {isMale ? 'Hypogonadism Screening Risk' : 'PCOS Screening Index'}
           </h3>
@@ -68,8 +66,9 @@ export const WellnessIndexMatrixCard: React.FC<WellnessIndexMatrixCardProps> = (
           to={ROUTES.APP.HUB}
           className="text-[#64748B] hover:text-[#0288D1] p-1 rounded-lg transition-colors cursor-pointer"
           title="View Full ML Report in Hub"
+          aria-label="View Full ML Report in Hub"
         >
-          <MoreVertical className="w-4 h-4" />
+          <DotsVertical className="w-4 h-4" aria-hidden="true" />
         </Link>
       </div>
 

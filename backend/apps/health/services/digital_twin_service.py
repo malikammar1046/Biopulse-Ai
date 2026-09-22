@@ -32,7 +32,7 @@ class DigitalTwinService:
     @classmethod
     def build_digital_twin(
         cls,
-        health_data: HealthDataBundle,
+        health_data: PatientHealthData,
         client_telemetry: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         profile = health_data.profile

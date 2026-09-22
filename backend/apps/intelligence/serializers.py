@@ -41,6 +41,8 @@ class ProgressiveAssessmentSerializer(serializers.Serializer):
     risk_category = serializers.CharField(required=False, default="lower")
     replaced_assessment_id = serializers.CharField(allow_null=True, required=False)
     explanations = serializers.ListField(child=serializers.DictField(), required=False, default=list)
+    shap_explanation = serializers.DictField(required=False, allow_null=True)
+    longitudinal_shap_comparison = serializers.DictField(required=False, allow_null=True)
     limitations = serializers.ListField(child=serializers.CharField(), required=False, default=list)
     next_available_tier = serializers.IntegerField(allow_null=True, required=False)
     pcom_status = serializers.CharField(allow_null=True, required=False)

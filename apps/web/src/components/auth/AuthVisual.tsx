@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles } from 'lucide-react';
+import { ActivityHeart } from '@untitledui/icons';
 
 export interface AuthVisualProps {
   headlineLine1: string;
@@ -112,7 +112,7 @@ export const AuthVisual: React.FC<AuthVisualProps> = ({
       >
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#200D35]/80 border border-[#8E3EAF]/40 backdrop-blur-md shadow-sm">
           <span className="w-2 h-2 rounded-full bg-[#E87084] shadow-[0_0_6px_#E87084] animate-ping" />
-          <Sparkles className="w-3.5 h-3.5 text-[#D8B4FE]" />
+          <ActivityHeart className="w-4 h-4 text-[#D8B4FE] shrink-0" aria-hidden="true" />
           <span className="text-xs font-semibold tracking-wide text-[#EDE4F7]">
             {identityTag}
           </span>
@@ -167,7 +167,7 @@ export const AuthVisual: React.FC<AuthVisualProps> = ({
         transition={{ duration: 0.6, delay: 0.3 }}
         className="relative z-10 hidden sm:flex items-center justify-between text-xs text-[#8D7E9E]"
       >
-        <span>OVASense Intelligence Framework</span>
+        <span>BioPulse AI Intelligence Framework</span>
         <span className="font-mono text-[11px] text-[#A21CAF]">v1.0.0-preview</span>
       </motion.div>
     </div>

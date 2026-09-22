@@ -1,10 +1,10 @@
 import React from 'react';
 import {
-  Moon,
-  Droplet,
-  Briefcase,
+  Moon01,
+  Droplets01,
+  Briefcase01,
   Check,
-} from 'lucide-react';
+} from '@untitledui/icons';
 import type { UserProfile, LifestyleProfile } from '../../../../types/onboarding';
 import { AssessmentImpactBadge } from '../AssessmentImpactBadge';
 import { EXERCISE_PREFERENCE_OPTIONS } from '../../../../data/mockOnboardingData';
@@ -74,7 +74,7 @@ export const LifestyleTab: React.FC<LifestyleTabProps> = ({
                 onClick={() => updateLifestyle('activityLevel', lvl.id)}
                 className={`p-3.5 rounded-2xl text-left border transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-[#0E9EAA] text-white border-[#0E9EAA] shadow-xs ring-1 ring-[#0E9EAA]/30'
+                    ? 'bg-[#0288D1] text-white border-[#0288D1] shadow-xs ring-1 ring-[#0288D1]/30'
                     : 'bg-slate-50/70 border-slate-200 text-slate-700 hover:bg-slate-100'
                 }`}
               >
@@ -111,10 +111,10 @@ export const LifestyleTab: React.FC<LifestyleTabProps> = ({
           <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/70">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                <Moon className="w-3.5 h-3.5 text-[#0E9EAA]" />
+                <Moon01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
                 Average Nightly Sleep
               </span>
-              <span className="text-xs font-bold text-[#0E9EAA]">
+              <span className="text-xs font-bold text-[#0288D1]">
                 {lifestyle.sleepHours || 7.5} Hours
               </span>
             </div>
@@ -127,7 +127,7 @@ export const LifestyleTab: React.FC<LifestyleTabProps> = ({
                 step="0.5"
                 value={lifestyle.sleepHours || 7.5}
                 onChange={(e) => updateLifestyle('sleepHours', Number(e.target.value))}
-                className="w-full accent-[#0E9EAA] h-2 bg-slate-200 rounded-lg cursor-pointer"
+                className="w-full accent-[#0288D1] h-2 bg-slate-200 rounded-lg cursor-pointer"
               />
               <input
                 type="number"
@@ -136,7 +136,7 @@ export const LifestyleTab: React.FC<LifestyleTabProps> = ({
                 step="0.5"
                 value={lifestyle.sleepHours || 7.5}
                 onChange={(e) => updateLifestyle('sleepHours', Number(e.target.value))}
-                className="w-16 px-2 py-1 rounded-xl bg-white border border-slate-200 text-xs font-bold text-center text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0E9EAA]/20 focus:border-[#0E9EAA]"
+                className="w-16 px-2 py-1 rounded-xl bg-white border border-slate-200 text-xs font-bold text-center text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0288D1]/20 focus:border-[#0288D1]"
               />
             </div>
             <p className="text-[10px] text-slate-400 mt-2">
@@ -150,7 +150,7 @@ export const LifestyleTab: React.FC<LifestyleTabProps> = ({
           <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/70">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                <Droplet className="w-3.5 h-3.5 text-[#0E9EAA]" />
+                <Droplets01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
                 Daily Water Target
               </span>
               <span className="text-xs font-bold text-slate-800">
@@ -169,7 +169,7 @@ export const LifestyleTab: React.FC<LifestyleTabProps> = ({
                     onClick={() => updateLifestyle('dailyWaterGlasses', gl)}
                     className={`flex-1 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-[#0E9EAA] text-white border-[#0E9EAA] shadow-xs ring-1 ring-[#0E9EAA]/30'
+                        ? 'bg-[#0288D1] text-white border-[#0288D1] shadow-xs ring-1 ring-[#0288D1]/30'
                         : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                     }`}
                   >
@@ -206,21 +206,21 @@ export const LifestyleTab: React.FC<LifestyleTabProps> = ({
                 onClick={() => toggleExercise(ex.label)}
                 className={`p-3 rounded-2xl text-left border transition-all flex items-center justify-between gap-2 cursor-pointer ${
                   isSelected
-                    ? 'bg-[#EAFBFC] border-[#0E9EAA] ring-1.5 ring-[#0E9EAA] shadow-xs'
+                    ? 'bg-[#F0F9FF] border-[#0288D1] ring-1.5 ring-[#0288D1] shadow-xs'
                     : 'bg-slate-50/80 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
                 }`}
               >
-                <span className={`text-xs leading-snug ${isSelected ? 'font-bold text-[#073B72]' : 'font-medium text-slate-700'}`}>
+                <span className={`text-xs leading-snug ${isSelected ? 'font-bold text-[#01579B]' : 'font-medium text-slate-700'}`}>
                   {ex.label}
                 </span>
                 <div
                   className={`w-4 h-4 rounded-md flex items-center justify-center shrink-0 border transition-all ${
                     isSelected
-                      ? 'bg-[#0E9EAA] border-[#0E9EAA] text-white shadow-xs'
+                      ? 'bg-[#0288D1] border-[#0288D1] text-white shadow-xs'
                       : 'border-slate-300 bg-white'
                   }`}
                 >
-                  {isSelected && <Check className="w-3 h-3 text-white stroke-[3]" />}
+                  {isSelected && <Check className="w-3 h-3 text-white stroke-[3]" aria-hidden="true" />}
                 </div>
               </button>
             );
@@ -230,7 +230,7 @@ export const LifestyleTab: React.FC<LifestyleTabProps> = ({
         {/* Work Lifestyle */}
         <div>
           <label className="block text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5">
-            <Briefcase className="w-3.5 h-3.5 text-[#0E9EAA]" />
+            <Briefcase01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
             Typical Work Environment
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -247,7 +247,7 @@ export const LifestyleTab: React.FC<LifestyleTabProps> = ({
                   onClick={() => updateLifestyle('workLifestyle', wk.id)}
                   className={`p-3 rounded-2xl text-left border transition-all cursor-pointer ${
                     isSelected
-                      ? 'bg-[#0E9EAA] text-white border-[#0E9EAA] shadow-xs ring-1 ring-[#0E9EAA]/30'
+                      ? 'bg-[#0288D1] text-white border-[#0288D1] shadow-xs ring-1 ring-[#0288D1]/30'
                       : 'bg-slate-50/70 border-slate-200 text-slate-600 hover:bg-slate-100'
                   }`}
                 >

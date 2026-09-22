@@ -1,7 +1,6 @@
 import React from 'react';
-import { ArrowRight, Check, Activity, Layers } from 'lucide-react';
+import { ArrowRight, Check, Activity, Loading01 } from '@untitledui/icons';
 import type { HealthPathway } from '../../types/onboarding';
-import { SemicircularRiskGauge } from './SemicircularRiskGauge';
 
 interface PrimaryScreeningCardProps {
   pathway: HealthPathway;
@@ -26,172 +25,71 @@ export const PrimaryScreeningCard: React.FC<PrimaryScreeningCardProps> = ({
   hasAssessment,
   probabilityPercent,
   riskCategory = 'lower',
+  riskLabel,
   assessmentLevel = 'tier_1',
   updatedAt,
-  threshold,
+  threshold = 0.1808,
   onStartScreening,
   onViewAssessment,
   onSecondaryAction,
   secondaryActionLabel,
   loading = false,
-  gradcamB64,
-  pcomStatus,
 }) => {
-  const isMale = pathway === 'male';
-  const title = isMale ? 'Hypogonadism Screening' : 'PCOS Screening';
+  const isTier2 = assessmentLevel === 'tier_1_2';
+  const title = pathway === 'male' ? 'Hypogonadism Screening' : 'PCOS Screening';
+  const assessmentLevelLabel = isTier2 ? 'Tier 2 Assessment' : 'Tier 1 Assessment';
 
-  // Format Tier metadata
-  const getTierLabel = () => {
-    if (isMale) {
-      if (assessmentLevel === 'tier_1_2') return 'Based on Tier 1 + Clinical Labs';
-      return 'Based on Tier 1 assessment';
-    }
-    if (assessmentLevel === 'tier_1_2_3') return 'Based on Tier 3 Multimodal assessment';
-    if (assessmentLevel === 'tier_1_2') return 'Based on Tier 2 Clinical assessment';
-    return 'Based on Tier 1 assessment';
-  };
+  // Contextual Risk Status Badge
+  const normalizedCategory = (riskCategory || 'lower').toLowerCase();
+  const isHigher = normalizedCategory.includes('high') || normalizedCategory.includes('elevated');
+  const isIntermediate = !isHigher && (normalizedCategory.includes('intermediate') || normalizedCategory.includes('moderate'));
 
-  // Determine stage progression for Female (3 tiers) vs Male (2 tiers)
-  const renderTierIndicator = () => {
-    if (isMale) {
-      const isTier2Done = assessmentLevel === 'tier_1_2';
-      return (
-        <div className="pt-3 border-t border-[#E2E8F0]">
-          <span className="text-[11px] font-semibold text-[#64748B] block mb-2">
-            Screening Progress
-          </span>
-          <div className="flex items-center gap-2 text-xs">
-            {/* Tier 1 */}
-            <div className="flex items-center gap-1.5 font-medium text-[#0F172A]">
-              <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px] font-bold">
-                <Check className="w-3 h-3" />
-              </span>
-              <span>Tier 1: Initial</span>
-            </div>
-
-            <div className="flex-1 h-0.5 bg-[#CBD5E1] mx-1" />
-
-            {/* Tier 2 */}
-            <div
-              className={`flex items-center gap-1.5 font-medium ${
-                isTier2Done ? 'text-[#0F172A]' : 'text-[#64748B]'
-              }`}
-            >
-              <span
-                className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                  isTier2Done
-                    ? 'bg-emerald-100 text-emerald-700'
-                    : 'border-2 border-[#94A3B8] bg-white text-[#64748B]'
-                }`}
-              >
-                {isTier2Done ? <Check className="w-3 h-3" /> : '2'}
-              </span>
-              <span>Tier 2: Hormone Labs</span>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    // Female Pathway (3 implemented tiers: Tier 1 self-reported, Tier 2 clinical labs, Tier 3 ultrasound)
-    const isTier2Done = assessmentLevel === 'tier_1_2' || assessmentLevel === 'tier_1_2_3';
-    const isTier3Done = assessmentLevel === 'tier_1_2_3';
-
-    return (
-      <div className="pt-3 border-t border-[#E2E8F0]">
-        <span className="text-[11px] font-semibold text-[#64748B] block mb-2">
-          Screening Progress
-        </span>
-        <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs">
-          {/* Tier 1 */}
-          <div className="flex items-center gap-1.5 font-medium text-[#0F172A]">
-            <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px] font-bold shrink-0">
-              <Check className="w-3 h-3" />
-            </span>
-            <span className="truncate">Tier 1: Symptoms</span>
-          </div>
-
-          <div className="flex-1 h-0.5 bg-[#CBD5E1] min-w-[12px]" />
-
-          {/* Tier 2 */}
-          <div
-            className={`flex items-center gap-1.5 font-medium ${
-              isTier2Done ? 'text-[#0F172A]' : 'text-[#64748B]'
-            }`}
-          >
-            <span
-              className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
-                isTier2Done
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : 'border-2 border-[#94A3B8] bg-white text-[#64748B]'
-              }`}
-            >
-              {isTier2Done ? <Check className="w-3 h-3" /> : '2'}
-            </span>
-            <span className="truncate">Tier 2: Labs</span>
-          </div>
-
-          <div className="flex-1 h-0.5 bg-[#CBD5E1] min-w-[12px]" />
-
-          {/* Tier 3 */}
-          <div
-            className={`flex items-center gap-1.5 font-medium ${
-              isTier3Done ? 'text-[#0F172A]' : 'text-[#64748B]'
-            }`}
-          >
-            <span
-              className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
-                isTier3Done
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : 'border-2 border-[#94A3B8] bg-white text-[#64748B]'
-              }`}
-            >
-              {isTier3Done ? <Check className="w-3 h-3" /> : '3'}
-            </span>
-            <span className="truncate">Tier 3: Ultrasound</span>
-          </div>
-        </div>
-      </div>
-    );
-  };
+  const statusBadge = isHigher ? (
+    <span className="inline-flex items-center gap-1.5 font-medium rounded-full border px-2.5 py-1 text-xs select-none bg-[#FEF3F2] text-[#B42318] border-[#FECDCA]">
+      {riskLabel || 'Higher Risk'}
+    </span>
+  ) : isIntermediate ? (
+    <span className="inline-flex items-center gap-1.5 font-medium rounded-full border px-2.5 py-1 text-xs select-none bg-[#FEF7EC] text-[#B54708] border-[#FEDF89]">
+      {riskLabel || 'Intermediate Risk'}
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1.5 font-medium rounded-full border px-2.5 py-1 text-xs select-none bg-[#ECFDF3] text-[#027A48] border-[#D1FADF]">
+      {riskLabel || 'Lower Screening Risk'}
+    </span>
+  );
 
   // ---------------------------------------------------------------------------
-  // Loading State: Synchronizing / Fetching clinical assessment
+  // 1. Loading State (corresponds to FemaleLoadingState)
   // ---------------------------------------------------------------------------
   if (loading && (!hasAssessment || probabilityPercent === null)) {
     return (
-      <div className="p-6 sm:p-7 rounded-[24px] bg-white border border-[#E2E8F0] shadow-sm flex flex-col justify-between text-left space-y-6 h-full select-none animate-pulse">
+      <div className="bg-white border border-[#E2E8F0] rounded-[18px] p-5 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.03)] flex flex-col justify-between text-left space-y-6 h-full select-none animate-pulse">
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center text-[#0288D1]">
-                <Activity className="w-4 h-4 animate-spin" />
+              <div className="w-8 h-8 rounded-xl bg-medical-primary-muted border border-medical-primary-border flex items-center justify-center text-medical-primary-hover">
+                <Activity className="w-4 h-4" aria-hidden="true" />
               </div>
-              <h2 className="text-base sm:text-lg font-bold text-[#0F172A]">
-                {title}
-              </h2>
+              <div>
+                <h2 className="text-base sm:text-lg font-semibold text-medical-text-primary">{title}</h2>
+                <p className="text-xs text-medical-text-muted">Synchronizing model results...</p>
+              </div>
             </div>
-            <span className="text-[11px] font-semibold text-[#0288D1] px-2.5 py-0.5 rounded-full bg-sky-50 border border-sky-200">
-              Synchronizing...
+            <span className="inline-flex items-center gap-1.5 font-medium rounded-full border px-2.5 py-1 text-xs select-none bg-medical-primary-muted text-medical-primary-hover border-medical-primary-border">
+              Synchronizing
             </span>
           </div>
 
-          <div className="py-8 flex flex-col items-center justify-center space-y-3">
-            <div className="w-12 h-12 rounded-full border-4 border-sky-100 border-t-[#0288D1] animate-spin" />
-            <div className="text-center space-y-1">
-              <p className="text-xs font-semibold text-[#0F172A]">
-                Checking Screening Status
-              </p>
-              <p className="text-[11px] text-[#64748B]">
-                Synchronizing authoritative clinical assessment...
-              </p>
-            </div>
+          <div className="py-10 flex flex-col items-center justify-center space-y-3">
+            <Loading01 className="w-8 h-8 text-medical-primary-hover animate-spin" aria-hidden="true" />
+            <p className="text-xs font-semibold text-medical-text-primary">Calibrating Clinical Intelligence</p>
+            <p className="text-[11px] text-medical-text-muted">Synthesizing screening inputs...</p>
           </div>
         </div>
 
         <div className="pt-4 border-t border-[#E2E8F0]">
-          <p className="text-[10px] text-[#64748B] leading-relaxed">
-            Evidence-based screening indicator · Does not constitute a medical diagnosis.
+          <p className="text-[11px] text-medical-text-muted leading-relaxed">
+            Evidence-based screening indicator · Does not constitute a clinical diagnosis.
           </p>
         </div>
       </div>
@@ -199,32 +97,31 @@ export const PrimaryScreeningCard: React.FC<PrimaryScreeningCardProps> = ({
   }
 
   // ---------------------------------------------------------------------------
-  // Empty State: No assessment yet
+  // 2. Empty State (corresponds to FemaleEmptyState)
   // ---------------------------------------------------------------------------
   if (!hasAssessment || probabilityPercent === null) {
     return (
-      <div className="p-6 sm:p-7 rounded-[24px] bg-white border border-[#E2E8F0] shadow-sm flex flex-col justify-between text-left space-y-6 h-full select-none">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
+      <div className="bg-white border border-[#E2E8F0] rounded-[18px] p-5 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.03)] flex flex-col justify-between text-left space-y-6 h-full select-none">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center text-[#0288D1]">
-                <Activity className="w-4 h-4" />
+              <div className="w-8 h-8 rounded-xl bg-medical-primary-muted border border-medical-primary-border flex items-center justify-center text-medical-primary-hover">
+                <Activity className="w-4 h-4" aria-hidden="true" />
               </div>
-              <h2 className="text-base sm:text-lg font-bold text-[#0F172A]">
-                {title}
-              </h2>
+              <div>
+                <h2 className="text-base sm:text-lg font-semibold text-medical-text-primary">{title}</h2>
+                <p className="text-xs text-medical-text-muted">Screening Not Started</p>
+              </div>
             </div>
-            <span className="text-[11px] font-semibold text-[#64748B] px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200">
+            <span className="inline-flex items-center gap-1.5 font-medium rounded-full border px-2.5 py-1 text-xs select-none bg-[#F2F4F7] text-[#344054] border-[#EAECF0]">
               Not Started
             </span>
           </div>
 
-          <div className="pt-2 space-y-1.5">
-            <h3 className="text-lg font-bold text-[#0F172A]">
-              No assessment yet
-            </h3>
-            <p className="text-xs sm:text-sm text-[#475569] leading-relaxed">
-              Complete your first screening to understand your current risk.
+          <div className="space-y-1.5 max-w-md">
+            <h3 className="text-base sm:text-lg font-semibold text-medical-text-primary">Initial screening required</h3>
+            <p className="text-xs sm:text-sm text-medical-text-muted leading-relaxed">
+              Complete the ADAM questionnaire to assess potential testosterone deficiency patterns and establish your clinical baseline.
             </p>
           </div>
         </div>
@@ -234,14 +131,14 @@ export const PrimaryScreeningCard: React.FC<PrimaryScreeningCardProps> = ({
             type="button"
             onClick={onStartScreening}
             disabled={loading}
-            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 h-10 px-4 py-2.5 rounded-xl whitespace-nowrap bg-medical-primary-hover hover:bg-medical-primary-active active:scale-[0.98] text-white text-xs sm:text-sm font-semibold shadow-xs transition-all duration-150 select-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-medical-primary-hover/30 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span>Start Screening</span>
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-4 h-4 shrink-0" aria-hidden="true" />
           </button>
 
-          <p className="text-[10px] text-[#64748B] leading-relaxed">
-            Evidence-based screening indicator · Does not constitute a medical diagnosis.
+          <p className="text-[11px] text-medical-text-muted leading-relaxed">
+            Evidence-based screening indicator · Does not constitute a clinical diagnosis. Consult a physician for diagnostic evaluation.
           </p>
         </div>
       </div>
@@ -249,98 +146,149 @@ export const PrimaryScreeningCard: React.FC<PrimaryScreeningCardProps> = ({
   }
 
   // ---------------------------------------------------------------------------
-  // Active Assessment State with Semicircular Risk Gauge
+  // 3. Active Screening State (Exact correspondence to FemaleScreeningCard)
   // ---------------------------------------------------------------------------
   return (
-    <div className="p-6 sm:p-7 rounded-[24px] bg-white border border-[#E2E8F0] shadow-sm flex flex-col justify-between text-left space-y-6 h-full select-none">
-      <div className="space-y-4">
+    <div className="bg-white border border-[#E2E8F0] rounded-[18px] p-5 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.03)] text-left transition-all duration-200 space-y-5 select-none flex flex-col justify-between h-full">
+      <div className="space-y-5">
         {/* Card Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3 border-b border-[#E2E8F0] pb-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center text-[#0288D1]">
-              <Activity className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-xl bg-medical-primary-muted border border-medical-primary-border flex items-center justify-center text-medical-primary-hover">
+              <Activity className="w-4 h-4" aria-hidden="true" />
             </div>
-            <h2 className="text-base sm:text-lg font-bold text-[#0F172A]">
-              {title}
-            </h2>
+            <div>
+              <h2 className="text-base sm:text-lg font-semibold text-medical-text-primary">
+                {title}
+              </h2>
+              <p className="text-xs text-medical-text-muted">
+                {assessmentLevelLabel} {updatedAt ? `· Updated ${updatedAt}` : ''}
+              </p>
+            </div>
           </div>
 
-          <span className="text-xs font-medium text-[#64748B]">
-            {getTierLabel()} {updatedAt ? `· Updated ${updatedAt}` : ''}
+          {statusBadge}
+        </div>
+
+        {/* Probability Score & Circular Tier Indicator */}
+        <div className="flex items-center justify-between gap-6 py-2">
+          <div className="space-y-1">
+            <span className="text-xs font-medium text-medical-text-muted block">
+              Screening Probability Score
+            </span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl sm:text-4xl font-bold font-display text-medical-text-primary">
+                {probabilityPercent}%
+              </span>
+              <span className="text-xs text-medical-text-muted">
+                (threshold {Math.round(threshold * 100)}%)
+              </span>
+            </div>
+            <p className="text-xs text-medical-text-muted pt-1 max-w-xs leading-relaxed">
+              {isTier2
+                ? 'Your result includes verified morning testosterone and metabolic panel.'
+                : 'Based on your reported ADAM questionnaire symptoms and clinical profile.'}
+            </p>
+          </div>
+
+          {/* Clean Circular Tier Indicator (corresponds to Female ring in Male blue) */}
+          <div className="relative w-24 h-24 shrink-0 flex items-center justify-center">
+            <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                className="text-medical-primary-muted"
+                strokeWidth="8"
+                stroke="currentColor"
+                fill="transparent"
+              />
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                className="text-medical-primary-hover transition-all duration-700 ease-out"
+                strokeWidth="8"
+                strokeDasharray={251.2}
+                strokeDashoffset={251.2 - (251.2 * Math.min(Math.max(probabilityPercent, 0), 100)) / 100}
+                strokeLinecap="round"
+                stroke="currentColor"
+                fill="transparent"
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+              <span className="text-xs font-bold text-medical-text-primary">
+                {isTier2 ? 'Tier 2' : 'Tier 1'}
+              </span>
+              <span className="text-[10px] text-medical-text-muted">
+                {isTier2 ? 'Verified' : 'Initial'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Screening Progression (Male 2 tiers: 1. Symptoms, 2. Labs) */}
+        <div className="pt-3 border-t border-[#E2E8F0] space-y-2">
+          <span className="text-xs font-medium text-medical-text-muted block">
+            Screening Progression
           </span>
-        </div>
+          <div className="flex items-center gap-2 text-xs">
+            {/* Tier 1 */}
+            <div className="flex items-center gap-1.5 font-medium text-medical-text-primary">
+              <span className="w-5 h-5 rounded-full bg-[#ECFDF3] text-[#027A48] flex items-center justify-center text-[10px] font-bold shrink-0">
+                <Check className="w-3 h-3" aria-hidden="true" />
+              </span>
+              <span>1. Symptoms (ADAM)</span>
+            </div>
 
-        {/* Semicircular Risk Gauge with Moving Needle & Real Threshold Zones */}
-        <div className="py-2 flex justify-center">
-          <SemicircularRiskGauge
-            probabilityPercent={probabilityPercent}
-            riskCategory={riskCategory}
-            pathway={pathway}
-            threshold={threshold}
-            assessmentLevel={assessmentLevel}
-          />
-        </div>
+            <div className="flex-1 h-0.5 bg-[#E2E8F0] mx-1" />
 
-        {/* Dynamic Tier Progress Bar */}
-        {renderTierIndicator()}
-
-        {/* Ultrasound Grad-CAM Preview */}
-        {pathway !== 'male' && (assessmentLevel === 'tier_1_3' || assessmentLevel === 'tier_1_2_3') && gradcamB64 && (
-          <div className="pt-3 border-t border-[#E2E8F0]">
-            <div className="p-3 rounded-2xl bg-sky-50/70 border border-sky-100 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <img
-                  src={gradcamB64.startsWith('data:') ? gradcamB64 : `data:image/png;base64,${gradcamB64}`}
-                  alt="Ultrasound Grad-CAM Heatmap"
-                  className="w-12 h-12 rounded-xl object-cover border border-sky-200 shrink-0"
-                />
-                <div className="min-w-0">
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#0288D1] block">
-                    Ultrasound AI Heatmap
-                  </span>
-                  <p className="text-xs font-semibold text-[#0F172A] truncate">
-                    {pcomStatus || 'Ovarian Morphology Processed'}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={onViewAssessment}
-                className="text-xs font-bold text-[#0288D1] hover:underline shrink-0"
+            {/* Tier 2 */}
+            <div
+              className={`flex items-center gap-1.5 font-medium ${
+                isTier2 ? 'text-medical-text-primary' : 'text-medical-text-muted'
+              }`}
+            >
+              <span
+                className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                  isTier2
+                    ? 'bg-[#ECFDF3] text-[#027A48]'
+                    : 'border border-[#CBD5E1] bg-white text-medical-text-muted'
+                }`}
               >
-                View Analysis →
-              </button>
+                {isTier2 ? <Check className="w-3 h-3" aria-hidden="true" /> : '2'}
+              </span>
+              <span>2. Hormone Labs</span>
             </div>
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Action Buttons & Clinical Non-Diagnostic Disclaimer */}
+      {/* Card Footer: Actions & Clinical Non-Diagnostic Disclaimer */}
       <div className="pt-4 border-t border-[#E2E8F0] space-y-3">
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
             onClick={onViewAssessment}
-            className="px-5 py-2.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold shadow-sm transition-all flex items-center gap-2 cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 h-10 px-4 py-2.5 rounded-xl whitespace-nowrap bg-medical-primary-hover hover:bg-medical-primary-active active:scale-[0.98] text-white text-xs sm:text-sm font-semibold shadow-xs transition-all duration-150 select-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-medical-primary-hover/30"
           >
             <span>View Full Assessment</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <ArrowRight className="w-4 h-4 shrink-0" aria-hidden="true" />
           </button>
 
-          {secondaryActionLabel && onSecondaryAction && (
+          {!isTier2 && onSecondaryAction && (
             <button
               type="button"
               onClick={onSecondaryAction}
-              className="px-4 py-2.5 rounded-xl bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] text-[#0288D1] text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 h-10 px-4 py-2.5 rounded-xl whitespace-nowrap bg-white hover:bg-medical-primary-soft active:scale-[0.98] text-medical-primary-hover border border-[#E2E8F0] hover:border-medical-primary-border text-xs sm:text-sm font-semibold shadow-xs transition-all duration-150 select-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-medical-primary-hover/20"
             >
-              <Layers className="w-3.5 h-3.5" />
-              <span>{secondaryActionLabel}</span>
+              <span>{secondaryActionLabel || 'Add Hormone Labs'}</span>
             </button>
           )}
         </div>
 
-        <p className="text-[10px] text-[#64748B] leading-relaxed">
-          Evidence-based screening indicator · Does not constitute a clinical diagnosis. Consult a qualified physician for evaluation.
+        <p className="text-[11px] text-medical-text-muted leading-relaxed">
+          Evidence-based screening indicator · Does not constitute a clinical diagnosis. Consult a physician for diagnostic evaluation.
         </p>
       </div>
     </div>

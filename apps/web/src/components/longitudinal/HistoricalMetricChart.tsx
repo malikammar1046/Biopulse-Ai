@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { TrendingUp, TrendingDown, Minus, Info, Table as TableIcon, LineChart as ChartIcon } from 'lucide-react';
+import {
+  LineChartUp01,
+  LineChartDown01,
+  Minus,
+  InfoCircle,
+  Table as TableIcon,
+  LineChartUp01 as ChartIcon,
+} from '@untitledui/icons';
 
 export interface ChartDataPoint {
   label: string;
@@ -27,7 +34,7 @@ export const HistoricalMetricChart: React.FC<HistoricalMetricChartProps> = ({
   subtitle,
   data,
   unit = '',
-  color = '#0288D1',
+  color = 'var(--color-medical-primary-hover, #0288D1)',
   emptyMessage = 'No historical entries recorded for this metric yet.',
   insufficientMessage = 'Keep logging regularly. A clear visual trend will appear once more entries are recorded.',
   minDataPoints = 2,
@@ -38,11 +45,11 @@ export const HistoricalMetricChart: React.FC<HistoricalMetricChartProps> = ({
 
   if (!data || data.length === 0) {
     return (
-      <div className="p-5 rounded-[20px] bg-white border border-[#BAE6FD] text-left shadow-xs">
+      <div className="p-5 rounded-[20px] bg-white border border-[var(--color-medical-primary-border,#BAE6FD)] text-left shadow-xs">
         <h4 className="text-sm font-bold font-display text-[#0F172A] mb-1">{title}</h4>
         {subtitle && <p className="text-xs text-[#475569] mb-3">{subtitle}</p>}
-        <div className="py-8 px-4 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] text-center">
-          <Info className="w-5 h-5 text-[#0288D1] mx-auto mb-2 opacity-80" />
+        <div className="py-8 px-4 rounded-xl bg-[var(--color-medical-primary-soft,#F0F9FF)] border border-[var(--color-medical-primary-border,#BAE6FD)] text-center">
+          <InfoCircle className="w-5 h-5 text-[var(--color-medical-primary-hover,#0288D1)] mx-auto mb-2 opacity-80" aria-hidden="true" />
           <p className="text-xs text-[#475569] max-w-sm mx-auto">{emptyMessage}</p>
         </div>
       </div>
@@ -51,12 +58,12 @@ export const HistoricalMetricChart: React.FC<HistoricalMetricChartProps> = ({
 
   if (data.length < minDataPoints) {
     return (
-      <div className="p-5 rounded-[20px] bg-white border border-[#BAE6FD] text-left shadow-xs">
+      <div className="p-5 rounded-[20px] bg-white border border-[var(--color-medical-primary-border,#BAE6FD)] text-left shadow-xs">
         <h4 className="text-sm font-bold font-display text-[#0F172A] mb-1">{title}</h4>
         {subtitle && <p className="text-xs text-[#475569] mb-3">{subtitle}</p>}
-        <div className="py-6 px-4 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] text-left space-y-2">
+        <div className="py-6 px-4 rounded-xl bg-[var(--color-medical-primary-soft,#F0F9FF)] border border-[var(--color-medical-primary-border,#BAE6FD)] text-left space-y-2">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-mono font-bold text-[#0288D1] bg-[#E0F2FE] border border-[#BAE6FD] px-2 py-0.5 rounded">
+            <span className="text-xs font-mono font-bold text-[var(--color-medical-primary-hover,#0288D1)] bg-[#E0F2FE] border border-[var(--color-medical-primary-border,#BAE6FD)] px-2 py-0.5 rounded">
               {data.length} Entry Recorded
             </span>
             <span className="text-xs text-[#0F172A] font-semibold">
@@ -103,7 +110,7 @@ export const HistoricalMetricChart: React.FC<HistoricalMetricChartProps> = ({
   const diff = lastVal - firstVal;
 
   return (
-    <div className="p-5 rounded-[24px] bg-white border border-[#BAE6FD] text-left space-y-3 shadow-xs select-none">
+    <div className="p-5 rounded-[24px] bg-white border border-[var(--color-medical-primary-border,#BAE6FD)] text-left space-y-3 shadow-xs select-none">
       {/* Header with Title & Table Toggle */}
       <div className="flex items-center justify-between gap-2 border-b border-[#E2E8F0] pb-3">
         <div>
@@ -112,15 +119,15 @@ export const HistoricalMetricChart: React.FC<HistoricalMetricChartProps> = ({
             <div className="flex items-center gap-1 text-[11px] font-mono">
               {diff > 0 ? (
                 <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-bold flex items-center gap-0.5">
-                  <TrendingUp className="w-3 h-3 text-emerald-600" /> +{diff} {unit}
+                  <LineChartUp01 className="w-3 h-3 text-emerald-600" aria-hidden="true" /> +{diff} {unit}
                 </span>
               ) : diff < 0 ? (
                 <span className="text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full font-bold flex items-center gap-0.5">
-                  <TrendingDown className="w-3 h-3 text-amber-600" /> {diff} {unit}
+                  <LineChartDown01 className="w-3 h-3 text-amber-600" aria-hidden="true" /> {diff} {unit}
                 </span>
               ) : (
                 <span className="text-[#64748B] bg-[#F8FAFC] border border-[#E2E8F0] px-2 py-0.5 rounded-full font-medium flex items-center gap-0.5">
-                  <Minus className="w-3 h-3 text-[#64748B]" /> Steady
+                  <Minus className="w-3 h-3 text-[#64748B]" aria-hidden="true" /> Steady
                 </span>
               )}
             </div>
@@ -132,11 +139,15 @@ export const HistoricalMetricChart: React.FC<HistoricalMetricChartProps> = ({
           <button
             type="button"
             onClick={() => setViewMode(viewMode === 'chart' ? 'table' : 'chart')}
-            className="p-2 rounded-xl bg-[#F8FAFC] hover:bg-[#F0F9FF] text-[#475569] hover:text-[#0F172A] border border-[#BAE6FD] transition-colors cursor-pointer"
+            className="p-2 rounded-xl bg-[#F8FAFC] hover:bg-[var(--color-medical-primary-soft,#F0F9FF)] text-[#475569] hover:text-[#0F172A] border border-[var(--color-medical-primary-border,#BAE6FD)] transition-colors cursor-pointer"
             title={viewMode === 'chart' ? 'View as accessible data table' : 'View as chart'}
             aria-label="Toggle chart / table view"
           >
-            {viewMode === 'chart' ? <TableIcon className="w-4 h-4" /> : <ChartIcon className="w-4 h-4" />}
+            {viewMode === 'chart' ? (
+              <TableIcon className="w-4 h-4" aria-hidden="true" />
+            ) : (
+              <ChartIcon className="w-4 h-4" aria-hidden="true" />
+            )}
           </button>
         )}
       </div>
@@ -258,7 +269,7 @@ export const HistoricalMetricChart: React.FC<HistoricalMetricChartProps> = ({
 
           {/* Tooltip Hover Overlay */}
           {hoveredIdx !== null && data[hoveredIdx] && (
-            <div className="absolute top-1 right-2 px-3 py-1.5 rounded-xl bg-[#0F172A] border border-[#BAE6FD]/20 text-xs text-white shadow-lg pointer-events-none z-10">
+            <div className="absolute top-1 right-2 px-3 py-1.5 rounded-xl bg-[#0F172A] border border-[var(--color-medical-primary-border,#BAE6FD)]/20 text-xs text-white shadow-lg pointer-events-none z-10">
               <span className="font-mono text-[#38BDF8] font-bold">{data[hoveredIdx].label}:</span>{' '}
               <span className="font-bold">{data[hoveredIdx].displayValue || data[hoveredIdx].value} {unit}</span>
               {data[hoveredIdx].sublabel && (
@@ -269,7 +280,7 @@ export const HistoricalMetricChart: React.FC<HistoricalMetricChartProps> = ({
         </div>
       ) : (
         /* Accessible Table Alternative */
-        <div className="overflow-x-auto rounded-xl border border-[#BAE6FD]">
+        <div className="overflow-x-auto rounded-xl border border-[var(--color-medical-primary-border,#BAE6FD)]">
           <table className="w-full text-left text-xs text-[#0F172A]">
             <thead>
               <tr className="border-b border-[#E2E8F0] bg-[#F8FAFC] text-[10px] font-mono uppercase text-[#64748B] font-bold">
@@ -280,9 +291,9 @@ export const HistoricalMetricChart: React.FC<HistoricalMetricChartProps> = ({
             </thead>
             <tbody className="divide-y divide-[#E2E8F0]">
               {data.map((d, idx) => (
-                <tr key={idx} className="hover:bg-[#F0F9FF] transition-colors">
+                <tr key={idx} className="hover:bg-[var(--color-medical-primary-soft,#F0F9FF)] transition-colors">
                   <td className="py-2.5 px-3 font-mono font-bold text-[#0F172A]">{d.label}</td>
-                  <td className="py-2.5 px-3 font-bold text-[#0288D1]">
+                  <td className="py-2.5 px-3 font-bold text-[var(--color-medical-primary-hover,#0288D1)]">
                     {d.displayValue || d.value} {unit}
                   </td>
                   <td className="py-2.5 px-3 text-[#475569]">{d.sublabel || d.tooltip || '—'}</td>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, MoreVertical } from 'lucide-react';
+import { Calendar, DotsVertical } from '@untitledui/icons';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '../../../constants/routes';
 
@@ -22,9 +22,7 @@ export const CycleCompactCard: React.FC<CycleCompactCardProps> = ({
     <div className="p-5 sm:p-6 rounded-[24px] bg-white border border-[#E2E8F0] shadow-sm flex flex-col justify-between space-y-3 text-left select-none relative">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="p-2 rounded-xl bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD]">
-            <Calendar className="w-4 h-4" />
-          </span>
+          <Calendar className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
           <h3 className="text-sm font-bold font-display text-[#0F172A]">
             Cycle Rhythm
           </h3>
@@ -33,8 +31,9 @@ export const CycleCompactCard: React.FC<CycleCompactCardProps> = ({
           to={ROUTES.APP.CYCLE}
           className="text-[#64748B] hover:text-[#0288D1] p-1 rounded-lg transition-colors cursor-pointer"
           title="Open Cycle Tracker"
+          aria-label="Open Cycle Tracker"
         >
-          <MoreVertical className="w-4 h-4" />
+          <DotsVertical className="w-4 h-4" aria-hidden="true" />
         </Link>
       </div>
 

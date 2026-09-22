@@ -2,28 +2,26 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  CheckCircle2,
+  CheckCircle,
   AlertCircle,
   AlertTriangle,
   ChevronDown,
   ChevronUp,
   ArrowRight,
-  ShieldAlert,
-  FileText,
-  HeartPulse,
-  Stethoscope,
-  Droplets,
-  Utensils,
-  Activity,
-  Pill,
-  UserCheck,
-  Layers,
-  TrendingUp,
-  FileUp,
-  Sparkles,
+  ShieldTick,
+  File01,
+  ActivityHeart,
+  MedicalCross,
+  Droplets01,
+  Scales01,
+  MedicalCircle,
+  UserCheck01,
+  LayersThree01,
+  TrendUp01,
+  Upload01,
+  MessageChatCircle,
   Calendar,
-  Zap,
-} from 'lucide-react';
+} from '@untitledui/icons';
 import type { DashboardAction } from '../../../utils/dashboardActions';
 import type { HealthPathway } from '../../../types/onboarding';
 
@@ -32,39 +30,39 @@ interface TodayActionsCardProps {
   pathway: HealthPathway;
 }
 
-// Map string icon names to Lucide components
+// Map string icon names to UntitledUI components
 function renderActionIcon(iconName: string, className: string = 'w-4 h-4') {
   switch (iconName) {
     case 'ShieldAlert':
-      return <ShieldAlert className={className} />;
+      return <ShieldTick className={className} aria-hidden="true" />;
     case 'FileText':
-      return <FileText className={className} />;
+      return <File01 className={className} aria-hidden="true" />;
     case 'UserCheck':
-      return <UserCheck className={className} />;
+      return <UserCheck01 className={className} aria-hidden="true" />;
     case 'HeartPulse':
-      return <HeartPulse className={className} />;
+      return <ActivityHeart className={className} aria-hidden="true" />;
     case 'Stethoscope':
-      return <Stethoscope className={className} />;
+      return <MedicalCross className={className} aria-hidden="true" />;
     case 'Droplets':
-      return <Droplets className={className} />;
+      return <Droplets01 className={className} aria-hidden="true" />;
     case 'Utensils':
-      return <Utensils className={className} />;
+      return <Scales01 className={className} aria-hidden="true" />;
     case 'Activity':
-      return <Activity className={className} />;
+      return <ActivityHeart className={className} aria-hidden="true" />;
     case 'Pill':
-      return <Pill className={className} />;
+      return <MedicalCircle className={className} aria-hidden="true" />;
     case 'Layers':
-      return <Layers className={className} />;
+      return <LayersThree01 className={className} aria-hidden="true" />;
     case 'TrendingUp':
-      return <TrendingUp className={className} />;
+      return <TrendUp01 className={className} aria-hidden="true" />;
     case 'FileUp':
-      return <FileUp className={className} />;
+      return <Upload01 className={className} aria-hidden="true" />;
     case 'Sparkles':
-      return <Sparkles className={className} />;
+      return <MessageChatCircle className={className} aria-hidden="true" />;
     case 'Calendar':
-      return <Calendar className={className} />;
+      return <Calendar className={className} aria-hidden="true" />;
     default:
-      return <Zap className={className} />;
+      return <ActivityHeart className={className} aria-hidden="true" />;
   }
 }
 
@@ -86,14 +84,14 @@ export const TodayActionsCard: React.FC<TodayActionsCardProps> = ({
       case 'critical':
         return (
           <span className="inline-flex items-center gap-1 text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
-            <AlertCircle className="w-2.5 h-2.5" />
+            <AlertCircle className="w-2.5 h-2.5" aria-hidden="true" />
             CRITICAL
           </span>
         );
       case 'high':
         return (
           <span className="inline-flex items-center gap-1 text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-            <AlertTriangle className="w-2.5 h-2.5" />
+            <AlertTriangle className="w-2.5 h-2.5" aria-hidden="true" />
             HIGH
           </span>
         );
@@ -127,7 +125,7 @@ export const TodayActionsCard: React.FC<TodayActionsCardProps> = ({
             </span>
             {criticalCount > 0 && (
               <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
-                <AlertCircle className="w-2.5 h-2.5" />
+                <AlertCircle className="w-2.5 h-2.5" aria-hidden="true" />
                 {criticalCount} Urgent
               </span>
             )}
@@ -160,7 +158,7 @@ export const TodayActionsCard: React.FC<TodayActionsCardProps> = ({
       {actions.length === 0 ? (
         <div className="py-8 text-center space-y-2">
           <div className="w-12 h-12 mx-auto rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <CheckCircle2 className="w-6 h-6" />
+            <CheckCircle className="w-6 h-6" aria-hidden="true" />
           </div>
           <h4 className="text-sm font-bold font-display text-[#0F172A]">All Caught Up!</h4>
           <p className="text-xs text-[#64748B] max-w-sm mx-auto">
@@ -200,7 +198,7 @@ export const TodayActionsCard: React.FC<TodayActionsCardProps> = ({
                       }`}
                     >
                       {isDone ? (
-                        <CheckCircle2 className="w-4 h-4" />
+                        <CheckCircle className="w-4 h-4" aria-hidden="true" />
                       ) : (
                         renderActionIcon(action.iconName, 'w-4 h-4')
                       )}
@@ -235,7 +233,7 @@ export const TodayActionsCard: React.FC<TodayActionsCardProps> = ({
                         }`}
                       >
                         <span>{action.actionLabel}</span>
-                        <ArrowRight className="w-3 h-3" />
+                        <ArrowRight className="w-3 h-3" aria-hidden="true" />
                       </Link>
                     )}
                     {isDone && (
@@ -261,12 +259,12 @@ export const TodayActionsCard: React.FC<TodayActionsCardProps> = ({
             {showAll ? (
               <>
                 <span>Show Fewer Actions</span>
-                <ChevronUp className="w-3.5 h-3.5" />
+                <ChevronUp className="w-3.5 h-3.5" aria-hidden="true" />
               </>
             ) : (
               <>
                 <span>View All {actions.length} Priorities</span>
-                <ChevronDown className="w-3.5 h-3.5" />
+                <ChevronDown className="w-3.5 h-3.5" aria-hidden="true" />
               </>
             )}
           </button>

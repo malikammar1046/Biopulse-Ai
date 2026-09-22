@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Clock, Plus, Utensils, Sparkles } from 'lucide-react';
+import { XClose, Clock, Plus, Scales01, InfoCircle } from '@untitledui/icons';
 import type { PlannedMeal } from '../../types/diet';
 
 interface MealDetailModalProps {
@@ -31,7 +31,7 @@ export const MealDetailModal: React.FC<MealDetailModalProps> = ({
           <div className="p-5 sm:p-6 pb-4 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F0F9FF]">
             <div className="flex items-center gap-2.5">
               <span className="p-2 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
-                <Utensils className="w-5 h-5" />
+                <Scales01 className="w-5 h-5" aria-hidden="true" />
               </span>
               <div>
                 <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#0288D1] block">
@@ -47,8 +47,9 @@ export const MealDetailModal: React.FC<MealDetailModalProps> = ({
               type="button"
               onClick={onClose}
               className="p-2 rounded-xl text-[#64748B] hover:text-[#0F172A] hover:bg-[#E0F2FE] transition-all cursor-pointer"
+              aria-label="Close dialog"
             >
-              <X className="w-5 h-5" />
+              <XClose className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
 
@@ -77,7 +78,7 @@ export const MealDetailModal: React.FC<MealDetailModalProps> = ({
             {/* Why this was suggested */}
             <div className="p-4 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] space-y-1">
               <span className="text-[10px] font-mono font-bold uppercase text-[#0288D1] flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5" />
+                <InfoCircle className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>Why this was suggested</span>
               </span>
               <p className="text-xs text-[#475569] leading-relaxed">
@@ -92,7 +93,7 @@ export const MealDetailModal: React.FC<MealDetailModalProps> = ({
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {meal.ingredients.map((ing, idx) => (
-                  <div
+                   <div
                     key={idx}
                     className="p-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs text-[#0F172A] flex items-center gap-2"
                   >
@@ -110,7 +111,7 @@ export const MealDetailModal: React.FC<MealDetailModalProps> = ({
                   Simple Preparation
                 </span>
                 <span className="text-xs font-mono text-[#0288D1] flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5" />
+                  <Clock className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>~{meal.prepTimeMinutes} mins</span>
                 </span>
               </div>
@@ -152,7 +153,7 @@ export const MealDetailModal: React.FC<MealDetailModalProps> = ({
               }}
               className="px-5 py-2 rounded-xl bg-[#0288D1] text-white text-xs font-semibold hover:bg-[#0277BD] shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Log This Meal</span>
             </button>
           </div>

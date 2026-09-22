@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, FileDown, CheckCircle2 } from 'lucide-react';
+import { FileCheck01, FileDownload01, CheckCircle } from '@untitledui/icons';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { resolvePathway, type HealthPathway } from '../../types/onboarding';
 
@@ -32,10 +32,10 @@ export const WeeklyHealthSummary: React.FC<WeeklyHealthSummaryProps> = ({
   };
 
   const title = isFemale
-    ? 'Your Week in OvaSense'
+    ? 'Your Week in BioPulse AI'
     : isMale
-    ? 'Your Week in BIOPulse AI'
-    : 'Your Week in BIOPulse AI';
+    ? 'Your Week in BioPulse AI'
+    : 'Your Week in BioPulse AI';
 
   const subtitle = isFemale
     ? 'A continuous, longitudinal summary ready to share with your gynecologist or endocrinologist.'
@@ -49,7 +49,7 @@ export const WeeklyHealthSummary: React.FC<WeeklyHealthSummaryProps> = ({
       <div className="relative z-10 space-y-4 max-w-xl">
         <div className="space-y-1">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E0F2FE] border border-[#BAE6FD] text-xs font-mono font-bold text-[#0288D1] mb-1">
-            <Sparkles className="w-3.5 h-3.5" />
+            <FileCheck01 className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Executive Health Brief</span>
           </div>
           <h3 className="text-xl sm:text-2xl font-bold font-display text-[#0F172A]">
@@ -113,12 +113,12 @@ export const WeeklyHealthSummary: React.FC<WeeklyHealthSummaryProps> = ({
             </>
           ) : downloadSuccess ? (
             <>
-              <CheckCircle2 className="w-4 h-4 text-white" />
+              <CheckCircle className="w-4 h-4 text-white" aria-hidden="true" />
               <span>Summary Downloaded ✓</span>
             </>
           ) : (
             <>
-              <FileDown className="w-4 h-4" />
+              <FileDownload01 className="w-4 h-4" aria-hidden="true" />
               <span>Export Clinician Summary PDF</span>
             </>
           )}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, HelpCircle, Layers } from 'lucide-react';
+import { CheckCircle, HelpCircle, LayersThree01 } from '@untitledui/icons';
 import type { InformationGapReport } from '../../types/adaptiveScreening';
 
 interface InformationGapAnalysisCardProps {
@@ -15,7 +15,7 @@ export const InformationGapAnalysisCard: React.FC<InformationGapAnalysisCardProp
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#E2E8F0] pb-4">
         <div>
           <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-[#E0F2FE] text-[#01579B] text-xs font-mono font-bold mb-1">
-            <Layers className="w-3.5 h-3.5 text-[#0288D1]" />
+            <LayersThree01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
             <span>Information Architecture</span>
           </div>
           <h3 className="text-xl sm:text-2xl font-bold font-display text-[#01579B]">
@@ -43,7 +43,7 @@ export const InformationGapAnalysisCard: React.FC<InformationGapAnalysisCardProp
         <div className="p-4 sm:p-5 rounded-2xl bg-[#F0FDF4] border border-[#BBF7D0] space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#047857] flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-[#047857]" />
+              <CheckCircle className="w-4 h-4 text-[#047857]" aria-hidden="true" />
               <span>Information Available ({gaps.availableItems.length})</span>
             </span>
           </div>
@@ -117,7 +117,7 @@ export const InformationGapAnalysisCard: React.FC<InformationGapAnalysisCardProp
 
       {/* Reassurance text */}
       <div className="text-xs text-[#475569] leading-relaxed bg-[#F8FAFC] p-3.5 rounded-xl border border-[#BAE6FD]/80 flex items-start gap-2.5">
-        <HelpCircle className="w-4 h-4 text-[#0288D1] shrink-0 mt-0.5" />
+        <HelpCircle className="w-4 h-4 text-[#0288D1] shrink-0 mt-0.5" aria-hidden="true" />
         <p>
           <strong className="text-[#01579B]">Unknown ≠ Normal:</strong> Missing fields are treated strictly as unknown rather than assumed healthy or unhealthy. When you visit a healthcare professional or complete routine lab work, newly verified tests can be uploaded to enrich your profile.
         </p>

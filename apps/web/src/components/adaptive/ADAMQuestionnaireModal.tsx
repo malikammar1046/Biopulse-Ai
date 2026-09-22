@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle2, ShieldCheck, ClipboardCheck } from 'lucide-react';
+import { XClose, CheckCircle, ShieldTick, ClipboardCheck } from '@untitledui/icons';
 import type { ADAMQuestionnaireState } from '../../types/adaptiveScreening';
 import { getInitialADAMQuestions } from '../../services/adaptiveProfileService';
 
@@ -80,7 +80,7 @@ export const ADAMQuestionnaireModal: React.FC<ADAMQuestionnaireModalProps> = ({
           <div className="p-6 border-b border-[#E2E8F0] flex items-start justify-between gap-4 bg-white">
             <div className="space-y-1">
               <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-[#E0F2FE] border border-[#BAE6FD] text-xs font-mono text-[#01579B] font-bold">
-                <ClipboardCheck className="w-3.5 h-3.5 text-[#0288D1]" />
+                <ClipboardCheck className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
                 <span>Standardized Screening Instrument</span>
               </div>
               <h3 className="text-xl font-bold font-display text-[#01579B]">
@@ -97,13 +97,13 @@ export const ADAMQuestionnaireModal: React.FC<ADAMQuestionnaireModalProps> = ({
               className="w-8 h-8 rounded-full bg-[#F8FAFC] hover:bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center text-[#475569] hover:text-[#01579B] transition-colors cursor-pointer shrink-0"
               aria-label="Close modal"
             >
-              <X className="w-4 h-4" />
+              <XClose className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
 
           {/* ── Clinical Safety Notice ──────────────────────────────────── */}
           <div className="px-6 py-2.5 bg-[#F0F9FF] border-b border-[#BAE6FD] text-xs text-[#0369A1] flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-[#0284C7] shrink-0" />
+            <ShieldTick className="w-4 h-4 text-[#0284C7] shrink-0" aria-hidden="true" />
             <span>
               <strong>Clinical Guardrail:</strong> This questionnaire is a self-reported screening instrument. It does not provide or replace a medical diagnosis.
             </span>
@@ -179,7 +179,7 @@ export const ADAMQuestionnaireModal: React.FC<ADAMQuestionnaireModalProps> = ({
                 onClick={handleComplete}
                 className="px-5 py-2.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold font-sans transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
               >
-                <CheckCircle2 className="w-4 h-4" />
+                <CheckCircle className="w-4 h-4" aria-hidden="true" />
                 <span>Save to Tier 1 Profile</span>
               </button>
             </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Info } from 'lucide-react';
+import { AlertCircle } from '@untitledui/icons';
 
 export interface AppleAuthButtonProps {
   onUnavailableNotice?: () => void;
@@ -59,7 +59,7 @@ export const AppleAuthButton: React.FC<AppleAuthButtonProps> = ({ onUnavailableN
             exit={{ opacity: 0, y: -6 }}
             className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-800 flex items-center gap-2"
           >
-            <Info className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" aria-hidden="true" />
             <span>Apple sign-in is coming soon. Please continue with Google or your email.</span>
           </motion.div>
         )}

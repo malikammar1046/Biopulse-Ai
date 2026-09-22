@@ -1,6 +1,7 @@
 import React from 'react';
-import { Droplets, Plus, Minus } from 'lucide-react';
+import { Droplets01, Plus, Minus } from '@untitledui/icons';
 import type { WaterLogEntry } from '../../types/diet';
+import { useUserHealth } from '../../context/UserHealthContext';
 
 interface WaterTrackerWidgetProps {
   waterLog: WaterLogEntry;
@@ -13,6 +14,9 @@ export const WaterTrackerWidget: React.FC<WaterTrackerWidgetProps> = ({
   onIncrement,
   onDecrement,
 }) => {
+  const { userProfile } = useUserHealth();
+  const isFemale = userProfile?.pathway !== 'male' && userProfile?.gender !== 'male';
+
   const current = waterLog.glasses;
   const target = waterLog.targetGlasses || 8;
   const percentage = Math.min(100, Math.round((current / target) * 100));
@@ -20,13 +24,11 @@ export const WaterTrackerWidget: React.FC<WaterTrackerWidgetProps> = ({
   const targetLiters = (target * 0.25).toFixed(1);
 
   return (
-    <div className="p-6 sm:p-7 rounded-2xl bg-white border border-[#BAE6FD] shadow-none select-none text-left space-y-5">
+    <div className="p-6 sm:p-7 rounded-2xl bg-white border border-[#EAECF0] shadow-xs select-none text-left space-y-5">
       {/* Top Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="p-1.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
-            <Droplets className="w-4 h-4" />
-          </span>
+        <div className="flex items-center gap-2.5">
+          <Droplets01 className={`w-5 h-5 shrink-0 ${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'}`} aria-hidden="true" />
           <div>
             <h3 className="text-base font-bold text-[#0F172A]">
               Hydration & Water
@@ -37,7 +39,9 @@ export const WaterTrackerWidget: React.FC<WaterTrackerWidgetProps> = ({
           </div>
         </div>
 
-        <span className="text-xs font-mono font-bold text-[#01579B] bg-[#E0F2FE] px-3 py-1 rounded-full">
+        <span className={`text-xs font-mono font-bold px-3 py-1 rounded-full ${
+          isFemale ? 'text-[#DC326C] bg-[#FDE6EF]' : 'text-[#01579B] bg-[#E0F2FE]'
+        }`}>
           {percentage}% Today
         </span>
       </div>
@@ -81,7 +85,7 @@ export const WaterTrackerWidget: React.FC<WaterTrackerWidgetProps> = ({
                   : 'bg-[#F8FAFC] text-[#94A3B8] border-[#E2E8F0]'
               }`}
             >
-              <Droplets className={`w-4 h-4 ${isFilled ? 'fill-white text-white' : ''}`} />
+              <Droplets01 className={`w-4 h-4 ${isFilled ? 'fill-white text-white' : ''}`} aria-hidden="true" />
             </div>
           );
         })}
@@ -93,18 +97,20 @@ export const WaterTrackerWidget: React.FC<WaterTrackerWidgetProps> = ({
           type="button"
           onClick={onDecrement}
           disabled={current <= 0}
-          className="flex-1 py-2 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] disabled:opacity-40 text-xs font-semibold text-[#64748B] flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:cursor-not-allowed"
+          className="flex-1 h-9 rounded-lg border border-[#EAECF0] bg-white hover:bg-[#F8FAFC] disabled:opacity-40 text-xs font-medium text-[#475569] flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:cursor-not-allowed"
         >
-          <Minus className="w-3.5 h-3.5" />
+          <Minus className="w-3.5 h-3.5" aria-hidden="true" />
           <span>-1 Glass</span>
         </button>
 
         <button
           type="button"
           onClick={onIncrement}
-          className="flex-1 py-2 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm"
+          className={`flex-1 h-9 rounded-lg text-white text-xs font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs ${
+            isFemale ? 'bg-[#F43F7D] hover:bg-[#DC326C]' : 'bg-[#0288D1] hover:bg-[#0277BD]'
+          }`}
         >
-          <Plus className="w-3.5 h-3.5 text-[#E0F2FE]" />
+          <Plus className="w-3.5 h-3.5" aria-hidden="true" />
           <span>+1 Glass</span>
         </button>
       </div>

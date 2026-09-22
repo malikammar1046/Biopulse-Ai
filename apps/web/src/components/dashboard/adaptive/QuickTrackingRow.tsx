@@ -2,15 +2,14 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  HeartPulse,
+  ActivityHeart,
   Calendar,
-  Utensils,
-  Droplets,
-  Activity,
-  Pill,
+  Scales01,
+  Droplets01,
+  LineChartUp01,
+  MedicalCircle,
   Plus,
-  Zap,
-} from 'lucide-react';
+} from '@untitledui/icons';
 import type { HealthPathway } from '../../../types/onboarding';
 import type { NutritionData, FitnessData, HealthSnapshotMetrics } from '../../../types/dashboard';
 import { ROUTES } from '../../../constants/routes';
@@ -69,7 +68,7 @@ export const QuickTrackingRow: React.FC<QuickTrackingRowProps> = ({
     id: 'symptoms',
     label: 'Log Symptoms',
     metric: `${snapshotMetrics.symptomsCountToday || 0} logged`,
-    icon: <HeartPulse className="w-4 h-4 text-rose-600" />,
+    icon: <ActivityHeart className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />,
     route: ROUTES.APP.SYMPTOMS,
   });
 
@@ -79,7 +78,7 @@ export const QuickTrackingRow: React.FC<QuickTrackingRowProps> = ({
       id: 'cycle',
       label: 'Cycle Tracking',
       metric: snapshotMetrics.cycleDay ? `Day ${snapshotMetrics.cycleDay} • ${snapshotMetrics.phaseName}` : 'Log Period',
-      icon: <Calendar className="w-4 h-4 text-[#0288D1]" />,
+      icon: <Calendar className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />,
       route: ROUTES.APP.CYCLE,
     });
   }
@@ -90,7 +89,7 @@ export const QuickTrackingRow: React.FC<QuickTrackingRowProps> = ({
       id: 'vitality',
       label: 'Vitality & Energy',
       metric: 'Log daily level',
-      icon: <Zap className="w-4 h-4 text-amber-600" />,
+      icon: <ActivityHeart className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />,
       route: ROUTES.APP.SYMPTOMS,
     });
   }
@@ -100,7 +99,7 @@ export const QuickTrackingRow: React.FC<QuickTrackingRowProps> = ({
     id: 'diet',
     label: 'Nutrition & Food',
     metric: nutrition.caloriesLogged > 0 ? `${nutrition.caloriesLogged} kcal` : 'Log Meals',
-    icon: <Utensils className="w-4 h-4 text-emerald-600" />,
+    icon: <Scales01 className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />,
     route: ROUTES.APP.DIET,
   });
 
@@ -109,7 +108,7 @@ export const QuickTrackingRow: React.FC<QuickTrackingRowProps> = ({
     id: 'water',
     label: 'Hydration',
     metric: `${nutrition.waterIntakeLiters || 0} / ${nutrition.waterTargetLiters || 2.5} L`,
-    icon: <Droplets className="w-4 h-4 text-sky-600" />,
+    icon: <Droplets01 className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />,
     route: ROUTES.APP.DIET,
   });
 
@@ -118,7 +117,7 @@ export const QuickTrackingRow: React.FC<QuickTrackingRowProps> = ({
     id: 'fitness',
     label: pathway === 'male' ? 'Strength & Activity' : 'Daily Movement',
     metric: `${fitness.activeMinutesToday || 0} min active`,
-    icon: <Activity className="w-4 h-4 text-orange-600" />,
+    icon: <LineChartUp01 className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />,
     route: ROUTES.APP.FITNESS,
   });
 
@@ -128,7 +127,7 @@ export const QuickTrackingRow: React.FC<QuickTrackingRowProps> = ({
       id: 'medications',
       label: 'Medications & TRT',
       metric: 'Manage schedule',
-      icon: <Pill className="w-4 h-4 text-indigo-600" />,
+      icon: <MedicalCircle className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />,
       route: ROUTES.APP.MEDICATIONS,
     });
   }
@@ -166,7 +165,7 @@ export const QuickTrackingRow: React.FC<QuickTrackingRowProps> = ({
                   {item.icon}
                 </div>
                 <div className="w-6 h-6 rounded-lg bg-[#F8FAFC] text-[#64748B] group-hover:text-[#0288D1] group-hover:bg-[#E0F2FE] flex items-center justify-center transition-colors">
-                  <Plus className="w-3.5 h-3.5" />
+                  <Plus className="w-3.5 h-3.5" aria-hidden="true" />
                 </div>
               </div>
 

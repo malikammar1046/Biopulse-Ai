@@ -86,6 +86,7 @@ export const FitnessPage: React.FC = () => {
         phaseName={isMale ? 'Vitality & Stamina' : snapshotMetrics.phaseName}
         routines={suggestedFitnessRoutines}
         onQuickComplete={handleQuickCompleteRoutine}
+        isMale={isMale}
       />
 
       {/* ── 3. WEEKLY MOVEMENT SUMMARY & RECENT LOGS ── */}
@@ -94,6 +95,7 @@ export const FitnessPage: React.FC = () => {
           <WeeklyMovementWidget
             stats={weeklyFitnessStats}
             todayMinutes={todayFitnessMinutes}
+            isMale={isMale}
           />
         </div>
 
@@ -103,6 +105,7 @@ export const FitnessPage: React.FC = () => {
             onOpenLogModal={handleOpenNewLog}
             onEditActivity={handleEditActivity}
             onDeleteActivity={deleteFitnessActivity}
+            isMale={isMale}
           />
         </div>
       </div>
@@ -116,6 +119,7 @@ export const FitnessPage: React.FC = () => {
         initialDurationMinutes={initialDuration}
         onClose={() => setIsLogModalOpen(false)}
         onSave={handleSaveActivity}
+        isMale={isMale}
       />
     </motion.div>
   );

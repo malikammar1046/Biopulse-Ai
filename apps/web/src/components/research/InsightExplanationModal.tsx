@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import {
-  X,
-  Brain,
-  ShieldCheck,
-  CheckCircle2,
-  Code2,
-} from 'lucide-react';
+  XClose,
+  BarChart01,
+  ShieldTick,
+  CheckCircle,
+  Code01,
+} from '@untitledui/icons';
 import type { ExplainableInsight } from '../../types/researchIntelligence';
 
 interface InsightExplanationModalProps {
@@ -58,7 +58,7 @@ export const InsightExplanationModal: React.FC<InsightExplanationModalProps> = (
         <div className="p-5 sm:p-6 border-b border-[#E2E8F0] flex items-center justify-between gap-4 relative z-10 bg-[#F8FAFC]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center text-[#0288D1] shadow-xs">
-              <Brain className="w-5 h-5" />
+              <BarChart01 className="w-5 h-5" aria-hidden="true" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -81,7 +81,7 @@ export const InsightExplanationModal: React.FC<InsightExplanationModalProps> = (
             className="w-9 h-9 rounded-xl bg-white hover:bg-[#F1F5F9] flex items-center justify-center text-[#64748B] hover:text-[#0F172A] border border-[#E2E8F0] transition-colors cursor-pointer"
             aria-label="Close dialog"
           >
-            <X className="w-5 h-5" />
+            <XClose className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -108,13 +108,13 @@ export const InsightExplanationModal: React.FC<InsightExplanationModalProps> = (
                   : 'text-[#64748B] hover:text-[#0F172A]'
               }`}
             >
-              <Code2 className="w-3.5 h-3.5" />
+              <Code01 className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Research View (Technical)</span>
             </button>
           </div>
 
           <div className="hidden sm:flex items-center gap-1.5 text-xs text-emerald-700 font-mono font-bold">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <ShieldTick className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
             <span>Non-Diagnostic</span>
           </div>
         </div>
@@ -165,7 +165,7 @@ export const InsightExplanationModal: React.FC<InsightExplanationModalProps> = (
                       </div>
                       <p className="text-[11px] text-[#64748B]">{ds.description}</p>
                       <div className="pt-1 flex items-center gap-1 text-[10px] font-mono text-emerald-700">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <CheckCircle className="w-3 h-3 text-emerald-600" />
                         <span>Trust level: {ds.trustLevel.replace('_', ' ')}</span>
                       </div>
                     </div>

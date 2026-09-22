@@ -1,18 +1,19 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Sparkles,
-  Send,
-  Loader2,
-  Stethoscope,
-  ShieldCheck,
-  Database,
-  X,
+  MessageChatCircle,
+  Send01,
+  RefreshCw01,
+  MedicalCircle,
+  ShieldTick,
+  Database01,
+  XClose,
   Calendar,
   Heart,
-  FileText,
-  Trash2,
-} from 'lucide-react';
+  File01,
+  Trash01,
+  Sliders01,
+} from '@untitledui/icons';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { sendChatMessage } from '../../services/intelligenceService';
 import { DigitalTwinService } from '../../services/digitalTwinService';
@@ -40,7 +41,7 @@ const FEMALE_SUGGESTED_QUESTIONS = [
   },
   {
     category: 'Lab Reports & Biomarkers',
-    icon: FileText,
+    icon: File01,
     prompts: [
       'Can you explain my verified lab results in plain language?',
       'What is the significance of the LH to FSH ratio?',
@@ -58,7 +59,7 @@ const FEMALE_SUGGESTED_QUESTIONS = [
   },
   {
     category: 'Doctor Discussion',
-    icon: Stethoscope,
+    icon: MedicalCircle,
     prompts: [
       'What key questions should I prepare for my next gynecologist appointment?',
       'How can I discuss my screening logs with my doctor?',
@@ -78,7 +79,7 @@ const MALE_SUGGESTED_QUESTIONS = [
   },
   {
     category: 'Lab Reports & Biomarkers',
-    icon: FileText,
+    icon: File01,
     prompts: [
       'Can you explain my verified morning lab results in plain language?',
       'What is the difference between total and free testosterone?',
@@ -96,7 +97,7 @@ const MALE_SUGGESTED_QUESTIONS = [
   },
   {
     category: 'Doctor Discussion',
-    icon: Stethoscope,
+    icon: MedicalCircle,
     prompts: [
       'What key questions should I prepare for my endocrinologist or urologist?',
       'How can I discuss my ADAM symptom answers with my doctor?',
@@ -121,7 +122,6 @@ export const ChatPage: React.FC = () => {
 
   const pathway = resolvePathway(userProfile.gender, userProfile.pathway);
   const aiBrandName = 'BioPulse AI Companion';
-
 
   const conversationId = useRef<string>(
     typeof crypto !== 'undefined' && crypto.randomUUID
@@ -218,7 +218,6 @@ export const ChatPage: React.FC = () => {
         { ...snapshotMetrics, pathway }
       );
 
-
       if (resp && resp.success) {
         if (resp.conversation_id) {
           conversationId.current = resp.conversation_id;
@@ -269,107 +268,56 @@ export const ChatPage: React.FC = () => {
     setMessages([initialGreeting]);
   };
 
-  const isFemale = pathway === 'female';
-
   return (
     <div className="max-w-6xl mx-auto h-[calc(100vh-6.5rem)] flex flex-col space-y-4 pb-6 select-none text-left">
       {/* ── Top Header Bar ── */}
-      {isFemale ? (
-        <div className="p-4 sm:p-5 rounded-[24px] bg-white border border-[#EAECF0] text-[#111318] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#FBE7F0] flex items-center justify-center text-[#E84A8A] shadow-2xs">
-              <Sparkles className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-xl font-bold font-display text-[#111318]">
-                  BioPulse AI Companion
-                </h1>
-                <span className="px-2 py-0.5 rounded-full bg-[#16A36A]/10 border border-[#16A36A]/20 text-[10px] font-mono text-[#16A36A] font-bold">
-                  Connected
-                </span>
-              </div>
-              <p className="text-xs text-[#667085] font-sans">
-                Ask questions about your screening, reports and reproductive health information.
-              </p>
-            </div>
+      <div className="p-4 sm:p-5 rounded-[24px] bg-white border border-[#E2E8F0] text-[#0F172A] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-[#E0F2FE] flex items-center justify-center text-[#0288D1] shadow-2xs">
+            <MessageChatCircle className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
           </div>
-
-          <div className="flex items-center gap-2 self-end sm:self-auto">
-            {/* Digital Twin Context Inspector Button */}
-            <button
-              type="button"
-              onClick={() => setIsContextDrawerOpen(true)}
-              className="px-3 py-2 rounded-xl bg-[#FAFAFC] hover:bg-[#F2F4F7] border border-[#EAECF0] text-xs font-mono font-semibold text-[#344054] flex items-center gap-1.5 transition-all cursor-pointer active:scale-[0.98]"
-            >
-              <Database className="w-3.5 h-3.5 text-[#E84A8A]" />
-              <span>Inspect Shared Health Context</span>
-            </button>
-
-            {/* Reset Conversation */}
-            <button
-              type="button"
-              onClick={clearChatHistory}
-              title="Reset Conversation"
-              className="p-2 rounded-xl border border-[#EAECF0] hover:bg-[#F2F4F7] text-[#667085] hover:text-[#DC2626] transition-all cursor-pointer active:scale-[0.98]"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg sm:text-xl font-bold font-display text-[#0F172A]">
+                BioPulse AI Companion
+              </h1>
+              <span className="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-[10px] font-mono text-emerald-700 font-bold">
+                Connected
+              </span>
+            </div>
+            <p className="text-xs text-[#64748B] font-sans">
+              Clinical health companion & non-diagnostic literacy reasoning
+            </p>
           </div>
         </div>
-      ) : (
-        <div className="p-4 sm:p-5 rounded-[28px] bg-[#01579B] border border-[#0288D1]/30 text-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#0288D1] flex items-center justify-center text-white shadow-sm">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-xl font-extrabold font-display text-white">
-                  {aiBrandName}
-                </h1>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-[10px] font-mono text-emerald-300 font-bold">
-                  Connected
-                </span>
-              </div>
-              <p className="text-xs text-[#E0F2FE] font-sans">
-                Clinical health companion & non-diagnostic literacy reasoning
-              </p>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-2 self-end sm:self-auto">
-            {/* Digital Twin Context Inspector Button */}
-            <button
-              type="button"
-              onClick={() => setIsContextDrawerOpen(true)}
-              className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-mono font-bold text-white flex items-center gap-1.5 transition-all cursor-pointer"
-            >
-              <Database className="w-3.5 h-3.5 text-[#38BDF8]" />
-              <span>Inspect Shared Health Context</span>
-            </button>
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          {/* Digital Twin Context Inspector Button */}
+          <button
+            type="button"
+            onClick={() => setIsContextDrawerOpen(true)}
+            className="px-3 py-2 rounded-xl bg-[#F8FAFC] hover:bg-[#F1F5F9] border border-[#E2E8F0] text-xs font-mono font-semibold text-[#334155] flex items-center gap-1.5 transition-all cursor-pointer active:scale-[0.98]"
+          >
+            <Database01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
+            <span>Inspect Shared Health Context</span>
+          </button>
 
-            {/* Reset Conversation */}
-            <button
-              type="button"
-              onClick={clearChatHistory}
-              title="Reset Conversation"
-              className="p-2 rounded-xl border border-white/20 hover:bg-white/20 text-white transition-all cursor-pointer"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
+          {/* Reset Conversation */}
+          <button
+            type="button"
+            onClick={clearChatHistory}
+            title="Reset Conversation"
+            className="p-2 rounded-xl border border-[#E2E8F0] hover:bg-[#F1F5F9] text-[#64748B] hover:text-[#DC2626] transition-all cursor-pointer active:scale-[0.98]"
+          >
+            <Trash01 className="w-4 h-4" aria-hidden="true" />
+          </button>
         </div>
-      )}
+      </div>
 
       {/* ── Main Chat Area ── */}
-      <div className={`flex-1 flex flex-col rounded-[24px] bg-white border shadow-xs overflow-hidden relative ${
-        isFemale ? 'border-[#EAECF0]' : 'border-[#BAE6FD]'
-      }`}>
+      <div className="flex-1 flex flex-col rounded-[24px] bg-white border border-[#E2E8F0] shadow-xs overflow-hidden relative">
         {/* Messages Stream */}
-        <div className={`flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 ${
-          isFemale ? 'bg-[#FAFAFC]' : 'bg-[#F8FAFC]'
-        }`}>
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-[#F8FAFC]">
           {messages.map((msg) => (
             <div
               key={msg.id}
@@ -378,34 +326,24 @@ export const ChatPage: React.FC = () => {
               }`}
             >
               {msg.sender === 'user' ? (
-                <div className={`max-w-[85%] sm:max-w-[75%] rounded-2xl rounded-tr-xs p-3.5 sm:p-4 shadow-2xs space-y-1 ${
-                  isFemale
-                    ? 'bg-[#FBE7F0] text-[#A92D61] border border-[#FCE1ED]'
-                    : 'bg-[#0288D1] text-white shadow-sm'
-                }`}>
-                  <p className={`whitespace-pre-wrap font-sans text-xs sm:text-sm leading-relaxed ${
-                    isFemale ? 'text-[#111318]' : 'text-white'
-                  }`}>{msg.text}</p>
-                  <div className={`flex items-center justify-end text-[10px] font-mono pt-0.5 ${
-                    isFemale ? 'text-[#A92D61]/70' : 'text-[#E0F2FE]'
-                  }`}>
+                <div className="max-w-[85%] sm:max-w-[75%] rounded-2xl rounded-tr-xs p-3.5 sm:p-4 bg-[#0288D1] text-white shadow-xs space-y-1">
+                  <p className="whitespace-pre-wrap font-sans text-xs sm:text-sm leading-relaxed text-white">
+                    {msg.text}
+                  </p>
+                  <div className="flex items-center justify-end text-[10px] font-mono text-[#E0F2FE] pt-0.5">
                     <span>{msg.timestamp}</span>
                   </div>
                 </div>
               ) : (
                 <div className="flex items-start gap-2.5 max-w-[88%] sm:max-w-[80%]">
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center shadow-2xs shrink-0 mt-0.5 ${
-                    isFemale ? 'bg-[#FBE7F0] text-[#E84A8A]' : 'bg-[#0288D1] text-white'
-                  }`}>
-                    <Sparkles className="w-4 h-4" />
+                  <div className="w-8 h-8 rounded-xl bg-[#E0F2FE] text-[#0288D1] flex items-center justify-center shadow-2xs shrink-0 mt-0.5">
+                    <MessageChatCircle className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
                   </div>
-                  <div className={`rounded-2xl rounded-tl-xs p-4 sm:p-5 bg-white border shadow-xs space-y-2 ${
-                    isFemale ? 'border-[#EAECF0] text-[#111318]' : 'border-[#BAE6FD] text-[#0F172A]'
-                  }`}>
+                  <div className="rounded-2xl rounded-tl-xs p-4 sm:p-5 bg-white border border-[#E2E8F0] shadow-xs space-y-2 text-[#0F172A]">
                     {/* Clinician Referral Alert Flag */}
                     {msg.needsClinician && (
                       <div className="p-2.5 rounded-xl bg-[#FEF2F2] border border-[#FECACA] text-xs text-[#991B1B] flex items-start gap-2 font-sans">
-                        <Stethoscope className="w-4 h-4 text-[#DC2626] shrink-0 mt-0.5" />
+                        <MedicalCircle className="w-4 h-4 text-[#DC2626] shrink-0 mt-0.5" aria-hidden="true" />
                         <span>
                           <strong>Clinical Evaluation Advised:</strong> Please consult your licensed healthcare provider for individualized care.
                         </span>
@@ -413,11 +351,11 @@ export const ChatPage: React.FC = () => {
                     )}
 
                     {/* Message text with whitespace preservation */}
-                    <p className={`whitespace-pre-wrap font-sans text-xs sm:text-sm leading-relaxed ${
-                      isFemale ? 'text-[#111318]' : 'text-[#0F172A]'
-                    }`}>{msg.text}</p>
+                    <p className="whitespace-pre-wrap font-sans text-xs sm:text-sm leading-relaxed text-[#0F172A]">
+                      {msg.text}
+                    </p>
 
-                    <div className="flex items-center justify-end text-[10px] font-mono text-[#98A2B3] pt-1">
+                    <div className="flex items-center justify-end text-[10px] font-mono text-[#94A3B8] pt-1">
                       <span>{msg.timestamp}</span>
                     </div>
                   </div>
@@ -429,15 +367,11 @@ export const ChatPage: React.FC = () => {
           {/* Shimmering Typing Indicator */}
           {isTyping && (
             <div className="flex items-start gap-2.5">
-              <div className={`w-8 h-8 rounded-xl flex items-center justify-center shadow-2xs shrink-0 mt-0.5 ${
-                isFemale ? 'bg-[#FBE7F0] text-[#E84A8A]' : 'bg-[#0288D1] text-white'
-              }`}>
-                <Sparkles className="w-4 h-4" />
+              <div className="w-8 h-8 rounded-xl bg-[#E0F2FE] text-[#0288D1] flex items-center justify-center shadow-2xs shrink-0 mt-0.5">
+                <MessageChatCircle className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
               </div>
-              <div className={`rounded-2xl rounded-tl-xs p-3.5 sm:p-4 bg-white border shadow-xs flex items-center gap-2.5 ${
-                isFemale ? 'border-[#EAECF0] text-[#667085]' : 'border-[#BAE6FD] text-[#475569]'
-              }`}>
-                <Loader2 className={`w-4 h-4 animate-spin ${isFemale ? 'text-[#E84A8A]' : 'text-[#0288D1]'}`} />
+              <div className="rounded-2xl rounded-tl-xs p-3.5 sm:p-4 bg-white border border-[#E2E8F0] shadow-xs flex items-center gap-2.5 text-[#475569]">
+                <RefreshCw01 className="w-4 h-4 animate-spin text-[#0288D1]" aria-hidden="true" />
                 <span className="text-xs font-sans">
                   {aiBrandName} is consulting your recorded health observations...
                 </span>
@@ -448,13 +382,9 @@ export const ChatPage: React.FC = () => {
         </div>
 
         {/* ── Suggested Questions Carousel / Grid ── */}
-        <div className={`border-t p-3 sm:p-4 bg-white ${
-          isFemale ? 'border-[#EAECF0]' : 'border-[#BAE6FD]'
-        }`}>
-          <div className={`text-[11px] font-mono uppercase font-bold mb-2 flex items-center gap-1.5 ${
-            isFemale ? 'text-[#A92D61]' : 'text-[#0288D1]'
-          }`}>
-            <Sparkles className="w-3.5 h-3.5" />
+        <div className="border-t border-[#E2E8F0] p-3 sm:p-4 bg-white">
+          <div className="text-[11px] font-mono uppercase font-bold mb-2 flex items-center gap-1.5 text-[#0288D1]">
+            <Sliders01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
             <span>Suggested Inquiries</span>
           </div>
 
@@ -464,11 +394,7 @@ export const ChatPage: React.FC = () => {
                 key={idx}
                 type="button"
                 onClick={() => handleSendMessage(prompt)}
-                className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer active:scale-[0.98] ${
-                  isFemale
-                    ? 'bg-[#FFF5F9] hover:bg-[#FBE7F0] border border-[#FCE1ED] text-[#A92D61]'
-                    : 'bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] text-[#0369A1] shadow-2xs hover:shadow-xs'
-                }`}
+                className="shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer active:scale-[0.98] bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] text-[#0288D1] shadow-2xs hover:shadow-xs"
               >
                 {prompt}
               </button>
@@ -477,9 +403,7 @@ export const ChatPage: React.FC = () => {
         </div>
 
         {/* ── Input Bar ── */}
-        <div className={`p-3 sm:p-4 border-t bg-white ${
-          isFemale ? 'border-[#EAECF0]' : 'border-[#BAE6FD]'
-        }`}>
+        <div className="p-3 sm:p-4 border-t border-[#E2E8F0] bg-white">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -493,26 +417,18 @@ export const ChatPage: React.FC = () => {
               onChange={(e) => setInputText(e.target.value)}
               placeholder={pathway === 'male' ? `Ask ${aiBrandName} about your symptoms, morning lab tests, or nutrition...` : `Ask ${aiBrandName} about your symptoms, lab reports, or nutrition...`}
               disabled={isTyping}
-              className={`flex-1 px-4 py-3 rounded-xl border text-xs sm:text-sm focus:outline-none transition-all shadow-2xs ${
-                isFemale
-                  ? 'bg-[#FAFAFC] border-[#EAECF0] text-[#111318] placeholder-[#98A2B3] focus:border-[#E84A8A] focus:bg-white'
-                  : 'bg-[#F8FAFC] border-[#BAE6FD] text-[#0F172A] placeholder-[#64748B] focus:border-[#0288D1] focus:bg-white'
-              }`}
+              className="flex-1 px-4 py-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] text-[#0F172A] placeholder-[#64748B] focus:border-[#0288D1] focus:bg-white text-xs sm:text-sm focus:outline-none transition-all shadow-2xs"
             />
             <button
               type="submit"
               disabled={!inputText.trim() || isTyping}
-              className={`px-5 py-3 rounded-xl font-semibold text-xs shadow-xs transition-all flex items-center gap-2 cursor-pointer shrink-0 active:scale-[0.98] ${
-                isFemale
-                  ? 'bg-[#E84A8A] hover:bg-[#D93B7A] disabled:opacity-40 text-white'
-                  : 'bg-[#0288D1] hover:bg-[#0277BD] disabled:opacity-40 text-white'
-              }`}
+              className="px-5 py-3 rounded-xl font-semibold text-xs shadow-xs transition-all flex items-center gap-2 cursor-pointer shrink-0 active:scale-[0.98] bg-[#0288D1] hover:bg-[#0277BD] disabled:opacity-40 text-white"
             >
               <span>Send</span>
-              <Send className="w-4 h-4" />
+              <Send01 className="w-4 h-4 text-white" aria-hidden="true" />
             </button>
           </form>
-          <p className="text-[10px] text-center text-[#98A2B3] font-sans mt-2">
+          <p className="text-[10px] text-center text-[#94A3B8] font-sans mt-2">
             {aiBrandName} provides health literacy explanations based on your recorded health data. It does not provide medical diagnoses or prescription changes.
           </p>
         </div>
@@ -532,11 +448,11 @@ export const ChatPage: React.FC = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="w-full max-w-lg bg-[#0F172A] border-l border-[#BAE6FD]/20 text-white p-6 overflow-y-auto flex flex-col space-y-6"
+              className="w-full max-w-lg bg-[#0F172A] border-l border-[#0288D1]/20 text-white p-6 overflow-y-auto flex flex-col space-y-6"
             >
               <div className="flex items-center justify-between border-b border-white/10 pb-4">
                 <div className="flex items-center gap-2.5">
-                  <Database className="w-5 h-5 text-[#38BDF8]" />
+                  <Database01 className="w-5 h-5 text-[#38BDF8]" aria-hidden="true" />
                   <h3 className="text-lg font-bold font-display text-white">
                     Longitudinal Health State
                   </h3>
@@ -544,15 +460,15 @@ export const ChatPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsContextDrawerOpen(false)}
-                  className="p-1.5 rounded-lg hover:bg-white/10 text-[#94A3B8]"
+                  className="p-1.5 rounded-lg hover:bg-white/10 text-[#94A3B8] transition-colors"
                 >
-                  <X className="w-5 h-5" />
+                  <XClose className="w-5 h-5" aria-hidden="true" />
                 </button>
               </div>
 
               <div className="text-xs text-[#94A3B8] bg-white/[0.03] p-3 rounded-xl border border-white/10 space-y-1">
                 <div className="flex items-center gap-1.5 text-[#38BDF8] font-bold">
-                  <ShieldCheck className="w-4 h-4" />
+                  <ShieldTick className="w-4 h-4 text-[#38BDF8]" aria-hidden="true" />
                   <span>Privacy-Preserving Shared Tree</span>
                 </div>
                 <p>

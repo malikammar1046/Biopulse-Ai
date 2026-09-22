@@ -1,17 +1,16 @@
 import React from 'react';
 import {
-  Sparkles,
-  Zap,
+  ActivityHeart,
+  BatteryLow,
   Heart,
-  Moon,
-  Smile,
-  Dumbbell,
+  Moon01,
+  FaceSmile,
   Activity,
+  Scissors01,
   Check,
-  CheckCircle2,
-  Info,
-} from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+  CheckCircle,
+  InfoCircle,
+} from '@untitledui/icons';
 import type { MensHealthProfile } from '../../../types/onboarding';
 import { MaleWhyWeAskCard } from './MaleWhyWeAskCard';
 
@@ -24,7 +23,7 @@ interface SymptomCardDef {
   id: string;
   title: string;
   desc: string;
-  icon: LucideIcon;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   check: (m: MensHealthProfile) => boolean;
   toggle: (m: MensHealthProfile) => MensHealthProfile;
 }
@@ -46,7 +45,7 @@ export const MaleStep3SymptomsADAM: React.FC<MaleStep3Props> = ({ data, onChange
       id: 'energy',
       title: 'Low Energy & Daytime Fatigue',
       desc: 'Frequent tiredness, sluggishness, or a persistent lack of stamina during daily tasks.',
-      icon: Zap,
+      icon: BatteryLow,
       check: (m) => m.energyLevel === 'low' || m.energyLevel === 'very_low',
       toggle: (m) => ({
         ...m,
@@ -57,7 +56,7 @@ export const MaleStep3SymptomsADAM: React.FC<MaleStep3Props> = ({ data, onChange
       id: 'sleep',
       title: 'Sleep Disruption & Evening Fatigue',
       desc: 'Restless nights, waking unrefreshed, or falling asleep unusually early after dinner.',
-      icon: Moon,
+      icon: Moon01,
       check: (m) => m.sleepQuality === 'poor' || m.sleepQuality === 'frequently_waking',
       toggle: (m) => ({
         ...m,
@@ -68,7 +67,7 @@ export const MaleStep3SymptomsADAM: React.FC<MaleStep3Props> = ({ data, onChange
       id: 'strength',
       title: 'Drop in Strength or Endurance',
       desc: 'Noticeable reduction in physical strength, muscle fullness, or exercise performance.',
-      icon: Dumbbell,
+      icon: Activity,
       check: (m) => m.muscleStrengthChanges === 'reduced' || m.muscleStrengthChanges === 'significantly_reduced',
       toggle: (m) => ({
         ...m,
@@ -82,7 +81,7 @@ export const MaleStep3SymptomsADAM: React.FC<MaleStep3Props> = ({ data, onChange
       id: 'firmness',
       title: 'Morning / Spontaneous Firmness Dips',
       desc: 'Inconsistent, less frequent, or weaker morning and spontaneous firmness.',
-      icon: Activity,
+      icon: ActivityHeart,
       check: (m) => m.erectileDifficulties === 'occasional' || m.erectileDifficulties === 'frequent',
       toggle: (m) => ({
         ...m,
@@ -96,7 +95,7 @@ export const MaleStep3SymptomsADAM: React.FC<MaleStep3Props> = ({ data, onChange
       id: 'mood',
       title: 'Mood Shifts & Lower Motivation',
       desc: 'Feeling less drive, increased irritability, grumpiness, or dips in mental focus.',
-      icon: Smile,
+      icon: FaceSmile,
       check: (m) => (m.moodChanges || []).length > 0,
       toggle: (m) => ({
         ...m,
@@ -110,7 +109,7 @@ export const MaleStep3SymptomsADAM: React.FC<MaleStep3Props> = ({ data, onChange
       id: 'hair',
       title: 'Facial or Body Hair Thinning',
       desc: 'Gradual thinning or slowing growth in beard density or body hair patterns.',
-      icon: Sparkles,
+      icon: Scissors01,
       check: (m) => m.bodyHairChanges === 'thinning' || m.bodyHairChanges === 'reduced_growth',
       toggle: (m) => ({
         ...m,
@@ -142,7 +141,7 @@ export const MaleStep3SymptomsADAM: React.FC<MaleStep3Props> = ({ data, onChange
       {/* ── Compact Question Header ── */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-full bg-[#DDF7F7] flex items-center justify-center shrink-0 shadow-2xs">
-          <Zap className="w-5 h-5 text-[#0E9EAA]" />
+          <ActivityHeart className="w-5 h-5 text-[#0E9EAA]" aria-hidden="true" />
         </div>
 
         <div>
@@ -186,7 +185,7 @@ export const MaleStep3SymptomsADAM: React.FC<MaleStep3Props> = ({ data, onChange
                           : 'bg-[#FAFCFF] border border-[#D7EAF2] text-[#0E9EAA]'
                       }`}
                     >
-                      <IconComp className="w-3.5 h-3.5" />
+                      <IconComp className="w-3.5 h-3.5" aria-hidden="true" />
                     </div>
                     <div>
                       <span className="text-xs font-bold text-[#073B72] block leading-tight">
@@ -205,7 +204,7 @@ export const MaleStep3SymptomsADAM: React.FC<MaleStep3Props> = ({ data, onChange
                         : 'border-[#D7EAF2] bg-white'
                     }`}
                   >
-                    {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                    {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" aria-hidden="true" />}
                   </div>
                 </button>
               );
@@ -229,7 +228,7 @@ export const MaleStep3SymptomsADAM: React.FC<MaleStep3Props> = ({ data, onChange
                       : 'bg-[#FAFCFF] border border-[#D7EAF2] text-[#0E9EAA]'
                   }`}
                 >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <CheckCircle className="w-3.5 h-3.5" aria-hidden="true" />
                 </div>
                 <div>
                   <span className="text-xs font-bold text-[#073B72] block leading-tight">
@@ -248,7 +247,7 @@ export const MaleStep3SymptomsADAM: React.FC<MaleStep3Props> = ({ data, onChange
                     : 'border-[#D7EAF2] bg-white'
                 }`}
               >
-                {!anySelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                {!anySelected && <Check className="w-2.5 h-2.5 stroke-[3]" aria-hidden="true" />}
               </div>
             </button>
           </div>
@@ -259,7 +258,7 @@ export const MaleStep3SymptomsADAM: React.FC<MaleStep3Props> = ({ data, onChange
           <MaleWhyWeAskCard
             title="Why we ask this"
             description="Male hypogonadism can affect energy, mood, sexual health, and physical performance. Looking at these patterns alongside your health profile helps provide a more informed screening estimate."
-            icon={Info}
+            icon={InfoCircle}
           />
 
           <div className="p-3.5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] text-[11px] text-[#55718F] space-y-1.5">

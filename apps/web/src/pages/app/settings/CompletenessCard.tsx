@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, Circle, AlertCircle } from 'lucide-react';
+import { CheckCircle, AlertCircle } from '@untitledui/icons';
 import type { ProfileCompleteness } from './settingsTypes';
 
 interface CompletenessCardProps {
@@ -49,7 +49,7 @@ export const CompletenessCard: React.FC<CompletenessCardProps> = ({
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
               Screening Profile Completeness
             </span>
-            <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-[#0E9EAA]/10 text-[#0E9EAA]">
+            <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-[#E0F2FE] text-[#0288D1]">
               {percentage}%
             </span>
           </div>
@@ -71,7 +71,7 @@ export const CompletenessCard: React.FC<CompletenessCardProps> = ({
         <div className="w-full sm:w-48">
           <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
             <div
-              className="bg-[#0E9EAA] h-2 rounded-full transition-all duration-500"
+              className="bg-[#0288D1] h-2 rounded-full transition-all duration-500"
               style={{ width: `${percentage}%` }}
             />
           </div>
@@ -92,11 +92,11 @@ export const CompletenessCard: React.FC<CompletenessCardProps> = ({
             }`}
           >
             {it.complete ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
             ) : it.required ? (
-              <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
+              <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" aria-hidden="true" />
             ) : (
-              <Circle className="w-4 h-4 text-slate-300 shrink-0" />
+              <span className="w-4 h-4 rounded-full border border-slate-300 shrink-0 inline-block" aria-hidden="true" />
             )}
             <div className="min-w-0">
               <p className="font-semibold truncate">{it.label}</p>

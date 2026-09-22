@@ -113,6 +113,8 @@ class MaleMLService:
     def __init__(self) -> None:
         self._tier1_artifact: Optional[Dict[str, Any]] = None
         self._tier2_artifact: Optional[Dict[str, Any]] = None
+        self._t1_fold_explainer: Optional[Any] = None
+        self._t2_fold_explainer: Optional[Any] = None
         self._is_ready: bool = False
         self._models_dir: str = ""
 
@@ -130,6 +132,43 @@ class MaleMLService:
         t1_path = os.path.join(base_dir, "male_tier1", "artifacts", "male_low_t_model.joblib")
         t2_path = os.path.join(base_dir, "male_tier2", "artifacts", "male_tier2_model.joblib")
         return t1_path, t2_path
+
+    def _init_shap_explainers(self) -> None:
+        """Initializes fold-aware 5-fold ensemble SHAP explainers for Male Tier 1 and Tier 2."""
+        try:
+            from apps.intelligence.services.shap_adapter import FoldAwareCalibratedExplainer
+
+            if self._tier1_artifact and "model" in self._tier1_artifact:
+                self._t1_fold_explainer = FoldAwareCalibratedExplainer(
+                    calibrated_model=self._tier1_artifact["model"],
+                    model_name=self._tier1_artifact.get("model_name", "Logistic Regression (Balanced)"),
+                    model_version="Male-ML v1.0-T1",
+                    pathway="male_hypogonadism",
+                    tier="tier_1",
+                    explainer_type="LinearExplainer",
+                    output_space="log_odds",
+                    raw_feature_names=MALE_TIER1_FEATURE_NAMES,
+                )
+                self._t1_fold_explainer.initialize()
+
+            if self._tier2_artifact and "model" in self._tier2_artifact:
+                self._t2_fold_explainer = FoldAwareCalibratedExplainer(
+                    calibrated_model=self._tier2_artifact["model"],
+                    model_name=self._tier2_artifact.get("model_name", "Random Forest"),
+                    model_version="Male-ML v1.0-T2",
+                    pathway="male_hypogonadism",
+                    tier="tier_1_2",
+                    explainer_type="TreeExplainer",
+                    output_space="raw",
+                    raw_feature_names=MALE_TIER2_FEATURE_NAMES,
+                )
+                self._t2_fold_explainer.initialize()
+
+            logger.info("Fold-aware SHAP explainers successfully initialized across all 5 folds for Male T1 and T2.")
+        except Exception as e:
+            logger.warning("Male SHAP explainer initialization deferred: %s", e)
+            self._t1_fold_explainer = None
+            self._t2_fold_explainer = None
 
     def load(self) -> None:
         """Loads male Tier 1 and Tier 2 models once into memory."""
@@ -159,6 +198,8 @@ class MaleMLService:
                     warnings.simplefilter("ignore", InconsistentVersionWarning)
                     self._tier1_artifact = joblib.load(t1_path)
                     self._tier2_artifact = joblib.load(t2_path)
+                
+                self._init_shap_explainers()
                 self._is_ready = True
                 logger.info("Male-ML Assessment Engine initialized successfully.")
             except Exception as e:
@@ -364,7 +405,12 @@ class MaleMLService:
             summary_text = "Your answers and health profile show a lower probability pattern for testosterone deficiency."
             next_step = "You can add clinical laboratory results anytime if symptoms arise."
 
-        explanations = self._generate_tier1_explanations(df.iloc[0].to_dict())
+        shap_payload = None
+        if self._t1_fold_explainer is not None:
+            shap_payload = self._t1_fold_explainer.explain(df, raw_inputs, final_calibrated_prob=prob)
+            explanations = shap_payload["factors"]
+        else:
+            explanations = self._generate_tier1_explanations(df.iloc[0].to_dict())
 
         limitations = [
             "This Tier 1 assessment evaluates non-invasive lifestyle, demographic, and symptom parameters.",
@@ -387,6 +433,7 @@ class MaleMLService:
             "missing_features": missing_feats,
             "input_features": {k: (None if pd.isna(v) else v) for k, v in df.iloc[0].to_dict().items()},
             "explanations": explanations,
+            "shap_explanation": shap_payload,
             "limitations": limitations,
             "next_step": next_step,
             "disclaimer": DISCLAIMER_TEXT,
@@ -666,7 +713,14 @@ class MaleMLService:
 
         # Rule-based hormone pattern evaluation
         hormone_pattern = self.evaluate_hormone_pattern(lab_inputs)
-        explanations = self._generate_tier2_explanations(df.iloc[0].to_dict())
+
+        combined_patient_inputs = {**(tier1_inputs or {}), **lab_inputs}
+        shap_payload = None
+        if self._t2_fold_explainer is not None:
+            shap_payload = self._t2_fold_explainer.explain(df, combined_patient_inputs, final_calibrated_prob=prob)
+            explanations = shap_payload["factors"]
+        else:
+            explanations = self._generate_tier2_explanations(df.iloc[0].to_dict())
 
         # Direct lab interpretations
         direct_labs: List[Dict[str, Any]] = []
@@ -717,6 +771,7 @@ class MaleMLService:
             "hormone_pattern_interpretation": hormone_pattern,
             "direct_laboratory_values": direct_labs,
             "explanations": explanations,
+            "shap_explanation": shap_payload,
             "limitations": limitations,
             "next_step": next_step,
             "disclaimer": DISCLAIMER_TEXT,

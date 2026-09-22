@@ -2,12 +2,12 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  CheckCircle2,
+  CheckCircle,
   ArrowRight,
-  User,
-  ShieldCheck,
+  User01,
+  ShieldTick,
   ChevronRight,
-} from 'lucide-react';
+} from '@untitledui/icons';
 import type { ProfileCompletionResult } from '../../../utils/profileCompletion';
 import type { HealthPathway } from '../../../types/onboarding';
 import { ROUTES } from '../../../constants/routes';
@@ -54,9 +54,7 @@ export const ProfileCompletenessCard: React.FC<ProfileCompletenessCardProps> = (
       {/* Top Title & Pathway Badge */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center text-[#0288D1]">
-            <User className="w-4 h-4" />
-          </div>
+          <User01 className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
           <div>
             <span className="text-[10px] font-mono uppercase tracking-wider text-[#64748B] font-bold block">
               Profile Completeness
@@ -69,7 +67,7 @@ export const ProfileCompletenessCard: React.FC<ProfileCompletenessCardProps> = (
 
         {isComplete ? (
           <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <ShieldCheck className="w-3 h-3" />
+            <ShieldTick className="w-3 h-3" aria-hidden="true" />
             Verified 100%
           </span>
         ) : (
@@ -136,7 +134,7 @@ export const ProfileCompletenessCard: React.FC<ProfileCompletenessCardProps> = (
       {isComplete ? (
         <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
             <span className="text-xs font-sans text-emerald-900 font-medium">
               Profile parameters fully configured for high-confidence screening.
             </span>
@@ -146,7 +144,7 @@ export const ProfileCompletenessCard: React.FC<ProfileCompletenessCardProps> = (
             className="text-[11px] font-bold font-sans text-emerald-700 hover:text-emerald-800 shrink-0 inline-flex items-center gap-1"
           >
             <span>Review</span>
-            <ChevronRight className="w-3 h-3" />
+            <ChevronRight className="w-3 h-3" aria-hidden="true" />
           </Link>
         </div>
       ) : (
@@ -178,7 +176,7 @@ export const ProfileCompletenessCard: React.FC<ProfileCompletenessCardProps> = (
                   className="text-xs font-bold font-sans px-3 py-1.5 rounded-lg bg-[#F0F9FF] hover:bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD] transition-colors shrink-0 inline-flex items-center gap-1 cursor-pointer"
                 >
                   <span>Add</span>
-                  <ArrowRight className="w-3 h-3" />
+                  <ArrowRight className="w-3 h-3" aria-hidden="true" />
                 </Link>
               </div>
             ))}
@@ -190,7 +188,7 @@ export const ProfileCompletenessCard: React.FC<ProfileCompletenessCardProps> = (
               className="w-full py-2.5 rounded-2xl bg-[#0288D1] hover:bg-[#0277BD] text-white shadow-sm text-xs font-bold font-sans transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>Update Health Profile</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
             </Link>
           </div>
         </div>

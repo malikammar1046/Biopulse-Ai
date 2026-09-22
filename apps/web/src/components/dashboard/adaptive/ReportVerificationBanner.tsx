@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Clock, ArrowRight, FileCheck2 } from 'lucide-react';
+import { Clock, ArrowRight, FileCheck01 } from '@untitledui/icons';
 import type { MedicalReport } from '../../../types/report';
 import { ROUTES } from '../../../constants/routes';
 
@@ -33,7 +33,7 @@ export const ReportVerificationBanner: React.FC<ReportVerificationBannerProps> =
     >
       <div className="flex items-start sm:items-center gap-3.5 min-w-0">
         <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 border border-amber-300">
-          <Clock className="w-5 h-5 animate-pulse" />
+          <Clock className="w-5 h-5 animate-pulse" aria-hidden="true" />
         </div>
 
         <div className="space-y-0.5 min-w-0">
@@ -56,9 +56,9 @@ export const ReportVerificationBanner: React.FC<ReportVerificationBannerProps> =
           to={ROUTES.APP.REPORTS}
           className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold font-sans transition-all flex items-center gap-1.5 shadow-sm hover:shadow cursor-pointer"
         >
-          <FileCheck2 className="w-4 h-4" />
+          <FileCheck01 className="w-4 h-4" aria-hidden="true" />
           <span>Review & Verify</span>
-          <ArrowRight className="w-3.5 h-3.5" />
+          <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
         </Link>
       </div>
     </motion.div>

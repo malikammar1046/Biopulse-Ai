@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Utensils,
+  Scales01,
   ArrowRight,
-  Sparkles,
-  CalendarCheck,
-  ShieldCheck,
-  CheckCircle2,
-} from 'lucide-react';
+  CalendarCheck01,
+  ShieldTick,
+  CheckCircle,
+  ClockFastForward,
+} from '@untitledui/icons';
 import { ROUTES } from '../../constants/routes';
 import type { HealthPathway } from '../../types/onboarding';
 import { nutritionService } from '../../services/nutritionService';
@@ -68,7 +68,7 @@ export const DashboardNutritionCard: React.FC<DashboardNutritionCardProps> = ({ 
       <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 rounded-2xl bg-[#0288D1] text-white flex items-center justify-center shrink-0 shadow-md shadow-[#0288D1]/20">
-            <Utensils className="w-6 h-6" />
+            <Scales01 className="w-6 h-6" aria-hidden="true" />
           </div>
 
           <div className="space-y-1.5 text-left">
@@ -78,12 +78,12 @@ export const DashboardNutritionCard: React.FC<DashboardNutritionCardProps> = ({ 
               </h3>
               {isPlanActive ? (
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                  <CheckCircle2 className="w-3 h-3" />
+                  <CheckCircle className="w-3 h-3" aria-hidden="true" />
                   7-Day Plan Active
                 </span>
               ) : isReady ? (
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-sky-100 text-sky-800 border border-sky-200">
-                  <Sparkles className="w-3 h-3" />
+                  <ClockFastForward className="w-3 h-3" aria-hidden="true" />
                   Ready to Generate
                 </span>
               ) : (
@@ -99,12 +99,12 @@ export const DashboardNutritionCard: React.FC<DashboardNutritionCardProps> = ({ 
 
             <div className="flex items-center gap-3 pt-1 flex-wrap text-[11px] text-[#64748B] font-medium">
               <span className="flex items-center gap-1">
-                <CalendarCheck className="w-3.5 h-3.5 text-[#0288D1]" />
+                <CalendarCheck01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
                 7-Day Culturally Calibrated
               </span>
               <span>•</span>
               <span className="flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#0288D1]" />
+                <ShieldTick className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
                 Portion Gram Targets
               </span>
               <span>•</span>
@@ -120,7 +120,7 @@ export const DashboardNutritionCard: React.FC<DashboardNutritionCardProps> = ({ 
             className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0288D1] hover:bg-[#0277BD] transition-all shadow-sm cursor-pointer active:scale-98"
           >
             <span>{isPlanActive ? 'View Meal Plan' : 'View Nutrition Plan'}</span>
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       </div>

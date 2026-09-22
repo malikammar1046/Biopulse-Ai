@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, Trash2, X, Loader2 } from 'lucide-react';
+import { AlertTriangle, Trash01, XClose, Loading01 } from '@untitledui/icons';
 import type { SymptomRecord } from '../../types/symptom';
 
 interface DeleteSymptomConfirmationModalProps {
@@ -46,18 +46,19 @@ export const DeleteSymptomConfirmationModal: React.FC<DeleteSymptomConfirmationM
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.2 }}
-          className="relative w-full max-w-md rounded-2xl bg-white border border-[#BAE6FD] shadow-xl p-6 text-left space-y-5 z-10 select-none"
+          className="relative w-full max-w-md rounded-2xl bg-white border border-[#EAECF0] shadow-xl p-6 text-left space-y-5 z-10 select-none"
         >
           <div className="flex items-center justify-between">
             <div className="p-3 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
-              <AlertTriangle className="w-5 h-5" />
+              <AlertTriangle className="w-5 h-5" aria-hidden="true" />
             </div>
             <button
               type="button"
               onClick={onClose}
+              aria-label="Close modal"
               className="p-2 rounded-xl text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] transition-colors cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <XClose className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
 
@@ -70,12 +71,12 @@ export const DeleteSymptomConfirmationModal: React.FC<DeleteSymptomConfirmationM
             </p>
           </div>
 
-          <div className="pt-2 flex items-center justify-end gap-3 border-t border-[#E2E8F0]">
+          <div className="pt-2 flex items-center justify-end gap-3 border-t border-[#EAECF0]">
             <button
               type="button"
               onClick={onClose}
               disabled={isDeleting}
-              className="px-4 py-2 rounded-xl border border-[#E2E8F0] text-xs font-semibold text-[#64748B] hover:bg-[#F8FAFC] transition-colors cursor-pointer disabled:opacity-50"
+              className="h-10 px-4 rounded-xl border border-[#EAECF0] text-xs font-semibold text-[#64748B] hover:bg-[#F8FAFC] transition-colors cursor-pointer disabled:opacity-50"
             >
               Cancel
             </button>
@@ -84,16 +85,16 @@ export const DeleteSymptomConfirmationModal: React.FC<DeleteSymptomConfirmationM
               type="button"
               onClick={handleDelete}
               disabled={isDeleting}
-              className="px-4 py-2 rounded-xl font-semibold text-xs text-white bg-rose-600 hover:bg-rose-700 transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50 shadow-sm"
+              className="h-10 px-4 rounded-xl font-medium text-xs text-white bg-rose-600 hover:bg-rose-700 transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50 shadow-sm"
             >
               {isDeleting ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loading01 className="w-4 h-4 animate-spin" aria-hidden="true" />
                   <span>Deleting...</span>
                 </>
               ) : (
                 <>
-                  <Trash2 className="w-4 h-4" />
+                  <Trash01 className="w-4 h-4" aria-hidden="true" />
                   <span>Delete Entry</span>
                 </>
               )}

@@ -3,9 +3,9 @@ import { motion } from 'framer-motion';
 import {
   Activity,
   AlertTriangle,
-  CheckCircle2,
-  RefreshCw,
-} from 'lucide-react';
+  CheckCircle,
+  RefreshCw01,
+} from '@untitledui/icons';
 import { useUserHealth } from '../../../context/UserHealthContext';
 import { getRiskPatternDisplay } from '../../../services/intelligenceService';
 
@@ -87,9 +87,7 @@ export const AssessmentStatusHeader: React.FC<AssessmentStatusHeaderProps> = ({
       className={`rounded-2xl p-5 border transition-all ${
         isStale
           ? 'bg-amber-50/70 border-amber-200/80 shadow-sm'
-          : isMale
-          ? 'bg-gradient-to-r from-teal-50/80 via-cyan-50/50 to-white border-teal-200/80 shadow-xs'
-          : 'bg-gradient-to-r from-teal-50/80 via-rose-50/30 to-white border-teal-200/80 shadow-xs'
+          : 'bg-gradient-to-r from-sky-50/80 via-blue-50/40 to-white border-[#BAE6FD] shadow-xs'
       }`}
     >
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -99,13 +97,13 @@ export const AssessmentStatusHeader: React.FC<AssessmentStatusHeaderProps> = ({
             className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-xs ${
               isStale
                 ? 'bg-amber-100 text-amber-600'
-                : 'bg-[#0E9EAA] text-white'
+                : 'bg-[#0288D1] text-white'
             }`}
           >
             {isStale ? (
-              <AlertTriangle className="w-5 h-5 text-amber-600" />
+              <AlertTriangle className="w-5 h-5 text-amber-600" aria-hidden="true" />
             ) : (
-              <Activity className="w-5 h-5 text-white" />
+              <Activity className="w-5 h-5 text-white" aria-hidden="true" />
             )}
           </div>
 
@@ -174,11 +172,12 @@ export const AssessmentStatusHeader: React.FC<AssessmentStatusHeaderProps> = ({
             className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-sm ${
               isStale
                 ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-600/20'
-                : 'bg-[#0E9EAA] hover:bg-[#0C8B96] shadow-[#0E9EAA]/25'
+                : 'bg-[#0288D1] hover:bg-[#0277BD] shadow-[#0288D1]/25'
             } disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer`}
           >
-            <RefreshCw
+            <RefreshCw01
               className={`w-3.5 h-3.5 text-white ${isRefreshing || assessmentLoading ? 'animate-spin' : ''}`}
+              aria-hidden="true"
             />
             <span className="text-white">
               {isRefreshing || assessmentLoading ? 'Evaluating...' : isStale ? 'Refresh Screening' : 'Recalculate Result'}
@@ -193,7 +192,7 @@ export const AssessmentStatusHeader: React.FC<AssessmentStatusHeaderProps> = ({
           animate={{ opacity: 1, y: 0 }}
           className="mt-3 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg flex items-center gap-2"
         >
-          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+          <CheckCircle className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
           <span>{refreshNotice}</span>
         </motion.div>
       )}

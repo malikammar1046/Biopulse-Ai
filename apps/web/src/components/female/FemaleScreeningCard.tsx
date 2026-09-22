@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Activity, Check } from 'lucide-react';
+import { ArrowRight, Check, Activity } from '@untitledui/icons';
 import {
   FemaleCard,
   FemaleStatusBadge,
@@ -98,8 +98,8 @@ export const FemaleScreeningCard: React.FC<FemaleScreeningCardProps> = ({
         {/* Card Header */}
         <div className="flex items-center justify-between gap-3 border-b border-[#EAECF0] pb-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#FFF5F9] border border-[#FBE7F0] flex items-center justify-center text-[#E84A8A]">
-              <Activity className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-xl bg-[#FDE6EF] border border-[#F43F7D]/20 flex items-center justify-center text-[#F43F7D]">
+              <Activity className="w-4 h-4" aria-hidden="true" />
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-semibold text-[#111318]">
@@ -142,7 +142,7 @@ export const FemaleScreeningCard: React.FC<FemaleScreeningCardProps> = ({
                 cx="50"
                 cy="50"
                 r="40"
-                className="text-[#FBE7F0]"
+                className="text-[#FDE6EF]"
                 strokeWidth="8"
                 stroke="currentColor"
                 fill="transparent"
@@ -151,7 +151,7 @@ export const FemaleScreeningCard: React.FC<FemaleScreeningCardProps> = ({
                 cx="50"
                 cy="50"
                 r="40"
-                className="text-[#E84A8A] transition-all duration-700 ease-out"
+                className="text-[#F43F7D] transition-all duration-700 ease-out"
                 strokeWidth="8"
                 strokeDasharray={251.2}
                 strokeDashoffset={251.2 - (251.2 * Math.min(Math.max(probabilityPercent, 0), 100)) / 100}
@@ -176,7 +176,7 @@ export const FemaleScreeningCard: React.FC<FemaleScreeningCardProps> = ({
             {/* Tier 1 */}
             <div className="flex items-center gap-1.5 font-medium text-[#111318]">
               <span className="w-5 h-5 rounded-full bg-[#ECFDF3] text-[#027A48] flex items-center justify-center text-[10px] font-bold">
-                <Check className="w-3 h-3" />
+                <Check className="w-3 h-3" aria-hidden="true" />
               </span>
               <span>1. Symptoms</span>
             </div>
@@ -196,7 +196,7 @@ export const FemaleScreeningCard: React.FC<FemaleScreeningCardProps> = ({
                     : 'border border-[#D0D5DD] bg-white text-[#667085]'
                 }`}
               >
-                {isTier2 ? <Check className="w-3 h-3" /> : '2'}
+                {isTier2 ? <Check className="w-3 h-3" aria-hidden="true" /> : '2'}
               </span>
               <span>2. Labs</span>
             </div>
@@ -216,7 +216,7 @@ export const FemaleScreeningCard: React.FC<FemaleScreeningCardProps> = ({
                     : 'border border-[#D0D5DD] bg-white text-[#667085]'
                 }`}
               >
-                {isTier3 ? <Check className="w-3 h-3" /> : '3'}
+                {isTier3 ? <Check className="w-3 h-3" aria-hidden="true" /> : '3'}
               </span>
               <span>3. Ultrasound</span>
             </div>
@@ -226,15 +226,15 @@ export const FemaleScreeningCard: React.FC<FemaleScreeningCardProps> = ({
         {/* Ultrasound Grad-CAM Preview if available */}
         {isTier3 && gradcamB64 && (
           <div className="pt-2 border-t border-[#EAECF0]">
-            <div className="p-3 rounded-2xl bg-[#FFF5F9] border border-[#FBE7F0] flex items-center justify-between gap-3">
+            <div className="p-3 rounded-2xl bg-[#FDE6EF]/30 border border-[#FDE6EF] flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <img
                   src={gradcamB64.startsWith('data:') ? gradcamB64 : `data:image/png;base64,${gradcamB64}`}
                   alt="Ultrasound Neural Heatmap"
-                  className="w-12 h-12 rounded-xl object-cover border border-[#FCE1ED] shrink-0"
+                  className="w-12 h-12 rounded-xl object-cover border border-[#FDE6EF] shrink-0"
                 />
                 <div className="min-w-0">
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#A92D61] block">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#DC326C] block">
                     Ultrasound Imaging Focus
                   </span>
                   <p className="text-xs font-semibold text-[#111318] truncate">
@@ -245,7 +245,7 @@ export const FemaleScreeningCard: React.FC<FemaleScreeningCardProps> = ({
               <button
                 type="button"
                 onClick={onViewAssessment}
-                className="text-xs font-semibold text-[#E84A8A] hover:text-[#D93B7A] cursor-pointer shrink-0"
+                className="text-xs font-semibold text-[#F43F7D] hover:text-[#DC326C] cursor-pointer shrink-0"
               >
                 View Analysis →
               </button>
@@ -259,7 +259,7 @@ export const FemaleScreeningCard: React.FC<FemaleScreeningCardProps> = ({
         <div className="flex flex-wrap items-center gap-3">
           <FemalePrimaryButton onClick={onViewAssessment}>
             <span>View Full Assessment</span>
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-4 h-4 shrink-0" aria-hidden="true" />
           </FemalePrimaryButton>
 
           {!isTier2 && onAddLabs && (

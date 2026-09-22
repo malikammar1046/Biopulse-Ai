@@ -309,6 +309,8 @@ export interface ProgressiveAssessment {
   available_features?: string[];
   missing_features?: string[];
   explanations: ShapExplanation[];
+  shap_explanation?: PatientShapExplanationPayload | null;
+  longitudinal_shap_comparison?: LongitudinalShapComparison | null;
   limitations: string[];
   next_step?: string;
   next_available_tier?: number | null;
@@ -337,6 +339,133 @@ export interface ProgressiveAssessment {
   notice?: string;
   disclaimer: string;
   created_at?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Fold-Aware Calibrated SHAP Explainability Types
+// ---------------------------------------------------------------------------
+
+export interface ShapFoldAgreement {
+  fold_values: number[];
+  positive_folds: number;
+  negative_folds: number;
+  zero_folds: number;
+  agreeing_folds_count: number;
+  total_folds_count: number;
+  fold_agreement_ratio: number;
+  stability: 'consistent' | 'moderate' | 'mixed';
+}
+
+export interface PatientShapFactor {
+  feature_key: string;
+  patient_label: string;
+  patient_value: string;
+  raw_value: any;
+  shap_value: number;
+  absolute_shap: number;
+  direction: 'higher' | 'lower' | 'neutral';
+  direction_label: string;
+  relative_influence: number;
+  explanation_share_percent: number;
+  influence_level: 'strong' | 'moderate' | 'mild' | 'minimal';
+  category: string;
+  modifiable_status: 'modifiable' | 'partially_modifiable' | 'non_modifiable';
+  simple_description: string;
+  why_model_uses_it: string;
+  patient_explanation: string;
+  fold_agreement: ShapFoldAgreement;
+  clinical_reference?: {
+    reference_interval?: string | null;
+    reference_source?: string | null;
+    has_reference_range: boolean;
+    disclaimer?: string;
+  } | null;
+  technical_details?: {
+    output_space: string;
+    fold_values: number[];
+    stability: string;
+  };
+}
+
+export interface PatientShapExplanationPayload {
+  schema_version: string;
+  pathway: string;
+  tier: string;
+  model_name: string;
+  model_version: string;
+  outer_estimator_type: string;
+  base_estimator_type: string;
+  calibration_method: string;
+  calibration_fold_count: number;
+  explained_fold_count: number;
+  aggregation_method: string;
+  explainer_type: string;
+  explained_model_stage: string;
+  output_space: string;
+  positive_class: number;
+  positive_class_index: number;
+  ensemble_base_value: number;
+  ensemble_reconstructed_output: number;
+  final_calibrated_probability: number;
+  final_calibrated_percent: number;
+  additivity_verified: boolean;
+  additivity_error: number;
+  environment_metadata: {
+    shap_version: string;
+    sklearn_version: string;
+    reference_strategy: string;
+  };
+  factors: PatientShapFactor[];
+  top_higher_factors: PatientShapFactor[];
+  top_lower_factors: PatientShapFactor[];
+  top_mixed_factors?: PatientShapFactor[];
+  summary: {
+    headline: string;
+    subheadline: string;
+    total_factors_evaluated: number;
+    top_higher_count: number;
+    top_lower_count: number;
+    top_mixed_count?: number;
+  };
+  multimodal_context?: {
+    clinical_weight: number;
+    ultrasound_weight: number;
+    clinical_probability: number;
+    ultrasound_probability: number;
+    pcom_status: string;
+    pcom_probability: number;
+    note: string;
+  };
+}
+
+export interface LongitudinalFactorComparison {
+  feature_key: string;
+  patient_label: string;
+  category: string;
+  previous_value: string;
+  current_value: string;
+  value_changed: boolean;
+  previous_influence_level: 'strong' | 'moderate' | 'mild' | 'minimal';
+  current_influence_level: 'strong' | 'moderate' | 'mild' | 'minimal';
+  previous_direction: 'higher' | 'lower' | 'neutral';
+  current_direction: 'higher' | 'lower' | 'neutral';
+  previous_shap_value: number;
+  current_shap_value: number;
+  previous_share_percent: number;
+  current_share_percent: number;
+  patient_narrative: string;
+}
+
+export interface LongitudinalShapComparison {
+  is_comparable: boolean;
+  reason?: string;
+  message?: string;
+  previous_assessment_id?: string;
+  previous_assessment_date?: string;
+  previous_calibrated_probability?: number;
+  current_calibrated_probability?: number;
+  total_factors_compared?: number;
+  comparisons?: LongitudinalFactorComparison[];
 }
 
 export interface MaleClinicalLabInputs {

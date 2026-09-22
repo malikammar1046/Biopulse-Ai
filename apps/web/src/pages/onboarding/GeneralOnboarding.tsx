@@ -4,16 +4,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
   ArrowRight,
-  ShieldCheck,
-  Compass,
+  ShieldTick,
+  Target04,
   Calendar,
-  CheckCircle2,
-  Phone,
-  User,
+  CheckCircle,
+  Phone01,
+  User01,
   AlertCircle,
-  Loader2,
+  RefreshCw01,
   Check,
-} from 'lucide-react';
+} from '@untitledui/icons';
 import { ROUTES } from '../../constants/routes';
 import { useUserHealth } from '../../context/UserHealthContext';
 import type { UserProfile, GeneralHealthProfile, LifestyleProfile } from '../../types/onboarding';
@@ -270,7 +270,7 @@ export const GeneralOnboarding: React.FC = () => {
                     Full Name <span className="text-[#34D399]">*</span>
                   </label>
                   <div className="relative">
-                    <User className="w-4 h-4 text-[#A7F3D0]/60 absolute left-3.5 top-3.5" />
+                    <User01 className="w-4 h-4 text-[#A7F3D0]/60 absolute left-3.5 top-3.5" aria-hidden="true" />
                     <input
                       type="text"
                       value={draftProfile.fullName}
@@ -290,7 +290,7 @@ export const GeneralOnboarding: React.FC = () => {
                       <span className="text-[10px] text-[#A7F3D0]/70 font-mono">16 – 50 years</span>
                     </label>
                     <div className="relative">
-                      <Calendar className="w-4 h-4 text-[#A7F3D0]/60 absolute left-3.5 top-3.5" />
+                      <Calendar className="w-4 h-4 text-[#A7F3D0]/60 absolute left-3.5 top-3.5" aria-hidden="true" />
                       <input
                         type="date"
                         min={dobBounds.min}
@@ -311,7 +311,7 @@ export const GeneralOnboarding: React.FC = () => {
                       <span className="text-[10px] text-[#A7F3D0]/70 font-mono">11 digits (03xx or +92)</span>
                     </label>
                     <div className="relative">
-                      <Phone className="w-4 h-4 text-[#A7F3D0]/60 absolute left-3.5 top-3.5" />
+                      <Phone01 className="w-4 h-4 text-[#A7F3D0]/60 absolute left-3.5 top-3.5" aria-hidden="true" />
                       <input
                         type="tel"
                         value={draftProfile.phone}
@@ -403,7 +403,7 @@ export const GeneralOnboarding: React.FC = () => {
                             isSelected ? 'bg-[#34D399] border-[#34D399] text-[#0A1A12]' : 'border-white/30'
                           }`}
                         >
-                          {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                          {isSelected && <Check className="w-3 h-3 stroke-[3]" aria-hidden="true" />}
                         </div>
                       </button>
                     );
@@ -576,7 +576,7 @@ export const GeneralOnboarding: React.FC = () => {
                           isSelected ? 'bg-[#34D399] border-[#34D399] text-[#0A1A12]' : 'border-white/30'
                         }`}
                       >
-                        {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                        {isSelected && <Check className="w-3 h-3 stroke-[3]" aria-hidden="true" />}
                       </div>
                     </button>
                   );
@@ -597,7 +597,7 @@ export const GeneralOnboarding: React.FC = () => {
             >
               <div className="text-center space-y-2 py-2">
                 <div className="w-16 h-16 rounded-full mx-auto bg-gradient-to-tr from-[#059669] via-[#10B981] to-[#34D399] flex items-center justify-center text-[#0A1A12] shadow-xl shadow-emerald-950/50 font-bold">
-                  <Compass className="w-8 h-8 text-[#0A1A12]" />
+                  <Target04 className="w-8 h-8 text-[#0A1A12]" aria-hidden="true" />
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-bold font-display text-white">
                   Your BIOPulse AI profile is ready.
@@ -609,7 +609,7 @@ export const GeneralOnboarding: React.FC = () => {
 
               {saveError && (
                 <div className="p-3.5 rounded-2xl bg-[#E87084]/15 border border-[#E87084]/40 text-xs text-[#F48498] flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <AlertCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
                   <span>{saveError}</span>
                 </div>
               )}
@@ -621,23 +621,23 @@ export const GeneralOnboarding: React.FC = () => {
                 </span>
                 <ul className="space-y-2 text-xs text-[#A7F3D0]/80">
                   <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-[#34D399] shrink-0" />
+                    <CheckCircle className="w-4 h-4 text-[#34D399] shrink-0" aria-hidden="true" />
                     <span>Baseline health overview, daily vitals, and wellness index</span>
                   </li>
                   <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-[#34D399] shrink-0" />
+                    <CheckCircle className="w-4 h-4 text-[#34D399] shrink-0" aria-hidden="true" />
                     <span>Evidence-based lifestyle, nutrition, and hydration tracking</span>
                   </li>
                   <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-[#34D399] shrink-0" />
+                    <CheckCircle className="w-4 h-4 text-[#34D399] shrink-0" aria-hidden="true" />
                     <span>Verified lab report integration & OCR report organization</span>
                   </li>
                   <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-[#34D399] shrink-0" />
+                    <CheckCircle className="w-4 h-4 text-[#34D399] shrink-0" aria-hidden="true" />
                     <span>Longitudinal monitoring & preventive health timelines</span>
                   </li>
                   <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-[#34D399] shrink-0" />
+                    <CheckCircle className="w-4 h-4 text-[#34D399] shrink-0" aria-hidden="true" />
                     <span>Interactive health education & conversational AI explanations</span>
                   </li>
                 </ul>
@@ -653,13 +653,13 @@ export const GeneralOnboarding: React.FC = () => {
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin text-[#0A1A12]" />
+                    <RefreshCw01 className="w-4 h-4 animate-spin text-[#0A1A12]" aria-hidden="true" />
                     <span>Initializing BIOPulse AI...</span>
                   </>
                 ) : (
                   <>
                     <span>Enter BIOPulse AI</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-4 h-4" aria-hidden="true" />
                   </>
                 )}
               </motion.button>
@@ -676,7 +676,7 @@ export const GeneralOnboarding: React.FC = () => {
               disabled={currentStep === 1}
               className="px-4 py-2.5 rounded-xl border border-white/15 text-xs text-[#A7F3D0]/70 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
+              <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Back</span>
             </button>
 
@@ -688,7 +688,7 @@ export const GeneralOnboarding: React.FC = () => {
               className="px-6 py-2.5 rounded-xl font-sans font-semibold text-xs text-[#0A1A12] bg-gradient-to-r from-[#34D399] to-[#6EE7B7] border border-[#34D399]/40 hover:brightness-110 shadow-md shadow-emerald-950/40 transition-all flex items-center gap-2 cursor-pointer font-bold"
             >
               <span>Continue</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
             </motion.button>
           </div>
         )}
@@ -697,7 +697,7 @@ export const GeneralOnboarding: React.FC = () => {
       {/* Footer */}
       <footer className="max-w-4xl w-full mx-auto pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between text-[11px] text-[#A7F3D0]/60 gap-2">
         <div className="flex items-center gap-1.5">
-          <ShieldCheck className="w-4 h-4 text-[#34D399]" />
+          <ShieldTick className="w-4 h-4 text-[#34D399]" aria-hidden="true" />
           <span>Encrypted HIPAA-grade health data container.</span>
         </div>
         <div>

@@ -1,53 +1,56 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Layers,
-  ShieldCheck,
+  LayersThree01,
+  ShieldTick,
   AlertTriangle,
   AlertCircle,
-  Target,
-  FlaskConical,
-  UploadCloud,
-  CheckCircle2,
-  Sparkles,
-  History,
-  RotateCcw,
-  Info,
+  Target02,
+  Beaker01,
+  UploadCloud01,
+  CheckCircle,
+  ClipboardCheck,
+  BarChart01,
+  Clock,
+  RefreshCw01,
+  InfoCircle,
   Heart,
   Calendar,
   Activity,
-  Scale,
-  FileText,
-  X,
+  ActivityHeart,
+  Scales01,
+  File06,
+  XClose,
   ArrowRight,
-} from 'lucide-react';
+} from '@untitledui/icons';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { ClinicalLabsModal } from '../adaptive/ClinicalLabsModal';
 import { UltrasoundUploadModal } from '../adaptive/UltrasoundUploadModal';
 import { AssessmentHistoryModal } from '../adaptive/AssessmentHistoryModal';
+import { PatientShapExplanation } from '../explainability/PatientShapExplanation';
 
 /**
  * Botanical Petal Artwork SVG matching reference screenshot top-right decoration
  */
 const BotanicalPetalArtwork: React.FC = () => (
   <svg
-    className="w-16 h-16 sm:w-20 sm:h-20 text-[#FCE7F3] opacity-80 pointer-events-none select-none shrink-0"
+    className="w-16 h-16 sm:w-20 sm:h-20 text-[#FDE6EF] opacity-80 pointer-events-none select-none shrink-0"
     viewBox="0 0 100 100"
     fill="currentColor"
     aria-hidden="true"
   >
     <path
       d="M30 75 C 30 45, 55 25, 75 20 C 70 45, 50 65, 30 75 Z"
-      fill="#FCE7F3"
+      fill="#FDE6EF"
     />
     <path
       d="M50 85 C 50 60, 70 45, 88 40 C 85 62, 68 78, 50 85 Z"
-      fill="#F9D2E5"
+      fill="#FDE6EF"
       opacity="0.8"
     />
     <path
       d="M20 60 C 25 38, 45 22, 60 18 C 52 38, 38 52, 20 60 Z"
-      fill="#FDEBF4"
+      fill="#FDE6EF"
       opacity="0.6"
     />
   </svg>
@@ -323,21 +326,21 @@ export const FemaleScreeningWorkspace: React.FC = () => {
   const renderFactorIcon = (iconType: string) => {
     switch (iconType) {
       case 'skin':
-        return <Sparkles className="w-5 h-5 text-[#E84A8A]" />;
+        return <ActivityHeart className="w-5 h-5 text-[#F43F7D]" aria-hidden="true" />;
       case 'hair':
-        return <Activity className="w-5 h-5 text-[#E84A8A]" />;
+        return <ActivityHeart className="w-5 h-5 text-[#F43F7D]" aria-hidden="true" />;
       case 'exercise':
-        return <Activity className="w-5 h-5 text-[#E84A8A]" />;
+        return <Activity className="w-5 h-5 text-[#F43F7D]" aria-hidden="true" />;
       case 'cycle':
-        return <Calendar className="w-5 h-5 text-[#E84A8A]" />;
+        return <Calendar className="w-5 h-5 text-[#F43F7D]" aria-hidden="true" />;
       case 'scale':
-        return <Scale className="w-5 h-5 text-[#E84A8A]" />;
+        return <Scales01 className="w-5 h-5 text-[#F43F7D]" aria-hidden="true" />;
       case 'ultrasound':
-        return <UploadCloud className="w-5 h-5 text-[#E84A8A]" />;
+        return <UploadCloud01 className="w-5 h-5 text-[#F43F7D]" aria-hidden="true" />;
       case 'labs':
-        return <FlaskConical className="w-5 h-5 text-[#E84A8A]" />;
+        return <Beaker01 className="w-5 h-5 text-[#F43F7D]" aria-hidden="true" />;
       default:
-        return <Sparkles className="w-5 h-5 text-[#E84A8A]" />;
+        return <ActivityHeart className="w-5 h-5 text-[#F43F7D]" aria-hidden="true" />;
     }
   };
 
@@ -345,7 +348,7 @@ export const FemaleScreeningWorkspace: React.FC = () => {
     <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       {/* ── Breadcrumb ───────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-2 text-xs text-[#667085]">
-        <Layers className="w-3.5 h-3.5 text-[#98A2B3]" />
+        <LayersThree01 className="w-3.5 h-3.5 text-[#98A2B3]" aria-hidden="true" />
         <span>BioPulse AI</span>
         <span>&gt;</span>
         <span className="font-medium text-[#111318]">PCOS Screening</span>
@@ -369,7 +372,7 @@ export const FemaleScreeningWorkspace: React.FC = () => {
             onClick={() => setIsHistoryModalOpen(true)}
             className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-[#F9FAFB] active:bg-[#F2F4F7] text-[#111318] text-sm font-medium rounded-full border border-[#EAECF0] shadow-xs transition-colors"
           >
-            <History className="w-4 h-4 text-[#667085]" />
+            <Clock className="w-4 h-4 text-[#667085]" aria-hidden="true" />
             <span>Assessment History</span>
           </button>
 
@@ -377,12 +380,12 @@ export const FemaleScreeningWorkspace: React.FC = () => {
           <div className="hidden lg:flex items-center gap-2">
             <BotanicalPetalArtwork />
             <div className="flex flex-col items-start select-none">
-              <span className="text-xs italic font-serif text-[#A92D61] tracking-wide leading-tight">
+              <span className="text-xs italic font-serif text-[#DC326C] tracking-wide leading-tight">
                 Healthier tomorrows
                 <br />
                 for every woman
               </span>
-              <span className="w-6 h-0.5 bg-[#E84A8A] rounded-full mt-1 opacity-70" />
+              <span className="w-6 h-0.5 bg-[#F43F7D] rounded-full mt-1 opacity-70" />
             </div>
           </div>
         </div>
@@ -396,8 +399,8 @@ export const FemaleScreeningWorkspace: React.FC = () => {
             {/* Header row: Tier Badge, Model Version, View Details */}
             <div className="flex items-center justify-between gap-3 pb-4">
               <div className="flex items-center gap-3">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FCE7F3] text-[#A92D61]">
-                  <Layers className="w-3.5 h-3.5 text-[#E84A8A]" />
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FDE6EF] text-[#DC326C]">
+                  <LayersThree01 className="w-3.5 h-3.5 text-[#F43F7D]" aria-hidden="true" />
                   {getTierLabel()}
                 </span>
                 {modelTag && (
@@ -411,10 +414,10 @@ export const FemaleScreeningWorkspace: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsDetailsModalOpen(true)}
-                  className="text-xs font-semibold text-[#A92D61] hover:text-[#E84A8A] transition-colors inline-flex items-center gap-1"
+                  className="text-xs font-semibold text-[#DC326C] hover:text-[#F43F7D] transition-colors inline-flex items-center gap-1 cursor-pointer"
                 >
                   <span>View details</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
               )}
             </div>
@@ -428,17 +431,17 @@ export const FemaleScreeningWorkspace: React.FC = () => {
               {hasAssessment ? (
                 isLowerRisk ? (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#ECFDF3] text-[#027A48] border border-[#D1FADF]">
-                    <ShieldCheck className="w-4 h-4 text-[#12B76A]" />
+                    <ShieldTick className="w-4 h-4 text-[#12B76A]" aria-hidden="true" />
                     Lower Screening Risk
                   </span>
                 ) : isHigherRisk ? (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#FEF3F2] text-[#B42318] border border-[#FECDCA]">
-                    <AlertCircle className="w-4 h-4 text-[#F04438]" />
+                    <AlertCircle className="w-4 h-4 text-[#F04438]" aria-hidden="true" />
                     Higher Screening Risk
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#FFFAEB] text-[#B54708] border border-[#FEDF89]">
-                    <AlertTriangle className="w-4 h-4 text-[#F79009]" />
+                    <AlertTriangle className="w-4 h-4 text-[#F79009]" aria-hidden="true" />
                     Intermediate Screening Risk
                   </span>
                 )
@@ -515,7 +518,7 @@ export const FemaleScreeningWorkspace: React.FC = () => {
                 <span className="text-[11px] text-[#98A2B3]">{riskRanges.intermediateLabel}</span>
               </div>
               <div className="text-right">
-                <span className="block font-semibold text-[#A92D61]">Higher Risk</span>
+                <span className="block font-semibold text-[#B42318]">Higher Risk</span>
                 <span className="text-[11px] text-[#98A2B3]">{riskRanges.highLabel}</span>
               </div>
             </div>
@@ -527,24 +530,24 @@ export const FemaleScreeningWorkspace: React.FC = () => {
           <div>
             {/* Header: Target icon + Recommended Next Step */}
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-[#FCE7F3] flex items-center justify-center text-[#E84A8A]">
-                <Target className="w-4 h-4" />
+              <div className="w-7 h-7 rounded-full bg-[#FDE6EF] flex items-center justify-center text-[#F43F7D]">
+                <Target02 className="w-4 h-4" aria-hidden="true" />
               </div>
-              <h2 className="text-sm font-bold text-[#E84A8A] tracking-tight">
+              <h2 className="text-sm font-bold text-[#F43F7D] tracking-tight">
                 Recommended Next Step
               </h2>
             </div>
 
             {/* Circular Icon Container */}
-            <div className="w-16 h-16 rounded-full bg-[#FCE7F3] flex items-center justify-center mx-auto my-5 text-[#E84A8A]">
+            <div className="w-16 h-16 rounded-full bg-[#FDE6EF] flex items-center justify-center mx-auto my-5 text-[#F43F7D]">
               {!hasAssessment ? (
-                <Sparkles className="w-8 h-8" />
+                <ClipboardCheck className="w-8 h-8" aria-hidden="true" />
               ) : isTier3Done ? (
-                <CheckCircle2 className="w-8 h-8 text-[#12B76A]" />
+                <CheckCircle className="w-8 h-8 text-[#12B76A]" aria-hidden="true" />
               ) : isTier2Done ? (
-                <UploadCloud className="w-8 h-8" />
+                <UploadCloud01 className="w-8 h-8" aria-hidden="true" />
               ) : (
-                <FlaskConical className="w-8 h-8" />
+                <Beaker01 className="w-8 h-8" aria-hidden="true" />
               )}
             </div>
 
@@ -578,9 +581,9 @@ export const FemaleScreeningWorkspace: React.FC = () => {
                 type="button"
                 onClick={handleStartTier1}
                 disabled={isSubmittingT1}
-                className="w-full py-3 px-4 bg-[#E84A8A] hover:bg-[#D83777] active:scale-[0.98] text-white text-sm font-semibold rounded-xl shadow-xs transition-all flex items-center justify-center gap-2"
+                className="w-full h-11 px-4 bg-[#F43F7D] hover:bg-[#DC326C] active:scale-[0.98] text-white text-sm font-medium rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
-                <Sparkles className="w-4 h-4" />
+                <ClipboardCheck className="w-4 h-4" aria-hidden="true" />
                 <span>{isSubmittingT1 ? 'Evaluating...' : 'Start Initial Screening (Tier 1) →'}</span>
               </button>
             ) : isTier3Done ? (
@@ -588,18 +591,18 @@ export const FemaleScreeningWorkspace: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsDetailsModalOpen(true)}
-                  className="w-full py-3 px-4 bg-[#E84A8A] hover:bg-[#D83777] active:scale-[0.98] text-white text-sm font-semibold rounded-xl shadow-xs transition-all flex items-center justify-center gap-2"
+                  className="w-full h-11 px-4 bg-[#F43F7D] hover:bg-[#DC326C] active:scale-[0.98] text-white text-sm font-medium rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <FileText className="w-4 h-4" />
+                  <File06 className="w-4 h-4" aria-hidden="true" />
                   <span>Review Full Screening Report</span>
                 </button>
                 <button
                   type="button"
                   onClick={handleStartTier1}
                   disabled={isSubmittingT1}
-                  className="w-full py-2.5 px-4 bg-white hover:bg-[#F9FAFB] active:scale-[0.98] text-[#344054] text-sm font-medium rounded-xl border border-[#D0D5DD] transition-all flex items-center justify-center gap-2"
+                  className="w-full h-10 px-4 bg-white hover:bg-[#F9FAFB] active:scale-[0.98] text-[#344054] text-sm font-medium rounded-xl border border-[#D0D5DD] transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <RotateCcw className="w-4 h-4 text-[#667085]" />
+                  <RefreshCw01 className="w-4 h-4 text-[#667085]" aria-hidden="true" />
                   <span>Re-evaluate Screening</span>
                 </button>
               </>
@@ -608,17 +611,17 @@ export const FemaleScreeningWorkspace: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsUltrasoundModalOpen(true)}
-                  className="w-full py-3 px-4 bg-[#E84A8A] hover:bg-[#D83777] active:scale-[0.98] text-white text-sm font-semibold rounded-xl shadow-xs transition-all flex items-center justify-center gap-2"
+                  className="w-full h-11 px-4 bg-[#F43F7D] hover:bg-[#DC326C] active:scale-[0.98] text-white text-sm font-medium rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <UploadCloud className="w-4 h-4" />
+                  <UploadCloud01 className="w-4 h-4" aria-hidden="true" />
                   <span>Upload Ultrasound (Tier 3) →</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsLabsModalOpen(true)}
-                  className="w-full py-2.5 px-4 bg-white hover:bg-[#F9FAFB] active:scale-[0.98] text-[#344054] text-sm font-medium rounded-xl border border-[#D0D5DD] transition-all flex items-center justify-center gap-2"
+                  className="w-full h-10 px-4 bg-white hover:bg-[#F9FAFB] active:scale-[0.98] text-[#344054] text-sm font-medium rounded-xl border border-[#D0D5DD] transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <FlaskConical className="w-4 h-4 text-[#667085]" />
+                  <Beaker01 className="w-4 h-4 text-[#667085]" aria-hidden="true" />
                   <span>Edit Clinical Labs (Tier 2)</span>
                 </button>
               </>
@@ -627,9 +630,9 @@ export const FemaleScreeningWorkspace: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsLabsModalOpen(true)}
-                className="w-full py-3 px-4 bg-[#E84A8A] hover:bg-[#D83777] active:scale-[0.98] text-white text-sm font-semibold rounded-xl shadow-xs transition-all flex items-center justify-center gap-2"
+                className="w-full h-11 px-4 bg-[#F43F7D] hover:bg-[#DC326C] active:scale-[0.98] text-white text-sm font-medium rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
-                <FlaskConical className="w-4 h-4" />
+                <Beaker01 className="w-4 h-4" aria-hidden="true" />
                 <span>Add Clinical Labs (Tier 2) →</span>
               </button>
             )}
@@ -642,107 +645,106 @@ export const FemaleScreeningWorkspace: React.FC = () => {
         </div>
       </div>
 
-      {/* ── What Influenced Your Result ──────────────────────────────────────── */}
-      <div className="space-y-3 pt-2">
-        <div className="flex items-center gap-2">
-          {/* Signal bars icon matching screenshot */}
-          <div className="flex items-end gap-0.5 h-4 select-none">
-            <span className="w-1 h-2 bg-[#E84A8A] rounded-xs" />
-            <span className="w-1 h-3.5 bg-[#E84A8A] rounded-xs" />
-            <span className="w-1 h-2.5 bg-[#E84A8A] rounded-xs" />
-          </div>
-          <h2 className="text-lg sm:text-xl font-bold text-[#111318] tracking-tight">
-            What influenced your result
-          </h2>
-        </div>
-        <p className="text-xs sm:text-sm text-[#667085]">
-          Top factors from your assessment that most contributed to your current screening risk.
-        </p>
-
-        {!hasAssessment ? (
-          /* Explicit Empty State: No Assessment */
-          <div className="bg-white rounded-2xl border border-[#EAECF0] p-6 text-center shadow-xs">
-            <div className="w-10 h-10 rounded-full bg-[#FCE7F3] flex items-center justify-center mx-auto mb-2 text-[#E84A8A]">
-              <Sparkles className="w-5 h-5" />
+      {/* ── Patient-Centered SHAP Explainability Engine ────────────────────── */}
+      {hasAssessment && activeAssessment?.shap_explanation ? (
+        <PatientShapExplanation
+          payload={activeAssessment.shap_explanation}
+          longitudinalComparison={activeAssessment.longitudinal_shap_comparison}
+          pathway="female_pcos"
+        />
+      ) : (
+        <div className="space-y-3 pt-2">
+          <div className="flex items-center gap-2">
+            <div className="flex items-end gap-0.5 h-4 select-none">
+              <span className="w-1 h-2 bg-[#F43F7D] rounded-xs" />
+              <span className="w-1 h-3.5 bg-[#F43F7D] rounded-xs" />
+              <span className="w-1 h-2.5 bg-[#F43F7D] rounded-xs" />
             </div>
-            <p className="text-sm font-medium text-[#111318]">
-              Complete your initial screening to see which factors influence your result.
-            </p>
-            <p className="text-xs text-[#667085] mt-1 max-w-md mx-auto">
-              Once evaluated, personalized TreeSHAP explainability features will highlight key biometric and lifestyle signals.
-            </p>
+            <h2 className="text-lg sm:text-xl font-bold text-[#111318] tracking-tight">
+              What influenced your result
+            </h2>
           </div>
-        ) : topFactors.length === 0 ? (
-          /* Explicit Empty State: Assessment exists but explanations unavailable */
-          <div className="bg-white rounded-2xl border border-[#EAECF0] p-6 text-center shadow-xs">
-            <p className="text-sm text-[#667085]">
-              Factor explanations are not available for this assessment.
-            </p>
-          </div>
-        ) : (
-          /* 3-Column Factor Cards from real SHAP output */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-1">
-            {topFactors.map((factor, index) => (
-              <div
-                key={index}
-                className="bg-white rounded-2xl border border-[#EAECF0] p-4 sm:p-5 flex items-start gap-3.5 relative shadow-xs"
-              >
-                {/* Factor Icon in Soft Pink Container */}
-                <div className="w-11 h-11 rounded-full bg-[#FCE7F3] flex items-center justify-center shrink-0">
-                  {renderFactorIcon(factor.iconType)}
-                </div>
+          <p className="text-xs sm:text-sm text-[#667085]">
+            Top factors from your assessment that most contributed to your current screening risk.
+          </p>
 
-                {/* Title & Description */}
-                <div className="flex-1 pr-6">
-                  <h3 className="text-sm font-semibold text-[#111318] leading-snug">
-                    {factor.title}
-                  </h3>
-                  <p className="text-xs text-[#667085] mt-1 leading-relaxed">
-                    {factor.explanation}
-                  </p>
-                </div>
-
-                {/* Direction Indicator Badge (Top-Right): Strictly from explanation payload */}
-                <div className="absolute top-4 right-4">
-                  {factor.direction === 'decreases_risk' ? (
-                    <span
-                      className="w-6 h-6 rounded-full bg-[#ECFDF3] text-[#12B76A] flex items-center justify-center text-xs font-bold"
-                      title="Contributes toward lower screening risk"
-                    >
-                      ↓
-                    </span>
-                  ) : factor.direction === 'increases_risk' ? (
-                    <span
-                      className="w-6 h-6 rounded-full bg-[#FEF3F2] text-[#F04438] flex items-center justify-center text-xs font-bold"
-                      title="Contributes toward higher screening risk"
-                    >
-                      ↑
-                    </span>
-                  ) : (
-                    <span
-                      className="w-6 h-6 rounded-full bg-[#F2F4F7] text-[#667085] flex items-center justify-center text-xs font-bold"
-                      title="Evaluated screening factor"
-                    >
-                      •
-                    </span>
-                  )}
-                </div>
+          {!hasAssessment ? (
+            <div className="bg-white rounded-2xl border border-[#EAECF0] p-6 text-center shadow-xs">
+              <div className="w-10 h-10 rounded-full bg-[#FDE6EF] flex items-center justify-center mx-auto mb-2 text-[#F43F7D]">
+                <BarChart01 className="w-5 h-5" aria-hidden="true" />
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+              <p className="text-sm font-medium text-[#111318]">
+                Complete your initial screening to see which factors influence your result.
+              </p>
+              <p className="text-xs text-[#667085] mt-1 max-w-md mx-auto">
+                Once evaluated, personalized TreeSHAP explainability features will highlight key biometric and lifestyle signals.
+              </p>
+            </div>
+          ) : topFactors.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-[#EAECF0] p-6 text-center shadow-xs">
+              <p className="text-sm text-[#667085]">
+                Factor explanations are not available for this assessment.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-1">
+              {topFactors.map((factor, index) => (
+                <div
+                  key={index}
+                  className="bg-white rounded-2xl border border-[#EAECF0] p-4 sm:p-5 flex items-start gap-3.5 relative shadow-xs"
+                >
+                  <div className="w-11 h-11 rounded-full bg-[#FDE6EF] flex items-center justify-center shrink-0">
+                    {renderFactorIcon(factor.iconType)}
+                  </div>
+                  <div className="flex-1 pr-6">
+                    <h3 className="text-sm font-semibold text-[#111318] leading-snug">
+                      {factor.title}
+                    </h3>
+                    <p className="text-xs text-[#667085] mt-1 leading-relaxed">
+                      {factor.explanation}
+                    </p>
+                  </div>
+                  <div className="absolute top-4 right-4">
+                    {factor.direction === 'decreases_risk' ? (
+                      <span
+                        className="w-6 h-6 rounded-full bg-[#ECFDF3] text-[#12B76A] flex items-center justify-center text-xs font-bold"
+                        title="Contributes toward lower screening risk"
+                      >
+                        ↓
+                      </span>
+                    ) : factor.direction === 'increases_risk' ? (
+                      <span
+                        className="w-6 h-6 rounded-full bg-[#FEF3F2] text-[#F04438] flex items-center justify-center text-xs font-bold"
+                        title="Contributes toward higher screening risk"
+                      >
+                        ↑
+                      </span>
+                    ) : (
+                      <span
+                        className="w-6 h-6 rounded-full bg-[#F2F4F7] text-[#667085] flex items-center justify-center text-xs font-bold"
+                        title="Evaluated screening factor"
+                      >
+                        •
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Disclaimer Bar ───────────────────────────────────────────────────── */}
       <div className="bg-[#F8F9FA] rounded-xl border border-[#EAECF0] px-5 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#667085]">
         <div className="flex items-center gap-2 text-center sm:text-left">
-          <Info className="w-4 h-4 text-[#475569] shrink-0" />
+          <InfoCircle className="w-4 h-4 text-[#475569] shrink-0" aria-hidden="true" />
           <span>
             Non-diagnostic statistical screening estimate. Consult a qualified healthcare professional for clinical diagnosis and care.
           </span>
         </div>
         <div className="flex items-center gap-1.5 text-[#98A2B3] text-[11px] shrink-0 select-none">
-          <Heart className="w-3.5 h-3.5 text-[#F670A1] fill-[#F670A1]" />
+          <Heart className="w-3.5 h-3.5 text-[#F43F7D] fill-current" aria-hidden="true" />
           <span>Evidence today. Healthier tomorrows.</span>
         </div>
       </div>
@@ -759,15 +761,16 @@ export const FemaleScreeningWorkspace: React.FC = () => {
             >
               <div className="flex items-center justify-between border-b border-[#F2F4F7] pb-3">
                 <div className="flex items-center gap-2">
-                  <Layers className="w-5 h-5 text-[#E84A8A]" />
+                  <LayersThree01 className="w-5 h-5 text-[#F43F7D]" aria-hidden="true" />
                   <h3 className="text-base font-bold text-[#111318]">Assessment Details</h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsDetailsModalOpen(false)}
-                  className="p-1 rounded-lg hover:bg-[#F2F4F7] text-[#667085]"
+                  className="p-1 rounded-lg hover:bg-[#F2F4F7] text-[#667085] cursor-pointer"
+                  aria-label="Close dialog"
                 >
-                  <X className="w-5 h-5" />
+                  <XClose className="w-5 h-5" aria-hidden="true" />
                 </button>
               </div>
 

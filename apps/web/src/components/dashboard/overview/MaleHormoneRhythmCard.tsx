@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sun, BatteryCharging } from 'lucide-react';
+import { Sun, BatteryCharging01 } from '@untitledui/icons';
 
 interface MaleHormoneRhythmCardProps {
   energyLevel?: string;
@@ -14,9 +14,7 @@ export const MaleHormoneRhythmCard: React.FC<MaleHormoneRhythmCardProps> = ({
     <div className="p-5 sm:p-6 rounded-[24px] bg-white border border-[#E2E8F0] shadow-sm text-left select-none space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center text-[#0288D1]">
-            <Sun className="w-4 h-4" />
-          </div>
+          <Sun className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
           <div>
             <span className="text-xs font-bold font-display text-[#0F172A] block">
               Endocrine Rhythm
@@ -53,7 +51,7 @@ export const MaleHormoneRhythmCard: React.FC<MaleHormoneRhythmCardProps> = ({
       </div>
 
       <div className="flex items-center gap-2 text-[11px] text-[#64748B] pt-1">
-        <BatteryCharging className="w-3.5 h-3.5 text-[#0288D1]" />
+        <BatteryCharging01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
         <span>Peak testosterone synthesis occurs during undisturbed deep REM sleep.</span>
       </div>
     </div>

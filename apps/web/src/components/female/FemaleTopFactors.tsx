@@ -1,5 +1,5 @@
 import React from 'react';
-import { HelpCircle, Sparkles } from 'lucide-react';
+import { BarChart01, HelpCircle } from '@untitledui/icons';
 import { FemaleCard } from './FemaleDesignPrimitives';
 
 interface ExplanationFactor {
@@ -111,9 +111,7 @@ export const FemaleTopFactors: React.FC<FemaleTopFactorsProps> = ({
     <FemaleCard className="space-y-4 select-none">
       <div className="flex items-center justify-between border-b border-[#EAECF0] pb-3">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-[#FFF5F9] border border-[#FBE7F0] flex items-center justify-center text-[#E84A8A]">
-            <Sparkles className="w-3.5 h-3.5" />
-          </div>
+          <BarChart01 className="w-5 h-5 text-[#F43F7D] shrink-0" aria-hidden="true" />
           <h3 className="text-sm sm:text-base font-semibold text-[#111318]">
             Key Contributing Factors
           </h3>
@@ -123,10 +121,10 @@ export const FemaleTopFactors: React.FC<FemaleTopFactorsProps> = ({
           <button
             type="button"
             onClick={onViewExplanation}
-            className="text-xs font-semibold text-[#E84A8A] hover:text-[#D93B7A] flex items-center gap-1 cursor-pointer transition-colors"
+            className="text-xs font-semibold text-[#F43F7D] hover:text-[#DC326C] flex items-center gap-1 cursor-pointer transition-colors"
           >
             <span>Why these factors?</span>
-            <HelpCircle className="w-3.5 h-3.5" />
+            <HelpCircle className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
         )}
       </div>
@@ -137,7 +135,7 @@ export const FemaleTopFactors: React.FC<FemaleTopFactorsProps> = ({
             key={idx}
             className="p-3 rounded-xl bg-[#FAFAFC] border border-[#EAECF0] flex items-start gap-3"
           >
-            <div className="w-5 h-5 rounded-full bg-[#FBE7F0] text-[#A92D61] flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5">
+            <div className="w-5 h-5 rounded-full bg-[#FDE6EF] text-[#DC326C] flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5">
               {idx + 1}
             </div>
             <div className="space-y-0.5 min-w-0">

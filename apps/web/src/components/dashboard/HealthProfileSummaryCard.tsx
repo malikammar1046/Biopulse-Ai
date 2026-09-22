@@ -1,17 +1,17 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ShieldCheck,
-  HeartPulse,
-  Pill,
+  ShieldTick,
+  ActivityHeart,
+  MedicalCross,
+  MedicalCircle,
   AlertCircle,
-  Stethoscope,
-  Sparkles,
   Phone,
-  Scale,
+  Scales01,
   Calendar,
-  Edit3,
-} from 'lucide-react';
+  Edit01,
+  Sliders01,
+} from '@untitledui/icons';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { calculateAge, calculateProfileCompletion } from '../../utils/profileCompletion';
 import { ROUTES } from '../../constants/routes';
@@ -38,7 +38,7 @@ export const HealthProfileSummaryCard: React.FC = () => {
       <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-[#E2E8F0]">
         <div className="space-y-1">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD] text-xs font-mono font-bold">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#0288D1]" />
+            <ShieldTick className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
             <span>Your Health Record</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold font-display text-[#0F172A]">
@@ -54,7 +54,7 @@ export const HealthProfileSummaryCard: React.FC = () => {
           <div className="space-y-1.5 min-w-[200px]">
             <div className="flex items-center justify-between text-xs">
               <span className="font-mono font-bold text-[#0F172A] flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-[#0288D1]" />
+                <Sliders01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
                 Profile Completion
               </span>
               <span className="font-mono font-extrabold text-[#0288D1]">
@@ -82,7 +82,7 @@ export const HealthProfileSummaryCard: React.FC = () => {
             onClick={handleCompleteOrEdit}
             className="px-4 py-2 rounded-xl font-sans font-bold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
           >
-            <Edit3 className="w-3.5 h-3.5" />
+            <Edit01 className="w-3.5 h-3.5" aria-hidden="true" />
             <span>{completion.percentage < 100 ? 'Complete Profile' : 'Edit Profile'}</span>
           </button>
         </div>
@@ -93,7 +93,7 @@ export const HealthProfileSummaryCard: React.FC = () => {
         {/* 1. Age & Date of Birth */}
         <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-1">
           <div className="flex items-center gap-1.5 text-xs font-mono text-[#64748B]">
-            <Calendar className="w-3.5 h-3.5 text-[#0288D1]" />
+            <Calendar className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
             <span>Age / DOB</span>
           </div>
           {age !== null ? (
@@ -119,7 +119,7 @@ export const HealthProfileSummaryCard: React.FC = () => {
         {/* 2. Blood Type */}
         <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-1">
           <div className="flex items-center gap-1.5 text-xs font-mono text-[#64748B]">
-            <HeartPulse className="w-3.5 h-3.5 text-[#0288D1]" />
+            <ActivityHeart className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
             <span>Blood Type</span>
           </div>
           {userProfile.medical?.bloodType && userProfile.medical.bloodType !== 'Not Sure' ? (
@@ -145,7 +145,7 @@ export const HealthProfileSummaryCard: React.FC = () => {
         {/* 3. Physical Measurements (Height & Weight) */}
         <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-1">
           <div className="flex items-center gap-1.5 text-xs font-mono text-[#64748B]">
-            <Scale className="w-3.5 h-3.5 text-[#0288D1]" />
+            <Scales01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
             <span>Height & Weight</span>
           </div>
           {userProfile.heightCm || userProfile.weightKg ? (
@@ -171,7 +171,7 @@ export const HealthProfileSummaryCard: React.FC = () => {
         {/* 4. Primary Emergency Contact */}
         <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-1">
           <div className="flex items-center gap-1.5 text-xs font-mono text-[#64748B]">
-            <Phone className="w-3.5 h-3.5 text-emerald-600" />
+            <Phone className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
             <span>Emergency Contact</span>
           </div>
           {primaryEmergency?.name?.trim() ? (
@@ -203,7 +203,7 @@ export const HealthProfileSummaryCard: React.FC = () => {
         <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold font-mono text-[#0F172A] uppercase flex items-center gap-1.5">
-              <AlertCircle className="w-3.5 h-3.5 text-rose-500" />
+              <AlertCircle className="w-3.5 h-3.5 text-rose-500" aria-hidden="true" />
               Known Allergies
             </span>
             <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-rose-50 border border-rose-200 text-rose-700">
@@ -240,7 +240,7 @@ export const HealthProfileSummaryCard: React.FC = () => {
         <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold font-mono text-[#0F172A] uppercase flex items-center gap-1.5">
-              <Pill className="w-3.5 h-3.5 text-emerald-600" />
+              <MedicalCross className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
               Medications & Supplements
             </span>
             <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700">
@@ -277,7 +277,7 @@ export const HealthProfileSummaryCard: React.FC = () => {
         <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold font-mono text-[#0F172A] uppercase flex items-center gap-1.5">
-              <Stethoscope className="w-3.5 h-3.5 text-[#0288D1]" />
+              <MedicalCircle className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
               Health Conditions
             </span>
             <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#E0F2FE] border border-[#BAE6FD] text-[#0288D1]">

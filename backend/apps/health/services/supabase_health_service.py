@@ -43,6 +43,8 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PatientProfile:
     user_id: str
+    gender: str | None = None
+    pathway: str | None = None
     height_cm: float | None = None
     weight_kg: float | None = None
     date_of_birth: str | None = None
@@ -64,6 +66,8 @@ class PatientProfile:
     abortions_count: int | None = None     # 0, 1, 2...
     fast_food_intake: str | None = None    # "frequent" | "occasional" | "rare_never"
     regular_exercise: bool | None = None   # True | False
+    updated_at: str | None = None
+    created_at: str | None = None
 
 
 @dataclass
@@ -232,10 +236,11 @@ class SupabaseHealthService:
             res = (
                 client.table("profiles")
                 .select(
-                    "id,height_cm,weight_kg,date_of_birth,cycle_length,"
+                    "id,gender,pathway,height_cm,weight_kg,date_of_birth,cycle_length,"
                     "period_duration,last_period_date,period_regularity,"
                     "common_symptoms,activity_level,sleep_hours,"
-                    "daily_water_glasses,dietary_preference,conditions,medications"
+                    "daily_water_glasses,dietary_preference,conditions,medications,"
+                    "updated_at,created_at"
                 )
                 .eq("id", patient_uuid)
                 .maybe_single()
@@ -264,6 +269,8 @@ class SupabaseHealthService:
 
         return PatientProfile(
             user_id=patient_uuid,
+            gender=row.get("gender"),
+            pathway=row.get("pathway"),
             height_cm=row.get("height_cm"),
             weight_kg=row.get("weight_kg"),
             date_of_birth=row.get("date_of_birth"),
@@ -278,6 +285,8 @@ class SupabaseHealthService:
             dietary_preference=row.get("dietary_preference"),
             conditions=_safe_list(row.get("conditions")),
             medications_profile=_extract_med_names(row.get("medications")),
+            updated_at=row.get("updated_at"),
+            created_at=row.get("created_at"),
         )
 
     # ------------------------------------------------------------------
@@ -387,15 +396,29 @@ class SupabaseHealthService:
     def fetch_water_logs(self, patient_uuid: str, days: int = 90, auth_token: str | None = None) -> list[WaterLogData]:
         try:
             client = self._client_or_raise(auth_token)
-            res = (
-                client.table("water_logs")
-                .select("id,glasses,logged_date")
-                .eq("user_id", patient_uuid)
-                .gte("logged_date", _cutoff_date(days))
-                .order("logged_date", desc=True)
-                .limit(200)
-                .execute()
-            )
+            # Authoritative schema column is 'date'; fallback to 'logged_date' if legacy
+            date_col = "date"
+            try:
+                res = (
+                    client.table("water_logs")
+                    .select("id,glasses,date")
+                    .eq("user_id", patient_uuid)
+                    .gte("date", _cutoff_date(days))
+                    .order("date", desc=True)
+                    .limit(200)
+                    .execute()
+                )
+            except Exception:
+                date_col = "logged_date"
+                res = (
+                    client.table("water_logs")
+                    .select("id,glasses,logged_date")
+                    .eq("user_id", patient_uuid)
+                    .gte("logged_date", _cutoff_date(days))
+                    .order("logged_date", desc=True)
+                    .limit(200)
+                    .execute()
+                )
             rows = res.data or []
         except Exception as exc:
             logger.warning("water_logs fetch failed: %s", exc)
@@ -405,7 +428,7 @@ class SupabaseHealthService:
             WaterLogData(
                 id=r["id"],
                 glasses=int(r.get("glasses", 0)),
-                logged_date=r.get("logged_date", ""),
+                logged_date=r.get(date_col) or r.get("date") or r.get("logged_date", ""),
             )
             for r in rows
         ]
@@ -761,15 +784,20 @@ class SupabaseHealthService:
         patient_uuid: str,
         auth_token: str | None = None,
         client_health_data: dict | None = None,
+        include_logs: bool = True,
     ) -> PatientHealthData:
         """
-        Retrieve the complete patient health dataset required for ML inference.
+        Retrieve the patient health dataset required for ML inference or context resolution.
+        If include_logs is False, retrieves only the profile and omits non-profile sub-fetches.
         All sub-fetches are best-effort; failures are logged but don't crash the pipeline.
         Merges with client_health_data if provided.
         """
         errors: list[str] = []
 
         profile = self.fetch_profile(patient_uuid, auth_token=auth_token)
+
+        if not include_logs:
+            return PatientHealthData(profile=profile, fetch_errors=[])
 
         def safe(name: str, fn):
             try:

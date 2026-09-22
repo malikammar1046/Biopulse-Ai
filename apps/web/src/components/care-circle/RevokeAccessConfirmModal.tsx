@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, X, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, XClose, Shield01 } from '@untitledui/icons';
 import type { CareCircleMember } from '../../types/careCircle';
 
 interface RevokeAccessConfirmModalProps {
@@ -42,14 +42,14 @@ export const RevokeAccessConfirmModal: React.FC<RevokeAccessConfirmModalProps> =
           {/* Top Decorative Icon */}
           <div className="flex items-start justify-between">
             <div className="w-12 h-12 rounded-xl bg-[#FFF1F2] text-[#E11D48] flex items-center justify-center">
-              <ShieldAlert className="w-6 h-6" />
+              <Shield01 className="w-6 h-6" aria-hidden="true" />
             </div>
             <button
               onClick={onClose}
               disabled={loading}
               className="p-2 rounded-lg text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] transition-colors cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <XClose className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
 
@@ -97,7 +97,7 @@ export const RevokeAccessConfirmModal: React.FC<RevokeAccessConfirmModalProps> =
                 <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
               ) : (
                 <>
-                  <AlertTriangle className="w-3.5 h-3.5" />
+                  <AlertTriangle className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>Remove Access</span>
                 </>
               )}

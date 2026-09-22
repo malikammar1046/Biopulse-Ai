@@ -411,6 +411,8 @@ class PCOSMLService:
         # SHAP Explainers
         self._t1_explainer = None
         self._t2_explainer = None
+        self._t1_fold_explainer = None
+        self._t2_fold_explainer = None
 
         # Reference population statistics for fallback / context
         self._reference_medians: dict[str, float] = {}
@@ -515,24 +517,52 @@ class PCOSMLService:
             self._eff_backbone = None
 
     def _init_shap_explainers(self) -> None:
-        """Initializes TreeExplainer instances on the underlying tree classifiers."""
+        """Initializes fold-aware 5-fold ensemble TreeSHAP explainers."""
         try:
             import shap
+            from apps.intelligence.services.shap_adapter import FoldAwareCalibratedExplainer
 
-            # Extract underlying ExtraTreesClassifier from calibrated pipeline
+            if self._t1_model is not None:
+                self._t1_fold_explainer = FoldAwareCalibratedExplainer(
+                    calibrated_model=self._t1_model,
+                    model_name="Extra Trees + Platt Sigmoid Calibration (Tier 1)",
+                    model_version="PCOS-ML v1.2-T1",
+                    pathway="female_pcos",
+                    tier="tier_1",
+                    explainer_type="TreeExplainer",
+                    output_space="raw",
+                    raw_feature_names=TIER1_FEATURE_NAMES,
+                )
+                self._t1_fold_explainer.initialize()
+
+            if self._t2_pipeline is not None:
+                self._t2_fold_explainer = FoldAwareCalibratedExplainer(
+                    calibrated_model=self._t2_pipeline,
+                    model_name="Extra Trees + Platt Sigmoid Calibration (Cumulative Tier 1+2)",
+                    model_version="PCOS-ML v1.2-T2",
+                    pathway="female_pcos",
+                    tier="tier_1_2",
+                    explainer_type="TreeExplainer",
+                    output_space="raw",
+                    raw_feature_names=TIER2_FEATURE_NAMES,
+                )
+                self._t2_fold_explainer.initialize()
+
+            # Backwards compatibility legacy explainer handles
             t1_tree = self._extract_tree_estimator(self._t1_model)
             if t1_tree is not None:
                 self._t1_explainer = shap.TreeExplainer(t1_tree)
-
             t2_tree = self._extract_tree_estimator(self._t2_pipeline)
             if t2_tree is not None:
                 self._t2_explainer = shap.TreeExplainer(t2_tree)
 
-            logger.info("TreeSHAP explainers initialized for Tier 1 and Tier 2 models.")
+            logger.info("Fold-aware TreeSHAP explainers successfully initialized across all 5 folds for Tier 1 and Tier 2.")
         except Exception as e:
             logger.warning("TreeSHAP explainer initialization deferred: %s", e)
             self._t1_explainer = None
             self._t2_explainer = None
+            self._t1_fold_explainer = None
+            self._t2_fold_explainer = None
 
     def _extract_tree_estimator(self, model_or_pipeline: Any) -> Any:
         """Recursively extracts the base tree estimator from CalibratedClassifierCV or Pipeline."""
@@ -687,7 +717,13 @@ class PCOSMLService:
 
         threshold = TIER1_SCREENING_THRESHOLD
         risk_category = self._classify_risk(prob, threshold, low_cutoff=TIER1_LOW_RISK_THRESHOLD)
-        explanations = self._generate_tree_explanations(self._t1_model, df_t1, self._t1_explainer, TIER1_FEATURE_NAMES)
+
+        shap_payload = None
+        if self._t1_fold_explainer is not None:
+            shap_payload = self._t1_fold_explainer.explain(df_t1, raw_inputs, final_calibrated_prob=prob)
+            explanations = shap_payload["factors"]
+        else:
+            explanations = self._generate_tree_explanations(self._t1_model, df_t1, self._t1_explainer, TIER1_FEATURE_NAMES)
 
         return {
             'assessment_level': 'tier_1',
@@ -699,6 +735,7 @@ class PCOSMLService:
             'threshold': threshold,
             'risk_category': risk_category,
             'explanations': explanations,
+            'shap_explanation': shap_payload,
             'limitations': [
                 'Based exclusively on self-reported questionnaires and biometrics without clinical laboratory markers.',
                 'Screening estimate intended for proactive longitudinal tracking, not a diagnosis.'
@@ -737,7 +774,13 @@ class PCOSMLService:
 
         threshold = TIER2_SCREENING_THRESHOLD
         risk_category = self._classify_risk(prob, threshold, low_cutoff=0.18)
-        explanations = self._generate_tree_explanations(self._t2_pipeline, df_t2, self._t2_explainer, TIER2_FEATURE_NAMES)
+
+        shap_payload = None
+        if self._t2_fold_explainer is not None:
+            shap_payload = self._t2_fold_explainer.explain(df_t2, raw_inputs, final_calibrated_prob=prob)
+            explanations = shap_payload["factors"]
+        else:
+            explanations = self._generate_tree_explanations(self._t2_pipeline, df_t2, self._t2_explainer, TIER2_FEATURE_NAMES)
 
         # Evidence Completeness Calculation
         available_tier2_fields = [
@@ -769,6 +812,7 @@ class PCOSMLService:
             'threshold': threshold,
             'risk_category': risk_category,
             'explanations': explanations,
+            'shap_explanation': shap_payload,
             'tier_2_available_count': available_count,
             'tier_2_total_count': total_count,
             'tier_2_available_fields': available_tier2_fields,
@@ -889,8 +933,21 @@ class PCOSMLService:
         threshold = MULTIMODAL_SCREENING_THRESHOLD
         risk_category = self._classify_risk(p_fused, threshold, low_cutoff=0.18)
 
-        # Explanations from cumulative Tier 2 plus imaging note
+        # Explanations from cumulative Tier 2 plus imaging context
         explanations = t2_res['explanations']
+        shap_payload = dict(t2_res.get('shap_explanation') or {})
+        if shap_payload:
+            shap_payload['tier'] = 'tier_1_2_3'
+            shap_payload['model_name'] = 'Complete Multimodal Fusion (Tier 1 + Clinical + Ultrasound)'
+            shap_payload['multimodal_context'] = {
+                'clinical_weight': w_clin,
+                'ultrasound_weight': w_img,
+                'clinical_probability': p_t2,
+                'ultrasound_probability': p_img,
+                'pcom_status': img_res['pcom_status'],
+                'pcom_probability': img_res['pcom_probability'],
+                'note': 'Tabular factor explanations derive from the clinical and laboratory assessment model. Pelvic ultrasound contributes morphological validation (PCOM) without tabular feature fabrication.',
+            }
 
         return {
             'assessment_level': 'tier_1_2_3',
@@ -902,6 +959,7 @@ class PCOSMLService:
             'threshold': threshold,
             'risk_category': risk_category,
             'explanations': explanations,
+            'shap_explanation': shap_payload,
             'pcom_status': img_res['pcom_status'],
             'pcom_probability': img_res['pcom_probability'],
             'gradcam_b64': img_res['gradcam_b64'],

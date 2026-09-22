@@ -122,7 +122,7 @@ export const TimelinePage: React.FC = () => {
   // Handle Pattern Click -> AI Prompt
   const handleAskAiPattern = (pattern: HealthPatternCorrelation) => {
     openAiChatWithPrompt(
-      `Can you explain this pattern observed in my OvaSense timeline? "${pattern.title}": ${pattern.observation}`
+      `Can you explain this pattern observed in my BioPulse AI timeline? "${pattern.title}": ${pattern.observation}`
     );
   };
 

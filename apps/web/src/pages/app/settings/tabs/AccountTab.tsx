@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import {
-  LogOut,
-  Trash2,
-  Download,
-  RotateCcw,
+  LogOut01,
+  Trash01,
+  Download01,
+  RefreshCw01,
   AlertTriangle,
-  FileText,
-  CheckCircle2,
-} from 'lucide-react';
+  File01,
+  CheckCircle,
+} from '@untitledui/icons';
 import type { UserProfile, EmergencyContact } from '../../../../types/onboarding';
 
 interface AccountTabProps {
@@ -73,7 +73,7 @@ export const AccountTab: React.FC<AccountTabProps> = ({
             onClick={onLogout}
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 transition-colors"
           >
-            <LogOut className="w-3.5 h-3.5" />
+            <LogOut01 className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Sign Out</span>
           </button>
         </div>
@@ -97,7 +97,7 @@ export const AccountTab: React.FC<AccountTabProps> = ({
             </label>
             <div className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium text-slate-600 flex items-center justify-between">
               <span>••••••••••••</span>
-              <span className="text-[11px] text-[#0E9EAA] font-semibold">
+              <span className="text-[11px] text-[#0288D1] font-semibold">
                 Protected via Supabase Auth
               </span>
             </div>
@@ -126,7 +126,7 @@ export const AccountTab: React.FC<AccountTabProps> = ({
               value={primaryContact.name || ''}
               onChange={(e) => updatePrimary('name', e.target.value)}
               placeholder="e.g. Sarah Jenkins"
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0E9EAA]/20 focus:border-[#0E9EAA]"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0288D1]/20 focus:border-[#0288D1]"
             />
           </div>
 
@@ -137,7 +137,7 @@ export const AccountTab: React.FC<AccountTabProps> = ({
             <select
               value={primaryContact.relationship || 'Partner / Spouse'}
               onChange={(e) => updatePrimary('relationship', e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0E9EAA]/20 focus:border-[#0E9EAA] bg-white"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0288D1]/20 focus:border-[#0288D1] bg-white"
             >
               <option value="Partner / Spouse">Partner / Spouse</option>
               <option value="Parent">Parent</option>
@@ -156,7 +156,7 @@ export const AccountTab: React.FC<AccountTabProps> = ({
               value={primaryContact.phone || ''}
               onChange={(e) => updatePrimary('phone', e.target.value)}
               placeholder="e.g. +92 300 9876543"
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0E9EAA]/20 focus:border-[#0E9EAA]"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0288D1]/20 focus:border-[#0288D1]"
             />
           </div>
         </div>
@@ -178,7 +178,7 @@ export const AccountTab: React.FC<AccountTabProps> = ({
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
             <div>
               <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5 mb-1">
-                <Download className="w-3.5 h-3.5 text-primary-teal" />
+                <Download01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
                 Export Health Profile (JSON)
               </span>
               <p className="text-[11px] text-slate-500 leading-relaxed mb-3">
@@ -188,16 +188,16 @@ export const AccountTab: React.FC<AccountTabProps> = ({
             <button
               type="button"
               onClick={handleExportData}
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 transition-colors shadow-xs"
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 transition-colors shadow-xs cursor-pointer"
             >
               {downloadSuccess ? (
                 <>
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <CheckCircle className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
                   <span className="text-emerald-700">Exported Successfully</span>
                 </>
               ) : (
                 <>
-                  <FileText className="w-3.5 h-3.5" />
+                  <File01 className="w-3.5 h-3.5 text-slate-600" aria-hidden="true" />
                   <span>Download Health JSON</span>
                 </>
               )}
@@ -208,7 +208,7 @@ export const AccountTab: React.FC<AccountTabProps> = ({
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
             <div>
               <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5 mb-1">
-                <RotateCcw className="w-3.5 h-3.5 text-primary-teal" />
+                <RefreshCw01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
                 Re-take Clinical Onboarding
               </span>
               <p className="text-[11px] text-slate-500 leading-relaxed mb-3">
@@ -218,9 +218,9 @@ export const AccountTab: React.FC<AccountTabProps> = ({
             <button
               type="button"
               onClick={onRestartOnboarding}
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 transition-colors shadow-xs"
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 transition-colors shadow-xs cursor-pointer"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
+              <RefreshCw01 className="w-3.5 h-3.5 text-slate-600" aria-hidden="true" />
               <span>Launch Onboarding Flow</span>
             </button>
           </div>
@@ -232,7 +232,7 @@ export const AccountTab: React.FC<AccountTabProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-rose-600" />
+              <AlertTriangle className="w-4 h-4 text-rose-600" aria-hidden="true" />
               <h3 className="text-sm font-bold text-rose-900">Danger Zone: Delete Account</h3>
             </div>
             <p className="text-xs text-rose-700/80 mt-1 max-w-xl leading-relaxed">
@@ -243,9 +243,9 @@ export const AccountTab: React.FC<AccountTabProps> = ({
           <button
             type="button"
             onClick={onOpenDeleteModal}
-            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white transition-colors shadow-sm shrink-0"
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white transition-colors shadow-sm shrink-0 cursor-pointer"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <Trash01 className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Delete Account & Data</span>
           </button>
         </div>

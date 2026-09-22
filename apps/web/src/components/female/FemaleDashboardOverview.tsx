@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Info } from 'lucide-react';
+import { InfoCircle } from '@untitledui/icons';
 import { ROUTES } from '../../constants/routes';
 import { useUserHealth } from '../../context/UserHealthContext';
 import {
@@ -187,19 +187,19 @@ export const FemaleDashboardOverview: React.FC = () => {
 
       {/* ── 4. Subtle Contextual Guidance (Apple Deference) ────────────────── */}
       {hasAssessment && assessmentLevel === 'tier_1' && (
-        <FemaleCard className="p-4 sm:p-4.5 bg-[#FFF5F9] border-[#FBE7F0] flex items-center justify-between gap-4">
+        <FemaleCard className="p-4 sm:p-4.5 bg-[#FDE6EF]/30 border-[#FDE6EF] flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-white border border-[#FCE1ED] flex items-center justify-center text-[#E84A8A] shrink-0">
-              <Info className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-xl bg-white border border-[#FDE6EF] flex items-center justify-center text-[#F43F7D] shrink-0">
+              <InfoCircle className="w-4 h-4" aria-hidden="true" />
             </div>
             <p className="text-xs text-[#667085] leading-relaxed">
-              <strong className="font-semibold text-[#A92D61]">Clinical Tip:</strong> Adding fasting blood sugar and hormone lab values can refine your statistical estimate.
+              <strong className="font-semibold text-[#DC326C]">Clinical Tip:</strong> Adding fasting blood sugar and hormone lab values can refine your statistical estimate.
             </p>
           </div>
           <button
             type="button"
             onClick={() => navigate(ROUTES.APP.ASSESSMENT)}
-            className="text-xs font-semibold text-[#E84A8A] hover:text-[#D93B7A] cursor-pointer shrink-0"
+            className="text-xs font-semibold text-[#F43F7D] hover:text-[#DC326C] cursor-pointer shrink-0"
           >
             Learn More →
           </button>

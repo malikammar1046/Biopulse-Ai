@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity } from 'lucide-react';
+import { Activity } from '@untitledui/icons';
 import type { SymptomRecord } from '../../types/symptom';
 import { CATEGORY_METADATA } from '../../types/symptom';
 
@@ -30,12 +30,12 @@ export const SymptomCycleTimeline: React.FC<SymptomCycleTimelineProps> = ({
   const milestones = [1, 7, 14, 21, cycleLength];
 
   return (
-    <div className="p-6 sm:p-8 rounded-[24px] bg-white border border-[#E2E8F0] shadow-sm text-left select-none space-y-6">
+    <div className="p-6 sm:p-8 rounded-2xl bg-white border border-[#EAECF0] shadow-xs text-left select-none space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E0F2FE] text-[#0288D1] text-xs font-mono font-bold border border-[#BAE6FD]">
-            <Activity className="w-3.5 h-3.5 text-[#0288D1]" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FDE6EF] text-[#DC326C] text-xs font-mono font-bold border border-[#F43F7D]/20">
+            <Activity className="w-3.5 h-3.5 text-[#F43F7D]" aria-hidden="true" />
             <span>Cycle Scatter Timeline</span>
           </div>
           <h3 className="text-xl sm:text-2xl font-bold font-display text-[#0F172A]">
@@ -54,7 +54,7 @@ export const SymptomCycleTimeline: React.FC<SymptomCycleTimelineProps> = ({
       </div>
 
       {cycleSymptoms.length === 0 ? (
-        <div className="p-8 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] text-center space-y-2">
+        <div className="p-8 rounded-2xl bg-[#F8FAFC] border border-[#EAECF0] text-center space-y-2">
           <p className="text-xs text-[#475569]">
             No cycle-linked symptoms recorded yet. When you log symptoms during your period cycles, they will plot automatically along this ~{cycleLength}-day timeline.
           </p>
@@ -62,7 +62,7 @@ export const SymptomCycleTimeline: React.FC<SymptomCycleTimelineProps> = ({
       ) : (
         <div className="space-y-6 pt-2">
           {/* Visual Track */}
-          <div className="relative py-8 px-2 sm:px-6 bg-[#F8FAFC] rounded-3xl border border-[#E2E8F0]">
+          <div className="relative py-8 px-2 sm:px-6 bg-[#F8FAFC] rounded-2xl border border-[#EAECF0]">
             {/* Horizontal Baseline Bar */}
             <div className="relative h-2 rounded-full bg-[#E2E8F0]">
               {/* Day Markers */}
@@ -74,7 +74,7 @@ export const SymptomCycleTimeline: React.FC<SymptomCycleTimelineProps> = ({
                     style={{ left: `${percent}%` }}
                     className="absolute -top-1.5 -translate-x-1/2 flex flex-col items-center gap-1.5"
                   >
-                    <div className="w-4 h-4 rounded-full bg-white border-2 border-[#0288D1] shadow-xs" />
+                    <div className="w-4 h-4 rounded-full bg-white border-2 border-[#F43F7D] shadow-xs" />
                     <span className="text-[10px] font-mono font-bold text-[#64748B] mt-1">
                       Day {day}
                     </span>

@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  X,
-  Search,
+  XClose,
+  SearchLg,
   Plus,
-  Utensils,
+  Scales01,
+  Sunrise,
   Sun,
-  Coffee,
-  CupSoda,
-  Moon,
-  CheckCircle2,
-} from 'lucide-react';
+  Sunset,
+  Moon01,
+  CheckCircle,
+} from '@untitledui/icons';
 import type { MealType, FoodLogInput, FoodItem } from '../../types/diet';
 import { PAKISTANI_FOOD_DATABASE } from '../../data/pakistaniFoodDatabase';
 
@@ -58,53 +58,58 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({
 
   const handleSelectFood = (food: FoodItem) => {
     setSelectedFood(food);
-    setIsCustomMode(false);
     setSearchQuery(food.name);
     setServingUnit(food.standardServing);
-    setCustomServingMultiplier(1);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
 
-    let foodName = searchQuery;
-    let calories = 0;
-    let proteinG = 0;
-    let carbsG = 0;
-    let fatG = 0;
-    let fiberG = 0;
-    let serving = servingUnit;
+    const title = isCustomMode
+      ? customFoodName.trim() || 'Custom Pakistani Food'
+      : selectedFood?.name || searchQuery.trim() || 'Logged Food';
 
-    if (isCustomMode) {
-      foodName = customFoodName.trim() || searchQuery || 'Custom Meal';
-      calories = customCalories;
-      proteinG = customProtein;
-      carbsG = customCarbs;
-      fatG = customFat;
-      fiberG = customFiber;
-      serving = servingUnit || '1 serving';
-    } else if (selectedFood) {
-      foodName = selectedFood.name;
-      const mult = customServingMultiplier || 1;
-      calories = Math.round(selectedFood.caloriesPerServing * mult);
-      proteinG = Math.round(selectedFood.proteinGrams * mult * 10) / 10;
-      carbsG = Math.round(selectedFood.carbsGrams * mult * 10) / 10;
-      fatG = Math.round(selectedFood.fatGrams * mult * 10) / 10;
-      fiberG = Math.round(selectedFood.fiberGrams * mult * 10) / 10;
-      serving = mult === 1 ? selectedFood.standardServing : `${mult}x (${selectedFood.standardServing})`;
-    } else {
-      foodName = searchQuery.trim() || 'Logged Food';
-      calories = 200;
-      proteinG = 8;
-      carbsG = 25;
-      fatG = 6;
-      fiberG = 3;
-    }
+    const calories = isCustomMode
+      ? customCalories
+      : selectedFood
+      ? Math.round(selectedFood.caloriesPerServing * customServingMultiplier)
+      : 200;
+
+    const proteinG = isCustomMode
+      ? customProtein
+      : selectedFood
+      ? Math.round(selectedFood.proteinGrams * customServingMultiplier)
+      : 8;
+
+    const carbsG = isCustomMode
+      ? customCarbs
+      : selectedFood
+      ? Math.round(selectedFood.carbsGrams * customServingMultiplier)
+      : 25;
+
+    const fatG = isCustomMode
+      ? customFat
+      : selectedFood
+      ? Math.round(selectedFood.fatGrams * customServingMultiplier)
+      : 6;
+
+    const fiberG = isCustomMode
+      ? customFiber
+      : selectedFood
+      ? Math.round(selectedFood.fiberGrams * customServingMultiplier)
+      : 3;
+
+    const mult = customServingMultiplier || 1;
+    const serving = isCustomMode
+      ? servingUnit || '1 serving'
+      : selectedFood
+      ? mult === 1 ? selectedFood.standardServing : `${mult}x (${selectedFood.standardServing})`
+      : '1 serving';
 
     const payload: FoodLogInput = {
       mealType,
-      foodName,
+      foodName: title,
       serving,
       calories,
       proteinG,
@@ -141,7 +146,7 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({
           <div className="p-5 sm:p-6 pb-4 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F0F9FF]">
             <div className="flex items-center gap-2.5">
               <span className="p-2 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
-                <Utensils className="w-5 h-5" />
+                <Scales01 className="w-5 h-5" aria-hidden="true" />
               </span>
               <div>
                 <h2 className="text-lg font-bold text-[#0F172A]">
@@ -157,8 +162,9 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({
               type="button"
               onClick={onClose}
               className="p-2 rounded-xl text-[#64748B] hover:text-[#0F172A] hover:bg-[#E0F2FE] transition-all cursor-pointer"
+              aria-label="Close dialog"
             >
-              <X className="w-5 h-5" />
+              <XClose className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
 
@@ -171,11 +177,11 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                 {[
-                  { key: 'breakfast', label: 'Breakfast', icon: <Sun className="w-3.5 h-3.5" /> },
-                  { key: 'morning_snack', label: 'M. Snack', icon: <Coffee className="w-3.5 h-3.5" /> },
-                  { key: 'lunch', label: 'Lunch', icon: <Utensils className="w-3.5 h-3.5" /> },
-                  { key: 'afternoon_snack', label: 'A. Snack', icon: <CupSoda className="w-3.5 h-3.5" /> },
-                  { key: 'dinner', label: 'Dinner', icon: <Moon className="w-3.5 h-3.5" /> },
+                  { key: 'breakfast', label: 'Breakfast', icon: <Sunrise className="w-3.5 h-3.5" aria-hidden="true" /> },
+                  { key: 'morning_snack', label: 'M. Snack', icon: <Sun className="w-3.5 h-3.5" aria-hidden="true" /> },
+                  { key: 'lunch', label: 'Lunch', icon: <Scales01 className="w-3.5 h-3.5" aria-hidden="true" /> },
+                  { key: 'afternoon_snack', label: 'A. Snack', icon: <Sunset className="w-3.5 h-3.5" aria-hidden="true" /> },
+                  { key: 'dinner', label: 'Dinner', icon: <Moon01 className="w-3.5 h-3.5" aria-hidden="true" /> },
                 ].map((item) => {
                   const isSelected = mealType === item.key;
                   return (
@@ -218,7 +224,7 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({
               {!isCustomMode ? (
                 <div className="space-y-2">
                   <div className="relative">
-                    <Search className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <SearchLg className="w-4 h-4 text-[#64748B] absolute left-3.5 top-1/2 -translate-y-1/2" aria-hidden="true" />
                     <input
                       type="text"
                       placeholder="e.g. Roti, Moong Daal, Chicken Tikka, Chana..."
@@ -381,12 +387,12 @@ export const FoodLogModal: React.FC<FoodLogModalProps> = ({
               >
                 {successToast ? (
                   <>
-                    <CheckCircle2 className="w-4 h-4 text-white" />
+                    <CheckCircle className="w-4 h-4 text-white" aria-hidden="true" />
                     <span>Logged!</span>
                   </>
                 ) : (
                   <>
-                    <Plus className="w-4 h-4 text-[#E0F2FE]" />
+                    <Plus className="w-4 h-4 text-[#E0F2FE]" aria-hidden="true" />
                     <span>Save to Today’s Log</span>
                   </>
                 )}

@@ -1,7 +1,7 @@
 import React, { useId } from 'react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle } from '@untitledui/icons';
 
 export interface AuthFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
@@ -95,7 +95,7 @@ export const AuthField: React.FC<AuthFieldProps> = ({
       {/* Inline Validation Error */}
       {hasError && (
         <div id={errorId} role="alert" className="flex items-center gap-1.5 pt-0.5">
-          <AlertCircle className="w-3.5 h-3.5 text-[#E87084] shrink-0" />
+          <AlertCircle className="w-3.5 h-3.5 text-[#E87084] shrink-0" aria-hidden="true" />
           <p className="text-xs text-[#F48498] font-medium leading-tight">{errorText}</p>
         </div>
       )}

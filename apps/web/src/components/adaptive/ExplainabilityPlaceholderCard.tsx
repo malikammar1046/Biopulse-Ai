@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Brain, CheckCircle2 } from 'lucide-react';
+import { BarChart01, InfoCircle, CheckCircle } from '@untitledui/icons';
 import type { ExplainabilitySummary } from '../../types/adaptiveScreening';
 
 interface ExplainabilityPlaceholderCardProps {
@@ -15,7 +15,7 @@ export const ExplainabilityPlaceholderCard: React.FC<ExplainabilityPlaceholderCa
       <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-4">
         <div className="space-y-1">
           <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-[#E0F2FE] text-[#01579B] text-xs font-mono font-bold">
-            <Brain className="w-3.5 h-3.5 text-[#0288D1]" />
+            <BarChart01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
             <span>Explainable AI Interface</span>
           </div>
           <h3 className="text-xl sm:text-2xl font-bold font-display text-[#01579B]">
@@ -30,7 +30,7 @@ export const ExplainabilityPlaceholderCard: React.FC<ExplainabilityPlaceholderCa
       {/* ── Mandatory Safe Approved Headline ────────────────────────────── */}
       <div className="p-4 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] space-y-1.5">
         <h4 className="text-sm font-bold text-[#01579B] font-sans flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-[#0288D1]" />
+          <InfoCircle className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
           <span>{summary.headline}</span>
         </h4>
         <p className="text-xs text-[#0369A1] leading-relaxed">
@@ -38,7 +38,7 @@ export const ExplainabilityPlaceholderCard: React.FC<ExplainabilityPlaceholderCa
         </p>
       </div>
 
-      {/* ── Feature Cards Grid ──────────────────────────────────────────── */}
+      {/* ── Feature Cards Grid ──────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
         {summary.features.map((feat) => (
           <div
@@ -50,7 +50,7 @@ export const ExplainabilityPlaceholderCard: React.FC<ExplainabilityPlaceholderCa
                 <span>Feature Factor</span>
                 {feat.isKnown ? (
                   <span className="text-[#047857] flex items-center gap-1 font-bold">
-                    <CheckCircle2 className="w-3 h-3 text-[#047857]" />
+                    <CheckCircle className="w-3 h-3 text-[#047857]" aria-hidden="true" />
                     <span>Recorded</span>
                   </span>
                 ) : (

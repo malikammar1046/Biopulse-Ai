@@ -1,19 +1,19 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  X,
+  XClose,
   Calendar,
   Activity,
-  FileText,
-  Pill,
-  Utensils,
-  Dumbbell,
-  Stethoscope,
-  Users,
-  ExternalLink,
+  File06,
+  MedicalCross,
+  Scales01,
+  ActivityHeart,
+  CalendarCheck01,
+  Users01,
+  LinkExternal01,
   Clock,
-  Sparkles,
-} from 'lucide-react';
+  InfoCircle,
+} from '@untitledui/icons';
 import type { TimelineEvent, TimelineCategory } from '../../types/timeline';
 import { ROUTES } from '../../constants/routes';
 
@@ -35,22 +35,22 @@ export const TimelineDetailModal: React.FC<TimelineDetailModalProps> = ({
   const getCategoryIcon = (cat: TimelineCategory) => {
     switch (cat) {
       case 'cycle':
-        return <Calendar className="w-5 h-5 text-rose-600" />;
+        return <Calendar className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />;
       case 'symptom':
-        return <Activity className="w-5 h-5 text-[#0288D1]" />;
+        return <Activity className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />;
       case 'report':
-        return <FileText className="w-5 h-5 text-[#0288D1]" />;
+        return <File06 className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />;
       case 'medication':
-        return <Pill className="w-5 h-5 text-amber-600" />;
+        return <MedicalCross className="w-5 h-5 text-amber-600" aria-hidden="true" />;
       case 'nutrition':
-        return <Utensils className="w-5 h-5 text-emerald-600" />;
+        return <Scales01 className="w-5 h-5 text-emerald-600" aria-hidden="true" />;
       case 'fitness':
-        return <Dumbbell className="w-5 h-5 text-orange-600" />;
+        return <ActivityHeart className="w-5 h-5 text-sky-600" aria-hidden="true" />;
       case 'appointment':
-        return <Stethoscope className="w-5 h-5 text-[#01579B]" />;
+        return <CalendarCheck01 className="w-5 h-5 text-[#01579B]" aria-hidden="true" />;
       case 'care_circle':
       default:
-        return <Users className="w-5 h-5 text-[#0288D1]" />;
+        return <Users01 className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />;
     }
   };
 
@@ -96,9 +96,10 @@ export const TimelineDetailModal: React.FC<TimelineDetailModalProps> = ({
         <button
           type="button"
           onClick={onClose}
+          aria-label="Close details"
           className="absolute top-5 right-5 p-2 rounded-xl text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] transition-colors cursor-pointer"
         >
-          <X className="w-5 h-5" />
+          <XClose className="w-5 h-5" aria-hidden="true" />
         </button>
 
         {/* Header with Icon & Category */}
@@ -120,13 +121,13 @@ export const TimelineDetailModal: React.FC<TimelineDetailModalProps> = ({
         {/* Meta Pills: Date, Time, Cycle Day, Metric */}
         <div className="p-3.5 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] flex flex-wrap items-center gap-3 text-xs">
           <div className="flex items-center gap-1.5 text-[#0F172A] font-semibold">
-            <Calendar className="w-3.5 h-3.5 text-[#0288D1]" />
+            <Calendar className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
             <span>{formattedDate}</span>
           </div>
 
           {event.time && (
             <div className="flex items-center gap-1.5 text-[#64748B]">
-              <Clock className="w-3.5 h-3.5 text-[#64748B]" />
+              <Clock className="w-3.5 h-3.5 text-[#64748B]" aria-hidden="true" />
               <span>{event.time}</span>
             </div>
           )}
@@ -177,8 +178,8 @@ export const TimelineDetailModal: React.FC<TimelineDetailModalProps> = ({
         )}
 
         {/* Educational Safe Guard Notice */}
-        <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-2 text-xs text-amber-800">
-          <Sparkles className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
+        <div className="p-3 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-start gap-2 text-xs text-[#01579B]">
+          <InfoCircle className="w-4 h-4 shrink-0 text-[#0288D1] mt-0.5" aria-hidden="true" />
           <p className="text-[11px] leading-relaxed">
             Longitudinal records help build patterns for discussion with your healthcare provider. BIOPulse AI provides educational synthesis, not clinical diagnosis.
           </p>
@@ -200,7 +201,7 @@ export const TimelineDetailModal: React.FC<TimelineDetailModalProps> = ({
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm transition-all cursor-pointer"
           >
             <span>Open in {event.sourceModule}</span>
-            <ExternalLink className="w-3.5 h-3.5" />
+            <LinkExternal01 className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
         </div>
       </div>

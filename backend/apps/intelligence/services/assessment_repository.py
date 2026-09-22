@@ -94,6 +94,17 @@ def _normalize_assessment_record(item: dict[str, Any]) -> dict[str, Any]:
     elif is_male or not is_ultrasound_tier:
         for field in ("pcom_status", "pcom_probability", "gradcam_url", "gradcam_b64", "ultrasound_report_id"):
             item[field] = None
+
+    if isinstance(item.get("shap_explanation"), str):
+        try:
+            item["shap_explanation"] = json.loads(item["shap_explanation"])
+        except Exception:
+            pass
+    if isinstance(item.get("longitudinal_shap_comparison"), str):
+        try:
+            item["longitudinal_shap_comparison"] = json.loads(item["longitudinal_shap_comparison"])
+        except Exception:
+            pass
     return item
 
 
@@ -152,34 +163,52 @@ def init_sqlite_store() -> None:
             logger.warning("Failed to initialize SQLite assessment store: %s", e)
 
 
+_cached_service_client = None
+_client_lock = threading.Lock()
+
+
 def get_supabase_client(auth_token: str | None = None) -> Any:
     """
     Returns a Supabase client using SUPABASE_SERVICE_ROLE_KEY (for server-side privileged operations)
     or SUPABASE_ANON_KEY and caller JWT.
     """
-    global _remote_table_available
+    global _remote_table_available, _cached_service_client
     if not _remote_table_available:
         return None
-    try:
-        from supabase import create_client
-        url = os.environ.get("SUPABASE_URL", "") or os.environ.get("VITE_SUPABASE_URL", "")
-        key = (
-            os.environ.get("SUPABASE_SECRET_KEY", "")
-            or os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
-            or os.environ.get("SUPABASE_ANON_KEY", "")
-            or os.environ.get("VITE_SUPABASE_ANON_KEY", "")
-        )
-        is_privileged = bool(os.environ.get("SUPABASE_SECRET_KEY") or os.environ.get("SUPABASE_SERVICE_ROLE_KEY"))
-        if url and key:
-            client = create_client(url, key)
-            if auth_token and not is_privileged:
+
+    if auth_token:
+        try:
+            from supabase import create_client
+            url = os.environ.get("SUPABASE_URL", "") or os.environ.get("VITE_SUPABASE_URL", "")
+            key = os.environ.get("SUPABASE_ANON_KEY", "") or os.environ.get("VITE_SUPABASE_ANON_KEY", "")
+            if url and key:
+                client = create_client(url, key)
                 try:
                     client.postgrest.auth(auth_token)
                 except Exception:
                     pass
-            return client
-    except Exception as e:
-        logger.debug("Supabase client init error: %s", e)
+                return client
+        except Exception as e:
+            logger.debug("Caller Supabase client init error: %s", e)
+        return None
+
+    with _client_lock:
+        if _cached_service_client is not None:
+            return _cached_service_client
+        try:
+            from supabase import create_client
+            url = os.environ.get("SUPABASE_URL", "") or os.environ.get("VITE_SUPABASE_URL", "")
+            key = (
+                os.environ.get("SUPABASE_SECRET_KEY", "")
+                or os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+                or os.environ.get("SUPABASE_ANON_KEY", "")
+                or os.environ.get("VITE_SUPABASE_ANON_KEY", "")
+            )
+            if url and key:
+                _cached_service_client = create_client(url, key)
+                return _cached_service_client
+        except Exception as e:
+            logger.debug("Service Supabase client init error: %s", e)
     return None
 
 
@@ -314,9 +343,10 @@ class AssessmentRepository:
         client = get_supabase_client(auth_token)
         if client and _remote_table_available and _is_valid_uuid(user_id_str):
             try:
+                select_cols = "*, pcos_ultrasound_assessments(*)" if module_name == "female_pcos" else "*"
                 query = (
                     client.table("screening_assessments")
-                    .select("*, pcos_ultrasound_assessments(*)")
+                    .select(select_cols)
                     .eq("user_id", user_id_str)
                     .eq("module", module_name)
                     .eq("is_active", True)
@@ -393,7 +423,8 @@ class AssessmentRepository:
         client = get_supabase_client(auth_token)
         if client and _remote_table_available and _is_valid_uuid(user_id_str):
             try:
-                query = client.table("screening_assessments").select("*, pcos_ultrasound_assessments(*)").eq("user_id", user_id_str)
+                select_cols = "*, pcos_ultrasound_assessments(*)" if module_name == "female_pcos" else "*"
+                query = client.table("screening_assessments").select(select_cols).eq("user_id", user_id_str)
                 if module_name:
                     query = query.eq("module", module_name)
                 res = query.order("created_at", desc=True).execute()
@@ -519,6 +550,8 @@ class AssessmentRepository:
             "hormone_pattern_interpretation": assessment_data.get("hormone_pattern_interpretation") if (has_t2 and is_male) else None,
             "direct_laboratory_values": assessment_data.get("direct_laboratory_values", []) if has_t2 else [],
             "explanations": assessment_data.get("explanations", []),
+            "shap_explanation": assessment_data.get("shap_explanation"),
+            "longitudinal_shap_comparison": assessment_data.get("longitudinal_shap_comparison"),
             "limitations": assessment_data.get("limitations", []),
             "next_available_tier": assessment_data.get("next_available_tier"),
             "pcom_status": assessment_data.get("pcom_status") if has_t3 else None,
@@ -578,6 +611,8 @@ class AssessmentRepository:
                     "p_pcom_probability": float(assessment_data.get("pcom_probability")) if (has_t3 and assessment_data.get("pcom_probability") is not None) else None,
                     "p_gradcam_url": assessment_data.get("gradcam_url") if has_t3 else None,
                     "p_ultrasound_report_id": assessment_data.get("ultrasound_report_id") if has_t3 else None,
+                    "p_shap_explanation": assessment_data.get("shap_explanation"),
+                    "p_longitudinal_shap_comparison": assessment_data.get("longitudinal_shap_comparison"),
                 }
                 res = client.rpc("save_screening_assessment", rpc_payload).execute()
                 if res.data:

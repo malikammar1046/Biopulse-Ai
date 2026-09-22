@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Dumbbell, ArrowRight, Sparkles } from 'lucide-react';
+import { ActivityHeart, ArrowRight, CheckCircle } from '@untitledui/icons';
 import type { FitnessData } from '../../types/dashboard';
 import { ROUTES } from '../../constants/routes';
 
@@ -14,9 +14,7 @@ export const FitnessSnapshotCard: React.FC<FitnessProps> = ({ data }) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="p-1.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
-            <Dumbbell className="w-4 h-4" />
-          </span>
+          <ActivityHeart className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
           <h3 className="text-base font-bold font-display text-[#0F172A]">
             Today’s Movement
           </h3>
@@ -55,7 +53,7 @@ export const FitnessSnapshotCard: React.FC<FitnessProps> = ({ data }) => {
       <div className="p-3.5 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] space-y-1.5">
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold text-[#0288D1] flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-[#0288D1]" />
+            <CheckCircle className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
             {data.suggestedMovement.title}
           </span>
           <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-white border border-[#BAE6FD] text-[#0288D1] shadow-2xs">
@@ -74,7 +72,7 @@ export const FitnessSnapshotCard: React.FC<FitnessProps> = ({ data }) => {
           className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0288D1] hover:text-[#0277BD] transition-colors group"
         >
           <span>View Movement Routines</span>
-          <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+          <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
         </Link>
 
         <span className="text-[10px] font-mono text-[#64748B]">

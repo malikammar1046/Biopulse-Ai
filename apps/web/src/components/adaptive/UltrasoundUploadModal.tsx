@@ -1,14 +1,14 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ImageIcon,
-  UploadCloud,
-  X,
+  Image01,
+  UploadCloud01,
+  XClose,
   AlertCircle,
-  CheckCircle2,
-  Loader2,
-  Info,
-} from 'lucide-react';
+  CheckCircle,
+  Loading01,
+  InfoCircle,
+} from '@untitledui/icons';
 import { useUserHealth } from '../../context/UserHealthContext';
 
 interface UltrasoundUploadModalProps {
@@ -122,7 +122,7 @@ export const UltrasoundUploadModal: React.FC<UltrasoundUploadModalProps> = ({
           <div className="flex items-start justify-between gap-4 border-b border-white/15 pb-4">
             <div className="space-y-1">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 border border-white/25 text-xs font-mono text-white">
-                <ImageIcon className="w-3.5 h-3.5 text-[#BAE6FD]" />
+                <Image01 className="w-3.5 h-3.5 text-[#BAE6FD]" aria-hidden="true" />
                 <span>Tier 3 Imaging Analysis</span>
               </div>
               <h2 className="text-xl sm:text-2xl font-bold font-display text-white">
@@ -137,14 +137,15 @@ export const UltrasoundUploadModal: React.FC<UltrasoundUploadModalProps> = ({
               type="button"
               onClick={onClose}
               className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-colors cursor-pointer"
+              aria-label="Close modal"
             >
-              <X className="w-5 h-5" />
+              <XClose className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
 
           {/* Fusion Status Context */}
           <div className="p-3.5 rounded-2xl bg-white/10 border border-white/15 flex items-start gap-3 text-xs text-sky-100">
-            <Info className="w-4 h-4 text-[#BAE6FD] shrink-0 mt-0.5" />
+            <InfoCircle className="w-4 h-4 text-[#BAE6FD] shrink-0 mt-0.5" aria-hidden="true" />
             <div className="space-y-1">
               {isTier2Active ? (
                 <p>
@@ -160,14 +161,14 @@ export const UltrasoundUploadModal: React.FC<UltrasoundUploadModalProps> = ({
 
           {error && (
             <div className="p-3.5 rounded-2xl bg-rose-500/20 border border-rose-400/40 text-rose-100 text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0 text-rose-300" />
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-300" aria-hidden="true" />
               <span>{error}</span>
             </div>
           )}
 
           {successNotice && (
             <div className="p-3.5 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-100 text-xs flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-300" />
+              <CheckCircle className="w-4 h-4 shrink-0 text-emerald-300" aria-hidden="true" />
               <span>{successNotice}</span>
             </div>
           )}
@@ -194,7 +195,7 @@ export const UltrasoundUploadModal: React.FC<UltrasoundUploadModalProps> = ({
                 className="p-8 border-2 border-dashed border-white/30 hover:border-white rounded-3xl bg-white/5 hover:bg-white/10 transition-all flex flex-col items-center justify-center text-center gap-3 cursor-pointer"
               >
                 <div className="w-14 h-14 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center text-white">
-                  <UploadCloud className="w-7 h-7" />
+                  <UploadCloud01 className="w-7 h-7" aria-hidden="true" />
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-bold font-sans text-white">
@@ -239,12 +240,12 @@ export const UltrasoundUploadModal: React.FC<UltrasoundUploadModalProps> = ({
               >
                 {loading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loading01 className="w-4 h-4 animate-spin" aria-hidden="true" />
                     <span>Analyzing Morphology & Grad-CAM...</span>
                   </>
                 ) : (
                   <>
-                    <ImageIcon className="w-4 h-4" />
+                    <Image01 className="w-4 h-4" aria-hidden="true" />
                     <span>Run Ultrasound Neural Analysis</span>
                   </>
                 )}

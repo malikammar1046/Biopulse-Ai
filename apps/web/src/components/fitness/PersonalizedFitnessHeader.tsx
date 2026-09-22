@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dumbbell, Plus, Sparkles, Heart, Activity } from 'lucide-react';
+import { ActivityHeart, Plus, MessageChatCircle, Calendar } from '@untitledui/icons';
 import type { UserProfile } from '../../types/onboarding';
 
 interface PersonalizedFitnessHeaderProps {
@@ -28,20 +28,20 @@ export const PersonalizedFitnessHeader: React.FC<PersonalizedFitnessHeaderProps>
 
   if (!isMale) {
     return (
-      <div className="p-6 sm:p-8 rounded-[24px] bg-white text-[#111318] shadow-xs relative overflow-hidden select-none border border-[#EAECF0] text-left">
+      <div className="p-6 sm:p-8 rounded-2xl bg-white text-[#111318] shadow-xs relative overflow-hidden select-none border border-[#EAECF0] text-left">
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           {/* Left Column: Greeting, Cycle Context & Mission */}
           <div className="space-y-4 max-w-2xl">
             {/* Trust Badges */}
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-semibold bg-[#FBE7F0] text-[#A92D61] border border-[#FCE1ED]">
-                <Dumbbell className="w-3.5 h-3.5 text-[#E84A8A]" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-semibold bg-[#FDE6EF] text-[#DC326C] border border-[rgba(244,63,125,0.2)]">
+                <ActivityHeart className="w-3.5 h-3.5 text-[#F43F7D]" aria-hidden="true" />
                 <span>Cycle-Synced Movement</span>
               </span>
 
               {cycleDay > 0 && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-semibold bg-[#FFF5F9] text-[#A92D61] border border-[#FCE1ED]">
-                  <Heart className="w-3.5 h-3.5 text-[#E84A8A]" />
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-semibold bg-[#F8FAFC] text-[#344054] border border-[#EAECF0]">
+                  <Calendar className="w-3.5 h-3.5 text-[#F43F7D]" aria-hidden="true" />
                   <span>Day {cycleDay} • {cyclePhaseName}</span>
                 </span>
               )}
@@ -69,9 +69,9 @@ export const PersonalizedFitnessHeader: React.FC<PersonalizedFitnessHeaderProps>
             </div>
 
             {/* Today's Quick Summary Pill */}
-            <div className="p-3.5 rounded-xl bg-[#FFF5F9] border border-[#FCE1ED] flex items-center justify-between gap-3 text-xs text-[#A92D61]">
+            <div className="p-3.5 rounded-xl bg-[#FDE6EF]/30 border border-[rgba(244,63,125,0.2)] flex items-center justify-between gap-3 text-xs text-[#64748B]">
               <div className="flex items-center gap-2">
-                <Activity className="w-4 h-4 text-[#E84A8A] shrink-0" />
+                <ActivityHeart className="w-4 h-4 text-[#F43F7D] shrink-0" aria-hidden="true" />
                 <span>
                   {todayMinutes > 0 ? (
                     <><strong>{todayMinutes} minutes</strong> logged today</>
@@ -81,7 +81,7 @@ export const PersonalizedFitnessHeader: React.FC<PersonalizedFitnessHeaderProps>
                 </span>
               </div>
 
-              <span className="font-mono text-[11px] text-[#A92D61] font-bold">
+              <span className="font-mono text-[11px] text-[#DC326C] font-bold">
                 {weeklyTotalMinutes} min this week
               </span>
             </div>
@@ -92,18 +92,18 @@ export const PersonalizedFitnessHeader: React.FC<PersonalizedFitnessHeaderProps>
             <button
               type="button"
               onClick={onOpenLogModal}
-              className="px-6 py-3 rounded-xl font-sans font-semibold text-xs sm:text-sm text-white bg-[#E84A8A] hover:bg-[#D93B7A] shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
+              className="h-10 px-4 rounded-xl font-sans font-medium text-sm text-white bg-[#F43F7D] hover:bg-[#DC326C] shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
             >
-              <Plus className="w-4 h-4 text-white" />
+              <Plus className="w-4 h-4 text-white" aria-hidden="true" />
               <span>+ Log Activity</span>
             </button>
 
             <button
               type="button"
               onClick={onAskAi}
-              className="px-5 py-3 rounded-xl font-sans font-semibold text-xs sm:text-sm text-[#344054] bg-[#FAFAFC] hover:bg-[#F2F4F7] border border-[#EAECF0] shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
+              className="h-10 px-4 rounded-xl font-sans font-medium text-sm text-[#344054] bg-[#FAFAFC] hover:bg-[#F2F4F7] border border-[#EAECF0] shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
             >
-              <Sparkles className="w-4 h-4 text-[#E84A8A]" />
+              <MessageChatCircle className="w-4 h-4 text-[#F43F7D]" aria-hidden="true" />
               <span>Movement Guidance</span>
             </button>
 
@@ -124,13 +124,13 @@ export const PersonalizedFitnessHeader: React.FC<PersonalizedFitnessHeaderProps>
           {/* Trust Badges */}
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-white/15 text-white border border-white/25">
-              <Dumbbell className="w-3.5 h-3.5 text-[#BAE6FD]" />
+              <ActivityHeart className="w-3.5 h-3.5 text-[#BAE6FD]" aria-hidden="true" />
               <span>{isMale ? 'Daily Vitality & Functional Movement' : 'Cycle-Synced Movement'}</span>
             </span>
 
             {!isMale && cycleDay > 0 && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-white/15 text-white border border-white/25">
-                <Heart className="w-3.5 h-3.5 text-[#BAE6FD]" />
+                <Calendar className="w-3.5 h-3.5 text-[#BAE6FD]" aria-hidden="true" />
                 <span>Day {cycleDay} • {cyclePhaseName}</span>
               </span>
             )}
@@ -160,7 +160,7 @@ export const PersonalizedFitnessHeader: React.FC<PersonalizedFitnessHeaderProps>
           {/* Today's Quick Summary Pill */}
           <div className="p-3.5 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-between gap-3 text-xs text-sky-100">
             <div className="flex items-center gap-2">
-              <Activity className="w-4 h-4 text-[#BAE6FD] shrink-0" />
+              <ActivityHeart className="w-4 h-4 text-[#BAE6FD] shrink-0" aria-hidden="true" />
               <span>
                 {todayMinutes > 0 ? (
                   <><strong>{todayMinutes} minutes</strong> logged today</>
@@ -183,7 +183,7 @@ export const PersonalizedFitnessHeader: React.FC<PersonalizedFitnessHeaderProps>
             onClick={onOpenLogModal}
             className="px-6 py-3.5 rounded-2xl font-sans font-bold text-xs sm:text-sm text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
-            <Plus className="w-4 h-4 text-white" />
+            <Plus className="w-4 h-4 text-white" aria-hidden="true" />
             <span>+ Log Activity</span>
           </button>
 
@@ -192,7 +192,7 @@ export const PersonalizedFitnessHeader: React.FC<PersonalizedFitnessHeaderProps>
             onClick={onAskAi}
             className="px-5 py-3 rounded-2xl font-sans font-bold text-xs sm:text-sm text-[#01579B] bg-white hover:bg-[#F0F9FF] shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
-            <Sparkles className="w-4 h-4 text-[#0288D1]" />
+            <MessageChatCircle className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
             <span>Movement Guidance</span>
           </button>
 

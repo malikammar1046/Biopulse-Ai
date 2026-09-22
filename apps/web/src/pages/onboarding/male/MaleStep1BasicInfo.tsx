@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Mail, Phone, Calendar, Ruler, Scale, Activity, Camera, Info } from 'lucide-react';
+import { User01, Mail01, Phone01, Calendar, Ruler, Scales01, Activity, Camera01, InfoCircle } from '@untitledui/icons';
 import {
   cmToFtIn,
   ftInToCm,
@@ -58,7 +58,7 @@ export const MaleStep1BasicInfo: React.FC<MaleStep1Props> = ({
       {/* ── Compact Question Header ── */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-full bg-[#DDF7F7] flex items-center justify-center shrink-0 shadow-2xs">
-          <User className="w-5 h-5 text-[#0E9EAA]" />
+          <User01 className="w-5 h-5 text-[#0E9EAA]" aria-hidden="true" />
         </div>
 
         <div>
@@ -86,7 +86,7 @@ export const MaleStep1BasicInfo: React.FC<MaleStep1Props> = ({
                 <span>Full Name <span className="text-[#0E9EAA]">*</span></span>
               </label>
               <div className="relative">
-                <User className="w-4 h-4 text-[#8FA3B8] absolute left-3.5 top-2.5" />
+                <User01 className="w-4 h-4 text-[#8FA3B8] absolute left-3.5 top-2.5" aria-hidden="true" />
                 <input
                   type="text"
                   value={data.fullName}
@@ -108,7 +108,7 @@ export const MaleStep1BasicInfo: React.FC<MaleStep1Props> = ({
                 <span>Email Address <span className="text-[#0E9EAA]">*</span></span>
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-[#8FA3B8] absolute left-3.5 top-2.5" />
+                <Mail01 className="w-4 h-4 text-[#8FA3B8] absolute left-3.5 top-2.5" aria-hidden="true" />
                 <input
                   type="email"
                   value={data.email}
@@ -134,7 +134,7 @@ export const MaleStep1BasicInfo: React.FC<MaleStep1Props> = ({
                 <span className="text-[9px] text-[#8FA3B8] font-normal lowercase">age &ge; 12</span>
               </label>
               <div className="relative">
-                <Calendar className="w-4 h-4 text-[#8FA3B8] absolute left-3.5 top-2.5" />
+                <Calendar className="w-4 h-4 text-[#8FA3B8] absolute left-3.5 top-2.5" aria-hidden="true" />
                 <input
                   type="date"
                   min={dobBounds.min}
@@ -158,7 +158,7 @@ export const MaleStep1BasicInfo: React.FC<MaleStep1Props> = ({
                 <span className="text-[9px] text-[#8FA3B8] font-normal">03xx or +92</span>
               </label>
               <div className="relative">
-                <Phone className="w-4 h-4 text-[#8FA3B8] absolute left-3.5 top-2.5" />
+                <Phone01 className="w-4 h-4 text-[#8FA3B8] absolute left-3.5 top-2.5" aria-hidden="true" />
                 <input
                   type="tel"
                   value={data.phone}
@@ -193,7 +193,7 @@ export const MaleStep1BasicInfo: React.FC<MaleStep1Props> = ({
               <div className="p-2.5 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-1.5 shadow-2xs">
                 <div className="flex items-center justify-between">
                   <label className="text-[10px] font-bold font-mono text-[#073B72] uppercase tracking-wide flex items-center gap-1">
-                    <Ruler className="w-3 h-3 text-[#0E9EAA]" />
+                    <Ruler className="w-3 h-3 text-[#0E9EAA]" aria-hidden="true" />
                     <span>Height</span>
                   </label>
                   <div className="flex rounded-md bg-[#EAFBFC] p-0.5 border border-[#B2EBF2] text-[9px] font-mono">
@@ -271,7 +271,7 @@ export const MaleStep1BasicInfo: React.FC<MaleStep1Props> = ({
               <div className="p-2.5 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-1.5 shadow-2xs">
                 <div className="flex items-center justify-between">
                   <label className="text-[10px] font-bold font-mono text-[#073B72] uppercase tracking-wide flex items-center gap-1">
-                    <Scale className="w-3 h-3 text-[#0E9EAA]" />
+                    <Scales01 className="w-3 h-3 text-[#0E9EAA]" aria-hidden="true" />
                     <span>Weight</span>
                   </label>
                   <div className="flex rounded-md bg-[#EAFBFC] p-0.5 border border-[#B2EBF2] text-[9px] font-mono">
@@ -334,7 +334,7 @@ export const MaleStep1BasicInfo: React.FC<MaleStep1Props> = ({
               <div className="p-2.5 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-1.5 shadow-2xs">
                 <div className="flex items-center justify-between">
                   <label className="text-[10px] font-bold font-mono text-[#073B72] uppercase tracking-wide flex items-center gap-1">
-                    <Activity className="w-3 h-3 text-[#0E9EAA]" />
+                    <Activity className="w-3 h-3 text-[#0E9EAA]" aria-hidden="true" />
                     <span>Waist Size</span>
                   </label>
                   <div className="flex rounded-md bg-[#EAFBFC] p-0.5 border border-[#B2EBF2] text-[9px] font-mono">
@@ -397,7 +397,7 @@ export const MaleStep1BasicInfo: React.FC<MaleStep1Props> = ({
           {/* Row 4: Compact Profile Photo Picker */}
           <div className="pt-2 border-t border-[#E8F1F5] flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Camera className="w-3.5 h-3.5 text-[#0E9EAA]" />
+              <Camera01 className="w-3.5 h-3.5 text-[#0E9EAA]" aria-hidden="true" />
               <span className="text-[11px] font-bold font-mono text-[#073B72] uppercase tracking-wide">
                 Profile Photo (Optional)
               </span>
@@ -427,7 +427,7 @@ export const MaleStep1BasicInfo: React.FC<MaleStep1Props> = ({
           <MaleWhyWeAskCard
             title="Why we ask this"
             description="Age, waist circumference, and BMI are primary physical metrics in clinical male hypogonadism screening. Waist circumference in particular directly reflects visceral adiposity and endocrine balance."
-            icon={Info}
+            icon={InfoCircle}
           />
 
           <div className="p-3.5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] text-[11px] text-[#55718F] space-y-1.5">

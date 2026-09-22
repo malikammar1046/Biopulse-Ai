@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Zap, MoreVertical } from 'lucide-react';
+import { LineChartUp01, DotsVertical } from '@untitledui/icons';
 
 interface EnergyUsedBubbleCardProps {
   totalKcal?: number;
@@ -34,18 +34,17 @@ export const EnergyUsedBubbleCard: React.FC<EnergyUsedBubbleCardProps> = ({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="p-2 rounded-2xl bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD]">
-              <Zap className="w-4 h-4 fill-current" />
-            </span>
+            <LineChartUp01 className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
             <h3 className="text-base font-bold font-display text-[#0F172A]">
               Energy Used
             </h3>
           </div>
           <button
             type="button"
+            aria-label="Energy options"
             className="text-[#64748B] hover:text-[#0288D1] p-1 rounded-lg transition-colors cursor-pointer"
           >
-            <MoreVertical className="w-4 h-4" />
+            <DotsVertical className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
 

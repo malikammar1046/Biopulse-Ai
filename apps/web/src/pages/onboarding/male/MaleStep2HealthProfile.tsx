@@ -1,8 +1,8 @@
 import React from 'react';
 import {
-  HeartPulse,
+  ActivityHeart,
   Check,
-} from 'lucide-react';
+} from '@untitledui/icons';
 import type { MedicalProfile, MensHealthProfile } from '../../../types/onboarding';
 import { MaleWhyWeAskCard } from './MaleWhyWeAskCard';
 
@@ -109,7 +109,7 @@ export const MaleStep2HealthProfile: React.FC<MaleStep2Props> = ({
       {/* ── Compact Question Header ── */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-full bg-[#DDF7F7] flex items-center justify-center shrink-0 shadow-2xs">
-          <HeartPulse className="w-5 h-5 text-[#0E9EAA]" />
+          <ActivityHeart className="w-5 h-5 text-[#0E9EAA]" aria-hidden="true" />
         </div>
 
         <div>
@@ -180,7 +180,7 @@ export const MaleStep2HealthProfile: React.FC<MaleStep2Props> = ({
                           : 'border-[#D7EAF2] bg-white'
                       }`}
                     >
-                      {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                      {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" aria-hidden="true" />}
                     </div>
                   </button>
                 );
@@ -215,7 +215,7 @@ export const MaleStep2HealthProfile: React.FC<MaleStep2Props> = ({
                           : 'border-[#D7EAF2] bg-white'
                       }`}
                     >
-                      {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                      {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" aria-hidden="true" />}
                     </div>
                   </button>
                 );
@@ -255,7 +255,7 @@ export const MaleStep2HealthProfile: React.FC<MaleStep2Props> = ({
           <MaleWhyWeAskCard
             title="Why we ask this"
             description="High blood pressure and impaired glucose metabolism are recognized metabolic risk factors that directly co-occur with lower bioavailable testosterone and microvascular dysfunction."
-            icon={HeartPulse}
+            icon={ActivityHeart}
           />
 
           <div className="p-3.5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] text-[11px] text-[#55718F] space-y-1.5">

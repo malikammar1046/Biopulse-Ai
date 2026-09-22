@@ -1,33 +1,41 @@
-import { TrendingUp, Award } from 'lucide-react';
+import React from 'react';
+import { LineChartUp01, Award01 } from '@untitledui/icons';
 import type { WeeklyAdherenceStats } from '../../types/medication';
 
 interface WeeklyAdherenceWidgetProps {
   stats: WeeklyAdherenceStats;
+  isMale?: boolean;
 }
 
-export const WeeklyAdherenceWidget: React.FC<WeeklyAdherenceWidgetProps> = ({ stats }) => {
+export const WeeklyAdherenceWidget: React.FC<WeeklyAdherenceWidgetProps> = ({ stats, isMale }) => {
+  const accentColor = isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]';
+
   return (
-    <div className="p-6 sm:p-7 rounded-[28px] bg-white border border-[#BAE6FD] shadow-sm select-none text-left space-y-5">
+    <div className={`p-6 sm:p-7 rounded-2xl bg-white shadow-xs select-none text-left space-y-5 border ${
+      isMale ? 'border-[#BAE6FD]' : 'border-[#EAECF0]'
+    }`}>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E2E8F0]">
-        <div className="flex items-center gap-2">
-          <span className="p-1.5 rounded-xl bg-[#F0F9FF] text-[#0288D1]">
-            <TrendingUp className="w-4 h-4" />
-          </span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#EAECF0]">
+        <div className="flex items-center gap-2.5">
+          <LineChartUp01 className={`w-5 h-5 ${accentColor}`} aria-hidden="true" />
           <div>
             <h3 className="text-base font-bold font-display text-[#0F172A]">
               How Regularly You Took Your Medicine
             </h3>
-            <p className="text-xs text-[#475569]">
+            <p className="text-xs text-[#64748B]">
               {stats.adherencePercentage}% of scheduled doses taken this week
             </p>
           </div>
         </div>
 
         {/* Weekly Adherence Badge */}
-        <div className="flex items-center gap-2 bg-[#F0F9FF] px-3.5 py-1.5 rounded-2xl border border-[#BAE6FD]">
-          <Award className="w-4 h-4 text-[#0288D1]" />
-          <span className="text-xs font-mono font-bold text-[#0288D1]">
+        <div className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl border ${
+          isMale
+            ? 'bg-[#F0F9FF] border-[#BAE6FD]'
+            : 'bg-[#FDE6EF] border-[rgba(244,63,125,0.2)]'
+        }`}>
+          <Award01 className={`w-4 h-4 ${accentColor}`} aria-hidden="true" />
+          <span className={`text-xs font-mono font-bold ${isMale ? 'text-[#0288D1]' : 'text-[#DC326C]'}`}>
             {stats.totalTakenThisWeek} / {stats.totalScheduledThisWeek} Doses
           </span>
         </div>
@@ -35,7 +43,7 @@ export const WeeklyAdherenceWidget: React.FC<WeeklyAdherenceWidgetProps> = ({ st
 
       {/* 3 Overview Metric Tiles */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="p-3.5 rounded-2xl bg-[#F8FAFC] border border-[#BAE6FD] space-y-0.5">
+        <div className="p-3.5 rounded-xl bg-[#F8FAFC] border border-[#EAECF0] space-y-0.5">
           <span className="text-[10px] font-mono uppercase text-[#64748B] font-bold">
             Doses Taken
           </span>
@@ -44,7 +52,7 @@ export const WeeklyAdherenceWidget: React.FC<WeeklyAdherenceWidgetProps> = ({ st
           </span>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-[#F8FAFC] border border-[#BAE6FD] space-y-0.5">
+        <div className="p-3.5 rounded-xl bg-[#F8FAFC] border border-[#EAECF0] space-y-0.5">
           <span className="text-[10px] font-mono uppercase text-[#64748B] font-bold">
             Doses Skipped
           </span>
@@ -53,11 +61,11 @@ export const WeeklyAdherenceWidget: React.FC<WeeklyAdherenceWidgetProps> = ({ st
           </span>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-[#F8FAFC] border border-[#BAE6FD] space-y-0.5">
+        <div className="p-3.5 rounded-xl bg-[#F8FAFC] border border-[#EAECF0] space-y-0.5">
           <span className="text-[10px] font-mono uppercase text-[#64748B] font-bold">
             Days Tracked
           </span>
-          <span className="text-xl font-bold font-display text-[#0288D1] block">
+          <span className={`text-xl font-bold font-display block ${isMale ? 'text-[#0288D1]' : 'text-[#DC326C]'}`}>
             {stats.trackedDaysCount} <span className="text-xs font-mono font-normal text-[#64748B]">/ 7</span>
           </span>
         </div>
@@ -74,7 +82,7 @@ export const WeeklyAdherenceWidget: React.FC<WeeklyAdherenceWidgetProps> = ({ st
           </span>
         </div>
 
-        <div className="grid grid-cols-7 gap-2 sm:gap-3 pt-4 pb-2 items-end h-32 border-b border-[#E2E8F0]">
+        <div className="grid grid-cols-7 gap-2 sm:gap-3 pt-4 pb-2 items-end h-32 border-b border-[#EAECF0]">
           {stats.dailyBreakdown.map((day, idx) => {
             const dayPct =
               day.totalScheduled > 0
@@ -85,12 +93,14 @@ export const WeeklyAdherenceWidget: React.FC<WeeklyAdherenceWidgetProps> = ({ st
             return (
               <div key={idx} className="flex flex-col items-center gap-1.5 h-full justify-end">
                 {/* Bar */}
-                <div className="w-full max-w-[28px] bg-[#F0F9FF] border border-[#BAE6FD]/40 rounded-t-lg h-20 flex items-end justify-center overflow-hidden">
+                <div className={`w-full max-w-[28px] rounded-t-lg h-20 flex items-end justify-center overflow-hidden border ${
+                  isMale ? 'bg-[#F0F9FF] border-[#BAE6FD]/40' : 'bg-[#FDE6EF]/30 border-[rgba(244,63,125,0.2)]'
+                }`}>
                   <div
                     className={`w-full rounded-t-lg transition-all duration-700 ${
                       day.takenCount > 0
                         ? isToday
-                          ? 'bg-[#0288D1]'
+                          ? isMale ? 'bg-[#0288D1]' : 'bg-[#F43F7D]'
                           : 'bg-[#15803D]'
                         : day.skippedCount > 0
                         ? 'bg-[#DC2626]'
@@ -105,7 +115,7 @@ export const WeeklyAdherenceWidget: React.FC<WeeklyAdherenceWidgetProps> = ({ st
                 <div className="text-center">
                   <span
                     className={`text-xs font-mono font-bold block ${
-                      isToday ? 'text-[#0288D1]' : 'text-[#0F172A]'
+                      isToday ? (isMale ? 'text-[#0288D1]' : 'text-[#DC326C]') : 'text-[#0F172A]'
                     }`}
                   >
                     {day.dayShort}

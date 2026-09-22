@@ -1,6 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, Circle, Clock, Pill, Droplets, Footprints, Calendar, Plus } from 'lucide-react';
+import {
+  CheckCircle,
+  Circle,
+  Clock,
+  MedicalCross,
+  Droplets01,
+  ActivityHeart,
+  Calendar,
+  CalendarCheck01,
+  Plus,
+} from '@untitledui/icons';
 import type { TodayReminder } from '../../types/dashboard';
 import { ROUTES } from '../../constants/routes';
 
@@ -18,16 +28,16 @@ export const TodayRemindersCard: React.FC<RemindersCardProps> = ({
   const getCategoryIcon = (cat: TodayReminder['category']) => {
     switch (cat) {
       case 'medication':
-        return <Pill className="w-3.5 h-3.5 text-[#0288D1]" />;
+        return <MedicalCross className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />;
       case 'hydration':
-        return <Droplets className="w-3.5 h-3.5 text-[#0288D1]" />;
+        return <Droplets01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />;
       case 'fitness':
-        return <Footprints className="w-3.5 h-3.5 text-[#059669]" />;
+        return <ActivityHeart className="w-3.5 h-3.5 text-[#059669]" aria-hidden="true" />;
       case 'appointment':
-        return <Calendar className="w-3.5 h-3.5 text-[#0288D1]" />;
+        return <Calendar className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />;
       case 'cycle':
       default:
-        return <Calendar className="w-3.5 h-3.5 text-[#0288D1]" />;
+        return <CalendarCheck01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />;
     }
   };
 
@@ -38,9 +48,7 @@ export const TodayRemindersCard: React.FC<RemindersCardProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="p-1.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
-            <Clock className="w-4 h-4" />
-          </span>
+          <Clock className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
           <h3 className="text-base font-bold font-display text-[#0F172A]">
             Today’s Reminders
           </h3>
@@ -100,12 +108,13 @@ export const TodayRemindersCard: React.FC<RemindersCardProps> = ({
                 {/* Checkbox Trigger */}
                 <button
                   type="button"
+                  aria-label={isDone ? `Mark "${rem.title}" as incomplete` : `Mark "${rem.title}" as complete`}
                   className="shrink-0 p-1 text-[#0288D1] hover:scale-110 transition-transform cursor-pointer"
                 >
                   {isDone ? (
-                    <CheckCircle2 className="w-5 h-5 text-[#059669] fill-[#ECFDF5]" />
+                    <CheckCircle className="w-5 h-5 text-[#059669]" aria-hidden="true" />
                   ) : (
-                    <Circle className="w-5 h-5 text-[#BAE6FD]" />
+                    <Circle className="w-5 h-5 text-[#BAE6FD]" aria-hidden="true" />
                   )}
                 </button>
               </div>
@@ -128,7 +137,7 @@ export const TodayRemindersCard: React.FC<RemindersCardProps> = ({
           onClick={onAddReminder}
           className="inline-flex items-center gap-1 text-xs font-bold text-[#64748B] hover:text-[#0F172A] transition-colors cursor-pointer"
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="w-3.5 h-3.5" aria-hidden="true" />
           <span>+ Custom</span>
         </button>
       </div>

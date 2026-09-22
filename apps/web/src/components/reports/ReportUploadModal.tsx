@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  X,
-  Upload,
-  FileText,
+  XClose,
+  UploadCloud01,
+  File06,
   Check,
   AlertTriangle,
-  Loader2,
-  Sparkles,
+  Loading01,
+  FileSearch01,
   Plus,
-  Trash2,
-  ShieldCheck,
-  ExternalLink,
-  CheckCircle2,
+  Trash01,
+  ShieldTick,
+  LinkExternal01,
+  CheckCircle,
   Clock,
   Eye,
-} from 'lucide-react';
+} from '@untitledui/icons';
 import {
   REPORT_CATEGORIES,
   type MedicalReportInput,
@@ -322,7 +322,7 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
           <div className="flex items-center justify-between pb-3.5 border-b border-[#E2E8F0]">
             <div className="flex items-center gap-2.5">
               <span className="p-2 rounded-2xl bg-[#E0F2FE] text-[#0288D1]">
-                <FileText className="w-5 h-5" />
+                <File06 className="w-5 h-5" aria-hidden="true" />
               </span>
               <div>
                 <h2 className="text-lg sm:text-xl font-bold font-display text-[#0F172A]">
@@ -340,9 +340,10 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
             <button
               type="button"
               onClick={onClose}
+              aria-label="Close modal"
               className="p-2 rounded-xl text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] transition-colors cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <XClose className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
 
@@ -363,7 +364,7 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
           {/* Error Banner */}
           {generalError && (
             <div className="p-4 rounded-2xl bg-[#FFF1F2] border border-[#FDA4AF] flex items-start gap-3 text-xs text-[#9F1239]">
-              <AlertTriangle className="w-4 h-4 text-[#E11D48] shrink-0 mt-0.5" />
+              <AlertTriangle className="w-4 h-4 text-[#E11D48] shrink-0 mt-0.5" aria-hidden="true" />
               <span>{generalError}</span>
             </div>
           )}
@@ -373,7 +374,7 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
             <div className="space-y-5 text-center py-4">
               <div className="p-8 rounded-3xl border-2 border-dashed border-[#BAE6FD] bg-[#F8FAFC] space-y-3">
                 <div className="w-12 h-12 rounded-2xl bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD] flex items-center justify-center mx-auto">
-                  <Upload className="w-6 h-6 text-[#0288D1]" />
+                  <UploadCloud01 className="w-6 h-6 text-[#0288D1]" aria-hidden="true" />
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-bold text-[#0F172A]">
@@ -407,7 +408,7 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
             <div className="space-y-5">
               <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-white text-[#0288D1] border border-[#BAE6FD]/60 shadow-xs">
-                  <FileText className="w-6 h-6 text-[#0288D1]" />
+                  <File06 className="w-6 h-6 text-[#0288D1]" aria-hidden="true" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <span className="text-xs font-bold text-[#0F172A] block truncate">
@@ -489,7 +490,7 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                   onClick={handleStartOcrExtraction}
                   className="px-6 py-2.5 rounded-2xl font-sans font-bold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm flex items-center gap-2 cursor-pointer"
                 >
-                  <Sparkles className="w-4 h-4" />
+                  <FileSearch01 className="w-4 h-4" aria-hidden="true" />
                   <span>Scan & Read Numbers (OCR)</span>
                 </button>
               </div>
@@ -501,10 +502,10 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
             <div className="py-12 flex flex-col items-center justify-center text-center space-y-4">
               <div className="relative">
                 <div className="w-16 h-16 rounded-3xl bg-[#0288D1] flex items-center justify-center shadow-lg shadow-sky-950/20 animate-pulse">
-                  <Sparkles className="w-8 h-8 text-white" />
+                  <FileSearch01 className="w-8 h-8 text-white" aria-hidden="true" />
                 </div>
                 <div className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-white shadow-xs">
-                  <Loader2 className="w-4 h-4 animate-spin text-[#0288D1]" />
+                  <Loading01 className="w-4 h-4 animate-spin text-[#0288D1]" aria-hidden="true" />
                 </div>
               </div>
 
@@ -524,7 +525,7 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
             <div className="space-y-4">
               {/* Mandatory Review Notice Banner */}
               <div className="p-3.5 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-start gap-2.5 text-xs text-[#0288D1]">
-                <ShieldCheck className="w-5 h-5 text-[#0288D1] shrink-0 mt-0.5" />
+                <ShieldTick className="w-5 h-5 text-[#0288D1] shrink-0 mt-0.5" aria-hidden="true" />
                 <div className="space-y-1">
                   <p className="font-bold text-[#0F172A] text-sm">
                     Please review the values extracted from your report. Check them against your original report before confirming.
@@ -557,7 +558,7 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                       : 'text-[#64748B] hover:text-[#0F172A]'
                   }`}
                 >
-                  <Eye className="w-3.5 h-3.5" />
+                  <Eye className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>Original Document</span>
                 </button>
               </div>
@@ -572,7 +573,7 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                 >
                   <div className="flex items-center justify-between px-1">
                     <span className="text-xs font-bold text-[#0F172A] flex items-center gap-1.5">
-                      <FileText className="w-3.5 h-3.5 text-[#0288D1]" />
+                      <File06 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
                       Original Document
                     </span>
                     {previewUrl && (
@@ -582,7 +583,7 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                         rel="noreferrer"
                         className="text-[11px] font-semibold text-[#0288D1] hover:underline flex items-center gap-1"
                       >
-                        <ExternalLink className="w-3 h-3" />
+                        <LinkExternal01 className="w-3 h-3" aria-hidden="true" />
                         <span>Open in new tab</span>
                       </a>
                     )}
@@ -605,7 +606,7 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                       </div>
                     ) : (
                       <div className="text-center p-6 space-y-2 text-[#64748B]">
-                        <FileText className="w-10 h-10 text-[#0288D1] mx-auto" />
+                        <File06 className="w-10 h-10 text-[#0288D1] mx-auto" aria-hidden="true" />
                         <p className="text-xs font-semibold">{selectedFile?.name || 'Report Document'}</p>
                         <p className="text-[11px] text-[#64748B]">
                           Preview not available for this file type.
@@ -629,12 +630,12 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                       </span>
                       {isAllConfirmed ? (
                         <span className="text-[10px] font-mono font-bold text-[#059669] bg-[#ECFDF5] px-2 py-0.5 rounded-full border border-[#A7F3D0] flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" />
+                          <CheckCircle className="w-3 h-3" aria-hidden="true" />
                           Ready for trusted profile
                         </span>
                       ) : (
                         <span className="text-[10px] font-mono font-bold text-[#D97706] bg-[#FFFBEB] px-2 py-0.5 rounded-full border border-[#FDE68A]/60 flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
+                          <Clock className="w-3 h-3" aria-hidden="true" />
                           Needs confirmation
                         </span>
                       )}
@@ -653,7 +654,7 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                         onClick={handleAddResultRow}
                         className="px-2.5 py-1 rounded-xl bg-white border border-[#E2E8F0] text-xs font-bold text-[#64748B] hover:bg-slate-50 transition-colors flex items-center gap-1 cursor-pointer"
                       >
-                        <Plus className="w-3 h-3" />
+                        <Plus className="w-3 h-3" aria-hidden="true" />
                         <span>Add Missing</span>
                       </button>
                     </div>
@@ -710,12 +711,12 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                               {/* Verification State Badge */}
                               {res.userVerified ? (
                                 <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-md border border-emerald-300 flex items-center gap-1">
-                                  <Check className="w-3 h-3 text-emerald-700" />
+                                  <Check className="w-3 h-3 text-emerald-700" aria-hidden="true" />
                                   Confirmed by you ✓
                                 </span>
                               ) : (
                                 <span className="text-[10px] font-mono font-bold text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded-md border border-amber-300 flex items-center gap-1">
-                                  <Clock className="w-3 h-3 text-amber-700" />
+                                  <Clock className="w-3 h-3 text-amber-700" aria-hidden="true" />
                                   Waiting for confirmation
                                 </span>
                               )}
@@ -725,8 +726,9 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                                 onClick={() => handleDeleteResultRow(index)}
                                 className="p-1 text-[#64748B] hover:text-[#E11D48] transition-colors cursor-pointer"
                                 title="Remove test"
+                                aria-label="Remove test"
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
+                                <Trash01 className="w-3.5 h-3.5" aria-hidden="true" />
                               </button>
                             </div>
                           </div>
@@ -796,7 +798,7 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                                   : 'bg-white text-[#0288D1] hover:bg-[#E0F2FE] border border-[#BAE6FD]'
                               }`}
                             >
-                              <Check className="w-3.5 h-3.5" />
+                              <Check className="w-3.5 h-3.5" aria-hidden="true" />
                               <span>{res.userVerified ? 'Confirmed ✓' : 'Confirm this test'}</span>
                             </button>
                           </div>
@@ -838,12 +840,12 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
                   >
                     {isSaving ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loading01 className="w-4 h-4 animate-spin" aria-hidden="true" />
                         <span>Saving Report...</span>
                       </>
                     ) : (
                       <>
-                        <Check className="w-4 h-4" />
+                        <Check className="w-4 h-4" aria-hidden="true" />
                         <span>Confirm & Verify All</span>
                       </>
                     )}

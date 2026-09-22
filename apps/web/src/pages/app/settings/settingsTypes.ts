@@ -1,13 +1,13 @@
-import type { LucideIcon } from 'lucide-react';
+import React from 'react';
 import {
-  User,
-  HeartPulse,
+  User01,
+  ActivityHeart,
   Activity,
-  Utensils,
-  Target,
-  ShieldCheck,
+  Scales01,
+  Target04,
+  ShieldTick,
   Calendar,
-} from 'lucide-react';
+} from '@untitledui/icons';
 import type { UserProfile } from '../../../types/onboarding';
 
 export type SettingsTabId =
@@ -23,7 +23,7 @@ export interface SettingsTabItem {
   id: SettingsTabId;
   label: string;
   description: string;
-  icon: LucideIcon;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   badge?: string;
   isPathwaySpecific?: boolean;
 }
@@ -34,13 +34,13 @@ export function getSettingsTabs(isMale: boolean): SettingsTabItem[] {
       id: 'personal',
       label: 'Personal Information',
       description: 'Identity, demographics & biometrics',
-      icon: User,
+      icon: User01,
     },
     {
       id: 'health',
       label: 'Health Profile',
       description: 'Medical history, conditions & vitals',
-      icon: HeartPulse,
+      icon: ActivityHeart,
     },
     {
       id: 'screening',
@@ -61,19 +61,19 @@ export function getSettingsTabs(isMale: boolean): SettingsTabItem[] {
       id: 'nutrition',
       label: 'Nutrition Preferences',
       description: 'Dietary habits, allergies & readiness',
-      icon: Utensils,
+      icon: Scales01,
     },
     {
       id: 'goals',
       label: 'Goals & Preferences',
       description: 'Health focus & coaching cadence',
-      icon: Target,
+      icon: Target04,
     },
     {
       id: 'account',
       label: 'Account & Privacy',
       description: 'Security, contacts & data controls',
-      icon: ShieldCheck,
+      icon: ShieldTick,
     },
   ];
 }

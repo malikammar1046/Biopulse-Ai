@@ -1,5 +1,5 @@
 import React from 'react';
-import { Utensils, Droplets, Dumbbell, Moon, Check, Pizza } from 'lucide-react';
+import { Scales01, Droplets01, ActivityHeart, Moon01, Check } from '@untitledui/icons';
 import type { LifestyleProfile } from '../../types/onboarding';
 import {
   DIETARY_PREFERENCE_OPTIONS,
@@ -51,7 +51,7 @@ export const Step5Lifestyle: React.FC<Step5Props> = ({ data, onChange }) => {
       {/* 1. Dietary Preference */}
       <div className="p-5 rounded-3xl bg-white/[0.04] border border-white/10 space-y-3">
         <div className="flex items-center gap-2">
-          <Utensils className="w-4 h-4 text-[#34D399]" />
+          <Scales01 className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
           <span className="text-xs font-bold font-mono text-[#EDE4F7] uppercase tracking-wider">
             Primary Dietary Preference
           </span>
@@ -67,7 +67,7 @@ export const Step5Lifestyle: React.FC<Step5Props> = ({ data, onChange }) => {
                 onClick={() => onChange({ ...data, dietaryPreference: diet.label })}
                 className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between ${
                   isSelected
-                    ? 'bg-[#1C0D2E] border-[#34D399] shadow-sm text-white'
+                    ? 'bg-[#0F172A] border-[#0288D1] shadow-sm text-white'
                     : 'bg-[#140924] border-white/10 text-[#CDBDD8] hover:border-white/20'
                 }`}
               >
@@ -75,7 +75,7 @@ export const Step5Lifestyle: React.FC<Step5Props> = ({ data, onChange }) => {
                   <span className="text-xs font-bold block">{diet.label}</span>
                   <span className="text-[10px] text-[#A797BD]">{diet.desc}</span>
                 </div>
-                {isSelected && <Check className="w-4 h-4 text-[#34D399]" />}
+                {isSelected && <Check className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />}
               </button>
             );
           })}
@@ -85,7 +85,7 @@ export const Step5Lifestyle: React.FC<Step5Props> = ({ data, onChange }) => {
       {/* 2. Fast Food / Processed Intake (Used by ML Model) */}
       <div className="p-5 rounded-3xl bg-white/[0.04] border border-white/10 space-y-3">
         <div className="flex items-center gap-2">
-          <Pizza className="w-4 h-4 text-[#FB7185]" />
+          <ActivityHeart className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
           <span className="text-xs font-bold font-mono text-[#EDE4F7] uppercase tracking-wider">
             Fast-Food & Processed Intake (Evaluated by ML Model)
           </span>
@@ -101,13 +101,13 @@ export const Step5Lifestyle: React.FC<Step5Props> = ({ data, onChange }) => {
                 onClick={() => onChange({ ...data, fastFoodIntake: opt.id as any })}
                 className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
                   isSelected
-                    ? 'bg-[#1C0D2E] border-[#FB7185] text-white shadow-sm scale-[1.02]'
+                    ? 'bg-[#0F172A] border-[#0288D1] text-white shadow-sm scale-[1.02]'
                     : 'bg-[#140924] border-white/10 text-[#CDBDD8] hover:border-white/20'
                 }`}
               >
                 <div className="flex items-center justify-between gap-1">
                   <span className="text-xs font-bold block">{opt.label}</span>
-                  {isSelected && <Check className="w-3.5 h-3.5 text-[#FB7185] shrink-0" />}
+                  {isSelected && <Check className="w-3.5 h-3.5 text-[#0288D1] shrink-0" aria-hidden="true" />}
                 </div>
                 <span className="text-[10px] text-[#A797BD] mt-1.5">{opt.desc}</span>
               </button>
@@ -122,7 +122,7 @@ export const Step5Lifestyle: React.FC<Step5Props> = ({ data, onChange }) => {
         <div className="p-5 rounded-3xl bg-white/[0.04] border border-white/10 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold font-mono text-[#EDE4F7] uppercase tracking-wider flex items-center gap-1.5">
-              <Droplets className="w-3.5 h-3.5 text-[#38BDF8]" />
+              <Droplets01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
               Daily Water Target
             </span>
             <span className="text-xs font-mono font-bold text-white">
@@ -136,7 +136,7 @@ export const Step5Lifestyle: React.FC<Step5Props> = ({ data, onChange }) => {
             max="16"
             value={data.dailyWaterGlasses}
             onChange={(e) => onChange({ ...data, dailyWaterGlasses: parseInt(e.target.value, 10) })}
-            className="w-full h-2 bg-[#140924] rounded-lg appearance-none cursor-pointer accent-[#38BDF8]"
+            className="w-full h-2 bg-[#140924] rounded-lg appearance-none cursor-pointer accent-[#0288D1]"
           />
           <div className="flex justify-between text-[10px] font-mono text-[#A797BD]">
             <span>4 glasses (1L)</span>
@@ -149,7 +149,7 @@ export const Step5Lifestyle: React.FC<Step5Props> = ({ data, onChange }) => {
         <div className="p-5 rounded-3xl bg-white/[0.04] border border-white/10 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold font-mono text-[#EDE4F7] uppercase tracking-wider flex items-center gap-1.5">
-              <Moon className="w-3.5 h-3.5 text-[#C084FC]" />
+              <Moon01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
               Average Sleep
             </span>
             <span className="text-xs font-mono font-bold text-white">
@@ -164,7 +164,7 @@ export const Step5Lifestyle: React.FC<Step5Props> = ({ data, onChange }) => {
             step="0.5"
             value={data.sleepHours}
             onChange={(e) => onChange({ ...data, sleepHours: parseFloat(e.target.value) })}
-            className="w-full h-2 bg-[#140924] rounded-lg appearance-none cursor-pointer accent-[#C084FC]"
+            className="w-full h-2 bg-[#140924] rounded-lg appearance-none cursor-pointer accent-[#0288D1]"
           />
           <div className="flex justify-between text-[10px] font-mono text-[#A797BD]">
             <span>5 hrs</span>
@@ -177,7 +177,7 @@ export const Step5Lifestyle: React.FC<Step5Props> = ({ data, onChange }) => {
       {/* 4. Physical Activity Level */}
       <div className="p-5 rounded-3xl bg-white/[0.04] border border-white/10 space-y-3">
         <div className="flex items-center gap-2">
-          <Dumbbell className="w-4 h-4 text-[#FDA4AF]" />
+          <ActivityHeart className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
           <span className="text-xs font-bold font-mono text-[#EDE4F7] uppercase tracking-wider">
             Everyday Activity Baseline
           </span>
@@ -199,7 +199,7 @@ export const Step5Lifestyle: React.FC<Step5Props> = ({ data, onChange }) => {
                 }
                 className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
                   isSelected
-                    ? 'bg-[#1C0D2E] border-[#FB7185] text-white shadow-sm scale-105'
+                    ? 'bg-[#0F172A] border-[#0288D1] text-white shadow-sm scale-105'
                     : 'bg-[#140924] border-white/10 text-[#CDBDD8] hover:border-white/20'
                 }`}
               >
@@ -230,11 +230,11 @@ export const Step5Lifestyle: React.FC<Step5Props> = ({ data, onChange }) => {
                 onClick={() => toggleExercise(ex.label)}
                 className={`px-3.5 py-2 rounded-2xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-2 ${
                   isSelected
-                    ? 'bg-gradient-to-r from-[#8E3EAF] to-[#E87084] text-white shadow'
+                    ? 'bg-[#0288D1] text-white shadow'
                     : 'bg-[#140924] border border-white/15 text-[#CDBDD8] hover:text-white'
                 }`}
               >
-                {isSelected && <Check className="w-3.5 h-3.5" />}
+                {isSelected && <Check className="w-3.5 h-3.5" aria-hidden="true" />}
                 <span>{ex.label}</span>
               </button>
             );

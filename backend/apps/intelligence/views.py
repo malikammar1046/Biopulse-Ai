@@ -13,9 +13,12 @@ Endpoints:
   POST /api/v1/intelligence/assessment/           — Unified progressive assessment runner
 """
 
+from __future__ import annotations
+
 import io
 import json
 import logging
+from typing import Any, Dict, List, Optional
 from PIL import Image
 
 from rest_framework import status
@@ -833,7 +836,7 @@ class LongitudinalHealthView(APIView):
         """
         profile = None
         try:
-            health_data = health_service.fetch_all(patient_uuid, auth_token=auth_token)
+            health_data = health_service.fetch_all(patient_uuid, auth_token=auth_token, include_logs=False)
             profile = getattr(health_data, "profile", None)
         except Exception as e:
             logger.warning(

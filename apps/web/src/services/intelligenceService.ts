@@ -134,6 +134,14 @@ async function fetchWithTimeout(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
+  if (options.signal) {
+    if (options.signal.aborted) {
+      controller.abort();
+    } else {
+      options.signal.addEventListener('abort', () => controller.abort(), { once: true });
+    }
+  }
+
   try {
     const response = await fetch(url, { ...options, signal: controller.signal });
     return response;
@@ -976,7 +984,8 @@ export async function checkCompanionHealth(): Promise<{
  */
 export async function getLongitudinalHealth(
   period: MonitoringPeriodFilter = '90d',
-  module?: string
+  module?: string,
+  signal?: AbortSignal
 ): Promise<LongitudinalHealthResponse | null> {
   try {
     const token = await getAccessToken();
@@ -990,13 +999,17 @@ export async function getLongitudinalHealth(
     if (module) params.set('module', module);
 
     const url = `${LONGITUDINAL_HEALTH_ENDPOINT}?${params.toString()}`;
-    const response = await fetchWithTimeout(url, { method: 'GET', headers }, 30000);
+    const response = await fetchWithTimeout(url, { method: 'GET', headers, signal }, 15000);
     if (!response.ok) {
       console.warn(`[Intelligence API] getLongitudinalHealth failed with status ${response.status}`);
       return null;
     }
     return (await response.json()) as LongitudinalHealthResponse;
-  } catch (err) {
+  } catch (err: any) {
+    if (err?.name === 'AbortError' || signal?.aborted) {
+      // Aborted cleanly due to unmount or newer request; do not log as error
+      return null;
+    }
     console.error('[Intelligence API] getLongitudinalHealth error:', err);
     return null;
   }

@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Brain,
-  Layers,
-  ShieldCheck,
+  BarChart01,
+  LayersThree01,
+  ShieldTick,
   ArrowRight,
-  Lock,
-} from 'lucide-react';
+  Lock01,
+} from '@untitledui/icons';
 import type { HealthPathway } from '../../types/onboarding';
 import type { ExplainableInsight } from '../../types/researchIntelligence';
 import { useUserHealth } from '../../context/UserHealthContext';
@@ -138,7 +138,7 @@ export const ResearchIntelligenceSection: React.FC<ResearchIntelligenceSectionPr
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center text-[#0288D1] shrink-0">
-              <Brain className="w-5 h-5" />
+              <BarChart01 className="w-5 h-5" aria-hidden="true" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
@@ -166,11 +166,11 @@ export const ResearchIntelligenceSection: React.FC<ResearchIntelligenceSectionPr
 
           <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
             <div className="flex items-center gap-1.5 text-xs text-[#64748B] font-mono bg-[#F8FAFC] px-3 py-1.5 rounded-xl border border-[#E2E8F0]">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <ShieldTick className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
               <span>Full Data Provenance</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs text-[#64748B] font-mono bg-[#F8FAFC] px-3 py-1.5 rounded-xl border border-[#E2E8F0]">
-              <Lock className="w-3.5 h-3.5 text-[#64748B]" />
+              <Lock01 className="w-3.5 h-3.5 text-[#64748B]" aria-hidden="true" />
               <span>Encrypted & Private</span>
             </div>
           </div>
@@ -196,7 +196,7 @@ export const ResearchIntelligenceSection: React.FC<ResearchIntelligenceSectionPr
         <div className="p-4 sm:p-5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center text-[#0288D1] shrink-0">
-              <Layers className="w-4 h-4" />
+              <LayersThree01 className="w-4 h-4" aria-hidden="true" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -219,7 +219,7 @@ export const ResearchIntelligenceSection: React.FC<ResearchIntelligenceSectionPr
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-[#F0F9FF] text-xs font-sans font-semibold text-[#0288D1] border border-[#BAE6FD] transition-all self-start sm:self-auto shrink-0 shadow-xs cursor-pointer"
           >
             <span>Explore Longitudinal State</span>
-            <ArrowRight className="w-3.5 h-3.5 text-[#0288D1]" />
+            <ArrowRight className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
           </button>
         </div>
 

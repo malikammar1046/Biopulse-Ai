@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  X,
-  Sparkles,
+  XClose,
+  Sliders01,
   Clock,
-  ChefHat,
+  Scales01,
   Plus,
-} from 'lucide-react';
+} from '@untitledui/icons';
 import type { MealType, MealBuilderFilters, BuildMealResult } from '../../types/diet';
 import { dietService } from '../../services/dietService';
 
@@ -64,7 +64,7 @@ export const MealBuilderModal: React.FC<MealBuilderModalProps> = ({
           <div className="p-5 sm:p-6 pb-4 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F0F9FF]">
             <div className="flex items-center gap-2.5">
               <span className="p-2 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
-                <ChefHat className="w-5 h-5" />
+                <Scales01 className="w-5 h-5" aria-hidden="true" />
               </span>
               <div>
                 <h2 className="text-lg font-bold text-[#0F172A]">
@@ -80,8 +80,9 @@ export const MealBuilderModal: React.FC<MealBuilderModalProps> = ({
               type="button"
               onClick={onClose}
               className="p-2 rounded-xl text-[#64748B] hover:text-[#0F172A] hover:bg-[#E0F2FE] transition-all cursor-pointer"
+              aria-label="Close dialog"
             >
-              <X className="w-5 h-5" />
+              <XClose className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
 
@@ -167,7 +168,7 @@ export const MealBuilderModal: React.FC<MealBuilderModalProps> = ({
                   onClick={handleGenerate}
                   className="px-5 py-2 rounded-xl bg-[#0288D1] text-white text-xs font-bold hover:bg-[#0277BD] shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
+                  <Sliders01 className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>Generate Recipes</span>
                 </button>
               </div>
@@ -221,7 +222,7 @@ export const MealBuilderModal: React.FC<MealBuilderModalProps> = ({
                     <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
                       <div className="flex items-center gap-3 text-[10px] font-mono text-[#64748B]">
                         <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-[#0288D1]" />
+                          <Clock className="w-3 h-3 text-[#0288D1]" aria-hidden="true" />
                           <span>{result.cookingTimeMinutes}m</span>
                         </span>
                         <span>•</span>
@@ -236,7 +237,7 @@ export const MealBuilderModal: React.FC<MealBuilderModalProps> = ({
                         }}
                         className="px-4 py-2 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
                       >
-                        <Plus className="w-3.5 h-3.5" />
+                        <Plus className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>Log This Meal</span>
                       </button>
                     </div>

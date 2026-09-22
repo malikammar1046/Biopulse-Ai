@@ -63,7 +63,7 @@
   --color-medical-primary-dark: #01579B;
   --color-medical-primary-medium: #4FC3F7;
   --color-medical-primary-light: #B3E5FC;
-  --color-medical-primary-muted: #E1F5FE;
+  --color-medical-primary-muted: #E0F2FE;
   --color-medical-primary-soft: #F0F9FF;
   --color-medical-primary-border: #BAE6FD;
   --color-medical-bg: #F8FAFC;
@@ -80,6 +80,18 @@
   --color-primary-teal-tint: #EAFBFC;
   --color-accent-pink: #F43F7D;
   --color-accent-pink-soft: #FDE6EF;
+
+  /* ── Female Clinical Dashboard Tokens (BioPulse Female Identity) ── */
+  --female-primary: #F43F7D;
+  --female-primary-hover: #DC326C;
+  --female-primary-light: #FDE6EF;
+  --female-border: rgba(244, 63, 125, 0.2);
+  --female-focus: rgba(244, 63, 125, 0.25);
+  --color-female-primary: #F43F7D;
+  --color-female-primary-hover: #DC326C;
+  --color-female-primary-light: #FDE6EF;
+  --color-female-border: rgba(244, 63, 125, 0.2);
+  --color-female-focus: rgba(244, 63, 125, 0.25);
 }
 
 @layer base {

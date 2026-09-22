@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Pill, Plus, Edit2, Trash2, PauseCircle, PlayCircle } from 'lucide-react';
+import { MedicalCross, Plus, Edit01, Trash01, PauseCircle, PlayCircle } from '@untitledui/icons';
 import type { MedicationItem } from '../../types/medication';
 
 interface ActivePrescriptionsListProps {
@@ -9,6 +9,7 @@ interface ActivePrescriptionsListProps {
   onEditMedication: (med: MedicationItem) => void;
   onToggleActive: (med: MedicationItem) => void;
   onDeleteMedication: (id: string) => void;
+  isMale?: boolean;
 }
 
 export const ActivePrescriptionsList: React.FC<ActivePrescriptionsListProps> = ({
@@ -17,20 +18,23 @@ export const ActivePrescriptionsList: React.FC<ActivePrescriptionsListProps> = (
   onEditMedication,
   onToggleActive,
   onDeleteMedication,
+  isMale,
 }) => {
+  const accentColor = isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]';
+
   return (
-    <div className="p-6 sm:p-8 rounded-[28px] bg-white border border-[#BAE6FD] shadow-sm select-none text-left space-y-4">
+    <div className={`p-6 sm:p-8 rounded-2xl bg-white shadow-xs select-none text-left space-y-4 border ${
+      isMale ? 'border-[#BAE6FD]' : 'border-[#EAECF0]'
+    }`}>
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="p-1.5 rounded-xl bg-[#F0F9FF] text-[#0288D1]">
-            <Pill className="w-4 h-4" />
-          </span>
+        <div className="flex items-center gap-2.5">
+          <MedicalCross className={`w-5 h-5 ${accentColor}`} aria-hidden="true" />
           <div>
             <h3 className="text-base font-bold font-display text-[#0F172A]">
               Your Medicine & Supplement List ({medications.length})
             </h3>
-            <p className="text-xs text-[#475569]">
+            <p className="text-xs text-[#64748B]">
               Manage daily prescriptions and inositol supplements
             </p>
           </div>
@@ -39,21 +43,27 @@ export const ActivePrescriptionsList: React.FC<ActivePrescriptionsListProps> = (
         <button
           type="button"
           onClick={onOpenAddModal}
-          className="text-xs font-bold text-[#0288D1] hover:text-[#0277BD] transition-colors inline-flex items-center gap-1 cursor-pointer"
+          className={`text-xs font-bold transition-colors inline-flex items-center gap-1 cursor-pointer ${
+            isMale ? 'text-[#0288D1] hover:text-[#0277BD]' : 'text-[#DC326C] hover:text-[#B82558]'
+          }`}
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="w-3.5 h-3.5" aria-hidden="true" />
           <span>+ Add Medicine</span>
         </button>
       </div>
 
       {medications.length > 0 ? (
-        <div className="divide-y divide-[#E2E8F0] border border-[#BAE6FD] rounded-2xl overflow-hidden bg-white">
+        <div className={`divide-y divide-[#EAECF0] border rounded-xl overflow-hidden bg-white ${
+          isMale ? 'border-[#BAE6FD]' : 'border-[#EAECF0]'
+        }`}>
           {medications.map((med) => (
             <motion.div
               key={med.id}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-[#F0F9FF] transition-all"
+              className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all ${
+                isMale ? 'hover:bg-[#F0F9FF]' : 'hover:bg-[#FDE6EF]/20'
+              }`}
             >
               {/* Left Details */}
               <div className="space-y-1">
@@ -61,7 +71,9 @@ export const ActivePrescriptionsList: React.FC<ActivePrescriptionsListProps> = (
                   <span className="text-sm font-bold text-[#0F172A]">
                     {med.name}
                   </span>
-                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-[#E0F2FE] text-[#0288D1]">
+                  <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-md ${
+                    isMale ? 'bg-[#E0F2FE] text-[#0288D1]' : 'bg-[#FDE6EF] text-[#DC326C]'
+                  }`}>
                     {med.dose} {med.unit}
                   </span>
                   <span
@@ -94,11 +106,12 @@ export const ActivePrescriptionsList: React.FC<ActivePrescriptionsListProps> = (
                       : 'text-[#059669] hover:bg-[#ECFDF5]'
                   }`}
                   title={med.isActive ? 'Pause medicine' : 'Resume medicine'}
+                  aria-label={med.isActive ? 'Pause medicine' : 'Resume medicine'}
                 >
                   {med.isActive ? (
-                    <PauseCircle className="w-4 h-4 text-[#64748B]" />
+                    <PauseCircle className="w-4 h-4 text-[#64748B]" aria-hidden="true" />
                   ) : (
-                    <PlayCircle className="w-4 h-4 text-[#059669]" />
+                    <PlayCircle className="w-4 h-4 text-[#059669]" aria-hidden="true" />
                   )}
                 </button>
 
@@ -106,10 +119,13 @@ export const ActivePrescriptionsList: React.FC<ActivePrescriptionsListProps> = (
                 <button
                   type="button"
                   onClick={() => onEditMedication(med)}
-                  className="p-1.5 rounded-lg text-[#64748B] hover:text-[#0288D1] hover:bg-[#F0F9FF] transition-colors cursor-pointer"
+                  className={`p-1.5 rounded-lg text-[#64748B] transition-colors cursor-pointer ${
+                    isMale ? 'hover:text-[#0288D1] hover:bg-[#F0F9FF]' : 'hover:text-[#F43F7D] hover:bg-[#FDE6EF]'
+                  }`}
                   title="Edit medicine"
+                  aria-label="Edit medicine"
                 >
-                  <Edit2 className="w-3.5 h-3.5" />
+                  <Edit01 className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
 
                 {/* Delete Button */}
@@ -118,22 +134,27 @@ export const ActivePrescriptionsList: React.FC<ActivePrescriptionsListProps> = (
                   onClick={() => onDeleteMedication(med.id)}
                   className="p-1.5 rounded-lg text-[#64748B] hover:text-[#DC2626] hover:bg-[#FEF2F2] transition-colors cursor-pointer"
                   title="Delete medicine"
+                  aria-label="Delete medicine"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash01 className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
               </div>
             </motion.div>
           ))}
         </div>
       ) : (
-        <div className="p-8 rounded-2xl bg-[#F8FAFC] border border-dashed border-[#BAE6FD] text-center space-y-2">
-          <p className="text-xs text-[#475569]">
+        <div className={`p-8 rounded-2xl bg-[#F8FAFC] border border-dashed text-center space-y-2 ${
+          isMale ? 'border-[#BAE6FD]' : 'border-[#EAECF0]'
+        }`}>
+          <p className="text-xs text-[#64748B]">
             No medicines or supplements added yet.
           </p>
           <button
             type="button"
             onClick={onOpenAddModal}
-            className="text-xs font-bold text-[#0288D1] hover:underline cursor-pointer"
+            className={`text-xs font-bold hover:underline cursor-pointer ${
+              isMale ? 'text-[#0288D1]' : 'text-[#DC326C]'
+            }`}
           >
             + Add your first medicine
           </button>

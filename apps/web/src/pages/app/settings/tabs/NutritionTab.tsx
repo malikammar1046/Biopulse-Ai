@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react';
+import { CheckCircle, AlertCircle, ShieldTick } from '@untitledui/icons';
 import type { UserProfile } from '../../../../types/onboarding';
 import { DIETARY_PREFERENCE_OPTIONS } from '../../../../data/mockOnboardingData';
 
@@ -52,7 +52,7 @@ export const NutritionTab: React.FC<NutritionTabProps> = ({
                 }
                 className={`p-4 rounded-2xl text-left border transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-[#0E9EAA] text-white border-[#0E9EAA] shadow-xs ring-1 ring-[#0E9EAA]/30'
+                    ? 'bg-[#0288D1] text-white border-[#0288D1] shadow-xs ring-1 ring-[#0288D1]/30'
                     : 'bg-slate-50/70 border-slate-200 text-slate-700 hover:bg-slate-100'
                 }`}
               >
@@ -63,7 +63,7 @@ export const NutritionTab: React.FC<NutritionTabProps> = ({
                       isSelected ? 'border-white bg-white' : 'border-slate-300 bg-white'
                     }`}
                   >
-                    {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[#0E9EAA]" />}
+                    {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[#0288D1]" />}
                   </div>
                 </div>
                 <p
@@ -90,7 +90,7 @@ export const NutritionTab: React.FC<NutritionTabProps> = ({
                   : 'bg-amber-50 text-amber-600 border border-amber-200'
               }`}
             >
-              <ShieldCheck className="w-5 h-5" />
+              <ShieldTick className="w-5 h-5" aria-hidden="true" />
             </div>
             <div>
               <h3 className="text-base font-bold text-slate-800">
@@ -130,9 +130,9 @@ export const NutritionTab: React.FC<NutritionTabProps> = ({
               }`}
             >
               {item.ready ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
               ) : (
-                <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
+                <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" aria-hidden="true" />
               )}
               <span className="font-semibold truncate">{item.label}</span>
             </div>

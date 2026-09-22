@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, Activity, Compass, Check, Pill } from 'lucide-react';
+import { Heart, ActivityHeart, Compass01, Check, MedicalCircle } from '@untitledui/icons';
 import type {
   UserGender,
   WomensHealthProfile,
@@ -53,14 +53,14 @@ export const Step3AdaptiveHealth: React.FC<Step3AdaptiveProps> = ({
   onMensHealthChange,
   onGeneralHealthChange,
 }) => {
-  // ── 1. Female Pathway: OvaSense AI (PCOS & Reproductive Patterns) ──
+  // ── 1. Female Pathway: BioPulse AI (PCOS & Reproductive Patterns) ──
   if (gender === 'female') {
     return (
       <div className="space-y-4 text-left">
-        <div className="p-3.5 rounded-2xl bg-[#6E2D8B]/20 border border-[#8E3EAF]/30 flex items-center gap-2.5 text-xs text-[#FDA4AF]">
-          <Heart className="w-4 h-4 text-[#FB7185] shrink-0" />
+        <div className="p-3.5 rounded-2xl bg-[#0288D1]/10 border border-[#0288D1]/30 flex items-center gap-2.5 text-xs text-[#E0F2FE]">
+          <Heart className="w-4 h-4 text-[#0288D1] shrink-0" aria-hidden="true" />
           <span>
-            <strong>OvaSense AI Pathway:</strong> We'll use this information to understand whether your pattern is worth discussing with a healthcare professional.
+            <strong>BioPulse AI Pathway:</strong> We'll use this information to understand whether your pattern is worth discussing with a healthcare professional.
           </span>
         </div>
         <Step4WomensHealth data={womensHealth} onChange={onWomensHealthChange} />
@@ -101,8 +101,8 @@ export const Step3AdaptiveHealth: React.FC<Step3AdaptiveProps> = ({
       <div className="space-y-7 text-left">
         {/* Header */}
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0284C7]/20 border border-[#38BDF8]/40 text-xs font-mono text-[#7DD3FC] mb-1">
-            <Activity className="w-3.5 h-3.5 text-[#38BDF8]" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0288D1]/20 border border-[#0288D1]/40 text-xs font-mono text-[#7DD3FC] mb-1">
+            <ActivityHeart className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
             <span>Hormonal Vitality & Energy Screening</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold font-display text-white">
@@ -295,7 +295,7 @@ export const Step3AdaptiveHealth: React.FC<Step3AdaptiveProps> = ({
                     <span className="text-xs font-bold block">{item.label}</span>
                     <span className="text-[10px] text-[#A797BD]">{item.desc}</span>
                   </div>
-                  {isChecked && <Check className="w-4 h-4 text-[#38BDF8] shrink-0" />}
+                  {isChecked && <Check className="w-4 h-4 text-[#0288D1] shrink-0" aria-hidden="true" />}
                 </button>
               );
             })}
@@ -305,7 +305,7 @@ export const Step3AdaptiveHealth: React.FC<Step3AdaptiveProps> = ({
         {/* 5. Relevant Medication Factors */}
         <div className="p-5 rounded-3xl bg-white/[0.04] border border-white/10 space-y-3">
           <div className="flex items-center gap-2">
-            <Pill className="w-4 h-4 text-[#FDA4AF]" />
+            <MedicalCircle className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
             <span className="text-xs font-bold font-mono text-[#EDE4F7] uppercase tracking-wider">
               Relevant Medication History
             </span>
@@ -326,7 +326,7 @@ export const Step3AdaptiveHealth: React.FC<Step3AdaptiveProps> = ({
                   }`}
                 >
                   <span className="text-xs font-medium">{med}</span>
-                  {isSelected && <Check className="w-4 h-4 text-[#38BDF8] shrink-0" />}
+                  {isSelected && <Check className="w-4 h-4 text-[#0288D1] shrink-0" aria-hidden="true" />}
                 </button>
               );
             })}
@@ -440,8 +440,8 @@ export const Step3AdaptiveHealth: React.FC<Step3AdaptiveProps> = ({
     <div className="space-y-7 text-left">
       {/* Header */}
       <div className="space-y-1">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#8B5CF6]/20 border border-[#A78BFA]/40 text-xs font-mono text-[#C4B5FD] mb-1">
-          <Compass className="w-3.5 h-3.5 text-[#A78BFA]" />
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0288D1]/20 border border-[#0288D1]/40 text-xs font-mono text-[#7DD3FC] mb-1">
+          <Compass01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
           <span>BioPulse AI Baseline Health Profile</span>
         </div>
         <h2 className="text-2xl sm:text-3xl font-bold font-display text-white">
@@ -468,12 +468,12 @@ export const Step3AdaptiveHealth: React.FC<Step3AdaptiveProps> = ({
                 onClick={() => toggleFocus(item)}
                 className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between ${
                   isChecked
-                    ? 'bg-[#1E1736] border-[#A78BFA] text-white shadow-sm'
+                    ? 'bg-[#1E1736] border-[#0288D1] text-white shadow-sm'
                     : 'bg-[#140924] border-white/10 text-[#CDBDD8] hover:border-white/20'
                 }`}
               >
                 <span className="text-xs font-semibold">{item}</span>
-                {isChecked && <Check className="w-4 h-4 text-[#A78BFA] shrink-0" />}
+                {isChecked && <Check className="w-4 h-4 text-[#0288D1] shrink-0" aria-hidden="true" />}
               </button>
             );
           })}

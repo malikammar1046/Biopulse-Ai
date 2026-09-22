@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Activity, Plus, RefreshCw } from 'lucide-react';
+import { ActivityHeart, Plus, RefreshCw01 } from '@untitledui/icons';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { TodayCheckInCard } from '../../components/symptoms/TodayCheckInCard';
 import { SymptomPatternSection } from '../../components/symptoms/SymptomPatternSection';
@@ -81,10 +81,8 @@ export const SymptomsPage: React.FC = () => {
       {/* ── 1. Page Header Bar ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
-              <Activity className="w-5 h-5" />
-            </span>
+          <div className="flex items-center gap-2.5">
+            <ActivityHeart className={`w-6 h-6 shrink-0 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`} aria-hidden="true" />
             <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-[#0F172A] tracking-tight">
               Symptoms & Body Journal
             </h1>
@@ -98,18 +96,22 @@ export const SymptomsPage: React.FC = () => {
           <button
             type="button"
             onClick={() => refreshSymptomRecords()}
-            className="p-2.5 rounded-2xl bg-white border border-[#E2E8F0] text-[#64748B] hover:text-[#0288D1] hover:bg-[#F8FAFC] transition-colors cursor-pointer"
+            className={`h-10 w-10 flex items-center justify-center rounded-xl bg-white border border-[#EAECF0] text-[#64748B] transition-colors cursor-pointer ${
+              isMale ? 'hover:text-[#0288D1] hover:bg-[#F8FAFC]' : 'hover:text-[#F43F7D] hover:bg-[#FDE6EF]/30'
+            }`}
             title="Refresh symptom logs"
           >
-            <RefreshCw className={`w-4 h-4 ${symptomsLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw01 className={`w-4 h-4 shrink-0 ${symptomsLoading ? 'animate-spin' : ''}`} aria-hidden="true" />
           </button>
 
           <button
             type="button"
             onClick={handleOpenGeneralModal}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl font-sans font-bold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-xs transition-all cursor-pointer"
+            className={`h-10 px-4 rounded-xl font-medium text-sm text-white shadow-xs transition-all cursor-pointer flex items-center gap-2 ${
+              isMale ? 'bg-[#0288D1] hover:bg-[#0277BD]' : 'bg-[#F43F7D] hover:bg-[#DC326C]'
+            }`}
           >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <Plus className="w-4 h-4 shrink-0" aria-hidden="true" />
             <span>Log a Symptom</span>
           </button>
         </div>
@@ -127,6 +129,7 @@ export const SymptomsPage: React.FC = () => {
       <SymptomPatternSection
         observations={symptomStats.patternObservations}
         totalLoggedCount={symptomStats.totalLoggedCount}
+        isMale={isMale}
       />
 
       {/* ── 4. Cycle Day Scatter Timeline (Female Pathway Only) ── */}
@@ -143,6 +146,7 @@ export const SymptomsPage: React.FC = () => {
         onEdit={handleOpenEditModal}
         onDelete={handleOpenDeleteModal}
         onOpenLogModal={handleOpenGeneralModal}
+        isMale={isMale}
       />
 
       {/* ── 6. Modals ── */}

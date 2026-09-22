@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Mail, Phone, Calendar, Ruler, Scale, Activity, Camera, Info } from 'lucide-react';
+import { User01, Mail01, Phone01, Calendar, Ruler, Scales01, Activity, Camera01, InfoCircle } from '@untitledui/icons';
 import {
   cmToFtIn,
   ftInToCm,
@@ -51,12 +51,12 @@ export const FemaleStep1BasicInfo: React.FC<FemaleStep1Props> = ({
     <div className="space-y-4 text-left">
       {/* ── Compact Question Header ── */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-[#FDE6EF] flex items-center justify-center shrink-0 shadow-2xs">
-          <User className="w-5 h-5 text-[#F43F7D]" />
+        <div className="w-10 h-10 rounded-full bg-[#E0F2FE] flex items-center justify-center shrink-0 shadow-2xs">
+          <User01 className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
         </div>
 
         <div>
-          <span className="text-[10px] font-bold font-mono text-[#F43F7D] uppercase tracking-wider block leading-none">
+          <span className="text-[10px] font-bold font-mono text-[#0288D1] uppercase tracking-wider block leading-none">
             Let's get started
           </span>
           <h2 className="text-xl sm:text-2xl font-extrabold font-display text-[#073B72] tracking-tight leading-tight mt-0.5">
@@ -90,7 +90,7 @@ export const FemaleStep1BasicInfo: React.FC<FemaleStep1Props> = ({
                     errors.fullName ? 'border-[#F43F7D] bg-rose-50/20' : 'border-[#D7EAF2]'
                   }`}
                 />
-                <User className="w-3.5 h-3.5 text-[#55718F] absolute left-3 top-1/2 -translate-y-1/2" />
+                <User01 className="w-3.5 h-3.5 text-[#55718F] absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true" />
               </div>
               {errors.fullName && (
                 <p className="text-[11px] text-[#F43F7D] font-medium">{errors.fullName}</p>
@@ -113,7 +113,7 @@ export const FemaleStep1BasicInfo: React.FC<FemaleStep1Props> = ({
                     errors.email ? 'border-[#F43F7D] bg-rose-50/20' : 'border-[#D7EAF2]'
                   }`}
                 />
-                <Mail className="w-3.5 h-3.5 text-[#55718F] absolute left-3 top-1/2 -translate-y-1/2" />
+                <Mail01 className="w-3.5 h-3.5 text-[#55718F] absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true" />
               </div>
               {errors.email && (
                 <p className="text-[11px] text-[#F43F7D] font-medium">{errors.email}</p>
@@ -130,23 +130,25 @@ export const FemaleStep1BasicInfo: React.FC<FemaleStep1Props> = ({
                 <span className="text-[10px] text-[#55718F] font-normal lowercase">DD / MM / YYYY</span>
               </label>
               <div className="relative">
+                <Calendar className="w-3.5 h-3.5 text-[#55718F] absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true" />
                 <input
                   type="date"
                   min={dobBounds.min}
                   max={dobBounds.max}
                   value={data.dateOfBirth}
                   onChange={(e) => onChange('dateOfBirth', e.target.value)}
-                  className={`w-full h-10 px-3.5 pl-9 rounded-xl bg-white border text-sm text-[#073B72] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#F43F7D]/15 focus:border-[#F43F7D] transition-all ${
-                    errors.dateOfBirth ? 'border-[#F43F7D] bg-rose-50/20' : 'border-[#D7EAF2]'
+                  className={`w-full pl-9 pr-3 py-2 rounded-xl bg-white border text-xs font-semibold text-[#073B72] placeholder-[#8FA3B8] transition-all focus:outline-none ${
+                    errors.dateOfBirth
+                      ? 'border-[#E87084] focus:border-[#E87084]'
+                      : 'border-[#D7EAF2] focus:border-[#0288D1]'
                   }`}
                 />
-                <Calendar className="w-3.5 h-3.5 text-[#55718F] absolute left-3 top-1/2 -translate-y-1/2" />
               </div>
               {errors.dateOfBirth ? (
                 <p className="text-[11px] text-[#F43F7D] font-medium">{errors.dateOfBirth}</p>
               ) : (
                 <div className="flex items-center gap-1.5 text-[10px] text-[#55718F]">
-                  <Info className="w-3 h-3 text-[#0E9EAA] shrink-0" />
+                  <InfoCircle className="w-3 h-3 text-[#0288D1] shrink-0" aria-hidden="true" />
                   <span>You must be 12 years or older to continue.</span>
                 </div>
               )}
@@ -168,7 +170,7 @@ export const FemaleStep1BasicInfo: React.FC<FemaleStep1Props> = ({
                     errors.phone ? 'border-[#F43F7D] bg-rose-50/20' : 'border-[#D7EAF2]'
                   }`}
                 />
-                <Phone className="w-3.5 h-3.5 text-[#55718F] absolute left-3 top-1/2 -translate-y-1/2" />
+                <Phone01 className="w-3.5 h-3.5 text-[#55718F] absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true" />
               </div>
               {errors.phone && (
                 <p className="text-[11px] text-[#F43F7D] font-medium">{errors.phone}</p>
@@ -190,7 +192,7 @@ export const FemaleStep1BasicInfo: React.FC<FemaleStep1Props> = ({
               <div className="p-2.5 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="text-[11px] font-semibold text-[#073B72] flex items-center gap-1">
-                    <Ruler className="w-3 h-3 text-[#F43F7D]" />
+                    <Ruler className="w-3 h-3 text-[#0288D1]" aria-hidden="true" />
                     <span>Height</span>
                   </label>
                   {/* Apple-style segmented control */}
@@ -275,7 +277,7 @@ export const FemaleStep1BasicInfo: React.FC<FemaleStep1Props> = ({
               <div className="p-2.5 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="text-[11px] font-semibold text-[#073B72] flex items-center gap-1">
-                    <Scale className="w-3 h-3 text-[#F43F7D]" />
+                    <Scales01 className="w-3 h-3 text-[#0288D1]" aria-hidden="true" />
                     <span>Weight</span>
                   </label>
                   <div className="flex rounded-lg bg-[#EAEFF4] p-0.5 text-[10px] font-mono">
@@ -344,7 +346,7 @@ export const FemaleStep1BasicInfo: React.FC<FemaleStep1Props> = ({
               <div className="p-2.5 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="text-[11px] font-semibold text-[#073B72] flex items-center gap-1">
-                    <Activity className="w-3 h-3 text-[#F43F7D]" />
+                    <Activity className="w-3 h-3 text-[#0288D1]" aria-hidden="true" />
                     <span>Waist</span>
                   </label>
                   <div className="flex rounded-lg bg-[#EAEFF4] p-0.5 text-[10px] font-mono">
@@ -413,7 +415,7 @@ export const FemaleStep1BasicInfo: React.FC<FemaleStep1Props> = ({
           {/* Row 4: Compact Profile Photo Bar */}
           <div className="p-2.5 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <div className="relative w-8 h-8 rounded-full overflow-hidden border border-[#F43F7D] bg-[#FDE6EF] flex items-center justify-center shrink-0">
+              <div className="relative w-8 h-8 rounded-full overflow-hidden border border-[#0288D1] bg-[#E0F2FE] flex items-center justify-center shrink-0">
                 {data.avatarUrl ? (
                   <img
                     src={data.avatarUrl}
@@ -421,10 +423,10 @@ export const FemaleStep1BasicInfo: React.FC<FemaleStep1Props> = ({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <User className="w-4 h-4 text-[#F43F7D]" />
+                  <User01 className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
                 )}
-                <span className="absolute -bottom-0.5 -right-0.5 p-0.5 rounded-full bg-[#F43F7D] text-white">
-                  <Camera className="w-2 h-2" />
+                <span className="absolute -bottom-0.5 -right-0.5 p-0.5 rounded-full bg-[#0288D1] text-white">
+                  <Camera01 className="w-2 h-2" aria-hidden="true" />
                 </span>
               </div>
               <div>

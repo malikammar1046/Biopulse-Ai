@@ -2,19 +2,19 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Mail,
-  User,
-  Lock,
+  Mail01,
+  User01,
+  Lock01,
   Eye,
   EyeOff,
   ArrowRight,
-  Zap,
-  Users,
-  BarChart3,
-  HeartHandshake,
-  Info,
-  CheckCircle2,
-} from 'lucide-react';
+  InfoCircle,
+  CheckCircle,
+  ActivityHeart,
+  Users01,
+  LineChartUp01,
+  HeartHand,
+} from '@untitledui/icons';
 import { GoogleAuthButton } from '../../components/auth/GoogleAuthButton';
 import { Logo } from '../../components/brand/Logo';
 import { useAuth } from '../../context/AuthContext';
@@ -165,7 +165,7 @@ export const Register: React.FC = () => {
       <div className="min-h-screen w-full bg-gradient-to-b from-[#FAFCFF] via-[#FFFFFF] to-[#EAF7F9] text-[#162A45] flex flex-col justify-center items-center px-4 py-12">
         <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-slate-200 shadow-xl text-center space-y-5">
           <div className="w-14 h-14 rounded-2xl bg-cyan-50 text-[#008CA5] flex items-center justify-center mx-auto">
-            <CheckCircle2 className="w-7 h-7" />
+            <CheckCircle className="w-7 h-7" aria-hidden="true" />
           </div>
           <h2 className="text-2xl font-bold text-[#0F254B]">Verify your email</h2>
           <p className="text-sm text-slate-600 leading-relaxed">
@@ -252,7 +252,7 @@ export const Register: React.FC = () => {
               {/* Feature 1 */}
               <div className="flex items-center gap-3.5">
                 <div className="w-9 h-9 rounded-full bg-[#E0F7FA] border border-[#B2EBF2] flex items-center justify-center text-[#008CA5] shrink-0 shadow-2xs">
-                  <Zap className="w-4 h-4 fill-[#22D3EE] text-[#008CA5]" />
+                  <ActivityHeart className="w-4 h-4 text-[#008CA5]" aria-hidden="true" />
                 </div>
                 <span className="text-sm font-semibold text-[#0F254B]">
                   Personalized insights
@@ -262,7 +262,7 @@ export const Register: React.FC = () => {
               {/* Feature 2 */}
               <div className="flex items-center gap-3.5">
                 <div className="w-9 h-9 rounded-full bg-[#E0F7FA] border border-[#B2EBF2] flex items-center justify-center text-[#008CA5] shrink-0 shadow-2xs">
-                  <Users className="w-4 h-4 text-[#008CA5]" />
+                  <Users01 className="w-4 h-4 text-[#008CA5]" aria-hidden="true" />
                 </div>
                 <span className="text-sm font-semibold text-[#0F254B]">
                   AI-powered screening
@@ -272,7 +272,7 @@ export const Register: React.FC = () => {
               {/* Feature 3 */}
               <div className="flex items-center gap-3.5">
                 <div className="w-9 h-9 rounded-full bg-[#E0F7FA] border border-[#B2EBF2] flex items-center justify-center text-[#008CA5] shrink-0 shadow-2xs">
-                  <BarChart3 className="w-4 h-4 text-[#008CA5]" />
+                  <LineChartUp01 className="w-4 h-4 text-[#008CA5]" aria-hidden="true" />
                 </div>
                 <span className="text-sm font-semibold text-[#0F254B]">
                   Track progress over time
@@ -282,7 +282,7 @@ export const Register: React.FC = () => {
               {/* Feature 4 */}
               <div className="flex items-center gap-3.5">
                 <div className="w-9 h-9 rounded-full bg-[#E0F7FA] border border-[#B2EBF2] flex items-center justify-center text-[#008CA5] shrink-0 shadow-2xs">
-                  <HeartHandshake className="w-4 h-4 text-[#008CA5]" />
+                  <HeartHand className="w-4 h-4 text-[#008CA5]" aria-hidden="true" />
                 </div>
                 <span className="text-sm font-semibold text-[#0F254B]">
                   Support for a healthier you
@@ -359,7 +359,7 @@ export const Register: React.FC = () => {
                 {/* Full Name Input */}
                 <div className="space-y-1">
                   <div className="relative flex items-center">
-                    <User className="w-4 h-4 text-slate-400 absolute left-4 pointer-events-none" />
+                    <User01 className="w-4 h-4 text-slate-400 absolute left-4 pointer-events-none" aria-hidden="true" />
                     <input
                       type="text"
                       id="register-fullname"
@@ -386,7 +386,7 @@ export const Register: React.FC = () => {
                 {/* Email Address Input */}
                 <div className="space-y-1">
                   <div className="relative flex items-center">
-                    <Mail className="w-4 h-4 text-slate-400 absolute left-4 pointer-events-none" />
+                    <Mail01 className="w-4 h-4 text-slate-400 absolute left-4 pointer-events-none" aria-hidden="true" />
                     <input
                       type="email"
                       id="register-email"
@@ -414,7 +414,7 @@ export const Register: React.FC = () => {
                 {/* Password Input */}
                 <div className="space-y-1">
                   <div className="relative flex items-center">
-                    <Lock className="w-4 h-4 text-slate-400 absolute left-4 pointer-events-none" />
+                    <Lock01 className="w-4 h-4 text-slate-400 absolute left-4 pointer-events-none" aria-hidden="true" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       id="register-password"
@@ -438,7 +438,7 @@ export const Register: React.FC = () => {
                       className="absolute right-4 p-1 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showPassword ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4" aria-hidden="true" />}
                     </button>
                   </div>
                   {errors.password && (
@@ -455,7 +455,7 @@ export const Register: React.FC = () => {
                     className="w-full py-3.5 rounded-full font-bold text-white bg-[#008CA5] hover:bg-[#007A90] shadow-md shadow-cyan-900/15 flex items-center justify-center gap-2 text-sm sm:text-base transition-all cursor-pointer"
                   >
                     <span>Create Account</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-4 h-4" aria-hidden="true" />
                   </motion.button>
                 </div>
               </form>
@@ -495,7 +495,7 @@ export const Register: React.FC = () => {
               {/* Informational Notice Box at the bottom of the card */}
               <div className="p-3.5 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD]/80 flex items-center gap-3 text-left">
                 <div className="w-6 h-6 rounded-full bg-cyan-100/70 text-[#008CA5] flex items-center justify-center shrink-0">
-                  <Info className="w-3.5 h-3.5" />
+                  <InfoCircle className="w-3.5 h-3.5" aria-hidden="true" />
                 </div>
                 <p className="text-xs font-medium text-slate-600 leading-snug">
                   Date of birth and basic details will be collected during onboarding.

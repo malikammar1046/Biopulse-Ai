@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, Droplet, AlertTriangle, Check, Loader2 } from 'lucide-react';
+import { XClose, Calendar, Drop, AlertTriangle, Check, RefreshCw01 } from '@untitledui/icons';
 import type { CycleRecord, CycleRecordInput, MenstrualFlow } from '../../types/cycle';
 import { validateCycleRecord } from '../../utils/cycleValidation';
 import { getDaysDifference } from '../../utils/cycleCalculations';
@@ -58,10 +58,8 @@ export const PeriodLogModal: React.FC<PeriodLogModalProps> = ({
         setNotes(initialData.notes || '');
       } else {
         const todayStr = new Date().toISOString().split('T')[0];
-        // Default end date 5 days from start date
-        const defaultEnd = new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
         setStartDate(todayStr);
-        setEndDate(defaultEnd);
+        setEndDate('');
         setFlow('medium');
         setSelectedSymptoms([]);
         setNotes('');
@@ -72,15 +70,17 @@ export const PeriodLogModal: React.FC<PeriodLogModalProps> = ({
     }
   }, [isOpen, initialData]);
 
-  // Calculate duration preview
+  // Derived duration preview
   const durationPreview =
-    startDate && endDate && endDate >= startDate
+    startDate && endDate && startDate <= endDate
       ? getDaysDifference(startDate, endDate) + 1
       : null;
 
   const toggleSymptom = (symptom: string) => {
     setSelectedSymptoms((prev) =>
-      prev.includes(symptom) ? prev.filter((s) => s !== symptom) : [...prev, symptom]
+      prev.includes(symptom)
+        ? prev.filter((s) => s !== symptom)
+        : [...prev, symptom]
     );
   };
 
@@ -93,7 +93,7 @@ export const PeriodLogModal: React.FC<PeriodLogModalProps> = ({
       periodEndDate: endDate,
       flow,
       symptoms: selectedSymptoms,
-      notes: notes.trim(),
+      notes: notes.trim() || undefined,
     };
 
     const validation = validateCycleRecord(input, existingRecords, initialData?.id);
@@ -142,14 +142,12 @@ export const PeriodLogModal: React.FC<PeriodLogModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.2 }}
-          className="relative w-full max-w-lg rounded-[28px] bg-white border border-[#BAE6FD] shadow-2xl p-4 sm:p-8 text-left space-y-6 z-10 select-none my-8 max-h-[90vh] overflow-y-auto"
+          className="relative w-full max-w-lg rounded-2xl bg-white border border-[#EAECF0] shadow-xl p-6 sm:p-8 text-left space-y-6 z-10 select-none my-8 max-h-[90vh] overflow-y-auto"
         >
           {/* Header */}
-          <div className="flex items-center justify-between pb-4 border-b border-[#E2E8F0]">
+          <div className="flex items-center justify-between pb-4 border-b border-[#EAECF0]">
             <div className="flex items-center gap-2.5">
-              <span className="p-2 rounded-2xl bg-[#F0F9FF] text-[#0288D1]">
-                <Calendar className="w-5 h-5" />
-              </span>
+              <Calendar className="w-5 h-5 text-[#F43F7D] shrink-0" aria-hidden="true" />
               <div>
                 <h2 className="text-xl font-bold font-display text-[#0F172A]">
                   {isEditing ? 'Edit Period Entry' : 'Log Your Period'}
@@ -162,17 +160,18 @@ export const PeriodLogModal: React.FC<PeriodLogModalProps> = ({
 
             <button
               type="button"
+              aria-label="Close modal"
               onClick={onClose}
               className="p-2 rounded-xl text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] transition-colors cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <XClose className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
 
           {/* General Error Banner */}
           {generalError && (
             <div className="p-4 rounded-2xl bg-[#FEF2F2] border border-[#FECACA] flex items-start gap-3 text-xs text-[#991B1B]">
-              <AlertTriangle className="w-4 h-4 text-[#DC2626] shrink-0 mt-0.5" />
+              <AlertTriangle className="w-4 h-4 text-[#DC2626] shrink-0 mt-0.5" aria-hidden="true" />
               <span>{generalError}</span>
             </div>
           )}
@@ -190,8 +189,8 @@ export const PeriodLogModal: React.FC<PeriodLogModalProps> = ({
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className={`w-full px-3.5 py-2.5 rounded-2xl bg-[#F8FAFC] border text-xs font-medium text-[#0F172A] focus:bg-white focus:outline-none transition-colors ${
-                    errors.startDate ? 'border-[#DC2626] ring-1 ring-[#DC2626]' : 'border-[#BAE6FD] focus:border-[#0288D1]'
+                  className={`w-full h-10 px-3.5 rounded-lg bg-[#F8FAFC] border text-xs font-medium text-[#0F172A] focus:bg-white focus:outline-none transition-colors ${
+                    errors.startDate ? 'border-[#DC2626] ring-1 ring-[#DC2626]' : 'border-[#EAECF0] focus:border-[#F43F7D] focus:ring-2 focus:ring-[#F43F7D]/20'
                   }`}
                   required
                 />
@@ -209,8 +208,8 @@ export const PeriodLogModal: React.FC<PeriodLogModalProps> = ({
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className={`w-full px-3.5 py-2.5 rounded-2xl bg-[#F8FAFC] border text-xs font-medium text-[#0F172A] focus:bg-white focus:outline-none transition-colors ${
-                    errors.endDate ? 'border-[#DC2626] ring-1 ring-[#DC2626]' : 'border-[#BAE6FD] focus:border-[#0288D1]'
+                  className={`w-full h-10 px-3.5 rounded-lg bg-[#F8FAFC] border text-xs font-medium text-[#0F172A] focus:bg-white focus:outline-none transition-colors ${
+                    errors.endDate ? 'border-[#DC2626] ring-1 ring-[#DC2626]' : 'border-[#EAECF0] focus:border-[#F43F7D] focus:ring-2 focus:ring-[#F43F7D]/20'
                   }`}
                   required
                 />
@@ -222,9 +221,9 @@ export const PeriodLogModal: React.FC<PeriodLogModalProps> = ({
 
             {/* Calculated Duration Pill */}
             {durationPreview !== null && (
-              <div className="p-3 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-center justify-between text-xs">
-                <span className="text-[#0369A1] font-medium">Estimated Period Duration:</span>
-                <span className="font-mono font-bold text-[#0288D1] bg-white px-2.5 py-0.5 rounded-full border border-[#BAE6FD]">
+              <div className="p-3 rounded-xl bg-[#FDE6EF]/40 border border-[#FDE6EF] flex items-center justify-between text-xs">
+                <span className="text-[#DC326C] font-medium">Estimated Period Duration:</span>
+                <span className="font-mono font-bold text-[#F43F7D] bg-white px-2.5 py-0.5 rounded-full border border-[#FDE6EF]">
                   {durationPreview} Day{durationPreview === 1 ? '' : 's'}
                 </span>
               </div>
@@ -247,15 +246,15 @@ export const PeriodLogModal: React.FC<PeriodLogModalProps> = ({
                       key={option.value}
                       type="button"
                       onClick={() => setFlow(option.value as MenstrualFlow)}
-                      className={`p-3 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-between gap-1.5 ${
+                      className={`p-3 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-between gap-1.5 ${
                         isSelected
-                          ? 'border-[#0288D1] ring-2 ring-[#0288D1]/20 bg-[#F0F9FF]'
-                          : 'border-[#E2E8F0] bg-[#F8FAFC] hover:bg-white hover:border-[#BAE6FD]'
+                          ? 'border-[#F43F7D] ring-2 ring-[#F43F7D]/20 bg-[#FDE6EF]/30'
+                          : 'border-[#EAECF0] bg-[#F8FAFC] hover:bg-white hover:border-[#F43F7D]/30'
                       }`}
                     >
-                      <div className="flex items-center gap-0.5 text-[#0288D1]">
+                      <div className="flex items-center gap-0.5 text-[#F43F7D]">
                         {Array.from({ length: option.iconCount }).map((_, i) => (
-                          <Droplet key={i} className="w-3.5 h-3.5 fill-[#0288D1]" />
+                          <Drop key={i} className="w-3.5 h-3.5 fill-[#F43F7D]" aria-hidden="true" />
                         ))}
                       </div>
                       <span className="text-xs font-bold text-[#0F172A]">{option.label}</span>
@@ -284,11 +283,11 @@ export const PeriodLogModal: React.FC<PeriodLogModalProps> = ({
                       onClick={() => toggleSymptom(sym)}
                       className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                         isSelected
-                          ? 'bg-[#0288D1] text-white shadow-xs font-semibold'
-                          : 'bg-[#F8FAFC] border border-[#E2E8F0] text-[#475569] hover:bg-white hover:border-[#BAE6FD]'
+                          ? 'bg-[#F43F7D] text-white shadow-xs font-semibold'
+                          : 'bg-[#F8FAFC] border border-[#EAECF0] text-[#475569] hover:bg-white hover:border-[#F43F7D]/30'
                       }`}
                     >
-                      {isSelected && <Check className="w-3 h-3" />}
+                      {isSelected && <Check className="w-3 h-3" aria-hidden="true" />}
                       <span>{sym}</span>
                     </button>
                   );
@@ -306,17 +305,17 @@ export const PeriodLogModal: React.FC<PeriodLogModalProps> = ({
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Add any details (e.g. stress levels, medication taken, cramps intensity)..."
                 rows={2}
-                className="w-full px-3.5 py-2.5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs text-[#0F172A] focus:bg-white focus:outline-none focus:border-[#0288D1] transition-colors"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#F8FAFC] border border-[#EAECF0] text-xs text-[#0F172A] focus:bg-white focus:outline-none focus:border-[#F43F7D] focus:ring-2 focus:ring-[#F43F7D]/20 transition-colors"
               />
             </div>
 
             {/* Action Buttons */}
-            <div className="pt-3 flex items-center justify-end gap-3 border-t border-[#E2E8F0]">
+            <div className="pt-3 flex items-center justify-end gap-3 border-t border-[#EAECF0]">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className="px-5 py-2.5 rounded-2xl border border-[#E2E8F0] text-xs font-bold text-[#475569] hover:bg-[#F8FAFC] transition-colors cursor-pointer disabled:opacity-50"
+                className="h-10 px-4 rounded-lg border border-[#EAECF0] text-xs font-medium text-[#475569] hover:bg-[#F8FAFC] transition-colors cursor-pointer disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -324,11 +323,11 @@ export const PeriodLogModal: React.FC<PeriodLogModalProps> = ({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-6 py-2.5 rounded-2xl font-sans font-semibold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                className="h-10 px-5 rounded-lg font-medium text-xs text-white bg-[#F43F7D] hover:bg-[#DC326C] shadow-xs transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50"
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <RefreshCw01 className="w-4 h-4 animate-spin" aria-hidden="true" />
                     <span>Saving...</span>
                   </>
                 ) : (

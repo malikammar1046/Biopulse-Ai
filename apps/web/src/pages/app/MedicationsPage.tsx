@@ -86,6 +86,7 @@ export const MedicationsPage: React.FC = () => {
         todayProgress={todayMedicationProgress}
         weeklyStats={weeklyMedicationStats}
         onOpenAddModal={handleOpenAddModal}
+        isMale={isMale}
         onAskAi={() =>
           openAiChatWithPrompt(
             isMale
@@ -102,12 +103,13 @@ export const MedicationsPage: React.FC = () => {
         onMarkSkipped={handleMarkSkipped}
         onResetDose={handleResetDose}
         onOpenAddModal={handleOpenAddModal}
+        isMale={isMale}
       />
 
       {/* ── 3. WEEKLY ADHERENCE & ACTIVE PRESCRIPTIONS ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-5">
-          <WeeklyAdherenceWidget stats={weeklyMedicationStats} />
+          <WeeklyAdherenceWidget stats={weeklyMedicationStats} isMale={isMale} />
         </div>
 
         <div className="lg:col-span-7">
@@ -117,6 +119,7 @@ export const MedicationsPage: React.FC = () => {
             onEditMedication={handleEditMedication}
             onToggleActive={handleToggleActive}
             onDeleteMedication={deleteMedication}
+            isMale={isMale}
           />
         </div>
       </div>
@@ -127,6 +130,7 @@ export const MedicationsPage: React.FC = () => {
         editingMedication={editingMedication}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveMedication}
+        isMale={isMale}
       />
     </motion.div>
   );

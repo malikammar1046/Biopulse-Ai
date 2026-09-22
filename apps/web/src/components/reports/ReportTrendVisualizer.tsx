@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TrendingUp } from 'lucide-react';
+import { LineChartUp01 } from '@untitledui/icons';
 import type { MedicalReport } from '../../types/report';
 import {
   extractHistoricalTrends,
@@ -44,7 +44,7 @@ export const ReportTrendVisualizer: React.FC<ReportTrendVisualizerProps> = ({ re
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="space-y-1">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD] text-xs font-mono font-bold">
-            <TrendingUp className="w-3.5 h-3.5 text-[#0288D1]" />
+            <LineChartUp01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
             <span>Historical Lab Comparison</span>
           </div>
           <h3 className="text-xl sm:text-2xl font-bold font-display text-[#0F172A]">

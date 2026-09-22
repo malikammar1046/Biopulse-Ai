@@ -1,5 +1,17 @@
 import React, { useState } from 'react';
-import { User, Mail, Phone, Calendar, Sparkles, Camera, Heart, Activity, Compass, Ruler, Scale } from 'lucide-react';
+import {
+  User01,
+  Mail01,
+  Phone01,
+  Calendar,
+  ShieldTick,
+  Camera01,
+  Heart,
+  ActivityHeart,
+  Compass01,
+  Ruler,
+  Scales01,
+} from '@untitledui/icons';
 import type { UserGender } from '../../types/onboarding';
 import {
   cmToFtIn,
@@ -84,16 +96,16 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
               }`}
             >
               <div className="flex items-center justify-between">
-                <div className="w-8 h-8 rounded-xl bg-[#6E2D8B]/30 border border-[#8E3EAF]/40 flex items-center justify-center text-[#FDA4AF]">
-                  <Heart className="w-4 h-4" />
+                <div className="w-8 h-8 rounded-xl bg-[#0288D1]/20 border border-[#0288D1]/40 flex items-center justify-center text-[#29B6F6]">
+                  <Heart className="w-4 h-4" aria-hidden="true" />
                 </div>
                 {data.gender === 'female' && (
-                  <span className="w-2 h-2 rounded-full bg-[#FB7185]" />
+                  <span className="w-2 h-2 rounded-full bg-[#0288D1]" />
                 )}
               </div>
               <div>
                 <span className="text-sm font-bold text-white block">Female</span>
-                <span className="text-[11px] text-[#FDA4AF] font-medium block">PCOS Pathway</span>
+                <span className="text-[11px] text-[#29B6F6] font-medium block">PCOS Pathway</span>
                 <span className="text-[10px] text-[#A797BD] leading-tight block mt-1">
                   PCOS screening, period rhythms & women's health
                 </span>
@@ -106,21 +118,21 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
               onClick={() => handleSelectGender('male')}
               className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-3 ${
                 data.gender === 'male'
-                  ? 'bg-gradient-to-b from-[#102038] to-[#0A1224] border-[#38BDF8] shadow-lg shadow-sky-950/40 ring-1 ring-[#38BDF8]'
+                  ? 'bg-gradient-to-b from-[#102038] to-[#0A1224] border-[#0288D1] shadow-lg shadow-sky-950/40 ring-1 ring-[#0288D1]'
                   : 'bg-[#140924] border-white/10 hover:border-white/20 text-[#CDBDD8]'
               }`}
             >
               <div className="flex items-center justify-between">
-                <div className="w-8 h-8 rounded-xl bg-[#0284C7]/20 border border-[#38BDF8]/40 flex items-center justify-center text-[#38BDF8]">
-                  <Activity className="w-4 h-4" />
+                <div className="w-8 h-8 rounded-xl bg-[#0288D1]/20 border border-[#0288D1]/40 flex items-center justify-center text-[#29B6F6]">
+                  <ActivityHeart className="w-4 h-4" aria-hidden="true" />
                 </div>
                 {data.gender === 'male' && (
-                  <span className="w-2 h-2 rounded-full bg-[#38BDF8]" />
+                  <span className="w-2 h-2 rounded-full bg-[#0288D1]" />
                 )}
               </div>
               <div>
                 <span className="text-sm font-bold text-white block">Male</span>
-                <span className="text-[11px] text-[#38BDF8] font-medium block">Hypogonadism Pathway</span>
+                <span className="text-[11px] text-[#29B6F6] font-medium block">Hypogonadism Pathway</span>
                 <span className="text-[10px] text-[#A797BD] leading-tight block mt-1">
                   Hormone vitality, hypogonadism screening & energy
                 </span>
@@ -133,21 +145,21 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
               onClick={() => handleSelectGender('other')}
               className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-3 ${
                 data.gender === 'other' || data.gender === 'prefer_not_to_say'
-                  ? 'bg-gradient-to-b from-[#1C162E] to-[#100C1F] border-[#A78BFA] shadow-lg shadow-purple-950/40 ring-1 ring-[#A78BFA]'
+                  ? 'bg-gradient-to-b from-[#1C162E] to-[#100C1F] border-[#0288D1] shadow-lg shadow-blue-950/40 ring-1 ring-[#0288D1]'
                   : 'bg-[#140924] border-white/10 hover:border-white/20 text-[#CDBDD8]'
               }`}
             >
               <div className="flex items-center justify-between">
-                <div className="w-8 h-8 rounded-xl bg-[#8B5CF6]/20 border border-[#A78BFA]/40 flex items-center justify-center text-[#A78BFA]">
-                  <Compass className="w-4 h-4" />
+                <div className="w-8 h-8 rounded-xl bg-[#0288D1]/20 border border-[#0288D1]/40 flex items-center justify-center text-[#29B6F6]">
+                  <Compass01 className="w-4 h-4" aria-hidden="true" />
                 </div>
                 {(data.gender === 'other' || data.gender === 'prefer_not_to_say') && (
-                  <span className="w-2 h-2 rounded-full bg-[#A78BFA]" />
+                  <span className="w-2 h-2 rounded-full bg-[#0288D1]" />
                 )}
               </div>
               <div>
                 <span className="text-sm font-bold text-white block">Other / General</span>
-                <span className="text-[11px] text-[#A78BFA] font-medium block">General Baseline</span>
+                <span className="text-[11px] text-[#29B6F6] font-medium block">General Baseline</span>
                 <span className="text-[10px] text-[#A797BD] leading-tight block mt-1">
                   General wellness, lifestyle, reports & monitoring
                 </span>
@@ -168,7 +180,7 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
       {/* Avatar Picker (Optional) */}
       <div className="p-4 rounded-3xl bg-white/[0.04] border border-white/10 flex flex-col sm:flex-row items-center gap-4">
         <div className="relative">
-          <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#FB7185] bg-[#1C0D2E] flex items-center justify-center shadow-lg">
+          <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#0288D1] bg-[#1C0D2E] flex items-center justify-center shadow-lg">
             {data.avatarUrl ? (
               <img
                 src={data.avatarUrl}
@@ -176,11 +188,11 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
                 className="w-full h-full object-cover"
               />
             ) : (
-              <User className="w-7 h-7 text-[#D8B4FE]" />
+              <User01 className="w-7 h-7 text-[#38BDF8]" aria-hidden="true" />
             )}
           </div>
-          <span className="absolute -bottom-1 -right-1 p-1 rounded-full bg-[#8E3EAF] text-white shadow">
-            <Camera className="w-3 h-3" />
+          <span className="absolute -bottom-1 -right-1 p-1 rounded-full bg-[#0288D1] text-white shadow">
+            <Camera01 className="w-3 h-3" aria-hidden="true" />
           </span>
         </div>
 
@@ -205,7 +217,7 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
                 onClick={() => onChange('avatarUrl', url)}
                 className={`w-7 h-7 rounded-full overflow-hidden border-2 transition-transform cursor-pointer ${
                   data.avatarUrl === url
-                    ? 'border-[#FB7185] scale-110 shadow-md'
+                    ? 'border-[#0288D1] scale-110 shadow-md'
                     : 'border-white/20 opacity-70 hover:opacity-100'
                 }`}
               >
@@ -230,11 +242,11 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
               placeholder="e.g. Ayesha Khan"
               value={data.fullName}
               onChange={(e) => onChange('fullName', e.target.value)}
-              className={`w-full px-4 py-3 pl-10 rounded-2xl bg-[#140924] border text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#8E3EAF] transition-all ${
+              className={`w-full px-4 py-3 pl-10 rounded-2xl bg-[#140924] border text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#0288D1] transition-all ${
                 errors.fullName ? 'border-[#FB7185]' : 'border-white/15'
               }`}
             />
-            <User className="w-4 h-4 text-[#A797BD] absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <User01 className="w-4 h-4 text-[#A797BD] absolute left-3.5 top-1/2 -translate-y-1/2" aria-hidden="true" />
           </div>
           {errors.fullName && <p className="text-xs text-[#FB7185] font-medium">{errors.fullName}</p>}
         </div>
@@ -252,11 +264,11 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
               max={dobBounds.max}
               value={data.dateOfBirth}
               onChange={(e) => onChange('dateOfBirth', e.target.value)}
-              className={`w-full px-4 py-3 pl-10 rounded-2xl bg-[#140924] border text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#8E3EAF] transition-all ${
+              className={`w-full px-4 py-3 pl-10 rounded-2xl bg-[#140924] border text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#0288D1] transition-all ${
                 errors.dateOfBirth ? 'border-[#FB7185]' : 'border-white/15'
               }`}
             />
-            <Calendar className="w-4 h-4 text-[#A797BD] absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Calendar className="w-4 h-4 text-[#A797BD] absolute left-3.5 top-1/2 -translate-y-1/2" aria-hidden="true" />
           </div>
           {errors.dateOfBirth && <p className="text-xs text-[#FB7185] font-medium">{errors.dateOfBirth}</p>}
         </div>
@@ -273,11 +285,11 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
               placeholder="03001234567 or +923001234567"
               value={data.phone}
               onChange={(e) => onChange('phone', e.target.value)}
-              className={`w-full px-4 py-3 pl-10 rounded-2xl bg-[#140924] border text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#8E3EAF] transition-all ${
+              className={`w-full px-4 py-3 pl-10 rounded-2xl bg-[#140924] border text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#0288D1] transition-all ${
                 errors.phone ? 'border-[#FB7185]' : 'border-white/15'
               }`}
             />
-            <Phone className="w-4 h-4 text-[#A797BD] absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Phone01 className="w-4 h-4 text-[#A797BD] absolute left-3.5 top-1/2 -translate-y-1/2" aria-hidden="true" />
           </div>
           {errors.phone && <p className="text-xs text-[#FB7185] font-medium">{errors.phone}</p>}
         </div>
@@ -294,11 +306,11 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
               placeholder="ayesha.khan@example.com"
               value={data.email}
               onChange={(e) => onChange('email', e.target.value)}
-              className={`w-full px-4 py-3 pl-10 rounded-2xl bg-[#140924] border text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#8E3EAF] transition-all ${
+              className={`w-full px-4 py-3 pl-10 rounded-2xl bg-[#140924] border text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#0288D1] transition-all ${
                 errors.email ? 'border-[#FB7185]' : 'border-white/15'
               }`}
             />
-            <Mail className="w-4 h-4 text-[#A797BD] absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Mail01 className="w-4 h-4 text-[#A797BD] absolute left-3.5 top-1/2 -translate-y-1/2" aria-hidden="true" />
           </div>
           {errors.email && <p className="text-xs text-[#FB7185] font-medium">{errors.email}</p>}
         </div>
@@ -317,7 +329,7 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
             <div className="p-3.5 rounded-2xl bg-[#140924] border border-white/10 space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-semibold text-[#EDE4F7] flex items-center gap-1.5">
-                  <Ruler className="w-3.5 h-3.5 text-[#FB7185]" />
+                  <Ruler className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
                   <span>Height</span>
                 </label>
                 <div className="flex rounded-lg bg-white/5 p-0.5 border border-white/10 text-[10px] font-mono">
@@ -325,7 +337,7 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
                     type="button"
                     onClick={() => setHeightUnit('cm')}
                     className={`px-2 py-0.5 rounded-md transition-all ${
-                      heightUnit === 'cm' ? 'bg-[#FB7185] text-white font-bold shadow' : 'text-[#A797BD]'
+                      heightUnit === 'cm' ? 'bg-[#0288D1] text-white font-bold shadow' : 'text-[#A797BD]'
                     }`}
                   >
                     cm
@@ -334,7 +346,7 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
                     type="button"
                     onClick={() => setHeightUnit('ft_in')}
                     className={`px-2 py-0.5 rounded-md transition-all ${
-                      heightUnit === 'ft_in' ? 'bg-[#FB7185] text-white font-bold shadow' : 'text-[#A797BD]'
+                      heightUnit === 'ft_in' ? 'bg-[#0288D1] text-white font-bold shadow' : 'text-[#A797BD]'
                     }`}
                   >
                     ft/in
@@ -351,7 +363,7 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
                     placeholder="e.g. 165"
                     value={data.heightCm ?? ''}
                     onChange={(e) => onChange('heightCm', e.target.value ? parseFloat(e.target.value) : null)}
-                    className="w-full px-3 py-2 rounded-xl bg-[#1D0C30] border border-white/15 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#FB7185]"
+                    className="w-full px-3 py-2 rounded-xl bg-[#1D0C30] border border-white/15 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#0288D1]"
                   />
                   <span className="absolute right-3 top-2 text-xs text-[#A797BD]">cm</span>
                 </div>
@@ -368,7 +380,7 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
                         const newFeet = parseInt(e.target.value, 10) || 0;
                         onChange('heightCm', ftInToCm(newFeet, inches));
                       }}
-                      className="w-full px-3 py-2 rounded-xl bg-[#1D0C30] border border-white/15 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#FB7185]"
+                      className="w-full px-3 py-2 rounded-xl bg-[#1D0C30] border border-white/15 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#0288D1]"
                     />
                     <span className="absolute right-2 top-2 text-xs text-[#A797BD]">ft</span>
                   </div>
@@ -383,7 +395,7 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
                         const newInches = parseInt(e.target.value, 10) || 0;
                         onChange('heightCm', ftInToCm(feet, newInches));
                       }}
-                      className="w-full px-3 py-2 rounded-xl bg-[#1D0C30] border border-white/15 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#FB7185]"
+                      className="w-full px-3 py-2 rounded-xl bg-[#1D0C30] border border-white/15 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#0288D1]"
                     />
                     <span className="absolute right-2 top-2 text-xs text-[#A797BD]">in</span>
                   </div>
@@ -395,7 +407,7 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
             <div className="p-3.5 rounded-2xl bg-[#140924] border border-white/10 space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-semibold text-[#EDE4F7] flex items-center gap-1.5">
-                  <Scale className="w-3.5 h-3.5 text-[#FB7185]" />
+                  <Scales01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
                   <span>Weight</span>
                 </label>
                 <div className="flex rounded-lg bg-white/5 p-0.5 border border-white/10 text-[10px] font-mono">
@@ -403,7 +415,7 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
                     type="button"
                     onClick={() => setWeightUnit('kg')}
                     className={`px-2 py-0.5 rounded-md transition-all ${
-                      weightUnit === 'kg' ? 'bg-[#FB7185] text-white font-bold shadow' : 'text-[#A797BD]'
+                      weightUnit === 'kg' ? 'bg-[#0288D1] text-white font-bold shadow' : 'text-[#A797BD]'
                     }`}
                   >
                     kg
@@ -412,7 +424,7 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
                     type="button"
                     onClick={() => setWeightUnit('lbs')}
                     className={`px-2 py-0.5 rounded-md transition-all ${
-                      weightUnit === 'lbs' ? 'bg-[#FB7185] text-white font-bold shadow' : 'text-[#A797BD]'
+                      weightUnit === 'lbs' ? 'bg-[#0288D1] text-white font-bold shadow' : 'text-[#A797BD]'
                     }`}
                   >
                     lbs
@@ -430,7 +442,7 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
                     placeholder="e.g. 62"
                     value={data.weightKg ?? ''}
                     onChange={(e) => onChange('weightKg', e.target.value ? parseFloat(e.target.value) : null)}
-                    className="w-full px-3 py-2 rounded-xl bg-[#1D0C30] border border-white/15 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#FB7185]"
+                    className="w-full px-3 py-2 rounded-xl bg-[#1D0C30] border border-white/15 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#0288D1]"
                   />
                   <span className="absolute right-3 top-2 text-xs text-[#A797BD]">kg</span>
                 </div>
@@ -447,7 +459,7 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
                       const val = parseFloat(e.target.value);
                       onChange('weightKg', lbsToKg(val));
                     }}
-                    className="w-full px-3 py-2 rounded-xl bg-[#1D0C30] border border-white/15 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#FB7185]"
+                    className="w-full px-3 py-2 rounded-xl bg-[#1D0C30] border border-white/15 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#0288D1]"
                   />
                   <span className="absolute right-3 top-2 text-xs text-[#A797BD]">lbs</span>
                 </div>
@@ -458,7 +470,7 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
             <div className="p-3.5 rounded-2xl bg-[#140924] border border-white/10 space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-semibold text-[#EDE4F7] flex items-center gap-1.5">
-                  <Activity className="w-3.5 h-3.5 text-[#FB7185]" />
+                  <ActivityHeart className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
                   <span>Waist</span>
                 </label>
                 <div className="flex rounded-lg bg-white/5 p-0.5 border border-white/10 text-[10px] font-mono">
@@ -466,7 +478,7 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
                     type="button"
                     onClick={() => setWaistUnit('cm')}
                     className={`px-2 py-0.5 rounded-md transition-all ${
-                      waistUnit === 'cm' ? 'bg-[#FB7185] text-white font-bold shadow' : 'text-[#A797BD]'
+                      waistUnit === 'cm' ? 'bg-[#0288D1] text-white font-bold shadow' : 'text-[#A797BD]'
                     }`}
                   >
                     cm
@@ -475,7 +487,7 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
                     type="button"
                     onClick={() => setWaistUnit('in')}
                     className={`px-2 py-0.5 rounded-md transition-all ${
-                      waistUnit === 'in' ? 'bg-[#FB7185] text-white font-bold shadow' : 'text-[#A797BD]'
+                      waistUnit === 'in' ? 'bg-[#0288D1] text-white font-bold shadow' : 'text-[#A797BD]'
                     }`}
                   >
                     in
@@ -492,7 +504,7 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
                     placeholder="e.g. 78"
                     value={data.waistCm ?? ''}
                     onChange={(e) => onChange('waistCm', e.target.value ? parseFloat(e.target.value) : null)}
-                    className="w-full px-3 py-2 rounded-xl bg-[#1D0C30] border border-white/15 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#FB7185]"
+                    className="w-full px-3 py-2 rounded-xl bg-[#1D0C30] border border-white/15 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#0288D1]"
                   />
                   <span className="absolute right-3 top-2 text-xs text-[#A797BD]">cm</span>
                 </div>
@@ -509,7 +521,7 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
                       const val = parseFloat(e.target.value);
                       onChange('waistCm', inchesToCm(val));
                     }}
-                    className="w-full px-3 py-2 rounded-xl bg-[#1D0C30] border border-white/15 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#FB7185]"
+                    className="w-full px-3 py-2 rounded-xl bg-[#1D0C30] border border-white/15 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#0288D1]"
                   />
                   <span className="absolute right-3 top-2 text-xs text-[#A797BD]">in</span>
                 </div>
@@ -520,8 +532,8 @@ export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors
       </div>
 
       {/* Reassurance Note */}
-      <div className="p-3.5 rounded-2xl bg-[#6E2D8B]/20 border border-[#8E3EAF]/30 flex items-center gap-2.5 text-xs text-[#CDBDD8]">
-        <Sparkles className="w-4 h-4 text-[#FB7185] shrink-0" />
+      <div className="p-3.5 rounded-2xl bg-[#0288D1]/10 border border-[#0288D1]/30 flex items-center gap-2.5 text-xs text-[#CDBDD8]">
+        <ShieldTick className="w-4 h-4 text-[#0288D1] shrink-0" aria-hidden="true" />
         <span>Your data is encrypted end-to-end and stored with strict clinical privacy standards.</span>
       </div>
     </div>

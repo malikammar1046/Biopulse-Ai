@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, AlertCircle, Plus } from 'lucide-react';
+import { XClose, Calendar, AlertCircle, Plus } from '@untitledui/icons';
 import type { CareCircleMember } from '../../types/careCircle';
 import type { AppointmentInput, AppointmentType } from '../../types/appointment';
 import { useUserHealth } from '../../context/UserHealthContext';
@@ -150,9 +150,7 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
           {/* Header */}
           <div className="p-6 border-b border-[#E2E8F0] bg-[#F0F9FF] flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD]/60 flex items-center justify-center">
-                <Calendar className="w-5 h-5" />
-              </div>
+              <Calendar className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
               <div>
                 <h2 className="text-lg font-bold font-display text-[#0F172A]">
                   Book an Appointment
@@ -168,7 +166,7 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
               onClick={onClose}
               className="p-2 rounded-xl text-[#64748B] hover:text-[#0F172A] hover:bg-white transition-colors cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <XClose className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
 
@@ -176,7 +174,7 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
           <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto text-xs">
             {errorMsg && (
               <div className="p-3 rounded-xl bg-[#FEF2F2] border border-[#FECACA] text-[#B91C1C] flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
+                <AlertCircle className="w-4 h-4 shrink-0 text-[#B91C1C]" aria-hidden="true" />
                 <span>{errorMsg}</span>
               </div>
             )}
@@ -326,7 +324,7 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
                     type="url"
                     value={meetingUrl}
                     onChange={(e) => setMeetingUrl(e.target.value)}
-                    placeholder="https://meet.ovasense.health/..."
+                    placeholder="https://meet.biopulse.ai/..."
                     className="w-full px-3.5 py-2 rounded-xl border border-[#E2E8F0] text-xs focus:outline-none focus:border-[#0288D1]"
                   />
                 </div>
@@ -383,7 +381,7 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
                 disabled={isSubmitting}
                 className="px-5 py-2.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white font-bold shadow-xs transition-all disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-4 h-4 shrink-0" aria-hidden="true" />
                 <span>{isSubmitting ? 'Booking...' : 'Confirm Appointment'}</span>
               </button>
             </div>

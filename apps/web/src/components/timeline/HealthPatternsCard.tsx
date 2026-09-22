@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Brain, CheckCircle, Info, ArrowUpRight } from 'lucide-react';
+import { BarChart01, CheckCircle, MessageChatCircle, ArrowUpRight, InfoCircle } from '@untitledui/icons';
 import type { HealthPatternCorrelation } from '../../types/timeline';
 
 interface HealthPatternsCardProps {
@@ -16,9 +16,7 @@ export const HealthPatternsCard: React.FC<HealthPatternsCardProps> = ({
       {/* Card Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
-            <Brain className="w-5 h-5" />
-          </div>
+          <BarChart01 className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
           <div>
             <h2 className="text-lg sm:text-xl font-bold text-[#0F172A]">
               Patterns BIOPulse AI Found
@@ -69,7 +67,7 @@ export const HealthPatternsCard: React.FC<HealthPatternsCardProps> = ({
                 {/* Observed Fact */}
                 <div className="p-3 rounded-xl bg-white border border-[#E2E8F0] text-[#0F172A] space-y-1">
                   <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-[#0288D1] uppercase">
-                    <CheckCircle className="w-3 h-3 text-emerald-600" />
+                    <CheckCircle className="w-3 h-3 text-emerald-600" aria-hidden="true" />
                     <span>Observed Data</span>
                   </div>
                   <p className="text-xs text-[#0F172A] leading-relaxed">
@@ -80,11 +78,11 @@ export const HealthPatternsCard: React.FC<HealthPatternsCardProps> = ({
                 {/* BIOPulse Interpretation */}
                 <div className="p-3 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] text-[#475569] space-y-1">
                   <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-[#0288D1] uppercase">
-                    <Sparkles className="w-3 h-3 text-[#0288D1]" />
+                    <MessageChatCircle className="w-3 h-3 text-[#0288D1]" aria-hidden="true" />
                     <span>Clinical Interpretation</span>
                   </div>
                   <p className="text-xs text-[#475569] leading-relaxed">
-                    {pat.interpretation.replace(/^OvaSense Interpretation:\s*/, '')}
+                    {pat.interpretation.replace(/^(OvaSense|BIOPulse)\s*Interpretation:\s*/i, '')}
                   </p>
                 </div>
               </div>
@@ -105,7 +103,7 @@ export const HealthPatternsCard: React.FC<HealthPatternsCardProps> = ({
                   className="inline-flex items-center gap-1 text-xs font-semibold text-[#0288D1] hover:text-[#01579B] shrink-0 cursor-pointer"
                 >
                   <span>Explore in AI</span>
-                  <ArrowUpRight className="w-3 h-3" />
+                  <ArrowUpRight className="w-3 h-3" aria-hidden="true" />
                 </button>
               )}
             </div>
@@ -115,7 +113,7 @@ export const HealthPatternsCard: React.FC<HealthPatternsCardProps> = ({
 
       {/* Safety Notice */}
       <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-center gap-2 text-xs text-amber-800">
-        <Info className="w-4 h-4 shrink-0 text-amber-600" />
+        <InfoCircle className="w-4 h-4 shrink-0 text-amber-600" aria-hidden="true" />
         <span className="text-[11px]">
           Observed correlations are derived from user-reported and lab logs to empower consultation conversations. They do not constitute diagnostic claims.
         </span>

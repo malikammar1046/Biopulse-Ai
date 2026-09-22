@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Check } from 'lucide-react';
+import { Check } from '@untitledui/icons';
 
 export interface MaleStepItem {
   number: string;
@@ -55,7 +55,7 @@ export const MaleOnboardingStepper: React.FC<MaleOnboardingStepperProps> = ({
                 }`}
               >
                 {isCompleted ? (
-                  <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <Check className="w-3.5 h-3.5 stroke-[2.5]" aria-hidden="true" />
                 ) : (
                   <span>{stepNum}</span>
                 )}

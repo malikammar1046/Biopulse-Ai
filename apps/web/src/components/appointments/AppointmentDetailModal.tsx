@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  X,
+  XClose,
   Calendar,
-  MapPin,
-  Video,
-  Stethoscope,
-  FileText,
-  Trash2,
-  CheckCircle2,
-} from 'lucide-react';
+  MarkerPin01,
+  VideoRecorder,
+  MedicalCircle,
+  File01,
+  Trash01,
+  CheckCircle,
+} from '@untitledui/icons';
 import type { AppointmentItem } from '../../types/appointment';
 
 interface AppointmentDetailModalProps {
@@ -109,9 +109,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
           {/* Header */}
           <div className="p-6 border-b border-[#BAE6FD] bg-[#01579B] text-white flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-white/10 text-white flex items-center justify-center">
-                <Stethoscope className="w-5 h-5 text-[#E0F2FE]" />
-              </div>
+              <MedicalCircle className="w-5 h-5 text-[#E0F2FE] shrink-0" aria-hidden="true" />
               <div>
                 <span className="text-[10px] font-mono uppercase font-bold text-[#BAE6FD]">
                   {appointment.appointmentType.replace('_', ' ')}
@@ -127,7 +125,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
               onClick={onClose}
               className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <XClose className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
 
@@ -160,7 +158,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3.5 rounded-xl bg-white border border-[#E2E8F0] space-y-1">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-[#0288D1]">
-                  <Calendar className="w-3.5 h-3.5" />
+                  <Calendar className="w-4 h-4 shrink-0" aria-hidden="true" />
                   <span>Date & Time</span>
                 </div>
                 <p className="font-bold text-[#0F172A]">{appointment.scheduledDate}</p>
@@ -169,7 +167,11 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
 
               <div className="p-3.5 rounded-xl bg-white border border-[#E2E8F0] space-y-1">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-[#0288D1]">
-                  {appointment.meetingUrl ? <Video className="w-3.5 h-3.5" /> : <MapPin className="w-3.5 h-3.5" />}
+                  {appointment.meetingUrl ? (
+                    <VideoRecorder className="w-4 h-4 shrink-0" aria-hidden="true" />
+                  ) : (
+                    <MarkerPin01 className="w-4 h-4 shrink-0" aria-hidden="true" />
+                  )}
                   <span>Location</span>
                 </div>
                 <p className="font-bold text-[#0F172A] truncate">{appointment.location}</p>
@@ -285,7 +287,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
                   className="p-2 rounded-xl text-[#64748B] hover:text-[#B91C1C] hover:bg-[#FEF2F2] transition-colors cursor-pointer"
                   title="Delete record"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash01 className="w-4 h-4 shrink-0" aria-hidden="true" />
                 </button>
 
                 {appointment.status === 'scheduled' && !isRescheduling && !isCancelling && (
@@ -321,7 +323,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
                     disabled={isSubmitting}
                     className="px-3 py-2 rounded-xl border border-[#DCFCE7] text-[#15803D] font-bold hover:bg-[#F0FDF4] transition-colors flex items-center gap-1 cursor-pointer"
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <CheckCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
                     <span>Mark Completed</span>
                   </button>
                 )}
@@ -334,7 +336,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
                   }}
                   className="px-4 py-2 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white font-semibold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
                 >
-                  <FileText className="w-3.5 h-3.5" />
+                  <File01 className="w-4 h-4 shrink-0" aria-hidden="true" />
                   <span>Prepare Brief</span>
                 </button>
               </div>

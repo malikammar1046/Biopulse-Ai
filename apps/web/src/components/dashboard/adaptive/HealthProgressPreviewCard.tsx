@@ -1,13 +1,13 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  TrendingUp,
+  TrendUp01,
   ArrowUpRight,
-  Activity,
-  ShieldCheck,
+  ActivityHeart,
+  ShieldTick,
   Calendar,
   ChevronRight,
-} from 'lucide-react';
+} from '@untitledui/icons';
 import { ROUTES } from '../../../constants/routes';
 import type { HealthPathway, UserProfile } from '../../../types/onboarding';
 import type { SymptomRecord } from '../../../types/symptom';
@@ -62,9 +62,7 @@ export const HealthProgressPreviewCard: React.FC<HealthProgressPreviewCardProps>
       {/* Top Header */}
       <div className="flex items-center justify-between gap-3 relative z-10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center text-[#0288D1] shrink-0">
-            <TrendingUp className="w-5 h-5" />
-          </div>
+          <TrendUp01 className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-mono uppercase tracking-wider text-[#0288D1] font-bold">
@@ -85,7 +83,7 @@ export const HealthProgressPreviewCard: React.FC<HealthProgressPreviewCardProps>
           className="px-3.5 py-1.5 rounded-xl bg-[#F8FAFC] hover:bg-[#E0F2FE] border border-[#E2E8F0] text-xs font-semibold text-[#0288D1] transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
         >
           <span>Full Progress</span>
-          <ArrowUpRight className="w-3.5 h-3.5 text-[#0288D1]" />
+          <ArrowUpRight className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
         </Link>
       </div>
 
@@ -94,7 +92,7 @@ export const HealthProgressPreviewCard: React.FC<HealthProgressPreviewCardProps>
         {/* Metric 1: Recent Changes */}
         <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-1">
           <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#64748B]">
-            <Activity className="w-3 h-3 text-[#0288D1]" />
+            <ActivityHeart className="w-3 h-3 text-[#0288D1]" aria-hidden="true" />
             <span>Recent Changes</span>
           </div>
           <p className="text-xs text-[#0F172A] font-medium line-clamp-2">
@@ -105,7 +103,7 @@ export const HealthProgressPreviewCard: React.FC<HealthProgressPreviewCardProps>
         {/* Metric 2: Historical Depth */}
         <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-1">
           <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#64748B]">
-            <Calendar className="w-3 h-3 text-[#0288D1]" />
+            <Calendar className="w-3 h-3 text-[#0288D1]" aria-hidden="true" />
             <span>Historical Depth</span>
           </div>
           <div className="text-xs text-[#0F172A] font-medium">
@@ -116,7 +114,7 @@ export const HealthProgressPreviewCard: React.FC<HealthProgressPreviewCardProps>
         {/* Metric 3: Verified Biomarkers */}
         <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-1">
           <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#64748B]">
-            <ShieldCheck className="w-3 h-3 text-emerald-600" />
+            <ShieldTick className="w-3 h-3 text-emerald-600" aria-hidden="true" />
             <span>Verified Labs</span>
           </div>
           <div className="text-xs text-[#0F172A] font-medium">
@@ -143,7 +141,7 @@ export const HealthProgressPreviewCard: React.FC<HealthProgressPreviewCardProps>
             className="text-xs font-semibold text-[#0288D1] hover:text-[#0277BD] flex items-center gap-1 shrink-0 cursor-pointer"
           >
             <span>Explore Trends</span>
-            <ChevronRight className="w-3.5 h-3.5" />
+            <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
           </Link>
         </div>
       )}

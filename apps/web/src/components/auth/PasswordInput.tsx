@@ -1,5 +1,5 @@
 import React, { useState, useId } from 'react';
-import { Eye, EyeOff, Lock, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, Lock01, AlertCircle } from '@untitledui/icons';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -116,7 +116,7 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
         )}
       >
         <div className="pl-4 pr-1 text-[#8D7E9E] flex items-center shrink-0">
-          <Lock className="w-4 h-4" />
+          <Lock01 className="w-4 h-4 shrink-0" aria-hidden="true" />
         </div>
 
         <input
@@ -144,7 +144,11 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
           aria-label={showPassword ? 'Hide password' : 'Show password'}
           className="absolute right-2 p-2 rounded-xl text-[#8D7E9E] hover:text-[#EDE4F7] hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-[#8E3EAF]/40 flex items-center justify-center min-w-[40px] min-h-[40px] cursor-pointer"
         >
-          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          {showPassword ? (
+            <EyeOff className="w-4 h-4 shrink-0" aria-hidden="true" />
+          ) : (
+            <Eye className="w-4 h-4 shrink-0" aria-hidden="true" />
+          )}
         </button>
       </div>
 
@@ -167,7 +171,7 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
       {/* Inline Validation Error */}
       {hasError && (
         <div id={errorId} role="alert" className="flex items-center gap-1.5 pt-0.5">
-          <AlertCircle className="w-3.5 h-3.5 text-[#E87084] shrink-0" />
+          <AlertCircle className="w-3.5 h-3.5 text-[#E87084] shrink-0" aria-hidden="true" />
           <p className="text-xs text-[#F48498] font-medium leading-tight">{errorText}</p>
         </div>
       )}

@@ -2,16 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Mail,
-  Lock,
+  Mail01,
+  Lock01,
   Eye,
   EyeOff,
   ArrowRight,
-  Loader2,
-  Shield,
-  Users,
-  Leaf,
-} from 'lucide-react';
+  RefreshCw01,
+  ShieldTick,
+  Users01,
+  ActivityHeart,
+} from '@untitledui/icons';
 import { GoogleAuthButton } from '../../components/auth/GoogleAuthButton';
 import { Logo } from '../../components/brand/Logo';
 import { useAuth } from '../../context/AuthContext';
@@ -218,7 +218,7 @@ export const Login: React.FC = () => {
               <div className="absolute bottom-4 left-4 right-4 p-3.5 rounded-2xl bg-white/90 backdrop-blur-md border border-white/80 shadow-lg shadow-cyan-950/10 text-left flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-[#E0F7FA] border border-[#B2EBF2] flex items-center justify-center text-[#008CA5] shrink-0">
-                    <Leaf className="w-4 h-4 fill-[#22D3EE] text-[#008CA5]" />
+                    <ActivityHeart className="w-4 h-4 text-[#008CA5]" aria-hidden="true" />
                   </div>
                   <div>
                     <div className="text-xs sm:text-sm font-bold text-[#0F254B]">
@@ -243,7 +243,7 @@ export const Login: React.FC = () => {
             <div className="w-full max-w-[440px] grid grid-cols-3 gap-3 pt-2">
               <div className="flex flex-col items-center text-center space-y-1">
                 <div className="w-7 h-7 rounded-full bg-cyan-50 text-[#008CA5] flex items-center justify-center">
-                  <Shield className="w-3.5 h-3.5" />
+                  <ShieldTick className="w-3.5 h-3.5" aria-hidden="true" />
                 </div>
                 <span className="text-[11px] font-semibold text-slate-600 leading-tight">
                   Your data stays private
@@ -252,7 +252,7 @@ export const Login: React.FC = () => {
 
               <div className="flex flex-col items-center text-center space-y-1">
                 <div className="w-7 h-7 rounded-full bg-cyan-50 text-[#008CA5] flex items-center justify-center">
-                  <Users className="w-3.5 h-3.5" />
+                  <Users01 className="w-3.5 h-3.5" aria-hidden="true" />
                 </div>
                 <span className="text-[11px] font-semibold text-slate-600 leading-tight">
                   Trusted by clinicians
@@ -261,7 +261,7 @@ export const Login: React.FC = () => {
 
               <div className="flex flex-col items-center text-center space-y-1">
                 <div className="w-7 h-7 rounded-full bg-cyan-50 text-[#008CA5] flex items-center justify-center">
-                  <Leaf className="w-3.5 h-3.5" />
+                  <ActivityHeart className="w-3.5 h-3.5" aria-hidden="true" />
                 </div>
                 <span className="text-[11px] font-semibold text-slate-600 leading-tight">
                   Evidence-based &amp; AI
@@ -312,7 +312,7 @@ export const Login: React.FC = () => {
                 {/* Email Address Input */}
                 <div className="space-y-1">
                   <div className="relative flex items-center">
-                    <Mail className="w-4 h-4 text-slate-400 absolute left-4 pointer-events-none" />
+                    <Mail01 className="w-4 h-4 text-slate-400 absolute left-4 pointer-events-none" aria-hidden="true" />
                     <input
                       type="email"
                       id="login-email"
@@ -340,7 +340,7 @@ export const Login: React.FC = () => {
                 {/* Password Input */}
                 <div className="space-y-1">
                   <div className="relative flex items-center">
-                    <Lock className="w-4 h-4 text-slate-400 absolute left-4 pointer-events-none" />
+                    <Lock01 className="w-4 h-4 text-slate-400 absolute left-4 pointer-events-none" aria-hidden="true" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       id="login-password"
@@ -364,7 +364,7 @@ export const Login: React.FC = () => {
                       className="absolute right-4 p-1 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showPassword ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4" aria-hidden="true" />}
                     </button>
                   </div>
                   {errors.password && (
@@ -409,13 +409,13 @@ export const Login: React.FC = () => {
                   >
                     {loading ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin text-white" />
+                        <RefreshCw01 className="w-4 h-4 animate-spin text-white" aria-hidden="true" />
                         <span>Signing in...</span>
                       </>
                     ) : (
                       <>
                         <span>Login</span>
-                        <ArrowRight className="w-4 h-4" />
+                        <ArrowRight className="w-4 h-4" aria-hidden="true" />
                       </>
                     )}
                   </motion.button>

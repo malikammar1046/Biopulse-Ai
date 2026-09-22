@@ -1,24 +1,22 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  X,
-  FileText,
+  XClose,
+  File01,
   HelpCircle,
   Plus,
-  Trash2,
-  CheckCircle2,
+  Trash01,
+  CheckCircle,
   Circle,
   Printer,
-  Copy,
+  Copy01,
   Check,
-  Activity,
+  ActivityHeart,
   Calendar,
-  Pill,
-  Footprints,
-  Sparkles,
-  ShieldCheck,
+  MedicalCross,
+  ShieldTick,
   Sun,
-} from 'lucide-react';
+} from '@untitledui/icons';
 import type { AppointmentItem, HealthSummarySnapshot, ConsultationBrief } from '../../types/appointment';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { resolvePathway } from '../../types/onboarding';
@@ -190,7 +188,7 @@ ${brief.disclaimer}
           <div className="p-4 sm:p-6 border-b border-[#BAE6FD] bg-[#01579B] text-white flex items-center justify-between gap-4 shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-white/10 text-white flex items-center justify-center shrink-0">
-                <FileText className="w-6 h-6 text-[#E0F2FE]" />
+                <File01 className="w-6 h-6 text-[#E0F2FE]" aria-hidden="true" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
@@ -212,7 +210,7 @@ ${brief.disclaimer}
               onClick={onClose}
               className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <XClose className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
 
@@ -239,7 +237,7 @@ ${brief.disclaimer}
                   : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5 text-[#0288D1]" />
+              <File01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
               <span>2. 1-Page Doctor Brief</span>
             </button>
           </div>
@@ -252,7 +250,7 @@ ${brief.disclaimer}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-bold font-display text-[#0F172A] flex items-center gap-1.5">
-                      <Activity className="w-4 h-4 text-[#0288D1]" />
+                      <ActivityHeart className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
                       <span>Health Summary</span>
                     </h3>
                     <span className="text-[10px] font-mono text-[#64748B]">
@@ -265,7 +263,7 @@ ${brief.disclaimer}
                     {isMale ? (
                       <div className="p-3.5 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] space-y-1">
                         <div className="flex items-center gap-1.5 text-xs font-bold text-[#0288D1]">
-                          <Sun className="w-3.5 h-3.5" />
+                          <Sun className="w-3.5 h-3.5" aria-hidden="true" />
                           <span>Endocrine & Sleep</span>
                         </div>
                         <p className="text-xs font-semibold text-[#0F172A]">
@@ -278,7 +276,7 @@ ${brief.disclaimer}
                     ) : (
                       <div className="p-3.5 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] space-y-1">
                         <div className="flex items-center gap-1.5 text-xs font-bold text-[#0288D1]">
-                          <Calendar className="w-3.5 h-3.5" />
+                          <Calendar className="w-3.5 h-3.5" aria-hidden="true" />
                           <span>Cycle</span>
                         </div>
                         <p className="text-xs font-semibold text-[#0F172A]">
@@ -293,7 +291,7 @@ ${brief.disclaimer}
                     {/* Symptoms Card */}
                     <div className="p-3.5 rounded-xl bg-[#FFF1F2] border border-[#FFE4E6] space-y-1">
                       <div className="flex items-center gap-1.5 text-xs font-bold text-[#E11D48]">
-                        <Activity className="w-3.5 h-3.5" />
+                        <ActivityHeart className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>Symptoms</span>
                       </div>
                       <p className="text-xs font-semibold text-[#0F172A]">
@@ -309,7 +307,7 @@ ${brief.disclaimer}
                     {/* Lifestyle Card */}
                     <div className="p-3.5 rounded-xl bg-[#F0FDF4] border border-[#DCFCE7] space-y-1">
                       <div className="flex items-center gap-1.5 text-xs font-bold text-[#15803D]">
-                        <Footprints className="w-3.5 h-3.5" />
+                        <ActivityHeart className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>Lifestyle</span>
                       </div>
                       <p className="text-xs font-semibold text-[#0F172A]">
@@ -323,7 +321,7 @@ ${brief.disclaimer}
                     {/* Medications Card */}
                     <div className="p-3.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-1">
                       <div className="flex items-center gap-1.5 text-xs font-bold text-[#0288D1]">
-                        <Pill className="w-3.5 h-3.5" />
+                        <MedicalCross className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>Medication</span>
                       </div>
                       <p className="text-xs font-semibold text-[#0F172A]">
@@ -338,7 +336,7 @@ ${brief.disclaimer}
                     <div className="sm:col-span-2 p-3.5 rounded-xl bg-[#FFFBEB] border border-[#FEF3C7] space-y-1">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5 text-xs font-bold text-[#B45309]">
-                          <FileText className="w-3.5 h-3.5" />
+                          <File01 className="w-3.5 h-3.5" aria-hidden="true" />
                           <span>Medical Reports</span>
                         </div>
                         <span className="text-[10px] font-mono font-bold text-[#B45309]">
@@ -364,7 +362,7 @@ ${brief.disclaimer}
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-sm font-bold font-display text-[#0F172A] flex items-center gap-1.5">
-                        <HelpCircle className="w-4 h-4 text-[#0288D1]" />
+                        <HelpCircle className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
                         <span>Questions for My Doctor</span>
                       </h3>
                       <p className="text-xs text-[#64748B]">
@@ -394,7 +392,7 @@ ${brief.disclaimer}
                       disabled={isAddingQuestion || !newQuestionText.trim()}
                       className="px-4 py-2.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold transition-all disabled:opacity-50 cursor-pointer flex items-center gap-1 shrink-0 shadow-sm"
                     >
-                      <Plus className="w-3.5 h-3.5" />
+                      <Plus className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>Add</span>
                     </button>
                   </form>
@@ -436,9 +434,9 @@ ${brief.disclaimer}
                             className="mt-0.5 text-[#0288D1] hover:scale-110 transition-transform cursor-pointer shrink-0"
                           >
                             {q.isDiscussed ? (
-                              <CheckCircle2 className="w-4 h-4 text-[#15803D]" />
+                              <CheckCircle className="w-4 h-4 text-[#15803D]" aria-hidden="true" />
                             ) : (
-                              <Circle className="w-4 h-4 text-[#94A3B8]" />
+                              <Circle className="w-4 h-4 text-[#94A3B8]" aria-hidden="true" />
                             )}
                           </button>
 
@@ -455,7 +453,7 @@ ${brief.disclaimer}
                             onClick={() => onDeleteQuestion(appointment.id, q.id)}
                             className="text-[#94A3B8] hover:text-[#B91C1C] transition-colors p-1 cursor-pointer"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash01 className="w-3.5 h-3.5" aria-hidden="true" />
                           </button>
                         </div>
                       ))
@@ -482,7 +480,7 @@ ${brief.disclaimer}
                       onClick={handleCopyBrief}
                       className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-white border border-[#BAE6FD] text-xs font-bold text-[#0288D1] hover:bg-[#F0F9FF] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
                     >
-                      {copied ? <Check className="w-3.5 h-3.5 text-[#15803D]" /> : <Copy className="w-3.5 h-3.5" />}
+                      {copied ? <Check className="w-3.5 h-3.5 text-[#15803D]" aria-hidden="true" /> : <Copy01 className="w-3.5 h-3.5" aria-hidden="true" />}
                       <span>{copied ? 'Copied Brief' : 'Copy Text'}</span>
                     </button>
 
@@ -491,7 +489,7 @@ ${brief.disclaimer}
                       onClick={handlePrint}
                       className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                     >
-                      <Printer className="w-3.5 h-3.5" />
+                      <Printer className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>Print Brief</span>
                     </button>
                   </div>
@@ -598,7 +596,7 @@ ${brief.disclaimer}
 
                   {/* Mandatory Clinical Disclaimer */}
                   <div className="p-3.5 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-start gap-2.5 text-[11px] text-[#0369A1] leading-relaxed">
-                    <ShieldCheck className="w-4 h-4 text-[#0288D1] shrink-0 mt-0.5" />
+                    <ShieldTick className="w-4 h-4 text-[#0288D1] shrink-0 mt-0.5" aria-hidden="true" />
                     <span>
                       {brief?.disclaimer ||
                         'This summary is generated from information recorded in BIOPulse AI and is intended to support discussion with a healthcare professional. It does not replace clinical judgment or provide a diagnosis.'}

@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import {
-  TrendingUp,
+  LineChartUp01,
   Activity,
   Calendar,
-  Dumbbell,
-  Droplets,
-  Pill,
-  Info,
-} from 'lucide-react';
+  ActivityHeart,
+  Droplets01,
+  MedicalCross,
+  InfoCircle,
+} from '@untitledui/icons';
 import type { HealthTrajectorySummary, HealthTrajectoryDataPoint } from '../../types/timeline';
 
 interface HealthTrajectoryChartProps {
@@ -69,9 +69,7 @@ export const HealthTrajectoryChart: React.FC<HealthTrajectoryChartProps> = ({
       {/* Chart Header & Stats */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
-            <TrendingUp className="w-5 h-5" />
-          </div>
+          <LineChartUp01 className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
           <div>
             <h2 className="text-lg sm:text-xl font-bold text-[#0F172A]">
               Health Signal Trajectory
@@ -101,7 +99,7 @@ export const HealthTrajectoryChart: React.FC<HealthTrajectoryChartProps> = ({
               : 'bg-[#F8FAFC] text-[#64748B] border-[#E2E8F0] opacity-60'
           }`}
         >
-          <Activity className="w-3.5 h-3.5" />
+          <Activity className="w-3.5 h-3.5" aria-hidden="true" />
           <span>Symptom Intensity</span>
         </button>
 
@@ -114,7 +112,7 @@ export const HealthTrajectoryChart: React.FC<HealthTrajectoryChartProps> = ({
               : 'bg-[#F8FAFC] text-[#64748B] border-[#E2E8F0] opacity-60'
           }`}
         >
-          <Dumbbell className="w-3.5 h-3.5" />
+          <ActivityHeart className="w-3.5 h-3.5" aria-hidden="true" />
           <span>Movement Minutes</span>
         </button>
 
@@ -127,7 +125,7 @@ export const HealthTrajectoryChart: React.FC<HealthTrajectoryChartProps> = ({
               : 'bg-[#F8FAFC] text-[#64748B] border-[#E2E8F0] opacity-60'
           }`}
         >
-          <Droplets className="w-3.5 h-3.5" />
+          <Droplets01 className="w-3.5 h-3.5" aria-hidden="true" />
           <span>Hydration (Glasses)</span>
         </button>
 
@@ -140,7 +138,7 @@ export const HealthTrajectoryChart: React.FC<HealthTrajectoryChartProps> = ({
               : 'bg-[#F8FAFC] text-[#64748B] border-[#E2E8F0] opacity-60'
           }`}
         >
-          <Pill className="w-3.5 h-3.5" />
+          <MedicalCross className="w-3.5 h-3.5" aria-hidden="true" />
           <span>Med Adherence</span>
         </button>
 
@@ -149,11 +147,11 @@ export const HealthTrajectoryChart: React.FC<HealthTrajectoryChartProps> = ({
           onClick={() => toggleSignal('cycle')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
             activeSignals.cycle
-              ? 'bg-rose-50 text-rose-800 border-rose-300'
+              ? 'bg-sky-50 text-sky-800 border-sky-300'
               : 'bg-[#F8FAFC] text-[#64748B] border-[#E2E8F0] opacity-60'
           }`}
         >
-          <Calendar className="w-3.5 h-3.5" />
+          <Calendar className="w-3.5 h-3.5" aria-hidden="true" />
           <span>Cycle Phase Bands</span>
         </button>
       </div>
@@ -262,7 +260,7 @@ export const HealthTrajectoryChart: React.FC<HealthTrajectoryChartProps> = ({
 
       {/* Explainer Tip */}
       <div className="flex items-center gap-2 text-[11px] text-[#64748B]">
-        <Info className="w-3.5 h-3.5 text-[#0288D1] shrink-0" />
+        <InfoCircle className="w-3.5 h-3.5 text-[#0288D1] shrink-0" aria-hidden="true" />
         <span>Hover along the trajectory to inspect daily multi-signal correlation snapshots.</span>
       </div>
     </div>

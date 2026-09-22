@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import {
   Calendar,
-  MapPin,
-  Video,
-  Stethoscope,
-  FileText,
+  MarkerPin01,
+  VideoRecorder,
+  MedicalCircle,
+  File01,
   HelpCircle,
   ChevronRight,
-} from 'lucide-react';
+} from '@untitledui/icons';
 import type { AppointmentItem, AppointmentStatus } from '../../types/appointment';
 
 interface AppointmentHistoryListProps {
@@ -32,10 +32,8 @@ export const AppointmentHistoryList: React.FC<AppointmentHistoryListProps> = ({
     <div className="p-6 sm:p-7 rounded-[32px] bg-white border border-[#BAE6FD] shadow-sm select-none text-left space-y-5">
       {/* Header & Filter Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
-        <div className="flex items-center gap-2">
-          <span className="p-1.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
-            <Calendar className="w-4 h-4" />
-          </span>
+        <div className="flex items-center gap-2.5">
+          <Calendar className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
           <div>
             <h3 className="text-base font-bold font-display text-[#0F172A]">
               Appointment History & Logs
@@ -84,7 +82,7 @@ export const AppointmentHistoryList: React.FC<AppointmentHistoryListProps> = ({
                 {/* Left: Doctor & Details */}
                 <div className="flex items-start gap-3.5 min-w-0">
                   <div className="w-10 h-10 rounded-xl bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD]/60 flex items-center justify-center shrink-0 mt-0.5">
-                    <Stethoscope className="w-5 h-5" />
+                    <MedicalCircle className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
                   </div>
 
                   <div className="space-y-1 min-w-0">
@@ -111,22 +109,22 @@ export const AppointmentHistoryList: React.FC<AppointmentHistoryListProps> = ({
 
                     <div className="flex flex-wrap items-center gap-3 text-[11px] text-[#64748B] pt-0.5">
                       <span className="flex items-center gap-1 font-mono">
-                        <Calendar className="w-3 h-3 text-[#0288D1]" />
+                        <Calendar className="w-3.5 h-3.5 text-[#0288D1] shrink-0" aria-hidden="true" />
                         {formattedDate} at {appt.scheduledTime}
                       </span>
 
                       <span className="flex items-center gap-1">
                         {appt.meetingUrl ? (
-                          <Video className="w-3 h-3 text-[#059669]" />
+                          <VideoRecorder className="w-3.5 h-3.5 text-[#059669] shrink-0" aria-hidden="true" />
                         ) : (
-                          <MapPin className="w-3 h-3 text-[#0288D1]" />
+                          <MarkerPin01 className="w-3.5 h-3.5 text-[#0288D1] shrink-0" aria-hidden="true" />
                         )}
                         <span className="truncate max-w-[180px]">{appt.location}</span>
                       </span>
 
                       {questionCount > 0 && (
                         <span className="flex items-center gap-1 text-[#0288D1] font-semibold">
-                          <HelpCircle className="w-3 h-3" />
+                          <HelpCircle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                           {questionCount} {questionCount === 1 ? 'question' : 'questions'}
                         </span>
                       )}
@@ -141,7 +139,7 @@ export const AppointmentHistoryList: React.FC<AppointmentHistoryListProps> = ({
                     onClick={() => onPrepare(appt)}
                     className="px-3.5 py-1.5 rounded-xl bg-white border border-[#BAE6FD] hover:border-[#0288D1] text-[#0288D1] text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
                   >
-                    <FileText className="w-3.5 h-3.5" />
+                    <File01 className="w-4 h-4 shrink-0" aria-hidden="true" />
                     <span>Prepare</span>
                   </button>
 
@@ -151,7 +149,7 @@ export const AppointmentHistoryList: React.FC<AppointmentHistoryListProps> = ({
                     className="p-2 rounded-xl bg-white border border-[#E2E8F0] hover:bg-[#F0F9FF] text-[#64748B] hover:text-[#0F172A] transition-colors cursor-pointer"
                     title="View Full Details"
                   >
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="w-4 h-4 shrink-0" aria-hidden="true" />
                   </button>
                 </div>
               </div>

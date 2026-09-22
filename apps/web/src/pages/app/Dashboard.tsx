@@ -11,7 +11,6 @@ import { PrimaryScreeningCard } from '../../components/dashboard/PrimaryScreenin
 import { NextBestActionCard } from '../../components/dashboard/NextBestActionCard';
 import { TopFactorsCard } from '../../components/dashboard/TopFactorsCard';
 import { RecentActivityRow } from '../../components/dashboard/RecentActivityRow';
-import { DashboardNutritionCard } from '../../components/dashboard/DashboardNutritionCard';
 import { FemaleDashboardOverview } from '../../components/female/FemaleDashboardOverview';
 
 // Clinical Modals
@@ -206,18 +205,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ pathway: pathwayProp }) =>
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
+      transition={{ type: 'spring', damping: 28, stiffness: 350 }}
       className="max-w-6xl mx-auto space-y-6 sm:space-y-7 pb-16 text-left select-none"
     >
-      {/* ── 1. Compact Header ─────────────────────────────────────────────── */}
+      {/* ── 1. Page Header ─────────────────────────────────────────────────── */}
       <CleanDashboardHeader
         userProfile={userProfile}
         pathway={activePathway}
         lastAssessmentDate={lastAssessmentDateFormatted}
         profileCompletionPercentage={profileCompletion.percentage}
+        hasAssessment={hasAssessment}
+        assessmentLevel={assessmentLevel}
       />
 
-      {/* ── 2. Primary Above-the-Fold Grid ────────────────────────────────── */}
+      {/* ── 2. Primary 2-Column Clinical Grid ───────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-stretch">
         {/* Left Column (7 cols): Primary Screening Result */}
         <div className="lg:col-span-7 flex flex-col">
@@ -233,22 +234,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ pathway: pathwayProp }) =>
             onStartScreening={handleStartScreening}
             onViewAssessment={() => navigate(ROUTES.APP.ASSESSMENT)}
             onSecondaryAction={
-              isMale && hasAssessment ? () => setIsMaleLabsModalOpen(true) : undefined
+              isMale && hasAssessment && assessmentLevel === 'tier_1'
+                ? () => setIsMaleLabsModalOpen(true)
+                : undefined
             }
             secondaryActionLabel={
-              isMale && hasAssessment ? 'Add Hormone Labs' : undefined
+              isMale && hasAssessment && assessmentLevel === 'tier_1'
+                ? 'Add Hormone Labs'
+                : undefined
             }
             loading={screeningLoading}
-            gradcamB64={
-              !isMale && (assessmentLevel === 'tier_1_3' || assessmentLevel === 'tier_1_2_3')
-                ? activeAssessment?.gradcam_b64
-                : undefined
-            }
-            pcomStatus={
-              !isMale && (assessmentLevel === 'tier_1_3' || assessmentLevel === 'tier_1_2_3')
-                ? activeAssessment?.pcom_status
-                : undefined
-            }
           />
         </div>
 
@@ -272,14 +267,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ pathway: pathwayProp }) =>
         </div>
       </div>
 
-      {/* ── 2.5 Nutrition & Meal Planning Action Card ────────────────────── */}
-      <DashboardNutritionCard pathway={activePathway} />
-
-      {/* ── 3. Recent Activity Row (Latest Report + Upcoming Appointment) ─── */}
-      <RecentActivityRow
-        latestReport={latestReport}
-        upcomingAppointment={nextAppointment}
-      />
+      {/* ── 3. Recent Clinical Activity (Latest Report & Appointment) ───────── */}
+      <div className="space-y-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-[#64748B] px-1">
+          Recent Health Records
+        </h3>
+        <RecentActivityRow
+          latestReport={latestReport}
+          upcomingAppointment={nextAppointment}
+        />
+      </div>
 
       {/* Male Clinical Labs Modal */}
       {isMale && (

@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUp, ShieldAlert } from 'lucide-react';
+import { LineChartUp01, AlertTriangle } from '@untitledui/icons';
 import type { PrioritizedInformationItem } from '../../types/adaptiveScreening';
 
 interface CostAwarePrioritizationCardProps {
@@ -16,7 +16,7 @@ export const CostAwarePrioritizationCard: React.FC<CostAwarePrioritizationCardPr
       {/* ── Title & Research Context ────────────────────────────────────── */}
       <div className="space-y-1">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E0F2FE] border border-[#BAE6FD] text-xs font-mono text-[#01579B] font-bold">
-          <TrendingUp className="w-3.5 h-3.5 text-[#0288D1]" />
+          <LineChartUp01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
           <span>Research & Information Prioritization</span>
         </div>
         <h3 className="text-lg sm:text-xl font-bold font-display text-[#01579B]">
@@ -30,7 +30,7 @@ export const CostAwarePrioritizationCard: React.FC<CostAwarePrioritizationCardPr
       {/* ── Approved Clinical Wording Callout ───────────────────────────── */}
       <div className="p-4 rounded-2xl bg-[#FFFBEB] border border-[#FDE68A] text-xs text-[#92400E] space-y-1.5">
         <div className="flex items-center gap-2 font-bold uppercase tracking-wider text-[11px] text-[#78350F]">
-          <ShieldAlert className="w-4 h-4 text-[#D97706]" />
+          <AlertTriangle className="w-4 h-4 text-[#D97706]" aria-hidden="true" />
           <span>Clinical Decision-Support Notice</span>
         </div>
         <p className="leading-relaxed">

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar } from 'lucide-react';
+import { Calendar } from '@untitledui/icons';
 import type { CycleSummaryStats } from '../../types/cycle';
 import { getCyclePhase } from '../../utils/cycleCalculations';
 
@@ -26,14 +26,12 @@ export const CycleTimelineVisualizer: React.FC<CycleTimelineVisualizerProps> = (
   }).format(new Date());
 
   return (
-    <div className="p-6 sm:p-8 rounded-2xl bg-white border border-[#BAE6FD] shadow-sm space-y-6 select-none text-left">
+    <div className="p-6 sm:p-8 rounded-2xl bg-white border border-[#EAECF0] shadow-xs space-y-6 select-none text-left">
       {/* Header with Title & Context */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E2E8F0]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#EAECF0]">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-xl bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD]">
-              <Calendar className="w-4 h-4" />
-            </span>
+            <Calendar className="w-5 h-5 text-[#F43F7D] shrink-0" aria-hidden="true" />
             <h2 className="text-base font-bold font-display text-[#0F172A]">
               {currentMonthYear} Active Cycle Timeline
             </h2>
@@ -44,7 +42,7 @@ export const CycleTimelineVisualizer: React.FC<CycleTimelineVisualizerProps> = (
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="px-3 py-1 rounded-full bg-[#F0F9FF] border border-[#BAE6FD] text-xs font-mono font-bold text-[#0288D1]">
+          <span className="px-3 py-1 rounded-full bg-[#FDE6EF] border border-[#F43F7D]/20 text-xs font-mono font-bold text-[#F43F7D]">
             {totalDays}-Day Cycle
           </span>
         </div>
@@ -71,10 +69,10 @@ export const CycleTimelineVisualizer: React.FC<CycleTimelineVisualizerProps> = (
                 onClick={() => setSelectedDay(day)}
                 className={`p-2.5 rounded-xl border transition-all flex flex-col justify-between items-center min-h-[78px] cursor-pointer text-center relative ${
                   isSelected
-                    ? 'border-[#0288D1] ring-2 ring-[#0288D1]/40 bg-[#F0F9FF] shadow-sm scale-102 z-10'
+                    ? 'border-[#F43F7D] ring-2 ring-[#F43F7D]/30 bg-[#FDE6EF]/40 shadow-xs scale-102 z-10'
                     : isCurrentDay
-                    ? 'border-[#0288D1] ring-2 ring-[#0288D1]/30 bg-[#F0F9FF]'
-                    : 'border-[#E2E8F0] bg-[#F8FAFC] hover:bg-white hover:border-[#BAE6FD]'
+                    ? 'border-[#F43F7D] ring-2 ring-[#F43F7D]/20 bg-[#FDE6EF]/20'
+                    : 'border-[#E2E8F0] bg-[#F8FAFC] hover:bg-white hover:border-[#F43F7D]/30'
                 }`}
               >
                 <div className="w-full flex items-center justify-between">
@@ -82,7 +80,7 @@ export const CycleTimelineVisualizer: React.FC<CycleTimelineVisualizerProps> = (
                     {day}
                   </span>
                   {isCurrentDay && (
-                    <span className="w-2 h-2 rounded-full bg-[#0288D1] animate-pulse" title="Today" />
+                    <span className="w-2 h-2 rounded-full bg-[#F43F7D] animate-pulse" title="Today" />
                   )}
                 </div>
 
@@ -133,10 +131,10 @@ export const CycleTimelineVisualizer: React.FC<CycleTimelineVisualizerProps> = (
           </p>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] space-y-1">
+        <div className="p-3.5 rounded-xl bg-[#EDE4F7] border border-[#D8B4FE]/40 space-y-1">
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#0288D1]" />
-            <span className="font-bold text-[#0288D1]">2. Follicular Phase (egg develops)</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-[#8E3EAF]" />
+            <span className="font-bold text-[#8E3EAF]">2. Follicular Phase (egg develops)</span>
           </div>
           <p className="text-[11px] text-[#475569]">
             Days {periodDuration + 1}–{Math.floor(totalDays / 2) - 1} • An egg matures as natural estrogen rises

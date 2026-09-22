@@ -2,16 +2,16 @@ import React from 'react';
 import {
   Calendar,
   Activity,
-  FileText,
-  Pill,
-  Utensils,
-  Dumbbell,
-  Stethoscope,
-  Users,
+  File06,
+  MedicalCross,
+  Scales01,
+  ActivityHeart,
+  CalendarCheck01,
+  Users01,
   ChevronRight,
-  Star,
+  Star01,
   Clock,
-} from 'lucide-react';
+} from '@untitledui/icons';
 import type { TimelineEvent, TimelineCategory } from '../../types/timeline';
 
 interface TimelineEventCardProps {
@@ -31,66 +31,66 @@ export const TimelineEventCard: React.FC<TimelineEventCardProps> = ({
       case 'cycle':
         return {
           icon: Calendar,
-          iconBg: 'bg-[#FFE4E6]',
-          iconColor: 'text-[#E11D48]',
-          badgeBg: 'bg-[#FFF1F2]',
-          badgeText: 'text-[#BE123C]',
+          iconBg: 'bg-[#F0F9FF]',
+          iconColor: 'text-[#0288D1]',
+          badgeBg: 'bg-[#E0F2FE]',
+          badgeText: 'text-[#01579B]',
         };
       case 'symptom':
         return {
           icon: Activity,
-          iconBg: 'bg-[#E0F2FE]',
+          iconBg: 'bg-[#F0F9FF]',
           iconColor: 'text-[#0288D1]',
-          badgeBg: 'bg-[#F0F9FF]',
+          badgeBg: 'bg-[#E0F2FE]',
           badgeText: 'text-[#0288D1]',
         };
       case 'report':
         return {
-          icon: FileText,
-          iconBg: 'bg-[#E0F2FE]',
+          icon: File06,
+          iconBg: 'bg-[#F0F9FF]',
           iconColor: 'text-[#0288D1]',
-          badgeBg: 'bg-[#F0F9FF]',
+          badgeBg: 'bg-[#E0F2FE]',
           badgeText: 'text-[#0288D1]',
         };
       case 'medication':
         return {
-          icon: Pill,
-          iconBg: 'bg-amber-100',
+          icon: MedicalCross,
+          iconBg: 'bg-amber-50',
           iconColor: 'text-amber-700',
           badgeBg: 'bg-amber-50',
           badgeText: 'text-amber-800',
         };
       case 'nutrition':
         return {
-          icon: Utensils,
-          iconBg: 'bg-emerald-100',
+          icon: Scales01,
+          iconBg: 'bg-emerald-50',
           iconColor: 'text-emerald-700',
           badgeBg: 'bg-emerald-50',
           badgeText: 'text-emerald-800',
         };
       case 'fitness':
         return {
-          icon: Dumbbell,
-          iconBg: 'bg-orange-100',
-          iconColor: 'text-orange-700',
-          badgeBg: 'bg-orange-50',
-          badgeText: 'text-orange-800',
+          icon: ActivityHeart,
+          iconBg: 'bg-sky-50',
+          iconColor: 'text-sky-700',
+          badgeBg: 'bg-sky-50',
+          badgeText: 'text-sky-800',
         };
       case 'appointment':
         return {
-          icon: Stethoscope,
-          iconBg: 'bg-[#E0F2FE]',
+          icon: CalendarCheck01,
+          iconBg: 'bg-[#F0F9FF]',
           iconColor: 'text-[#01579B]',
-          badgeBg: 'bg-[#F0F9FF]',
+          badgeBg: 'bg-[#E0F2FE]',
           badgeText: 'text-[#01579B]',
         };
       case 'care_circle':
       default:
         return {
-          icon: Users,
-          iconBg: 'bg-[#E0F2FE]',
+          icon: Users01,
+          iconBg: 'bg-[#F0F9FF]',
           iconColor: 'text-[#0284C7]',
-          badgeBg: 'bg-[#F0F9FF]',
+          badgeBg: 'bg-[#E0F2FE]',
           badgeText: 'text-[#0369A1]',
         };
     }
@@ -142,7 +142,7 @@ export const TimelineEventCard: React.FC<TimelineEventCardProps> = ({
 
             {event.time && (
               <span className="text-[11px] font-mono text-[#64748B] flex items-center gap-1">
-                <Clock className="w-3 h-3" />
+                <Clock className="w-3 h-3" aria-hidden="true" />
                 <span>{event.time}</span>
               </span>
             )}
@@ -157,7 +157,7 @@ export const TimelineEventCard: React.FC<TimelineEventCardProps> = ({
           <div className="flex items-center gap-2">
             {isHighImportance && (
               <span className="flex items-center gap-1 text-[10px] font-bold font-mono px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
-                <Star className="w-3 h-3 fill-amber-600 text-amber-600" />
+                <Star01 className="w-3 h-3 fill-amber-600 text-amber-600" aria-hidden="true" />
                 <span>Key Event</span>
               </span>
             )}
@@ -200,7 +200,7 @@ export const TimelineEventCard: React.FC<TimelineEventCardProps> = ({
           <span>Click to view longitudinal details</span>
           <div className="flex items-center gap-0.5 text-[#0288D1] font-semibold group-hover:translate-x-1 transition-transform">
             <span>Details</span>
-            <ChevronRight className="w-3.5 h-3.5" />
+            <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
           </div>
         </div>
       </div>

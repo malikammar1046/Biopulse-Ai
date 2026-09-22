@@ -90,28 +90,46 @@ def init_sqlite_clinical_store() -> None:
             logger.warning("Failed to initialize SQLite clinical state store: %s", e)
 
 
+_cached_service_client = None
+_client_lock = threading.Lock()
+
+
 def get_supabase_client(auth_token: str | None = None) -> Any:
     """Returns an authenticated Supabase client using SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY and caller JWT."""
-    try:
-        from supabase import create_client
-        url = os.environ.get("SUPABASE_URL", "") or os.environ.get("VITE_SUPABASE_URL", "")
-        key = (
-            os.environ.get("SUPABASE_SECRET_KEY", "")
-            or os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
-            or os.environ.get("SUPABASE_ANON_KEY", "")
-            or os.environ.get("VITE_SUPABASE_ANON_KEY", "")
-        )
-        is_privileged = bool(os.environ.get("SUPABASE_SECRET_KEY") or os.environ.get("SUPABASE_SERVICE_ROLE_KEY"))
-        if url and key:
-            client = create_client(url, key)
-            if auth_token and not is_privileged:
+    global _cached_service_client
+    if auth_token:
+        try:
+            from supabase import create_client
+            url = os.environ.get("SUPABASE_URL", "") or os.environ.get("VITE_SUPABASE_URL", "")
+            key = os.environ.get("SUPABASE_ANON_KEY", "") or os.environ.get("VITE_SUPABASE_ANON_KEY", "")
+            if url and key:
+                client = create_client(url, key)
                 try:
                     client.postgrest.auth(auth_token)
                 except Exception:
                     pass
-            return client
-    except Exception as e:
-        logger.debug("Supabase client init error: %s", e)
+                return client
+        except Exception as e:
+            logger.debug("Caller Supabase client init error: %s", e)
+        return None
+
+    with _client_lock:
+        if _cached_service_client is not None:
+            return _cached_service_client
+        try:
+            from supabase import create_client
+            url = os.environ.get("SUPABASE_URL", "") or os.environ.get("VITE_SUPABASE_URL", "")
+            key = (
+                os.environ.get("SUPABASE_SECRET_KEY", "")
+                or os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+                or os.environ.get("SUPABASE_ANON_KEY", "")
+                or os.environ.get("VITE_SUPABASE_ANON_KEY", "")
+            )
+            if url and key:
+                _cached_service_client = create_client(url, key)
+                return _cached_service_client
+        except Exception as e:
+            logger.debug("Supabase client init error: %s", e)
     return None
 
 

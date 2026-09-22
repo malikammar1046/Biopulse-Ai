@@ -1,6 +1,12 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight, Sparkles, CheckCircle2, FlaskConical, FileWarning, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import {
+  ArrowRight,
+  ClipboardCheck,
+  CheckCircle,
+  Beaker01,
+  File06,
+} from '@untitledui/icons';
 import type { HealthPathway } from '../../types/onboarding';
 import type { DashboardAction } from '../../utils/dashboardActions';
 import { ROUTES } from '../../constants/routes';
@@ -15,232 +21,106 @@ interface NextBestActionCardProps {
 }
 
 export const NextBestActionCard: React.FC<NextBestActionCardProps> = ({
-  pathway,
   hasAssessment,
   assessmentLevel = 'tier_1',
   unverifiedReportsCount = 0,
-  topAction,
   onOpenLabsModal,
 }) => {
-  const isMale = pathway === 'male';
+  const navigate = useNavigate();
 
-  // ── 1. Priority A: Unverified Lab Reports ──────────────────────────────────
-  if (unverifiedReportsCount > 0) {
-    return (
-      <div className="p-5 sm:p-6 rounded-[24px] bg-white border border-[#E2E8F0] shadow-sm flex flex-col justify-between text-left space-y-4 select-none">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-amber-50 text-amber-700 border border-amber-200">
-              <FileWarning className="w-4 h-4" />
-            </span>
-            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-800">
-              Recommended Next Step
-            </span>
-          </div>
-
-          <h3 className="text-base font-bold text-[#0F172A]">
-            Review & Verify Lab Results
-          </h3>
-          <p className="text-xs text-[#475569] leading-relaxed">
-            You have {unverifiedReportsCount} unconfirmed lab {unverifiedReportsCount === 1 ? 'result' : 'results'} from recent uploads. Reviewing and confirming these values ensures accurate screening.
-          </p>
-        </div>
-
-        <div className="pt-2 border-t border-[#E2E8F0]">
-          <Link
-            to={ROUTES.APP.REPORTS}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold shadow-sm transition-all"
-          >
-            <span>Review Reports</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  // ── 2. Priority B: No Assessment Completed Yet ─────────────────────────────
-  if (!hasAssessment) {
-    return (
-      <div className="p-5 sm:p-6 rounded-[24px] bg-white border border-[#E2E8F0] shadow-sm flex flex-col justify-between text-left space-y-4 select-none">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD]">
-              <Sparkles className="w-4 h-4" />
-            </span>
-            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#0288D1]">
-              Recommended Next Step
-            </span>
-          </div>
-
-          <h3 className="text-base font-bold text-[#0F172A]">
-            Complete Initial Screening
-          </h3>
-          <p className="text-xs text-[#475569] leading-relaxed">
-            Answer your preliminary health and lifestyle questions to establish your baseline screening risk score.
-          </p>
-        </div>
-
-        <div className="pt-2 border-t border-[#E2E8F0]">
-          <Link
-            to={ROUTES.APP.ASSESSMENT}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold shadow-sm transition-all"
-          >
-            <span>Start Screening</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  // ── 3. Priority C: Tier 1 Complete, Tier 2 Missing ──────────────────────────
-  const isTier1Only = assessmentLevel === 'tier_1';
-
-  if (isTier1Only) {
-    if (isMale) {
-      return (
-        <div className="p-5 sm:p-6 rounded-[24px] bg-white border border-[#E2E8F0] shadow-sm flex flex-col justify-between text-left space-y-4 select-none">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD]">
-                <FlaskConical className="w-4 h-4" />
-              </span>
-              <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#0288D1]">
-                Recommended Next Step
-              </span>
-            </div>
-
-            <h3 className="text-base font-bold text-[#0F172A]">
-              Add Hormone Lab Results
-            </h3>
-            <p className="text-xs text-[#475569] leading-relaxed">
-              If available, adding your morning total testosterone and related lab values refines your screening to Tier 2.
-            </p>
-          </div>
-
-          <div className="pt-2 border-t border-[#E2E8F0]">
-            {onOpenLabsModal ? (
-              <button
-                type="button"
-                onClick={onOpenLabsModal}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
-              >
-                <span>Add Hormone Results</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            ) : (
-              <Link
-                to={ROUTES.APP.ASSESSMENT}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold shadow-sm transition-all"
-              >
-                <span>Add Hormone Results</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            )}
-          </div>
-        </div>
-      );
+  // Dynamic derivation of next best clinical action for Male pathway
+  const getActionContent = () => {
+    // 1. Priority A: Unverified lab reports needing user confirmation
+    if (unverifiedReportsCount > 0) {
+      return {
+        badge: 'Needs Verification',
+        title: 'Review & Confirm Lab Reports',
+        description: `You have ${unverifiedReportsCount} unconfirmed lab report${
+          unverifiedReportsCount === 1 ? '' : 's'
+        }. Reviewing and confirming extracted values ensures screening precision.`,
+        buttonText: 'Review Reports',
+        icon: File06,
+        onClick: () => navigate(ROUTES.APP.REPORTS),
+      };
     }
 
-    // Female: Add Clinical Labs (LH/FSH/Glucose)
-    return (
-      <div className="p-5 sm:p-6 rounded-[24px] bg-white border border-[#E2E8F0] shadow-sm flex flex-col justify-between text-left space-y-4 select-none">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD]">
-              <FlaskConical className="w-4 h-4" />
-            </span>
-            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#0288D1]">
-              Recommended Next Step
-            </span>
-          </div>
+    // 2. Priority B: No baseline screening completed
+    if (!hasAssessment) {
+      return {
+        badge: 'Screening Needed',
+        title: 'Complete ADAM Questionnaire',
+        description:
+          'Answer 10 clinically validated ADAM questions to assess symptoms and establish your baseline hypogonadism screening score.',
+        buttonText: 'Start Screening',
+        icon: ClipboardCheck,
+        onClick: () => navigate(ROUTES.APP.ASSESSMENT),
+      };
+    }
 
-          <h3 className="text-base font-bold text-[#0F172A]">
-            Add Clinical Lab Values
-          </h3>
-          <p className="text-xs text-[#475569] leading-relaxed">
-            Adding available blood panels (such as LH, FSH, or fasting glucose) refines your screening assessment to Tier 2.
-          </p>
-        </div>
+    // 3. Priority C: Tier 1 Complete, Tier 2 Hormone Labs Missing
+    if (assessmentLevel === 'tier_1') {
+      return {
+        badge: 'Add Labs',
+        title: 'Add Morning Testosterone Labs',
+        description:
+          'Upload or record fasting morning total testosterone and LH/FSH values to unlock Tier 2 cumulative assessment.',
+        buttonText: 'Add Hormone Labs',
+        icon: Beaker01,
+        onClick: onOpenLabsModal || (() => navigate(ROUTES.APP.ASSESSMENT)),
+      };
+    }
 
-        <div className="pt-2 border-t border-[#E2E8F0]">
-          <Link
-            to={ROUTES.APP.ASSESSMENT}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold shadow-sm transition-all"
-          >
-            <span>Add Lab Results</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-      </div>
-    );
-  }
+    // 4. Default: Tier 2 Active / Complete
+    return {
+      badge: 'Screening Complete',
+      title: 'Review Longitudinal Health Progress',
+      description:
+        'Your hypogonadism assessment is active and multi-tier calibrated. Monitor biomarker trajectories and prepare for clinical discussion.',
+      buttonText: 'Review Assessment',
+      icon: CheckCircle,
+      onClick: () => navigate(ROUTES.APP.ASSESSMENT),
+    };
+  };
 
-  // ── 4. Priority D: Critical/High Action from Action Engine ──────────────────
-  if (topAction && topAction.priority === 'critical') {
-    return (
-      <div className="p-5 sm:p-6 rounded-[24px] bg-white border border-[#E2E8F0] shadow-sm flex flex-col justify-between text-left space-y-4 select-none">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200">
-              <AlertCircle className="w-4 h-4" />
-            </span>
-            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-rose-700">
-              Recommended Next Step
-            </span>
-          </div>
+  const action = getActionContent();
+  const Icon = action.icon;
 
-          <h3 className="text-base font-bold text-[#0F172A]">
-            {topAction.title}
-          </h3>
-          <p className="text-xs text-[#475569] leading-relaxed">
-            {topAction.description}
-          </p>
-        </div>
-
-        <div className="pt-2 border-t border-[#E2E8F0]">
-          <Link
-            to={topAction.route || ROUTES.APP.SETTINGS}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold shadow-sm transition-all"
-          >
-            <span>{topAction.actionLabel}</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  // ── 5. Default / Completed State: Screening is Up to Date ──────────────────
   return (
-    <div className="p-5 sm:p-6 rounded-[24px] bg-white border border-[#E2E8F0] shadow-sm flex flex-col justify-between text-left space-y-4 select-none">
-      <div className="space-y-2">
+    <div className="bg-white border border-[#E2E8F0] rounded-[18px] p-5 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.03)] text-left transition-all duration-200 space-y-4 select-none">
+      {/* Card Header */}
+      <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
         <div className="flex items-center gap-2">
-          <span className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <CheckCircle2 className="w-4 h-4" />
-          </span>
-          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-emerald-800">
-            Screening Status
-          </span>
+          <Icon className="w-5 h-5 text-medical-primary-hover shrink-0" aria-hidden="true" />
+          <h3 className="text-sm sm:text-base font-semibold text-medical-text-primary">
+            Recommended Next Step
+          </h3>
         </div>
 
-        <h3 className="text-base font-bold text-[#0F172A]">
-          Your Screening is Up to Date
-        </h3>
-        <p className="text-xs text-[#475569] leading-relaxed">
-          Your current screening information is actively synthesized. View your longitudinal trends and progress.
+        <span className="text-[11px] font-semibold text-medical-primary-hover px-2 py-0.5 rounded-full bg-medical-primary-muted">
+          {action.badge}
+        </span>
+      </div>
+
+      {/* Content */}
+      <div className="space-y-2">
+        <h4 className="text-sm sm:text-base font-semibold text-medical-text-primary">
+          {action.title}
+        </h4>
+        <p className="text-xs text-medical-text-muted leading-relaxed">
+          {action.description}
         </p>
       </div>
 
-      <div className="pt-2 border-t border-[#E2E8F0]">
-        <Link
-          to={ROUTES.APP.PROGRESS}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-[#CBD5E1] text-[#0F172A] text-xs font-semibold shadow-xs transition-all"
+      {/* CTA Button */}
+      <div className="pt-4">
+        <button
+          type="button"
+          onClick={action.onClick}
+          className="inline-flex items-center justify-center gap-2 h-10 px-4 py-2.5 rounded-xl whitespace-nowrap bg-medical-primary-hover hover:bg-medical-primary-active active:scale-[0.98] text-white text-xs sm:text-sm font-semibold shadow-xs transition-all duration-150 select-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-medical-primary-hover/30"
         >
-          <span>View Progress</span>
-          <ArrowRight className="w-3.5 h-3.5 text-[#0288D1]" />
-        </Link>
+          <span>{action.buttonText}</span>
+          <ArrowRight className="w-4 h-4 shrink-0" aria-hidden="true" />
+        </button>
       </div>
     </div>
   );

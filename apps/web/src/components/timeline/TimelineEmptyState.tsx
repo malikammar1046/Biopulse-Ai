@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { GitBranch, Calendar, Activity, Utensils, RotateCcw } from 'lucide-react';
+import { LineChartUp01, Calendar, Activity, Scales01, RefreshCcw01 } from '@untitledui/icons';
 import { ROUTES } from '../../constants/routes';
 
 interface TimelineEmptyStateProps {
@@ -14,8 +14,8 @@ export const TimelineEmptyState: React.FC<TimelineEmptyStateProps> = ({
 }) => {
   return (
     <div className="p-8 sm:p-12 rounded-2xl bg-white border border-dashed border-[#BAE6FD] text-center space-y-5 select-none">
-      <div className="w-12 h-12 rounded-xl bg-[#E0F2FE] text-[#0288D1] flex items-center justify-center mx-auto shadow-none">
-        <GitBranch className="w-6 h-6" />
+      <div className="w-12 h-12 rounded-xl bg-[#F0F9FF] text-[#0288D1] flex items-center justify-center mx-auto shadow-none">
+        <LineChartUp01 className="w-6 h-6" aria-hidden="true" />
       </div>
 
       <div className="space-y-2 max-w-md mx-auto">
@@ -37,32 +37,32 @@ export const TimelineEmptyState: React.FC<TimelineEmptyStateProps> = ({
             onClick={onResetFilters}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-[#0288D1] hover:bg-[#0277BD] transition-all shadow-sm cursor-pointer"
           >
-            <RotateCcw className="w-3.5 h-3.5" />
+            <RefreshCcw01 className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Reset All Filters</span>
           </button>
         ) : (
           <>
             <Link
               to={ROUTES.APP.CYCLE}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-[#0288D1] bg-[#E0F2FE] hover:bg-[#BAE6FD] transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-[#0288D1] bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] transition-colors"
             >
-              <Calendar className="w-3.5 h-3.5" />
+              <Calendar className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Log Cycle</span>
             </Link>
 
             <Link
               to={ROUTES.APP.SYMPTOMS}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-[#0288D1] bg-[#E0F2FE] hover:bg-[#BAE6FD] transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-[#0288D1] bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] transition-colors"
             >
-              <Activity className="w-3.5 h-3.5" />
+              <Activity className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Log Symptom</span>
             </Link>
 
             <Link
               to={ROUTES.APP.DIET}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-[#0288D1] bg-[#E0F2FE] hover:bg-[#BAE6FD] transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-[#0288D1] bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] transition-colors"
             >
-              <Utensils className="w-3.5 h-3.5" />
+              <Scales01 className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Log Food</span>
             </Link>
           </>

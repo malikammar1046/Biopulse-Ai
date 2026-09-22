@@ -1,22 +1,21 @@
 import React, { useState, useMemo } from 'react';
 import {
-  X,
-  FileText,
-  Download,
+  XClose,
+  File01,
+  Download01,
   Printer,
-  Share2,
+  Share01,
   Calendar,
-  Activity,
-  Pill,
-  Utensils,
-  Dumbbell,
-  Stethoscope,
-  Brain,
+  ActivityHeart,
+  MedicalCircle,
+  Scales01,
+  CalendarCheck01,
+  BarChart01,
   CheckCircle,
   AlertCircle,
-  Loader2,
-  SlidersHorizontal,
-} from 'lucide-react';
+  RefreshCw01,
+  Sliders01,
+} from '@untitledui/icons';
 import type {
   HealthJourneyReportOptions,
   HealthJourneyReportDateRange,
@@ -81,15 +80,15 @@ export const HealthJourneyExportModal: React.FC<HealthJourneyExportModalProps> =
   ];
 
   const sectionConfigs = [
-    { key: 'overview', label: 'Executive Health Overview', icon: FileText, desc: 'Patient snapshot & key health indicators', available: true },
+    { key: 'overview', label: 'Executive Health Overview', icon: File01, desc: 'Patient snapshot & key health indicators', available: true },
     { key: 'cycle', label: 'Cycle & Period History', icon: Calendar, desc: availability.cycle.description, available: availability.cycle.hasData },
-    { key: 'symptoms', label: 'Symptoms & Severity Distribution', icon: Activity, desc: availability.symptoms.description, available: availability.symptoms.hasData },
-    { key: 'reports', label: 'Medical Reports & Lab Biomarkers', icon: FileText, desc: availability.reports.description, available: availability.reports.hasData },
-    { key: 'medications', label: 'Medications & Adherence', icon: Pill, desc: availability.medications.description, available: availability.medications.hasData },
-    { key: 'nutrition', label: 'Nutrition & Daily Hydration', icon: Utensils, desc: availability.nutrition.description, available: availability.nutrition.hasData },
-    { key: 'fitness', label: 'Fitness & Movement Sessions', icon: Dumbbell, desc: availability.fitness.description, available: availability.fitness.hasData },
-    { key: 'patterns', label: 'Observed Clinical Patterns', icon: Brain, desc: 'AI-assisted correlations & doctor prompts', available: true },
-    { key: 'appointments', label: 'Consultations & Doctor Questions', icon: Stethoscope, desc: availability.appointments.description, available: availability.appointments.hasData },
+    { key: 'symptoms', label: 'Symptoms & Severity Distribution', icon: ActivityHeart, desc: availability.symptoms.description, available: availability.symptoms.hasData },
+    { key: 'reports', label: 'Medical Reports & Lab Biomarkers', icon: File01, desc: availability.reports.description, available: availability.reports.hasData },
+    { key: 'medications', label: 'Medications & Adherence', icon: MedicalCircle, desc: availability.medications.description, available: availability.medications.hasData },
+    { key: 'nutrition', label: 'Nutrition & Daily Hydration', icon: Scales01, desc: availability.nutrition.description, available: availability.nutrition.hasData },
+    { key: 'fitness', label: 'Fitness & Movement Sessions', icon: ActivityHeart, desc: availability.fitness.description, available: availability.fitness.hasData },
+    { key: 'patterns', label: 'Observed Clinical Patterns', icon: BarChart01, desc: 'AI-assisted correlations & doctor prompts', available: true },
+    { key: 'appointments', label: 'Consultations & Doctor Questions', icon: CalendarCheck01, desc: availability.appointments.description, available: availability.appointments.hasData },
   ] as const;
 
   const handleToggleSection = (key: keyof HealthJourneyReportOptions['sections']) => {
@@ -136,8 +135,8 @@ export const HealthJourneyExportModal: React.FC<HealthJourneyExportModalProps> =
           type: 'application/pdf',
         });
         await navigator.share({
-          title: 'OvaSense Health Journey Clinical Brief',
-          text: 'Here is my longitudinal health journey clinical brief from OvaSense.',
+          title: 'BioPulse AI Health Journey Clinical Brief',
+          text: 'Here is my longitudinal health journey clinical brief from BioPulse AI.',
           files: [file],
         });
       } catch {
@@ -151,31 +150,30 @@ export const HealthJourneyExportModal: React.FC<HealthJourneyExportModalProps> =
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#10071A]/75 backdrop-blur-xs select-none">
-      <div className="relative w-full max-w-2xl max-h-[90vh] rounded-[36px] bg-white border border-[#E7DFEF] shadow-2xl p-6 sm:p-8 overflow-y-auto space-y-6 animate-in fade-in zoom-in-95 duration-200 text-left">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0F172A]/75 backdrop-blur-xs select-none">
+      <div className="relative w-full max-w-2xl max-h-[90vh] rounded-[36px] bg-white border border-[#E2E8F0] shadow-2xl p-6 sm:p-8 overflow-y-auto space-y-6 animate-in fade-in zoom-in-95 duration-200 text-left">
         {/* Close Button */}
         <button
           type="button"
+          aria-label="Close modal"
           onClick={onClose}
-          className="absolute top-6 right-6 p-2 rounded-full text-[#8D7E9E] hover:text-[#1C1326] hover:bg-[#F8F5FA] transition-colors cursor-pointer"
+          className="absolute top-6 right-6 p-2 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] transition-colors cursor-pointer"
         >
-          <X className="w-5 h-5" />
+          <XClose className="w-5 h-5" aria-hidden="true" />
         </button>
 
         {/* Modal Header */}
         <div className="flex items-start gap-4">
-          <div className="p-3 rounded-2xl bg-gradient-to-tr from-[#6E2D8B] to-[#8E3EAF] text-white shadow-md shadow-purple-950/20 shrink-0">
-            <FileText className="w-6 h-6" />
-          </div>
+          <File01 className="w-7 h-7 text-[#0288D1] shrink-0 mt-1" aria-hidden="true" />
 
           <div className="space-y-1 pr-6">
-            <div className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold text-[#6E2D8B] uppercase tracking-wider">
+            <div className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold text-[#0288D1] uppercase tracking-wider">
               <span>Doctor-Ready Summary</span>
             </div>
-            <h2 className="text-xl font-bold font-display text-[#1C1326]">
+            <h2 className="text-xl font-bold font-display text-[#0F172A]">
               Complete Health Journey — Clinical Brief
             </h2>
-            <p className="text-xs text-[#584B68]">
+            <p className="text-xs text-[#475569]">
               Compile a structured, multi-page PDF briefing of your longitudinal health data for your next doctor consultation.
             </p>
           </div>
@@ -186,8 +184,8 @@ export const HealthJourneyExportModal: React.FC<HealthJourneyExportModalProps> =
           <div className="space-y-6">
             {/* Date Range Selection */}
             <div className="space-y-2.5">
-              <span className="text-xs font-bold font-display text-[#1C1326] flex items-center gap-1.5">
-                <SlidersHorizontal className="w-3.5 h-3.5 text-[#6E2D8B]" />
+              <span className="text-xs font-bold font-display text-[#0F172A] flex items-center gap-1.5">
+                <Sliders01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
                 <span>1. Select Reporting Period</span>
               </span>
 
@@ -199,8 +197,8 @@ export const HealthJourneyExportModal: React.FC<HealthJourneyExportModalProps> =
                     onClick={() => setOptions((prev) => ({ ...prev, dateRange: r.value }))}
                     className={`p-2.5 rounded-2xl text-xs font-bold transition-all text-left cursor-pointer border ${
                       options.dateRange === r.value
-                        ? 'bg-[#1C0D2E] text-white border-[#1C0D2E] shadow-xs'
-                        : 'bg-[#F8F5FA] text-[#584B68] border-[#E7DFEF] hover:bg-[#EDE4F7]'
+                        ? 'bg-[#0F172A] text-white border-[#0F172A] shadow-xs'
+                        : 'bg-[#F8FAFC] text-[#475569] border-[#E2E8F0] hover:bg-[#F1F5F9]'
                     }`}
                   >
                     {r.label}
@@ -211,8 +209,8 @@ export const HealthJourneyExportModal: React.FC<HealthJourneyExportModalProps> =
 
             {/* Sections to Include Checkboxes */}
             <div className="space-y-2.5">
-              <span className="text-xs font-bold font-display text-[#1C1326] flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5 text-[#6E2D8B]" />
+              <span className="text-xs font-bold font-display text-[#0F172A] flex items-center gap-1.5">
+                <File01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
                 <span>2. Choose Sections to Include</span>
               </span>
 
@@ -226,8 +224,8 @@ export const HealthJourneyExportModal: React.FC<HealthJourneyExportModalProps> =
                       key={sec.key}
                       className={`p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 cursor-pointer ${
                         isChecked
-                          ? 'bg-[#FAF5FF] border-[#D8B4FE]'
-                          : 'bg-[#F8F5FA] border-[#E7DFEF] opacity-70'
+                          ? 'bg-[#F0F9FF] border-[#BAE6FD]'
+                          : 'bg-[#F8FAFC] border-[#E2E8F0] opacity-70'
                       }`}
                     >
                       <div className="flex items-center gap-3 min-w-0">
@@ -235,14 +233,14 @@ export const HealthJourneyExportModal: React.FC<HealthJourneyExportModalProps> =
                           type="checkbox"
                           checked={isChecked}
                           onChange={() => handleToggleSection(sec.key as keyof HealthJourneyReportOptions['sections'])}
-                          className="w-4 h-4 rounded-md text-[#6E2D8B] focus:ring-[#8E3EAF] border-[#E7DFEF] cursor-pointer"
+                          className="w-4 h-4 rounded-md text-[#0288D1] focus:ring-[#0288D1] border-[#CBD5E1] cursor-pointer"
                         />
                         <div className="min-w-0">
-                          <span className="text-xs font-bold text-[#1C1326] block truncate flex items-center gap-1.5">
-                            <Icon className="w-3.5 h-3.5 text-[#6E2D8B]" />
+                          <span className="text-xs font-bold text-[#0F172A] block truncate flex items-center gap-1.5">
+                            <Icon className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
                             <span>{sec.label}</span>
                           </span>
-                          <span className="text-[10px] text-[#8D7E9E] block">
+                          <span className="text-[10px] text-[#64748B] block">
                             {sec.desc}
                           </span>
                         </div>
@@ -253,7 +251,7 @@ export const HealthJourneyExportModal: React.FC<HealthJourneyExportModalProps> =
                           Data Ready
                         </span>
                       ) : (
-                        <span className="text-[10px] font-mono text-[#8D7E9E] bg-[#E7DFEF] px-2 py-0.5 rounded-full shrink-0">
+                        <span className="text-[10px] font-mono text-[#64748B] bg-[#F1F5F9] px-2 py-0.5 rounded-full shrink-0">
                           No Data
                         </span>
                       )}
@@ -265,7 +263,7 @@ export const HealthJourneyExportModal: React.FC<HealthJourneyExportModalProps> =
 
             {/* Optional Patient Custom Note */}
             <div className="space-y-2">
-              <span className="text-xs font-bold font-display text-[#1C1326] block">
+              <span className="text-xs font-bold font-display text-[#0F172A] block">
                 3. Optional Note for Your Doctor
               </span>
               <textarea
@@ -273,16 +271,16 @@ export const HealthJourneyExportModal: React.FC<HealthJourneyExportModalProps> =
                 onChange={(e) => setOptions((prev) => ({ ...prev, patientCustomNote: e.target.value }))}
                 placeholder="E.g., I've been feeling more fatigued during my luteal phase and wanted to ask about adjusting my supplement routine..."
                 rows={3}
-                className="w-full p-3.5 rounded-2xl bg-[#F8F5FA] border border-[#E7DFEF] focus:outline-hidden focus:border-[#8E3EAF] text-xs text-[#1C1326] placeholder-[#8D7E9E]"
+                className="w-full p-3.5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] focus:outline-hidden focus:border-[#0288D1] text-xs text-[#0F172A] placeholder-[#94A3B8]"
               />
             </div>
 
             {/* Footer Actions */}
-            <div className="flex items-center justify-between pt-4 border-t border-[#F0EAF5]">
+            <div className="flex items-center justify-between pt-4 border-t border-[#F1F5F9]">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-5 py-2.5 rounded-2xl text-xs font-bold text-[#584B68] bg-[#F8F5FA] hover:bg-[#EDE4F7] transition-all cursor-pointer"
+                className="px-5 py-2.5 rounded-2xl text-xs font-bold text-[#64748B] bg-[#F8FAFC] hover:bg-[#F1F5F9] transition-all cursor-pointer"
               >
                 Cancel
               </button>
@@ -290,9 +288,9 @@ export const HealthJourneyExportModal: React.FC<HealthJourneyExportModalProps> =
               <button
                 type="button"
                 onClick={handleStartGeneration}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-bold text-white bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF] hover:brightness-110 shadow-md shadow-purple-950/20 transition-all cursor-pointer"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-bold text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm transition-all cursor-pointer"
               >
-                <Download className="w-4 h-4" />
+                <Download01 className="w-4 h-4" aria-hidden="true" />
                 <span>Generate Clinical Brief PDF</span>
               </button>
             </div>
@@ -305,28 +303,28 @@ export const HealthJourneyExportModal: React.FC<HealthJourneyExportModalProps> =
           progressState.stage === 'building' ||
           progressState.stage === 'finalizing') && (
           <div className="py-12 px-4 text-center space-y-6">
-            <div className="w-16 h-16 rounded-3xl bg-[#EDE4F7] text-[#6E2D8B] flex items-center justify-center mx-auto shadow-sm animate-pulse">
-              <Loader2 className="w-8 h-8 animate-spin" />
+            <div className="w-16 h-16 rounded-3xl bg-[#E0F2FE] text-[#0288D1] flex items-center justify-center mx-auto shadow-sm">
+              <RefreshCw01 className="w-8 h-8 animate-spin" aria-hidden="true" />
             </div>
 
             <div className="space-y-2 max-w-md mx-auto">
-              <h3 className="text-lg font-bold font-display text-[#1C1326]">
+              <h3 className="text-lg font-bold font-display text-[#0F172A]">
                 Preparing Your Health Journey
               </h3>
-              <p className="text-xs text-[#584B68] leading-relaxed">
+              <p className="text-xs text-[#475569] leading-relaxed">
                 {progressState.message}
               </p>
             </div>
 
             {/* Progress Bar */}
             <div className="max-w-xs mx-auto space-y-1.5">
-              <div className="w-full h-2.5 rounded-full bg-[#EDE4F7] overflow-hidden">
+              <div className="w-full h-2.5 rounded-full bg-[#E0F2FE] overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-[#6E2D8B] to-[#FB7185] transition-all duration-300 rounded-full"
+                  className="h-full bg-[#0288D1] transition-all duration-300 rounded-full"
                   style={{ width: `${progressState.progressPercent}%` }}
                 />
               </div>
-              <span className="text-[10px] font-mono font-bold text-[#8D7E9E]">
+              <span className="text-[10px] font-mono font-bold text-[#64748B]">
                 {progressState.progressPercent}% Completed
               </span>
             </div>
@@ -337,14 +335,14 @@ export const HealthJourneyExportModal: React.FC<HealthJourneyExportModalProps> =
         {progressState.stage === 'ready' && (
           <div className="py-8 px-4 text-center space-y-6">
             <div className="w-16 h-16 rounded-3xl bg-[#ECFDF5] text-[#047857] flex items-center justify-center mx-auto shadow-sm">
-              <CheckCircle className="w-8 h-8" />
+              <CheckCircle className="w-8 h-8" aria-hidden="true" />
             </div>
 
             <div className="space-y-1.5 max-w-md mx-auto">
-              <h3 className="text-xl font-bold font-display text-[#1C1326]">
+              <h3 className="text-xl font-bold font-display text-[#0F172A]">
                 Your Health Journey Is Ready!
               </h3>
-              <p className="text-xs text-[#584B68]">
+              <p className="text-xs text-[#475569]">
                 {progressState.pdfFileName}
               </p>
             </div>
@@ -354,18 +352,18 @@ export const HealthJourneyExportModal: React.FC<HealthJourneyExportModalProps> =
               <button
                 type="button"
                 onClick={handleDownload}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl text-xs font-bold text-white bg-gradient-to-r from-[#6E2D8B] to-[#8E3EAF] hover:brightness-110 shadow-lg shadow-purple-950/20 transition-all cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl text-xs font-bold text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm transition-all cursor-pointer"
               >
-                <Download className="w-4 h-4" />
+                <Download01 className="w-4 h-4" aria-hidden="true" />
                 <span>Download PDF Now</span>
               </button>
 
               <button
                 type="button"
                 onClick={handlePrint}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl text-xs font-bold text-[#1C1326] bg-[#F8F5FA] hover:bg-[#EDE4F7] border border-[#E7DFEF] transition-all cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl text-xs font-bold text-[#0F172A] bg-[#F8FAFC] hover:bg-[#F1F5F9] border border-[#E2E8F0] transition-all cursor-pointer"
               >
-                <Printer className="w-4 h-4 text-[#6E2D8B]" />
+                <Printer className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
                 <span>Print Document</span>
               </button>
 
@@ -373,19 +371,19 @@ export const HealthJourneyExportModal: React.FC<HealthJourneyExportModalProps> =
                 <button
                   type="button"
                   onClick={handleShare}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl text-xs font-bold text-[#1C1326] bg-[#F8F5FA] hover:bg-[#EDE4F7] border border-[#E7DFEF] transition-all cursor-pointer"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl text-xs font-bold text-[#0F172A] bg-[#F8FAFC] hover:bg-[#F1F5F9] border border-[#E2E8F0] transition-all cursor-pointer"
                 >
-                  <Share2 className="w-4 h-4 text-[#0284C7]" />
+                  <Share01 className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
                   <span>Share</span>
                 </button>
               )}
             </div>
 
-            <div className="pt-4 border-t border-[#F0EAF5] flex items-center justify-between">
+            <div className="pt-4 border-t border-[#F1F5F9] flex items-center justify-between">
               <button
                 type="button"
                 onClick={handleReset}
-                className="text-xs font-bold text-[#6E2D8B] hover:underline cursor-pointer"
+                className="text-xs font-bold text-[#0288D1] hover:underline cursor-pointer"
               >
                 ← Generate Another with Different Options
               </button>
@@ -393,7 +391,7 @@ export const HealthJourneyExportModal: React.FC<HealthJourneyExportModalProps> =
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-[#584B68] bg-[#F8F5FA] hover:bg-[#EDE4F7] transition-all cursor-pointer"
+                className="px-4 py-2 rounded-xl text-xs font-bold text-[#64748B] bg-[#F8FAFC] hover:bg-[#F1F5F9] transition-all cursor-pointer"
               >
                 Done
               </button>
@@ -405,11 +403,11 @@ export const HealthJourneyExportModal: React.FC<HealthJourneyExportModalProps> =
         {progressState.stage === 'error' && (
           <div className="py-8 px-4 text-center space-y-5">
             <div className="w-16 h-16 rounded-3xl bg-[#FFF1F2] text-[#BE123C] flex items-center justify-center mx-auto shadow-sm">
-              <AlertCircle className="w-8 h-8" />
+              <AlertCircle className="w-8 h-8" aria-hidden="true" />
             </div>
 
             <div className="space-y-1.5 max-w-md mx-auto">
-              <h3 className="text-lg font-bold font-display text-[#1C1326]">
+              <h3 className="text-lg font-bold font-display text-[#0F172A]">
                 Generation Encountered an Issue
               </h3>
               <p className="text-xs text-[#BE123C]">
@@ -421,7 +419,7 @@ export const HealthJourneyExportModal: React.FC<HealthJourneyExportModalProps> =
               <button
                 type="button"
                 onClick={handleReset}
-                className="px-5 py-2.5 rounded-2xl text-xs font-bold text-white bg-[#6E2D8B] hover:bg-[#8E3EAF] transition-all cursor-pointer"
+                className="px-5 py-2.5 rounded-2xl text-xs font-bold text-white bg-[#0288D1] hover:bg-[#0277BD] transition-all cursor-pointer"
               >
                 Try Again
               </button>
@@ -429,7 +427,7 @@ export const HealthJourneyExportModal: React.FC<HealthJourneyExportModalProps> =
               <button
                 type="button"
                 onClick={onClose}
-                className="px-5 py-2.5 rounded-2xl text-xs font-bold text-[#584B68] bg-[#F8F5FA] hover:bg-[#EDE4F7] transition-all cursor-pointer"
+                className="px-5 py-2.5 rounded-2xl text-xs font-bold text-[#64748B] bg-[#F8FAFC] hover:bg-[#F1F5F9] transition-all cursor-pointer"
               >
                 Close
               </button>

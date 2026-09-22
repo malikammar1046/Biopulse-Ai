@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, Heart, Baby, CalendarHeart } from 'lucide-react';
+import { CheckCircle, Heart, User01, CalendarHeart01 } from '@untitledui/icons';
 import type { WomensHealthProfile } from '../../../types/onboarding';
 import { WhyWeAskCard } from './WhyWeAskCard';
 
@@ -26,12 +26,12 @@ export const FemaleStep3WomensHealth: React.FC<FemaleStep3Props> = ({ data, onCh
     <div className="space-y-4 text-left">
       {/* ── Compact Question Header ── */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-[#FDE6EF] flex items-center justify-center shrink-0 shadow-2xs">
-          <CalendarHeart className="w-5 h-5 text-[#F43F7D]" />
+        <div className="w-10 h-10 rounded-full bg-[#E0F2FE] flex items-center justify-center shrink-0 shadow-2xs">
+          <CalendarHeart01 className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
         </div>
 
         <div>
-          <span className="text-[10px] font-bold font-mono text-[#F43F7D] uppercase tracking-wider block leading-none">
+          <span className="text-[10px] font-bold font-mono text-[#0288D1] uppercase tracking-wider block leading-none">
             Period & Cycle
           </span>
           <h2 className="text-xl sm:text-2xl font-extrabold font-display text-[#073B72] tracking-tight leading-tight mt-0.5">
@@ -51,7 +51,7 @@ export const FemaleStep3WomensHealth: React.FC<FemaleStep3Props> = ({ data, onCh
           <div className="p-3 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-2">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-[11px] font-bold font-mono text-[#073B72] uppercase tracking-wide block">
+                <span className="text-xs font-bold text-[#073B72] block leading-tight">
                   Average Cycle Length
                 </span>
                 <span className="text-[10px] text-[#55718F]">
@@ -59,7 +59,7 @@ export const FemaleStep3WomensHealth: React.FC<FemaleStep3Props> = ({ data, onCh
                 </span>
               </div>
 
-              <div className="px-3 py-1 rounded-lg bg-[#FDE6EF] text-[#F43F7D] text-xs font-bold font-mono border border-[#FBCFE8]">
+              <div className="px-3 py-1 rounded-lg bg-[#E0F2FE] text-[#0288D1] text-xs font-bold font-mono border border-[#BAE6FD]">
                 {typeof data.cycleLength === 'number' ? `${data.cycleLength} Days` : 'Irregular / Varies'}
               </div>
             </div>
@@ -71,7 +71,7 @@ export const FemaleStep3WomensHealth: React.FC<FemaleStep3Props> = ({ data, onCh
                 max="45"
                 value={typeof data.cycleLength === 'number' ? data.cycleLength : 28}
                 onChange={(e) => onChange({ ...data, cycleLength: parseInt(e.target.value, 10) })}
-                className="w-full h-1.5 bg-[#D7EAF2] rounded-lg appearance-none cursor-pointer accent-[#F43F7D]"
+                className="w-full h-1.5 bg-[#D7EAF2] rounded-lg appearance-none cursor-pointer accent-[#0288D1]"
               />
 
               <div className="flex justify-between text-[10px] font-mono text-[#55718F]">
@@ -87,7 +87,7 @@ export const FemaleStep3WomensHealth: React.FC<FemaleStep3Props> = ({ data, onCh
                   onClick={() => onChange({ ...data, cycleLength: 28 })}
                   className={`px-3 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all ${
                     data.cycleLength === 28
-                      ? 'bg-[#F43F7D] text-white shadow-2xs'
+                      ? 'bg-[#0288D1] text-white shadow-2xs'
                       : 'bg-white border border-[#D7EAF2] text-[#55718F] hover:text-[#073B72]'
                   }`}
                 >
@@ -98,7 +98,7 @@ export const FemaleStep3WomensHealth: React.FC<FemaleStep3Props> = ({ data, onCh
                   onClick={() => onChange({ ...data, cycleLength: 'irregular' })}
                   className={`px-3 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all ${
                     data.cycleLength === 'irregular'
-                      ? 'bg-[#F43F7D] text-white shadow-2xs'
+                      ? 'bg-[#0288D1] text-white shadow-2xs'
                       : 'bg-white border border-[#D7EAF2] text-[#55718F] hover:text-[#073B72]'
                   }`}
                 >
@@ -108,41 +108,41 @@ export const FemaleStep3WomensHealth: React.FC<FemaleStep3Props> = ({ data, onCh
             </div>
           </div>
 
-          {/* 2. Period Regularity Cards */}
-          <div className="p-3 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-2">
-            <label className="text-[11px] font-bold font-mono text-[#073B72] uppercase tracking-wide block">
-              How regular are your cycles?
-            </label>
+          {/* 2. Cycle Regularity Radio Group */}
+          <div className="p-3 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-1.5">
+            <span className="text-xs font-bold text-[#073B72] block">
+              How regular is your menstrual cycle?
+            </span>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="space-y-1.5">
               {REGULARITY_OPTIONS.map((opt) => {
-                const isSelected = data.periodRegularity === opt.id;
+                const isSelected = (data.periodRegularity || 'mostly_regular') === opt.id;
                 return (
                   <button
                     key={opt.id}
                     type="button"
-                    onClick={() =>
-                      onChange({
-                        ...data,
-                        periodRegularity: opt.id as WomensHealthProfile['periodRegularity'],
-                      })
-                    }
-                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between gap-2 ${
+                    onClick={() => onChange({ ...data, periodRegularity: opt.id as any })}
+                    className={`w-full p-2.5 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between gap-3 ${
                       isSelected
-                        ? 'bg-[#FDE6EF]/60 border-[#F43F7D] shadow-2xs ring-1 ring-[#F43F7D]/30'
-                        : 'bg-white border-[#D7EAF2] hover:border-[#0E9EAA]/40'
+                        ? 'bg-[#E0F2FE]/60 border-[#0288D1] shadow-2xs ring-1 ring-[#0288D1]/30'
+                        : 'bg-white border-[#D7EAF2] hover:border-[#0288D1]/40'
                     }`}
                   >
                     <div>
-                      <span className="text-xs font-bold text-[#073B72] block leading-tight">{opt.label}</span>
-                      <span className="text-[10px] text-[#55718F] leading-tight">{opt.desc}</span>
+                      <span className="text-xs font-bold text-[#073B72] block leading-tight">
+                        {opt.label}
+                      </span>
+                      <span className="text-[10px] text-[#55718F] leading-tight block mt-0.5">
+                        {opt.desc}
+                      </span>
                     </div>
+
                     <div
                       className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
-                        isSelected ? 'border-[#F43F7D] bg-[#F43F7D] text-white' : 'border-[#D7EAF2] bg-white'
+                        isSelected ? 'border-[#0288D1] bg-[#0288D1] text-white' : 'border-[#D7EAF2] bg-white'
                       }`}
                     >
-                      {isSelected && <CheckCircle2 className="w-3 h-3" />}
+                      {isSelected && <CheckCircle className="w-3 h-3" aria-hidden="true" />}
                     </div>
                   </button>
                 );
@@ -153,7 +153,7 @@ export const FemaleStep3WomensHealth: React.FC<FemaleStep3Props> = ({ data, onCh
           {/* 3. Reproductive & Clinical Factors */}
           <div className="p-3 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-2.5">
             <div className="flex items-center gap-1.5">
-              <Heart className="w-3.5 h-3.5 text-[#F43F7D]" />
+              <Heart className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
               <span className="text-[11px] font-bold font-mono text-[#073B72] uppercase tracking-wider">
                 Reproductive Baseline (Used by Model)
               </span>
@@ -171,7 +171,7 @@ export const FemaleStep3WomensHealth: React.FC<FemaleStep3Props> = ({ data, onCh
                     onClick={() => onChange({ ...data, maritalStatus: 'unmarried', marriageYears: 0 })}
                     className={`py-1.5 px-2 rounded-lg border text-center transition-all cursor-pointer text-[10px] font-bold ${
                       maritalStatus === 'unmarried'
-                        ? 'bg-[#FDE6EF] border-[#F43F7D] text-[#F43F7D]'
+                        ? 'bg-[#E0F2FE] border-[#0288D1] text-[#0288D1]'
                         : 'bg-white border-[#D7EAF2] text-[#55718F]'
                     }`}
                   >
@@ -182,7 +182,7 @@ export const FemaleStep3WomensHealth: React.FC<FemaleStep3Props> = ({ data, onCh
                     onClick={() => onChange({ ...data, maritalStatus: 'married', marriageYears: marriageYears || 1 })}
                     className={`py-1.5 px-2 rounded-lg border text-center transition-all cursor-pointer text-[10px] font-bold ${
                       maritalStatus === 'married'
-                        ? 'bg-[#FDE6EF] border-[#F43F7D] text-[#F43F7D]'
+                        ? 'bg-[#E0F2FE] border-[#0288D1] text-[#0288D1]'
                         : 'bg-white border-[#D7EAF2] text-[#55718F]'
                     }`}
                   >
@@ -199,9 +199,9 @@ export const FemaleStep3WomensHealth: React.FC<FemaleStep3Props> = ({ data, onCh
                       max="30"
                       value={marriageYears}
                       onChange={(e) => onChange({ ...data, marriageYears: parseInt(e.target.value, 10) })}
-                      className="flex-1 h-1 bg-[#D7EAF2] rounded accent-[#F43F7D]"
+                      className="flex-1 h-1 bg-[#D7EAF2] rounded accent-[#0288D1]"
                     />
-                    <span className="font-mono font-bold text-[#F43F7D]">{marriageYears}y</span>
+                    <span className="font-mono font-bold text-[#0288D1]">{marriageYears}y</span>
                   </div>
                 )}
               </div>
@@ -209,7 +209,7 @@ export const FemaleStep3WomensHealth: React.FC<FemaleStep3Props> = ({ data, onCh
               {/* Currently Pregnant */}
               <div className="space-y-1">
                 <label className="text-[11px] font-semibold text-[#073B72] flex items-center gap-1">
-                  <Baby className="w-3 h-3 text-[#0E9EAA]" />
+                  <User01 className="w-3 h-3 text-[#0288D1]" aria-hidden="true" />
                   <span>Pregnant Now?</span>
                 </label>
                 <div className="grid grid-cols-2 gap-1">
@@ -242,7 +242,7 @@ export const FemaleStep3WomensHealth: React.FC<FemaleStep3Props> = ({ data, onCh
               <div className="space-y-1">
                 <label className="text-[11px] font-semibold text-[#073B72] flex items-center justify-between">
                   <span>Prior Loss</span>
-                  <span className="font-mono font-bold text-[#F43F7D] text-[10px]">{abortionsCount}</span>
+                  <span className="font-mono font-bold text-[#0288D1] text-[10px]">{abortionsCount}</span>
                 </label>
                 <div className="flex items-center gap-1">
                   {[0, 1, 2, 3].map((num) => (
@@ -252,7 +252,7 @@ export const FemaleStep3WomensHealth: React.FC<FemaleStep3Props> = ({ data, onCh
                       onClick={() => onChange({ ...data, abortionsCount: num })}
                       className={`flex-1 py-1.5 rounded-lg border text-center transition-all cursor-pointer text-[10px] font-bold font-mono ${
                         abortionsCount === num
-                          ? 'bg-[#FDE6EF] border-[#F43F7D] text-[#F43F7D]'
+                          ? 'bg-[#E0F2FE] border-[#0288D1] text-[#0288D1]'
                           : 'bg-white border-[#D7EAF2] text-[#55718F]'
                       }`}
                     >

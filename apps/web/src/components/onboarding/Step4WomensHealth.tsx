@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, CheckCircle2, Check, Heart, Baby } from 'lucide-react';
+import { Calendar, CheckCircle, Check, Heart, User01 } from '@untitledui/icons';
 import type { WomensHealthProfile } from '../../types/onboarding';
 import { DEFAULT_SYMPTOM_OPTIONS } from '../../data/mockOnboardingData';
 
@@ -35,8 +35,8 @@ export const Step4WomensHealth: React.FC<Step4Props> = ({ data, onChange }) => {
     <div className="space-y-7 text-left">
       {/* Header Info */}
       <div className="space-y-1">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#6E2D8B]/20 border border-[#8E3EAF]/40 text-xs font-mono text-[#FDA4AF] mb-1">
-          <Sparkles className="w-3.5 h-3.5 text-[#FB7185]" />
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0288D1]/20 border border-[#0288D1]/40 text-xs font-mono text-[#7DD3FC] mb-1">
+          <Calendar className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
           <span>Period & Reproductive Health</span>
         </div>
         <h2 className="text-2xl sm:text-3xl font-bold font-display text-white">
@@ -57,7 +57,7 @@ export const Step4WomensHealth: React.FC<Step4Props> = ({ data, onChange }) => {
             <span className="text-xs text-[#A797BD]">From Day 1 of one period to Day 1 of the next</span>
           </div>
 
-          <div className="px-3.5 py-1.5 rounded-2xl bg-[#6E2D8B] text-white text-sm font-bold font-mono shadow-md">
+          <div className="px-3.5 py-1.5 rounded-2xl bg-[#0288D1] text-white text-sm font-bold font-mono shadow-md">
             {typeof data.cycleLength === 'number' ? `${data.cycleLength} Days` : 'Irregular / Varies'}
           </div>
         </div>
@@ -70,7 +70,7 @@ export const Step4WomensHealth: React.FC<Step4Props> = ({ data, onChange }) => {
             max="45"
             value={typeof data.cycleLength === 'number' ? data.cycleLength : 28}
             onChange={(e) => onChange({ ...data, cycleLength: parseInt(e.target.value, 10) })}
-            className="w-full h-2 bg-[#140924] rounded-lg appearance-none cursor-pointer accent-[#FB7185]"
+            className="w-full h-2 bg-[#140924] rounded-lg appearance-none cursor-pointer accent-[#0288D1]"
           />
 
           <div className="flex justify-between text-[10px] font-mono text-[#A797BD]">
@@ -97,7 +97,7 @@ export const Step4WomensHealth: React.FC<Step4Props> = ({ data, onChange }) => {
               onClick={() => onChange({ ...data, cycleLength: 'irregular' })}
               className={`px-3 py-1 rounded-full text-xs font-semibold cursor-pointer ${
                 data.cycleLength === 'irregular'
-                  ? 'bg-gradient-to-r from-[#8E3EAF] to-[#FB7185] text-white shadow'
+                  ? 'bg-[#0288D1] text-white shadow'
                   : 'bg-white/5 text-[#CDBDD8] hover:text-white'
               }`}
             >
@@ -128,7 +128,7 @@ export const Step4WomensHealth: React.FC<Step4Props> = ({ data, onChange }) => {
                 }
                 className={`p-3.5 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 ${
                   isSelected
-                    ? 'bg-[#1C0D2E] border-[#FB7185] shadow-md scale-[1.01]'
+                    ? 'bg-[#0F172A] border-[#0288D1] shadow-md scale-[1.01]'
                     : 'bg-[#140924]/60 border-white/10 hover:border-white/20 hover:bg-white/[0.03]'
                 }`}
               >
@@ -138,10 +138,10 @@ export const Step4WomensHealth: React.FC<Step4Props> = ({ data, onChange }) => {
                 </div>
                 <div
                   className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
-                    isSelected ? 'border-[#FB7185] bg-[#FB7185] text-white' : 'border-white/30'
+                    isSelected ? 'border-[#0288D1] bg-[#0288D1] text-white' : 'border-white/30'
                   }`}
                 >
-                  {isSelected && <CheckCircle2 className="w-3.5 h-3.5" />}
+                  {isSelected && <CheckCircle className="w-3.5 h-3.5 text-white" aria-hidden="true" />}
                 </div>
               </button>
             );
@@ -152,7 +152,7 @@ export const Step4WomensHealth: React.FC<Step4Props> = ({ data, onChange }) => {
       {/* 3. Reproductive & Clinical ML Status (Marital Status, Pregnancy, Pregnancy Loss) */}
       <div className="p-5 rounded-3xl bg-white/[0.04] border border-white/10 space-y-5">
         <div className="flex items-center gap-2">
-          <Heart className="w-4 h-4 text-[#FB7185]" />
+          <Heart className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
           <span className="text-xs font-bold font-mono text-[#EDE4F7] uppercase tracking-wider">
             Reproductive & Clinical Factors (Used by ML Model)
           </span>
@@ -169,7 +169,7 @@ export const Step4WomensHealth: React.FC<Step4Props> = ({ data, onChange }) => {
               onClick={() => onChange({ ...data, maritalStatus: 'unmarried', marriageYears: 0 })}
               className={`p-3 rounded-2xl border text-center transition-all cursor-pointer font-sans text-xs font-bold ${
                 maritalStatus === 'unmarried'
-                  ? 'bg-[#1C0D2E] border-[#FB7185] text-white shadow'
+                  ? 'bg-[#0F172A] border-[#0288D1] text-white shadow'
                   : 'bg-[#140924] border-white/10 text-[#CDBDD8] hover:border-white/20'
               }`}
             >
@@ -180,7 +180,7 @@ export const Step4WomensHealth: React.FC<Step4Props> = ({ data, onChange }) => {
               onClick={() => onChange({ ...data, maritalStatus: 'married', marriageYears: marriageYears || 1 })}
               className={`p-3 rounded-2xl border text-center transition-all cursor-pointer font-sans text-xs font-bold ${
                 maritalStatus === 'married'
-                  ? 'bg-[#1C0D2E] border-[#FB7185] text-white shadow'
+                  ? 'bg-[#0F172A] border-[#0288D1] text-white shadow'
                   : 'bg-[#140924] border-white/10 text-[#CDBDD8] hover:border-white/20'
               }`}
             >
@@ -192,7 +192,7 @@ export const Step4WomensHealth: React.FC<Step4Props> = ({ data, onChange }) => {
             <div className="pt-2 p-3.5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-2 animate-in slide-in-from-top-1 duration-200">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-[#CDBDD8]">Years of Marriage:</span>
-                <span className="text-xs font-mono font-bold text-white px-3 py-1 rounded-xl bg-[#6E2D8B]">
+                <span className="text-xs font-mono font-bold text-white px-3 py-1 rounded-xl bg-[#0288D1]">
                   {marriageYears} {marriageYears === 1 ? 'Year' : 'Years'}
                 </span>
               </div>
@@ -203,7 +203,7 @@ export const Step4WomensHealth: React.FC<Step4Props> = ({ data, onChange }) => {
                 step="1"
                 value={marriageYears}
                 onChange={(e) => onChange({ ...data, marriageYears: parseInt(e.target.value, 10) })}
-                className="w-full h-2 bg-[#140924] rounded-lg appearance-none cursor-pointer accent-[#FB7185]"
+                className="w-full h-2 bg-[#140924] rounded-lg appearance-none cursor-pointer accent-[#0288D1]"
               />
             </div>
           )}
@@ -214,7 +214,7 @@ export const Step4WomensHealth: React.FC<Step4Props> = ({ data, onChange }) => {
           {/* Currently Pregnant */}
           <div className="space-y-2">
             <label className="text-xs font-semibold text-white/90 flex items-center gap-1.5">
-              <Baby className="w-3.5 h-3.5 text-[#38BDF8]" />
+              <User01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
               <span>Currently Pregnant?</span>
             </label>
             <div className="grid grid-cols-2 gap-2">
@@ -223,7 +223,7 @@ export const Step4WomensHealth: React.FC<Step4Props> = ({ data, onChange }) => {
                 onClick={() => onChange({ ...data, isPregnant: false })}
                 className={`py-2.5 px-3 rounded-2xl border text-center transition-all cursor-pointer text-xs font-bold ${
                   !isPregnant
-                    ? 'bg-[#1C0D2E] border-[#38BDF8] text-white'
+                    ? 'bg-[#0F172A] border-[#0288D1] text-white'
                     : 'bg-[#140924] border-white/10 text-[#CDBDD8]'
                 }`}
               >
@@ -234,7 +234,7 @@ export const Step4WomensHealth: React.FC<Step4Props> = ({ data, onChange }) => {
                 onClick={() => onChange({ ...data, isPregnant: true })}
                 className={`py-2.5 px-3 rounded-2xl border text-center transition-all cursor-pointer text-xs font-bold ${
                   isPregnant
-                    ? 'bg-[#1C0D2E] border-[#38BDF8] text-white'
+                    ? 'bg-[#0F172A] border-[#0288D1] text-white'
                     : 'bg-[#140924] border-white/10 text-[#CDBDD8]'
                 }`}
               >
@@ -257,7 +257,7 @@ export const Step4WomensHealth: React.FC<Step4Props> = ({ data, onChange }) => {
                   onClick={() => onChange({ ...data, abortionsCount: num })}
                   className={`flex-1 py-2 rounded-2xl border text-center transition-all cursor-pointer text-xs font-bold font-mono ${
                     abortionsCount === num
-                      ? 'bg-[#1C0D2E] border-[#FB7185] text-white'
+                      ? 'bg-[#0F172A] border-[#0288D1] text-white'
                       : 'bg-[#140924] border-white/10 text-[#CDBDD8]'
                   }`}
                 >
@@ -288,7 +288,7 @@ export const Step4WomensHealth: React.FC<Step4Props> = ({ data, onChange }) => {
                 onClick={() => toggleSymptom(sym.label)}
                 className={`p-3 rounded-2xl border text-left transition-all duration-200 cursor-pointer flex items-center justify-between gap-2.5 ${
                   isSelected
-                    ? 'bg-gradient-to-r from-[#6E2D8B]/40 to-[#FB7185]/20 border-[#FB7185] shadow-sm'
+                    ? 'bg-[#0288D1]/20 border-[#0288D1] shadow-sm'
                     : 'bg-[#140924]/60 border-white/10 hover:border-white/20 hover:bg-white/[0.02]'
                 }`}
               >
@@ -298,10 +298,10 @@ export const Step4WomensHealth: React.FC<Step4Props> = ({ data, onChange }) => {
                 </div>
                 <div
                   className={`w-4 h-4 rounded-md border flex items-center justify-center shrink-0 ${
-                    isSelected ? 'bg-[#FB7185] border-[#FB7185] text-white' : 'border-white/30'
+                    isSelected ? 'bg-[#0288D1] border-[#0288D1] text-white' : 'border-white/30'
                   }`}
                 >
-                  {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                  {isSelected && <Check className="w-3 h-3 stroke-[3]" aria-hidden="true" />}
                 </div>
               </button>
             );

@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Users,
+  Users01,
   Plus,
-  Stethoscope,
+  MedicalCircle,
   Heart,
-  ShieldCheck,
-  Lock,
-} from 'lucide-react';
+  ShieldTick,
+  Lock01,
+} from '@untitledui/icons';
 import { useUserHealth } from '../../context/UserHealthContext';
 import type { CareCircleMember, CareCircleRole } from '../../types/careCircle';
 import { AddCareMemberModal } from '../../components/care-circle/AddCareMemberModal';
@@ -66,7 +66,7 @@ export const CareCirclePage: React.FC = () => {
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-3 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-xs font-mono font-bold text-[#BAE6FD]">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#BAE6FD]" />
+              <ShieldTick className="w-3.5 h-3.5 text-[#BAE6FD]" aria-hidden="true" />
               <span>Zero-Compromise Patient Consent</span>
             </div>
 
@@ -87,7 +87,7 @@ export const CareCirclePage: React.FC = () => {
                 <span className="text-[#FCD34D] font-bold">{careCircleInvitations.length || pendingMembers.length}</span> Pending
               </div>
               <div className="px-3.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-xs font-mono text-[#6EE7B7] flex items-center gap-1.5">
-                <Lock className="w-3 h-3" />
+                <Lock01 className="w-3 h-3 text-[#6EE7B7]" aria-hidden="true" />
                 <span>Instant Revocation Enabled</span>
               </div>
             </div>
@@ -100,7 +100,7 @@ export const CareCirclePage: React.FC = () => {
               onClick={() => handleOpenAddModal('doctor')}
               className="px-5 py-3 rounded-xl font-sans font-semibold text-xs sm:text-sm text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
-              <Stethoscope className="w-4 h-4 text-[#BAE6FD]" />
+              <MedicalCircle className="w-4 h-4 text-[#BAE6FD]" aria-hidden="true" />
               <span>Add Doctor / Clinician</span>
             </button>
 
@@ -109,7 +109,7 @@ export const CareCirclePage: React.FC = () => {
               onClick={() => handleOpenAddModal('family')}
               className="px-5 py-3 rounded-xl font-sans font-semibold text-xs sm:text-sm text-[#01579B] bg-white hover:bg-[#F0F9FF] shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
-              <Heart className="w-4 h-4 text-[#E11D48]" />
+              <Heart className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
               <span>Add Family Member</span>
             </button>
           </div>
@@ -121,7 +121,7 @@ export const CareCirclePage: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="p-1.5 rounded-xl bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD]">
-              <Users className="w-4 h-4" />
+              <Users01 className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
             </span>
             <h2 className="text-lg font-bold font-display text-[#0F172A]">
               Active Connections ({activeMembers.length})
@@ -133,7 +133,7 @@ export const CareCirclePage: React.FC = () => {
             onClick={() => handleOpenAddModal('trusted_person')}
             className="text-xs font-bold text-[#0288D1] hover:text-[#01579B] transition-colors inline-flex items-center gap-1 cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
             <span>Add Trusted Person</span>
           </button>
         </div>
@@ -159,7 +159,7 @@ export const CareCirclePage: React.FC = () => {
         ) : (
           <div className="p-8 sm:p-12 rounded-2xl bg-white border border-dashed border-[#BAE6FD] text-center space-y-4">
             <div className="w-14 h-14 rounded-2xl bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD] flex items-center justify-center mx-auto">
-              <Users className="w-7 h-7" />
+              <Users01 className="w-7 h-7 text-[#0288D1]" aria-hidden="true" />
             </div>
             <div className="space-y-1">
               <h3 className="text-base font-bold font-display text-[#0F172A]">
@@ -174,7 +174,7 @@ export const CareCirclePage: React.FC = () => {
               onClick={() => handleOpenAddModal('doctor')}
               className="px-6 py-2.5 rounded-xl font-sans font-semibold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm transition-all inline-flex items-center gap-2 cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-3.5 h-3.5 text-white" aria-hidden="true" />
               <span>Add Someone You Trust</span>
             </button>
           </div>
@@ -229,7 +229,7 @@ export const CareCirclePage: React.FC = () => {
                 </div>
 
                 <span className="text-xs font-mono text-[#047857] font-bold flex items-center gap-1">
-                  <ShieldCheck className="w-4 h-4" />
+                  <ShieldTick className="w-4 h-4 text-[#047857]" aria-hidden="true" />
                   <span>Instant Safety Alert Active</span>
                 </span>
               </div>

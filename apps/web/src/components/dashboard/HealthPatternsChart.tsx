@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Activity, Sparkles } from 'lucide-react';
+import { LineChartUp01, BarChart01 } from '@untitledui/icons';
 import {
   MOCK_HEALTH_PATTERNS_7D,
   MOCK_HEALTH_PATTERNS_30D,
@@ -24,9 +24,7 @@ export const HealthPatternsChart: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
-              <Activity className="w-4 h-4" />
-            </span>
+            <LineChartUp01 className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
             <h3 className="text-lg font-bold font-display text-[#0F172A]">
               Your Health Patterns
             </h3>
@@ -141,7 +139,7 @@ export const HealthPatternsChart: React.FC = () => {
         {/* Dynamic Tooltip Bar when hovering */}
         <div className="p-3.5 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-3.5 h-3.5 text-[#0288D1]" />
+            <BarChart01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
             <span className="font-semibold text-[#0F172A]">
               {hoveredPoint ? `Insights for ${hoveredPoint.date}` : 'Hover over any day for unified metrics:'}
             </span>

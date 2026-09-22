@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import {
-  Brain,
+  BarChart01,
   ChevronDown,
   ChevronUp,
-  ShieldCheck,
+  ShieldTick,
   AlertCircle,
   ArrowRight,
-  Database,
-  CheckCircle2,
-  Activity,
-  Info,
-} from 'lucide-react';
+  Database01,
+  CheckCircle,
+  ActivityHeart,
+  InfoCircle,
+} from '@untitledui/icons';
 import type { ExplainableInsight, TrustLevel } from '../../types/researchIntelligence';
 
 interface ExplainableInsightCardProps {
@@ -29,7 +29,7 @@ export const ExplainableInsightCard: React.FC<ExplainableInsightCardProps> = ({
     if (isQuarantined || trust === 'unverified') {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#FB7185]/20 text-[#FDA4AF] border border-[#FB7185]/30">
-          <AlertCircle className="w-2.5 h-2.5" />
+          <AlertCircle className="w-2.5 h-2.5" aria-hidden="true" />
           Unverified (Quarantined)
         </span>
       );
@@ -38,21 +38,21 @@ export const ExplainableInsightCard: React.FC<ExplainableInsightCardProps> = ({
       case 'verified':
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#34D399]/20 text-[#34D399] border border-[#34D399]/30">
-            <CheckCircle2 className="w-2.5 h-2.5" />
+            <CheckCircle className="w-2.5 h-2.5" aria-hidden="true" />
             Verified Lab
           </span>
         );
       case 'model_generated':
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
-            <Brain className="w-2.5 h-2.5" />
+            <BarChart01 className="w-2.5 h-2.5" aria-hidden="true" />
             TreeSHAP ML
           </span>
         );
       case 'calculated':
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-            <Activity className="w-2.5 h-2.5" />
+            <ActivityHeart className="w-2.5 h-2.5" aria-hidden="true" />
             Calculated
           </span>
         );
@@ -60,7 +60,7 @@ export const ExplainableInsightCard: React.FC<ExplainableInsightCardProps> = ({
       default:
         return (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30">
-            <Database className="w-2.5 h-2.5" />
+            <Database01 className="w-2.5 h-2.5" aria-hidden="true" />
             User-Entered
           </span>
         );
@@ -106,7 +106,7 @@ export const ExplainableInsightCard: React.FC<ExplainableInsightCardProps> = ({
           </div>
 
           <div className="flex items-center gap-1.5 text-[11px] text-[#64748B] font-mono">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <ShieldTick className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
             <span>Non-Diagnostic</span>
           </div>
         </div>
@@ -183,10 +183,10 @@ export const ExplainableInsightCard: React.FC<ExplainableInsightCardProps> = ({
             aria-expanded={isExpanded}
           >
             <span className="flex items-center gap-1.5 font-bold">
-              <Info className="w-3.5 h-3.5" />
+              <InfoCircle className="w-3.5 h-3.5" aria-hidden="true" />
               {isExpanded ? 'Hide Factor Breakdown' : 'Why am I seeing this? (Expand factors)'}
             </span>
-            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            {isExpanded ? <ChevronUp className="w-4 h-4" aria-hidden="true" /> : <ChevronDown className="w-4 h-4" aria-hidden="true" />}
           </button>
 
           {isExpanded && (
@@ -259,7 +259,7 @@ export const ExplainableInsightCard: React.FC<ExplainableInsightCardProps> = ({
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-[#F0F9FF] text-xs font-sans font-semibold text-[#0288D1] border border-[#BAE6FD] transition-all shadow-2xs cursor-pointer"
           >
             <span>Research & Technical View</span>
-            <ArrowRight className="w-3.5 h-3.5 text-[#0288D1]" />
+            <ArrowRight className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
           </button>
         </div>
       </div>

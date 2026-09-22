@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Bell, Calendar, MessageSquare } from 'lucide-react';
+import { Check, Bell01, Calendar, MessageChatCircle } from '@untitledui/icons';
 import type { UserProfile, HealthGoals } from '../../../../types/onboarding';
 import { HEALTH_GOAL_OPTIONS, DEFAULT_MALE_HEALTH_GOAL_OPTIONS } from '../../../../data/mockOnboardingData';
 
@@ -42,7 +42,6 @@ export const GoalsTab: React.FC<GoalsTabProps> = ({
   // Dedicated pathway-isolated goals list
   const filteredGoalOptions = isMale ? DEFAULT_MALE_HEALTH_GOAL_OPTIONS : HEALTH_GOAL_OPTIONS;
 
-
   return (
     <div className="space-y-6">
       {/* 1. Primary Health Goals */}
@@ -66,26 +65,26 @@ export const GoalsTab: React.FC<GoalsTabProps> = ({
                 onClick={() => toggleGoal(goal.title)}
                 className={`p-4 rounded-2xl text-left border transition-all flex items-start justify-between gap-2 cursor-pointer ${
                   isSelected
-                    ? 'bg-[#EAFBFC] border-[#0E9EAA] ring-1.5 ring-[#0E9EAA] shadow-xs'
+                    ? 'bg-[#F0F9FF] border-[#0288D1] ring-1.5 ring-[#0288D1] shadow-xs'
                     : 'bg-slate-50/80 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
                 }`}
               >
                 <div>
-                  <span className={`text-xs leading-snug ${isSelected ? 'font-bold text-[#073B72]' : 'font-medium text-slate-800'}`}>
+                  <span className={`text-xs leading-snug ${isSelected ? 'font-bold text-[#01579B]' : 'font-medium text-slate-800'}`}>
                     {goal.title}
                   </span>
-                  <p className={`text-[10px] mt-0.5 ${isSelected ? 'text-[#0E9EAA]' : 'text-slate-500'}`}>
+                  <p className={`text-[10px] mt-0.5 ${isSelected ? 'text-[#0288D1]' : 'text-slate-500'}`}>
                     {goal.desc}
                   </p>
                 </div>
                 <div
                   className={`w-4 h-4 rounded-md flex items-center justify-center shrink-0 mt-0.5 border transition-all ${
                     isSelected
-                      ? 'bg-[#0E9EAA] border-[#0E9EAA] text-white shadow-xs'
+                      ? 'bg-[#0288D1] border-[#0288D1] text-white shadow-xs'
                       : 'border-slate-300 bg-white'
                   }`}
                 >
-                  {isSelected && <Check className="w-3 h-3 text-white stroke-[3]" />}
+                  {isSelected && <Check className="w-3 h-3 text-white stroke-[3]" aria-hidden="true" />}
                 </div>
               </button>
             );
@@ -109,7 +108,7 @@ export const GoalsTab: React.FC<GoalsTabProps> = ({
             {
               id: 'gentle_nudges',
               label: 'Gentle Nudges',
-              icon: Bell,
+              icon: Bell01,
               desc: 'Subtle daily reminders for water, meals, and missed logs.',
             },
             {
@@ -121,7 +120,7 @@ export const GoalsTab: React.FC<GoalsTabProps> = ({
             {
               id: 'daily_coaching',
               label: 'Daily Active Coaching',
-              icon: MessageSquare,
+              icon: MessageChatCircle,
               desc: 'Proactive habit coaching, symptom correlation, and prompt suggestions.',
             },
           ].map((cadence) => {
@@ -139,7 +138,7 @@ export const GoalsTab: React.FC<GoalsTabProps> = ({
                 }
                 className={`p-4 rounded-2xl text-left border transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-[#0E9EAA] text-white border-[#0E9EAA] shadow-xs ring-1 ring-[#0E9EAA]/30'
+                    ? 'bg-[#0288D1] text-white border-[#0288D1] shadow-xs ring-1 ring-[#0288D1]/30'
                     : 'bg-slate-50/70 border-slate-200 text-slate-700 hover:bg-slate-100'
                 }`}
               >
@@ -149,14 +148,14 @@ export const GoalsTab: React.FC<GoalsTabProps> = ({
                       isSelected ? 'bg-white/20 text-white' : 'bg-slate-200/70 text-slate-600'
                     }`}
                   >
-                    <Icon className="w-4 h-4" />
+                    <Icon className="w-4 h-4" aria-hidden="true" />
                   </div>
                   <div
                     className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
                       isSelected ? 'border-white bg-white' : 'border-slate-300 bg-white'
                     }`}
                   >
-                    {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[#0E9EAA]" />}
+                    {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[#0288D1]" />}
                   </div>
                 </div>
                 <p className="text-xs font-bold mb-1">{cadence.label}</p>

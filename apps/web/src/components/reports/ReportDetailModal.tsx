@@ -1,19 +1,19 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  X,
-  FileText,
-  CheckCircle2,
+  XClose,
+  File06,
+  CheckCircle,
   AlertCircle,
   HelpCircle,
-  Sparkles,
-  ShieldCheck,
-  ExternalLink,
+  InfoCircle,
+  ShieldTick,
+  LinkExternal01,
   Clock,
-  Edit2,
+  Edit01,
   Check,
-  Loader2,
-} from 'lucide-react';
+  Loading01,
+} from '@untitledui/icons';
 import type { MedicalReport, ReportResult } from '../../types/report';
 import { REPORT_CATEGORIES } from '../../types/report';
 import { findTestKnowledge } from '../../utils/reportKnowledge';
@@ -137,21 +137,21 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
       case 'within_range':
         return (
           <span className="text-[11px] font-mono font-bold px-2.5 py-1 rounded-full bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0] flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3 text-[#059669]" />
+            <CheckCircle className="w-3 h-3 text-[#059669]" aria-hidden="true" />
             Within typical range
           </span>
         );
       case 'outside_range':
         return (
           <span className="text-[11px] font-mono font-bold px-2.5 py-1 rounded-full bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]/60 flex items-center gap-1">
-            <AlertCircle className="w-3 h-3 text-[#D97706]" />
+            <AlertCircle className="w-3 h-3 text-[#D97706]" aria-hidden="true" />
             Outside typical range
           </span>
         );
       case 'needs_review':
         return (
           <span className="text-[11px] font-mono font-bold px-2.5 py-1 rounded-full bg-[#FFF1F2] text-[#E11D48] border border-[#FDA4AF]/60 flex items-center gap-1">
-            <AlertCircle className="w-3 h-3 text-[#E11D48]" />
+            <AlertCircle className="w-3 h-3 text-[#E11D48]" aria-hidden="true" />
             Needs a closer look
           </span>
         );
@@ -189,7 +189,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
             <div className="flex items-center gap-3">
               <div className="p-3 rounded-2xl bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD]/60 shrink-0 shadow-xs">
-                <FileText className="w-6 h-6 text-[#0288D1]" />
+                <File06 className="w-6 h-6 text-[#0288D1]" aria-hidden="true" />
               </div>
               <div className="space-y-0.5">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -211,16 +211,17 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
             <button
               type="button"
               onClick={onClose}
+              aria-label="Close details modal"
               className="p-2 rounded-xl text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] transition-colors cursor-pointer self-start sm:self-center"
             >
-              <X className="w-5 h-5" />
+              <XClose className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
 
           {/* Action Error Banner */}
           {actionError && (
             <div className="p-3.5 rounded-2xl bg-[#FFF1F2] border border-[#FDA4AF] text-xs text-[#9F1239] flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-[#E11D48] shrink-0" />
+              <AlertCircle className="w-4 h-4 text-[#E11D48] shrink-0" aria-hidden="true" />
               <span>{actionError}</span>
             </div>
           )}
@@ -229,7 +230,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
           {isAllVerified ? (
             <div className="p-4 rounded-2xl bg-[#ECFDF5] border border-[#A7F3D0] flex items-center justify-between gap-3 text-xs text-[#065F46]">
               <div className="flex items-center gap-2.5">
-                <CheckCircle2 className="w-5 h-5 text-[#059669] shrink-0" />
+                <CheckCircle className="w-5 h-5 text-[#059669] shrink-0" aria-hidden="true" />
                 <div>
                   <span className="font-bold block text-sm">Verified Report</span>
                   <span>
@@ -241,7 +242,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
           ) : (
             <div className="p-4 rounded-2xl bg-[#FFFBEB] border border-[#FDE68A] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[#92400E]">
               <div className="flex items-start gap-2.5">
-                <Clock className="w-5 h-5 text-[#D97706] shrink-0 mt-0.5" />
+                <Clock className="w-5 h-5 text-[#D97706] shrink-0 mt-0.5" aria-hidden="true" />
                 <div>
                   <span className="font-bold block text-sm">
                     {unverifiedCount} {unverifiedCount === 1 ? 'value waiting' : 'values waiting'} for your confirmation
@@ -260,12 +261,12 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
               >
                 {loadingActionId === 'all' ? (
                   <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <Loading01 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
                     <span>Verifying...</span>
                   </>
                 ) : (
                   <>
-                    <Check className="w-3.5 h-3.5" />
+                    <Check className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Confirm All Remaining</span>
                   </>
                 )}
@@ -276,7 +277,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
           {/* Document Attachment Bar */}
           <div className="p-3.5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2 text-[#64748B] min-w-0">
-              <FileText className="w-4 h-4 text-[#0288D1] shrink-0" />
+              <File06 className="w-4 h-4 text-[#0288D1] shrink-0" aria-hidden="true" />
               <span className="truncate">Original Document: {currentReport.fileName}</span>
             </div>
 
@@ -287,7 +288,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                 rel="noreferrer"
                 className="px-3 py-1.5 rounded-xl bg-white border border-[#BAE6FD] text-xs font-bold text-[#0288D1] hover:bg-[#E0F2FE] transition-colors flex items-center gap-1.5 shrink-0"
               >
-                <ExternalLink className="w-3.5 h-3.5" />
+                <LinkExternal01 className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>Open File</span>
               </a>
             )}
@@ -356,13 +357,13 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                     <div className="flex flex-wrap items-center justify-between gap-2 pt-1 pb-1">
                       {res.userVerified ? (
                         <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#ECFDF5] border border-[#A7F3D0]/70 text-[#059669] text-xs font-medium font-sans">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-[#059669]" />
+                          <CheckCircle className="w-3.5 h-3.5 text-[#059669]" aria-hidden="true" />
                           <span>Verified by you ✓</span>
                         </div>
                       ) : (
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-[11px] font-mono font-bold text-[#92400E] bg-[#FEF3C7] px-2.5 py-1 rounded-full border border-[#FDE68A] flex items-center gap-1">
-                            <Clock className="w-3 h-3 text-[#D97706]" />
+                            <Clock className="w-3 h-3 text-[#D97706]" aria-hidden="true" />
                             Waiting for your confirmation
                           </span>
                         </div>
@@ -377,7 +378,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                             disabled={isLoadingThis}
                             className="px-2.5 py-1 rounded-xl bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] text-xs font-semibold text-[#64748B] flex items-center gap-1 cursor-pointer disabled:opacity-50"
                           >
-                            <Edit2 className="w-3 h-3 text-[#64748B]" />
+                            <Edit01 className="w-3 h-3 text-[#64748B]" aria-hidden="true" />
                             <span>Edit</span>
                           </button>
 
@@ -389,9 +390,9 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                               className="px-3.5 py-1 rounded-xl bg-[#0288D1] text-white text-xs font-bold shadow-xs hover:bg-[#0277BD] flex items-center gap-1 cursor-pointer disabled:opacity-50"
                             >
                               {isLoadingThis ? (
-                                <Loader2 className="w-3 h-3 animate-spin" />
+                                <Loading01 className="w-3 h-3 animate-spin" aria-hidden="true" />
                               ) : (
-                                <Check className="w-3 h-3" />
+                                <Check className="w-3 h-3" aria-hidden="true" />
                               )}
                               <span>Confirm & Verify</span>
                             </button>
@@ -476,9 +477,9 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                             className="px-4 py-1.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                           >
                             {isLoadingThis ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
+                              <Loading01 className="w-3 h-3 animate-spin" aria-hidden="true" />
                             ) : (
-                              <Check className="w-3 h-3" />
+                              <Check className="w-3 h-3" aria-hidden="true" />
                             )}
                             <span>Save & Verify</span>
                           </button>
@@ -492,7 +493,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                       {explanation && (
                         <div className="p-3.5 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD]/60 space-y-1">
                           <span className="text-[11px] font-mono font-bold text-[#01579B] uppercase tracking-wider flex items-center gap-1.5">
-                            <HelpCircle className="w-3.5 h-3.5 text-[#0288D1]" />
+                            <HelpCircle className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
                             What is this test?
                           </span>
                           <p className="text-xs text-[#475569] leading-relaxed font-sans">
@@ -505,7 +506,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                       {timelineText && (
                         <div className="p-3.5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-1">
                           <span className="text-[11px] font-mono font-bold text-[#0288D1] uppercase tracking-wider flex items-center gap-1.5">
-                            <Sparkles className="w-3.5 h-3.5 text-[#0288D1]" />
+                            <InfoCircle className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
                             Related to your health journey
                           </span>
                           <p className="text-xs text-[#64748B] leading-relaxed font-sans">
@@ -522,7 +523,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
 
           {/* Safety & Non-Diagnostic Reassurance */}
           <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] flex items-start gap-3 text-xs text-[#64748B] leading-relaxed">
-            <ShieldCheck className="w-4 h-4 text-[#0288D1] shrink-0 mt-0.5" />
+            <ShieldTick className="w-4 h-4 text-[#0288D1] shrink-0 mt-0.5" aria-hidden="true" />
             <span>
               This result alone cannot tell us the cause. BioPulse AI helps organize and explain health information; it does not replace medical advice. This report should be reviewed together with your healthcare professional.
             </span>

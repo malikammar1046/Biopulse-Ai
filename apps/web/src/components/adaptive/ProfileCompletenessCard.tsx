@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Info } from 'lucide-react';
+import { LayersThree01, InfoCircle } from '@untitledui/icons';
 import type { AdaptiveHealthProfile, TierLevel } from '../../types/adaptiveScreening';
 
 interface ProfileCompletenessCardProps {
@@ -34,7 +34,7 @@ export const ProfileCompletenessCard: React.FC<ProfileCompletenessCardProps> = (
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E0F2FE] border border-[#BAE6FD] text-xs font-mono text-[#01579B] font-bold">
-            <Sparkles className="w-3.5 h-3.5 text-[#0288D1]" />
+            <LayersThree01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
             <span>Progressive {isMale ? '2-Tier' : '3-Tier'} Assessment</span>
           </div>
           <h3 className="text-xl sm:text-2xl font-extrabold font-display text-[#01579B]">
@@ -156,7 +156,7 @@ export const ProfileCompletenessCard: React.FC<ProfileCompletenessCardProps> = (
 
       {/* ── 4. Non-Diagnostic Safe Footer ───────────────────────────────── */}
       <div className="flex items-start gap-2.5 text-xs text-[#0369A1] bg-[#F0F9FF] p-3.5 rounded-2xl border border-[#BAE6FD]">
-        <Info className="w-4 h-4 text-[#0284C7] shrink-0 mt-0.5" />
+        <InfoCircle className="w-4 h-4 text-[#0284C7] shrink-0 mt-0.5" aria-hidden="true" />
         <p className="leading-normal">
           <strong className="text-[#0C4A6E]">Continuous Accessibility Notice:</strong> Screening performance can vary depending on how much relevant information is available. A missing test or incomplete tier never implies the presence or absence of a clinical condition.
         </p>

@@ -2,15 +2,15 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import {
   Heart,
-  BarChart3,
-  Zap,
-  Dumbbell,
-  User,
+  BarChart01,
+  ActivityHeart,
+  Activity,
+  User01,
   ArrowRight,
-  Loader2,
+  RefreshCw01,
   ArrowLeft,
-  Sparkles,
-} from 'lucide-react';
+  Sliders01,
+} from '@untitledui/icons';
 import { Link } from 'react-router-dom';
 import { Logo } from '../brand/Logo';
 import { ROUTES } from '../../constants/routes';
@@ -22,43 +22,6 @@ interface PathwaySelectionScreenProps {
   error?: string;
   onBack?: () => void;
 }
-
-// Crisp Venus / Female Symbol SVG
-const VenusIcon: React.FC<{ className?: string }> = ({ className = 'w-4 h-4' }) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-    aria-hidden="true"
-  >
-    <circle cx="12" cy="9" r="5" />
-    <path d="M12 14v7" />
-    <path d="M9 18h6" />
-  </svg>
-);
-
-// Crisp Lotus / Reproductive Wellness SVG
-const LotusIcon: React.FC<{ className?: string }> = ({ className = 'w-4 h-4' }) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2.2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-    aria-hidden="true"
-  >
-    <path d="M12 3c1.5 3 4 5.5 7 7-2 3-5 4-7 4s-5-1-7-4c3-1.5 5.5-4 7-7z" />
-    <path d="M12 7v7" />
-    <path d="M6 14c-1.5 1.5-3 2.5-4 2.5 1.5 2 4.5 2.5 8 2.5" />
-    <path d="M18 14c1.5 1.5 3 2.5 4 2.5-1.5 2-4.5 2.5-8 2.5" />
-  </svg>
-);
 
 // Decorative Botanical Leaves SVG (Left / Pink tones)
 const PinkBotanicalFoliage: React.FC<{ className?: string }> = ({ className }) => (
@@ -194,14 +157,14 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
               disabled={loading}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white/90 hover:bg-white border border-slate-200/80 shadow-2xs backdrop-blur-sm transition-all cursor-pointer disabled:opacity-50"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
+              <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Back</span>
             </button>
           )}
         </div>
 
         <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-slate-100/90 border border-slate-200/80 text-xs font-semibold text-slate-700 shadow-2xs">
-          <Sparkles className="w-3.5 h-3.5 text-teal-600" />
+          <Sliders01 className="w-3.5 h-3.5 text-teal-600" aria-hidden="true" />
           <span>Step 2 of 2: Choose Pathway</span>
         </div>
       </header>
@@ -334,7 +297,7 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
                 <div className="mt-6 space-y-3.5 max-w-xs mx-auto">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-pink-50 border border-pink-200/80 text-[#E11D48] flex items-center justify-center shrink-0 shadow-2xs">
-                      <Heart className="w-4 h-4 fill-pink-100" />
+                      <Heart className="w-4 h-4 text-[#E11D48]" aria-hidden="true" />
                     </div>
                     <span className="text-xs sm:text-sm font-semibold text-slate-700">
                       Menstrual & hormonal health
@@ -343,7 +306,7 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
 
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-pink-50 border border-pink-200/80 text-[#E11D48] flex items-center justify-center shrink-0 shadow-2xs">
-                      <VenusIcon className="w-4 h-4" />
+                      <ActivityHeart className="w-4 h-4 text-[#E11D48]" aria-hidden="true" />
                     </div>
                     <span className="text-xs sm:text-sm font-semibold text-slate-700">
                       Metabolic insights
@@ -352,7 +315,7 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
 
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-pink-50 border border-pink-200/80 text-[#E11D48] flex items-center justify-center shrink-0 shadow-2xs">
-                      <LotusIcon className="w-4 h-4" />
+                      <Activity className="w-4 h-4 text-[#E11D48]" aria-hidden="true" />
                     </div>
                     <span className="text-xs sm:text-sm font-semibold text-slate-700">
                       Reproductive wellness
@@ -361,7 +324,7 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
 
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-pink-50 border border-pink-200/80 text-[#E11D48] flex items-center justify-center shrink-0 shadow-2xs">
-                      <BarChart3 className="w-4 h-4" />
+                      <BarChart01 className="w-4 h-4 text-[#E11D48]" aria-hidden="true" />
                     </div>
                     <span className="text-xs sm:text-sm font-semibold text-slate-700">
                       Personalized guidance
@@ -380,13 +343,13 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
                 >
                   {loading && loadingPathway === 'female' ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <RefreshCw01 className="w-4 h-4 animate-spin" aria-hidden="true" />
                       <span>Starting Female Path...</span>
                     </>
                   ) : (
                     <>
                       <span>Choose Female Path</span>
-                      <ArrowRight className="w-4 h-4" />
+                      <ArrowRight className="w-4 h-4" aria-hidden="true" />
                     </>
                   )}
                 </button>
@@ -453,7 +416,7 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
                 <div className="mt-6 space-y-3.5 max-w-xs mx-auto">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-sky-50 border border-sky-200/80 text-[#0284C7] flex items-center justify-center shrink-0 shadow-2xs">
-                      <Zap className="w-4 h-4 fill-sky-100" />
+                      <ActivityHeart className="w-4 h-4 text-[#0284C7]" aria-hidden="true" />
                     </div>
                     <span className="text-xs sm:text-sm font-semibold text-slate-700">
                       Hormonal health
@@ -462,7 +425,7 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
 
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-sky-50 border border-sky-200/80 text-[#0284C7] flex items-center justify-center shrink-0 shadow-2xs">
-                      <Dumbbell className="w-4 h-4" />
+                      <Activity className="w-4 h-4 text-[#0284C7]" aria-hidden="true" />
                     </div>
                     <span className="text-xs sm:text-sm font-semibold text-slate-700">
                       Energy & vitality
@@ -471,7 +434,7 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
 
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-sky-50 border border-sky-200/80 text-[#0284C7] flex items-center justify-center shrink-0 shadow-2xs">
-                      <BarChart3 className="w-4 h-4" />
+                      <BarChart01 className="w-4 h-4 text-[#0284C7]" aria-hidden="true" />
                     </div>
                     <span className="text-xs sm:text-sm font-semibold text-slate-700">
                       Metabolic function
@@ -480,7 +443,7 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
 
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-sky-50 border border-sky-200/80 text-[#0284C7] flex items-center justify-center shrink-0 shadow-2xs">
-                      <User className="w-4 h-4" />
+                      <User01 className="w-4 h-4 text-[#0284C7]" aria-hidden="true" />
                     </div>
                     <span className="text-xs sm:text-sm font-semibold text-slate-700">
                       Personalized guidance
@@ -499,13 +462,13 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
                 >
                   {loading && loadingPathway === 'male' ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <RefreshCw01 className="w-4 h-4 animate-spin" aria-hidden="true" />
                       <span>Starting Male Path...</span>
                     </>
                   ) : (
                     <>
                       <span>Choose Male Path</span>
-                      <ArrowRight className="w-4 h-4" />
+                      <ArrowRight className="w-4 h-4" aria-hidden="true" />
                     </>
                   )}
                 </button>

@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react';
 import {
-  X,
-  Layers,
-  ShieldCheck,
-  TrendingUp,
-  Activity,
-  CheckCircle2,
+  XClose,
+  LayersThree01,
+  ShieldTick,
+  LineChartUp01,
+  ActivityHeart,
+  CheckCircle,
   HelpCircle,
-} from 'lucide-react';
+} from '@untitledui/icons';
 import type { ExplainableDimensionNode } from '../../types/researchIntelligence';
 import type { HealthPathway } from '../../types/onboarding';
 
@@ -46,21 +46,21 @@ export const DigitalTwinExplainableDrawer: React.FC<DigitalTwinExplainableDrawer
       case 'improving':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#34D399]/20 text-[#34D399] border border-[#34D399]/30">
-            <TrendingUp className="w-2.5 h-2.5" />
+            <LineChartUp01 className="w-2.5 h-2.5" aria-hidden="true" />
             Improving
           </span>
         );
       case 'changing':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-            <Activity className="w-2.5 h-2.5" />
+            <ActivityHeart className="w-2.5 h-2.5" aria-hidden="true" />
             Changing Pattern
           </span>
         );
       case 'insufficient_data':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
-            <HelpCircle className="w-2.5 h-2.5" />
+            <HelpCircle className="w-2.5 h-2.5" aria-hidden="true" />
             Insufficient Data
           </span>
         );
@@ -68,7 +68,7 @@ export const DigitalTwinExplainableDrawer: React.FC<DigitalTwinExplainableDrawer
       default:
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white/10 text-[#CDBDD8] border border-white/10">
-            <CheckCircle2 className="w-2.5 h-2.5" />
+            <CheckCircle className="w-2.5 h-2.5" aria-hidden="true" />
             Stable Baseline
           </span>
         );
@@ -90,7 +90,7 @@ export const DigitalTwinExplainableDrawer: React.FC<DigitalTwinExplainableDrawer
         <div className="p-5 sm:p-6 border-b border-[#E2E8F0] flex items-center justify-between gap-4 relative z-10 bg-[#F8FAFC]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center text-[#0288D1] shrink-0">
-              <Layers className="w-5 h-5" />
+              <LayersThree01 className="w-5 h-5" aria-hidden="true" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -113,7 +113,7 @@ export const DigitalTwinExplainableDrawer: React.FC<DigitalTwinExplainableDrawer
             className="w-9 h-9 rounded-xl bg-white hover:bg-[#F1F5F9] flex items-center justify-center text-[#64748B] hover:text-[#0F172A] border border-[#E2E8F0] transition-colors cursor-pointer"
             aria-label="Close dialog"
           >
-            <X className="w-5 h-5" />
+            <XClose className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -123,7 +123,7 @@ export const DigitalTwinExplainableDrawer: React.FC<DigitalTwinExplainableDrawer
             This longitudinal summary is a structured, data-driven representation of your recorded history. It never fabricates values or predicts unverified outcomes.
           </p>
           <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-emerald-700 font-mono font-bold">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <ShieldTick className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
             <span>Deterministic</span>
           </div>
         </div>

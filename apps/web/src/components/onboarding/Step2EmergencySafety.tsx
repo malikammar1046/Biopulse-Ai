@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldCheck, User, Phone, HeartHandshake, Plus, Trash2 } from 'lucide-react';
+import { ShieldTick, User01, Phone01, HeartHand, Plus, Trash01 } from '@untitledui/icons';
 import type { EmergencyContact } from '../../types/onboarding';
 
 interface Step2Props {
@@ -73,12 +73,12 @@ export const Step2EmergencySafety: React.FC<Step2Props> = ({ contacts, onChange,
       <div className="p-5 rounded-3xl bg-white/[0.04] border border-white/10 space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-white/10">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-[#FB7185]" />
+            <ShieldTick className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
             <h3 className="text-sm font-bold font-display text-white">
               Primary Emergency Contact
             </h3>
           </div>
-          <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-[#FB7185]/20 text-[#FB7185] font-bold">
+          <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-[#0288D1]/20 text-[#29B6F6] font-bold">
             Required
           </span>
         </div>
@@ -95,11 +95,11 @@ export const Step2EmergencySafety: React.FC<Step2Props> = ({ contacts, onChange,
                 placeholder="e.g. Zubair Khan"
                 value={primaryContact.name}
                 onChange={(e) => updatePrimary('name', e.target.value)}
-                className={`w-full px-4 py-3 pl-10 rounded-2xl bg-[#140924] border text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#8E3EAF] transition-all ${
+                className={`w-full px-4 py-3 pl-10 rounded-2xl bg-[#140924] border text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#0288D1] transition-all ${
                   errors.primaryName ? 'border-[#FB7185]' : 'border-white/15'
                 }`}
               />
-              <User className="w-4 h-4 text-[#A797BD] absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <User01 className="w-4 h-4 text-[#A797BD] absolute left-3.5 top-1/2 -translate-y-1/2" aria-hidden="true" />
             </div>
             {errors.primaryName && <p className="text-xs text-[#FB7185] font-medium">{errors.primaryName}</p>}
           </div>
@@ -113,7 +113,7 @@ export const Step2EmergencySafety: React.FC<Step2Props> = ({ contacts, onChange,
               <select
                 value={primaryContact.relationship}
                 onChange={(e) => updatePrimary('relationship', e.target.value)}
-                className="w-full px-4 py-3 pl-10 rounded-2xl bg-[#140924] border border-white/15 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#8E3EAF] transition-all cursor-pointer"
+                className="w-full px-4 py-3 pl-10 rounded-2xl bg-[#140924] border border-white/15 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#0288D1] transition-all cursor-pointer"
               >
                 {RELATIONSHIP_PRESETS.map((rel) => (
                   <option key={rel} value={rel} className="bg-[#180A26] text-white">
@@ -121,7 +121,7 @@ export const Step2EmergencySafety: React.FC<Step2Props> = ({ contacts, onChange,
                   </option>
                 ))}
               </select>
-              <HeartHandshake className="w-4 h-4 text-[#A797BD] absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <HeartHand className="w-4 h-4 text-[#A797BD] absolute left-3.5 top-1/2 -translate-y-1/2" aria-hidden="true" />
             </div>
           </div>
 
@@ -136,11 +136,11 @@ export const Step2EmergencySafety: React.FC<Step2Props> = ({ contacts, onChange,
                 placeholder="+92 321 7654321"
                 value={primaryContact.phone}
                 onChange={(e) => updatePrimary('phone', e.target.value)}
-                className={`w-full px-4 py-3 pl-10 rounded-2xl bg-[#140924] border text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#8E3EAF] transition-all ${
+                className={`w-full px-4 py-3 pl-10 rounded-2xl bg-[#140924] border text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#0288D1] transition-all ${
                   errors.primaryPhone ? 'border-[#FB7185]' : 'border-white/15'
                 }`}
               />
-              <Phone className="w-4 h-4 text-[#A797BD] absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Phone01 className="w-4 h-4 text-[#A797BD] absolute left-3.5 top-1/2 -translate-y-1/2" aria-hidden="true" />
             </div>
             {errors.primaryPhone && <p className="text-xs text-[#FB7185] font-medium">{errors.primaryPhone}</p>}
           </div>
@@ -152,20 +152,20 @@ export const Step2EmergencySafety: React.FC<Step2Props> = ({ contacts, onChange,
         <button
           type="button"
           onClick={handleToggleSecondary}
-          className="w-full p-4 rounded-3xl border border-dashed border-white/20 hover:border-[#FB7185] text-xs font-semibold text-[#EDE4F7] hover:text-white flex items-center justify-center gap-2 transition-all cursor-pointer bg-white/[0.02]"
+          className="w-full p-4 rounded-3xl border border-dashed border-white/20 hover:border-[#0288D1] text-xs font-semibold text-[#EDE4F7] hover:text-white flex items-center justify-center gap-2 transition-all cursor-pointer bg-white/[0.02]"
         >
-          <Plus className="w-4 h-4 text-[#FB7185]" />
+          <Plus className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
           <span>Add Secondary Emergency Contact (Optional)</span>
         </button>
       ) : (
         <div className="p-5 rounded-3xl bg-white/[0.04] border border-white/10 space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-white/10">
             <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-[#C084FC]" />
+              <ShieldTick className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
               <h3 className="text-sm font-bold font-display text-white">
                 Secondary Emergency Contact
               </h3>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/10 text-[#D8B4FE]">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/10 text-[#29B6F6]">
                 Optional
               </span>
             </div>
@@ -174,7 +174,7 @@ export const Step2EmergencySafety: React.FC<Step2Props> = ({ contacts, onChange,
               onClick={handleToggleSecondary}
               className="text-xs text-[#FB7185] hover:text-white flex items-center gap-1 cursor-pointer"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash01 className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Remove</span>
             </button>
           </div>
@@ -189,7 +189,7 @@ export const Step2EmergencySafety: React.FC<Step2Props> = ({ contacts, onChange,
                 placeholder="e.g. Fatima Khan"
                 value={secondaryContact.name}
                 onChange={(e) => updateSecondary('name', e.target.value)}
-                className="w-full px-4 py-3 rounded-2xl bg-[#140924] border border-white/15 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#8E3EAF]"
+                className="w-full px-4 py-3 rounded-2xl bg-[#140924] border border-white/15 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#0288D1]"
               />
             </div>
 
@@ -200,7 +200,7 @@ export const Step2EmergencySafety: React.FC<Step2Props> = ({ contacts, onChange,
               <select
                 value={secondaryContact.relationship}
                 onChange={(e) => updateSecondary('relationship', e.target.value)}
-                className="w-full px-4 py-3 rounded-2xl bg-[#140924] border border-white/15 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#8E3EAF]"
+                className="w-full px-4 py-3 rounded-2xl bg-[#140924] border border-white/15 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#0288D1]"
               >
                 {RELATIONSHIP_PRESETS.map((rel) => (
                   <option key={rel} value={rel} className="bg-[#180A26] text-white">
@@ -219,7 +219,7 @@ export const Step2EmergencySafety: React.FC<Step2Props> = ({ contacts, onChange,
                 placeholder="+92 333 9876543"
                 value={secondaryContact.phone}
                 onChange={(e) => updateSecondary('phone', e.target.value)}
-                className="w-full px-4 py-3 rounded-2xl bg-[#140924] border border-white/15 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#8E3EAF]"
+                className="w-full px-4 py-3 rounded-2xl bg-[#140924] border border-white/15 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#0288D1]"
               />
             </div>
           </div>

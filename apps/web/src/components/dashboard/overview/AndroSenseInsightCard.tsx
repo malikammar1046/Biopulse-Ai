@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Activity,
-  Sparkles,
+  ActivityHeart,
+  MessageChatCircle,
   ArrowRight,
-  ShieldCheck,
-  FlaskConical,
-  TrendingUp,
-  TrendingDown,
-  Layers,
+  ShieldTick,
+  Beaker01,
+  TrendUp01,
+  TrendDown01,
+  LayersThree01,
   AlertTriangle,
-  CheckCircle2,
-  X,
-  RefreshCw,
-  Info,
-} from 'lucide-react';
+  CheckCircle,
+  XClose,
+  RefreshCw01,
+  InfoCircle,
+} from '@untitledui/icons';
 import { useUserHealth } from '../../../context/UserHealthContext';
 import { ROUTES } from '../../../constants/routes';
 import { MaleClinicalLabsModal } from '../../adaptive/MaleClinicalLabsModal';
@@ -99,15 +99,16 @@ export const AndroSenseInsightCard: React.FC<AndroSenseInsightCardProps> = ({ on
         {assessmentNotification && (
           <div className="relative z-20 -mt-2 -mx-2 mb-2 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-between gap-3 text-xs shadow-sm animate-in fade-in slide-in-from-top-2">
             <div className="flex items-center gap-2.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
               <span className="font-semibold">{assessmentNotification.message}</span>
             </div>
             <button
               type="button"
+              aria-label="Dismiss notification"
               onClick={dismissAssessmentNotification}
               className="p-1 text-emerald-600 hover:text-emerald-900 rounded-lg hover:bg-emerald-100 transition-colors"
             >
-              <X className="w-3.5 h-3.5" />
+              <XClose className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </div>
         )}
@@ -115,9 +116,7 @@ export const AndroSenseInsightCard: React.FC<AndroSenseInsightCardProps> = ({ on
         {/* Top Header Row */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center text-[#0288D1]">
-              <Activity className="w-5 h-5" />
-            </div>
+            <ActivityHeart className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#0288D1]">
@@ -137,7 +136,7 @@ export const AndroSenseInsightCard: React.FC<AndroSenseInsightCardProps> = ({ on
 
           <div className="flex items-center gap-2 self-start sm:self-auto">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F8FAFC] border border-[#E2E8F0] text-xs text-[#64748B]">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <ShieldTick className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
               <span>Non-Diagnostic Screening</span>
             </div>
           </div>
@@ -148,7 +147,7 @@ export const AndroSenseInsightCard: React.FC<AndroSenseInsightCardProps> = ({ on
         {/* ------------------------------------------------------------- */}
         {assessmentLoading && !hasAssessment && (
           <div className="p-8 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] flex flex-col items-center justify-center space-y-3 text-center">
-            <RefreshCw className="w-6 h-6 text-[#0288D1] animate-spin" />
+            <RefreshCw01 className="w-6 h-6 text-[#0288D1] animate-spin" aria-hidden="true" />
             <p className="text-xs font-semibold text-[#0F172A]">
               Loading your hypogonadism screening assessment...
             </p>
@@ -165,7 +164,7 @@ export const AndroSenseInsightCard: React.FC<AndroSenseInsightCardProps> = ({ on
           <div className="p-6 rounded-2xl bg-[#FFF1F2] border border-[#FECDD3] space-y-3 relative z-10 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="space-y-1 text-center sm:text-left">
               <h4 className="text-sm font-bold text-[#E11D48] flex items-center gap-2 justify-center sm:justify-start">
-                <AlertTriangle className="w-4 h-4" />
+                <AlertTriangle className="w-4 h-4" aria-hidden="true" />
                 Unable to load your screening assessment
               </h4>
               <p className="text-xs text-[#64748B]">
@@ -189,7 +188,7 @@ export const AndroSenseInsightCard: React.FC<AndroSenseInsightCardProps> = ({ on
           <div className="p-6 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-4 relative z-10 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="space-y-1.5 max-w-lg">
               <h4 className="text-base font-bold text-[#0F172A] flex items-center gap-2 justify-center sm:justify-start">
-                <Sparkles className="w-4 h-4 text-[#0288D1]" />
+                <ActivityHeart className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
                 Hypogonadism Screening Assessment
               </h4>
               <p className="text-xs text-[#0F172A] font-medium leading-relaxed">
@@ -207,14 +206,14 @@ export const AndroSenseInsightCard: React.FC<AndroSenseInsightCardProps> = ({ on
             >
               {runningTier1 ? (
                 <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <RefreshCw01 className="w-4 h-4 animate-spin" aria-hidden="true" />
                   <span>Computing Tier 1...</span>
                 </>
               ) : (
                 <>
-                  <Activity className="w-4 h-4" />
+                  <ActivityHeart className="w-4 h-4" aria-hidden="true" />
                   <span>Start Tier 1 Screening</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-4 h-4" aria-hidden="true" />
                 </>
               )}
             </button>
@@ -240,9 +239,9 @@ export const AndroSenseInsightCard: React.FC<AndroSenseInsightCardProps> = ({ on
                     }`}
                   >
                     {isHigherRisk ? (
-                      <AlertTriangle className="w-3 h-3 text-rose-600" />
+                      <AlertTriangle className="w-3 h-3 text-rose-600" aria-hidden="true" />
                     ) : (
-                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                      <CheckCircle className="w-3 h-3 text-emerald-600" aria-hidden="true" />
                     )}
                     {riskLabel}
                   </span>
@@ -311,7 +310,7 @@ export const AndroSenseInsightCard: React.FC<AndroSenseInsightCardProps> = ({ on
                 {/* Hormone Pattern Rule Badge (Tier 2) */}
                 {hormonePattern && hormonePattern.pattern_name && (
                   <div className="p-3 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-start gap-2.5 text-xs text-[#0F172A]">
-                    <FlaskConical className="w-4 h-4 text-[#0288D1] shrink-0 mt-0.5" />
+                    <Beaker01 className="w-4 h-4 text-[#0288D1] shrink-0 mt-0.5" aria-hidden="true" />
                     <div>
                       <span className="font-bold text-[#0288D1] block">
                         Pituitary-Gonadal Signaling: {hormonePattern.pattern_name}
@@ -340,9 +339,9 @@ export const AndroSenseInsightCard: React.FC<AndroSenseInsightCardProps> = ({ on
                         className="p-2.5 rounded-xl bg-white border border-[#E2E8F0] flex items-start gap-2 text-xs"
                       >
                         {isInc ? (
-                          <TrendingUp className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5" />
+                          <TrendUp01 className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5" aria-hidden="true" />
                         ) : (
-                          <TrendingDown className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                          <TrendDown01 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" aria-hidden="true" />
                         )}
                         <div>
                           <span className="font-semibold text-[#0F172A] text-[11px] block">
@@ -358,7 +357,7 @@ export const AndroSenseInsightCard: React.FC<AndroSenseInsightCardProps> = ({ on
                 </div>
               ) : (
                 <div className="p-3 rounded-xl bg-white border border-[#E2E8F0] text-xs text-[#64748B] flex items-center gap-2">
-                  <Info className="w-4 h-4 text-[#0288D1] shrink-0" />
+                  <InfoCircle className="w-4 h-4 text-[#0288D1] shrink-0" aria-hidden="true" />
                   <span>Detailed contributing factors are not available for this assessment.</span>
                 </div>
               )}
@@ -396,7 +395,7 @@ export const AndroSenseInsightCard: React.FC<AndroSenseInsightCardProps> = ({ on
               onClick={() => setIsLabsModalOpen(true)}
               className="px-4 py-2.5 rounded-2xl bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] text-[#0288D1] font-sans text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
             >
-              <FlaskConical className="w-4 h-4 text-[#0288D1]" />
+              <Beaker01 className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
               <span>{isTier2 ? 'Update Clinical Evidence' : 'Add Clinical Evidence'}</span>
             </button>
 
@@ -406,7 +405,7 @@ export const AndroSenseInsightCard: React.FC<AndroSenseInsightCardProps> = ({ on
               onClick={() => navigate(ROUTES.APP.ASSESSMENT)}
               className="px-4 py-2.5 rounded-2xl bg-white hover:bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] font-sans text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
             >
-              <Layers className="w-4 h-4 text-[#0288D1]" />
+              <LayersThree01 className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
               <span>Screening Profile</span>
             </button>
 
@@ -420,9 +419,9 @@ export const AndroSenseInsightCard: React.FC<AndroSenseInsightCardProps> = ({ on
               }
               className="px-5 py-2.5 rounded-2xl bg-[#0288D1] hover:bg-[#0277BD] text-white font-sans text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-sm"
             >
-              <Sparkles className="w-4 h-4 text-white" />
+              <MessageChatCircle className="w-4 h-4 text-white" aria-hidden="true" />
               <span>Ask AI</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
         </div>

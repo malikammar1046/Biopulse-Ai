@@ -1,5 +1,11 @@
 import React from 'react';
-import { ArrowRight, FileText, UploadCloud, CheckCircle2, ClipboardCheck } from 'lucide-react';
+import {
+  ArrowRight,
+  File06,
+  UploadCloud01,
+  CheckCircle,
+  ClipboardCheck,
+} from '@untitledui/icons';
 import { FemaleCard, FemalePrimaryButton } from './FemaleDesignPrimitives';
 
 interface FemaleNextBestActionProps {
@@ -34,7 +40,7 @@ export const FemaleNextBestAction: React.FC<FemaleNextBestActionProps> = ({
         title: `Verify ${unverifiedReportsCount} Lab Result${unverifiedReportsCount > 1 ? 's' : ''}`,
         description: 'New clinical values extracted from your report are waiting for your confirmation.',
         buttonText: 'Review Verified Labs',
-        icon: FileText,
+        icon: File06,
       };
     }
 
@@ -44,7 +50,7 @@ export const FemaleNextBestAction: React.FC<FemaleNextBestActionProps> = ({
         title: 'Add Clinical Laboratory Values',
         description: 'Incorporate hormonal and metabolic blood tests (such as FSH, LH, AMH, and fasting insulin) to refine your screening score.',
         buttonText: 'Add Clinical Labs',
-        icon: FileText,
+        icon: File06,
       };
     }
 
@@ -54,7 +60,7 @@ export const FemaleNextBestAction: React.FC<FemaleNextBestActionProps> = ({
         title: 'Upload Pelvic Ultrasound Scan',
         description: 'Add ultrasound imaging for neural feature analysis of polycystic ovarian morphology.',
         buttonText: 'Upload Ultrasound Scan',
-        icon: UploadCloud,
+        icon: UploadCloud01,
       };
     }
 
@@ -63,7 +69,7 @@ export const FemaleNextBestAction: React.FC<FemaleNextBestActionProps> = ({
       title: 'Review Longitudinal Health Progress',
       description: 'Your multimodal assessment is active. Track symptom changes and prepare for clinical discussion.',
       buttonText: 'Review Assessment',
-      icon: CheckCircle2,
+      icon: CheckCircle,
     };
   };
 
@@ -74,15 +80,13 @@ export const FemaleNextBestAction: React.FC<FemaleNextBestActionProps> = ({
     <FemaleCard className="space-y-4 select-none">
       <div className="flex items-center justify-between border-b border-[#EAECF0] pb-3">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-[#FFF5F9] border border-[#FBE7F0] flex items-center justify-center text-[#E84A8A]">
-            <Icon className="w-3.5 h-3.5" />
-          </div>
+          <Icon className="w-5 h-5 text-[#F43F7D] shrink-0" aria-hidden="true" />
           <h3 className="text-sm sm:text-base font-semibold text-[#111318]">
             Recommended Next Step
           </h3>
         </div>
 
-        <span className="text-[11px] font-semibold text-[#A92D61] px-2 py-0.5 rounded-full bg-[#FBE7F0]">
+        <span className="text-[11px] font-semibold text-[#DC326C] px-2 py-0.5 rounded-full bg-[#FDE6EF]">
           {action.badge}
         </span>
       </div>
@@ -96,10 +100,10 @@ export const FemaleNextBestAction: React.FC<FemaleNextBestActionProps> = ({
         </p>
       </div>
 
-      <div className="pt-2">
-        <FemalePrimaryButton onClick={onAction} className="w-full sm:w-auto">
+      <div className="pt-4">
+        <FemalePrimaryButton onClick={onAction}>
           <span>{action.buttonText}</span>
-          <ArrowRight className="w-4 h-4" />
+          <ArrowRight className="w-4 h-4 shrink-0" aria-hidden="true" />
         </FemalePrimaryButton>
       </div>
     </FemaleCard>

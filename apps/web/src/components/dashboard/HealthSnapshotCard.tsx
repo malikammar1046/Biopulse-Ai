@@ -1,4 +1,13 @@
-import { Calendar, Clock, Activity, TrendingUp, Sparkles, ChevronRight, Zap, ShieldCheck } from 'lucide-react';
+import React from 'react';
+import {
+  Calendar,
+  Clock,
+  ActivityHeart,
+  LineChartUp01,
+  ChevronRight,
+  ShieldTick,
+  CheckCircle,
+} from '@untitledui/icons';
 import type { HealthSnapshotMetrics } from '../../types/dashboard';
 
 interface SnapshotCardsProps {
@@ -21,9 +30,7 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
         <div className="p-5 rounded-2xl bg-white border border-[#E2E8F0] shadow-xs transition-all text-left space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#0288D1] uppercase tracking-wider">
-              <span className="p-1.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
-                <ShieldCheck className="w-3.5 h-3.5" />
-              </span>
+              <ShieldTick className="w-4 h-4 text-[#0288D1] shrink-0" aria-hidden="true" />
               <span>Hormone Health</span>
             </div>
             <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 font-bold">
@@ -54,9 +61,7 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#0288D1] uppercase tracking-wider">
-              <span className="p-1.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
-                <Calendar className="w-3.5 h-3.5" />
-              </span>
+              <Calendar className="w-4 h-4 text-[#0288D1] shrink-0" aria-hidden="true" />
               <span>Your Cycle Day</span>
             </div>
             <span className="text-[10px] font-mono text-[#64748B] font-medium">
@@ -89,7 +94,7 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
               <circle cx="50" cy="8" r="3.5" fill="#0288D1" />
             </svg>
             <span className="text-[10px] font-mono text-[#64748B] group-hover:text-[#0288D1] flex items-center transition-colors">
-              Details <ChevronRight className="w-3 h-3" />
+              Details <ChevronRight className="w-3 h-3" aria-hidden="true" />
             </span>
           </div>
         </div>
@@ -100,9 +105,7 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
         <div className="p-5 rounded-2xl bg-white border border-[#E2E8F0] shadow-xs transition-all text-left space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#0288D1] uppercase tracking-wider">
-              <span className="p-1.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
-                <Zap className="w-3.5 h-3.5" />
-              </span>
+              <ActivityHeart className="w-4 h-4 text-[#0288D1] shrink-0" aria-hidden="true" />
               <span>Vitality Baseline</span>
             </div>
             <span className="text-[10px] font-mono text-[#64748B] font-medium">ADAM Profile</span>
@@ -135,9 +138,7 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#0288D1] uppercase tracking-wider">
-              <span className="p-1.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
-                <Clock className="w-3.5 h-3.5" />
-              </span>
+              <Clock className="w-4 h-4 text-[#0288D1] shrink-0" aria-hidden="true" />
               <span>Next Period</span>
             </div>
             <span className="text-[10px] font-mono text-[#64748B] font-medium">Estimated</span>
@@ -166,7 +167,6 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
         </div>
       )}
 
-
       {/* ── 3. SYMPTOMS LOGGED CARD ── */}
       <div
         onClick={onViewSymptoms}
@@ -174,9 +174,7 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#0288D1] uppercase tracking-wider">
-            <span className="p-1.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
-              <Activity className="w-3.5 h-3.5" />
-            </span>
+            <ActivityHeart className="w-4 h-4 text-[#0288D1] shrink-0" aria-hidden="true" />
             <span>Today&apos;s Symptoms</span>
           </div>
           <span className="text-[10px] font-mono text-[#0288D1] font-bold group-hover:underline">
@@ -212,13 +210,11 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
       <div className="p-5 rounded-2xl bg-white border border-[#E2E8F0] hover:border-[#BAE6FD] shadow-xs transition-all text-left space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-mono font-bold text-emerald-700 uppercase tracking-wider">
-            <span className="p-1.5 rounded-xl bg-emerald-50 text-emerald-600">
-              <Sparkles className="w-3.5 h-3.5" />
-            </span>
+            <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
             <span>Wellness Check</span>
           </div>
           <div className="flex items-center gap-1 text-[11px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-            <TrendingUp className="w-3 h-3" />
+            <LineChartUp01 className="w-3 h-3 text-emerald-600" aria-hidden="true" />
             <span>+{metrics.wellnessScoreChange}% vs last week</span>
           </div>
         </div>
@@ -250,3 +246,4 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
     </div>
   );
 };
+

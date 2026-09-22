@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, ArrowRight } from 'lucide-react';
+import { Calendar, ArrowRight } from '@untitledui/icons';
 import { ROUTES } from '../../constants/routes';
 
 interface CycleDialProps {
@@ -42,18 +42,16 @@ export const CycleProgressDial: React.FC<CycleDialProps> = ({
   const mid = Math.floor(totalDays / 2);
 
   return (
-    <div className="p-6 sm:p-7 rounded-[28px] bg-white border border-[#E2E8F0] shadow-xs flex flex-col justify-between select-none text-left space-y-6">
+    <div className="p-6 sm:p-7 rounded-2xl bg-white border border-[#EAECF0] shadow-xs flex flex-col justify-between select-none text-left space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="p-1.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
-            <Calendar className="w-4 h-4" />
-          </span>
+          <Calendar className="w-5 h-5 text-[#F43F7D] shrink-0" aria-hidden="true" />
           <h3 className="text-base font-bold font-display text-[#0F172A]">
             Cycle Progress
           </h3>
         </div>
-        <span className="text-xs font-mono font-bold text-[#0288D1] bg-[#E0F2FE] border border-[#BAE6FD] px-3 py-1 rounded-full">
+        <span className="text-xs font-mono font-bold text-[#DC326C] bg-[#FDE6EF] border border-[#F43F7D]/20 px-3 py-1 rounded-full">
           {totalDays} Days Cycle
         </span>
       </div>
@@ -78,7 +76,7 @@ export const CycleProgressDial: React.FC<CycleDialProps> = ({
               cy="80"
               r={radius}
               fill="none"
-              stroke="#0288D1"
+              stroke="#F43F7D"
               strokeWidth="12"
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
@@ -120,7 +118,7 @@ export const CycleProgressDial: React.FC<CycleDialProps> = ({
             <span className="text-xs font-mono uppercase text-[#64748B] tracking-wider block">
               {hasLogged ? 'Current Phase' : 'Rhythm Status'}
             </span>
-            <h4 className="text-lg sm:text-xl font-bold font-display text-[#0288D1]">
+            <h4 className="text-lg sm:text-xl font-bold font-display text-[#F43F7D]">
               {phaseName}
             </h4>
           </div>
@@ -131,30 +129,30 @@ export const CycleProgressDial: React.FC<CycleDialProps> = ({
 
           <Link
             to={ROUTES.APP.CYCLE}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0288D1] hover:text-[#0277BD] transition-colors group"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#F43F7D] hover:text-[#DC326C] transition-colors group"
           >
             <span>{hasLogged ? 'View Cycle Calendar' : 'Start Tracking Your Cycle'}</span>
-            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+            <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
           </Link>
         </div>
       </div>
 
       {/* Segment Legend */}
-      <div className="pt-4 border-t border-[#E2E8F0] flex flex-wrap items-center justify-between gap-2 text-xs font-sans">
+      <div className="pt-4 border-t border-[#EAECF0] flex flex-wrap items-center justify-between gap-2 text-xs font-sans">
         <div className="flex items-center gap-1.5 text-[#475569]">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#0288D1]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[#FB7185]" />
           <span>Period (1–5)</span>
         </div>
         <div className="flex items-center gap-1.5 text-[#475569]">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#29B6F6]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[#8E3EAF]" />
           <span>Follicular (6–{mid - 1})</span>
         </div>
         <div className="flex items-center gap-1.5 text-[#475569]">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#01579B]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[#A21CAF]" />
           <span>Ovulation ({mid})</span>
         </div>
         <div className="flex items-center gap-1.5 text-[#475569]">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#BAE6FD]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[#6E2D8B]" />
           <span>Luteal ({mid + 1}–{totalDays})</span>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Plus, RefreshCw, Loader2 } from 'lucide-react';
+import { Calendar, Plus, RefreshCw01 } from '@untitledui/icons';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { CycleOverviewCard } from '../../components/cycle/CycleOverviewCard';
 import { CycleTimelineVisualizer } from '../../components/cycle/CycleTimelineVisualizer';
@@ -70,12 +70,10 @@ export const CyclePage: React.FC = () => {
       className="max-w-6xl mx-auto space-y-6 sm:space-y-8 text-left select-none pb-16"
     >
       {/* ── 1. Page Header Bar ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#BAE6FD]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#EAECF0]">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-xl bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD]">
-              <Calendar className="w-5 h-5" />
-            </span>
+          <div className="flex items-center gap-2.5">
+            <Calendar className="w-6 h-6 text-[#F43F7D] shrink-0" aria-hidden="true" />
             <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-[#0F172A] tracking-tight">
               Your Cycle & Period Tracker
             </h1>
@@ -89,18 +87,18 @@ export const CyclePage: React.FC = () => {
           <button
             type="button"
             onClick={() => refreshCycleRecords()}
-            className="p-2.5 rounded-xl bg-white border border-[#BAE6FD] text-[#475569] hover:text-[#0288D1] hover:bg-[#F0F9FF] transition-colors cursor-pointer"
+            className="p-2.5 rounded-xl bg-white border border-[#EAECF0] text-[#475569] hover:text-[#F43F7D] hover:bg-[#FDE6EF]/50 transition-colors cursor-pointer"
             title="Refresh cycle records"
           >
-            <RefreshCw className={`w-4 h-4 ${cycleLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw01 className={`w-4 h-4 shrink-0 ${cycleLoading ? 'animate-spin' : ''}`} aria-hidden="true" />
           </button>
 
           <button
             type="button"
             onClick={handleOpenLogModal}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-sans font-semibold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm transition-all cursor-pointer"
+            className="flex items-center gap-2 h-10 px-4 rounded-lg font-medium text-sm text-white bg-[#F43F7D] hover:bg-[#DC326C] shadow-xs transition-all cursor-pointer"
           >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <Plus className="w-4 h-4 shrink-0" aria-hidden="true" />
             <span>Log Period</span>
           </button>
         </div>
@@ -108,8 +106,8 @@ export const CyclePage: React.FC = () => {
 
       {/* ── 2. Loading State ── */}
       {cycleLoading && cycleRecords.length === 0 ? (
-        <div className="p-12 rounded-2xl bg-white border border-[#BAE6FD] flex flex-col items-center justify-center space-y-3">
-          <Loader2 className="w-8 h-8 text-[#0288D1] animate-spin" />
+        <div className="p-12 rounded-2xl bg-white border border-[#EAECF0] flex flex-col items-center justify-center space-y-3">
+          <RefreshCw01 className="w-8 h-8 text-[#F43F7D] animate-spin" aria-hidden="true" />
           <span className="text-xs font-mono text-[#64748B]">Loading your cycle records...</span>
         </div>
       ) : !cycleStats.hasData ? (
@@ -137,8 +135,8 @@ export const CyclePage: React.FC = () => {
       )}
 
       {/* ── 5. Responsible Clinical Boundary Notice ── */}
-      <div className="p-4 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] text-center max-w-3xl mx-auto text-xs text-[#0369A1] space-y-1">
-        <p className="font-semibold text-[#01579B]">
+      <div className="p-4 rounded-xl bg-[#FDE6EF]/30 border border-[#FDE6EF] text-center max-w-3xl mx-auto text-xs text-[#667085] space-y-1">
+        <p className="font-semibold text-[#DC326C]">
           Responsible Health & Non-Diagnostic Framing
         </p>
         <p>

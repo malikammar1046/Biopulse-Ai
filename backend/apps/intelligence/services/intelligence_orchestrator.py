@@ -397,9 +397,13 @@ def reassess_from_current_patient_state(
     stored_ultrasound = dict(current_state.get("ultrasound_inputs") or {})
 
     # 2. Extract baseline Tier 1 inputs & PATCH merge incoming
+    # Stored inputs are the baseline; fresh profile inputs (e.g. Weight changed in Settings) take precedence!
     if module == "male_hypogonadism":
         baseline_t1 = extract_male_patient_raw_inputs(health_data, client_health_data or incoming_tier1)
-        merged_tier1 = {**baseline_t1, **stored_tier1}
+        merged_tier1 = dict(stored_tier1)
+        for k, v in baseline_t1.items():
+            if v is not None and str(v).strip() != "":
+                merged_tier1[k] = v
         if incoming_tier1 and isinstance(incoming_tier1, dict):
             for k, v in incoming_tier1.items():
                 if v is not None and str(v).strip() != "":
@@ -409,7 +413,10 @@ def reassess_from_current_patient_state(
                         merged_tier1[k] = v
     else:
         baseline_t1 = extract_patient_raw_inputs(health_data, client_health_data or incoming_tier1)
-        merged_tier1 = {**baseline_t1, **stored_tier1}
+        merged_tier1 = dict(stored_tier1)
+        for k, v in baseline_t1.items():
+            if v is not None and str(v).strip() != "":
+                merged_tier1[k] = v
         if incoming_tier1 and isinstance(incoming_tier1, dict):
             for k, v in incoming_tier1.items():
                 if v is not None and str(v).strip() != "":
@@ -417,6 +424,18 @@ def reassess_from_current_patient_state(
                         merged_tier1[k] = float(v)
                     except (ValueError, TypeError):
                         merged_tier1[k] = v
+
+    # Canonical BMI recalculation & synchronization
+    w_raw = merged_tier1.get("weight_kg")
+    h_raw = merged_tier1.get("height_cm")
+    if w_raw is not None and h_raw is not None:
+        try:
+            w_flt = float(w_raw)
+            h_flt = float(h_raw)
+            if h_flt > 0:
+                merged_tier1["bmi"] = round(w_flt / ((h_flt / 100.0) ** 2), 1)
+        except (ValueError, TypeError):
+            pass
 
     # 3. PATCH Merge Tier 2 inputs
     if clear_tier2:
@@ -605,6 +624,47 @@ def reassess_from_current_patient_state(
         auth_token=auth_token,
     )
 
+    # 6b. Synchronize immutable metric observations (Weight, BMI, Waist, Symptoms)
+    try:
+        from apps.intelligence.services.observation_repository import observation_repository
+        profile_ts = (
+            getattr(p, 'updated_at', None)
+            or getattr(p, 'created_at', None)
+            or (client_health_data.get('updated_at') if isinstance(client_health_data, dict) else None)
+            or (incoming_tier1.get('updated_at') if isinstance(incoming_tier1, dict) else None)
+            or current_state.get('updated_at')
+            or current_state.get('created_at')
+        )
+        observation_repository.sync_observations_from_patient_state(
+            user_id=patient_uuid,
+            module=module,
+            current_profile=p,
+            current_clinical_state={"tier_1_inputs": merged_tier1, "tier_2_inputs": merged_tier2},
+            source="profile_update",
+            observed_at=profile_ts,
+            auth_token=auth_token,
+        )
+    except Exception as obs_err:
+        logger.warning("Observation sync notice for patient %s: %s", patient_uuid[:8] if len(patient_uuid) >= 8 else patient_uuid, obs_err)
+
+    # 6c. Compute longitudinal SHAP explanation comparison against latest directly comparable assessment
+    try:
+        if res.get("shap_explanation"):
+            from apps.intelligence.services.longitudinal_shap_service import (
+                compare_explanations,
+                find_latest_comparable_assessment,
+            )
+            comparable_target = find_latest_comparable_assessment(
+                user_id=patient_uuid,
+                current_explanation=res["shap_explanation"],
+                current_assessment_id=res.get("id"),
+                auth_token=auth_token,
+            )
+            if comparable_target:
+                res["longitudinal_shap_comparison"] = compare_explanations(res["shap_explanation"], comparable_target)
+    except Exception as comp_err:
+        logger.warning("Longitudinal SHAP comparison notice: %s", comp_err)
+
     # 7. Save assessment to repository and format
     saved = assessment_repository.save_assessment(patient_uuid, res, make_active=True, auth_token=auth_token)
     formatted = format_assessment_response(saved)
@@ -727,6 +787,23 @@ def run_ultrasound_assessment(
             ultrasound_inputs={'pcom_status': res.get('pcom_status'), 'pcom_probability': res.get('pcom_probability'), 'ultrasound_report_id': report_id},
             auth_token=auth_token,
         )
+        try:
+            if res.get('shap_explanation'):
+                from apps.intelligence.services.longitudinal_shap_service import (
+                    compare_explanations,
+                    find_latest_comparable_assessment,
+                )
+                comparable_target = find_latest_comparable_assessment(
+                    user_id=patient_uuid,
+                    current_explanation=res['shap_explanation'],
+                    current_assessment_id=res.get('id'),
+                    auth_token=auth_token,
+                )
+                if comparable_target:
+                    res['longitudinal_shap_comparison'] = compare_explanations(res['shap_explanation'], comparable_target)
+        except Exception as comp_err:
+            logger.warning("Longitudinal SHAP comparison notice (multimodal): %s", comp_err)
+
         saved = assessment_repository.save_assessment(patient_uuid, res, make_active=True, auth_token=auth_token)
         logger.info(f"[ASSESSMENT_PIPELINE] STAGE: ULTRASOUND_ASSESSMENT_SAVED | patient={patient_uuid} | level=tier_1_2_3")
         return format_assessment_response(saved)
@@ -866,6 +943,26 @@ def run_assessment(
 
     active = assessment_repository.get_active_assessment(patient_uuid, module=module, auth_token=auth_token)
     if active:
+        if client_health_data and isinstance(client_health_data, dict):
+            try:
+                from apps.intelligence.services.observation_repository import observation_repository
+                user_prof = client_health_data.get("userProfile")
+                if user_prof:
+                    prof_ts = (
+                        user_prof.get("updated_at")
+                        or user_prof.get("created_at")
+                        or (p and getattr(p, "updated_at", None))
+                    )
+                    observation_repository.sync_observations_from_patient_state(
+                        user_id=patient_uuid,
+                        module=module,
+                        current_profile=user_prof,
+                        source="profile_update",
+                        observed_at=prof_ts,
+                        auth_token=auth_token,
+                    )
+            except Exception:
+                pass
         return format_assessment_response(active)
 
     from apps.intelligence.maintenance import is_assessment_maintenance_active
@@ -1003,6 +1100,8 @@ def format_assessment_response(record: dict[str, Any]) -> dict[str, Any]:
         'available_features': record.get('available_features', []),
         'missing_features': record.get('missing_features', []),
         'explanations': record.get('explanations', []),
+        'shap_explanation': record.get('shap_explanation'),
+        'longitudinal_shap_comparison': record.get('longitudinal_shap_comparison'),
         'limitations': record.get('limitations', []),
         'next_available_tier': record.get('next_available_tier'),
         'pcom_status': pcom_status,

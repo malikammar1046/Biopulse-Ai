@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { LayoutGrid, Sparkles } from 'lucide-react';
+import { Grid01, MessageChatCircle } from '@untitledui/icons';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { timelineService } from '../../services/timelineService';
 import { HealthProfileSummaryCard } from '../../components/dashboard/HealthProfileSummaryCard';
@@ -90,7 +90,7 @@ export const MasterHealthHub: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 sm:p-8 rounded-[32px] bg-[#01579B] border border-[#0288D1] text-white shadow-md">
         <div className="space-y-1">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0288D1]/40 border border-[#BAE6FD]/40 text-xs font-mono text-[#E0F2FE] mb-1">
-            <LayoutGrid className="w-3.5 h-3.5 text-[#29B6F6]" />
+            <Grid01 className="w-3.5 h-3.5 text-[#29B6F6] shrink-0" aria-hidden="true" />
             <span>Master Clinical Hub</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold font-display tracking-tight text-white">
@@ -108,7 +108,7 @@ export const MasterHealthHub: React.FC = () => {
           onClick={() => openAiChatWithPrompt('Generate a comprehensive health summary across all my logged modules.')}
           className="px-5 py-3 rounded-2xl bg-[#0288D1] hover:bg-[#0277BD] text-white font-sans text-xs font-bold shadow-md transition-all flex items-center gap-2 self-start sm:self-auto cursor-pointer"
         >
-          <Sparkles className="w-4 h-4 text-white" />
+          <MessageChatCircle className="w-4 h-4 text-white shrink-0" aria-hidden="true" />
           <span>Ask Health Hub AI</span>
         </button>
       </div>

@@ -1,5 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import { AlertTriangle, RefreshCw01, Home01 } from '@untitledui/icons';
 
 interface Props {
   children: ReactNode;
@@ -41,7 +41,7 @@ export class ErrorBoundary extends Component<Props, State> {
         <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] p-4 sm:p-6 select-none">
           <div className="w-full max-w-lg rounded-3xl bg-white border border-[#BAE6FD] p-6 sm:p-8 shadow-sm space-y-6 text-center">
             <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto text-amber-600 shadow-sm">
-              <AlertTriangle className="w-8 h-8" />
+              <AlertTriangle className="w-8 h-8" aria-hidden="true" />
             </div>
 
             <div className="space-y-2">
@@ -65,14 +65,14 @@ export class ErrorBoundary extends Component<Props, State> {
                 onClick={this.handleReload}
                 className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white font-medium text-sm transition-colors flex items-center justify-center gap-2 shadow-sm"
               >
-                <RefreshCw className="w-4 h-4" />
+                <RefreshCw01 className="w-4 h-4" aria-hidden="true" />
                 Reload Page
               </button>
               <button
                 onClick={this.handleGoHome}
                 className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#F0F9FF] hover:bg-[#E0F2FE] text-[#0288D1] font-medium text-sm transition-colors flex items-center justify-center gap-2 border border-[#BAE6FD]"
               >
-                <Home className="w-4 h-4" />
+                <Home01 className="w-4 h-4" aria-hidden="true" />
                 Return to Dashboard
               </button>
             </div>

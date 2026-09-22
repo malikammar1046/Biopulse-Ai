@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, type HTMLMotionProps } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
+import { Loading01 } from '@untitledui/icons';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -85,7 +85,7 @@ export const Button: React.FC<ButtonProps> = ({
       {...props}
     >
       {loading ? (
-        <Loader2 className="w-4 h-4 mr-2 animate-spin text-current" />
+        <Loading01 className="w-4 h-4 mr-2 animate-spin text-current" aria-hidden="true" />
       ) : iconLeft ? (
         <span className="mr-2 inline-flex items-center">{iconLeft}</span>
       ) : null}

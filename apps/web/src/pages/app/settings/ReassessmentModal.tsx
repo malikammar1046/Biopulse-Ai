@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, X, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { ActivityHeart, XClose, RefreshCw01, CheckCircle } from '@untitledui/icons';
 import { useUserHealth } from '../../../context/UserHealthContext';
 
 interface ReassessmentModalProps {
@@ -56,8 +56,8 @@ export const ReassessmentModal: React.FC<ReassessmentModalProps> = ({
         >
           {/* Header icon */}
           <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-[#0E9EAA]/10 text-[#0E9EAA]">
-              <Sparkles className="w-6 h-6" />
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-[#E0F2FE] text-[#0288D1]">
+              <ActivityHeart className="w-6 h-6 text-[#0288D1]" aria-hidden="true" />
             </div>
 
             <button
@@ -65,7 +65,7 @@ export const ReassessmentModal: React.FC<ReassessmentModalProps> = ({
               onClick={onClose}
               className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
             >
-              <X className="w-5 h-5" />
+              <XClose className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
 
@@ -87,7 +87,7 @@ export const ReassessmentModal: React.FC<ReassessmentModalProps> = ({
               animate={{ opacity: 1, scale: 1 }}
               className="mt-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-3 text-sm font-medium"
             >
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+              <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" aria-hidden="true" />
               <span>Screening result updated with your latest profile data!</span>
             </motion.div>
           ) : (
@@ -103,23 +103,20 @@ export const ReassessmentModal: React.FC<ReassessmentModalProps> = ({
                   type="button"
                   onClick={onClose}
                   disabled={isLoading || assessmentLoading}
-                  className="px-4 py-2.5 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition-colors disabled:opacity-50"
+                  className="px-4 py-2.5 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   Not Now
                 </button>
 
-              <button
-                type="button"
-                onClick={handleUpdateScreening}
-                disabled={isLoading || assessmentLoading}
-                className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white shadow-md transition-all cursor-pointer ${
-                  isMale
-                    ? 'bg-[#0E9EAA] hover:bg-[#0C8B96] shadow-[#0E9EAA]/25'
-                    : 'bg-[#0E9EAA] hover:bg-[#0C8B96] shadow-[#0E9EAA]/25'
-                } disabled:opacity-50`}
-              >
-                  <RefreshCw
+                <button
+                  type="button"
+                  onClick={handleUpdateScreening}
+                  disabled={isLoading || assessmentLoading}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white shadow-md transition-all cursor-pointer bg-[#0288D1] hover:bg-[#0277BD] shadow-[#0288D1]/25 disabled:opacity-50"
+                >
+                  <RefreshCw01
                     className={`w-3.5 h-3.5 ${isLoading || assessmentLoading ? 'animate-spin' : ''}`}
+                    aria-hidden="true"
                   />
                   <span>
                     {isLoading || assessmentLoading ? 'Updating Estimate...' : 'Update Screening Result'}

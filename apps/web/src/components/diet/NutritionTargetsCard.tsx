@@ -1,5 +1,5 @@
 import React from 'react';
-import { Target, Flame, Info } from 'lucide-react';
+import { Target01, ActivityHeart, InfoCircle } from '@untitledui/icons';
 import type { DailyNutritionTargets, FoodLogEntry, WaterLogEntry } from '../../types/diet';
 
 interface NutritionTargetsCardProps {
@@ -42,10 +42,8 @@ export const NutritionTargetsCard: React.FC<NutritionTargetsCardProps> = ({
       {/* Header & Balance Check-In Score */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
-              <Target className="w-4 h-4" />
-            </span>
+          <div className="flex items-center gap-2.5">
+            <Target01 className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
             <h3 className="text-base font-bold text-[#0F172A]">
               Today’s Nutrition Check-In
             </h3>
@@ -72,7 +70,7 @@ export const NutritionTargetsCard: React.FC<NutritionTargetsCardProps> = ({
       <div className="p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-2">
         <div className="flex items-center justify-between text-xs font-sans">
           <span className="font-semibold text-[#0F172A] flex items-center gap-1.5">
-            <Flame className="w-3.5 h-3.5 text-[#0288D1]" />
+            <ActivityHeart className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
             <span>Estimated Energy Target</span>
           </span>
           <span className="font-mono text-[#0288D1] font-bold">
@@ -164,7 +162,7 @@ export const NutritionTargetsCard: React.FC<NutritionTargetsCardProps> = ({
 
       {/* Educational Disclaimer Footer */}
       <div className="p-3 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] text-[11px] text-[#475569] flex items-start gap-2 leading-relaxed">
-        <Info className="w-3.5 h-3.5 text-[#0288D1] shrink-0 mt-0.5" />
+        <InfoCircle className="w-3.5 h-3.5 text-[#0288D1] shrink-0 mt-0.5" aria-hidden="true" />
         <span>
           <strong>Estimated daily target:</strong> {targets.calculationRationale} These suggestions are educational guidance to support balanced eating.
         </span>

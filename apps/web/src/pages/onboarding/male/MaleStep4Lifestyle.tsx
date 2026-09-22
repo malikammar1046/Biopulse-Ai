@@ -1,12 +1,12 @@
 import React from 'react';
 import {
   Activity,
-  Moon,
-  Dumbbell,
-  Droplets,
-  Utensils,
-  Info,
-} from 'lucide-react';
+  Moon01,
+  ActivityHeart,
+  Droplets01,
+  Scales01,
+  InfoCircle,
+} from '@untitledui/icons';
 import type { LifestyleProfile } from '../../../types/onboarding';
 import { MaleWhyWeAskCard } from './MaleWhyWeAskCard';
 
@@ -59,7 +59,7 @@ export const MaleStep4Lifestyle: React.FC<MaleStep4Props> = ({ data, onChange })
       {/* ── Compact Question Header ── */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-full bg-[#DDF7F7] flex items-center justify-center shrink-0 shadow-2xs">
-          <Activity className="w-5 h-5 text-[#0E9EAA]" />
+          <Activity className="w-5 h-5 text-[#0E9EAA]" aria-hidden="true" />
         </div>
 
         <div>
@@ -116,7 +116,7 @@ export const MaleStep4Lifestyle: React.FC<MaleStep4Props> = ({ data, onChange })
           <div className="pt-2 border-t border-[#E8F1F5] space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-[11px] font-bold font-mono text-[#073B72] uppercase tracking-wide flex items-center gap-1.5">
-                <Moon className="w-3.5 h-3.5 text-[#0E9EAA]" />
+                <Moon01 className="w-3.5 h-3.5 text-[#0E9EAA]" aria-hidden="true" />
                 <span>Average Sleep Duration</span>
               </label>
               <span className="text-xs font-mono font-bold text-[#0E9EAA] bg-[#EAFBFC] border border-[#B2EBF2] px-2.5 py-0.5 rounded-md">
@@ -143,7 +143,7 @@ export const MaleStep4Lifestyle: React.FC<MaleStep4Props> = ({ data, onChange })
           <div className="pt-2 border-t border-[#E8F1F5] space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-[11px] font-bold font-mono text-[#073B72] uppercase tracking-wide flex items-center gap-1.5">
-                <Dumbbell className="w-3.5 h-3.5 text-[#0E9EAA]" />
+                <ActivityHeart className="w-3.5 h-3.5 text-[#0E9EAA]" aria-hidden="true" />
                 <span>Do you exercise regularly?</span>
               </label>
               <div className="flex rounded-md bg-[#EAFBFC] p-0.5 border border-[#B2EBF2] text-[10px] font-mono">
@@ -197,7 +197,7 @@ export const MaleStep4Lifestyle: React.FC<MaleStep4Props> = ({ data, onChange })
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label className="text-[11px] font-bold font-mono text-[#073B72] uppercase tracking-wide flex items-center gap-1">
-                  <Droplets className="w-3 h-3 text-[#0E9EAA]" />
+                  <Droplets01 className="w-3 h-3 text-[#0E9EAA]" aria-hidden="true" />
                   <span>Daily Water Intake</span>
                 </label>
                 <span className="text-[10px] font-mono text-[#0E9EAA] font-bold">
@@ -223,7 +223,7 @@ export const MaleStep4Lifestyle: React.FC<MaleStep4Props> = ({ data, onChange })
             {/* Fast Food Frequency */}
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold font-mono text-[#073B72] uppercase tracking-wide flex items-center gap-1">
-                <Utensils className="w-3 h-3 text-[#0E9EAA]" />
+                <Scales01 className="w-3 h-3 text-[#0E9EAA]" aria-hidden="true" />
                 <span>Fast Food Intake</span>
               </label>
               <div className="grid grid-cols-3 gap-1">
@@ -254,7 +254,7 @@ export const MaleStep4Lifestyle: React.FC<MaleStep4Props> = ({ data, onChange })
           <MaleWhyWeAskCard
             title="Why we ask this"
             description="Regular resistance training and adequate deep sleep are two of the most effective non-pharmacological drivers of healthy testosterone synthesis."
-            icon={Info}
+            icon={InfoCircle}
           />
 
           <div className="p-3.5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] text-[11px] text-[#55718F] space-y-1.5">

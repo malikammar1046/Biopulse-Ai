@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, Trash2, X, Loader2 } from 'lucide-react';
+import { AlertTriangle, Trash01, XClose, Loading01 } from '@untitledui/icons';
 import type { MedicalReport } from '../../types/report';
 
 interface ReportDeleteModalProps {
@@ -50,14 +50,15 @@ export const ReportDeleteModal: React.FC<ReportDeleteModalProps> = ({
         >
           <div className="flex items-center justify-between">
             <div className="p-3 rounded-2xl bg-[#FFF1F2] text-[#E11D48] flex items-center justify-center border border-[#FDA4AF]/60">
-              <AlertTriangle className="w-6 h-6" />
+              <AlertTriangle className="w-6 h-6" aria-hidden="true" />
             </div>
             <button
               type="button"
               onClick={onClose}
+              aria-label="Close delete modal"
               className="p-2 rounded-xl text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] transition-colors cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <XClose className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
 
@@ -88,12 +89,12 @@ export const ReportDeleteModal: React.FC<ReportDeleteModalProps> = ({
             >
               {isDeleting ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loading01 className="w-4 h-4 animate-spin" aria-hidden="true" />
                   <span>Deleting...</span>
                 </>
               ) : (
                 <>
-                  <Trash2 className="w-4 h-4" />
+                  <Trash01 className="w-4 h-4" aria-hidden="true" />
                   <span>Delete Report</span>
                 </>
               )}

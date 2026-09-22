@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Check } from 'lucide-react';
+import { Check } from '@untitledui/icons';
 
 export interface StepItem {
   number: string;
@@ -48,14 +48,14 @@ export const OnboardingStepper: React.FC<OnboardingStepperProps> = ({
                 transition={{ duration: 0.2 }}
                 className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-[11px] sm:text-xs font-bold font-mono transition-all duration-300 ${
                   isActive
-                    ? 'bg-[#F43F7D] text-white shadow-sm shadow-pink-500/25 ring-3 ring-[#FDE6EF]'
+                    ? 'bg-[#0288D1] text-white shadow-sm shadow-sky-500/25 ring-3 ring-[#E0F2FE]'
                     : isCompleted
                     ? 'bg-[#0E9EAA] text-white shadow-2xs'
                     : 'bg-white border border-[#D7EAF2] text-[#8FA3B8]'
                 }`}
               >
                 {isCompleted ? (
-                  <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <Check className="w-3.5 h-3.5 stroke-[2.5]" aria-hidden="true" />
                 ) : (
                   <span>{stepNum}</span>
                 )}

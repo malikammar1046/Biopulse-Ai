@@ -1,43 +1,50 @@
 import React from 'react';
-import { TrendingUp, Award } from 'lucide-react';
+import { LineChartUp01, Award01 } from '@untitledui/icons';
 import type { WeeklyFitnessStats } from '../../types/fitness';
 
 interface WeeklyMovementWidgetProps {
   stats: WeeklyFitnessStats;
   todayMinutes: number;
+  isMale?: boolean;
 }
 
 export const WeeklyMovementWidget: React.FC<WeeklyMovementWidgetProps> = ({
   stats,
   todayMinutes,
+  isMale,
 }) => {
   const percentOfGoal = Math.min(
     100,
     Math.round((stats.totalMinutesThisWeek / stats.targetMinutesThisWeek) * 100)
   );
+  const accentColor = isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]';
 
   return (
-    <div className="p-6 sm:p-7 rounded-[32px] bg-white border border-[#BAE6FD] shadow-xs select-none text-left space-y-5">
+    <div className={`p-6 sm:p-7 rounded-2xl bg-white shadow-xs select-none text-left space-y-5 border ${
+      isMale ? 'border-[#BAE6FD]' : 'border-[#EAECF0]'
+    }`}>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E2E8F0]">
-        <div className="flex items-center gap-2">
-          <span className="p-1.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
-            <TrendingUp className="w-4 h-4" />
-          </span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#EAECF0]">
+        <div className="flex items-center gap-2.5">
+          <LineChartUp01 className={`w-5 h-5 shrink-0 ${accentColor}`} aria-hidden="true" />
           <div>
-            <h3 className="text-base font-bold font-display text-[#01579B]">
+            <h3 className={`text-base font-bold font-display ${isMale ? 'text-[#01579B]' : 'text-[#0F172A]'}`}>
               Your Movement This Week
             </h3>
-            <p className="text-xs text-[#475569]">
+            <p className="text-xs text-[#64748B]">
               {todayMinutes} minutes today • {stats.totalMinutesThisWeek} minutes this week
             </p>
           </div>
         </div>
 
         {/* Weekly Goal Progress Tag */}
-        <div className="flex items-center gap-2 bg-[#E0F2FE] px-3.5 py-1.5 rounded-2xl border border-[#BAE6FD]">
-          <Award className="w-4 h-4 text-[#0288D1]" />
-          <span className="text-xs font-mono font-bold text-[#01579B]">
+        <div className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl border ${
+          isMale
+            ? 'bg-[#E0F2FE] border-[#BAE6FD]'
+            : 'bg-[#FDE6EF] border-[rgba(244,63,125,0.2)]'
+        }`}>
+          <Award01 className={`w-4 h-4 ${accentColor}`} aria-hidden="true" />
+          <span className={`text-xs font-mono font-bold ${isMale ? 'text-[#01579B]' : 'text-[#DC326C]'}`}>
             {percentOfGoal}% of 150m Goal
           </span>
         </div>
@@ -45,7 +52,7 @@ export const WeeklyMovementWidget: React.FC<WeeklyMovementWidgetProps> = ({
 
       {/* 3 Quick Overview Metric Tiles */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="p-3.5 rounded-2xl bg-[#F8FAFC] border border-[#BAE6FD]/80 space-y-0.5">
+        <div className="p-3.5 rounded-xl bg-[#F8FAFC] border border-[#EAECF0] space-y-0.5">
           <span className="text-[10px] font-mono uppercase text-[#64748B] font-bold">
             Total Minutes
           </span>
@@ -54,16 +61,16 @@ export const WeeklyMovementWidget: React.FC<WeeklyMovementWidgetProps> = ({
           </span>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-[#F8FAFC] border border-[#BAE6FD]/80 space-y-0.5">
+        <div className="p-3.5 rounded-xl bg-[#F8FAFC] border border-[#EAECF0] space-y-0.5">
           <span className="text-[10px] font-mono uppercase text-[#64748B] font-bold">
             Active Days
           </span>
-          <span className="text-xl font-bold font-display text-[#0288D1] block">
+          <span className={`text-xl font-bold font-display block ${isMale ? 'text-[#0288D1]' : 'text-[#DC326C]'}`}>
             {stats.activeDaysCount} <span className="text-xs font-mono font-normal text-[#64748B]">/ 7</span>
           </span>
         </div>
 
-        <div className="p-3.5 rounded-2xl bg-[#F8FAFC] border border-[#BAE6FD]/80 space-y-0.5">
+        <div className="p-3.5 rounded-xl bg-[#F8FAFC] border border-[#EAECF0] space-y-0.5">
           <span className="text-[10px] font-mono uppercase text-[#64748B] font-bold">
             Activities
           </span>
@@ -84,7 +91,7 @@ export const WeeklyMovementWidget: React.FC<WeeklyMovementWidgetProps> = ({
           </span>
         </div>
 
-        <div className="grid grid-cols-7 gap-2 sm:gap-3 pt-4 pb-2 items-end h-36 border-b border-[#E2E8F0]">
+        <div className="grid grid-cols-7 gap-2 sm:gap-3 pt-4 pb-2 items-end h-36 border-b border-[#EAECF0]">
           {stats.dailySummaries.map((day, idx) => {
             const heightPercent = Math.max(10, Math.min(100, (day.totalMinutes / 45) * 100));
             const isToday = day.date === new Date().toISOString().split('T')[0];
@@ -92,13 +99,15 @@ export const WeeklyMovementWidget: React.FC<WeeklyMovementWidgetProps> = ({
             return (
               <div key={idx} className="flex flex-col items-center gap-1.5 h-full justify-end">
                 {/* Bar */}
-                <div className="w-full max-w-[28px] bg-[#E2E8F0] rounded-t-lg h-24 flex items-end justify-center overflow-hidden">
+                <div className={`w-full max-w-[28px] rounded-t-lg h-24 flex items-end justify-center overflow-hidden border ${
+                  isMale ? 'bg-[#E2E8F0] border-transparent' : 'bg-[#FDE6EF]/30 border-[rgba(244,63,125,0.2)]'
+                }`}>
                   <div
                     className={`w-full rounded-t-lg transition-all duration-700 ${
                       day.totalMinutes > 0
                         ? isToday
-                          ? 'bg-[#0288D1]'
-                          : 'bg-[#38BDF8]'
+                          ? isMale ? 'bg-[#0288D1]' : 'bg-[#F43F7D]'
+                          : isMale ? 'bg-[#38BDF8]' : 'bg-[#F43F7D]/70'
                         : 'bg-transparent'
                     }`}
                     style={{ height: `${heightPercent}%` }}
@@ -110,7 +119,7 @@ export const WeeklyMovementWidget: React.FC<WeeklyMovementWidgetProps> = ({
                 <div className="text-center">
                   <span
                     className={`text-xs font-mono font-bold block ${
-                      isToday ? 'text-[#0288D1]' : 'text-[#0F172A]'
+                      isToday ? (isMale ? 'text-[#0288D1]' : 'text-[#DC326C]') : 'text-[#0F172A]'
                     }`}
                   >
                     {day.dayShort}

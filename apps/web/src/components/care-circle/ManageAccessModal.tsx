@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  X,
-  Stethoscope,
+  XClose,
+  MedicalCircle,
   Heart,
-  Users,
+  Users01,
   Check,
-  Lock,
-  Trash2,
-  Save,
-  CheckCircle2,
-  Building2,
-  Mail,
-} from 'lucide-react';
+  Lock01,
+  Trash01,
+  Save01,
+  CheckCircle,
+  Building01,
+  Mail01,
+} from '@untitledui/icons';
 import type {
   CareCircleMember,
   CareCirclePermissionsMap,
@@ -77,7 +77,7 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({
   };
 
   const IconComponent =
-    member.role === 'doctor' ? Stethoscope : member.role === 'family' ? Heart : Users;
+    member.role === 'doctor' ? MedicalCircle : member.role === 'family' ? Heart : Users01;
 
   return (
     <AnimatePresence>
@@ -102,7 +102,7 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({
           <div className="p-6 sm:p-7 border-b border-[#BAE6FD] flex items-center justify-between shrink-0 bg-[#01579B] text-white">
             <div className="flex items-center gap-3.5">
               <div className="w-12 h-12 rounded-xl bg-white/10 text-white flex items-center justify-center">
-                <IconComponent className="w-6 h-6 text-[#E0F2FE]" />
+                <IconComponent className="w-6 h-6 text-[#E0F2FE]" aria-hidden="true" />
               </div>
               <div>
                 <h3 className="text-xl font-bold font-display text-white">
@@ -119,7 +119,7 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({
               onClick={onClose}
               className="p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <XClose className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
 
@@ -136,12 +136,12 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({
                 </div>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#475569]">
                   <span className="inline-flex items-center gap-1">
-                    <Mail className="w-3.5 h-3.5 text-[#64748B]" />
+                    <Mail01 className="w-3.5 h-3.5 text-[#64748B]" aria-hidden="true" />
                     {member.email}
                   </span>
                   {member.clinicOrganization && (
                     <span className="inline-flex items-center gap-1">
-                      <Building2 className="w-3.5 h-3.5 text-[#64748B]" />
+                      <Building01 className="w-3.5 h-3.5 text-[#64748B]" aria-hidden="true" />
                       {member.clinicOrganization}
                     </span>
                   )}
@@ -238,9 +238,9 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({
                           }`}
                         >
                           {isEnabled ? (
-                            <Check className="w-3 h-3 text-[#0288D1]" />
+                            <Check className="w-3 h-3 text-[#0288D1]" aria-hidden="true" />
                           ) : (
-                            <Lock className="w-2.5 h-2.5 text-[#94A3B8]" />
+                            <Lock01 className="w-2.5 h-2.5 text-[#94A3B8]" aria-hidden="true" />
                           )}
                         </motion.div>
                       </div>
@@ -258,7 +258,7 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({
               onClick={() => onRequestRevoke(member)}
               className="w-full sm:w-auto px-4 py-2.5 rounded-xl font-sans font-bold text-xs text-[#E11D48] hover:bg-[#FFF1F2] border border-[#FECACA] transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash01 className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Remove Access</span>
             </button>
 
@@ -281,12 +281,12 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({
                   <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
                 ) : saveSuccess ? (
                   <>
-                    <CheckCircle2 className="w-4 h-4 text-[#34D399]" />
+                    <CheckCircle className="w-4 h-4 text-[#34D399]" aria-hidden="true" />
                     <span>Permissions Updated ✓</span>
                   </>
                 ) : (
                   <>
-                    <Save className="w-4 h-4" />
+                    <Save01 className="w-4 h-4" aria-hidden="true" />
                     <span>Save Changes</span>
                   </>
                 )}

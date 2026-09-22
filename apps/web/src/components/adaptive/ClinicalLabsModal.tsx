@@ -1,19 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  FlaskConical,
-  X,
+  Beaker01,
+  XClose,
   AlertCircle,
-  CheckCircle2,
-  Loader2,
-  Info,
-  Trash2,
-  Upload,
-  Sparkles,
-  RotateCcw,
+  CheckCircle,
+  Loading01,
+  InfoCircle,
+  Trash01,
+  Upload01,
+  RefreshCw01,
   Check,
-  FileCheck,
-} from 'lucide-react';
+  FileCheck02,
+} from '@untitledui/icons';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { ocrService } from '../../services/ocrService';
 import type { ReportResultInput } from '../../types/report';
@@ -551,7 +550,7 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
                       title="Clear / Remove value"
                       className="text-[10px] text-rose-400 hover:text-rose-300 transition-colors flex items-center gap-0.5 cursor-pointer shrink-0"
                     >
-                      <Trash2 className="w-2.5 h-2.5" />
+                      <Trash01 className="w-2.5 h-2.5" aria-hidden="true" />
                       <span>Clear</span>
                     </button>
                   )}
@@ -603,7 +602,7 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
           <div className="flex items-start justify-between gap-4 border-b border-white/15 pb-4">
             <div className="space-y-1">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 border border-white/25 text-xs font-mono text-white">
-                <FlaskConical className="w-3.5 h-3.5 text-[#BAE6FD]" />
+                <Beaker01 className="w-3.5 h-3.5 text-[#BAE6FD]" aria-hidden="true" />
                 <span>Tier 2 Clinical Biomarkers</span>
               </div>
               <h2 className="text-xl sm:text-2xl font-bold font-display text-white">
@@ -618,8 +617,9 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
               type="button"
               onClick={onClose}
               className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-colors cursor-pointer"
+              aria-label="Close modal"
             >
-              <X className="w-5 h-5" />
+              <XClose className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
 
@@ -650,7 +650,7 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
                         : 'text-white/70 hover:text-white'
                     }`}
                   >
-                    <Sparkles className="w-3 h-3 text-[#0288D1]" />
+                    <Beaker01 className="w-3 h-3 text-[#0288D1]" aria-hidden="true" />
                     <span>Mock / Sample Data</span>
                   </button>
                 </div>
@@ -664,7 +664,7 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
                     onClick={handleFillMockData}
                     className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-mono text-sky-100 hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
                   >
-                    <Sparkles className="w-3.5 h-3.5 text-[#BAE6FD]" />
+                    <Beaker01 className="w-3.5 h-3.5 text-[#BAE6FD]" aria-hidden="true" />
                     <span>Fill Sample Values</span>
                   </button>
                 )}
@@ -675,7 +675,7 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
                     onClick={handleClearAll}
                     className="px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/30 text-xs font-mono text-rose-100 transition-colors flex items-center gap-1.5 cursor-pointer"
                   >
-                    <RotateCcw className="w-3.5 h-3.5" />
+                    <RefreshCw01 className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Clear All</span>
                   </button>
                 )}
@@ -705,9 +705,9 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-white/15 border border-white/25 text-white shrink-0">
                   {isScanningReport ? (
-                    <Loader2 className="w-5 h-5 animate-spin text-[#BAE6FD]" />
+                    <Loading01 className="w-5 h-5 animate-spin text-[#BAE6FD]" aria-hidden="true" />
                   ) : (
-                    <Upload className="w-5 h-5 text-[#BAE6FD]" />
+                    <Upload01 className="w-5 h-5 text-[#BAE6FD]" aria-hidden="true" />
                   )}
                 </div>
                 <div>
@@ -732,12 +732,12 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
               >
                 {isScanningReport ? (
                   <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <Loading01 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
                     <span>Scanning...</span>
                   </>
                 ) : (
                   <>
-                    <FileCheck className="w-3.5 h-3.5 text-[#BAE6FD]" />
+                    <FileCheck02 className="w-3.5 h-3.5 text-[#BAE6FD]" aria-hidden="true" />
                     <span>Select Report</span>
                   </>
                 )}
@@ -759,9 +759,9 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
               }`}
             >
               {ocrBanner.type === 'success' ? (
-                <Check className="w-4 h-4 text-emerald-300 shrink-0" />
+                <Check className="w-4 h-4 text-emerald-300 shrink-0" aria-hidden="true" />
               ) : (
-                <Info className="w-4 h-4 text-[#BAE6FD] shrink-0" />
+                <InfoCircle className="w-4 h-4 text-[#BAE6FD] shrink-0" aria-hidden="true" />
               )}
               <span className="flex-1">{ocrBanner.message}</span>
               <button
@@ -777,7 +777,7 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
           {/* Cumulative Model Notice & Partial Indicator */}
           <div className="p-3.5 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-between gap-3 text-xs text-sky-100">
             <div className="flex items-center gap-2.5">
-              <Info className="w-4 h-4 text-[#BAE6FD] shrink-0" />
+              <InfoCircle className="w-4 h-4 text-[#BAE6FD] shrink-0" aria-hidden="true" />
               <span>
                 Enter at least 1 test to upgrade your assessment. You can always add more results later.
               </span>
@@ -789,14 +789,14 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
 
           {error && (
             <div className="p-3.5 rounded-2xl bg-rose-500/20 border border-rose-400/40 text-rose-100 text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0 text-rose-300" />
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-300" aria-hidden="true" />
               <span>{error}</span>
             </div>
           )}
 
           {success && (
             <div className="p-3.5 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-100 text-xs flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-300" />
+              <CheckCircle className="w-4 h-4 shrink-0 text-emerald-300" aria-hidden="true" />
               <span>Clinical lab data processed! Your active assessment has been upgraded.</span>
             </div>
           )}
@@ -818,7 +818,7 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
                       disabled={clearingTier2}
                       className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1"
                     >
-                      {clearingTier2 ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                      {clearingTier2 ? <Loading01 className="w-3 h-3 animate-spin" aria-hidden="true" /> : <Trash01 className="w-3 h-3" aria-hidden="true" />}
                       <span>Confirm</span>
                     </button>
                     <button
@@ -838,7 +838,7 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
                       className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-300 text-xs font-sans flex items-center gap-1.5 transition-colors cursor-pointer"
                       title="Explicitly remove all stored Tier 2 laboratory data and revert to Tier 1 screening"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash01 className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>Clear Tier 2 Data</span>
                     </button>
                   )
@@ -864,12 +864,12 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
                 >
                   {loading ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loading01 className="w-4 h-4 animate-spin" aria-hidden="true" />
                       <span>Evaluating Cumulative Model...</span>
                     </>
                   ) : (
                     <>
-                      <FlaskConical className="w-4 h-4" />
+                      <Beaker01 className="w-4 h-4" aria-hidden="true" />
                       <span>{enteredCount > 0 ? 'Submit & Run Cumulative Tier 2' : 'Submit Clinical Data'}</span>
                     </>
                   )}

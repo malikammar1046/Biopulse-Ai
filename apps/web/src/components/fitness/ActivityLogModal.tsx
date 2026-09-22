@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  X,
+  XClose,
   Plus,
-  Dumbbell,
-  CheckCircle2,
-} from 'lucide-react';
+  ActivityHeart,
+  CheckCircle,
+} from '@untitledui/icons';
 import type { ActivityType, EnergyFeelingLevel, FitnessLogInput, FitnessLogEntry } from '../../types/fitness';
 
 interface ActivityLogModalProps {
@@ -16,6 +16,7 @@ interface ActivityLogModalProps {
   initialDurationMinutes?: number;
   onClose: () => void;
   onSave: (input: FitnessLogInput) => Promise<{ success: boolean; error?: string }>;
+  isMale?: boolean;
 }
 
 const ACTIVITY_TYPES: { type: ActivityType; label: string; icon: string }[] = [
@@ -47,6 +48,7 @@ export const ActivityLogModal: React.FC<ActivityLogModalProps> = ({
   initialDurationMinutes = 20,
   onClose,
   onSave,
+  isMale,
 }) => {
   const [activityType, setActivityType] = useState<ActivityType>(initialActivityType);
   const [activityName, setActivityName] = useState<string>(initialActivityName);
@@ -114,19 +116,25 @@ export const ActivityLogModal: React.FC<ActivityLogModalProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          className="w-full max-w-xl bg-white rounded-[32px] shadow-2xl border border-[#BAE6FD] overflow-hidden flex flex-col max-h-[90vh]"
+          className={`w-full max-w-xl bg-white rounded-2xl shadow-2xl border overflow-hidden flex flex-col max-h-[90vh] ${
+            isMale ? 'border-[#BAE6FD]' : 'border-[#EAECF0]'
+          }`}
         >
           {/* Header */}
-          <div className="p-6 pb-4 border-b border-[#BAE6FD] flex items-center justify-between bg-[#F0F9FF]">
+          <div className={`p-6 pb-4 border-b flex items-center justify-between ${
+            isMale ? 'border-[#BAE6FD] bg-[#F0F9FF]' : 'border-[#EAECF0] bg-[#FDE6EF]/20'
+          }`}>
             <div className="flex items-center gap-2.5">
-              <span className="p-2 rounded-2xl bg-[#E0F2FE] text-[#0288D1]">
-                <Dumbbell className="w-5 h-5" />
+              <span className={`p-2 rounded-xl ${
+                isMale ? 'bg-[#E0F2FE] text-[#0288D1]' : 'bg-[#FDE6EF] text-[#F43F7D]'
+              }`}>
+                <ActivityHeart className="w-5 h-5" aria-hidden="true" />
               </span>
               <div>
-                <h2 className="text-lg font-bold font-display text-[#01579B]">
+                <h2 className={`text-lg font-bold font-display ${isMale ? 'text-[#01579B]' : 'text-[#0F172A]'}`}>
                   {editingEntry ? 'Edit Activity' : 'Log Movement & Exercise'}
                 </h2>
-                <p className="text-xs text-[#475569]">
+                <p className="text-xs text-[#64748B]">
                   Record how your body moved and felt today
                 </p>
               </div>
@@ -135,9 +143,12 @@ export const ActivityLogModal: React.FC<ActivityLogModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-full text-[#64748B] hover:text-[#01579B] hover:bg-[#E0F2FE] transition-all cursor-pointer"
+              className={`p-2 rounded-xl transition-all cursor-pointer ${
+                isMale ? 'text-[#64748B] hover:text-[#01579B] hover:bg-[#E0F2FE]' : 'text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC]'
+              }`}
+              aria-label="Close dialog"
             >
-              <X className="w-5 h-5" />
+              <XClose className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
 
@@ -161,10 +172,14 @@ export const ActivityLogModal: React.FC<ActivityLogModalProps> = ({
                           setActivityName(item.label);
                         }
                       }}
-                      className={`p-3 rounded-2xl text-xs font-bold font-sans flex items-center gap-2 border transition-all cursor-pointer ${
+                      className={`p-3 rounded-xl text-xs font-bold font-sans flex items-center gap-2 border transition-all cursor-pointer ${
                         isSelected
-                          ? 'bg-[#0288D1] text-white border-[#0288D1] shadow-xs'
-                          : 'bg-[#F8FAFC] text-[#475569] border-[#BAE6FD]/80 hover:bg-[#E0F2FE]'
+                          ? isMale
+                            ? 'bg-[#0288D1] text-white border-[#0288D1] shadow-xs'
+                            : 'bg-[#F43F7D] text-white border-[#F43F7D] shadow-xs'
+                          : isMale
+                            ? 'bg-[#F8FAFC] text-[#475569] border-[#BAE6FD]/80 hover:bg-[#E0F2FE]'
+                            : 'bg-[#F8FAFC] text-[#475569] border-[#EAECF0] hover:bg-[#FDE6EF]/40 hover:border-[rgba(244,63,125,0.3)]'
                       }`}
                     >
                       <span className="text-base">{item.icon}</span>
@@ -185,7 +200,9 @@ export const ActivityLogModal: React.FC<ActivityLogModalProps> = ({
                 placeholder="e.g. Morning Sunshine Walk, Low-Impact Squats"
                 value={activityName}
                 onChange={(e) => setActivityName(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-2xl bg-[#F8FAFC] border border-[#BAE6FD]/80 text-xs font-sans text-[#0F172A] focus:bg-white focus:border-[#0288D1] focus:outline-none"
+                className={`w-full px-4 py-2.5 rounded-xl bg-[#F8FAFC] border text-xs font-sans text-[#0F172A] focus:bg-white focus:outline-none ${
+                  isMale ? 'border-[#BAE6FD]/80 focus:border-[#0288D1]' : 'border-[#EAECF0] focus:border-[#F43F7D]'
+                }`}
               />
             </div>
 
@@ -202,7 +219,9 @@ export const ActivityLogModal: React.FC<ActivityLogModalProps> = ({
                     max="300"
                     value={durationMinutes}
                     onChange={(e) => setDurationMinutes(Number(e.target.value))}
-                    className="w-20 px-2.5 py-1 rounded-xl bg-[#F8FAFC] border border-[#BAE6FD]/80 text-xs font-mono text-center font-bold text-[#0288D1]"
+                    className={`w-20 px-2.5 py-1 rounded-xl bg-[#F8FAFC] border text-xs font-mono text-center font-bold ${
+                      isMale ? 'border-[#BAE6FD]/80 text-[#0288D1]' : 'border-[#EAECF0] text-[#DC326C]'
+                    }`}
                   />
                   <span className="text-xs font-mono text-[#64748B]">min</span>
                 </div>
@@ -217,8 +236,10 @@ export const ActivityLogModal: React.FC<ActivityLogModalProps> = ({
                     onClick={() => setDurationMinutes(mins)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
                       durationMinutes === mins
-                        ? 'bg-[#0288D1] text-white'
-                        : 'bg-[#F8FAFC] text-[#475569] border border-[#BAE6FD]/80 hover:bg-[#E0F2FE]'
+                        ? isMale ? 'bg-[#0288D1] text-white' : 'bg-[#F43F7D] text-white'
+                        : isMale
+                          ? 'bg-[#F8FAFC] text-[#475569] border border-[#BAE6FD]/80 hover:bg-[#E0F2FE]'
+                          : 'bg-[#F8FAFC] text-[#475569] border border-[#EAECF0] hover:bg-[#FDE6EF]/40 hover:border-[rgba(244,63,125,0.3)]'
                     }`}
                   >
                     {mins}m
@@ -240,10 +261,14 @@ export const ActivityLogModal: React.FC<ActivityLogModalProps> = ({
                       key={item.level}
                       type="button"
                       onClick={() => setEnergyLevel(item.level)}
-                      className={`p-2.5 rounded-2xl text-xs font-bold font-sans flex items-center justify-center gap-1.5 border transition-all cursor-pointer ${
+                      className={`p-2.5 rounded-xl text-xs font-bold font-sans flex items-center justify-center gap-1.5 border transition-all cursor-pointer ${
                         isSelected
-                          ? 'bg-[#E0F2FE] text-[#01579B] border-[#0288D1] shadow-xs'
-                          : 'bg-[#F8FAFC] text-[#475569] border-[#BAE6FD]/80 hover:bg-[#E0F2FE]'
+                          ? isMale
+                            ? 'bg-[#E0F2FE] text-[#01579B] border-[#0288D1] shadow-xs'
+                            : 'bg-[#FDE6EF] text-[#DC326C] border-[#F43F7D] shadow-xs'
+                          : isMale
+                            ? 'bg-[#F8FAFC] text-[#475569] border-[#BAE6FD]/80 hover:bg-[#E0F2FE]'
+                            : 'bg-[#F8FAFC] text-[#475569] border-[#EAECF0] hover:bg-[#FDE6EF]/40 hover:border-[rgba(244,63,125,0.3)]'
                       }`}
                     >
                       <span>{item.emoji}</span>
@@ -262,7 +287,9 @@ export const ActivityLogModal: React.FC<ActivityLogModalProps> = ({
                   type="date"
                   value={occurredAt}
                   onChange={(e) => setOccurredAt(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-[#F8FAFC] border border-[#BAE6FD]/80 text-xs font-mono text-[#0F172A] focus:bg-white focus:border-[#0288D1] focus:outline-none"
+                  className={`w-full px-3 py-2 rounded-xl bg-[#F8FAFC] border text-xs font-mono text-[#0F172A] focus:bg-white focus:outline-none ${
+                    isMale ? 'border-[#BAE6FD]/80 focus:border-[#0288D1]' : 'border-[#EAECF0] focus:border-[#F43F7D]'
+                  }`}
                 />
               </div>
 
@@ -273,17 +300,19 @@ export const ActivityLogModal: React.FC<ActivityLogModalProps> = ({
                   placeholder="e.g. sunny morning, light hip soreness"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-[#F8FAFC] border border-[#BAE6FD]/80 text-xs font-sans text-[#0F172A] focus:bg-white focus:border-[#0288D1] focus:outline-none"
+                  className={`w-full px-3 py-2 rounded-xl bg-[#F8FAFC] border text-xs font-sans text-[#0F172A] focus:bg-white focus:outline-none ${
+                    isMale ? 'border-[#BAE6FD]/80 focus:border-[#0288D1]' : 'border-[#EAECF0] focus:border-[#F43F7D]'
+                  }`}
                 />
               </div>
             </div>
 
             {/* Submit Footer */}
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E2E8F0]">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#EAECF0]">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-5 py-2.5 rounded-2xl border border-[#BAE6FD] text-xs font-bold text-[#475569] hover:bg-[#E0F2FE] transition-all cursor-pointer"
+                className="h-10 px-4 rounded-xl border border-[#EAECF0] text-xs font-semibold text-[#64748B] hover:bg-[#F8FAFC] transition-all cursor-pointer"
               >
                 Cancel
               </button>
@@ -291,16 +320,18 @@ export const ActivityLogModal: React.FC<ActivityLogModalProps> = ({
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-6 py-2.5 rounded-2xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                className={`h-10 px-5 rounded-xl text-white text-sm font-medium shadow-xs flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50 ${
+                  isMale ? 'bg-[#0288D1] hover:bg-[#0277BD]' : 'bg-[#F43F7D] hover:bg-[#DC326C]'
+                }`}
               >
                 {successToast ? (
                   <>
-                    <CheckCircle2 className="w-4 h-4 text-white" />
+                    <CheckCircle className="w-4 h-4 text-white" aria-hidden="true" />
                     <span>Saved!</span>
                   </>
                 ) : (
                   <>
-                    <Plus className="w-4 h-4 text-white" />
+                    <Plus className="w-4 h-4 text-white" aria-hidden="true" />
                     <span>{editingEntry ? 'Update Activity' : 'Save to Movement Log'}</span>
                   </>
                 )}

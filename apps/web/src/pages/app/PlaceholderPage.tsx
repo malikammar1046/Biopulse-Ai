@@ -2,7 +2,7 @@ import React from 'react';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft, File01 } from '@untitledui/icons';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes';
 
@@ -33,7 +33,7 @@ export const PlaceholderPage: React.FC<PlaceholderProps> = ({
         </div>
 
         <Link to={ROUTES.HOME}>
-          <Button variant="outline" size="sm" iconLeft={<ArrowLeft className="w-3.5 h-3.5" />}>
+          <Button variant="outline" size="sm" iconLeft={<ArrowLeft className="w-4 h-4 shrink-0" aria-hidden="true" />}>
             Public Site
           </Button>
         </Link>
@@ -41,7 +41,7 @@ export const PlaceholderPage: React.FC<PlaceholderProps> = ({
 
       <Card variant="standard" className="p-8 space-y-6 border-[#BAE6FD]">
         <div className="flex items-center gap-3 p-4 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] text-[#0369A1]">
-          <Sparkles className="w-5 h-5 shrink-0 text-[#0288D1]" />
+          <File01 className="w-5 h-5 shrink-0 text-[#0288D1]" aria-hidden="true" />
           <p className="text-xs font-semibold">
             This module is reserved for Phase 2 implementation. The UI architecture, database schemas,
             and API controllers will connect during the authenticated application phase.

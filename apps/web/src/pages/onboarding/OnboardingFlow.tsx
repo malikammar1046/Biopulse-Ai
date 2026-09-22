@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ShieldTick } from '@untitledui/icons';
 import { ROUTES, getPathwayDashboardRoute } from '../../constants/routes';
 import { useUserHealth } from '../../context/UserHealthContext';
 import type {
@@ -115,7 +115,7 @@ export const OnboardingFlow: React.FC = () => {
         </Link>
 
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-[#B4A6C7]">
-          <ShieldCheck className="w-3.5 h-3.5 text-[#34D399]" />
+          <ShieldTick className="w-3.5 h-3.5 text-[#34D399]" aria-hidden="true" />
           <span>Encrypted Profile</span>
         </div>
       </header>

@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  ClipboardCheck,
-  Layers,
-  Edit3,
-  CheckCircle2,
-  Save,
-  Loader2,
-  ImageIcon,
-  Sparkles,
-  ShieldCheck,
-} from 'lucide-react';
+  CheckDone01,
+  LayersThree01,
+  Edit03,
+  CheckCircle,
+  Save01,
+  RefreshCw01,
+  Image01,
+  Eye,
+  ShieldTick,
+} from '@untitledui/icons';
 import { useAuth } from '../../context/AuthContext';
 import { useUserHealth } from '../../context/UserHealthContext';
 import type { TierLevel } from '../../types/adaptiveScreening';
@@ -29,6 +29,7 @@ import {
   AssessmentHistoryModal,
 } from '../../components/adaptive';
 import { FemaleScreeningWorkspace } from '../../components/female';
+import { PatientShapExplanation } from '../../components/explainability/PatientShapExplanation';
 
 export const AssessmentPage: React.FC = () => {
   const { userProfile, updateUserProfile } = useAuth();
@@ -121,7 +122,7 @@ export const AssessmentPage: React.FC = () => {
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 border border-white/25 text-xs font-mono text-white">
-              <Layers className="w-3.5 h-3.5 text-[#BAE6FD]" />
+              <LayersThree01 className="w-3.5 h-3.5 text-[#BAE6FD]" aria-hidden="true" />
               <span>{adaptiveProfile.screeningPathwayName}</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold font-display tracking-tight text-white">
@@ -173,13 +174,22 @@ export const AssessmentPage: React.FC = () => {
             onRefresh={handleInitializeTier1}
           />
 
+          {/* Patient-Centered Fold-Aware SHAP Explainability Engine */}
+          {activeAssessment?.shap_explanation && (
+            <PatientShapExplanation
+              payload={activeAssessment.shap_explanation}
+              longitudinalComparison={activeAssessment.longitudinal_shap_comparison}
+              pathway="male_hypogonadism"
+            />
+          )}
+
           {/* Dedicated Ultrasound AI Analysis Card (Side-by-Side Original & Grad-CAM) */}
           {hasUltrasoundEvidence && (
             <div className="p-6 sm:p-8 rounded-[32px] bg-white border border-[#BAE6FD] text-[#0F172A] shadow-xs space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E2E8F0] pb-4">
                 <div className="space-y-1">
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E0F2FE] border border-[#BAE6FD] text-xs font-mono text-[#0288D1] font-bold">
-                    <ImageIcon className="w-3.5 h-3.5" />
+                    <Image01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
                     <span>Tier 3 Pelvic Ultrasound Spatial Inspection</span>
                   </div>
                   <h3 className="text-lg sm:text-xl font-bold font-display text-[#01579B]">
@@ -214,7 +224,7 @@ export const AssessmentPage: React.FC = () => {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-[#0F172A] flex items-center gap-1.5">
-                      <Layers className="w-4 h-4 text-[#0288D1]" />
+                      <LayersThree01 className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
                       Original Pelvic Ultrasound Scan
                     </span>
                     <span className="text-[11px] font-mono text-[#64748B]">B-mode Grayscale</span>
@@ -244,7 +254,7 @@ export const AssessmentPage: React.FC = () => {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-[#01579B] flex items-center gap-1.5">
-                      <Sparkles className="w-4 h-4 text-[#0288D1]" />
+                      <Eye className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
                       AI Attention Heatmap (Grad-CAM)
                     </span>
                     <span className="text-[11px] font-mono text-[#0288D1] font-bold">Jet Colormap</span>
@@ -271,7 +281,7 @@ export const AssessmentPage: React.FC = () => {
 
               {/* Clinical Non-Diagnostic Safety Callout */}
               <div className="p-4 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-start gap-3 text-xs text-[#0F172A]">
-                <ShieldCheck className="w-4 h-4 text-[#0288D1] shrink-0 mt-0.5" />
+                <ShieldTick className="w-4 h-4 text-[#0288D1] shrink-0 mt-0.5" aria-hidden="true" />
                 <div className="space-y-1">
                   <p className="font-bold text-[#01579B]">
                     Informational Explainability & Spatial Visualization Only
@@ -295,11 +305,11 @@ export const AssessmentPage: React.FC = () => {
             <div className="p-4 sm:p-5 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[#0F172A] shadow-xs">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-[#0288D1] flex items-center justify-center text-white shrink-0 shadow-xs">
-                  <ClipboardCheck className="w-5 h-5" />
+                  <CheckDone01 className="w-5 h-5 text-white" aria-hidden="true" />
                 </div>
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
-                    <h4 className="text-sm sm:text-base font-bold text-[#01579B] font-display">
+                    <h4 className="text-sm sm:base font-bold text-[#01579B] font-display">
                       ADAM Questionnaire (Tier 1 Screening Tool)
                     </h4>
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD] font-bold">
@@ -377,7 +387,7 @@ export const AssessmentPage: React.FC = () => {
         >
           <div className="border-b border-[#E2E8F0] pb-4 space-y-1">
             <h3 className="text-lg font-bold font-display text-[#01579B] flex items-center gap-2">
-              <Edit3 className="w-5 h-5 text-[#0288D1]" />
+              <Edit03 className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
               <span>Update Tier 1 Biometrics & Habits</span>
             </h3>
             <p className="text-xs text-[#475569]">
@@ -464,7 +474,7 @@ export const AssessmentPage: React.FC = () => {
 
           {saveSuccess && (
             <div className="p-3 rounded-xl bg-[#ECFDF5] border border-[#A7F3D0] text-xs text-[#065F46] flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#059669]" />
+              <CheckCircle className="w-4 h-4 text-[#059669]" aria-hidden="true" />
               <span>Biometrics saved successfully! Tier 1 profile has been refreshed.</span>
             </div>
           )}
@@ -483,7 +493,7 @@ export const AssessmentPage: React.FC = () => {
               disabled={isSaving}
               className="px-5 py-2.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold font-sans transition-all flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
             >
-              {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              {isSaving ? <RefreshCw01 className="w-4 h-4 animate-spin text-white" aria-hidden="true" /> : <Save01 className="w-4 h-4 text-white" aria-hidden="true" />}
               <span>Save & Update Profile</span>
             </button>
           </div>

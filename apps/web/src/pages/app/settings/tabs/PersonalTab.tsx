@@ -1,5 +1,5 @@
 import React from 'react';
-import { Scale, Ruler } from 'lucide-react';
+import { Ruler, Scales01 } from '@untitledui/icons';
 import type { UserProfile } from '../../../../types/onboarding';
 import { AssessmentImpactBadge } from '../AssessmentImpactBadge';
 import {
@@ -224,7 +224,7 @@ export const PersonalTab: React.FC<PersonalTabProps> = ({
           <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/70">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                <Ruler className="w-3.5 h-3.5 text-primary-teal" />
+                <Ruler className="w-3.5 h-3.5 text-primary-teal" aria-hidden="true" />
                 Height
               </span>
 
@@ -315,7 +315,7 @@ export const PersonalTab: React.FC<PersonalTabProps> = ({
           <div className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/70">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                <Scale className="w-3.5 h-3.5 text-[#0E9EAA]" />
+                <Scales01 className="w-3.5 h-3.5 text-[#0E9EAA]" aria-hidden="true" />
                 Weight
               </span>
 

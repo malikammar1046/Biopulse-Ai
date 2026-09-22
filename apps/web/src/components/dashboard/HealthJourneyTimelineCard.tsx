@@ -1,17 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import {
-  GitBranch,
+  GitBranch01,
   Calendar,
-  Activity,
-  FileText,
-  Pill,
-  Utensils,
-  Dumbbell,
-  Stethoscope,
-  Users,
+  CalendarCheck01,
+  ActivityHeart,
+  File01,
+  MedicalCross,
+  Scales01,
+  Users01,
   ArrowRight,
-} from 'lucide-react';
+} from '@untitledui/icons';
 import type { TimelineEvent, TimelineCategory } from '../../types/timeline';
 import { ROUTES } from '../../constants/routes';
 
@@ -25,22 +24,22 @@ export const HealthJourneyTimelineCard: React.FC<HealthJourneyTimelineCardProps>
   const getCategoryIcon = (cat: TimelineCategory) => {
     switch (cat) {
       case 'cycle':
-        return <Calendar className="w-3.5 h-3.5 text-[#0288D1]" />;
+        return <Calendar className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />;
       case 'symptom':
-        return <Activity className="w-3.5 h-3.5 text-[#0288D1]" />;
+        return <ActivityHeart className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />;
       case 'report':
-        return <FileText className="w-3.5 h-3.5 text-[#0288D1]" />;
+        return <File01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />;
       case 'medication':
-        return <Pill className="w-3.5 h-3.5 text-[#0288D1]" />;
+        return <MedicalCross className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />;
       case 'nutrition':
-        return <Utensils className="w-3.5 h-3.5 text-[#059669]" />;
+        return <Scales01 className="w-3.5 h-3.5 text-[#059669]" aria-hidden="true" />;
       case 'fitness':
-        return <Dumbbell className="w-3.5 h-3.5 text-[#0288D1]" />;
+        return <ActivityHeart className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />;
       case 'appointment':
-        return <Stethoscope className="w-3.5 h-3.5 text-[#01579B]" />;
+        return <CalendarCheck01 className="w-3.5 h-3.5 text-[#01579B]" aria-hidden="true" />;
       case 'care_circle':
       default:
-        return <Users className="w-3.5 h-3.5 text-[#0288D1]" />;
+        return <Users01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />;
     }
   };
 
@@ -51,9 +50,7 @@ export const HealthJourneyTimelineCard: React.FC<HealthJourneyTimelineCardProps>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="p-1.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
-            <GitBranch className="w-4 h-4" />
-          </span>
+          <GitBranch01 className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
           <h3 className="text-base font-bold font-display text-[#0F172A]">
             Your Health Journey
           </h3>
@@ -64,7 +61,7 @@ export const HealthJourneyTimelineCard: React.FC<HealthJourneyTimelineCardProps>
           className="text-xs font-mono font-bold text-[#0288D1] hover:text-[#01579B] flex items-center gap-1 transition-colors"
         >
           <span>Timeline</span>
-          <ArrowRight className="w-3.5 h-3.5" />
+          <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
         </Link>
       </div>
 
@@ -121,7 +118,7 @@ export const HealthJourneyTimelineCard: React.FC<HealthJourneyTimelineCardProps>
           className="inline-flex items-center justify-between w-full text-xs font-bold text-[#0288D1] hover:text-[#01579B] transition-colors"
         >
           <span>View Longitudinal Timeline</span>
-          <ArrowRight className="w-3.5 h-3.5" />
+          <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
         </Link>
       </div>
     </div>

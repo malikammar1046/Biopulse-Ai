@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Lock, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Lock01, ActivityHeart } from '@untitledui/icons';
 import { ROUTES } from '../../../constants/routes';
 import { MaleOnboardingStepper } from './MaleOnboardingStepper';
 import type { MaleStepItem } from './MaleOnboardingStepper';
@@ -49,7 +49,7 @@ export const MaleOnboardingLayout: React.FC<MaleOnboardingLayoutProps> = ({
               to={ROUTES.HOME}
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#55718F] hover:text-[#073B72] transition-colors group cursor-pointer"
             >
-              <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5 text-[#55718F] group-hover:text-[#073B72]" />
+              <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5 text-[#55718F] group-hover:text-[#073B72]" aria-hidden="true" />
               <span>Back to Home</span>
             </Link>
 
@@ -115,7 +115,7 @@ export const MaleOnboardingLayout: React.FC<MaleOnboardingLayoutProps> = ({
               {/* Floating Badge Card Over Lower Left */}
               <div className="absolute -bottom-2 -left-2 sm:-left-3 z-20 bg-white/95 backdrop-blur-md rounded-xl p-2.5 border border-[#D7EAF2] shadow-md flex items-center gap-2.5">
                 <div className="w-7 h-7 rounded-lg bg-[#DDF7F7] flex items-center justify-center text-[#0E9EAA] shrink-0">
-                  <Sparkles className="w-3.5 h-3.5 text-[#0E9EAA]" />
+                  <ActivityHeart className="w-3.5 h-3.5 text-[#0E9EAA]" aria-hidden="true" />
                 </div>
                 <div>
                   <span className="text-[10px] font-bold text-[#073B72] block leading-tight">
@@ -177,7 +177,7 @@ export const MaleOnboardingLayout: React.FC<MaleOnboardingLayoutProps> = ({
                     : 'bg-[#F5FBFD] hover:bg-[#E8F4F8] border border-[#D7EAF2] text-[#55718F] hover:text-[#073B72]'
                 }`}
               >
-                <ArrowLeft className="w-3.5 h-3.5" />
+                <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>Back</span>
               </button>
 
@@ -202,7 +202,7 @@ export const MaleOnboardingLayout: React.FC<MaleOnboardingLayoutProps> = ({
                         ? 'Review Profile'
                         : 'Continue'}
                     </span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                   </>
                 )}
               </button>
@@ -212,7 +212,7 @@ export const MaleOnboardingLayout: React.FC<MaleOnboardingLayoutProps> = ({
           {/* Privacy Note & Footer Step Counter below Main Card */}
           <div className="w-full py-1.5 flex items-center justify-between text-[11px] text-[#55718F] px-3 shrink-0">
             <div className="flex items-center gap-1.5 mx-auto">
-              <Lock className="w-3 h-3 text-[#0E9EAA]" />
+              <Lock01 className="w-3 h-3 text-[#0E9EAA]" aria-hidden="true" />
               <span>Your information is secure and private.</span>
             </div>
             <span className="hidden sm:block text-[10px] font-mono text-[#8FA3B8]">

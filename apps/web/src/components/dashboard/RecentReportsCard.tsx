@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Upload, Plus } from 'lucide-react';
+import { FileCheck01, File01, Upload01, Plus } from '@untitledui/icons';
 import type { MedicalReport } from '../../types/report';
 import { ROUTES } from '../../constants/routes';
 
@@ -14,9 +14,7 @@ export const RecentReportsCard: React.FC<ReportsCardProps> = ({ reports }) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="p-1.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
-            <FileText className="w-4 h-4" />
-          </span>
+          <FileCheck01 className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
           <h3 className="text-base font-bold font-display text-[#0F172A]">
             Recent Health Reports
           </h3>
@@ -41,7 +39,7 @@ export const RecentReportsCard: React.FC<ReportsCardProps> = ({ reports }) => {
               to={ROUTES.APP.REPORTS}
               className="inline-flex items-center gap-1 text-xs font-bold text-[#0288D1] hover:text-[#01579B]"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Scan your first report</span>
             </Link>
           </div>
@@ -60,7 +58,7 @@ export const RecentReportsCard: React.FC<ReportsCardProps> = ({ reports }) => {
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="p-2.5 rounded-xl bg-white border border-[#BAE6FD]/60 text-[#0288D1] shrink-0 group-hover:bg-[#E0F2FE] transition-colors">
-                    <FileText className="w-4 h-4 text-[#0288D1]" />
+                    <File01 className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
                   </div>
                   <div className="min-w-0">
                     <span className="text-xs font-bold text-[#0F172A] block truncate">
@@ -88,7 +86,7 @@ export const RecentReportsCard: React.FC<ReportsCardProps> = ({ reports }) => {
           to={ROUTES.APP.REPORTS}
           className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0288D1] hover:text-[#01579B] transition-colors group"
         >
-          <Upload className="w-3.5 h-3.5" />
+          <Upload01 className="w-3.5 h-3.5" aria-hidden="true" />
           <span>Upload New Report</span>
         </Link>
 

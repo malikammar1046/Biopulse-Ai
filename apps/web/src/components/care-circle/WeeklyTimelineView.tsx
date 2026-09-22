@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Utensils, Dumbbell, Pill, Calendar } from 'lucide-react';
+import { Check, Scales01, ActivityHeart, MedicalCross, Calendar } from '@untitledui/icons';
 import type { WeeklyTimelineDay } from '../../types/careCircle';
 
 interface WeeklyTimelineViewProps {
@@ -21,9 +21,7 @@ export const WeeklyTimelineView: React.FC<WeeklyTimelineViewProps> = ({
     <div className="space-y-4 select-none text-left">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="p-1.5 rounded-xl bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD]">
-            <Calendar className="w-4 h-4" />
-          </span>
+          <Calendar className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
           <h3 className="text-sm font-bold font-display text-[#0F172A]">
             7-Day Longitudinal Health Timeline
           </h3>
@@ -55,12 +53,12 @@ export const WeeklyTimelineView: React.FC<WeeklyTimelineViewProps> = ({
               {showDiet && (
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-[#475569] inline-flex items-center gap-1">
-                    <Utensils className="w-3 h-3 text-[#64748B]" />
+                    <Scales01 className="w-3 h-3 text-[#64748B]" aria-hidden="true" />
                     Meals
                   </span>
                   {day.mealsLogged ? (
                     <span className="text-[#047857] font-bold inline-flex items-center gap-0.5 text-[10px]">
-                      <Check className="w-3 h-3" /> Logged
+                      <Check className="w-3 h-3" aria-hidden="true" /> Logged
                     </span>
                   ) : (
                     <span className="text-[#94A3B8] text-[10px]">None</span>
@@ -72,12 +70,12 @@ export const WeeklyTimelineView: React.FC<WeeklyTimelineViewProps> = ({
               {showFitness && (
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-[#475569] inline-flex items-center gap-1">
-                    <Dumbbell className="w-3 h-3 text-[#64748B]" />
+                    <ActivityHeart className="w-3 h-3 text-[#64748B]" aria-hidden="true" />
                     Exercise
                   </span>
                   {day.exerciseLogged ? (
                     <span className="text-[#047857] font-bold inline-flex items-center gap-0.5 text-[10px]">
-                      <Check className="w-3 h-3" /> Yes
+                      <Check className="w-3 h-3" aria-hidden="true" /> Yes
                     </span>
                   ) : (
                     <span className="text-[#94A3B8] text-[10px]">Rest</span>
@@ -89,7 +87,7 @@ export const WeeklyTimelineView: React.FC<WeeklyTimelineViewProps> = ({
               {showMedications && (
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-[#475569] inline-flex items-center gap-1">
-                    <Pill className="w-3 h-3 text-[#64748B]" />
+                    <MedicalCross className="w-3 h-3 text-[#64748B]" aria-hidden="true" />
                     Meds
                   </span>
                   <span className="font-mono text-[10px] text-[#0288D1] font-bold">

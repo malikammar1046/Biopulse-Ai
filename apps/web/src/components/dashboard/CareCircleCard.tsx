@@ -1,6 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Users, Calendar, ArrowRight, Stethoscope, ShieldCheck, Plus, Heart } from 'lucide-react';
+import {
+  Users01,
+  User01,
+  Calendar,
+  ArrowRight,
+  MedicalCircle,
+  ShieldTick,
+  Plus,
+  Heart,
+} from '@untitledui/icons';
 import type { CareCircleContact } from '../../types/dashboard';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { ROUTES } from '../../constants/routes';
@@ -23,9 +32,7 @@ export const CareCircleCard: React.FC<CareCircleProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="p-1.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
-            <Users className="w-4 h-4" />
-          </span>
+          <Users01 className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
           <h3 className="text-base font-bold font-display text-[#0F172A]">
             My Care Circle
           </h3>
@@ -44,7 +51,7 @@ export const CareCircleCard: React.FC<CareCircleProps> = ({
         <div className="p-3.5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
             <span className="p-2 rounded-xl bg-[#E0F2FE] text-[#0288D1] shrink-0">
-              <ShieldCheck className="w-4 h-4" />
+              <ShieldTick className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
             </span>
             <div className="min-w-0">
               <span className="text-xs font-bold text-[#0F172A] block truncate">
@@ -66,7 +73,7 @@ export const CareCircleCard: React.FC<CareCircleProps> = ({
             to={ROUTES.APP.SETTINGS}
             className="text-[#0288D1] font-bold hover:underline inline-flex items-center gap-1"
           >
-            <Plus className="w-3 h-3" /> Add
+            <Plus className="w-3 h-3" aria-hidden="true" /> Add
           </Link>
         </div>
       )}
@@ -79,7 +86,7 @@ export const CareCircleCard: React.FC<CareCircleProps> = ({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl overflow-hidden border border-[#BAE6FD] shrink-0 bg-white flex items-center justify-center">
-                    <Stethoscope className="w-5 h-5 text-[#0288D1]" />
+                    <User01 className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
                   </div>
                   <div>
                     <span className="text-xs font-bold text-[#0F172A] block">{doctor.name}</span>
@@ -94,7 +101,7 @@ export const CareCircleCard: React.FC<CareCircleProps> = ({
 
               <div className="flex items-center justify-between pt-2 border-t border-[#BAE6FD]/60 text-xs">
                 <div className="flex items-center gap-1.5 text-[#0288D1] font-semibold">
-                  <Calendar className="w-3.5 h-3.5" />
+                  <Calendar className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>
                     {upcomingAppointment
                       ? `Visit: ${upcomingAppointment.scheduledDate}`
@@ -146,9 +153,9 @@ export const CareCircleCard: React.FC<CareCircleProps> = ({
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     {m.role === 'doctor' ? (
-                      <Stethoscope className="w-3.5 h-3.5 text-[#0288D1] shrink-0" />
+                      <MedicalCircle className="w-3.5 h-3.5 text-[#0288D1] shrink-0" aria-hidden="true" />
                     ) : (
-                      <Heart className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                      <Heart className="w-3.5 h-3.5 text-rose-500 shrink-0" aria-hidden="true" />
                     )}
                     <span className="font-semibold text-[#0F172A] truncate">{m.name}</span>
                   </div>
@@ -169,7 +176,7 @@ export const CareCircleCard: React.FC<CareCircleProps> = ({
             to={ROUTES.APP.CARE_CIRCLE}
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-[#0288D1] hover:bg-[#0277BD] transition-all shadow-xs"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Add someone you trust</span>
           </Link>
         </div>
@@ -182,7 +189,7 @@ export const CareCircleCard: React.FC<CareCircleProps> = ({
           className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0288D1] hover:text-[#0277BD] transition-colors group"
         >
           <span>Manage Care Circle</span>
-          <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+          <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
         </Link>
 
         <span className="text-[10px] font-mono text-[#64748B]">

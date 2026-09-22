@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Minus } from '@untitledui/icons';
 import type { PeriodComparisonSummary } from '../../types/longitudinal';
 
 interface ProgressComparisonCardProps {
@@ -12,14 +12,14 @@ export const ProgressComparisonCard: React.FC<ProgressComparisonCardProps> = ({ 
       case 'increased':
         return (
           <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-            <ArrowUpRight className="w-3 h-3 text-emerald-600" />
+            <ArrowUpRight className="w-3 h-3 text-emerald-600" aria-hidden="true" />
             Increased
           </span>
         );
       case 'decreased':
         return (
           <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full">
-            <ArrowDownRight className="w-3 h-3 text-amber-600" />
+            <ArrowDownRight className="w-3 h-3 text-amber-600" aria-hidden="true" />
             Decreased
           </span>
         );
@@ -27,7 +27,7 @@ export const ProgressComparisonCard: React.FC<ProgressComparisonCardProps> = ({ 
       default:
         return (
           <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-[#584B68] bg-[#F8F5FA] border border-[#E7DFEF] px-2.5 py-0.5 rounded-full">
-            <Minus className="w-3 h-3 text-[#7A6A8B]" />
+            <Minus className="w-3 h-3 text-[#7A6A8B]" aria-hidden="true" />
             Unchanged
           </span>
         );
@@ -35,7 +35,7 @@ export const ProgressComparisonCard: React.FC<ProgressComparisonCardProps> = ({ 
   };
 
   return (
-    <div className="p-5 rounded-[24px] bg-white hover:border-[#0288D1] border border-[#BAE6FD] shadow-sm transition-all text-left space-y-3.5">
+    <div className="p-5 rounded-[24px] bg-white hover:border-[var(--color-medical-primary-hover,#0288D1)] border border-[var(--color-medical-primary-border,#BAE6FD)] shadow-sm transition-all text-left space-y-3.5">
       {/* Header */}
       <div className="flex items-center justify-between gap-2 border-b border-[#E2E8F0] pb-3">
         <div>
@@ -50,7 +50,7 @@ export const ProgressComparisonCard: React.FC<ProgressComparisonCardProps> = ({ 
       {/* Two Period Values Grid */}
       <div className="grid grid-cols-2 gap-3 items-center">
         {/* Previous Period */}
-        <div className="p-3 rounded-xl bg-[#F8FAFC] border border-[#BAE6FD] space-y-1">
+        <div className="p-3 rounded-xl bg-[#F8FAFC] border border-[var(--color-medical-primary-border,#BAE6FD)] space-y-1">
           <span className="text-[10px] font-mono text-[#64748B] block truncate font-medium">
             {comparison.previousPeriodLabel}
           </span>
@@ -60,8 +60,8 @@ export const ProgressComparisonCard: React.FC<ProgressComparisonCardProps> = ({ 
         </div>
 
         {/* Current Period */}
-        <div className="p-3 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] space-y-1 relative">
-          <span className="text-[10px] font-mono text-[#0288D1] font-bold block truncate">
+        <div className="p-3 rounded-xl bg-[var(--color-medical-primary-soft,#F0F9FF)] border border-[var(--color-medical-primary-border,#BAE6FD)] space-y-1 relative">
+          <span className="text-[10px] font-mono text-[var(--color-medical-primary-hover,#0288D1)] font-bold block truncate">
             {comparison.currentPeriodLabel}
           </span>
           <div className="text-lg font-bold font-mono text-[#0F172A]">

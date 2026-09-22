@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import {
   Calendar,
   Activity,
-  FileText,
-  Utensils,
-  Dumbbell,
-  Pill,
+  ActivityHeart,
+  File06,
+  Scales01,
+  MedicalCross,
   Clock,
   ChevronDown,
   ChevronUp,
-} from 'lucide-react';
+} from '@untitledui/icons';
 import type { ChronologicalTimelineGroup } from '../../types/longitudinal';
 
 interface HealthTimelineViewProps {
@@ -27,26 +27,26 @@ export const HealthTimelineView: React.FC<HealthTimelineViewProps> = ({
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case 'cycle':
-        return <Calendar className="w-4 h-4 text-[#FB7185]" />;
+        return <Calendar className="w-4 h-4 text-[var(--color-medical-primary-hover,#0288D1)]" aria-hidden="true" />;
       case 'symptom':
-        return <Activity className="w-4 h-4 text-amber-600" />;
+        return <ActivityHeart className="w-4 h-4 text-amber-600" aria-hidden="true" />;
       case 'report':
-        return <FileText className="w-4 h-4 text-emerald-600" />;
+        return <File06 className="w-4 h-4 text-emerald-600" aria-hidden="true" />;
       case 'nutrition':
-        return <Utensils className="w-4 h-4 text-[#8E3EAF]" />;
+        return <Scales01 className="w-4 h-4 text-[var(--color-medical-primary-hover,#0288D1)]" aria-hidden="true" />;
       case 'fitness':
-        return <Dumbbell className="w-4 h-4 text-blue-600" />;
+        return <Activity className="w-4 h-4 text-sky-600" aria-hidden="true" />;
       case 'medication':
-        return <Pill className="w-4 h-4 text-indigo-600" />;
+        return <MedicalCross className="w-4 h-4 text-blue-600" aria-hidden="true" />;
       default:
-        return <Clock className="w-4 h-4 text-[#7A6A8B]" />;
+        return <Clock className="w-4 h-4 text-slate-500" aria-hidden="true" />;
     }
   };
 
   if (!groups || groups.length === 0) {
     return (
-      <div className="p-8 rounded-[20px] bg-[#F8FAFC] border border-[#BAE6FD] text-center space-y-2">
-        <Clock className="w-8 h-8 text-[#64748B] mx-auto opacity-50" />
+      <div className="p-8 rounded-[20px] bg-[#F8FAFC] border border-[var(--color-medical-primary-border,#BAE6FD)] text-center space-y-2">
+        <Clock className="w-8 h-8 text-[#64748B] mx-auto opacity-50" aria-hidden="true" />
         <h5 className="text-sm font-bold font-display text-[#0F172A]">No Timeline Events Recorded</h5>
         <p className="text-xs text-[#475569] max-w-sm mx-auto">{emptyMessage}</p>
       </div>
@@ -80,8 +80,8 @@ export const HealthTimelineView: React.FC<HealthTimelineViewProps> = ({
             onClick={() => setSelectedCategory(cat.id)}
             className={`px-3 py-1 rounded-xl text-[11px] font-mono font-semibold transition-all cursor-pointer ${
               selectedCategory === cat.id
-                ? 'bg-[#0288D1] text-white shadow-xs'
-                : 'bg-[#F8FAFC] text-[#475569] hover:bg-[#F0F9FF] hover:text-[#0F172A] border border-[#BAE6FD]'
+                ? 'bg-[var(--color-medical-primary-hover,#0288D1)] text-white shadow-xs'
+                : 'bg-[#F8FAFC] text-[#475569] hover:bg-[var(--color-medical-primary-soft,#F0F9FF)] hover:text-[#0F172A] border border-[var(--color-medical-primary-border,#BAE6FD)]'
             }`}
           >
             {cat.label}
@@ -94,7 +94,7 @@ export const HealthTimelineView: React.FC<HealthTimelineViewProps> = ({
         {filteredGroups.map((group) => (
           <div key={group.groupKey} className="space-y-2.5">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#0288D1]">
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-[var(--color-medical-primary-hover,#0288D1)]">
                 {group.groupTitle}
               </span>
               <div className="flex-1 h-px bg-[#E2E8F0]" />
@@ -109,12 +109,12 @@ export const HealthTimelineView: React.FC<HealthTimelineViewProps> = ({
                 return (
                   <div
                     key={evt.id}
-                    className="p-3.5 sm:p-4 rounded-xl bg-white hover:bg-[#F0F9FF] border border-[#BAE6FD] hover:border-[#0288D1] shadow-2xs transition-all cursor-pointer"
+                    className="p-3.5 sm:p-4 rounded-xl bg-white hover:bg-[var(--color-medical-primary-soft,#F0F9FF)] border border-[var(--color-medical-primary-border,#BAE6FD)] hover:border-[var(--color-medical-primary-hover,#0288D1)] shadow-2xs transition-all cursor-pointer"
                     onClick={() => setExpandedEventId(isExpanded ? null : evt.id)}
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-lg bg-[#F8FAFC] border border-[#BAE6FD] flex items-center justify-center shrink-0">
+                        <div className="w-8 h-8 rounded-lg bg-[#F8FAFC] border border-[var(--color-medical-primary-border,#BAE6FD)] flex items-center justify-center shrink-0">
                           {getCategoryIcon(evt.category)}
                         </div>
                         <div className="min-w-0 space-y-0.5">
@@ -123,7 +123,7 @@ export const HealthTimelineView: React.FC<HealthTimelineViewProps> = ({
                               {evt.title}
                             </span>
                             {evt.cyclePhase && (
-                              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD] shrink-0 hidden sm:inline-block font-bold">
+                              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#E0F2FE] text-[var(--color-medical-primary-hover,#0288D1)] border border-[var(--color-medical-primary-border,#BAE6FD)] shrink-0 hidden sm:inline-block font-bold">
                                 Day {evt.cycleDay || 1} • {evt.cyclePhase}
                               </span>
                             )}
@@ -139,9 +139,9 @@ export const HealthTimelineView: React.FC<HealthTimelineViewProps> = ({
                           {evt.date}
                         </span>
                         {isExpanded ? (
-                          <ChevronUp className="w-3.5 h-3.5 text-[#0F172A]" />
+                          <ChevronUp className="w-3.5 h-3.5 text-[#0F172A]" aria-hidden="true" />
                         ) : (
-                          <ChevronDown className="w-3.5 h-3.5 text-[#64748B]" />
+                          <ChevronDown className="w-3.5 h-3.5 text-[#64748B]" aria-hidden="true" />
                         )}
                       </div>
                     </div>
@@ -151,7 +151,7 @@ export const HealthTimelineView: React.FC<HealthTimelineViewProps> = ({
                       <div className="mt-3 pt-3 border-t border-[#E2E8F0] space-y-2 text-xs">
                         <p className="text-[#0F172A] font-sans leading-relaxed">{evt.description}</p>
                         <div className="flex flex-wrap gap-2 text-[10px] font-mono">
-                          <span className="px-2 py-0.5 rounded bg-[#F8FAFC] border border-[#BAE6FD] text-[#475569]">
+                          <span className="px-2 py-0.5 rounded bg-[#F8FAFC] border border-[var(--color-medical-primary-border,#BAE6FD)] text-[#475569]">
                             Source: {evt.sourceModule}
                           </span>
                           {evt.metric && (

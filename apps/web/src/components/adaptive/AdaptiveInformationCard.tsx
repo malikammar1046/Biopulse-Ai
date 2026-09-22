@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import {
-  CheckCircle2,
+  CheckCircle,
   Clock,
   HelpCircle,
   ChevronDown,
   ChevronUp,
-  ShieldCheck,
-  FileText,
+  ShieldTick,
+  File06,
   Sun,
-  UserCheck,
-} from 'lucide-react';
+  UserCheck01,
+} from '@untitledui/icons';
 import type { AdaptiveFieldItem } from '../../types/adaptiveScreening';
 
 interface AdaptiveInformationCardProps {
@@ -30,7 +30,7 @@ export const AdaptiveInformationCard: React.FC<AdaptiveInformationCardProps> = (
 
   const statusBadge = isAvailable ? (
     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0]/80 shadow-2xs">
-      <CheckCircle2 className="w-3.5 h-3.5 text-[#047857]" aria-hidden="true" />
+      <CheckCircle className="w-3.5 h-3.5 text-[#047857]" aria-hidden="true" />
       <span>✓ Available</span>
     </span>
   ) : isPending ? (
@@ -113,12 +113,12 @@ export const AdaptiveInformationCard: React.FC<AdaptiveInformationCardProps> = (
           <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#475569]">
             {item.source && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#E0F2FE] border border-[#BAE6FD] text-[#01579B] font-medium">
-                <FileText className="w-3 h-3 text-[#0288D1]" />
+                <File06 className="w-3 h-3 text-[#0288D1]" aria-hidden="true" />
                 <span>{item.source}</span>
               </span>
             )}
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#ECFDF5] border border-[#A7F3D0]/80 text-[#047857] font-semibold">
-              <ShieldCheck className="w-3 h-3" />
+              <ShieldTick className="w-3 h-3" aria-hidden="true" />
               <span className="capitalize">{item.verification.replace(/_/g, ' ')}</span>
             </span>
           </div>
@@ -129,7 +129,7 @@ export const AdaptiveInformationCard: React.FC<AdaptiveInformationCardProps> = (
       {item.timingDetails && isAvailable && (
         <div className="mt-3 p-2.5 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-center justify-between text-xs text-[#0369A1]">
           <div className="flex items-center gap-2">
-            <Sun className="w-3.5 h-3.5 text-[#D97706]" />
+            <Sun className="w-3.5 h-3.5 text-[#D97706]" aria-hidden="true" />
             <span className="font-semibold">Standardized Morning Draw</span>
             {item.timingDetails.fastingStatus && (
               <span className="px-1.5 py-0.2 rounded bg-[#0284C7]/20 text-[10px] uppercase font-mono font-bold">
@@ -153,7 +153,7 @@ export const AdaptiveInformationCard: React.FC<AdaptiveInformationCardProps> = (
             onClick={() => onVerify(item.id, item.reportId, item.resultId)}
             className="px-3.5 py-1.5 rounded-xl bg-[#D97706] hover:bg-[#B45309] text-white text-xs font-bold font-sans transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
-            <UserCheck className="w-3.5 h-3.5" />
+            <UserCheck01 className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Confirm & Verify Value</span>
           </button>
         </div>
@@ -168,13 +168,13 @@ export const AdaptiveInformationCard: React.FC<AdaptiveInformationCardProps> = (
           aria-expanded={isExpanded}
         >
           <span className="flex items-center gap-1.5 font-medium">
-            <HelpCircle className="w-3.5 h-3.5 text-[#0288D1]" />
+            <HelpCircle className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
             <span>Why this information matters</span>
           </span>
           {isExpanded ? (
-            <ChevronUp className="w-3.5 h-3.5 text-[#64748B]" />
+            <ChevronUp className="w-3.5 h-3.5 text-[#64748B]" aria-hidden="true" />
           ) : (
-            <ChevronDown className="w-3.5 h-3.5 text-[#64748B]" />
+            <ChevronDown className="w-3.5 h-3.5 text-[#64748B]" aria-hidden="true" />
           )}
         </button>
 

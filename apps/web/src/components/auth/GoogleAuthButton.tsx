@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
+import { RefreshCw01 } from '@untitledui/icons';
 
 export interface GoogleAuthButtonProps {
   onClick: () => void;
@@ -43,7 +43,7 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({
     >
       {loading ? (
         <>
-          <Loader2 className="w-4 h-4 animate-spin text-[#D8B4FE]" />
+          <RefreshCw01 className="w-4 h-4 animate-spin text-[#D8B4FE]" aria-hidden="true" />
           <span className="text-[#D8B4FE]">{loadingText}</span>
         </>
       ) : (

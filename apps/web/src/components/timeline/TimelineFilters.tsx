@@ -2,16 +2,16 @@ import React from 'react';
 import {
   Calendar,
   Activity,
-  FileText,
-  Pill,
-  Utensils,
-  Dumbbell,
-  Stethoscope,
-  Users,
-  Search,
-  SlidersHorizontal,
-  Star,
-} from 'lucide-react';
+  File06,
+  MedicalCross,
+  Scales01,
+  ActivityHeart,
+  CalendarCheck01,
+  Users01,
+  SearchLg,
+  Sliders01,
+  Star01,
+} from '@untitledui/icons';
 import type { TimelineCategory, TimelineDateRange, TimelineFilterState } from '../../types/timeline';
 
 interface TimelineFiltersProps {
@@ -37,12 +37,12 @@ export const TimelineFilters: React.FC<TimelineFiltersProps> = ({
   const categories: { label: string; value: TimelineCategory; icon: React.FC<{ className?: string }> }[] = [
     { label: 'Cycle', value: 'cycle', icon: Calendar },
     { label: 'Symptoms', value: 'symptom', icon: Activity },
-    { label: 'Lab Reports', value: 'report', icon: FileText },
-    { label: 'Medications', value: 'medication', icon: Pill },
-    { label: 'Nutrition', value: 'nutrition', icon: Utensils },
-    { label: 'Movement', value: 'fitness', icon: Dumbbell },
-    { label: 'Appointments', value: 'appointment', icon: Stethoscope },
-    { label: 'Care Circle', value: 'care_circle', icon: Users },
+    { label: 'Lab Reports', value: 'report', icon: File06 },
+    { label: 'Medications', value: 'medication', icon: MedicalCross },
+    { label: 'Nutrition', value: 'nutrition', icon: Scales01 },
+    { label: 'Movement', value: 'fitness', icon: ActivityHeart },
+    { label: 'Appointments', value: 'appointment', icon: CalendarCheck01 },
+    { label: 'Care Circle', value: 'care_circle', icon: Users01 },
   ];
 
   const toggleCategory = (cat: TimelineCategory) => {
@@ -68,7 +68,7 @@ export const TimelineFilters: React.FC<TimelineFiltersProps> = ({
         {/* Date Range Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
           <span className="text-[11px] font-mono text-[#64748B] uppercase font-bold mr-1 flex items-center gap-1 shrink-0">
-            <SlidersHorizontal className="w-3.5 h-3.5 text-[#0288D1]" />
+            <Sliders01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
             <span>Horizon:</span>
           </span>
           {dateRanges.map((range) => {
@@ -94,7 +94,7 @@ export const TimelineFilters: React.FC<TimelineFiltersProps> = ({
         <div className="flex items-center gap-2.5">
           {/* Search Field */}
           <div className="relative flex-1 sm:w-64">
-            <Search className="w-3.5 h-3.5 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2" />
+            <SearchLg className="w-3.5 h-3.5 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true" />
             <input
               type="text"
               value={filterState.searchQuery}
@@ -114,7 +114,7 @@ export const TimelineFilters: React.FC<TimelineFiltersProps> = ({
                 : 'bg-[#F8FAFC] text-[#475569] border-[#E2E8F0] hover:bg-[#E0F2FE]'
             }`}
           >
-            <Star className={`w-3.5 h-3.5 ${filterState.onlyImportant ? 'fill-amber-600 text-amber-600' : 'text-[#64748B]'}`} />
+            <Star01 className={`w-3.5 h-3.5 ${filterState.onlyImportant ? 'fill-amber-600 text-amber-600' : 'text-[#64748B]'}`} aria-hidden="true" />
             <span>Key Milestones</span>
           </button>
         </div>

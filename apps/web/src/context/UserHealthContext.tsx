@@ -375,6 +375,11 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       await authUpdateProfile({
         mensHealth: updatedMens as any,
       });
+      try {
+        window.dispatchEvent(new CustomEvent('biopulse:longitudinal-refresh'));
+      } catch {
+        // ignore
+      }
     },
     [userProfile, authUpdateProfile]
   );
@@ -1929,6 +1934,11 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             'Updated Result: Your initial hypogonadism screening assessment has been generated.',
             'success'
           );
+          try {
+            window.dispatchEvent(new CustomEvent('biopulse:longitudinal-refresh'));
+          } catch {
+            // ignore
+          }
         }
         return res;
       } finally {
@@ -1992,6 +2002,11 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             'Updated Result: Your hypogonadism screening assessment has been updated with clinical evidence.',
             'success'
           );
+          try {
+            window.dispatchEvent(new CustomEvent('biopulse:longitudinal-refresh'));
+          } catch {
+            // ignore
+          }
         }
         return res;
       } finally {
@@ -2059,6 +2074,11 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             'Updated Result: Your initial screening assessment has been generated.',
             'success'
           );
+          try {
+            window.dispatchEvent(new CustomEvent('biopulse:longitudinal-refresh'));
+          } catch {
+            // ignore
+          }
         }
         return res;
       } finally {
@@ -2126,6 +2146,11 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             'Updated Result: Your assessment has been updated using additional clinical evidence.',
             'success'
           );
+          try {
+            window.dispatchEvent(new CustomEvent('biopulse:longitudinal-refresh'));
+          } catch {
+            // ignore
+          }
         }
         return res;
       } finally {
@@ -2193,6 +2218,11 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               'success'
             );
           }
+          try {
+            window.dispatchEvent(new CustomEvent('biopulse:longitudinal-refresh'));
+          } catch {
+            // ignore
+          }
         }
         return res;
       } finally {
@@ -2245,6 +2275,11 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             'Tier 2 clinical data has been cleared. Assessment reverted to Tier 1 screening.',
             'success'
           );
+          try {
+            window.dispatchEvent(new CustomEvent('biopulse:longitudinal-refresh'));
+          } catch {
+            // ignore
+          }
         }
         return res;
       } finally {
@@ -2342,7 +2377,16 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           }
         }
         // Force refresh assessment upon completing onboarding with new data
-        setTimeout(() => refreshMlAssessment(true), 100);
+        try {
+          await refreshMlAssessment(true);
+        } catch {
+          // ignore
+        }
+        try {
+          window.dispatchEvent(new CustomEvent('biopulse:longitudinal-refresh'));
+        } catch {
+          // ignore
+        }
       }
       return res;
     },
@@ -2356,7 +2400,16 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     async (data: Partial<UserProfile>): Promise<{ success: boolean; error?: string }> => {
       const res = await authUpdateProfile(data);
       if (res.success) {
-        setTimeout(() => refreshMlAssessment(true), 100);
+        try {
+          await refreshMlAssessment(true);
+        } catch (err) {
+          console.warn('[UserHealthContext] Assessment refresh after profile update error:', err);
+        }
+        try {
+          window.dispatchEvent(new CustomEvent('biopulse:longitudinal-refresh'));
+        } catch {
+          // ignore environment without window
+        }
       }
       return res;
     },

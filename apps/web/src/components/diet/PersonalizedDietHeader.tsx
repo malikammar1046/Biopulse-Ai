@@ -1,5 +1,5 @@
 import React from 'react';
-import { Utensils, Sparkles, Plus, AlertCircle, Heart, ShieldCheck } from 'lucide-react';
+import { Scales01, MessageChatCircle, Plus, AlertCircle, Calendar, ShieldTick, Sliders01 } from '@untitledui/icons';
 import type { UserProfile } from '../../types/onboarding';
 import { resolvePathway } from '../../types/onboarding';
 
@@ -33,20 +33,20 @@ export const PersonalizedDietHeader: React.FC<PersonalizedDietHeaderProps> = ({
 
   if (isFemale) {
     return (
-      <div className="p-6 sm:p-7 rounded-[24px] bg-white text-[#111318] shadow-xs border border-[#EAECF0] relative overflow-hidden select-none">
+      <div className="p-6 sm:p-7 rounded-2xl bg-white text-[#111318] shadow-xs border border-[#EAECF0] relative overflow-hidden select-none">
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           {/* Left Column: Greeting, Mission & Tags */}
           <div className="space-y-3.5 max-w-2xl text-left">
             {/* Trust & Mode Badge */}
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-semibold bg-[#FBE7F0] text-[#A92D61] border border-[#FCE1ED]">
-                <Utensils className="w-3.5 h-3.5 text-[#E84A8A]" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-semibold bg-[#FDE6EF] text-[#DC326C] border border-[#F43F7D]/20">
+                <Scales01 className="w-3.5 h-3.5 text-[#F43F7D]" aria-hidden="true" />
                 <span>Personalized Nutrition Companion</span>
               </span>
 
               {cycleStageName && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-semibold bg-[#FFF5F9] text-[#A92D61] border border-[#FCE1ED]">
-                  <Heart className="w-3 h-3 text-[#E84A8A]" />
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-semibold bg-[#F8FAFC] text-[#344054] border border-[#EAECF0]">
+                  <Calendar className="w-3 h-3 text-[#F43F7D]" aria-hidden="true" />
                   <span>{cycleStageName}</span>
                 </span>
               )}
@@ -70,7 +70,7 @@ export const PersonalizedDietHeader: React.FC<PersonalizedDietHeaderProps> = ({
 
               {allergies.length > 0 && allergies[0] !== 'None' && (
                 <span className="text-[11px] font-mono px-2.5 py-1 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 inline-flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3 text-rose-500" />
+                  <ShieldTick className="w-3 h-3 text-rose-500" aria-hidden="true" />
                   <span>Filtered: {allergies.join(', ')}</span>
                 </span>
               )}
@@ -84,8 +84,8 @@ export const PersonalizedDietHeader: React.FC<PersonalizedDietHeaderProps> = ({
 
             {/* Symptom Contextual Notice Pill */}
             {symptomNotice && (
-              <div className="p-3 rounded-xl bg-[#FFF5F9] border border-[#FCE1ED] flex items-start gap-2.5 text-[11px] text-[#A92D61] leading-snug">
-                <AlertCircle className="w-4 h-4 text-[#E84A8A] shrink-0 mt-0.5" />
+              <div className="p-3 rounded-xl bg-[#FDE6EF]/40 border border-[#FDE6EF] flex items-start gap-2.5 text-[11px] text-[#DC326C] leading-snug">
+                <AlertCircle className="w-4 h-4 text-[#DC326C] shrink-0 mt-0.5" aria-hidden="true" />
                 <span>{symptomNotice}</span>
               </div>
             )}
@@ -96,27 +96,28 @@ export const PersonalizedDietHeader: React.FC<PersonalizedDietHeaderProps> = ({
             <button
               type="button"
               onClick={onOpenLogFood}
-              className="px-5 py-2.5 rounded-xl font-sans font-semibold text-xs sm:text-sm text-white bg-[#E84A8A] hover:bg-[#D93B7A] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-[0.98]"
+              className="h-10 px-4 rounded-lg font-medium text-xs sm:text-sm text-white bg-[#F43F7D] hover:bg-[#DC326C] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-[0.98]"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4" aria-hidden="true" />
               <span>+ Log Food</span>
             </button>
 
             <button
               type="button"
               onClick={onOpenMealBuilder}
-              className="px-5 py-2.5 rounded-xl font-sans font-semibold text-xs sm:text-sm text-[#344054] bg-[#FAFAFC] hover:bg-[#F2F4F7] border border-[#EAECF0] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs active:scale-[0.98]"
+              className="h-10 px-4 rounded-lg font-medium text-xs sm:text-sm text-[#344054] bg-[#FAFAFC] hover:bg-[#F2F4F7] border border-[#EAECF0] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs active:scale-[0.98]"
             >
-              <Sparkles className="w-4 h-4 text-[#E84A8A]" />
+              <Sliders01 className="w-4 h-4 text-[#F43F7D]" aria-hidden="true" />
               <span>Build My Meal</span>
             </button>
 
             <button
               type="button"
               onClick={onAskAi}
-              className="px-4 py-2 rounded-xl text-[11px] font-mono text-[#E84A8A] hover:text-[#D93B7A] transition-colors text-center cursor-pointer active:scale-[0.98]"
+              className="h-9 px-4 rounded-lg text-[11px] font-mono text-[#F43F7D] hover:text-[#DC326C] transition-colors text-center cursor-pointer active:scale-[0.98] inline-flex items-center justify-center gap-1.5"
             >
-              ✨ Ask AI for food ideas
+              <MessageChatCircle className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Ask AI for food ideas</span>
             </button>
           </div>
         </div>
@@ -132,13 +133,13 @@ export const PersonalizedDietHeader: React.FC<PersonalizedDietHeaderProps> = ({
           {/* Trust & Mode Badge */}
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-[#0288D1] text-white border border-[#29B6F6]/40">
-              <Utensils className="w-3.5 h-3.5 text-[#E0F2FE]" />
+              <Scales01 className="w-3.5 h-3.5 text-[#E0F2FE]" aria-hidden="true" />
               <span>Personalized Nutrition Companion</span>
             </span>
 
             {cycleStageName && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-white/15 text-white border border-white/20">
-                <Heart className="w-3 h-3 text-[#29B6F6]" />
+                <Calendar className="w-3 h-3 text-[#29B6F6]" aria-hidden="true" />
                 <span>{cycleStageName}</span>
               </span>
             )}
@@ -162,7 +163,7 @@ export const PersonalizedDietHeader: React.FC<PersonalizedDietHeaderProps> = ({
 
             {allergies.length > 0 && allergies[0] !== 'None' && (
               <span className="text-[11px] font-mono px-2.5 py-1 rounded-xl bg-rose-500/20 text-rose-200 border border-rose-400/30 inline-flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3 text-rose-300" />
+                <ShieldTick className="w-3 h-3 text-rose-300" aria-hidden="true" />
                 <span>Filtered: {allergies.join(', ')}</span>
               </span>
             )}
@@ -177,7 +178,7 @@ export const PersonalizedDietHeader: React.FC<PersonalizedDietHeaderProps> = ({
           {/* Symptom Contextual Notice Pill */}
           {symptomNotice && (
             <div className="p-3 rounded-xl bg-white/10 border border-white/20 flex items-start gap-2.5 text-[11px] text-[#E0F2FE] leading-snug">
-              <AlertCircle className="w-4 h-4 text-[#29B6F6] shrink-0 mt-0.5" />
+              <AlertCircle className="w-4 h-4 text-[#29B6F6] shrink-0 mt-0.5" aria-hidden="true" />
               <span>{symptomNotice}</span>
             </div>
           )}
@@ -190,7 +191,7 @@ export const PersonalizedDietHeader: React.FC<PersonalizedDietHeaderProps> = ({
             onClick={onOpenLogFood}
             className="px-5 py-2.5 rounded-xl font-sans font-bold text-xs sm:text-sm text-[#0F172A] bg-[#29B6F6] hover:bg-[#4FC3F7] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
           >
-            <Plus className="w-4 h-4 text-[#0F172A]" />
+            <Plus className="w-4 h-4 text-[#0F172A]" aria-hidden="true" />
             <span>+ Log Food</span>
           </button>
 
@@ -199,16 +200,17 @@ export const PersonalizedDietHeader: React.FC<PersonalizedDietHeaderProps> = ({
             onClick={onOpenMealBuilder}
             className="px-5 py-2.5 rounded-xl font-sans font-bold text-xs sm:text-sm text-[#01579B] bg-white hover:bg-[#F0F9FF] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
           >
-            <Sparkles className="w-4 h-4 text-[#0288D1]" />
+            <Sliders01 className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
             <span>Build My Meal</span>
           </button>
 
           <button
             type="button"
             onClick={onAskAi}
-            className="px-4 py-2 rounded-xl text-[11px] font-mono text-[#E0F2FE] hover:text-white transition-colors text-center"
+            className="px-4 py-2 rounded-xl text-[11px] font-mono text-[#E0F2FE] hover:text-white transition-colors text-center inline-flex items-center justify-center gap-1.5"
           >
-            ✨ Ask AI for food ideas
+            <MessageChatCircle className="w-3.5 h-3.5" aria-hidden="true" />
+            <span>Ask AI for food ideas</span>
           </button>
         </div>
       </div>
