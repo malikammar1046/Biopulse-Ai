@@ -1,0 +1,102 @@
+{
+  "model_name": "OvaSense Extra Trees (Screening Tuned)",
+  "model_version": "1.0.0-phase3",
+  "date_created": "2026-08-31 18:04:59",
+  "training_metadata": {
+    "training_samples": 432,
+    "test_samples": 109,
+    "positive_prevalence_train": 0.3263888888888889,
+    "positive_prevalence_test": 0.3302752293577982,
+    "cv_strategy": "5-Fold StratifiedKFold(shuffle=True, random_state=42)",
+    "random_state": 42
+  },
+  "selected_hyperparameters": {
+    "n_estimators": 150,
+    "max_depth": 7,
+    "min_samples_split": 5,
+    "min_samples_leaf": 4,
+    "max_features": "log2",
+    "class_weight": "balanced_subsample"
+  },
+  "feature_list": [
+    " Age (yrs)",
+    "Weight (Kg)",
+    "Height(Cm) ",
+    "BMI",
+    "Cycle(R/I)",
+    "Cycle length(days)",
+    "Marraige Status (Yrs)",
+    "Pregnant(Y/N)",
+    "No. of aborptions",
+    "Weight gain(Y/N)",
+    "hair growth(Y/N)",
+    "Skin darkening (Y/N)",
+    "Hair loss(Y/N)",
+    "Pimples(Y/N)",
+    "Fast food (Y/N)",
+    "Reg.Exercise(Y/N)"
+  ],
+  "feature_name_mapping": {
+    " Age (yrs)": "age_years",
+    "Weight (Kg)": "weight_kg",
+    "Height(Cm) ": "height_cm",
+    "BMI": "bmi",
+    "Cycle(R/I)": "cycle_ri",
+    "Cycle length(days)": "cycle_length_days",
+    "Marraige Status (Yrs)": "marriage_status_years",
+    "Pregnant(Y/N)": "pregnant_yn",
+    "No. of aborptions": "no_of_abortions",
+    "Weight gain(Y/N)": "weight_gain_yn",
+    "hair growth(Y/N)": "hair_growth_yn",
+    "Skin darkening (Y/N)": "skin_darkening_yn",
+    "Hair loss(Y/N)": "hair_loss_yn",
+    "Pimples(Y/N)": "pimples_yn",
+    "Fast food (Y/N)": "fast_food_yn",
+    "Reg.Exercise(Y/N)": "reg_exercise_yn"
+  },
+  "preprocessing_description": "Median imputation for continuous features, most frequent imputation for binary features, custom binary regularity mapping (2->0, 4/5->1) for menstrual cycle. No scaling required for tree ensemble.",
+  "threshold_configuration": {
+    "default_threshold": 0.5,
+    "recommended_screening_threshold": 0.38,
+    "screening_target_sensitivity_target": ">= 85.0%",
+    "cv_sensitivity_at_screening_threshold": 0.851063829787234,
+    "cv_specificity_at_screening_threshold": 0.7525773195876289,
+    "cv_npv_at_screening_threshold": 0.9125,
+    "cv_f1_at_screening_threshold": 0.7207207207207208
+  },
+  "holdout_test_evaluation": {
+    "default_0.50": {
+      "threshold": 0.5,
+      "roc_auc": 0.908675799086758,
+      "pr_auc": 0.8436190859003978,
+      "sensitivity": 0.7777777777777778,
+      "specificity": 0.8767123287671232,
+      "precision": 0.7567567567567568,
+      "f1": 0.7671232876712328,
+      "accuracy": 0.8440366972477065,
+      "npv": 0.8888888888888888,
+      "brier_score": 0.11845703080192727,
+      "tp": 28,
+      "fp": 9,
+      "tn": 64,
+      "fn": 8
+    },
+    "screening_threshold": {
+      "threshold": 0.38,
+      "roc_auc": 0.908675799086758,
+      "pr_auc": 0.8436190859003978,
+      "sensitivity": 0.8611111111111112,
+      "specificity": 0.8082191780821918,
+      "precision": 0.6888888888888889,
+      "f1": 0.7654320987654321,
+      "accuracy": 0.8256880733944955,
+      "npv": 0.921875,
+      "brier_score": 0.11845703080192727,
+      "tp": 31,
+      "fp": 14,
+      "tn": 59,
+      "fn": 5
+    }
+  },
+  "clinical_safety_warning": "CRITICAL: OvaSense is strictly an early risk-screening and educational tool based on non-invasive questionnaires. It does NOT diagnose PCOS, does NOT replace formal Rotterdam criteria evaluation (ultrasound follicle assessment / serum biochemical assays), and does NOT substitute for consultation with a qualified medical professional."
+}

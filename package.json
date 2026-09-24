@@ -1,0 +1,21 @@
+{
+  "name": "biopulse-ai-risk-assessment",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BioPulse AI Risk Assessment — Monorepo for Frontend, Backend, and Machine Learning",
+  "scripts": {
+    "dev": "concurrently -n BACKEND,WEB -c \"magenta.bold,cyan.bold\" --kill-others-on-fail \"npm run dev:backend\" \"npm run dev:web\"",
+    "dev:backend": "node scripts/run-python.mjs backend/manage.py runserver 127.0.0.1:8000",
+    "dev:web": "npm run dev --prefix apps/web",
+    "build": "npm run build --prefix apps/web",
+    "type-check": "npm run type-check --prefix apps/web",
+    "install:all": "npm install && npm install --prefix apps/web",
+    "test:frontend": "npm run type-check --prefix apps/web && npm run build --prefix apps/web",
+    "test:backend": "node scripts/run-python.mjs backend/manage.py test apps.intelligence",
+    "test:ml": "node scripts/run-python.mjs -m pytest machine-learning/test_production_models.py",
+    "train:ml": "node scripts/run-python.mjs machine-learning/ml/training/train_pipeline.py"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

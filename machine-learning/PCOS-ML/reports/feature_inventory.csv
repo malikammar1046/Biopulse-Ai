@@ -1,0 +1,46 @@
+Original_Column,Clean_Name,Tier,Category,Modality,Usable_For_ML,Core_Status,Reason_And_Transformation
+Sl. No,sl_no,ID,Identifier,Database metadata,False,Excluded,Administrative row serial index (1-541). Predictive leakage risk.
+Patient File No.,patient_file_no,ID,Identifier,Hospital record,False,Excluded,Hospital patient file identifier (1-541). Predictive leakage risk.
+PCOS (Y/N),pcos_diagnosis,Target,Reported PCOS Status,Physician clinical diagnosis (Rotterdam consensus),False,Target,"Dataset-provided reference outcome (0=No PCOS, 1=PCOS). Target variable."
+ Age (yrs),age,Tier 1,Demographics,User self-report,True,Core Included,Patient chronological age in years. Non-invasive baseline demographic.
+Weight (Kg),weight_kg,Tier 1,Anthropometry,User self-report (home scale),True,Core Included,Self-reported body weight in kg. Direct indicator of adiposity.
+Height(Cm) ,height_cm,Tier 1,Anthropometry,User self-report,True,Core Included,Self-reported body height in cm. Anthropometric normalization factor.
+BMI,bmi,Tier 1,Anthropometry,User self-report / Calculable,True,Core Included,Body Mass Index. Calculable as weight / (height/100)^2.
+Blood Group,blood_group,Tier 2,Hematology / Lab,Venipuncture / ABO-Rh typing,True,Candidate Excluded from Core / Retained for Ablation,ABO/Rh typing is a laboratory test. No meaningful univariate association (p=0.957). Retained for ablation.
+Pulse rate(bpm) ,pulse_rate_bpm,Tier 2,Clinical Vitals,Clinical examination,True,Core Included,"Resting heart rate measured at clinic triage. Contains typos (13, 18 bpm) needing imputation."
+RR (breaths/min),respiratory_rate,Tier 2,Clinical Vitals,Clinical examination,True,Core Included,Respiratory rate measured at clinical triage.
+Hb(g/dl),hemoglobin,Tier 2,Hematology / Lab,Venipuncture blood test (CBC),True,Core Included,Hemoglobin concentration. Blood test result.
+Cycle(R/I),cycle_regularity,Tier 1,Menstrual History,User self-report,True,Core Included,"Menstrual cycle regularity (2=Regular, 4=Irregular, 5=Irregular outlier). Cardinal PCOS sign."
+Cycle length(days),cycle_length_raw,Tier 1,Menstrual History,User self-report,True,Core Included,"Values suggest bleeding duration in days; authoritative metadata is absent, so semantic uncertainty is acknowledged."
+Marraige Status (Yrs),marriage_years,Tier 1,Demographic / Social,User self-report,True,Candidate Excluded from Core / Retained for Ablation,Marital duration. Inapplicable to unmarried users; potential generalizability concern. Retained for ablation.
+Pregnant(Y/N),pregnant,Tier 1,Obstetric History,User self-report,True,Candidate Excluded from Core / Retained for Ablation,Pregnancy status. Acute physiological state confounding endocrine baselines. Retained for ablation.
+No. of aborptions,abortions_count,Tier 1,Obstetric History,User self-report,True,Candidate Excluded from Core / Retained for Ablation,Obstetric history. Inapplicable to nulliparous users; potential generalizability concern. Retained for ablation.
+  I   beta-HCG(mIU/mL),beta_hcg_i,Tier 2,Hormone / Lab,Serum laboratory test,True,Core Included,Quantitative serum beta-hCG test.
+II    beta-HCG(mIU/mL),beta_hcg_ii,Tier 2,Hormone / Lab,Serum laboratory test,True,Core Included,"Repeat serum beta-hCG test. Contains typo ""1.99."". High redundancy with beta_hcg_i."
+FSH(mIU/mL),fsh,Tier 2,Hormone / Lab,Serum laboratory test,True,Core Included,Follicle-Stimulating Hormone. Core reproductive gonadotropin. Outlier 5052 mIU/mL.
+LH(mIU/mL),lh,Tier 2,Hormone / Lab,Serum laboratory test,True,Core Included,Luteinizing Hormone. Core reproductive gonadotropin. Outlier 2018 mIU/mL.
+FSH/LH,fsh_lh_ratio,Tier 2,Hormone / Lab,Calculated lab ratio,True,Core Included,Calculated gonadotropin ratio. Collinear with source FSH and LH.
+Hip(inch),hip_inch,Tier 1,Anthropometry,User self-report (measuring tape),True,Core Included,Hip circumference in inches. Anthropometric fat distribution metric.
+Waist(inch),waist_inch,Tier 1,Anthropometry,User self-report (measuring tape),True,Core Included,Waist circumference in inches. Key marker of visceral adiposity and insulin resistance.
+Waist:Hip Ratio,waist_hip_ratio,Tier 1,Anthropometry,User self-report / Calculable,True,Core Included,Calculable as waist / hip. Standard WHO cardiovascular and metabolic metric.
+TSH (mIU/L),tsh,Tier 2,Hormone / Lab,Serum laboratory test,True,Core Included,Thyroid-Stimulating Hormone. Differential diagnosis rule-out test for hypothyroidism.
+AMH(ng/mL),amh,Tier 2,Hormone / Lab,Serum laboratory test,True,Core Included,"Anti-Mullerian Hormone. Cardinal PCOS ovarian reserve biomarker. Typo ""a"" at row 305."
+PRL(ng/mL),prolactin,Tier 2,Hormone / Lab,Serum laboratory test,True,Core Included,Prolactin. Differential diagnosis rule-out test for hyperprolactinemia.
+Vit D3 (ng/mL),vitamin_d3,Tier 2,Biomarker / Lab,Serum laboratory test,True,Core Included,"25-hydroxy Vitamin D3. Extreme data entry errors (6014.66, 5418.60 ng/mL)."
+PRG(ng/mL),progesterone,Tier 2,Hormone / Lab,Serum laboratory test,True,Core Included,Serum Progesterone. Reflects luteal activity and pregnancy state.
+RBS(mg/dl),rbs,Tier 2,Metabolic / Lab,Venipuncture / Glucometer,True,Core Included,Random Blood Sugar / glucose test. Core metabolic marker.
+Weight gain(Y/N),weight_gain,Tier 1,Symptoms,User self-report,True,Core Included,Unexplained or rapid weight gain symptom. Self-reported.
+hair growth(Y/N),hirsutism,Tier 1,Symptoms,User self-report,True,Core Included,Excessive facial/body hair growth (hirsutism). Physical hallmark of hyperandrogenism.
+Skin darkening (Y/N),skin_darkening,Tier 1,Symptoms,User self-report,True,Core Included,Acanthosis nigricans symptom. Hallmark physical sign of severe insulin resistance.
+Hair loss(Y/N),hair_loss,Tier 1,Symptoms,User self-report,True,Core Included,Androgenic alopecia / scalp hair thinning symptom. Self-reported.
+Pimples(Y/N),pimples_acne,Tier 1,Symptoms,User self-report,True,Core Included,Acne vulgaris / persistent pimples symptom. Self-reported.
+Fast food (Y/N),fast_food,Tier 1,Lifestyle,User self-report,True,Core Included,Fast food dietary consumption habit. 1 missing value at row 156.
+Reg.Exercise(Y/N),regular_exercise,Tier 1,Lifestyle,User self-report,True,Core Included,Regular physical exercise habit. Self-reported.
+BP _Systolic (mmHg),bp_systolic,Tier 2,Clinical Vitals,Sphygmomanometer,True,Core Included,"Systolic blood pressure. Contains typo (12 mmHg at row 161, intended 120)."
+BP _Diastolic (mmHg),bp_diastolic,Tier 2,Clinical Vitals,Sphygmomanometer,True,Core Included,"Diastolic blood pressure. Contains typo (8 mmHg at row 200, intended 80)."
+Follicle No. (L),follicle_no_l,Tier 3 (Structured),Ultrasound Measurement,Transvaginal pelvic ultrasound (TVS),False,Structured Reference Only,Left ovary follicle count from TVS. Direct Rotterdam diagnostic criterion.
+Follicle No. (R),follicle_no_r,Tier 3 (Structured),Ultrasound Measurement,Transvaginal pelvic ultrasound (TVS),False,Structured Reference Only,Right ovary follicle count from TVS. Direct Rotterdam diagnostic criterion.
+Avg. F size (L) (mm),avg_f_size_l,Tier 3 (Structured),Ultrasound Measurement,Transvaginal pelvic ultrasound (TVS),False,Structured Reference Only,Mean follicle diameter (left ovary) via TVS imaging.
+Avg. F size (R) (mm),avg_f_size_r,Tier 3 (Structured),Ultrasound Measurement,Transvaginal pelvic ultrasound (TVS),False,Structured Reference Only,Mean follicle diameter (right ovary) via TVS imaging.
+Endometrium (mm),endometrium_mm,Tier 3 (Structured),Ultrasound Measurement,Transvaginal pelvic ultrasound (TVS),False,Structured Reference Only,Endometrial stripe thickness measured via TVS imaging.
+Unnamed: 44,unnamed_44,Artifact,Excel Overflow,Spreadsheet error,False,Excluded,99.6% missing. Unnamed trailing Excel column with stray data entry marks.

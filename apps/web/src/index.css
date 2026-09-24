@@ -1,0 +1,209 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-display: 'Outfit', system-ui, -apple-system, sans-serif;
+  --font-script: 'Caveat', cursive, sans-serif;
+
+  /* Brand Primary: Deep Orchid */
+  --color-brand-primary: #6E2D8B;
+  --color-brand-primary-light: #8E3EAF;
+  --color-brand-primary-dark: #4A154B;
+  --color-brand-primary-soft: #EDE4F7;
+
+  /* Brand Secondary: Rich Berry / Magenta */
+  --color-brand-secondary: #A21CAF;
+  --color-brand-secondary-light: #C026D3;
+  --color-brand-secondary-dark: #701A75;
+  --color-brand-secondary-soft: #FDF2F8;
+
+  /* Empathetic Accent: Warm Coral Blush */
+  --color-brand-accent: #E87084;
+  --color-brand-accent-light: #F48498;
+  --color-brand-accent-soft: #FFF0F2;
+
+  /* Surfaces & Backgrounds */
+  --color-brand-bg: #F8F5FA;
+  --color-brand-surface: #FFFFFF;
+  --color-brand-surface-subtle: #F2ECF7;
+  --color-brand-surface-elevated: #FFFFFF;
+
+  /* Borders & Dividers */
+  --color-brand-border: #E7DFEF;
+  --color-brand-border-subtle: #F0EAF5;
+  --color-brand-border-focus: #8E3EAF;
+
+  /* Typography */
+  --color-brand-text-primary: #1C1326;
+  --color-brand-text-secondary: #584B68;
+  --color-brand-text-muted: #8D7E9E;
+  --color-brand-text-inverse: #FFFFFF;
+
+  /* Semantic Status Tokens (Non-Diagnostic Health Information) */
+  --color-brand-success: #047857;
+  --color-brand-success-soft: #ECFDF5;
+  --color-brand-success-border: #A7F3D0;
+
+  --color-brand-warning: #B45309;
+  --color-brand-warning-soft: #FFFBEB;
+  --color-brand-warning-border: #FDE68A;
+
+  --color-brand-error: #BE123C;
+  --color-brand-error-soft: #FFF1F2;
+  --color-brand-error-border: #FECDD3;
+
+  --color-brand-info: #4338CA;
+  --color-brand-info-soft: #EEF2FF;
+  --color-brand-info-border: #C7D2FE;
+
+  /* ── Medical Dashboard Design System (Brand: #29B6F6) ── */
+  --color-medical-primary: #29B6F6;
+  --color-medical-primary-hover: #0288D1;
+  --color-medical-primary-active: #0277BD;
+  --color-medical-primary-dark: #01579B;
+  --color-medical-primary-medium: #4FC3F7;
+  --color-medical-primary-light: #B3E5FC;
+  --color-medical-primary-muted: #E0F2FE;
+  --color-medical-primary-soft: #F0F9FF;
+  --color-medical-primary-border: #BAE6FD;
+  --color-medical-bg: #F8FAFC;
+  --color-medical-card-bg: #FFFFFF;
+  --color-medical-text-primary: #0F172A;
+  --color-medical-text-secondary: #475569;
+  --color-medical-text-muted: #64748B;
+
+  /* ── BioPulse Clinical Tokens ── */
+  --color-primary-teal: #0E9EAA;
+  --color-primary-teal-dark: #073B72;
+  --color-primary-teal-light: #16B8C4;
+  --color-primary-teal-soft: #DDF7F7;
+  --color-primary-teal-tint: #EAFBFC;
+  --color-accent-pink: #F43F7D;
+  --color-accent-pink-soft: #FDE6EF;
+
+  /* ── Female Clinical Dashboard Tokens (BioPulse Female Identity) ── */
+  --female-primary: #F43F7D;
+  --female-primary-hover: #DC326C;
+  --female-primary-light: #FDE6EF;
+  --female-border: rgba(244, 63, 125, 0.2);
+  --female-focus: rgba(244, 63, 125, 0.25);
+  --color-female-primary: #F43F7D;
+  --color-female-primary-hover: #DC326C;
+  --color-female-primary-light: #FDE6EF;
+  --color-female-border: rgba(244, 63, 125, 0.2);
+  --color-female-focus: rgba(244, 63, 125, 0.25);
+}
+
+@layer base {
+  body {
+    background-color: #FAFCFF;
+    color: #162A45;
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+}
+
+/* ── Hardware-Accelerated Lightweight Keyframe Animations ── */
+@keyframes bioPulse {
+  0% {
+    transform: scale(0.98) translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.03) translate3d(0, -4px, 0) rotate(1deg);
+  }
+  100% {
+    transform: scale(1.01) translate3d(0, 4px, 0) rotate(-1deg);
+  }
+}
+
+@keyframes bioHeartbeat {
+  0%, 100% {
+    transform: scale(0.96) translate3d(0, 0, 0);
+  }
+  50% {
+    transform: scale(1.06) translate3d(0, 0, 0);
+  }
+}
+
+/* Respect Prefers Reduced Motion Globally */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Custom Utilities for subtle organic orbs and glows */
+.glow-orchid {
+  box-shadow: 0 10px 40px -10px rgba(110, 45, 139, 0.25);
+}
+
+.glow-blush {
+  box-shadow: 0 10px 30px -10px rgba(232, 112, 132, 0.2);
+}
+
+.bg-gradient-brand {
+  background: linear-gradient(135deg, #6E2D8B 0%, #8E3EAF 60%, #D946EF 100%);
+}
+
+.bg-gradient-soft {
+  background: linear-gradient(180deg, #EDE4F7 0%, #FFF0F2 100%);
+}
+
+.bg-gradient-accent {
+  background: linear-gradient(90deg, #A21CAF 0%, #E87084 100%);
+}
+
+/* Cross-Browser Safe Text Gradient & Clipping Utilities */
+.bg-clip-text {
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+}
+
+.text-transparent {
+  -webkit-text-fill-color: transparent !important;
+}
+
+.gradient-text-brand {
+  color: #6E2D8B;
+  background: linear-gradient(135deg, #6E2D8B 0%, #8E3EAF 50%, #E87084 100%);
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  display: inline-block;
+}
+
+/* ── Custom Clean Scrollbars (No Windows Grey Controls) ── */
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+.no-scrollbar,
+.scrollbar-none {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  height: 5px;
+  width: 5px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(142, 62, 175, 0.25);
+  border-radius: 9999px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(142, 62, 175, 0.45);
+}

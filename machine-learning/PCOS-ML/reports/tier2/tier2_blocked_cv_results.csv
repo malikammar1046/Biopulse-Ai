@@ -1,0 +1,9 @@
+Model Configuration,Shuffled CV ROC-AUC,Blocked CV ROC-AUC,ROC-AUC Delta,Shuffled CV PR-AUC,Blocked CV PR-AUC,PR-AUC Delta
+Logistic Regression (Unweighted),0.8509,0.8563,0.0054,0.7717,0.7859,0.0142
+Logistic Regression (Balanced),0.849,0.8555,0.0065,0.7663,0.7829,0.0166
+Random Forest (Unweighted),0.8845,0.8822,-0.0023,0.8062,0.8002,-0.006
+Random Forest (Balanced),0.8873,0.8783,-0.009,0.8082,0.7941,-0.0141
+Extra Trees (Unweighted),0.8857,0.8835,-0.0022,0.8104,0.8074,-0.003
+Extra Trees (Balanced),0.8833,0.8824,-0.0009,0.8095,0.8108,0.0013
+XGBoost (Unweighted),0.8866,0.8739,-0.0127,0.7976,0.7768,-0.0207
+XGBoost (Balanced),0.8824,0.8736,-0.0088,0.7872,0.7745,-0.0127

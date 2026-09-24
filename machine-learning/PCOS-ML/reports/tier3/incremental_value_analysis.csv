@@ -1,0 +1,5 @@
+comparison,delta_roc_auc,ci_roc_95,p_val_roc,delta_pr_auc,ci_pr_95,p_val_pr,delta_brier,mcnemar_p,spans_zero,conclusion
+Multimodal (Late Blend) vs. Tier 1+2 Baseline,0.0,"[0.0000, 0.0000]",2.0,0.0,"[0.0000, 0.0000]",2.0,0.0,1.0,True,No demonstrated incremental improvement (CI spans zero)
+Multimodal (Meta-Classifier) vs. Tier 1+2 Baseline,3.497202527569243e-18,"[-0.0000, 0.0000]",1.732,0.0,"[0.0000, 0.0000]",2.0,0.0007666742752598993,1.0,True,No demonstrated incremental improvement (CI spans zero)
+Tier 3 Ultrasound-Only vs. Tier 1+2 Baseline,-0.3896767112959389,"[-0.5222, -0.2561]",0.0,-0.468623073454007,"[-0.6141, -0.3033]",0.0,0.10743160331270905,0.0003249142318964005,False,Ultrasound alone is substantially inferior to clinical baseline
+Tier 1+2 Baseline vs. Tier 1 Baseline,-0.006253373015897033,"[-0.0212, 0.0076]",0.362,-0.007780514996361466,"[-0.0397, 0.0210]",0.558,0.0016868531802421971,1.0,True,Modest refinement (CI spans zero on holdout)

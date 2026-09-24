@@ -1,0 +1,9 @@
+Model Configuration,Full Tier 2 ROC-AUC,Low-Circ ROC-AUC,ROC-AUC Delta,Full Tier 2 PR-AUC,Low-Circ PR-AUC,PR-AUC Delta
+Logistic Regression (Unweighted),0.8509,0.819,-0.0319,0.7717,0.717,-0.0547
+Logistic Regression (Balanced),0.849,0.8189,-0.0301,0.7663,0.712,-0.0542
+Random Forest (Unweighted),0.8845,0.8529,-0.0316,0.8062,0.7612,-0.045
+Random Forest (Balanced),0.8873,0.8525,-0.0348,0.8082,0.7607,-0.0476
+Extra Trees (Unweighted),0.8857,0.8568,-0.0289,0.8104,0.7645,-0.046
+Extra Trees (Balanced),0.8833,0.8554,-0.0279,0.8095,0.7644,-0.0451
+XGBoost (Unweighted),0.8866,0.8559,-0.0307,0.7976,0.7413,-0.0562
+XGBoost (Balanced),0.8824,0.8556,-0.0268,0.7872,0.7417,-0.0456

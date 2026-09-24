@@ -1,0 +1,408 @@
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { XClose, Plus, MedicalCross, Clock, CheckCircle, AlertCircle } from '@untitledui/icons';
+import type { MedicationItem, MedicationInput, MedicationFrequency } from '../../types/medication';
+
+interface MedicationModalProps {
+  isOpen: boolean;
+  editingMedication?: MedicationItem | null;
+  onClose: () => void;
+  onSave: (input: MedicationInput) => Promise<{ success: boolean; error?: string }>;
+  isMale?: boolean;
+}
+
+const COMMON_SUPPLEMENTS = [
+  'Metformin',
+  'Myo-Inositol',
+  'Vitamin D3',
+  'Spironolactone',
+  'CoQ10',
+  'Omega-3 Fish Oil',
+  'Magnesium Glycinate',
+  'Spearmint',
+];
+
+const UNIT_OPTIONS = ['mg', 'mcg', 'IU', 'tablet', 'capsule', 'sachet', 'drops', 'ml'];
+
+const FREQUENCY_OPTIONS: { key: MedicationFrequency; label: string; defaultTimes: string[] }[] = [
+  { key: 'once_daily', label: 'Once a day', defaultTimes: ['08:00'] },
+  { key: 'twice_daily', label: 'Twice a day', defaultTimes: ['08:00', '20:00'] },
+  { key: 'three_times_daily', label: 'Three times a day', defaultTimes: ['08:00', '13:00', '20:00'] },
+  { key: 'every_other_day', label: 'Every other day', defaultTimes: ['08:00'] },
+  { key: 'as_needed', label: 'As needed', defaultTimes: ['08:00'] },
+];
+
+export const MedicationModal: React.FC<MedicationModalProps> = ({
+  isOpen,
+  editingMedication,
+  onClose,
+  onSave,
+  isMale,
+}) => {
+  const [name, setName] = useState('');
+  const [dose, setDose] = useState('');
+  const [unit, setUnit] = useState('mg');
+  const [frequency, setFrequency] = useState<MedicationFrequency>('once_daily');
+  const [scheduledTimes, setScheduledTimes] = useState<string[]>(['08:00']);
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState('');
+  const [notes, setNotes] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [successToast, setSuccessToast] = useState(false);
+
+  useEffect(() => {
+    if (editingMedication) {
+      setName(editingMedication.name);
+      setDose(editingMedication.dose);
+      setUnit(editingMedication.unit);
+      setFrequency(editingMedication.frequency);
+      setScheduledTimes(editingMedication.scheduledTimes);
+      setStartDate(editingMedication.startDate);
+      setEndDate(editingMedication.endDate || '');
+      setNotes(editingMedication.notes || '');
+    } else {
+      setName('');
+      setDose('500');
+      setUnit('mg');
+      setFrequency('once_daily');
+      setScheduledTimes(['08:00']);
+      setStartDate(new Date().toISOString().split('T')[0]);
+      setEndDate('');
+      setNotes('');
+    }
+    setErrorMsg('');
+  }, [editingMedication, isOpen]);
+
+  const handleFrequencyChange = (newFreq: MedicationFrequency) => {
+    setFrequency(newFreq);
+    const option = FREQUENCY_OPTIONS.find((f) => f.key === newFreq);
+    if (option) {
+      setScheduledTimes(option.defaultTimes);
+    }
+  };
+
+  const handleTimeChange = (idx: number, newTime: string) => {
+    const updated = [...scheduledTimes];
+    updated[idx] = newTime;
+    setScheduledTimes(updated);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) {
+      setErrorMsg('Please enter a medicine name.');
+      return;
+    }
+    if (!dose.trim()) {
+      setErrorMsg('Please enter a dose (e.g. 500).');
+      return;
+    }
+
+    setSubmitting(true);
+    setErrorMsg('');
+
+    const payload: MedicationInput = {
+      name: name.trim(),
+      dose: dose.trim(),
+      unit,
+      frequency,
+      scheduledTimes,
+      startDate,
+      endDate: endDate || undefined,
+      notes: notes.trim(),
+      isActive: true,
+    };
+
+    const res = await onSave(payload);
+    setSubmitting(false);
+
+    if (res.success) {
+      setSuccessToast(true);
+      setTimeout(() => {
+        setSuccessToast(false);
+        onClose();
+      }, 500);
+    } else {
+      setErrorMsg(res.error || 'Failed to save medicine.');
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0F172A]/60 backdrop-blur-xs select-none text-left">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 15 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 15 }}
+          className={`w-full max-w-xl bg-white rounded-2xl shadow-2xl border overflow-hidden flex flex-col max-h-[90vh] ${
+            isMale ? 'border-[#BAE6FD]' : 'border-[#EAECF0]'
+          }`}
+        >
+          {/* Header */}
+          <div className="p-6 pb-4 border-b border-[#EAECF0] flex items-center justify-between bg-white">
+            <div className="flex items-center gap-2.5">
+              <span className={`p-2 rounded-xl ${
+                isMale ? 'bg-[#F0F9FF] text-[#0288D1]' : 'bg-[#FDE6EF] text-[#F43F7D]'
+              }`}>
+                <MedicalCross className="w-5 h-5" aria-hidden="true" />
+              </span>
+              <div>
+                <h2 className="text-lg font-bold font-display text-[#0F172A]">
+                  {editingMedication ? 'Edit Medicine' : 'Add Medicine or Supplement'}
+                </h2>
+                <p className="text-xs text-[#64748B]">
+                  Keep track of what you take and when
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close modal"
+              className="p-2 rounded-xl text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] transition-all cursor-pointer"
+            >
+              <XClose className="w-5 h-5" aria-hidden="true" />
+            </button>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-5">
+            {errorMsg && (
+              <div className="p-3 rounded-xl bg-[#FEF2F2] border border-[#FECACA] text-[#991B1B] text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-[#DC2626]" aria-hidden="true" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
+            {/* Quick Suggestions Chips */}
+            {!editingMedication && (
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-mono font-bold uppercase text-[#64748B]">
+                  Quick Fill Suggestions
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {COMMON_SUPPLEMENTS.map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => {
+                        setName(item);
+                        if (item.includes('Metformin')) {
+                          setDose('500');
+                          setUnit('mg');
+                          handleFrequencyChange('twice_daily');
+                        } else if (item.includes('Inositol')) {
+                          setDose('2000');
+                          setUnit('mg');
+                          handleFrequencyChange('once_daily');
+                        } else if (item.includes('Vitamin D')) {
+                          setDose('2000');
+                          setUnit('IU');
+                          handleFrequencyChange('once_daily');
+                        }
+                      }}
+                      className={`px-2.5 py-1 rounded-xl text-[11px] font-mono border transition-all cursor-pointer ${
+                        isMale
+                          ? 'bg-[#F8FAFC] hover:bg-[#F0F9FF] text-[#0369A1] border-[#BAE6FD]'
+                          : 'bg-[#F8FAFC] hover:bg-[#FDE6EF]/40 text-[#DC326C] border-[rgba(244,63,125,0.25)]'
+                      }`}
+                    >
+                      + {item}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 1. Medicine Name */}
+            <div className="space-y-1">
+              <label className="text-xs font-mono font-bold uppercase text-[#64748B]">
+                Medicine Name *
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Metformin, Myo-Inositol, Spironolactone"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className={`w-full px-4 py-2.5 rounded-xl bg-[#F8FAFC] border text-xs font-sans text-[#0F172A] focus:bg-white focus:outline-none ${
+                  isMale ? 'border-[#BAE6FD] focus:border-[#0288D1]' : 'border-[#EAECF0] focus:border-[#F43F7D]'
+                }`}
+              />
+            </div>
+
+            {/* 2. Dose & Unit */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-mono font-bold uppercase text-[#64748B]">
+                  Dose Amount *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. 500, 2000, 1"
+                  value={dose}
+                  onChange={(e) => setDose(e.target.value)}
+                  className={`w-full px-4 py-2.5 rounded-xl bg-[#F8FAFC] border text-xs font-mono text-[#0F172A] focus:bg-white focus:outline-none ${
+                    isMale ? 'border-[#BAE6FD] focus:border-[#0288D1]' : 'border-[#EAECF0] focus:border-[#F43F7D]'
+                  }`}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-mono font-bold uppercase text-[#64748B]">
+                  Unit
+                </label>
+                <select
+                  value={unit}
+                  onChange={(e) => setUnit(e.target.value)}
+                  className={`w-full px-4 py-2.5 rounded-xl bg-[#F8FAFC] border text-xs font-mono text-[#0F172A] focus:bg-white focus:outline-none ${
+                    isMale ? 'border-[#BAE6FD] focus:border-[#0288D1]' : 'border-[#EAECF0] focus:border-[#F43F7D]'
+                  }`}
+                >
+                  {UNIT_OPTIONS.map((u) => (
+                    <option key={u} value={u}>
+                      {u}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* 3. Frequency */}
+            <div className="space-y-2">
+              <label className="text-xs font-mono font-bold uppercase text-[#64748B] block">
+                How often do you take it?
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {FREQUENCY_OPTIONS.map((opt) => {
+                  const isSelected = frequency === opt.key;
+                  return (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => handleFrequencyChange(opt.key)}
+                      className={`p-2.5 rounded-xl text-xs font-semibold font-sans border transition-all cursor-pointer ${
+                        isSelected
+                          ? isMale
+                            ? 'bg-[#0288D1] text-white border-[#0288D1] shadow-xs'
+                            : 'bg-[#F43F7D] text-white border-[#F43F7D] shadow-xs'
+                          : isMale
+                            ? 'bg-[#F8FAFC] text-[#475569] border-[#E2E8F0] hover:bg-[#F0F9FF] hover:border-[#BAE6FD]'
+                            : 'bg-[#F8FAFC] text-[#475569] border-[#EAECF0] hover:bg-[#FDE6EF]/40 hover:border-[rgba(244,63,125,0.3)]'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 4. Scheduled Times */}
+            <div className="space-y-2">
+              <label className="text-xs font-mono font-bold uppercase text-[#64748B] block">
+                Scheduled Time(s)
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {scheduledTimes.map((time, idx) => (
+                  <div key={idx} className={`flex items-center gap-1.5 bg-[#F8FAFC] border p-2 rounded-xl ${
+                    isMale ? 'border-[#BAE6FD]' : 'border-[rgba(244,63,125,0.25)]'
+                  }`}>
+                    <Clock className={`w-3.5 h-3.5 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`} aria-hidden="true" />
+                    <input
+                      type="time"
+                      value={time}
+                      onChange={(e) => handleTimeChange(idx, e.target.value)}
+                      className={`text-xs font-mono font-bold bg-transparent focus:outline-none ${
+                        isMale ? 'text-[#0288D1]' : 'text-[#DC326C]'
+                      }`}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 5. Start Date & End Date */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-[11px] font-mono text-[#64748B]">Start Date</label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className={`w-full px-3 py-2 rounded-xl bg-[#F8FAFC] border text-xs font-mono text-[#0F172A] focus:bg-white focus:outline-none ${
+                    isMale ? 'border-[#BAE6FD] focus:border-[#0288D1]' : 'border-[#EAECF0] focus:border-[#F43F7D]'
+                  }`}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-mono text-[#64748B]">End Date (Optional)</label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className={`w-full px-3 py-2 rounded-xl bg-[#F8FAFC] border text-xs font-mono text-[#0F172A] focus:bg-white focus:outline-none ${
+                    isMale ? 'border-[#BAE6FD] focus:border-[#0288D1]' : 'border-[#EAECF0] focus:border-[#F43F7D]'
+                  }`}
+                />
+              </div>
+            </div>
+
+            {/* 6. Notes */}
+            <div className="space-y-1">
+              <label className="text-xs font-mono font-bold uppercase text-[#64748B]">
+                Optional Instructions / Notes
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Take with breakfast, dissolve in water"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className={`w-full px-4 py-2.5 rounded-xl bg-[#F8FAFC] border text-xs font-sans text-[#0F172A] focus:bg-white focus:outline-none ${
+                  isMale ? 'border-[#E2E8F0] focus:border-[#0288D1]' : 'border-[#EAECF0] focus:border-[#F43F7D]'
+                }`}
+              />
+            </div>
+
+            {/* Submit Footer */}
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#EAECF0]">
+              <button
+                type="button"
+                onClick={onClose}
+                className="h-10 px-4 rounded-xl border border-[#EAECF0] text-xs font-semibold text-[#64748B] hover:bg-[#F8FAFC] transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className={`h-10 px-5 rounded-xl text-white text-sm font-medium shadow-xs flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50 ${
+                  isMale ? 'bg-[#0288D1] hover:bg-[#0277BD]' : 'bg-[#F43F7D] hover:bg-[#DC326C]'
+                }`}
+              >
+                {successToast ? (
+                  <>
+                    <CheckCircle className="w-4 h-4 text-white" aria-hidden="true" />
+                    <span>Saved!</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4 text-white" aria-hidden="true" />
+                    <span>{editingMedication ? 'Save Changes' : 'Save Medicine'}</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  );
+};

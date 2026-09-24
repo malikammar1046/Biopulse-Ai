@@ -1,0 +1,3 @@
+Condition,TN,FP,FN,TP,Threshold
+Holdout @ Default (0.50),69,4,11,25,0.5
+Holdout @ Clinical Screening (tau=0.25),61,12,7,29,0.25
