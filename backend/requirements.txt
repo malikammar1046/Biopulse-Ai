@@ -20,3 +20,4 @@ pypdf>=3.17.0
 rapidocr-onnxruntime>=1.2.0
 pytest>=8.0.0
 timm>=0.9.12
+requests>=2.31.0
