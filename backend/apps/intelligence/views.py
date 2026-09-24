@@ -200,6 +200,8 @@ class ActiveAssessmentView(APIView):
         try:
             active = assessment_repository.get_active_assessment(patient_uuid, module=module, auth_token=auth_token)
             if not active:
+                if is_assessment_maintenance_active():
+                    return assessment_maintenance_response()
                 return Response(
                     {
                         "has_assessment": False,

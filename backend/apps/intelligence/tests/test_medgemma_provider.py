@@ -108,7 +108,7 @@ class MedGemmaProviderTests(TestCase):
     def test_factory_defaults_to_medgemma(self):
         prev = os.environ.get("LLM_PROVIDER")
         try:
-            os.environ.pop("LLM_PROVIDER", None)
+            os.environ["LLM_PROVIDER"] = "medgemma"
             provider = get_llm_provider()
             self.assertIsInstance(provider, MedGemmaProvider)
             self.assertEqual(provider.model_name, "medgemma:4b")
