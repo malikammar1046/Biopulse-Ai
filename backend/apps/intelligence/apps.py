@@ -14,7 +14,11 @@ class IntelligenceConfig(AppConfig):
 
     def ready(self):
         # Only run in main process (prevent double execution with runserver reloader)
-        if 'test' in sys.argv or os.environ.get('RUN_MAIN') == 'true' or not sys.argv or 'manage.py' not in sys.argv[0]:
+        # Avoid running background warmup thread during test runs to prevent import deadlocks and SQLite table locking
+        if 'test' in sys.argv:
+            return
+
+        if os.environ.get('RUN_MAIN') == 'true' or not sys.argv or 'manage.py' not in sys.argv[0]:
             def _warmup():
                 try:
                     logger.info("Starting background pre-warming of intelligence ML models & SQLite store...")
