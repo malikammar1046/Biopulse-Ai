@@ -16,6 +16,7 @@ TEST J: Longitudinal differential patient-safe attribution language
 TEST K: Explanation latency benchmark (< 30ms)
 """
 
+import os
 import time
 import unittest
 import uuid
@@ -23,7 +24,8 @@ import numpy as np
 import pandas as pd
 from PIL import Image
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
+from django.test import TestCase, override_settings
 
 from apps.intelligence.services.canonical_shap_registry import (
     CANONICAL_SHAP_REGISTRY,
@@ -43,11 +45,24 @@ from apps.intelligence.services.assessment_repository import (
 )
 
 
-class TestShapExplainability(unittest.TestCase):
+@override_settings(ALLOW_LOCAL_SQLITE_FALLBACK=True)
+class TestShapExplainability(TestCase):
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         pcos_ml_service.load()
         male_ml_service.load()
+
+    def setUp(self):
+        # Short-circuit dummy/unreachable Supabase clients during offline/CI test execution
+        supabase_url = os.environ.get("SUPABASE_URL", "")
+        if "dummy" in supabase_url.lower():
+            self.sb_patch1 = patch("apps.intelligence.services.clinical_state_repository.get_supabase_client", return_value=None)
+            self.sb_patch2 = patch("apps.intelligence.services.assessment_repository.get_supabase_client", return_value=None)
+            self.sb_patch1.start()
+            self.sb_patch2.start()
+            self.addCleanup(self.sb_patch1.stop)
+            self.addCleanup(self.sb_patch2.stop)
 
     def test_a_female_tier1_ensemble_additivity(self):
         """TEST A: Female Tier 1 5-fold ensemble aggregation satisfies additivity within 1e-5."""
@@ -336,9 +351,8 @@ class TestShapExplainability(unittest.TestCase):
 
     def test_safety_b_user_isolation_cannot_access_other_user_shap(self):
         """SAFETY B: another authenticated user cannot access another user's SHAP explanation."""
-        # Use existing Supabase auth test users to satisfy FK constraint
-        user_a = "001a8fdf-0299-4523-a19b-f705b6037a86"
-        user_b = "b289d8ec-ffd3-4fdf-b1f2-ac9dbece1ce8"
+        user_a = str(uuid.uuid4())
+        user_b = str(uuid.uuid4())
 
         pred = pcos_ml_service.predict_tier1({'age': 28, 'bmi': 26.0, 'cycle_length_days': 36.0})
         saved_a = AssessmentRepository.save_assessment(user_id=user_a, assessment_data=pred, make_active=True)
@@ -429,7 +443,7 @@ class TestShapExplainability(unittest.TestCase):
 
     def test_safety_e_shap_snapshot_survives_reload_without_in_memory_cache(self):
         """SAFETY E: SHAP snapshot survives reload without in-memory cache."""
-        test_user = "001a8fdf-0299-4523-a19b-f705b6037a86"
+        test_user = str(uuid.uuid4())
         pred = pcos_ml_service.predict_tier1({
             'age': 28, 'bmi': 27.0, 'cycle_length_days': 41.0, 'hirsutism': 1.0, 'fast_food': 1.0
         })
@@ -468,7 +482,7 @@ class TestShapExplainability(unittest.TestCase):
 
     def test_safety_f_previous_comparison_selects_historical_comparable_not_current_active(self):
         """SAFETY F: previous comparison selects historical comparable assessment, not current active."""
-        test_user = "c4dad78b-3f0a-4a6c-93bc-95484001072c"
+        test_user = str(uuid.uuid4())
         saved1 = None
         saved2 = None
         try:

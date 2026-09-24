@@ -19,6 +19,7 @@ jobs:
       DJANGO_DEBUG: "True"
       SUPABASE_URL: "https://dummy-project.supabase.co"
       SUPABASE_ANON_KEY: "dummy-anon-key"
+      ALLOW_LOCAL_SQLITE_FALLBACK: "true"
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4

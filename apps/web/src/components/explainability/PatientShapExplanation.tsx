@@ -4,11 +4,9 @@ import {
   TrendingUp,
   TrendingDown,
   ArrowRight,
-  ShieldAlert,
   Sparkles,
   BarChart3,
   Clock,
-  ExternalLink,
 } from 'lucide-react';
 import type {
   PatientShapExplanationPayload,
