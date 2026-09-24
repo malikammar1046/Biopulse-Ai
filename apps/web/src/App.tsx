@@ -61,6 +61,9 @@ const UnderstandMaleHypogonadism = lazy(() =>
 const TrustAndPrivacy = lazy(() =>
   import('./pages/public/TrustAndPrivacy').then((m) => ({ default: m.TrustAndPrivacy }))
 );
+const Doctors = lazy(() =>
+  import('./pages/public/Doctors').then((m) => ({ default: m.Doctors }))
+);
 
 // Auth & Onboarding Pages (Lazy-Loaded)
 const Login = lazy(() => import('./pages/auth/Login').then((m) => ({ default: m.Login })));
@@ -117,6 +120,7 @@ export function App() {
                 <Route path={ROUTES.HOW_IT_WORKS} element={<HowItWorks />} />
                 <Route path={ROUTES.FEATURES} element={<Features />} />
                 <Route path={ROUTES.CONTACT} element={<Contact />} />
+                <Route path={ROUTES.DOCTORS} element={<Doctors />} />
 
                 {/* Public Only Auth Pages */}
                 <Route element={<PublicOnlyRoute />}>

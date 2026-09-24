@@ -18,6 +18,7 @@ export const ROUTES = {
   CARE_CIRCLE: '/care-circle',
   CARE_PROVIDER_PORTAL: '/care-provider/:token',
   CONTACT: '/contact',
+  DOCTORS: '/doctors',
 
   // Authentication & Onboarding Routes
   LOGIN: '/login',
