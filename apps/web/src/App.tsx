@@ -12,6 +12,7 @@ import { PathwayRouteGuard } from './components/auth/PathwayRouteGuard';
 import { useUserHealth } from './context/UserHealthContext';
 import { getPathwayDashboardRoute } from './constants/routes';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
+import { BioPulseLoadingScreen } from './components/brand/BioPulseLoadingScreen';
 
 // Dynamic redirection to user's authorized pathway dashboard
 const DashboardRedirect: React.FC = () => {
@@ -20,19 +21,8 @@ const DashboardRedirect: React.FC = () => {
   return <Navigate to={destination} replace />;
 };
 
-// Lightweight Page Loading Skeleton / Fallback
-const PageLoadingFallback: React.FC = () => (
-  <div className="min-h-[70vh] flex items-center justify-center bg-[#10071A]">
-    <div className="flex flex-col items-center gap-3">
-      <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#6E2D8B] via-[#8E3EAF] to-[#E87084] flex items-center justify-center shadow-lg shadow-purple-950/40 animate-pulse">
-        <div className="w-3 h-3 rounded-full bg-white animate-ping" />
-      </div>
-      <span className="text-xs font-mono font-bold tracking-widest text-[#B4A6C7] uppercase">
-        Loading...
-      </span>
-    </div>
-  </div>
-);
+// Clinical Page Loading Fallback with Glowing BioPulse Logo
+const PageLoadingFallback: React.FC = () => <BioPulseLoadingScreen fullScreen={true} />;
 
 // Route-Level Lazy Loading (Code Splitting)
 const Home = lazy(() => import('./pages/public/Home').then((m) => ({ default: m.Home })));
