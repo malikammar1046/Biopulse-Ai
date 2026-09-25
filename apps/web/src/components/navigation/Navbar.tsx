@@ -19,6 +19,8 @@ const SEARCH_SUGGESTIONS = [
   { title: 'Pakistani Nutrition & 7-Day Meal Plan', path: ROUTES.FEATURES, category: 'Nutrition' },
   { title: 'Progressive Cost-Aware Screening', path: ROUTES.HOW_IT_WORKS, category: 'Screening' },
   { title: 'Supported Conditions Overview', path: ROUTES.CONDITIONS, category: 'Clinical Pathways' },
+  { title: 'Care Circle & Clinician Sharing', path: ROUTES.CARE_CIRCLE, category: 'Care Network' },
+  { title: 'Doctor Summary & Patient Permissions', path: ROUTES.CARE_CIRCLE, category: 'Privacy & Sharing' },
   { title: 'Meet Our Doctors & Specialists', path: ROUTES.DOCTORS, category: 'Clinical Team' },
   { title: 'Explainable AI & Feature Importance', path: ROUTES.FEATURES, category: 'Technology' },
   { title: 'Medical Report OCR Support', path: ROUTES.FEATURES, category: 'Features' },
@@ -62,6 +64,7 @@ export const Navbar: React.FC = () => {
   const isAboutActive = location.pathname === ROUTES.ABOUT;
   const isHowItWorksActive = location.pathname === ROUTES.HOW_IT_WORKS;
   const isConditionsActive = location.pathname === ROUTES.CONDITIONS;
+  const isCareCircleActive = location.pathname === ROUTES.CARE_CIRCLE;
   const isDoctorsActive = location.pathname === ROUTES.DOCTORS;
   const isContactActive = location.pathname === ROUTES.CONTACT;
 
@@ -173,6 +176,23 @@ export const Navbar: React.FC = () => {
               >
                 Conditions
                 {isConditionsActive && (
+                  <motion.div
+                    layoutId="navbar-active-indicator"
+                    className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-[#0891B2] rounded-full"
+                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                  />
+                )}
+              </Link>
+
+              {/* Care Circle */}
+              <Link
+                to={ROUTES.CARE_CIRCLE}
+                className={`relative py-1 transition-colors whitespace-nowrap ${
+                  isCareCircleActive ? 'text-[#0891B2] font-bold' : 'text-slate-600 hover:text-[#0891B2]'
+                }`}
+              >
+                Care Circle
+                {isCareCircleActive && (
                   <motion.div
                     layoutId="navbar-active-indicator"
                     className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-[#0891B2] rounded-full"
@@ -345,6 +365,15 @@ export const Navbar: React.FC = () => {
                     }`}
                   >
                     Conditions We Support
+                  </Link>
+
+                  <Link
+                    to={ROUTES.CARE_CIRCLE}
+                    className={`p-2.5 rounded-xl transition-colors ${
+                      isCareCircleActive ? 'bg-sky-50 text-[#0891B2] font-bold' : 'hover:bg-slate-50'
+                    }`}
+                  >
+                    Care Circle
                   </Link>
 
                   <Link
