@@ -11,6 +11,7 @@ import { PrimaryScreeningCard } from '../../components/dashboard/PrimaryScreenin
 import { NextBestActionCard } from '../../components/dashboard/NextBestActionCard';
 import { TopFactorsCard } from '../../components/dashboard/TopFactorsCard';
 import { RecentActivityRow } from '../../components/dashboard/RecentActivityRow';
+import { CareCircleCard } from '../../components/dashboard/CareCircleCard';
 import { FemaleDashboardOverview } from '../../components/female/FemaleDashboardOverview';
 
 // Clinical Modals
@@ -275,6 +276,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ pathway: pathwayProp }) =>
         <RecentActivityRow
           latestReport={latestReport}
           upcomingAppointment={nextAppointment}
+        />
+      </div>
+
+      {/* ── 4. Care Circle & Collaborative Support ───────── */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-[#64748B]">
+            Care Circle &amp; Consent Management
+          </h3>
+          <button
+            type="button"
+            onClick={() => navigate(ROUTES.APP.CARE_CIRCLE)}
+            className="text-xs font-bold text-[#0288D1] hover:text-[#01579B] transition-colors cursor-pointer"
+          >
+            Manage Care Circle →
+          </button>
+        </div>
+        <CareCircleCard
+          pathway="male"
+          onPrepareAppointment={() => navigate(ROUTES.APP.CARE_CIRCLE)}
         />
       </div>
 

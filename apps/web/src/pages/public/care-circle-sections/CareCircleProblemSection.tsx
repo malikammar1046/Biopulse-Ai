@@ -7,129 +7,104 @@ export const CareCircleProblemSection: React.FC = () => {
   const [isUnified, setIsUnified] = useState(false);
 
   const fragments = [
-    { label: 'Menstrual Cycle Logs', icon: <Calendar className="w-4 h-4 text-[#FB7185]" />, note: 'Isolated period tracker app' },
-    { label: 'Daily Symptom Trends', icon: <Activity className="w-4 h-4 text-[#E879F9]" />, note: 'Notes app & loose memory' },
-    { label: 'Nutrition & Meals', icon: <Utensils className="w-4 h-4 text-[#34D399]" />, note: 'Diet tracker slips' },
-    { label: 'Fitness & Physical Activity', icon: <Dumbbell className="w-4 h-4 text-[#38BDF8]" />, note: 'Smartwatch history' },
-    { label: 'Medication & Supplements', icon: <Pill className="w-4 h-4 text-[#FBBF24]" />, note: 'Prescription bottles & alarms' },
-    { label: 'Lab Reports & Bloodwork', icon: <FileText className="w-4 h-4 text-[#C084FC]" />, note: 'Paper printouts in folders' },
-    { label: 'Upcoming Appointments', icon: <Calendar className="w-4 h-4 text-[#F43F5E]" />, note: 'Calendar app alerts' },
-    { label: 'AI Health Conversations', icon: <MessageSquare className="w-4 h-4 text-[#A855F7]" />, note: 'Private symptom queries' },
+    { label: 'Menstrual Cycle Logs', icon: <Calendar className="w-4 h-4 text-[#E11D48]" />, note: 'Isolated period tracker app' },
+    { label: 'Daily Symptom Trends', icon: <Activity className="w-4 h-4 text-[#0891B2]" />, note: 'Notes app & loose memory' },
+    { label: 'Nutrition & Meals', icon: <Utensils className="w-4 h-4 text-[#059669]" />, note: 'Diet tracker slips' },
+    { label: 'Fitness & Movement', icon: <Dumbbell className="w-4 h-4 text-[#0284C7]" />, note: 'Smartwatch history' },
+    { label: 'Medication & Supplements', icon: <Pill className="w-4 h-4 text-[#D97706]" />, note: 'Prescription bottles & alarms' },
+    { label: 'Lab Reports & Bloodwork', icon: <FileText className="w-4 h-4 text-[#7C3AED]" />, note: 'Paper slips in folders' },
+    { label: 'Upcoming Appointments', icon: <Calendar className="w-4 h-4 text-[#E11D48]" />, note: 'Calendar app alerts' },
+    { label: 'AI Health Conversations', icon: <MessageSquare className="w-4 h-4 text-[#0891B2]" />, note: 'Private symptom queries' },
   ];
 
   return (
-    <section className="py-24 sm:py-32 bg-[#180A25] text-white relative overflow-hidden border-t border-white/10">
-      {/* Background Radial Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[750px] h-[550px] bg-[#6E2D8B]/20 rounded-full blur-[180px] pointer-events-none -z-10" />
-
+    <section className="py-20 sm:py-28 bg-[#F8FAFC] text-[#162A45] relative overflow-hidden border-b border-slate-200/80">
       <Container size="xl">
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto space-y-4 mb-14 sm:mb-18">
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/15 backdrop-blur-md"
-          >
-            <Layers className="w-4 h-4 text-[#FB7185]" />
-            <span className="text-xs font-bold uppercase tracking-[0.18em] text-[#F6F2FA]">
+        <div className="text-center max-w-3xl mx-auto space-y-4 mb-14 sm:mb-16">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-slate-200/90 shadow-2xs">
+            <Layers className="w-4 h-4 text-[#0891B2]" />
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#0891B2]">
               The Fragmentation Challenge
             </span>
-          </motion.div>
+          </div>
 
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7, delay: 0.1 }}
-            className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight font-display"
-          >
+          <h2 className="text-3xl sm:text-5xl font-extrabold text-[#162A45] tracking-tight font-display">
             Health information is everywhere.{' '}
-            <span className="bg-gradient-to-r from-[#FB7185] via-[#E879F9] to-[#C084FC] bg-clip-text text-transparent">
+            <span className="text-[#0891B2]">
               Support is usually disconnected.
             </span>
-          </motion.h2>
+          </h2>
 
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7, delay: 0.2 }}
-            className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans font-normal"
-          >
-            When health data lives in eight different places, explaining your reality to doctors and loved ones becomes exhausting. BIOPulse AI introduces an intelligent central layer to organize what matters.
-          </motion.p>
+          <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-sans font-normal max-w-2xl mx-auto">
+            When health data lives in eight separate places, explaining your symptoms to doctors and loved ones becomes exhausting. BioPulse AI introduces an intelligent central layer to organize what matters.
+          </p>
 
           {/* Interactive State Toggle */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7, delay: 0.3 }}
-            className="pt-4 flex justify-center"
-          >
-            <div className="inline-flex items-center gap-2 p-1.5 rounded-2xl bg-[#10071A] border border-white/15 backdrop-blur-md">
+          <div className="pt-4 flex justify-center">
+            <div className="inline-flex items-center gap-1.5 p-1 rounded-full bg-slate-200/70 border border-slate-300/80">
               <button
+                type="button"
                 onClick={() => setIsUnified(false)}
-                className={`px-5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                className={`px-5 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
                   !isUnified
-                    ? 'bg-white/15 text-white shadow-md'
-                    : 'text-[#B4A6C7] hover:text-white'
+                    ? 'bg-white text-[#162A45] shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 Fragmented Reality
               </button>
               <button
+                type="button"
                 onClick={() => setIsUnified(true)}
-                className={`px-5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-5 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                   isUnified
-                    ? 'bg-gradient-to-r from-[#8E3EAF] to-[#E87084] text-white shadow-lg shadow-purple-950/50'
-                    : 'text-[#B4A6C7] hover:text-white'
+                    ? 'bg-[#0891B2] text-white shadow-md'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <ShieldCheck className="w-4 h-4 text-[#FB7185]" />
+                <ShieldCheck className="w-4 h-4" />
                 <span>Unified Care Circle Layer</span>
               </button>
             </div>
-          </motion.div>
+          </div>
         </div>
 
         {/* Dynamic Interactive Stage */}
-        <div className="relative min-h-[480px] rounded-3xl bg-[#10071A]/80 border border-white/12 p-6 sm:p-10 backdrop-blur-xl flex items-center justify-center overflow-hidden shadow-2xl shadow-purple-950/40">
+        <div className="relative min-h-[460px] rounded-3xl bg-white border border-slate-200/90 p-6 sm:p-10 shadow-sm flex items-center justify-center overflow-hidden">
           <AnimatePresence mode="wait">
             {!isUnified ? (
               /* FRAGMENTED STATE */
               <motion.div
                 key="fragmented"
-                initial={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.5 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.4 }}
                 className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 relative"
               >
                 {fragments.map((frag, idx) => (
                   <motion.div
                     key={frag.label}
-                    initial={{ opacity: 0, y: 15 }}
+                    initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: idx * 0.05 }}
-                    whileHover={{ y: -4 }}
-                    className="p-5 rounded-2xl bg-[#180A25]/90 border border-white/10 space-y-3 hover:border-white/20 transition-all text-left shadow-lg"
+                    transition={{ duration: 0.35, delay: idx * 0.04 }}
+                    whileHover={{ y: -3 }}
+                    className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 hover:border-slate-300 hover:bg-white transition-all text-left shadow-2xs"
                   >
                     <div className="flex items-center justify-between">
-                      <div className="p-2 rounded-xl bg-white/10 border border-white/15">
+                      <div className="p-2 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
                         {frag.icon}
                       </div>
-                      <span className="text-[10px] font-mono text-[#F43F5E] bg-[#F43F5E]/10 px-2 py-0.5 rounded-full border border-[#F43F5E]/20">
+                      <span className="text-[10px] font-mono font-semibold text-[#E11D48] bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200/80">
                         Disconnected
                       </span>
                     </div>
                     <div>
-                      <h4 className="text-sm font-bold text-white font-display">
+                      <h4 className="text-sm font-bold text-[#162A45] font-display">
                         {frag.label}
                       </h4>
-                      <p className="text-xs text-[#B4A6C7] font-sans mt-1">
+                      <p className="text-xs text-slate-500 font-sans mt-1">
                         {frag.note}
                       </p>
                     </div>
@@ -140,61 +115,58 @@ export const CareCircleProblemSection: React.FC = () => {
               /* UNIFIED CARE CIRCLE LAYER */
               <motion.div
                 key="unified"
-                initial={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.5 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.4 }}
                 className="w-full flex flex-col items-center text-center space-y-8 py-4"
               >
                 {/* Central Orchestrator Orb */}
                 <div className="relative">
-                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#8E3EAF] via-[#A21CAF] to-[#E87084] p-1 shadow-[0_0_50px_rgba(232,112,132,0.6)] animate-pulse flex items-center justify-center">
-                    <div className="w-full h-full rounded-full bg-[#180A25] flex flex-col items-center justify-center">
-                      <ShieldCheck className="w-8 h-8 text-[#FB7185]" />
-                      <span className="text-[9px] font-mono font-bold text-[#E879F9]">
-                        BIOPULSE CORE
-                      </span>
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-[#00C4DF] to-[#0284C7] p-1 shadow-lg shadow-cyan-900/15 flex items-center justify-center">
+                    <div className="w-full h-full rounded-full bg-white flex flex-col items-center justify-center text-[#0891B2]">
+                      <ShieldCheck className="w-8 h-8 text-[#0891B2]" />
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-2 max-w-xl">
-                  <h3 className="text-2xl sm:text-3xl font-extrabold text-white font-display">
+                  <h3 className="text-2xl sm:text-3xl font-extrabold text-[#162A45] font-display">
                     One unified health intelligence layer.
                   </h3>
-                  <p className="text-sm sm:text-base text-[#EDE4F7] font-sans">
+                  <p className="text-sm sm:text-base text-slate-600 font-sans">
                     All your tracked signals flow into your secure personal hub — structured, timestamped, and ready for you to share selectively.
                   </p>
                 </div>
 
                 {/* 3 Unified Gateways */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl text-left">
-                  <div className="p-5 rounded-2xl bg-[#180A25]/90 border border-[#8E3EAF]/50 space-y-2 shadow-xl">
-                    <div className="flex items-center gap-2 text-[#C084FC] text-xs font-bold uppercase tracking-wider">
-                      <CheckCircle2 className="w-4 h-4 text-[#34D399]" />
+                  <div className="p-5 rounded-2xl bg-sky-50/70 border border-sky-200 space-y-2 shadow-2xs">
+                    <div className="flex items-center gap-2 text-[#0284C7] text-xs font-bold uppercase tracking-wider font-display">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                       <span>Doctor Brief View</span>
                     </div>
-                    <p className="text-xs text-[#B4A6C7]">
+                    <p className="text-xs text-slate-600 leading-relaxed">
                       Longitudinal reports, medication adherence, cycle summaries, and physician discussion prep.
                     </p>
                   </div>
 
-                  <div className="p-5 rounded-2xl bg-[#180A25]/90 border border-[#C084FC]/50 space-y-2 shadow-xl">
-                    <div className="flex items-center gap-2 text-[#E879F9] text-xs font-bold uppercase tracking-wider">
-                      <CheckCircle2 className="w-4 h-4 text-[#34D399]" />
-                      <span>Family & Routine View</span>
+                  <div className="p-5 rounded-2xl bg-rose-50/60 border border-rose-200 space-y-2 shadow-2xs">
+                    <div className="flex items-center gap-2 text-[#E11D48] text-xs font-bold uppercase tracking-wider font-display">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>Family &amp; Routine View</span>
                     </div>
-                    <p className="text-xs text-[#B4A6C7]">
+                    <p className="text-xs text-slate-600 leading-relaxed">
                       Selected medication reminders, appointment alerts, and general wellness check-ins.
                     </p>
                   </div>
 
-                  <div className="p-5 rounded-2xl bg-[#180A25]/90 border border-[#FB7185]/50 space-y-2 shadow-xl">
-                    <div className="flex items-center gap-2 text-[#FB7185] text-xs font-bold uppercase tracking-wider">
-                      <CheckCircle2 className="w-4 h-4 text-[#34D399]" />
+                  <div className="p-5 rounded-2xl bg-purple-50/60 border border-purple-200 space-y-2 shadow-2xs">
+                    <div className="flex items-center gap-2 text-[#7C3AED] text-xs font-bold uppercase tracking-wider font-display">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                       <span>Private Shield</span>
                     </div>
-                    <p className="text-xs text-[#B4A6C7]">
+                    <p className="text-xs text-slate-600 leading-relaxed">
                       Raw intimate AI chats and unshared sensitive markers remain 100% encrypted and private.
                     </p>
                   </div>
