@@ -17,7 +17,7 @@ export const CareCircle: React.FC = () => {
   }, []);
 
   return (
-    <div className="bg-[#10071A] text-white min-h-screen">
+    <div className="flex flex-col w-full overflow-hidden bg-transparent text-[#162A45] selection:bg-[#0891B2] selection:text-white">
       {/* 1. Cinematic Hero Section */}
       <CareCircleHeroSection />
 

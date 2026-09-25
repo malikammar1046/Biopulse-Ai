@@ -17,22 +17,34 @@ import { ROUTES } from '../../constants/routes';
 interface CareCircleProps {
   contacts?: CareCircleContact[];
   onPrepareAppointment?: () => void;
+  pathway?: 'female' | 'male' | 'general';
 }
 
 export const CareCircleCard: React.FC<CareCircleProps> = ({
   onPrepareAppointment,
+  pathway: pathwayProp,
 }) => {
   const { userProfile, careCircleMembers, upcomingAppointment } = useUserHealth();
   const activeMembers = careCircleMembers.filter((m) => m.status === 'active');
   const doctor = activeMembers.find((c) => c.role === 'doctor');
   const emergencyContacts = userProfile.emergencyContacts || [];
 
+  const pathway = pathwayProp || userProfile?.pathway || userProfile?.gender;
+  const isFemale = pathway === 'female';
+
+  const accentColor = isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]';
+  const hoverColor = isFemale ? 'hover:text-[#DC326C]' : 'hover:text-[#0277BD]';
+  const btnBg = isFemale ? 'bg-[#F43F7D] hover:bg-[#DC326C]' : 'bg-[#0288D1] hover:bg-[#0277BD]';
+  const mutedBg = isFemale ? 'bg-[#FDE6EF]' : 'bg-[#E0F2FE]';
+  const panelBg = isFemale ? 'bg-[#FFF5F8] border-[#FDE6EF]' : 'bg-[#F0F9FF] border-[#BAE6FD]';
+  const panelBorder = isFemale ? 'border-[#FDE6EF]' : 'border-[#BAE6FD]';
+
   return (
     <div className="p-6 sm:p-7 rounded-[28px] bg-white border border-[#E2E8F0] shadow-xs flex flex-col justify-between select-none text-left space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Users01 className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
+          <Users01 className={`w-5 h-5 ${accentColor} shrink-0`} aria-hidden="true" />
           <h3 className="text-base font-bold font-display text-[#0F172A]">
             My Care Circle
           </h3>
@@ -40,7 +52,7 @@ export const CareCircleCard: React.FC<CareCircleProps> = ({
 
         <Link
           to={ROUTES.APP.CARE_CIRCLE}
-          className="text-xs font-bold text-[#0288D1] hover:text-[#0277BD] transition-colors"
+          className={`text-xs font-bold ${accentColor} ${hoverColor} transition-colors`}
         >
           {activeMembers.length > 0 ? 'Manage Care Circle' : 'Add Member'}
         </Link>
@@ -50,8 +62,8 @@ export const CareCircleCard: React.FC<CareCircleProps> = ({
       {emergencyContacts.length > 0 && emergencyContacts[0]?.name ? (
         <div className="p-3.5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <span className="p-2 rounded-xl bg-[#E0F2FE] text-[#0288D1] shrink-0">
-              <ShieldTick className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
+            <span className={`p-2 rounded-xl ${mutedBg} ${accentColor} shrink-0`}>
+              <ShieldTick className={`w-4 h-4 ${accentColor}`} aria-hidden="true" />
             </span>
             <div className="min-w-0">
               <span className="text-xs font-bold text-[#0F172A] block truncate">
@@ -82,11 +94,11 @@ export const CareCircleCard: React.FC<CareCircleProps> = ({
       {activeMembers.length > 0 ? (
         <>
           {doctor ? (
-            <div className="p-4 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] space-y-3">
+            <div className={`p-4 rounded-2xl ${panelBg} space-y-3`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl overflow-hidden border border-[#BAE6FD] shrink-0 bg-white flex items-center justify-center">
-                    <User01 className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
+                  <div className={`w-10 h-10 rounded-xl overflow-hidden border ${panelBorder} shrink-0 bg-white flex items-center justify-center`}>
+                    <User01 className={`w-5 h-5 ${accentColor}`} aria-hidden="true" />
                   </div>
                   <div>
                     <span className="text-xs font-bold text-[#0F172A] block">{doctor.name}</span>
@@ -99,8 +111,8 @@ export const CareCircleCard: React.FC<CareCircleProps> = ({
                 </span>
               </div>
 
-              <div className="flex items-center justify-between pt-2 border-t border-[#BAE6FD]/60 text-xs">
-                <div className="flex items-center gap-1.5 text-[#0288D1] font-semibold">
+              <div className={`flex items-center justify-between pt-2 border-t ${panelBorder} text-xs`}>
+                <div className={`flex items-center gap-1.5 ${accentColor} font-semibold`}>
                   <Calendar className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>
                     {upcomingAppointment
@@ -114,14 +126,14 @@ export const CareCircleCard: React.FC<CareCircleProps> = ({
                     <button
                       type="button"
                       onClick={onPrepareAppointment}
-                      className="px-3 py-1 rounded-xl text-xs font-bold text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-xs transition-all cursor-pointer"
+                      className={`px-3 py-1 rounded-xl text-xs font-bold text-white ${btnBg} shadow-xs transition-all cursor-pointer`}
                     >
                       Prepare Summary
                     </button>
                   ) : (
                     <Link
                       to={ROUTES.APP.APPOINTMENTS}
-                      className="px-3 py-1 rounded-xl text-xs font-bold text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-xs transition-all"
+                      className={`px-3 py-1 rounded-xl text-xs font-bold text-white ${btnBg} shadow-xs transition-all`}
                     >
                       Prepare Summary
                     </Link>
@@ -129,7 +141,7 @@ export const CareCircleCard: React.FC<CareCircleProps> = ({
                 ) : (
                   <Link
                     to={ROUTES.APP.APPOINTMENTS}
-                    className="px-3 py-1 rounded-xl text-xs font-bold text-[#0288D1] bg-white hover:bg-[#F8FAFC] border border-[#BAE6FD] transition-all"
+                    className={`px-3 py-1 rounded-xl text-xs font-bold ${accentColor} bg-white hover:bg-[#F8FAFC] border ${panelBorder} transition-all`}
                   >
                     + Book Visit
                   </Link>
@@ -168,13 +180,13 @@ export const CareCircleCard: React.FC<CareCircleProps> = ({
           </div>
         </>
       ) : (
-        <div className="p-5 rounded-2xl bg-[#F8FAFC] border border-dashed border-[#BAE6FD] text-center space-y-2">
+        <div className={`p-5 rounded-2xl bg-[#F8FAFC] border border-dashed ${panelBorder} text-center space-y-2`}>
           <p className="text-xs text-[#64748B]">
             Your Care Circle is empty.
           </p>
           <Link
             to={ROUTES.APP.CARE_CIRCLE}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-[#0288D1] hover:bg-[#0277BD] transition-all shadow-xs"
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white ${btnBg} transition-all shadow-xs`}
           >
             <Plus className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Add someone you trust</span>
@@ -186,7 +198,7 @@ export const CareCircleCard: React.FC<CareCircleProps> = ({
       <div className="pt-2 border-t border-[#E2E8F0] flex items-center justify-between">
         <Link
           to={ROUTES.APP.CARE_CIRCLE}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0288D1] hover:text-[#0277BD] transition-colors group"
+          className={`inline-flex items-center gap-1.5 text-xs font-bold ${accentColor} ${hoverColor} transition-colors group`}
         >
           <span>Manage Care Circle</span>
           <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" aria-hidden="true" />

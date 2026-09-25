@@ -11,12 +11,12 @@ interface NodeData {
   subtitle: string;
   role: string;
   icon: React.ReactNode;
-  color: string;
-  borderColor: string;
-  glowColor: string;
+  accentBg: string;
+  accentColor: string;
+  badgeBg: string;
+  description: string;
   permitted: string[];
   restricted: string[];
-  description: string;
 }
 
 export const CareCircleNetworkSection: React.FC = () => {
@@ -28,10 +28,10 @@ export const CareCircleNetworkSection: React.FC = () => {
       title: 'Dr. Ahmed',
       subtitle: 'Attending Clinician • Ob/Gyn',
       role: 'Clinical Care & Review',
-      icon: <Stethoscope className="w-6 h-6 text-[#C084FC]" />,
-      color: 'from-[#8E3EAF] to-[#A21CAF]',
-      borderColor: 'border-[#8E3EAF]',
-      glowColor: 'shadow-[0_0_30px_rgba(142,62,175,0.4)]',
+      icon: <Stethoscope className="w-5 h-5 text-[#0284C7]" />,
+      accentBg: 'bg-sky-50',
+      accentColor: 'text-[#0284C7]',
+      badgeBg: 'bg-sky-50 text-[#0284C7] border-sky-200',
       description:
         'Receives high-density structured weekly summaries, biomarker lab report digitization, and consultation prep questions without accessing private chats.',
       permitted: [
@@ -52,10 +52,10 @@ export const CareCircleNetworkSection: React.FC = () => {
       title: 'Aisha (Sister)',
       subtitle: 'Family Support Network',
       role: 'Routine & Emotional Support',
-      icon: <Users className="w-6 h-6 text-[#E879F9]" />,
-      color: 'from-[#E879F9] to-[#A21CAF]',
-      borderColor: 'border-[#E879F9]',
-      glowColor: 'shadow-[0_0_30px_rgba(232,121,249,0.4)]',
+      icon: <Users className="w-5 h-5 text-[#E11D48]" />,
+      accentBg: 'bg-rose-50',
+      accentColor: 'text-[#E11D48]',
+      badgeBg: 'bg-rose-50 text-[#E11D48] border-rose-200',
       description:
         'Kept in the loop for shared medication alarms and appointment logistics without access to sensitive clinical biomarkers or doctor notes.',
       permitted: [
@@ -75,10 +75,10 @@ export const CareCircleNetworkSection: React.FC = () => {
       title: 'Care Partner',
       subtitle: 'Designated Health Partner',
       role: 'Wellness Collaboration',
-      icon: <UserCheck className="w-6 h-6 text-[#FB7185]" />,
-      color: 'from-[#FB7185] to-[#E87084]',
-      borderColor: 'border-[#FB7185]',
-      glowColor: 'shadow-[0_0_30px_rgba(251,113,133,0.4)]',
+      icon: <UserCheck className="w-5 h-5 text-[#7C3AED]" />,
+      accentBg: 'bg-purple-50',
+      accentColor: 'text-[#7C3AED]',
+      badgeBg: 'bg-purple-50 text-[#7C3AED] border-purple-200',
       description:
         'Participates in healthy meal planning, fitness routines, and logistical reminders with custom permissions governed exclusively by you.',
       permitted: [
@@ -94,13 +94,13 @@ export const CareCircleNetworkSection: React.FC = () => {
     },
     ai: {
       id: 'ai',
-      title: 'BIOPulse AI Engine',
+      title: 'BioPulse AI Engine',
       subtitle: 'Longitudinal Intelligence',
       role: 'Private Analysis & Synthesis',
-      icon: <Cpu className="w-6 h-6 text-[#38BDF8]" />,
-      color: 'from-[#38BDF8] to-[#0284C7]',
-      borderColor: 'border-[#38BDF8]',
-      glowColor: 'shadow-[0_0_30px_rgba(56,189,248,0.4)]',
+      icon: <Cpu className="w-5 h-5 text-[#059669]" />,
+      accentBg: 'bg-emerald-50',
+      accentColor: 'text-[#059669]',
+      badgeBg: 'bg-emerald-50 text-[#059669] border-emerald-200',
       description:
         'Processes your multimodal health signals locally and cryptographically inside your private vault — identifying longitudinal patterns without selling or broadcasting your data.',
       permitted: [
@@ -119,48 +119,27 @@ export const CareCircleNetworkSection: React.FC = () => {
   const active = nodes[selectedNode];
 
   return (
-    <section id="care-circle-network" className="py-24 sm:py-32 bg-[#10071A] text-white relative overflow-hidden border-t border-white/10">
-      {/* Background Ambience */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-[#6E2D8B]/20 rounded-full blur-[190px] pointer-events-none -z-10" />
-
+    <section id="care-circle-network" className="py-20 sm:py-28 bg-[#F8FAFC] text-[#162A45] relative overflow-hidden border-b border-slate-200/80">
       <Container size="xl">
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto space-y-4 mb-16 sm:mb-20">
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/15 backdrop-blur-md"
-          >
-            <Network className="w-4 h-4 text-[#FB7185]" />
-            <span className="text-xs font-bold uppercase tracking-[0.18em] text-[#F6F2FA]">
+        <div className="text-center max-w-3xl mx-auto space-y-4 mb-14 sm:mb-16">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-50 border border-cyan-200/80 text-xs font-semibold text-[#0891B2]">
+            <Network className="w-4 h-4 text-[#0891B2]" />
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em]">
               Interactive Permission Graph
             </span>
-          </motion.div>
+          </div>
 
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7, delay: 0.1 }}
-            className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight font-display"
-          >
+          <h2 className="text-3xl sm:text-5xl font-extrabold text-[#162A45] tracking-tight font-display">
             The Care Circle{' '}
-            <span className="bg-gradient-to-r from-[#C084FC] via-[#E879F9] to-[#FB7185] bg-clip-text text-transparent">
+            <span className="text-[#0891B2]">
               Network.
             </span>
-          </motion.h2>
+          </h2>
 
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7, delay: 0.2 }}
-            className="text-base sm:text-lg text-[#B4A6C7] leading-relaxed font-sans font-normal"
-          >
+          <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-sans font-normal max-w-2xl mx-auto">
             Click any node in your health circle to inspect exactly what information they are permitted to see and what is strictly shielded.
-          </motion.p>
+          </p>
         </div>
 
         {/* ── Interactive Network Grid & Inspection HUD ── */}
@@ -173,122 +152,117 @@ export const CareCircleNetworkSection: React.FC = () => {
               return (
                 <button
                   key={key}
+                  type="button"
                   onClick={() => setSelectedNode(key)}
                   className={`p-4 sm:p-5 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between gap-4 ${
                     isSelected
-                      ? `bg-[#180A25] ${node.borderColor} ${node.glowColor} scale-[1.02]`
-                      : 'bg-[#10071A]/70 border-white/10 hover:border-white/25 hover:bg-[#180A25]/50'
+                      ? 'bg-white border-2 border-[#0891B2] shadow-md scale-[1.01]'
+                      : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700'
                   }`}
                 >
                   <div className="flex items-center gap-3.5">
-                    <div className={`p-3 rounded-xl bg-gradient-to-br ${node.color} text-white shadow-md`}>
+                    <div className={`w-11 h-11 rounded-2xl ${node.accentBg} border border-slate-200 flex items-center justify-center shrink-0`}>
                       {node.icon}
                     </div>
                     <div>
-                      <h4 className="text-sm sm:text-base font-bold text-white font-display">
-                        {node.title}
-                      </h4>
-                      <span className="text-xs text-[#B4A6C7] font-sans">
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-sm sm:text-base font-bold text-[#162A45] font-display">
+                          {node.title}
+                        </h4>
+                        {isSelected && (
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        )}
+                      </div>
+                      <span className="text-xs text-slate-500 block font-sans">
                         {node.subtitle}
                       </span>
                     </div>
                   </div>
 
-                  <div className="shrink-0">
-                    <span
-                      className={`text-[10px] font-mono px-2.5 py-1 rounded-full border ${
-                        isSelected
-                          ? 'bg-white/15 text-white border-white/20'
-                          : 'bg-white/5 text-[#8D7E9E] border-white/5'
-                      }`}
-                    >
-                      {isSelected ? 'INSPECTING' : 'VIEW'}
-                    </span>
-                  </div>
+                  <span className="text-xs text-[#0891B2] font-semibold shrink-0">
+                    {isSelected ? 'Inspecting →' : 'View'}
+                  </span>
                 </button>
               );
             })}
           </div>
 
-          {/* Inspection Glass HUD */}
+          {/* Active Node Inspection HUD */}
           <div className="lg:col-span-7">
             <AnimatePresence mode="wait">
               <motion.div
                 key={active.id}
-                initial={{ opacity: 0, y: 15, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -15, scale: 0.98 }}
-                transition={{ duration: 0.45 }}
-                className="rounded-3xl bg-[#180A25]/95 border border-white/15 p-6 sm:p-8 backdrop-blur-2xl shadow-2xl shadow-purple-950/60 text-left space-y-6 relative overflow-hidden"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }}
+                transition={{ duration: 0.3 }}
+                className="rounded-3xl bg-white border border-slate-200/90 p-6 sm:p-8 shadow-xl text-left space-y-6"
               >
-                {/* Top Subtle Aura */}
-                <div className={`absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl ${active.color} opacity-15 rounded-full blur-2xl pointer-events-none`} />
-
-                {/* HUD Header */}
-                <div className="flex flex-wrap items-center justify-between gap-4 pb-5 border-b border-white/10">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-3 rounded-2xl bg-gradient-to-br ${active.color} text-white shadow-lg`}>
+                {/* Node Inspection Header */}
+                <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-slate-100">
+                  <div className="flex items-center gap-3.5">
+                    <div className={`w-12 h-12 rounded-2xl ${active.accentBg} border border-slate-200 flex items-center justify-center shrink-0`}>
                       {active.icon}
                     </div>
                     <div>
-                      <h3 className="text-xl font-extrabold text-white font-display">
-                        {active.title}
-                      </h3>
-                      <span className="text-xs text-[#B4A6C7] font-mono">
-                        Role: {active.role}
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-xl font-extrabold text-[#162A45] font-display">
+                          {active.title}
+                        </h3>
+                        <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full border ${active.badgeBg} font-bold uppercase`}>
+                          {active.role}
+                        </span>
+                      </div>
+                      <span className="text-xs text-slate-500 font-sans mt-0.5 block">
+                        {active.subtitle}
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#10B981]/15 border border-[#10B981]/30 text-xs font-mono text-[#34D399]">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>Permission Enforced</span>
+
+                  <div className="inline-flex items-center gap-1.5 text-xs text-emerald-700 font-mono font-bold bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                    <span>Active Consent Link</span>
                   </div>
                 </div>
 
                 {/* Description */}
-                <p className="text-xs sm:text-sm text-[#EDE4F7] font-sans leading-relaxed">
+                <p className="text-sm text-slate-600 leading-relaxed font-sans">
                   {active.description}
                 </p>
 
-                {/* Permitted vs Restricted 2-Column Matrix */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                  {/* PERMITTED */}
-                  <div className="p-4 rounded-2xl bg-[#10071A] border border-[#10B981]/30 space-y-3">
-                    <div className="flex items-center gap-2 text-xs font-bold text-[#34D399] uppercase tracking-wider font-mono">
-                      <Check className="w-4 h-4 stroke-[3]" />
-                      <span>Permitted Visibility</span>
+                {/* Permissions Breakdown Matrix */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+                  {/* Permitted Categories */}
+                  <div className="p-5 rounded-2xl bg-emerald-50/50 border border-emerald-200/70 space-y-3">
+                    <div className="flex items-center gap-2 text-xs font-bold font-mono text-emerald-800 uppercase tracking-wider">
+                      <Check className="w-4 h-4 text-emerald-600" />
+                      <span>Explicitly Permitted</span>
                     </div>
-                    <ul className="space-y-2 text-xs text-[#F6F2FA] font-sans">
+                    <ul className="space-y-2 text-xs text-slate-700">
                       {active.permitted.map((item, idx) => (
                         <li key={idx} className="flex items-start gap-2">
-                          <span className="text-[#34D399] font-bold">✓</span>
-                          <span>{item}</span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 mt-1.5" />
+                          <span className="leading-snug">{item}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
 
-                  {/* RESTRICTED */}
-                  <div className="p-4 rounded-2xl bg-[#10071A] border border-[#F43F5E]/30 space-y-3">
-                    <div className="flex items-center gap-2 text-xs font-bold text-[#FB7185] uppercase tracking-wider font-mono">
-                      <X className="w-4 h-4 stroke-[3]" />
-                      <span>Strictly Restricted</span>
+                  {/* Strictly Shielded Categories */}
+                  <div className="p-5 rounded-2xl bg-rose-50/40 border border-rose-200/70 space-y-3">
+                    <div className="flex items-center gap-2 text-xs font-bold font-mono text-[#E11D48] uppercase tracking-wider">
+                      <X className="w-4 h-4 text-[#E11D48]" />
+                      <span>Strictly Shielded</span>
                     </div>
-                    <ul className="space-y-2 text-xs text-[#B4A6C7] font-sans">
+                    <ul className="space-y-2 text-xs text-slate-600">
                       {active.restricted.map((item, idx) => (
                         <li key={idx} className="flex items-start gap-2">
-                          <span className="text-[#FB7185] font-bold">✕</span>
-                          <span>{item}</span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#E11D48] shrink-0 mt-1.5" />
+                          <span className="leading-snug">{item}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
-                </div>
-
-                {/* Bottom Control Note */}
-                <div className="pt-4 border-t border-white/10 flex items-center justify-between text-[11px] text-[#8D7E9E]">
-                  <span>Controlled from your personal mobile device</span>
-                  <span className="font-mono text-[#E879F9]">Access status: Active</span>
                 </div>
               </motion.div>
             </AnimatePresence>

@@ -64,6 +64,9 @@ const TrustAndPrivacy = lazy(() =>
 const Doctors = lazy(() =>
   import('./pages/public/Doctors').then((m) => ({ default: m.Doctors }))
 );
+const CareCircle = lazy(() =>
+  import('./pages/public/CareCircle').then((m) => ({ default: m.CareCircle }))
+);
 
 // Auth & Onboarding Pages (Lazy-Loaded)
 const Login = lazy(() => import('./pages/auth/Login').then((m) => ({ default: m.Login })));
@@ -111,8 +114,9 @@ export function App() {
                 <Route path={ROUTES.UNDERSTAND_MALE_FERTILITY} element={<Navigate to={ROUTES.UNDERSTAND_MALE_HYPOGONADISM} replace />} />
                 <Route path={ROUTES.WOMENS_HEALTH} element={<Navigate to={ROUTES.UNDERSTAND_PCOS_CANONICAL} replace />} />
                 <Route path={ROUTES.MENS_HEALTH} element={<Navigate to={ROUTES.UNDERSTAND_MALE_HYPOGONADISM} replace />} />
-                <Route path={ROUTES.CARE_CIRCLE} element={<Navigate to={ROUTES.ABOUT} replace />} />
-                <Route path={ROUTES.FOR_DOCTORS} element={<Navigate to={ROUTES.ABOUT} replace />} />
+                <Route path={ROUTES.CARE_CIRCLE} element={<CareCircle />} />
+                <Route path="/carecircle" element={<Navigate to={ROUTES.CARE_CIRCLE} replace />} />
+                <Route path={ROUTES.FOR_DOCTORS} element={<Navigate to={ROUTES.DOCTORS} replace />} />
                 <Route path="/ai-that-explains" element={<Navigate to={ROUTES.HOW_IT_WORKS} replace />} />
                 
                 <Route path={ROUTES.TRUST_PRIVACY} element={<TrustAndPrivacy />} />
@@ -197,6 +201,7 @@ export function App() {
                   <Route path="reports" element={<ReportsPage />} />
                   <Route path="medications" element={<MedicationsPage />} />
                   <Route path="care-circle" element={<CareCirclePage />} />
+                  <Route path="carecircle" element={<Navigate to={ROUTES.APP.CARE_CIRCLE} replace />} />
                   <Route path="appointments" element={<AppointmentsPage />} />
                   <Route path="timeline" element={<TimelinePage />} />
                   <Route path="progress" element={<ProgressPage />} />

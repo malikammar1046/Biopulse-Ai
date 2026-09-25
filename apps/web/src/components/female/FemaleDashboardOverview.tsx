@@ -14,6 +14,7 @@ import { FemaleScreeningCard } from './FemaleScreeningCard';
 import { FemaleTopFactors } from './FemaleTopFactors';
 import { FemaleNextBestAction } from './FemaleNextBestAction';
 import { FemaleRecentActivity } from './FemaleRecentActivity';
+import { CareCircleCard } from '../dashboard/CareCircleCard';
 
 export const FemaleDashboardOverview: React.FC = () => {
   const navigate = useNavigate();
@@ -182,6 +183,26 @@ export const FemaleDashboardOverview: React.FC = () => {
         <FemaleRecentActivity
           latestReport={latestReport}
           upcomingAppointment={nextAppointment}
+        />
+      </div>
+
+      {/* ── 4. My Care Circle & Collaborative Support ───────── */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-[#667085]">
+            Care Circle &amp; Consent Management
+          </h3>
+          <button
+            type="button"
+            onClick={() => navigate(ROUTES.APP.CARE_CIRCLE)}
+            className="text-xs font-semibold text-[#F43F7D] hover:text-[#DC326C] transition-colors cursor-pointer"
+          >
+            Manage Care Circle →
+          </button>
+        </div>
+        <CareCircleCard
+          pathway="female"
+          onPrepareAppointment={() => navigate(ROUTES.APP.CARE_CIRCLE)}
         />
       </div>
 
