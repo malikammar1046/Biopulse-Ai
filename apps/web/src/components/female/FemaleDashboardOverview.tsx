@@ -5,8 +5,6 @@ import { InfoCircle } from '@untitledui/icons';
 import { ROUTES } from '../../constants/routes';
 import { useUserHealth } from '../../context/UserHealthContext';
 import {
-  FemalePageHeader,
-  FemaleStatusBadge,
   FemaleCard,
   APPLE_SPRINGS,
 } from './FemaleDesignPrimitives';
@@ -18,7 +16,6 @@ import { FemaleRecentActivity } from './FemaleRecentActivity';
 export const FemaleDashboardOverview: React.FC = () => {
   const navigate = useNavigate();
   const {
-    userProfile,
     activeAssessment,
     mlAssessment,
     assessmentLoading,
@@ -27,14 +24,6 @@ export const FemaleDashboardOverview: React.FC = () => {
     appointments,
   } = useUserHealth();
 
-  // 1. Time-aware greeting
-  const greeting = useMemo(() => {
-    const hour = new Date().getHours();
-    const name = userProfile?.fullName?.split(' ')[0] || 'there';
-    if (hour < 12) return `Good morning, ${name}`;
-    if (hour < 17) return `Good afternoon, ${name}`;
-    return `Good evening, ${name}`;
-  }, [userProfile]);
 
   // 2. Authoritative Assessment State
   const hasAssessment = Boolean(
@@ -96,19 +85,6 @@ export const FemaleDashboardOverview: React.FC = () => {
 
   const loading = assessmentLoading || mlAssessmentLoading;
 
-  // Contextual status badge
-  const headerBadge = useMemo(() => {
-    if (!hasAssessment) {
-      return <FemaleStatusBadge variant="neutral">Screening Not Started</FemaleStatusBadge>;
-    }
-    if (assessmentLevel === 'tier_1_2_3') {
-      return <FemaleStatusBadge variant="pink">Tier 3 Multimodal</FemaleStatusBadge>;
-    }
-    if (assessmentLevel === 'tier_1_2') {
-      return <FemaleStatusBadge variant="pink">Tier 2 Clinical Labs</FemaleStatusBadge>;
-    }
-    return <FemaleStatusBadge variant="pink">Tier 1 Initial</FemaleStatusBadge>;
-  }, [hasAssessment, assessmentLevel]);
 
   // Primary action handler
   const handlePrimaryAction = async () => {
@@ -130,14 +106,7 @@ export const FemaleDashboardOverview: React.FC = () => {
       transition={APPLE_SPRINGS.instant}
       className="max-w-6xl mx-auto space-y-6 sm:space-y-7 pb-16 text-left select-none"
     >
-      {/* ── 1. Apple-Style Page Header ──────────────────────────────────────── */}
-      <FemalePageHeader
-        title={greeting}
-        subtitle="Here’s your reproductive health and PCOS screening overview."
-        badge={headerBadge}
-      />
-
-      {/* ── 2. Primary 2-Column Clinical Grid ───────────────────────────────── */}
+      {/* ── Primary 2-Column Clinical Grid ───────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-stretch">
         {/* Left Column (7 cols): Primary Screening Card */}
         <div className="lg:col-span-7 flex flex-col">

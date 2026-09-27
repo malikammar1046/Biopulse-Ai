@@ -36,14 +36,18 @@ class LifestyleService {
   /**
    * Fetch personalized lifestyle recommendations synthesized from
    * profile, screening risk, SHAP drivers, symptoms, and lab biomarkers.
+   * If refresh is true, triggers a fresh recalculation instead of using cached fingerprint.
    */
   async getRecommendations(
-    module?: 'ovasense' | 'androsense'
+    module?: 'ovasense' | 'androsense' | 'female_pcos' | 'male_hypogonadism',
+    refresh = false
   ): Promise<LifestyleRecommendationsResult> {
     const headers = await getAuthHeaders();
-    const url = module
-      ? `${LIFESTYLE_ENDPOINT}?module=${encodeURIComponent(module)}`
-      : LIFESTYLE_ENDPOINT;
+    const params = new URLSearchParams();
+    if (module) params.set('module', module);
+    if (refresh) params.set('refresh', 'true');
+    const queryString = params.toString();
+    const url = queryString ? `${LIFESTYLE_ENDPOINT}?${queryString}` : LIFESTYLE_ENDPOINT;
 
     const res = await fetch(url, {
       method: 'GET',
@@ -54,6 +58,35 @@ class LifestyleService {
       const err = await res.json().catch(() => ({}));
       throw new Error(
         err.error || err.detail || `Failed to fetch lifestyle recommendations (${res.status})`
+      );
+    }
+
+    return res.json();
+  }
+
+  /**
+   * Update the adherence lifecycle status (ACTIVE, COMPLETED, SKIPPED)
+   * of a specific lifestyle recommendation item. Persists to backend database.
+   */
+  async updateRecommendationStatus(params: {
+    recommendation_id: string;
+    status: 'NEW' | 'ACTIVE' | 'IMPROVING' | 'MAINTAIN' | 'REASSESS' | 'COMPLETED' | 'SKIPPED';
+    module?: string;
+    note?: string;
+  }): Promise<{ status: string; recommendation_id: string; [key: string]: any }> {
+    const headers = await getAuthHeaders();
+    const url = `${LIFESTYLE_ENDPOINT}status/`;
+
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(params),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(
+        err.error || err.detail || `Failed to update recommendation status (${res.status})`
       );
     }
 

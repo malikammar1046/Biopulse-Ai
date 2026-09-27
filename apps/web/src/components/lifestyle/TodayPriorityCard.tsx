@@ -1,16 +1,21 @@
 import React, { useState } from 'react';
-import { Sparkles, ArrowRight, TrendingUp, HelpCircle, ShieldCheck } from 'lucide-react';
+import { Sparkles, ArrowRight, TrendingUp, HelpCircle, ShieldCheck, CheckCircle2, RotateCcw } from 'lucide-react';
 import type { RecommendationItem } from '../../types/lifestyle';
 
 interface TodayPriorityCardProps {
   priorityRecommendation: RecommendationItem | null;
   onViewRecommendation: (rec: RecommendationItem) => void;
+  onUpdateStatus?: (
+    recommendationId: string,
+    status: 'NEW' | 'ACTIVE' | 'IMPROVING' | 'MAINTAIN' | 'REASSESS' | 'COMPLETED' | 'SKIPPED'
+  ) => void;
   isMale?: boolean;
 }
 
 export const TodayPriorityCard: React.FC<TodayPriorityCardProps> = ({
   priorityRecommendation,
   onViewRecommendation,
+  onUpdateStatus,
   isMale = false,
 }) => {
   const [showShapTooltip, setShowShapTooltip] = useState(false);
@@ -18,6 +23,8 @@ export const TodayPriorityCard: React.FC<TodayPriorityCardProps> = ({
   if (!priorityRecommendation) {
     return null;
   }
+
+  const isCompleted = priorityRecommendation.status === 'COMPLETED';
 
   return (
     <section
@@ -46,10 +53,17 @@ export const TodayPriorityCard: React.FC<TodayPriorityCardProps> = ({
             </span>
 
             {/* Status Chip */}
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-              <TrendingUp className="w-3 h-3" />
-              <span>{priorityRecommendation.status}</span>
-            </span>
+            {isCompleted ? (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-400/25 text-emerald-200 border border-emerald-400/40">
+                <CheckCircle2 className="w-3 h-3 text-emerald-300" />
+                <span>Completed</span>
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                <TrendingUp className="w-3 h-3" />
+                <span>{priorityRecommendation.status}</span>
+              </span>
+            )}
 
             {/* Model-Informed Priority Badge (SHAP boundary: strictly non-numeric) */}
             {priorityRecommendation.shap_priority_basis && (
@@ -81,7 +95,11 @@ export const TodayPriorityCard: React.FC<TodayPriorityCardProps> = ({
           </div>
 
           {/* Strong Action Title */}
-          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight font-display text-white">
+          <h2
+            className={`text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight font-display ${
+              isCompleted ? 'text-emerald-100 line-through decoration-emerald-400/60' : 'text-white'
+            }`}
+          >
             {priorityRecommendation.title}
           </h2>
 
@@ -96,18 +114,43 @@ export const TodayPriorityCard: React.FC<TodayPriorityCardProps> = ({
           </p>
         </div>
 
-        {/* Action Button */}
-        <div className="shrink-0 flex items-center">
+        {/* Action Buttons */}
+        <div className="shrink-0 flex items-center gap-3 flex-wrap">
+          {onUpdateStatus && (
+            <>
+              {isCompleted ? (
+                <button
+                  type="button"
+                  onClick={() => onUpdateStatus(priorityRecommendation.id, 'ACTIVE')}
+                  className="inline-flex items-center gap-1.5 px-4 py-3 rounded-2xl text-xs sm:text-sm font-semibold bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 hover:bg-emerald-500/30 transition-all cursor-pointer"
+                  title="Mark as active again"
+                >
+                  <RotateCcw className="w-4 h-4 text-emerald-300" />
+                  <span>Undo Done</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onUpdateStatus(priorityRecommendation.id, 'COMPLETED')}
+                  className="inline-flex items-center gap-1.5 px-4 py-3 rounded-2xl text-xs sm:text-sm font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-md cursor-pointer"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Mark Done</span>
+                </button>
+              )}
+            </>
+          )}
+
           <button
             type="button"
             onClick={() => onViewRecommendation(priorityRecommendation)}
-            className={`inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-200 shadow-md cursor-pointer ${
+            className={`inline-flex items-center gap-2 px-5 py-3 rounded-2xl text-xs sm:text-sm font-semibold transition-all duration-200 shadow-md cursor-pointer ${
               isMale
                 ? 'bg-[#2196E3] hover:bg-[#0868B9] text-white'
                 : 'bg-[#16B8C4] hover:bg-[#0E9EAA] text-white'
             }`}
           >
-            <span>View recommendation</span>
+            <span>View details</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>

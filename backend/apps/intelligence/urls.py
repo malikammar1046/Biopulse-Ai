@@ -21,7 +21,10 @@ from apps.intelligence.views import (
     CompanionHealthView,
     LongitudinalHealthView,
 )
-from apps.intelligence.views_lifestyle import LifestyleRecommendationsView
+from apps.intelligence.views_lifestyle import (
+    LifestyleRecommendationsView,
+    LifestyleRecommendationStatusView,
+)
 
 urlpatterns = [
     path("status/", IntelligenceStatusView.as_view(), name="intelligence-status"),
@@ -41,4 +44,5 @@ urlpatterns = [
     path("companion/chat/", IntelligenceChatView.as_view(), name="intelligence-companion-chat"),
     path("companion/health/", CompanionHealthView.as_view(), name="intelligence-companion-health"),
     path("lifestyle-recommendations/", LifestyleRecommendationsView.as_view(), name="intelligence-lifestyle-recommendations"),
+    path("lifestyle-recommendations/status/", LifestyleRecommendationStatusView.as_view(), name="intelligence-lifestyle-recommendations-status"),
 ]

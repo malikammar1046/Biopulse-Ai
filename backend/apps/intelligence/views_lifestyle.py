@@ -2,11 +2,18 @@
 backend/apps/intelligence/views_lifestyle.py
 
 DRF Views for BioPulse AI Dynamic Lifestyle Recommendations API.
-Endpoint:
-- GET  /api/v1/intelligence/lifestyle-recommendations/
-- POST /api/v1/intelligence/lifestyle-recommendations/
+Endpoints:
+- GET   /api/v1/intelligence/lifestyle-recommendations/
+- POST  /api/v1/intelligence/lifestyle-recommendations/
+- PATCH /api/v1/intelligence/lifestyle-recommendations/status/
+- POST  /api/v1/intelligence/lifestyle-recommendations/status/
 
-Guarantees 100% decoupling from legacy Meal Directory.
+Guarantees:
+- Context fingerprinting prevents redundant re-evaluations on simple page refresh.
+- Fresh patient state changes (weight, BMI, symptoms, labs, screening tier) automatically trigger re-evaluation.
+- Recommendations persist in Supabase (with SQLite local fallback).
+- User adherence actions (START, COMPLETE, SKIP) persist across sessions.
+- 100% decoupling from legacy Meal Directory.
 """
 
 from __future__ import annotations
@@ -21,6 +28,7 @@ from rest_framework.views import APIView
 
 from apps.authentication.supabase_auth import SupabaseAuthentication
 from apps.intelligence.services.lifestyle_context_builder import LifestyleContextBuilder
+from apps.intelligence.services.lifestyle_repository import lifestyle_repository
 from apps.intelligence.services.lifestyle_safety_rules import LifestyleSafetyEngine
 from apps.intelligence.services.lifestyle_recommendation_engine import LifestyleRecommendationEngine
 
@@ -44,24 +52,63 @@ class LifestyleRecommendationsView(APIView):
 
     def get(self, request) -> Response:
         user_id = str(request.user.id)
-        module = request.query_params.get("module")
+        raw_module = request.query_params.get("module")
         auth_token = _extract_auth_token(request)
+        force_refresh = request.query_params.get("refresh", "").lower() in ("true", "1")
 
         try:
-            # 1. Build Comprehensive Context
+            # 1. Build Comprehensive Context from current patient state
             context = LifestyleContextBuilder.build_context(
                 user_id=user_id,
-                module=module,
+                module=raw_module,
+                auth_token=auth_token,
+            )
+            canonical_module = context.demographics.pathway
+            current_version = context.context_version
+
+            # 2. Check persistent repository for active recommendations with matching context_version
+            if not force_refresh:
+                cached_record = lifestyle_repository.get_active_recommendations(
+                    user_id=user_id,
+                    module=canonical_module,
+                    auth_token=auth_token,
+                )
+                if cached_record and cached_record.get("context_version") == current_version:
+                    payload = cached_record.get("payload")
+                    if payload and isinstance(payload, dict):
+                        logger.info(
+                            "Returning cached persistent recommendations for user %s (version %s)",
+                            user_id[:8],
+                            current_version,
+                        )
+                        return Response(payload, status=status.HTTP_200_OK)
+
+            # 3. Context changed or not yet persisted -> Evaluate Clinical Safety & Boundaries
+            safety = LifestyleSafetyEngine.evaluate_safety(context)
+
+            # 4. Generate Synchronized Recommendations
+            recommendations_result = LifestyleRecommendationEngine.generate(context, safety)
+            payload = recommendations_result.to_dict()
+
+            # Preserve previously recorded item adherence statuses if any
+            existing_record = lifestyle_repository.get_active_recommendations(
+                user_id=user_id,
+                module=canonical_module,
+                auth_token=auth_token,
+            )
+            item_statuses = existing_record.get("item_statuses") if existing_record else {}
+
+            # 5. Persist to Supabase / SQLite repository
+            lifestyle_repository.save_recommendations(
+                user_id=user_id,
+                module=canonical_module,
+                context_version=current_version,
+                payload=payload,
+                item_statuses=item_statuses,
                 auth_token=auth_token,
             )
 
-            # 2. Evaluate Clinical Safety & Boundaries
-            safety = LifestyleSafetyEngine.evaluate_safety(context)
-
-            # 3. Generate Synchronized Recommendations
-            recommendations = LifestyleRecommendationEngine.generate(context, safety)
-
-            return Response(recommendations.to_dict(), status=status.HTTP_200_OK)
+            return Response(payload, status=status.HTTP_200_OK)
 
         except Exception as e:
             logger.error("Error generating lifestyle recommendations for user %s: %s", user_id[:8], e, exc_info=True)
@@ -79,13 +126,13 @@ class LifestyleRecommendationsView(APIView):
         Allows testing tailored recommendations with simulated dietary or lifestyle parameters.
         """
         user_id = str(request.user.id)
-        module = request.data.get("module") or request.query_params.get("module")
+        raw_module = request.data.get("module") or request.query_params.get("module")
         auth_token = _extract_auth_token(request)
 
         try:
             context = LifestyleContextBuilder.build_context(
                 user_id=user_id,
-                module=module,
+                module=raw_module,
                 auth_token=auth_token,
             )
 
@@ -109,5 +156,59 @@ class LifestyleRecommendationsView(APIView):
                     "error": "Failed to simulate lifestyle recommendations.",
                     "detail": str(e),
                 },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class LifestyleRecommendationStatusView(APIView):
+    """
+    Authoritative API endpoint for recording patient adherence actions on recommendation items
+    (e.g., ACTIVE, COMPLETED, SKIPPED, MAINTAIN).
+    """
+    authentication_classes = [SupabaseAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request) -> Response:
+        return self._handle_update(request)
+
+    def post(self, request) -> Response:
+        return self._handle_update(request)
+
+    def _handle_update(self, request) -> Response:
+        user_id = str(request.user.id)
+        raw_module = request.data.get("module") or request.query_params.get("module")
+        rec_id = request.data.get("recommendation_id") or request.data.get("id")
+        new_status = request.data.get("status")
+        note = request.data.get("note", "")
+        auth_token = _extract_auth_token(request)
+
+        if not rec_id:
+            return Response({"error": "recommendation_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+        if not new_status:
+            return Response({"error": "status is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        canonical_module = LifestyleContextBuilder.normalize_module(raw_module)
+
+        try:
+            updated = lifestyle_repository.update_item_status(
+                user_id=user_id,
+                module=canonical_module,
+                recommendation_id=str(rec_id),
+                new_status=str(new_status),
+                note=str(note),
+                auth_token=auth_token,
+            )
+            if not updated:
+                return Response(
+                    {"error": "No active recommendations found for this user and pathway."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            return Response(updated, status=status.HTTP_200_OK)
+        except ValueError as ve:
+            return Response({"error": str(ve)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error("Error updating recommendation status for user %s: %s", user_id[:8], e, exc_info=True)
+            return Response(
+                {"error": "Failed to update recommendation status.", "detail": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

@@ -117,31 +117,18 @@ export const AssessmentPage: React.FC = () => {
       transition={{ duration: 0.35, ease: 'easeOut' }}
       className="max-w-7xl mx-auto space-y-6 sm:space-y-8 pb-20 text-left select-none"
     >
-      {/* ── 1. Top Executive Banner ───────────────────────────────────────── */}
-      <div className="relative p-6 sm:p-8 rounded-[32px] bg-[#01579B] border border-[#BAE6FD] text-white shadow-sm overflow-hidden">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 border border-white/25 text-xs font-mono text-white">
-              <LayersThree01 className="w-3.5 h-3.5 text-[#BAE6FD]" aria-hidden="true" />
-              <span>{adaptiveProfile.screeningPathwayName}</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold font-display tracking-tight text-white">
-              Adaptive Health Profile & Screening
-            </h1>
-            <p className="text-xs sm:text-sm text-sky-100 font-sans max-w-2xl leading-relaxed">
-              Start with what you know → understand available information → identify gaps → progressively build your profile without mandatory testing.
-            </p>
-          </div>
-
-          {/* Navigation Toggle between 4-Tier System and Quick Profile Editor */}
-          <div className="flex items-center gap-2 p-1 rounded-2xl bg-black/20 border border-white/15 self-start md:self-auto">
+      {/* ── Screening Sub-Tabs & Actions Toolbar ─────────────────────────── */}
+      <div className="flex items-center justify-between gap-4 flex-wrap bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-2">View:</span>
+          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100">
             <button
               type="button"
               onClick={() => setActiveTab('overview')}
-              className={`px-4 py-2 rounded-xl text-xs font-sans font-bold transition-all cursor-pointer ${
+              className={`px-4 py-2 rounded-lg text-xs font-sans font-bold transition-all cursor-pointer ${
                 activeTab === 'overview'
-                  ? 'bg-white text-[#01579B] shadow-sm'
-                  : 'text-sky-100 hover:text-white'
+                  ? 'bg-white text-[#01579B] shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               {pathway === 'male' ? '2-Tier Screening' : '3-Tier Screening'}
@@ -149,15 +136,19 @@ export const AssessmentPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setActiveTab('intake')}
-              className={`px-4 py-2 rounded-xl text-xs font-sans font-bold transition-all cursor-pointer ${
+              className={`px-4 py-2 rounded-lg text-xs font-sans font-bold transition-all cursor-pointer ${
                 activeTab === 'intake'
-                  ? 'bg-white text-[#01579B] shadow-sm'
-                  : 'text-sky-100 hover:text-white'
+                  ? 'bg-white text-[#01579B] shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Update Biometrics
             </button>
           </div>
+        </div>
+
+        <div className="text-xs text-slate-500 hidden sm:block pr-2">
+          Progressively build your profile without mandatory clinical testing
         </div>
       </div>
 

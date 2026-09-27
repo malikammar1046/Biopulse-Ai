@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { SearchLg, Bell01, Plus, Calendar, Edit01 } from '@untitledui/icons';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { getTimeBasedGreeting } from '../../utils/profileCompletion';
+import { UserAvatar } from '../common/UserAvatar';
 
 export const DashboardHeader: React.FC = () => {
   const { userProfile, snapshotMetrics, openAiChatWithPrompt } = useUserHealth();
@@ -122,15 +123,14 @@ export const DashboardHeader: React.FC = () => {
         </button>
 
         {/* User Profile Avatar */}
-        <div className="w-9 h-9 rounded-2xl overflow-hidden border border-[#BAE6FD] bg-[#E0F2FE] flex items-center justify-center shrink-0 shadow-xs">
-          {userProfile.avatarUrl ? (
-            <img src={userProfile.avatarUrl} alt={userProfile.fullName} className="w-full h-full object-cover" />
-          ) : (
-            <span className="text-xs font-bold font-mono text-[#0288D1]">
-              {userProfile.fullName.charAt(0)}
-            </span>
-          )}
-        </div>
+        <UserAvatar
+          avatarUrl={userProfile.avatarUrl}
+          name={userProfile.fullName}
+          email={userProfile.email}
+          size="md"
+          pathway={userProfile.pathway}
+          gender={userProfile.gender}
+        />
       </div>
 
       {/* Quick Log Modal Overlay */}

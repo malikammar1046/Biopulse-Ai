@@ -260,16 +260,69 @@ class FitnessService {
     };
   }
 
-  // --- Dynamic Phase-Aligned Movement Suggestions ---
   generateSuggestedRoutines(
-    _profile: UserProfile,
+    profile: UserProfile,
     currentPhaseName = 'Follicular Phase',
     todayLogs: FitnessLogEntry[] = []
   ): SuggestedMovementRoutine[] {
+    const isMale = profile?.pathway === 'male' || profile?.gender === 'male';
     const phaseLower = currentPhaseName.toLowerCase();
     const routines: SuggestedMovementRoutine[] = [];
 
     const completedNames = todayLogs.map((l) => l.activityName.toLowerCase());
+
+    if (isMale || phaseLower.includes('vitality') || phaseLower.includes('stamina')) {
+      routines.push(
+        {
+          id: 'routine_male_1',
+          title: 'Full Body Functional Strength & Joint Mobility',
+          category: 'strength',
+          durationMinutes: 30,
+          intensity: 'Moderate',
+          focus: 'Core Stability & Muscular Endurance',
+          whyThisPhase:
+            'Compound resistance movements support lean muscle mass maintenance, bone density, and natural metabolic vitality.',
+          steps: [
+            '5 mins joint mobilization (shoulder circles, hip openers, torso twists)',
+            '3 sets of 10-12 bodyweight squats or goblet squats with controlled tempo',
+            '3 sets of 8-10 incline push-ups or standard push-ups',
+            '3 sets of 10 dumbbell or resistance band rows',
+            '3 mins cool-down stretch and nasal breathing recovery',
+          ],
+        },
+        {
+          id: 'routine_male_2',
+          title: 'Zone-2 Brisk Aerobic Power Walk',
+          category: 'walking',
+          durationMinutes: 25,
+          intensity: 'Moderate',
+          focus: 'Cardiovascular Conditioning & Mitochondrial Health',
+          whyThisPhase:
+            'Steady-state conversational movement enhances insulin sensitivity and aerobic stamina without overtaxing your nervous system.',
+          steps: [
+            '3 mins easy warm-up pace',
+            '20 mins steady brisk walking (maintain a pace where you can converse)',
+            '2 mins gentle cool-down stroll and hydration',
+          ],
+        },
+        {
+          id: 'routine_male_3',
+          title: 'Postural Alignment & Decompression',
+          category: 'rest_recovery',
+          durationMinutes: 15,
+          intensity: 'Restorative',
+          focus: 'Spinal Decompression & Stress Reduction',
+          whyThisPhase:
+            'Relieves seated tension, decompresses the spine, and facilitates autonomic nervous system balance.',
+          steps: [
+            '5 mins gentle Cat-Cow and thoracic spine rotations',
+            '5 mins door-frame chest stretches and hip flexor kneeling release',
+            '5 mins slow diaphragmatic box breathing in a comfortable seated position',
+          ],
+        }
+      );
+      return routines.filter((r) => !completedNames.includes(r.title.toLowerCase()));
+    }
 
     if (phaseLower.includes('menstrual') || phaseLower.includes('period')) {
       routines.push(

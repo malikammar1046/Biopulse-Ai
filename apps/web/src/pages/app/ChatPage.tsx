@@ -270,36 +270,27 @@ export const ChatPage: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto h-[calc(100vh-6.5rem)] flex flex-col space-y-4 pb-6 select-none text-left">
-      {/* ── Top Header Bar ── */}
-      <div className="p-4 sm:p-5 rounded-[24px] bg-white border border-[#E2E8F0] text-[#0F172A] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-[#E0F2FE] flex items-center justify-center text-[#0288D1] shadow-2xs">
-            <MessageChatCircle className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg sm:text-xl font-bold font-display text-[#0F172A]">
-                BioPulse AI Companion
-              </h1>
-              <span className="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-[10px] font-mono text-emerald-700 font-bold">
-                Connected
-              </span>
-            </div>
-            <p className="text-xs text-[#64748B] font-sans">
-              Clinical health companion & non-diagnostic literacy reasoning
-            </p>
-          </div>
+      {/* ── Companion Controls & Context Bar ── */}
+      <div className="px-2 py-1 flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-mono text-emerald-700 font-bold">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            Companion Connected
+          </span>
+          <span className="text-xs text-[#64748B] hidden md:inline">
+            Non-diagnostic clinical health companion
+          </span>
         </div>
 
-        <div className="flex items-center gap-2 self-end sm:self-auto">
+        <div className="flex items-center gap-2">
           {/* Digital Twin Context Inspector Button */}
           <button
             type="button"
             onClick={() => setIsContextDrawerOpen(true)}
-            className="px-3 py-2 rounded-xl bg-[#F8FAFC] hover:bg-[#F1F5F9] border border-[#E2E8F0] text-xs font-mono font-semibold text-[#334155] flex items-center gap-1.5 transition-all cursor-pointer active:scale-[0.98]"
+            className="px-3 py-1.5 rounded-xl bg-white hover:bg-[#F8FAFC] border border-[#E2E8F0] text-xs font-mono font-semibold text-[#334155] flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-[0.98]"
           >
             <Database01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
-            <span>Inspect Shared Health Context</span>
+            <span>Inspect Health Context</span>
           </button>
 
           {/* Reset Conversation */}
@@ -307,7 +298,7 @@ export const ChatPage: React.FC = () => {
             type="button"
             onClick={clearChatHistory}
             title="Reset Conversation"
-            className="p-2 rounded-xl border border-[#E2E8F0] hover:bg-[#F1F5F9] text-[#64748B] hover:text-[#DC2626] transition-all cursor-pointer active:scale-[0.98]"
+            className="p-1.5 rounded-xl bg-white border border-[#E2E8F0] hover:bg-[#F1F5F9] text-[#64748B] hover:text-[#DC2626] transition-all cursor-pointer shadow-xs active:scale-[0.98]"
           >
             <Trash01 className="w-4 h-4" aria-hidden="true" />
           </button>

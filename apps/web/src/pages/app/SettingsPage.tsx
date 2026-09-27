@@ -192,25 +192,17 @@ export const SettingsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-28 pt-4 sm:pt-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-left">
-      {/* ── 1. PAGE HEADER ── */}
+      {/* ── 1. Protocol & Status Toolbar ── */}
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-bold text-[#0288D1] uppercase tracking-wider">
-                Clinical Health Center
-              </span>
-              <span className="text-slate-300">•</span>
-              <span className="text-xs font-medium text-slate-500">
-                {isMale ? 'Male Hypogonadism Protocol' : 'PCOS Screening Protocol'}
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-              Profile & Settings
-            </h1>
-            <p className="text-sm text-slate-500 mt-1">
-              Manage your personal biometrics, clinical symptoms, and AI model inputs
-            </p>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-[#0288D1] uppercase tracking-wider">
+              Clinical Health Center
+            </span>
+            <span className="text-slate-300">•</span>
+            <span className="text-xs font-medium text-slate-500">
+              {isMale ? 'Male Hypogonadism Protocol' : 'PCOS Screening Protocol'}
+            </span>
           </div>
 
           {/* Top Status Indicators */}

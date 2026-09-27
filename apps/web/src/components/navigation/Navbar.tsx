@@ -38,10 +38,10 @@ const SEARCH_SUGGESTIONS = [
 export const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [activeDropdown, setActiveDropdown] = useState<'understand' | null>(null);
+  const [activeDropdown, setActiveDropdown] = useState<'education' | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const navRef = useRef<HTMLDivElement>(null);
@@ -102,11 +102,9 @@ export const Navbar: React.FC = () => {
   const isHomeActive = location.pathname === ROUTES.HOME;
   const isAboutActive = location.pathname === ROUTES.ABOUT;
   const isHowItWorksActive = location.pathname === ROUTES.HOW_IT_WORKS;
-  const isConditionsActive = location.pathname === ROUTES.CONDITIONS;
-  const isFeaturesActive = location.pathname === ROUTES.FEATURES;
   const isDoctorsActive = location.pathname === ROUTES.DOCTORS;
   const isContactActive = location.pathname === ROUTES.CONTACT;
-  const isUnderstandActive =
+  const isEducationActive =
     location.pathname === ROUTES.UNDERSTAND_PCOS ||
     location.pathname === ROUTES.UNDERSTAND_PCOS_CANONICAL ||
     location.pathname === ROUTES.UNDERSTAND_MALE_HYPOGONADISM ||
@@ -211,44 +209,27 @@ export const Navbar: React.FC = () => {
                 )}
               </Link>
 
-              {/* Conditions */}
-              <Link
-                to={ROUTES.CONDITIONS}
-                className={`relative py-1 transition-colors whitespace-nowrap ${
-                  isConditionsActive ? 'text-[#0891B2] font-bold' : 'text-slate-600 hover:text-[#0891B2]'
-                }`}
-              >
-                Conditions
-                {isConditionsActive && (
-                  <motion.div
-                    layoutId="navbar-active-indicator"
-                    className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-[#0891B2] rounded-full"
-                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                  />
-                )}
-              </Link>
-
-              {/* Understand (Dropdown) */}
+              {/* Education (Dropdown) */}
               <div
                 className="relative"
-                onMouseEnter={() => setActiveDropdown('understand')}
+                onMouseEnter={() => setActiveDropdown('education')}
                 onMouseLeave={() => setActiveDropdown(null)}
               >
                 <button
                   type="button"
-                  onClick={() => setActiveDropdown(activeDropdown === 'understand' ? null : 'understand')}
+                  onClick={() => setActiveDropdown(activeDropdown === 'education' ? null : 'education')}
                   className={`relative py-1 flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap ${
-                    isUnderstandActive ? 'text-[#0891B2] font-bold' : 'text-slate-600 hover:text-[#0891B2]'
+                    isEducationActive ? 'text-[#0891B2] font-bold' : 'text-slate-600 hover:text-[#0891B2]'
                   }`}
-                  aria-expanded={activeDropdown === 'understand'}
+                  aria-expanded={activeDropdown === 'education'}
                 >
-                  <span>Understand</span>
+                  <span>Education</span>
                   <ChevronDown
                     className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                      activeDropdown === 'understand' ? 'rotate-180 text-[#0891B2]' : 'text-slate-400'
+                      activeDropdown === 'education' ? 'rotate-180 text-[#0891B2]' : 'text-slate-400'
                     }`}
                   />
-                  {isUnderstandActive && (
+                  {isEducationActive && (
                     <motion.div
                       layoutId="navbar-active-indicator"
                       className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-[#0891B2] rounded-full"
@@ -259,7 +240,7 @@ export const Navbar: React.FC = () => {
 
                 {/* Dropdown Menu */}
                 <AnimatePresence>
-                  {activeDropdown === 'understand' && (
+                  {activeDropdown === 'education' && (
                     <motion.div
                       initial={{ opacity: 0, y: 8, scale: 0.98 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -299,23 +280,6 @@ export const Navbar: React.FC = () => {
                   )}
                 </AnimatePresence>
               </div>
-
-              {/* Resources (Concept Art Label) */}
-              <Link
-                to={ROUTES.FEATURES}
-                className={`relative py-1 transition-colors whitespace-nowrap ${
-                  isFeaturesActive ? 'text-[#0891B2] font-bold' : 'text-slate-600 hover:text-[#0891B2]'
-                }`}
-              >
-                Resources
-                {isFeaturesActive && (
-                  <motion.div
-                    layoutId="navbar-active-indicator"
-                    className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-[#0891B2] rounded-full"
-                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                  />
-                )}
-              </Link>
 
               {/* Doctors Directory */}
               <Link
@@ -366,36 +330,31 @@ export const Navbar: React.FC = () => {
               </button>
 
               {/* Auth Buttons */}
-              {isAuthenticated ? (
-                <div className="flex items-center gap-2">
-                  <Link
-                    to={ROUTES.APP.ROOT}
-                    className="hidden sm:inline-flex items-center justify-center px-4 sm:px-5 py-1.5 rounded-full border-[1.5px] border-[#38BDF8] text-xs sm:text-sm font-semibold text-[#0284C7] bg-white hover:bg-sky-50 transition-all whitespace-nowrap shadow-2xs"
-                  >
-                    Dashboard
-                  </Link>
-                  <Link
-                    to={ROUTES.APP.ROOT}
-                    className="inline-flex items-center justify-center px-5 sm:px-6 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-[#00C4DF] to-[#0284C7] hover:from-[#00B4CB] hover:to-[#0369A1] text-xs sm:text-sm font-bold text-white shadow-[0_4px_14px_rgba(0,196,223,0.35)] hover:shadow-lg transition-all whitespace-nowrap flex items-center gap-1.5"
-                  >
-                    <span>Go to App</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
+              {loading ? (
+                <div className="h-8 sm:h-9 w-24 sm:w-28 rounded-full bg-slate-100/70 animate-pulse" />
+              ) : isAuthenticated ? (
+                <Link
+                  to={ROUTES.APP.ROOT}
+                  className="inline-flex items-center justify-center px-5 sm:px-6 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-[#00C4DF] to-[#0284C7] hover:from-[#00B4CB] hover:to-[#0369A1] text-xs sm:text-sm font-bold text-white shadow-[0_4px_14px_rgba(0,196,223,0.35)] hover:shadow-lg transition-all whitespace-nowrap flex items-center gap-1.5"
+                >
+                  <span>Dashboard</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
               ) : (
                 <div className="flex items-center gap-2 sm:gap-2.5">
                   <Link
                     to={ROUTES.LOGIN}
                     className="hidden sm:inline-flex items-center justify-center px-4 sm:px-5 py-1.5 rounded-full border-[1.5px] border-[#38BDF8] text-xs sm:text-sm font-semibold text-[#0284C7] bg-white hover:bg-sky-50 hover:border-[#0284C7] transition-all whitespace-nowrap shadow-2xs"
                   >
-                    Log in
+                    Log In
                   </Link>
 
                   <Link
                     to={ROUTES.REGISTER}
-                    className="inline-flex items-center justify-center px-5 sm:px-6 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-[#00C4DF] to-[#0284C7] hover:from-[#00B4CB] hover:to-[#0369A1] text-xs sm:text-sm font-bold text-white shadow-[0_4px_14px_rgba(0,196,223,0.35)] hover:shadow-lg transition-all whitespace-nowrap"
+                    className="inline-flex items-center justify-center px-5 sm:px-6 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-[#00C4DF] to-[#0284C7] hover:from-[#00B4CB] hover:to-[#0369A1] text-xs sm:text-sm font-bold text-white shadow-[0_4px_14px_rgba(0,196,223,0.35)] hover:shadow-lg transition-all whitespace-nowrap flex items-center gap-1.5"
                   >
-                    Sign Up
+                    <span>Get Started</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
               )}
@@ -474,19 +433,10 @@ export const Navbar: React.FC = () => {
                   >
                     How It Works
                   </Link>
-                  <Link
-                    to={ROUTES.CONDITIONS}
-                    className={`p-2.5 rounded-xl transition-colors ${
-                      isConditionsActive ? 'bg-sky-50 text-[#0891B2] font-bold' : 'hover:bg-slate-50'
-                    }`}
-                  >
-                    Conditions We Support
-                  </Link>
-
-                  {/* Sub-menu for Understand */}
+                  {/* Sub-menu for Education */}
                   <div className="pt-2 pb-1 px-2.5">
                     <span className="text-[11px] font-mono uppercase font-bold text-slate-400 block mb-1">
-                      Understand Pathways
+                      Education Pathways
                     </span>
                     <div className="space-y-1 pl-1">
                       <Link
@@ -505,15 +455,6 @@ export const Navbar: React.FC = () => {
                       </Link>
                     </div>
                   </div>
-
-                  <Link
-                    to={ROUTES.FEATURES}
-                    className={`p-2.5 rounded-xl transition-colors ${
-                      isFeaturesActive ? 'bg-sky-50 text-[#0891B2] font-bold' : 'hover:bg-slate-50'
-                    }`}
-                  >
-                    Resources &amp; Capabilities
-                  </Link>
                   <Link
                     to={ROUTES.DOCTORS}
                     className={`p-2.5 rounded-xl transition-colors ${
@@ -534,29 +475,32 @@ export const Navbar: React.FC = () => {
 
                 {/* Mobile Auth Actions */}
                 <div className="pt-4 border-t border-slate-100 flex flex-col gap-2.5">
-                  {!isAuthenticated ? (
+                  {loading ? (
+                    <div className="w-full h-11 rounded-xl bg-slate-100/70 animate-pulse" />
+                  ) : isAuthenticated ? (
+                    <Link
+                      to={ROUTES.APP.ROOT}
+                      className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#00C4DF] to-[#0284C7] text-white text-center font-bold text-sm shadow-md flex items-center justify-center gap-2"
+                    >
+                      <span>Dashboard</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  ) : (
                     <>
                       <Link
                         to={ROUTES.REGISTER}
-                        className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#00C4DF] to-[#0284C7] text-white text-center font-bold text-sm shadow-md"
+                        className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#00C4DF] to-[#0284C7] text-white text-center font-bold text-sm shadow-md flex items-center justify-center gap-2"
                       >
-                        Sign Up Now
+                        <span>Get Started</span>
+                        <ArrowRight className="w-4 h-4" />
                       </Link>
                       <Link
                         to={ROUTES.LOGIN}
                         className="w-full py-2.5 rounded-xl border border-slate-200 text-[#0284C7] text-center font-semibold text-sm hover:bg-slate-50"
                       >
-                        Log in to Account
+                        Log In
                       </Link>
                     </>
-                  ) : (
-                    <Link
-                      to={ROUTES.APP.ROOT}
-                      className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#00C4DF] to-[#0284C7] text-white text-center font-bold text-sm shadow-md flex items-center justify-center gap-2"
-                    >
-                      <span>Launch Health App</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </Link>
                   )}
                 </div>
 

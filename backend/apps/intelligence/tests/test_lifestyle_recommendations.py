@@ -15,6 +15,8 @@ Dynamic Lifestyle Recommendations Module:
 - Section 15: Zero Dependency on legacy Meal Directory
 """
 
+import copy
+import json
 import sys
 import uuid
 from unittest.mock import MagicMock, patch
@@ -827,6 +829,86 @@ class LifestyleRecommendationsApiTests(TestCase):
         self.assertIn("nutrition", data)
         self.assertIn("recommendations", data)
 
+    @patch("apps.intelligence.views_lifestyle.LifestyleContextBuilder.build_context")
+    def test_get_lifestyle_recommendations_caching(self, mock_build):
+        context = ComprehensiveLifestyleContext(
+            user_id="778899",
+            demographics=PatientDemographics(
+                user_id="778899",
+                gender="female",
+                pathway="female_pcos",
+                age=27,
+                height_cm=160.0,
+                weight_kg=65.0,
+                bmi=25.4,
+            ),
+            screening=ScreeningContext(has_assessment=False, module="female_pcos"),
+            shap_drivers=[],
+            shap_mitigators=[],
+            symptoms=SymptomSummary(),
+            labs=LabBiomarkers(),
+            longitudinal=LongitudinalSummary(),
+        )
+        context.context_version = LifestyleContextBuilder.compute_context_version(context)
+        mock_build.return_value = context
+
+        # First GET call: builds and persists
+        resp1 = self.client.get("/api/v1/intelligence/lifestyle-recommendations/?module=female_pcos")
+        self.assertEqual(resp1.status_code, 200)
+
+        # Second GET call with same context: returns cached without re-generating
+        with patch("apps.intelligence.views_lifestyle.LifestyleRecommendationEngine.generate") as mock_gen:
+            resp2 = self.client.get("/api/v1/intelligence/lifestyle-recommendations/?module=female_pcos")
+            self.assertEqual(resp2.status_code, 200)
+            mock_gen.assert_not_called()
+
+    @patch("apps.intelligence.views_lifestyle.LifestyleContextBuilder.build_context")
+    def test_patch_recommendation_status_endpoint(self, mock_build):
+        context = ComprehensiveLifestyleContext(
+            user_id="778899",
+            demographics=PatientDemographics(
+                user_id="778899",
+                gender="female",
+                pathway="female_pcos",
+                age=27,
+                height_cm=160.0,
+                weight_kg=65.0,
+                bmi=25.4,
+            ),
+            screening=ScreeningContext(has_assessment=False, module="female_pcos"),
+            shap_drivers=[],
+            shap_mitigators=[],
+            symptoms=SymptomSummary(),
+            labs=LabBiomarkers(),
+            longitudinal=LongitudinalSummary(),
+        )
+        context.context_version = LifestyleContextBuilder.compute_context_version(context)
+        mock_build.return_value = context
+
+        # Populate initial recommendations
+        get_res = self.client.get("/api/v1/intelligence/lifestyle-recommendations/?module=ovasense")
+        self.assertEqual(get_res.status_code, 200)
+        recs = get_res.json()["recommendations"]
+        self.assertTrue(len(recs) > 0)
+        target_rec_id = recs[0]["id"]
+
+        # PATCH status to COMPLETED
+        patch_payload = {
+            "module": "ovasense",
+            "recommendation_id": target_rec_id,
+            "status": "COMPLETED",
+            "note": "Completed today's action",
+        }
+        patch_res = self.client.patch(
+            "/api/v1/intelligence/lifestyle-recommendations/status/",
+            patch_payload,
+            format="json",
+        )
+        self.assertEqual(patch_res.status_code, 200)
+        data = patch_res.json()
+        self.assertEqual(data["status"], "COMPLETED")
+        self.assertEqual(data["item_statuses"][target_rec_id]["status"], "COMPLETED")
+
 
 @override_settings(ALLOW_LOCAL_SQLITE_FALLBACK=True)
 class LifestyleEvidenceAndMedicalLanguageAuditTests(TestCase):
@@ -1047,3 +1129,85 @@ class LifestyleEvidenceAndMedicalLanguageAuditTests(TestCase):
         self.assertEqual(nutr_recs[0].priority, "high")
         self.assertIn("Fast Food Intake", nutr_recs[0].shap_priority_basis)
         self.assertEqual(nutr_recs[0].safety_status, res.safety_status)
+
+    def test_normalize_module_aliases(self):
+        self.assertEqual(LifestyleContextBuilder.normalize_module("ovasense"), "female_pcos")
+        self.assertEqual(LifestyleContextBuilder.normalize_module("pcos"), "female_pcos")
+        self.assertEqual(LifestyleContextBuilder.normalize_module("female_pcos"), "female_pcos")
+        self.assertEqual(LifestyleContextBuilder.normalize_module("androsense"), "male_hypogonadism")
+        self.assertEqual(LifestyleContextBuilder.normalize_module("hypogonadism"), "male_hypogonadism")
+        self.assertEqual(LifestyleContextBuilder.normalize_module("male_hypogonadism"), "male_hypogonadism")
+        self.assertEqual(LifestyleContextBuilder.normalize_module(None, gender="male"), "male_hypogonadism")
+        self.assertEqual(LifestyleContextBuilder.normalize_module(None, gender="female"), "female_pcos")
+
+    def test_context_version_computation_and_invalidation(self):
+        ctx1 = self.context_female
+        v1 = LifestyleContextBuilder.compute_context_version(ctx1)
+        self.assertTrue(len(v1) == 16)
+
+        # Same data gives same version
+        v1_again = LifestyleContextBuilder.compute_context_version(ctx1)
+        self.assertEqual(v1, v1_again)
+
+        # Weight change produces different version
+        import copy
+        ctx2 = copy.deepcopy(ctx1)
+        ctx2.demographics.weight_kg = 68.0
+        v2 = LifestyleContextBuilder.compute_context_version(ctx2)
+        self.assertNotEqual(v1, v2)
+
+    def test_lifestyle_repository_persistence_and_status_update(self):
+        from apps.intelligence.services.lifestyle_repository import lifestyle_repository
+        user_id = "test-user-persist-123"
+        module = "female_pcos"
+        ctx_ver = "ver1234567890abc"
+        payload = {
+            "user_id": user_id,
+            "pathway": module,
+            "recommendations": [
+                {"id": "rec_walk_post_meal", "title": "Brisk Walking", "status": "NEW"},
+                {"id": "rec_protein_focus", "title": "Protein First", "status": "NEW"},
+            ]
+        }
+        # Save
+        saved = lifestyle_repository.save_recommendations(
+            user_id=user_id,
+            module=module,
+            context_version=ctx_ver,
+            payload=payload,
+        )
+        self.assertEqual(saved["context_version"], ctx_ver)
+        self.assertEqual(saved["user_id"], user_id)
+
+        # Retrieve
+        active = lifestyle_repository.get_active_recommendations(user_id=user_id, module=module)
+        self.assertIsNotNone(active)
+        self.assertEqual(active["context_version"], ctx_ver)
+        self.assertEqual(len(active["payload"]["recommendations"]), 2)
+
+        # Update status
+        updated = lifestyle_repository.update_item_status(
+            user_id=user_id,
+            module=module,
+            recommendation_id="rec_walk_post_meal",
+            new_status="COMPLETED",
+            note="Walked 25 mins after lunch",
+        )
+        self.assertIsNotNone(updated)
+        self.assertEqual(updated["status"], "COMPLETED")
+        self.assertEqual(updated["item_statuses"]["rec_walk_post_meal"]["status"], "COMPLETED")
+
+        # Verify active record reflects updated status
+        refreshed = lifestyle_repository.get_active_recommendations(user_id=user_id, module=module)
+        rec_item = next(r for r in refreshed["payload"]["recommendations"] if r["id"] == "rec_walk_post_meal")
+        self.assertEqual(rec_item["status"], "COMPLETED")
+
+    def test_male_pathway_terminology_isolation(self):
+        res_m = LifestyleRecommendationEngine.generate(self.context_male)
+        res_m_dict = res_m.to_dict()
+        res_str = json.dumps(res_m_dict).lower()
+
+        # Strict isolation invariants: no female menstrual terms in male recommendations
+        forbidden_terms = ["menstrual", "period", "pcos", "ovary", "ovarian", "follicular", "luteal", "pcom", "pregnant"]
+        for term in forbidden_terms:
+            self.assertNotIn(term, res_str, f"Forbidden term '{term}' leaked into male recommendations!")

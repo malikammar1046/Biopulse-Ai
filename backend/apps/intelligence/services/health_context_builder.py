@@ -475,6 +475,48 @@ class HealthContextBuilder:
             context_lines.append(f"[TIER 5] [USER-REPORTED - Lifestyle Logs]: {', '.join(nutr)}")
             context_used["diet"] = True
 
+        # --- ACTIVE LIFESTYLE PROTOCOL (Deterministic) ---
+        active_lifestyle = None
+        try:
+            from apps.intelligence.services.lifestyle_repository import lifestyle_repository
+            active_lifestyle = lifestyle_repository.get_active_recommendations(
+                user_id=user_id_str,
+                module=pathway,
+                auth_token=auth_token,
+            )
+        except Exception as e:
+            logger.debug("Failed fetching active lifestyle for companion context: %s", e)
+
+        if active_lifestyle and isinstance(active_lifestyle.get("payload"), dict):
+            p = active_lifestyle["payload"]
+            ls_parts = []
+            nutr_pillar = p.get("nutrition", {})
+            if isinstance(nutr_pillar, dict) and nutr_pillar.get("strategy_title"):
+                ls_parts.append(f"Nutrition Strategy: {nutr_pillar['strategy_title']}")
+            dt = nutr_pillar.get("daily_targets", {}) if isinstance(nutr_pillar, dict) else {}
+            if isinstance(dt, dict) and dt.get("daily_calories_kcal"):
+                ls_parts.append(f"Calorie Target: ~{dt['daily_calories_kcal']} kcal/day")
+            swaps = nutr_pillar.get("targeted_swaps", []) if isinstance(nutr_pillar, dict) else []
+            if isinstance(swaps, list) and swaps:
+                swap_strs = [f"{s.get('replace_food')} -> {s.get('recommended_alternative')}" for s in swaps[:2] if isinstance(s, dict)]
+                if swap_strs:
+                    ls_parts.append(f"Recommended Swaps: {'; '.join(swap_strs)}")
+            fit_pillar = p.get("fitness", {})
+            if isinstance(fit_pillar, dict) and fit_pillar.get("protocol_name"):
+                ls_parts.append(f"Fitness Protocol: {fit_pillar['protocol_name']}")
+            recs_list = p.get("recommendations", [])
+            if isinstance(recs_list, list) and recs_list:
+                top_acts = [f"{r.get('title')} [{r.get('status', 'ACTIVE')}]" for r in recs_list[:4] if isinstance(r, dict)]
+                if top_acts:
+                    ls_parts.append(f"Active Priorities: {'; '.join(top_acts)}")
+            if ls_parts:
+                context_lines.append(
+                    "[TIER 4] [ACTIVE LIFESTYLE RECOMMENDATIONS - Deterministic BioPulse Protocol]:\n"
+                    + "\n".join(f"- {part}" for part in ls_parts)
+                    + "\n(Explain and reinforce these exact recommendations when the patient asks about diet, fitness, or recovery)."
+                )
+                context_used["lifestyle"] = True
+
         # Unverified OCR data (Explicitly flagged as unconfirmed)
         unverified_results = [r for r in health_data.report_results if not r.user_verified]
         if unverified_results:

@@ -22,13 +22,18 @@ from apps.intelligence.services.lifestyle_context_builder import ComprehensiveLi
 
 logger = logging.getLogger(__name__)
 
-CLINICAL_DISCLAIMER = (
-    "BioPulse AI lifestyle recommendations are non-diagnostic, educational, and personalized "
-    "to support metabolic and endocrine balance. They are designed for collaborative discussion "
-    "with your qualified healthcare professional and do not replace professional medical advice, "
-    "diagnosis, or prescribed medical treatment. Lifestyle interventions support hormonal health "
-    "but do not cure or reverse PCOS or Male Hypogonadism."
-)
+def get_pathway_disclaimer(pathway: str = "female_pcos") -> str:
+    is_male = str(pathway or "").lower() in ("male_hypogonadism", "male", "androsense")
+    condition = "Male Hypogonadism" if is_male else "PCOS"
+    return (
+        "BioPulse AI lifestyle recommendations are non-diagnostic, educational, and personalized "
+        "to support metabolic and endocrine balance. They are designed for collaborative discussion "
+        "with your qualified healthcare professional and do not replace professional medical advice, "
+        "diagnosis, or prescribed medical treatment. Lifestyle interventions support hormonal health "
+        f"but do not cure or reverse {condition}."
+    )
+
+CLINICAL_DISCLAIMER = get_pathway_disclaimer("female_pcos")
 
 ALLERGEN_INGREDIENT_MAP: Dict[str, Set[str]] = {
     "dairy": {"milk", "yogurt", "cheese", "paneer", "butter", "ghee", "cream", "whey", "curd", "dahi", "malai", "lassi"},
@@ -78,6 +83,7 @@ class LifestyleSafetyEngine:
     def evaluate_safety(cls, context: ComprehensiveLifestyleContext) -> SafetyEvaluationResult:
         result = SafetyEvaluationResult()
         demo = context.demographics
+        result.disclaimer = get_pathway_disclaimer(demo.pathway)
         screening = context.screening
         symptoms = context.symptoms
         labs = context.labs
@@ -149,7 +155,7 @@ class LifestyleSafetyEngine:
             )
             result.safety_status = "CLINICIAN_REVIEW"
             result.safety_notices.append("Clinical review: Glycemic biomarkers warrant formal physician evaluation.")
-        elif has_prediabetes_biomarkers or (demo.pathway == "female_pcos" and screening.risk_category == "elevated"):
+        elif has_prediabetes_biomarkers or (demo.pathway in ("female_pcos", "ovasense") and screening.risk_category == "elevated"):
             result.glycemic_priority_active = True
             if result.safety_status == "ALLOW":
                 result.safety_status = "MODIFY"

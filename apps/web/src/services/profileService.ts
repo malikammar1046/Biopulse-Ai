@@ -77,7 +77,7 @@ export function mapDbRowToUserProfile(
     dateOfBirth: row.date_of_birth ?? base.dateOfBirth,
     gender: resolvedGender,
     pathway: resolvedPathway,
-    avatarUrl: row.avatar_url ?? base.avatarUrl,
+    avatarUrl: (row.avatar_url && row.avatar_url.trim()) ? row.avatar_url : undefined,
     heightCm: row.height_cm ?? base.heightCm,
     weightKg: row.weight_kg ?? base.weightKg,
     waistCm: row.waist_cm ?? base.waistCm,
@@ -298,6 +298,10 @@ class ProfileService {
     const merged: UserProfile = {
       ...currentProfile,
       ...partialData,
+      avatarUrl:
+        partialData.avatarUrl !== undefined
+          ? (partialData.avatarUrl && partialData.avatarUrl.trim() ? partialData.avatarUrl : undefined)
+          : currentProfile.avatarUrl,
       gender: partialData.gender !== undefined ? partialData.gender : currentProfile.gender,
       pathway: partialData.pathway !== undefined ? partialData.pathway : currentProfile.pathway,
       medical: partialData.medical ? { ...currentProfile.medical, ...partialData.medical } : currentProfile.medical,
