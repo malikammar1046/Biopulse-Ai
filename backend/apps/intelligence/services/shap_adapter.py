@@ -397,13 +397,23 @@ class FoldAwareCalibratedExplainer:
                     ),
                 }
 
+            num_val = None
+            if patient_val_raw is not None:
+                try:
+                    num_val = float(patient_val_raw)
+                except (ValueError, TypeError):
+                    num_val = None
+
             factors_list.append({
                 "feature_key": feat,
+                "feature_name": meta.patient_label,
                 "patient_label": meta.patient_label,
                 "patient_value": patient_val_formatted,
                 "raw_value": patient_val_raw if patient_val_raw is not None else "n/a",
+                "value": num_val,
                 "shap_value": round(sv, 5),
                 "absolute_shap": round(asv, 5),
+                "impact_score": round(asv, 5),
                 "direction": direction,
                 "direction_label": direction_label,
                 "relative_influence": round(share, 4),

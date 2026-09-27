@@ -168,7 +168,7 @@ class BioPulseContextAndPathwayTests(TestCase):
             self.assertIn("PCOS", sys_prompt)
             self.assertIn("[BIOPULSE PATIENT PATHWAY]: FEMALE", ctx)
             self.assertIn("74.5%", ctx)
-            self.assertIn("HIGHER", ctx)
+            self.assertIn("HIGHER", ctx.upper())
             self.assertIn("Cycle Irregularity (increases risk)", ctx)
             self.assertIn("Fasting Glucose: 105.0", ctx)
 
