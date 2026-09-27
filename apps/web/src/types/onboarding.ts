@@ -84,6 +84,8 @@ export interface MensHealthProfile {
   testDrawTime?: 'morning_fasting' | 'afternoon' | 'unsure';
   priorMedications?: string[]; // e.g. 'Prescription Opioids', 'Steroids / Testosterone Therapy', 'None'
   primaryConcern?: string;
+  adamResponses?: Record<string, boolean | null>;
+  adamScore?: number;
 }
 
 export interface GeneralHealthProfile {

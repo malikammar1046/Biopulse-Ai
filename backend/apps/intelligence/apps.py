@@ -3,8 +3,22 @@ import os
 import sys
 import threading
 from django.apps import AppConfig
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
+
+
+def _init_sqlite_stores_on_migrate(*args, **kwargs):
+    """Ensure all local SQLite tables and indices are created cleanly on database setup / migration."""
+    try:
+        from apps.intelligence.services.assessment_repository import init_sqlite_store
+        from apps.intelligence.services.clinical_state_repository import init_sqlite_clinical_store
+        from apps.intelligence.services.observation_repository import init_sqlite_observation_store
+        init_sqlite_store()
+        init_sqlite_clinical_store()
+        init_sqlite_observation_store()
+    except Exception as e:
+        logger.debug("Post-migrate SQLite store initialization notice: %s", e)
 
 
 class IntelligenceConfig(AppConfig):
@@ -13,8 +27,20 @@ class IntelligenceConfig(AppConfig):
     label = 'intelligence'
 
     def ready(self):
-        # Only run in main process (prevent double execution with runserver reloader)
-        if 'test' in sys.argv or os.environ.get('RUN_MAIN') == 'true' or not sys.argv or 'manage.py' not in sys.argv[0]:
+        from django.db.models.signals import post_migrate
+        post_migrate.connect(_init_sqlite_stores_on_migrate)
+
+        # Explicit test isolation flag
+        disable_prewarm = (
+            getattr(settings, 'DISABLE_INTELLIGENCE_PREWARM', False)
+            or os.environ.get('DISABLE_INTELLIGENCE_PREWARM', '').strip().lower() in ('true', '1', 'yes')
+        )
+        if disable_prewarm:
+            return
+
+        # Only run in main process for production runserver or WSGI / ASGI server
+        # (prevent double execution with runserver reloader and avoid test startup warmup)
+        if os.environ.get('RUN_MAIN') == 'true' or not sys.argv or 'manage.py' not in sys.argv[0]:
             def _warmup():
                 try:
                     logger.info("Starting background pre-warming of intelligence ML models & SQLite store...")

@@ -100,7 +100,7 @@ export const QuickTrackingRow: React.FC<QuickTrackingRowProps> = ({
     label: 'Nutrition & Food',
     metric: nutrition.caloriesLogged > 0 ? `${nutrition.caloriesLogged} kcal` : 'Log Meals',
     icon: <Scales01 className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />,
-    route: ROUTES.APP.DIET,
+    route: ROUTES.APP.LIFESTYLE,
   });
 
   // 5. Hydration
@@ -109,7 +109,7 @@ export const QuickTrackingRow: React.FC<QuickTrackingRowProps> = ({
     label: 'Hydration',
     metric: `${nutrition.waterIntakeLiters || 0} / ${nutrition.waterTargetLiters || 2.5} L`,
     icon: <Droplets01 className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />,
-    route: ROUTES.APP.DIET,
+    route: ROUTES.APP.LIFESTYLE,
   });
 
   // 6. Fitness / Activity

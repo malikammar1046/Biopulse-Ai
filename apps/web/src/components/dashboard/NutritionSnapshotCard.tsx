@@ -132,10 +132,10 @@ export const NutritionSnapshotCard: React.FC<NutritionProps> = ({ data }) => {
       {/* Footer Link */}
       <div className="pt-2 border-t border-[#E2E8F0] flex items-center justify-between">
         <Link
-          to={ROUTES.APP.DIET}
+          to={ROUTES.APP.LIFESTYLE}
           className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0288D1] hover:text-[#01579B] transition-colors group"
         >
-          <span>View Full Meal Plan</span>
+          <span>View Lifestyle Plan</span>
           <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
         </Link>
 

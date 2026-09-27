@@ -1,0 +1,525 @@
+"""
+backend/apps/intelligence/services/lifestyle_context_builder.py
+
+Lifestyle Context Builder for BioPulse AI.
+Gathers and normalizes comprehensive patient context across:
+- Patient Profile (biometrics, demographics, dietary preferences, restrictions)
+- Screening Result (active assessment, probability, risk level, assessment tier)
+- Logged Symptoms (recent frequency, severity, active clinical patterns)
+- Verified Laboratory Biomarkers (glucose, insulin, testosterone, lipids, etc.)
+- Longitudinal Trends (weight trajectory, activity adherence, biomarker trends)
+- SHAP Feature Attributions (top driving risk factors & protective factors)
+
+Guarantees 100% independence from legacy Meal Directory.
+"""
+
+from __future__ import annotations
+
+import logging
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional, Set
+
+from apps.health.services.supabase_health_service import health_service, PatientHealthData
+from apps.intelligence.services.assessment_repository import assessment_repository
+from apps.intelligence.services.canonical_shap_registry import CANONICAL_SHAP_REGISTRY, get_feature_metadata
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class PatientDemographics:
+    user_id: str
+    gender: str  # 'female' | 'male'
+    pathway: str  # 'female_pcos' | 'male_hypogonadism' | 'general'
+    age: Optional[int] = None
+    height_cm: Optional[float] = None
+    weight_kg: Optional[float] = None
+    bmi: Optional[float] = None
+    waist_inch: Optional[float] = None
+    hip_inch: Optional[float] = None
+    waist_hip_ratio: Optional[float] = None
+    dietary_preference: str = "omnivore"  # 'omnivore', 'halal', 'vegetarian', 'vegan', 'pescatarian'
+    allergens: List[str] = field(default_factory=list)
+    intolerances: List[str] = field(default_factory=list)
+    activity_level: Optional[str] = None  # 'sedentary', 'light', 'moderate', 'active', 'very_active'
+    sleep_hours: Optional[float] = None
+    stress_level: Optional[str] = None  # 'low', 'moderate', 'high', 'severe'
+    regular_exercise: Optional[bool] = None
+    fast_food_intake: Optional[str] = None  # 'frequent', 'occasional', 'rare_never'
+    period_regularity: Optional[str] = None  # 'regular', 'irregular', 'very_irregular'
+    skin_darkening: Optional[bool] = None
+    hair_growth: Optional[bool] = None
+    acne: Optional[bool] = None
+
+
+@dataclass
+class ScreeningContext:
+    has_assessment: bool
+    module: str
+    assessment_id: Optional[str] = None
+    assessment_level: str = "tier_1"  # 'tier_1', 'tier_1_2', 'tier_1_2_3'
+    risk_category: str = "lower"  # 'lower', 'moderate', 'elevated'
+    risk_label: str = "Lower Screening Risk"
+    probability: float = 0.0
+    probability_percent: float = 0.0
+    threshold: float = 0.38
+    is_active: bool = False
+    created_at: Optional[str] = None
+
+
+@dataclass
+class ShapFactor:
+    feature_name: str
+    display_name: str
+    impact: str  # 'increases_risk' | 'decreases_risk'
+    shap_value: float
+    patient_value: Any
+    category: str
+    unit: str = ""
+    clinical_note: str = ""
+
+
+@dataclass
+class SymptomSummary:
+    active_symptoms: List[str] = field(default_factory=list)
+    symptom_frequencies: Dict[str, int] = field(default_factory=dict)
+    high_severity_symptoms: List[str] = field(default_factory=list)
+    total_logs_30d: int = 0
+
+
+@dataclass
+class LabBiomarkers:
+    fasting_glucose_mg_dl: Optional[float] = None
+    hba1c_percent: Optional[float] = None
+    fasting_insulin_uIU_ml: Optional[float] = None
+    total_testosterone_ng_dl: Optional[float] = None
+    free_testosterone_pg_ml: Optional[float] = None
+    lh_mIU_ml: Optional[float] = None
+    fsh_mIU_ml: Optional[float] = None
+    lh_fsh_ratio: Optional[float] = None
+    prolactin_ng_ml: Optional[float] = None
+    dhea_s_ug_dl: Optional[float] = None
+    triglycerides_mg_dl: Optional[float] = None
+    hdl_mg_dl: Optional[float] = None
+    ldl_mg_dl: Optional[float] = None
+    total_cholesterol_mg_dl: Optional[float] = None
+    crp_mg_l: Optional[float] = None
+    vitamin_d_ng_ml: Optional[float] = None
+    raw_markers: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class LongitudinalSummary:
+    has_history: bool = False
+    assessment_count: int = 0
+    weight_trend_30d: Optional[str] = None  # 'stable', 'increasing', 'decreasing', None
+    weight_delta_kg: Optional[float] = None
+    probability_trend: Optional[str] = None  # 'improving', 'worsening', 'stable', None
+    probability_delta: Optional[float] = None
+    activity_adherence_improved: Optional[bool] = None
+    symptoms_improved: Optional[bool] = None
+    logged_meals_30d: int = 0
+    logged_fitness_30d: int = 0
+    active_tracking_consistency_pct: float = 0.0
+    top_recurring_symptoms: List[str] = field(default_factory=list)
+
+
+@dataclass
+class ComprehensiveLifestyleContext:
+    user_id: str
+    demographics: PatientDemographics
+    screening: ScreeningContext
+    shap_drivers: List[ShapFactor]
+    shap_mitigators: List[ShapFactor]
+    symptoms: SymptomSummary
+    labs: LabBiomarkers
+    longitudinal: LongitudinalSummary
+    missing_data: List[str] = field(default_factory=list)
+    generated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+class LifestyleContextBuilder:
+    """
+    Authoritative builder that constructs ComprehensiveLifestyleContext from verified
+    patient health records, active screening assessments, and longitudinal trends.
+    """
+
+    @classmethod
+    def build_context(
+        cls,
+        user_id: str,
+        module: Optional[str] = None,
+        auth_token: Optional[str] = None,
+    ) -> ComprehensiveLifestyleContext:
+        user_id_str = str(user_id).strip()
+
+        # 1. Fetch raw health data bundle scoped to authenticated patient
+        try:
+            health_data = health_service.fetch_all(user_id_str, auth_token=auth_token)
+        except Exception as e:
+            logger.warning("Failed fetching health data for user %s: %s", user_id_str[:8], e)
+            health_data = None
+
+        profile_obj = getattr(health_data, "profile", None) if health_data else None
+
+        # 2. Extract demographics
+        gender = "female"
+        if profile_obj:
+            gender = str(getattr(profile_obj, "gender", "female") or "female").lower()
+        if not module:
+            module = "male_hypogonadism" if gender == "male" else "female_pcos"
+
+        pathway = module
+        age = None
+        height_cm = None
+        weight_kg = None
+        waist_inch = None
+        hip_inch = None
+        dietary_pref = "omnivore"
+        allergens: List[str] = []
+        intolerances: List[str] = []
+        activity_level = None
+        sleep_hours = None
+        stress_level = None
+        regular_exercise = None
+        fast_food_intake = None
+        period_regularity = None
+        skin_darkening = None
+        hair_growth = None
+        acne = None
+
+        if profile_obj:
+            age = getattr(profile_obj, "age", None)
+            height_cm = getattr(profile_obj, "height_cm", None)
+            weight_kg = getattr(profile_obj, "weight_kg", None)
+            waist_inch = getattr(profile_obj, "waist_inch", None)
+            hip_inch = getattr(profile_obj, "hip_inch", None)
+            regular_exercise = getattr(profile_obj, "regular_exercise", None)
+            fast_food_intake = getattr(profile_obj, "fast_food_intake", None)
+            period_regularity = getattr(profile_obj, "period_regularity", None)
+            activity_level = getattr(profile_obj, "activity_level", None)
+            sleep_hours = getattr(profile_obj, "sleep_hours", None)
+
+            # Common symptoms list
+            cs = [str(s).lower() for s in (getattr(profile_obj, "common_symptoms", []) or [])]
+            skin_darkening = any("dark" in s or "acanthosis" in s for s in cs)
+            hair_growth = any("hair" in s or "hirsutism" in s for s in cs)
+            acne = any("acne" in s or "pimple" in s for s in cs)
+
+            # Preferences & lifestyle
+            lifestyle_data = getattr(profile_obj, "lifestyle", {})
+            if isinstance(lifestyle_data, dict):
+                dietary_pref = lifestyle_data.get("dietaryPreference") or lifestyle_data.get("dietary_preference") or dietary_pref
+                allergens = lifestyle_data.get("allergens") or []
+                intolerances = lifestyle_data.get("intolerances") or []
+                activity_level = lifestyle_data.get("activityLevel") or lifestyle_data.get("activity_level") or activity_level
+                if sleep_hours is None and (lifestyle_data.get("sleepHours") or lifestyle_data.get("sleep_hours")):
+                    try:
+                        sleep_hours = float(lifestyle_data.get("sleepHours") or lifestyle_data.get("sleep_hours"))
+                    except (ValueError, TypeError):
+                        pass
+                stress_level = lifestyle_data.get("stressLevel") or lifestyle_data.get("stress_level") or stress_level
+
+        # 3. Retrieve Active Screening Assessment
+        active_rec = assessment_repository.get_active_assessment(user_id_str, module=module, auth_token=auth_token)
+        screening = ScreeningContext(
+            has_assessment=bool(active_rec),
+            module=module,
+            assessment_id=active_rec.get("id") if active_rec else None,
+            assessment_level=active_rec.get("assessment_level", "tier_1") if active_rec else "tier_1",
+            risk_category=active_rec.get("risk_category", "lower") if active_rec else "lower",
+            risk_label=active_rec.get("risk_label", "Lower Screening Risk") if active_rec else "Lower Screening Risk",
+            probability=float(active_rec.get("probability", 0.0)) if active_rec else 0.0,
+            probability_percent=float(active_rec.get("probability_percent", 0.0)) if active_rec else 0.0,
+            threshold=float(active_rec.get("threshold", 0.38)) if active_rec else 0.38,
+            is_active=bool(active_rec.get("is_active", False)) if active_rec else False,
+            created_at=active_rec.get("created_at") if active_rec else None,
+        )
+
+        # Cross-reference active assessment features if profile fields were missing
+        if active_rec and isinstance(active_rec.get("features"), dict):
+            feats = active_rec["features"]
+            if weight_kg is None and ("weight" in feats or "weight_kg" in feats):
+                try:
+                    weight_kg = float(feats.get("weight") or feats.get("weight_kg"))
+                except (ValueError, TypeError):
+                    pass
+            if height_cm is None and ("height" in feats or "height_cm" in feats):
+                try:
+                    height_cm = float(feats.get("height") or feats.get("height_cm"))
+                except (ValueError, TypeError):
+                    pass
+            if age is None and "age" in feats:
+                try:
+                    age = int(feats.get("age"))
+                except (ValueError, TypeError):
+                    pass
+            if regular_exercise is None and "exercise" in feats:
+                regular_exercise = bool(feats["exercise"])
+            if fast_food_intake is None and "fast_food" in feats:
+                fast_food_intake = str(feats["fast_food"])
+            if skin_darkening is None and "skin_darkening" in feats:
+                skin_darkening = bool(feats["skin_darkening"])
+            if hair_growth is None and "hair_growth" in feats:
+                hair_growth = bool(feats["hair_growth"])
+            if acne is None and "acne" in feats:
+                acne = bool(feats["acne"])
+
+        # Calculate BMI strictly from real data
+        bmi = None
+        if isinstance(weight_kg, (int, float)) and isinstance(height_cm, (int, float)) and height_cm > 0:
+            bmi = round(float(weight_kg) / ((float(height_cm) / 100.0) ** 2), 1)
+
+        # Calculate WHR
+        waist_hip_ratio = None
+        if isinstance(waist_inch, (int, float)) and isinstance(hip_inch, (int, float)) and hip_inch > 0:
+            waist_hip_ratio = round(float(waist_inch) / float(hip_inch), 3)
+
+        demographics = PatientDemographics(
+            user_id=user_id_str,
+            gender=gender,
+            pathway=pathway,
+            age=int(age) if age is not None else None,
+            height_cm=float(height_cm) if height_cm is not None else None,
+            weight_kg=float(weight_kg) if weight_kg is not None else None,
+            bmi=bmi,
+            waist_inch=float(waist_inch) if waist_inch is not None else None,
+            hip_inch=float(hip_inch) if hip_inch is not None else None,
+            waist_hip_ratio=waist_hip_ratio,
+            dietary_preference=str(dietary_pref).lower(),
+            allergens=[str(a).lower() for a in allergens if a],
+            intolerances=[str(i).lower() for i in intolerances if i],
+            activity_level=str(activity_level).lower() if activity_level else None,
+            sleep_hours=float(sleep_hours) if sleep_hours is not None else None,
+            stress_level=str(stress_level).lower() if stress_level else None,
+            regular_exercise=regular_exercise,
+            fast_food_intake=fast_food_intake,
+            period_regularity=period_regularity,
+            skin_darkening=skin_darkening,
+            hair_growth=hair_growth,
+            acne=acne,
+        )
+
+        # 4. Extract SHAP Factors from Active Assessment
+        shap_drivers: List[ShapFactor] = []
+        shap_mitigators: List[ShapFactor] = []
+
+        if active_rec and isinstance(active_rec.get("shap_explanation"), dict):
+            shap_dict = active_rec["shap_explanation"]
+            features_list = shap_dict.get("features", [])
+            if isinstance(features_list, list):
+                for f in features_list:
+                    if not isinstance(f, dict):
+                        continue
+                    feat_name = f.get("feature_name") or f.get("feature") or ""
+                    val = float(f.get("shap_value") or f.get("attribution") or 0.0)
+                    patient_val = f.get("patient_value") or f.get("value")
+                    meta = get_feature_metadata(feat_name)
+                    disp_name = meta.patient_label if meta else feat_name.replace("_", " ").title()
+                    category = meta.category if meta else "clinical"
+                    unit = getattr(meta, "unit", "") or ""
+
+                    factor = ShapFactor(
+                        feature_name=feat_name,
+                        display_name=disp_name,
+                        impact="increases_risk" if val > 0 else "decreases_risk",
+                        shap_value=round(val, 4),
+                        patient_value=patient_val,
+                        category=category,
+                        unit=unit,
+                        clinical_note=meta.why_model_uses_it if meta else "",
+                    )
+                    if val > 0:
+                        shap_drivers.append(factor)
+                    elif val < 0:
+                        shap_mitigators.append(factor)
+
+            shap_drivers.sort(key=lambda x: abs(x.shap_value), reverse=True)
+            shap_mitigators.sort(key=lambda x: abs(x.shap_value), reverse=True)
+
+        # 5. Extract Symptoms Summary
+        symptom_records = getattr(health_data, "symptom_records", []) if health_data else []
+        active_symptoms_set: Set[str] = set()
+        symptom_counts: Dict[str, int] = {}
+        high_severity: List[str] = []
+
+        for r in symptom_records:
+            sym_name = None
+            severity = 1
+            if isinstance(r, dict):
+                sym_name = r.get("symptom_name") or r.get("name")
+                severity = int(r.get("severity") or 1)
+            else:
+                sym_name = getattr(r, "symptom_name", None) or getattr(r, "name", None)
+                severity = int(getattr(r, "severity", 1) or 1)
+
+            if sym_name:
+                s_clean = str(sym_name).strip().lower()
+                active_symptoms_set.add(s_clean)
+                symptom_counts[s_clean] = symptom_counts.get(s_clean, 0) + 1
+                if severity >= 3 and s_clean not in high_severity:
+                    high_severity.append(s_clean)
+
+        symptoms = SymptomSummary(
+            active_symptoms=sorted(list(active_symptoms_set)),
+            symptom_frequencies=symptom_counts,
+            high_severity_symptoms=high_severity,
+            total_logs_30d=len(symptom_records),
+        )
+
+        # 6. Extract Lab Biomarkers
+        medical_reports = getattr(health_data, "medical_reports", []) if health_data else []
+        lab_markers = LabBiomarkers()
+        raw_labs: Dict[str, Any] = {}
+
+        for rep in medical_reports:
+            results = getattr(rep, "results", None) or (rep.get("results") if isinstance(rep, dict) else None)
+            if isinstance(results, list):
+                for marker in results:
+                    if not isinstance(marker, dict):
+                        continue
+                    k = str(marker.get("marker_key") or marker.get("name") or "").lower().strip()
+                    val = marker.get("value")
+                    try:
+                        fval = float(val) if val is not None else None
+                    except (ValueError, TypeError):
+                        fval = None
+
+                    if fval is not None:
+                        raw_labs[k] = fval
+                        if "glucose" in k and lab_markers.fasting_glucose_mg_dl is None:
+                            lab_markers.fasting_glucose_mg_dl = fval
+                        elif "hba1c" in k and lab_markers.hba1c_percent is None:
+                            lab_markers.hba1c_percent = fval
+                        elif "insulin" in k and lab_markers.fasting_insulin_uIU_ml is None:
+                            lab_markers.fasting_insulin_uIU_ml = fval
+                        elif "total_testosterone" in k or ("testosterone" in k and "free" not in k):
+                            if lab_markers.total_testosterone_ng_dl is None:
+                                lab_markers.total_testosterone_ng_dl = fval
+                        elif "free_testosterone" in k and lab_markers.free_testosterone_pg_ml is None:
+                            lab_markers.free_testosterone_pg_ml = fval
+                        elif k in ("lh", "luteinizing_hormone") and lab_markers.lh_mIU_ml is None:
+                            lab_markers.lh_mIU_ml = fval
+                        elif k in ("fsh", "follicle_stimulating_hormone") and lab_markers.fsh_mIU_ml is None:
+                            lab_markers.fsh_mIU_ml = fval
+                        elif "prolactin" in k and lab_markers.prolactin_ng_ml is None:
+                            lab_markers.prolactin_ng_ml = fval
+                        elif "dhea" in k and lab_markers.dhea_s_ug_dl is None:
+                            lab_markers.dhea_s_ug_dl = fval
+                        elif "triglyceride" in k and lab_markers.triglycerides_mg_dl is None:
+                            lab_markers.triglycerides_mg_dl = fval
+                        elif "hdl" in k and lab_markers.hdl_mg_dl is None:
+                            lab_markers.hdl_mg_dl = fval
+                        elif "ldl" in k and lab_markers.ldl_mg_dl is None:
+                            lab_markers.ldl_mg_dl = fval
+                        elif "cholesterol" in k and lab_markers.total_cholesterol_mg_dl is None:
+                            lab_markers.total_cholesterol_mg_dl = fval
+                        elif "crp" in k and lab_markers.crp_mg_l is None:
+                            lab_markers.crp_mg_l = fval
+                        elif "vitamin_d" in k and lab_markers.vitamin_d_ng_ml is None:
+                            lab_markers.vitamin_d_ng_ml = fval
+
+        if lab_markers.lh_mIU_ml and lab_markers.fsh_mIU_ml and lab_markers.fsh_mIU_ml > 0:
+            lab_markers.lh_fsh_ratio = round(lab_markers.lh_mIU_ml / lab_markers.fsh_mIU_ml, 2)
+        lab_markers.raw_markers = raw_labs
+
+        # 7. Extract Longitudinal Assessment History & Biometric Trends
+        history = assessment_repository.get_assessment_history(user_id_str, module=module, auth_token=auth_token)
+        has_history = len(history) > 1
+        assessment_count = len(history)
+
+        weight_trend = None
+        weight_delta = None
+        prob_trend = None
+        prob_delta = None
+
+        if has_history:
+            curr = history[0]
+            prev = history[1]
+            try:
+                curr_prob = float(curr.get("probability", 0.0) or 0.0)
+                prev_prob = float(prev.get("probability", 0.0) or 0.0)
+                prob_delta = round(curr_prob - prev_prob, 3)
+                if prob_delta < -0.04:
+                    prob_trend = "improving"
+                elif prob_delta > 0.04:
+                    prob_trend = "worsening"
+                else:
+                    prob_trend = "stable"
+            except (ValueError, TypeError):
+                pass
+
+            # Check weight delta from assessment features or profile
+            curr_w = None
+            prev_w = None
+            if isinstance(curr.get("features"), dict):
+                curr_w = curr["features"].get("weight") or curr["features"].get("weight_kg")
+            if isinstance(prev.get("features"), dict):
+                prev_w = prev["features"].get("weight") or prev["features"].get("weight_kg")
+            if curr_w is None and demographics.weight_kg is not None:
+                curr_w = demographics.weight_kg
+
+            if curr_w is not None and prev_w is not None:
+                try:
+                    w_diff = float(curr_w) - float(prev_w)
+                    weight_delta = round(w_diff, 1)
+                    if w_diff < -0.5:
+                        weight_trend = "decreasing"
+                    elif w_diff > 0.5:
+                        weight_trend = "increasing"
+                    else:
+                        weight_trend = "stable"
+                except (ValueError, TypeError):
+                    pass
+
+        food_logs = getattr(health_data, "food_logs", []) if health_data else []
+        fitness_logs = getattr(health_data, "fitness_logs", []) if health_data else []
+
+        longitudinal = LongitudinalSummary(
+            has_history=has_history,
+            assessment_count=assessment_count,
+            weight_trend_30d=weight_trend,
+            weight_delta_kg=weight_delta,
+            probability_trend=prob_trend,
+            probability_delta=prob_delta,
+            logged_meals_30d=len(food_logs),
+            logged_fitness_30d=len(fitness_logs),
+            active_tracking_consistency_pct=min(100.0, round((len(food_logs) + len(fitness_logs) + len(symptom_records)) / 30.0 * 100.0, 1)),
+            top_recurring_symptoms=[s for s, count in sorted(symptom_counts.items(), key=lambda item: item[1], reverse=True)[:3]],
+        )
+
+        # 8. Missing Data Audit
+        missing_data: List[str] = []
+        if demographics.weight_kg is None:
+            missing_data.append("weight_kg")
+        if demographics.height_cm is None:
+            missing_data.append("height_cm")
+        if demographics.bmi is None:
+            missing_data.append("bmi")
+        if demographics.age is None:
+            missing_data.append("age")
+        if demographics.activity_level is None and demographics.regular_exercise is None:
+            missing_data.append("activity_information")
+        if not screening.has_assessment:
+            missing_data.append("screening_assessment")
+        if not shap_drivers and not shap_mitigators:
+            missing_data.append("shap_factors")
+        if not symptoms.active_symptoms:
+            missing_data.append("symptom_logs")
+        if not lab_markers.raw_markers:
+            missing_data.append("laboratory_biomarkers")
+        if not longitudinal.has_history:
+            missing_data.append("longitudinal_history")
+
+        return ComprehensiveLifestyleContext(
+            user_id=user_id_str,
+            demographics=demographics,
+            screening=screening,
+            shap_drivers=shap_drivers[:5],
+            shap_mitigators=shap_mitigators[:5],
+            symptoms=symptoms,
+            labs=lab_markers,
+            longitudinal=longitudinal,
+            missing_data=missing_data,
+        )

@@ -71,7 +71,7 @@ export const AppSidebar: React.FC = () => {
   // Section 1: MAIN
   const maleMainItems: NavItem[] = [
     { label: 'Overview', path: overviewPath, icon: LayoutGrid01 },
-    { label: 'Nutrition Plan', path: ROUTES.APP.DIET, icon: Scales01 },
+    { label: 'Lifestyle & Nutrition', path: ROUTES.APP.LIFESTYLE, icon: Scales01 },
     { label: 'Screening', path: ROUTES.APP.ASSESSMENT, icon: ClipboardCheck },
     { label: 'Progress', path: ROUTES.APP.PROGRESS, icon: LineChartUp01 },
   ];
@@ -91,7 +91,7 @@ export const AppSidebar: React.FC = () => {
   ];
 
   const femaleHealthItems: NavItem[] = [
-    { label: 'Nutrition', path: ROUTES.APP.DIET, icon: Scales01 },
+    { label: 'Lifestyle & Nutrition', path: ROUTES.APP.LIFESTYLE, icon: Scales01 },
     { label: 'Fitness / Movement', path: ROUTES.APP.FITNESS, icon: Activity },
     { label: 'Reports', path: ROUTES.APP.REPORTS, icon: File06 },
     { label: 'Appointments', path: ROUTES.APP.APPOINTMENTS, icon: CalendarCheck01 },

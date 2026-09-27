@@ -75,7 +75,10 @@ const Dashboard = lazy(() => import('./pages/app/Dashboard').then((m) => ({ defa
 const MasterHealthHub = lazy(() => import('./pages/app/MasterHealthHub').then((m) => ({ default: m.MasterHealthHub })));
 const CyclePage = lazy(() => import('./pages/app/CyclePage').then((m) => ({ default: m.CyclePage })));
 const SymptomsPage = lazy(() => import('./pages/app/SymptomsPage').then((m) => ({ default: m.SymptomsPage })));
-const DietPage = lazy(() => import('./pages/app/DietPage').then((m) => ({ default: m.DietPage })));
+
+const LifestyleRecommendationsPage = lazy(() =>
+  import('./pages/app/LifestyleRecommendationsPage').then((m) => ({ default: m.LifestyleRecommendationsPage }))
+);
 const FitnessPage = lazy(() => import('./pages/app/FitnessPage').then((m) => ({ default: m.FitnessPage })));
 const ReportsPage = lazy(() => import('./pages/app/ReportsPage').then((m) => ({ default: m.ReportsPage })));
 const MedicationsPage = lazy(() => import('./pages/app/MedicationsPage').then((m) => ({ default: m.MedicationsPage })));
@@ -187,8 +190,9 @@ export function App() {
                   <Route path="ai" element={<ChatPage />} />
                   <Route path="assistant" element={<ChatPage />} />
                   <Route path="symptoms" element={<SymptomsPage />} />
-                  <Route path="diet" element={<DietPage />} />
-                  <Route path="diet/week" element={<DietPage />} />
+                  <Route path="lifestyle" element={<LifestyleRecommendationsPage />} />
+                  <Route path="diet" element={<LifestyleRecommendationsPage />} />
+                  <Route path="diet/week" element={<LifestyleRecommendationsPage />} />
                   <Route path="fitness" element={<FitnessPage />} />
                   <Route path="reports" element={<ReportsPage />} />
                   <Route path="medications" element={<MedicationsPage />} />
@@ -200,7 +204,7 @@ export function App() {
                   <Route path="settings" element={<SettingsPage />} />
                   {/* Backward compatibility aliases */}
                   <Route path="profile" element={<Navigate to={ROUTES.APP.SETTINGS} replace />} />
-                  <Route path="lifestyle" element={<Navigate to={ROUTES.APP.DIET} replace />} />
+
                 </Route>
               </Route>
 

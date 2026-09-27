@@ -34,6 +34,10 @@ export const MaleStep5ReviewReady: React.FC<MaleStep5Props> = ({
     : null;
 
   // Active symptoms count
+  const adam = mh.adamResponses || {};
+  const adamAnswered = Object.values(adam).filter((v) => v !== null && v !== undefined).length;
+  const adamYesCount = Object.values(adam).filter((v) => v === true).length;
+
   const symptomFlags: string[] = [];
   if (mh.sexDrive === 'reduced' || mh.sexDrive === 'significantly_reduced') symptomFlags.push('Reduced libido');
   if (mh.energyLevel === 'low' || mh.energyLevel === 'very_low') symptomFlags.push('Low energy / fatigue');
@@ -44,7 +48,9 @@ export const MaleStep5ReviewReady: React.FC<MaleStep5Props> = ({
   if (mh.bodyHairChanges === 'thinning' || mh.bodyHairChanges === 'reduced_growth') symptomFlags.push('Hair thinning');
 
   const symptomsSummary =
-    symptomFlags.length === 0
+    adamAnswered > 0
+      ? `${adamAnswered} of 10 ADAM questions answered • ${adamYesCount} positive indicator${adamYesCount === 1 ? '' : 's'}`
+      : symptomFlags.length === 0
       ? 'No active symptoms reported'
       : `${symptomFlags.length} indicator${symptomFlags.length > 1 ? 's' : ''} noted (${symptomFlags.slice(0, 2).join(', ')}${symptomFlags.length > 2 ? '...' : ''})`;
 
@@ -63,7 +69,7 @@ export const MaleStep5ReviewReady: React.FC<MaleStep5Props> = ({
           : profile.medical?.conditions?.join(', '),
     },
     {
-      label: 'Hormone & Vitality Symptoms (ADAM)',
+      label: 'ADAM Questionnaire & Symptoms',
       val: symptomsSummary,
     },
     {
@@ -74,7 +80,7 @@ export const MaleStep5ReviewReady: React.FC<MaleStep5Props> = ({
     },
     {
       label: 'BioPulse AI Screening Status',
-      val: 'Profile Ready • Non-diagnostic ML analysis enabled',
+      val: 'Profile Ready • Tier 1 Hypogonadism screening will run upon entry',
     },
   ];
 
@@ -89,19 +95,19 @@ export const MaleStep5ReviewReady: React.FC<MaleStep5Props> = ({
     <div className="space-y-4 text-left">
       {/* ── Compact Question Header ── */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-[#DDF7F7] flex items-center justify-center shrink-0 shadow-2xs">
-          <ShieldTick className="w-5 h-5 text-[#0E9EAA]" aria-hidden="true" />
+        <div className="w-10 h-10 rounded-full bg-[#DDEFFD] flex items-center justify-center shrink-0 shadow-2xs">
+          <ShieldTick className="w-5 h-5 text-[#0868B9]" aria-hidden="true" />
         </div>
 
         <div>
-          <span className="text-[10px] font-bold font-mono text-[#0E9EAA] uppercase tracking-wider block leading-none">
+          <span className="text-[10px] font-bold font-mono text-[#0868B9] uppercase tracking-wider block leading-none">
             Final Confirmation
           </span>
           <h2 className="text-xl sm:text-2xl font-extrabold font-display text-[#073B72] tracking-tight leading-tight mt-0.5">
             Review your BioPulse AI profile
           </h2>
           <p className="text-xs text-[#55718F] font-sans leading-tight mt-0.5">
-            Confirm your baseline information below to finalize your secure profile and begin exploring male hypogonadism screening.
+            Confirm your baseline information below to finalize your secure profile and generate your initial hypogonadism screening.
           </p>
         </div>
       </div>
@@ -119,7 +125,7 @@ export const MaleStep5ReviewReady: React.FC<MaleStep5Props> = ({
         {/* Review Cards Column */}
         <div className="lg:col-span-8 space-y-3">
           {/* Summary Details Card */}
-          <div className="p-3.5 rounded-2xl bg-white border border-[#D7EAF2] shadow-2xs space-y-2.5">
+          <div className="p-4 rounded-xl bg-white border border-[#D7EAF2] shadow-2xs space-y-2.5">
             {reviewRows.map((row, idx) => (
               <div
                 key={idx}
@@ -136,8 +142,8 @@ export const MaleStep5ReviewReady: React.FC<MaleStep5Props> = ({
           </div>
 
           {/* Tier 2 Laboratory Blood Tests Notice */}
-          <div className="p-3 rounded-xl bg-[#EAFBFC] border border-[#B2EBF2] flex items-start gap-2.5">
-            <div className="w-6 h-6 rounded-lg bg-[#DDF7F7] flex items-center justify-center text-[#0E9EAA] shrink-0 mt-0.5">
+          <div className="p-3.5 rounded-xl bg-[#F0F8FF] border border-[#BAE6FD] flex items-start gap-2.5">
+            <div className="w-6 h-6 rounded-lg bg-[#DDEFFD] flex items-center justify-center text-[#0868B9] shrink-0 mt-0.5">
               <Beaker01 className="w-3.5 h-3.5" aria-hidden="true" />
             </div>
             <div className="text-[11px] text-[#55718F] leading-snug">
@@ -147,14 +153,14 @@ export const MaleStep5ReviewReady: React.FC<MaleStep5Props> = ({
           </div>
 
           {/* What to Expect Card */}
-          <div className="p-3.5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-2">
-            <span className="text-[11px] font-bold font-mono text-[#0E9EAA] uppercase tracking-wider block">
+          <div className="p-4 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-2">
+            <span className="text-[11px] font-bold font-mono text-[#0868B9] uppercase tracking-wider block">
               What You Can Explore in AndroSense AI:
             </span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {exploreList.map((item, idx) => (
                 <div key={idx} className="flex items-center gap-2 text-xs text-[#55718F]">
-                  <CheckCircle className="w-3.5 h-3.5 text-[#0E9EAA] shrink-0" aria-hidden="true" />
+                  <CheckCircle className="w-3.5 h-3.5 text-[#0868B9] shrink-0" aria-hidden="true" />
                   <span>{item}</span>
                 </div>
               ))}
@@ -181,3 +187,5 @@ export const MaleStep5ReviewReady: React.FC<MaleStep5Props> = ({
     </div>
   );
 };
+
+export default MaleStep5ReviewReady;

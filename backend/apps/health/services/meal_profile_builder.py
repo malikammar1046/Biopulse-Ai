@@ -40,41 +40,56 @@ from apps.health.nutrition_vocabularies import (
     validate_cooking_time_preference,
     validate_meals_per_day,
 )
-from Meal.engine.schemas import (
-    Allergen,
-    DietaryClass,
-    Goal,
-    PALCategory,
-    UserNutritionProfile,
-)
-from Meal.evidence.schemas import (
-    ConditionEvidenceContext,
-    ConditionPathway,
-    EvidenceContextStatus,
-)
+try:
+    from Meal.engine.schemas import (
+        Allergen,
+        DietaryClass,
+        Goal,
+        PALCategory,
+        UserNutritionProfile,
+    )
+    from Meal.evidence.schemas import (
+        ConditionEvidenceContext,
+        ConditionPathway,
+        EvidenceContextStatus,
+    )
+    HAS_MEAL_MODULE = True
+except (ImportError, ModuleNotFoundError):
+    HAS_MEAL_MODULE = False
+    Allergen = None
+    DietaryClass = None
+    Goal = None
+    PALCategory = None
+    UserNutritionProfile = None
+    ConditionEvidenceContext = None
+    ConditionPathway = None
+    EvidenceContextStatus = None
 
 logger = logging.getLogger(__name__)
 
-# Catalog-supported allergen mapping to Meal.engine Allergen enum
-# Production catalog currently provides complete structured metadata for:
-# dairy, egg, fish, wheat, nuts (peanuts & tree nuts).
-ENGINE_ALLERGEN_MAP: Dict[str, Allergen] = {
-    CanonicalAllergen.MILK.value: Allergen.DAIRY,
-    CanonicalAllergen.EGG.value: Allergen.EGG,
-    CanonicalAllergen.FISH.value: Allergen.FISH,
-    CanonicalAllergen.WHEAT.value: Allergen.WHEAT,
-    CanonicalAllergen.PEANUT.value: Allergen.NUTS,
-    CanonicalAllergen.TREE_NUT.value: Allergen.NUTS,
-    "dairy": Allergen.DAIRY,
-    "milk": Allergen.DAIRY,
-    "egg": Allergen.EGG,
-    "eggs": Allergen.EGG,
-    "fish": Allergen.FISH,
-    "wheat": Allergen.WHEAT,
-    "nuts": Allergen.NUTS,
-    "peanut": Allergen.NUTS,
-    "peanuts": Allergen.NUTS,
-}
+if HAS_MEAL_MODULE:
+    # Catalog-supported allergen mapping to Meal.engine Allergen enum
+    # Production catalog currently provides complete structured metadata for:
+    # dairy, egg, fish, wheat, nuts (peanuts & tree nuts).
+    ENGINE_ALLERGEN_MAP: Dict[str, Any] = {
+        CanonicalAllergen.MILK.value: Allergen.DAIRY,
+        CanonicalAllergen.EGG.value: Allergen.EGG,
+        CanonicalAllergen.FISH.value: Allergen.FISH,
+        CanonicalAllergen.WHEAT.value: Allergen.WHEAT,
+        CanonicalAllergen.PEANUT.value: Allergen.NUTS,
+        CanonicalAllergen.TREE_NUT.value: Allergen.NUTS,
+        "dairy": Allergen.DAIRY,
+        "milk": Allergen.DAIRY,
+        "egg": Allergen.EGG,
+        "eggs": Allergen.EGG,
+        "fish": Allergen.FISH,
+        "wheat": Allergen.WHEAT,
+        "nuts": Allergen.NUTS,
+        "peanut": Allergen.NUTS,
+        "peanuts": Allergen.NUTS,
+    }
+else:
+    ENGINE_ALLERGEN_MAP = {}
 
 # Supported food allergens that the current master catalog has complete column coverage for
 CATALOG_COVERED_ALLERGENS: Set[str] = {
@@ -108,25 +123,29 @@ KNOWN_UNSUPPORTED_FOOD_ALLERGENS: Set[str] = {
     "sulfites",
 }
 
-# Activity level mapping (categorical 2023 NASEM equations)
-ACTIVITY_MAP: Dict[str, PALCategory] = {
-    "sedentary": PALCategory.INACTIVE,
-    "inactive": PALCategory.INACTIVE,
-    "light": PALCategory.LOW_ACTIVE,
-    "low_active": PALCategory.LOW_ACTIVE,
-    "moderate": PALCategory.ACTIVE,
-    "active": PALCategory.ACTIVE,
-    "very_active": PALCategory.VERY_ACTIVE,
-}
+if HAS_MEAL_MODULE:
+    # Activity level mapping (categorical 2023 NASEM equations)
+    ACTIVITY_MAP: Dict[str, Any] = {
+        "sedentary": PALCategory.INACTIVE,
+        "inactive": PALCategory.INACTIVE,
+        "light": PALCategory.LOW_ACTIVE,
+        "low_active": PALCategory.LOW_ACTIVE,
+        "moderate": PALCategory.ACTIVE,
+        "active": PALCategory.ACTIVE,
+        "very_active": PALCategory.VERY_ACTIVE,
+    }
 
-# Supported dietary pattern to Meal.engine DietaryClass mapping
-DIETARY_CLASS_MAP: Dict[DietaryPattern, DietaryClass] = {
-    DietaryPattern.OMNIVORE: DietaryClass.STANDARD,
-    DietaryPattern.HALAL_OMNIVORE: DietaryClass.STANDARD,
-    DietaryPattern.VEGETARIAN: DietaryClass.VEGETARIAN,
-    DietaryPattern.VEGAN: DietaryClass.VEGAN,
-    DietaryPattern.PESCATARIAN: DietaryClass.PESCATARIAN,
-}
+    # Supported dietary pattern to Meal.engine DietaryClass mapping
+    DIETARY_CLASS_MAP: Dict[Any, Any] = {
+        DietaryPattern.OMNIVORE: DietaryClass.STANDARD,
+        DietaryPattern.HALAL_OMNIVORE: DietaryClass.STANDARD,
+        DietaryPattern.VEGETARIAN: DietaryClass.VEGETARIAN,
+        DietaryPattern.VEGAN: DietaryClass.VEGAN,
+        DietaryPattern.PESCATARIAN: DietaryClass.PESCATARIAN,
+    }
+else:
+    ACTIVITY_MAP = {}
+    DIETARY_CLASS_MAP = {}
 
 
 @dataclass

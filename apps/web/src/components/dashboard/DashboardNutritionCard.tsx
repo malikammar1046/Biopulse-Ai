@@ -3,15 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import {
   Scales01,
   ArrowRight,
-  CalendarCheck01,
   ShieldTick,
   CheckCircle,
-  ClockFastForward,
+  Activity,
+  ActivityHeart,
 } from '@untitledui/icons';
 import { ROUTES } from '../../constants/routes';
 import type { HealthPathway } from '../../types/onboarding';
-import { nutritionService } from '../../services/nutritionService';
-import type { WeeklyNutritionPlan, NutritionReadiness } from '../../types/nutrition';
+import { lifestyleService } from '../../services/lifestyleService';
+import type { LifestyleRecommendationsResult } from '../../types/lifestyle';
 
 interface DashboardNutritionCardProps {
   pathway: HealthPathway;
@@ -19,24 +19,16 @@ interface DashboardNutritionCardProps {
 
 export const DashboardNutritionCard: React.FC<DashboardNutritionCardProps> = ({ pathway }) => {
   const navigate = useNavigate();
-  const [activePlan, setActivePlan] = useState<WeeklyNutritionPlan | null>(null);
-  const [readiness, setReadiness] = useState<NutritionReadiness | null>(null);
+  const [data, setData] = useState<LifestyleRecommendationsResult | null>(null);
 
   useEffect(() => {
     let isMounted = true;
     const fetchStatus = async () => {
       try {
-        const [planRes, readinessRes] = await Promise.allSettled([
-          nutritionService.getCurrentPlan(),
-          nutritionService.getReadiness(),
-        ]);
+        const moduleName = pathway === 'male' ? 'androsense' : 'ovasense';
+        const res = await lifestyleService.getRecommendations(moduleName);
         if (isMounted) {
-          if (planRes.status === 'fulfilled') {
-            setActivePlan(planRes.value);
-          }
-          if (readinessRes.status === 'fulfilled') {
-            setReadiness(readinessRes.value);
-          }
+          setData(res);
         }
       } catch (err) {
         // Non-blocking for dashboard
@@ -47,18 +39,18 @@ export const DashboardNutritionCard: React.FC<DashboardNutritionCardProps> = ({ 
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [pathway]);
 
-  // Condition-aware copy strictly adhering to requirement 12
+  const isMale = pathway === 'male';
+
   const description =
-    pathway === 'female'
-      ? 'Personalized Pakistani meal planning with PCOS-aware health guidance.'
-      : pathway === 'male'
-      ? 'Personalized Pakistani meal planning with male hormonal-health guidance.'
-      : 'Personalized Pakistani meal planning based on your metabolic profile.';
+    data?.nutrition.strategy_title ||
+    (isMale
+      ? 'Testosterone optimization, steady insulin sensitivity, and lean mass protocol.'
+      : 'Glycemic load blunting, androgen-lowering, and metabolic recovery protocol.');
 
-  const isPlanActive = Boolean(activePlan);
-  const isReady = readiness?.ready ?? true;
+  const calories = data?.nutrition.daily_targets.daily_calories_kcal;
+  const aerobicMins = data?.fitness.aerobic_target_minutes;
 
   return (
     <div className="p-6 sm:p-7 rounded-2xl bg-gradient-to-br from-white via-[#F8FAFC] to-[#F0F9FF] border border-[#BAE6FD] shadow-sm relative overflow-hidden transition-all hover:shadow-md">
@@ -74,23 +66,12 @@ export const DashboardNutritionCard: React.FC<DashboardNutritionCardProps> = ({ 
           <div className="space-y-1.5 text-left">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-base sm:text-lg font-bold text-[#0F172A]">
-                Nutrition Plan
+                Lifestyle & Nutrition Protocol
               </h3>
-              {isPlanActive ? (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                  <CheckCircle className="w-3 h-3" aria-hidden="true" />
-                  7-Day Plan Active
-                </span>
-              ) : isReady ? (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-sky-100 text-sky-800 border border-sky-200">
-                  <ClockFastForward className="w-3 h-3" aria-hidden="true" />
-                  Ready to Generate
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                  Profile Setup Needed
-                </span>
-              )}
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                <CheckCircle className="w-3 h-3" aria-hidden="true" />
+                Dynamic Clinical Protocol Active
+              </span>
             </div>
 
             <p className="text-xs sm:text-sm text-[#475569] max-w-xl leading-relaxed">
@@ -98,17 +79,28 @@ export const DashboardNutritionCard: React.FC<DashboardNutritionCardProps> = ({ 
             </p>
 
             <div className="flex items-center gap-3 pt-1 flex-wrap text-[11px] text-[#64748B] font-medium">
-              <span className="flex items-center gap-1">
-                <CalendarCheck01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
-                7-Day Culturally Calibrated
+              {calories && (
+                <>
+                  <span className="flex items-center gap-1 font-mono font-bold text-[#0F172A]">
+                    <ShieldTick className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
+                    {calories} kcal/day
+                  </span>
+                  <span>•</span>
+                </>
+              )}
+              {aerobicMins && (
+                <>
+                  <span className="flex items-center gap-1 font-mono text-[#0288D1]">
+                    <Activity className="w-3.5 h-3.5" aria-hidden="true" />
+                    {aerobicMins} min/wk Movement
+                  </span>
+                  <span>•</span>
+                </>
+              )}
+              <span className="flex items-center gap-1 text-slate-600">
+                <ActivityHeart className="w-3.5 h-3.5 text-purple-600" aria-hidden="true" />
+                SHAP-Attributed Swaps
               </span>
-              <span>•</span>
-              <span className="flex items-center gap-1">
-                <ShieldTick className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
-                Portion Gram Targets
-              </span>
-              <span>•</span>
-              <span>Breakfast, Lunch, Dinner, Snack</span>
             </div>
           </div>
         </div>
@@ -116,10 +108,10 @@ export const DashboardNutritionCard: React.FC<DashboardNutritionCardProps> = ({ 
         <div className="flex items-center gap-3 shrink-0 pt-2 md:pt-0">
           <button
             type="button"
-            onClick={() => navigate(ROUTES.APP.DIET)}
+            onClick={() => navigate(ROUTES.APP.LIFESTYLE)}
             className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0288D1] hover:bg-[#0277BD] transition-all shadow-sm cursor-pointer active:scale-98"
           >
-            <span>{isPlanActive ? 'View Meal Plan' : 'View Nutrition Plan'}</span>
+            <span>Explore Lifestyle Plan</span>
             <ArrowRight className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>

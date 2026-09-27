@@ -173,6 +173,13 @@ def _get_supabase_client():
     Create a Supabase client using SERVICE_ROLE_KEY (preferred) or ANON_KEY (fallback).
     The service role key must never be returned in API responses or logs.
     """
+    from django.conf import settings
+    if (
+        getattr(settings, "DISABLE_SUPABASE_NETWORK", False)
+        or os.environ.get("DISABLE_SUPABASE_NETWORK", "").strip().lower() in ("true", "1", "yes")
+    ):
+        raise RuntimeError("Supabase network access is disabled via DISABLE_SUPABASE_NETWORK.")
+
     from supabase import create_client, Client
 
     url: str = os.environ.get("SUPABASE_URL", "") or os.environ.get("VITE_SUPABASE_URL", "")
