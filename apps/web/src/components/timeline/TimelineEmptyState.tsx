@@ -59,7 +59,7 @@ export const TimelineEmptyState: React.FC<TimelineEmptyStateProps> = ({
             </Link>
 
             <Link
-              to={ROUTES.APP.DIET}
+              to={ROUTES.APP.LIFESTYLE}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-[#0288D1] bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] transition-colors"
             >
               <Scales01 className="w-3.5 h-3.5" aria-hidden="true" />

@@ -63,18 +63,74 @@ def _get_sqlite_path() -> str:
     return str(default_path)
 
 
-def _connect_sqlite() -> sqlite3.Connection:
-    db_path = _get_sqlite_path()
+_initialized_observation_db_paths: set[str] = set()
+_observation_init_lock = threading.Lock()
+
+
+class _DjangoSQLiteWrapper:
+    def __init__(self, django_conn: Any):
+        self._django_conn = django_conn
+        self._raw_conn = django_conn.connection
+
+    @property
+    def row_factory(self):
+        return getattr(self._raw_conn, "row_factory", None)
+
+    @row_factory.setter
+    def row_factory(self, val):
+        self._raw_conn.row_factory = val
+
+    def cursor(self):
+        return self._raw_conn.cursor()
+
+    def execute(self, sql: str, params: Any = ()):
+        return self._raw_conn.execute(sql, params)
+
+    def executemany(self, sql: str, seq_of_params: Any):
+        return self._raw_conn.executemany(sql, seq_of_params)
+
+    def close(self) -> None:
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return False
+
+
+def _connect_sqlite(db_path: str | None = None, timeout: float = 15.0) -> Any:
+    if db_path is None:
+        db_path = _get_sqlite_path()
+    try:
+        from django.db import connection
+        default_name = settings.DATABASES.get("default", {}).get("NAME")
+        if default_name and str(default_name) == str(db_path):
+            connection.ensure_connection()
+            if connection.connection:
+                return _DjangoSQLiteWrapper(connection)
+    except Exception:
+        pass
     is_uri = str(db_path).startswith("file:")
-    return sqlite3.connect(db_path, timeout=10.0, uri=is_uri)
+    conn = sqlite3.connect(db_path, timeout=timeout, uri=is_uri)
+    try:
+        conn.execute("PRAGMA busy_timeout = 15000;")
+    except Exception:
+        pass
+    return conn
 
 
 def init_sqlite_observation_store() -> None:
     """Initializes the local SQLite observation persistence table for offline/test environments."""
-    global _sqlite_observations_initialized
-    with _observation_lock:
+    db_path = _get_sqlite_path()
+    if db_path in _initialized_observation_db_paths:
+        return
+
+    with _observation_init_lock:
+        if db_path in _initialized_observation_db_paths:
+            return
+        conn = _connect_sqlite(db_path, timeout=10.0)
         try:
-            conn = _connect_sqlite()
             with conn:
                 conn.execute(
                     """
@@ -98,19 +154,29 @@ def init_sqlite_observation_store() -> None:
                 conn.execute(
                     "CREATE INDEX IF NOT EXISTS idx_obs_user_module ON patient_metric_observations(user_id, module)"
                 )
-            conn.close()
-            _sqlite_observations_initialized = True
+            # Mark initialized ONLY after successful DDL completion
+            _initialized_observation_db_paths.add(db_path)
+            logger.info("ObservationRepository persistent SQLite store initialized at %s", db_path)
         except Exception as e:
             logger.warning("Failed to initialize SQLite observation store: %s", e)
+        finally:
+            conn.close()
+
 
 
 _cached_service_client = None
 _client_lock = threading.Lock()
 
 
+def _is_supabase_network_disabled() -> bool:
+    return getattr(settings, "DISABLE_SUPABASE_NETWORK", False) or os.environ.get("DISABLE_SUPABASE_NETWORK", "").strip().lower() in ("true", "1", "yes")
+
+
 def get_supabase_client(auth_token: str | None = None) -> Any:
     """Returns an authenticated Supabase client using service key or caller JWT."""
     global _cached_service_client
+    if _is_supabase_network_disabled():
+        return None
     if auth_token:
         try:
             from supabase import create_client
@@ -254,35 +320,7 @@ class ObservationRepository:
                 )
             conn.close()
         except Exception as e:
-            if "no such table" in str(e).lower():
-                init_sqlite_observation_store()
-                try:
-                    conn = _connect_sqlite()
-                    with conn:
-                        conn.execute(
-                            """
-                            INSERT INTO patient_metric_observations 
-                            (id, user_id, module, metric_key, value, unit, observed_at, source, source_record_id, created_at)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                            """,
-                            (
-                                obs_record["id"],
-                                obs_record["user_id"],
-                                obs_record["module"],
-                                obs_record["metric_key"],
-                                obs_record["value"],
-                                obs_record["unit"],
-                                obs_record["observed_at"],
-                                obs_record["source"],
-                                obs_record["source_record_id"],
-                                obs_record["created_at"],
-                            ),
-                        )
-                    conn.close()
-                except Exception:
-                    pass
-            else:
-                logger.warning("SQLite observation insert error: %s", e)
+            logger.warning("SQLite observation insert error: %s", e)
 
         return obs_record
 
@@ -346,8 +384,6 @@ class ObservationRepository:
             if row:
                 return dict(row)
         except Exception as e:
-            if "no such table" in str(e).lower():
-                init_sqlite_observation_store()
             logger.debug("SQLite get_latest_observation error: %s", e)
 
         # 3. In-memory cache fallback (used in unit tests & mock environments)
@@ -417,8 +453,6 @@ class ObservationRepository:
                 conn.close()
                 results = [dict(r) for r in rows]
             except Exception as e:
-                if "no such table" in str(e).lower():
-                    init_sqlite_observation_store()
                 logger.debug("SQLite get_observations error: %s", e)
 
         # 3. Merge in-memory records (ensures local updates during request/tests are visible)

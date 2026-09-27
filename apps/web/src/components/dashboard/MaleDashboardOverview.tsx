@@ -608,10 +608,10 @@ export const MaleDashboardOverview: React.FC<MaleDashboardOverviewProps> = ({
           <div className="space-y-2 pt-2 border-t border-[#F1F5F9]">
             <button
               type="button"
-              onClick={() => navigate(ROUTES.APP.DIET)}
+              onClick={() => navigate(ROUTES.APP.LIFESTYLE)}
               className="w-full py-2.5 px-4 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold font-sans transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer"
             >
-              <span>View Today&apos;s Plan</span>
+              <span>View Lifestyle Plan</span>
               <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </div>
