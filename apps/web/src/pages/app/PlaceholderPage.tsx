@@ -14,8 +14,6 @@ interface PlaceholderProps {
 }
 
 export const PlaceholderPage: React.FC<PlaceholderProps> = ({
-  title,
-  subtitle,
   moduleName,
   expectedCapabilities,
 }) => {
@@ -23,13 +21,11 @@ export const PlaceholderPage: React.FC<PlaceholderProps> = ({
     <div className="space-y-6 max-w-4xl">
       <div className="flex items-center justify-between">
         <div>
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2">
             <Badge variant="primary" size="sm" showDot>
               Phase 2 Module: {moduleName}
             </Badge>
           </div>
-          <h1 className="text-3xl font-bold font-display text-[#0F172A]">{title}</h1>
-          <p className="text-sm text-[#475569] mt-1">{subtitle}</p>
         </div>
 
         <Link to={ROUTES.HOME}>

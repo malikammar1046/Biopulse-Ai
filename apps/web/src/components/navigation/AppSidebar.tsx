@@ -22,6 +22,7 @@ import { resolvePathway } from '../../types/onboarding';
 import { Logo } from '../brand/Logo';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { useAuth } from '../../context/AuthContext';
+import { UserAvatar } from '../common/UserAvatar';
 
 interface NavItem {
   label: string;
@@ -375,26 +376,19 @@ export const AppSidebar: React.FC = () => {
             userProfile?.fullName ||
             (userProfile?.email ? userProfile.email.split('@')[0] : 'User');
           const displayEmail = userProfile?.email || '';
-          const initial = displayName.charAt(0).toUpperCase() || 'U';
 
           return (
             <div className="p-2.5 rounded-xl bg-white border border-[#EAECF0] flex items-center justify-between gap-2.5 shadow-xs">
               <div className="flex items-center gap-2 min-w-0">
-                <div className={`w-7 h-7 rounded-full overflow-hidden border flex items-center justify-center shrink-0 ${
-                  isFemale ? 'border-[#F43F7D]/30 bg-[#F43F7D]' : 'border-[#B3E5FC] bg-[#29B6F6]'
-                }`}>
-                  {userProfile?.avatarUrl ? (
-                    <img
-                      src={userProfile.avatarUrl}
-                      alt={displayName}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-xs font-bold text-white font-mono">
-                      {initial}
-                    </span>
-                  )}
-                </div>
+                <UserAvatar
+                  avatarUrl={userProfile?.avatarUrl}
+                  name={displayName}
+                  email={displayEmail}
+                  size="sm"
+                  pathway={pathway}
+                  gender={userProfile?.gender}
+                  showBorder={false}
+                />
                 <div className="min-w-0">
                   <span className="text-xs font-semibold text-[#111318] block truncate">
                     {displayName}

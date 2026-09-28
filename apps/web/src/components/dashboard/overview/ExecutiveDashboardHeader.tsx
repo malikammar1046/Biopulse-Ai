@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { SearchLg, Bell01, ChevronDown } from '@untitledui/icons';
 import { useUserHealth } from '../../../context/UserHealthContext';
 import { resolvePathway, type HealthPathway } from '../../../types/onboarding';
+import { UserAvatar } from '../../common/UserAvatar';
 
 interface ExecutiveDashboardHeaderProps {
   timeframe: 'today' | 'week' | 'month';
@@ -45,9 +46,6 @@ export const ExecutiveDashboardHeader: React.FC<ExecutiveDashboardHeaderProps> =
 
   const fullName = userProfile.fullName?.trim() || 'Health Member';
   const email = userProfile.email || 'member@biopulse.ai';
-  const avatarUrl =
-    userProfile.avatarUrl ||
-    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
 
   const todayStr = new Date().toLocaleDateString('en-GB', {
     day: 'numeric',
@@ -70,10 +68,14 @@ export const ExecutiveDashboardHeader: React.FC<ExecutiveDashboardHeaderProps> =
           {/* User pill profile & pathway badge */}
           <div className="flex items-center gap-2 flex-wrap">
             <div className="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-white border border-[#E2E8F0] shadow-xs">
-              <img
-                src={avatarUrl}
-                alt={fullName}
-                className="w-7 h-7 rounded-full object-cover border border-[#BAE6FD]"
+              <UserAvatar
+                avatarUrl={userProfile.avatarUrl}
+                name={fullName}
+                email={email}
+                size="sm"
+                pathway={pathway}
+                gender={userProfile.gender}
+                showBorder={false}
               />
               <div className="leading-tight">
                 <span className="text-xs font-bold font-display text-[#0F172A] block">

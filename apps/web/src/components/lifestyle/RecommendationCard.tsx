@@ -11,18 +11,25 @@ import {
   HelpCircle,
   AlertCircle,
   Sparkles,
+  RotateCcw,
+  Check,
 } from 'lucide-react';
 import type { RecommendationItem } from '../../types/lifestyle';
 
 interface RecommendationCardProps {
   recommendation: RecommendationItem;
   onSelect: (rec: RecommendationItem) => void;
+  onUpdateStatus?: (
+    recommendationId: string,
+    status: 'NEW' | 'ACTIVE' | 'IMPROVING' | 'MAINTAIN' | 'REASSESS' | 'COMPLETED' | 'SKIPPED'
+  ) => void;
   isMale?: boolean;
 }
 
 export const RecommendationCard: React.FC<RecommendationCardProps> = ({
   recommendation,
   onSelect,
+  onUpdateStatus,
   isMale = false,
 }) => {
   const [showShapTooltip, setShowShapTooltip] = useState(false);
@@ -42,9 +49,21 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
     }
   };
 
-  // Status Styling Resolver (NEW / ACTIVE / IMPROVING / MAINTAIN / REASSESS)
+  // Status Styling Resolver (NEW / ACTIVE / IMPROVING / MAINTAIN / REASSESS / COMPLETED / SKIPPED)
   const getStatusBadge = (status: string) => {
     switch (status) {
+      case 'COMPLETED':
+        return {
+          label: 'Completed',
+          className: 'bg-emerald-100 text-emerald-800 border-emerald-300 font-semibold',
+          icon: <CheckCircle2 className="w-3 h-3 text-emerald-700" />,
+        };
+      case 'SKIPPED':
+        return {
+          label: 'Skipped',
+          className: 'bg-slate-100 text-slate-500 border-slate-200',
+          icon: null,
+        };
       case 'IMPROVING':
         return {
           label: 'Improving',
@@ -96,10 +115,18 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
 
   const statusBadge = getStatusBadge(recommendation.status);
   const priorityClass = getPriorityBadge(recommendation.priority);
+  const isCompleted = recommendation.status === 'COMPLETED';
+  const isSkipped = recommendation.status === 'SKIPPED';
 
   return (
     <article
-      className="group relative flex flex-col justify-between rounded-2xl bg-white border border-[#D7EAF2] hover:border-[#16B8C4]/50 shadow-xs hover:shadow-md transition-all duration-200 p-5 sm:p-6"
+      className={`group relative flex flex-col justify-between rounded-2xl bg-white border transition-all duration-200 p-5 sm:p-6 ${
+        isCompleted
+          ? 'border-emerald-200/90 bg-emerald-50/20 shadow-xs'
+          : isSkipped
+          ? 'border-slate-200 opacity-60 hover:opacity-100 shadow-xs'
+          : 'border-[#D7EAF2] hover:border-[#16B8C4]/50 shadow-xs hover:shadow-md'
+      }`}
       aria-labelledby={`rec-title-${recommendation.id}`}
     >
       <div className="space-y-4">
@@ -158,7 +185,11 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
         <div className="space-y-1.5">
           <h3
             id={`rec-title-${recommendation.id}`}
-            className="text-base sm:text-lg font-bold text-[#073B72] leading-snug group-hover:text-[#0E9EAA] transition-colors"
+            className={`text-base sm:text-lg font-bold leading-snug transition-colors ${
+              isCompleted
+                ? 'text-emerald-950 line-through decoration-emerald-500/60'
+                : 'text-[#073B72] group-hover:text-[#0E9EAA]'
+            }`}
           >
             {recommendation.title}
           </h3>
@@ -209,24 +240,66 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
       </div>
 
       {/* Card Action Footer */}
-      <div className="pt-4 mt-4 border-t border-[#D7EAF2] flex items-center justify-between">
-        <span className="text-xs text-[#55718F] font-normal truncate max-w-[200px]">
+      <div className="pt-4 mt-4 border-t border-[#D7EAF2] flex flex-wrap items-center justify-between gap-2">
+        <span className="text-xs text-[#55718F] font-normal truncate max-w-[180px]">
           {recommendation.longitudinal_basis}
         </span>
 
-        <button
-          type="button"
-          onClick={() => onSelect(recommendation)}
-          className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-            isMale
-              ? 'bg-[#0868B9]/10 text-[#0868B9] hover:bg-[#0868B9] hover:text-white'
-              : 'bg-[#0E9EAA]/10 text-[#0E9EAA] hover:bg-[#0E9EAA] hover:text-white'
-          }`}
-          aria-label={`View full details for ${recommendation.title}`}
-        >
-          <span>View details</span>
-          <ChevronRight className="w-3.5 h-3.5" />
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Adherence Action Buttons */}
+          {onUpdateStatus && (
+            <>
+              {isCompleted ? (
+                <button
+                  type="button"
+                  onClick={() => onUpdateStatus(recommendation.id, 'ACTIVE')}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-semibold bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition-colors cursor-pointer"
+                  title="Mark as active again"
+                  aria-label="Mark recommendation as active"
+                >
+                  <RotateCcw className="w-3 h-3 text-emerald-700" />
+                  <span>Undo</span>
+                </button>
+              ) : isSkipped ? (
+                <button
+                  type="button"
+                  onClick={() => onUpdateStatus(recommendation.id, 'ACTIVE')}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
+                  title="Restore recommendation"
+                  aria-label="Restore recommendation to active"
+                >
+                  <RotateCcw className="w-3 h-3 text-slate-600" />
+                  <span>Restore</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onUpdateStatus(recommendation.id, 'COMPLETED')}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors cursor-pointer"
+                  title="Mark as completed"
+                  aria-label={`Mark ${recommendation.title} as completed`}
+                >
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="hidden sm:inline">Complete</span>
+                </button>
+              )}
+            </>
+          )}
+
+          <button
+            type="button"
+            onClick={() => onSelect(recommendation)}
+            className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+              isMale
+                ? 'bg-[#0868B9]/10 text-[#0868B9] hover:bg-[#0868B9] hover:text-white'
+                : 'bg-[#0E9EAA]/10 text-[#0E9EAA] hover:bg-[#0E9EAA] hover:text-white'
+            }`}
+            aria-label={`View full details for ${recommendation.title}`}
+          >
+            <span>Details</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
     </article>
   );

@@ -10,12 +10,19 @@ import {
   Clock,
   AlertCircle,
   BookOpen,
+  Check,
+  RotateCcw,
+  MinusCircle,
 } from 'lucide-react';
 import type { RecommendationItem, EvidenceMetadata } from '../../types/lifestyle';
 
 interface RecommendationDetailModalProps {
   recommendation: RecommendationItem | null;
   onClose: () => void;
+  onUpdateStatus?: (
+    recommendationId: string,
+    status: 'NEW' | 'ACTIVE' | 'IMPROVING' | 'MAINTAIN' | 'REASSESS' | 'COMPLETED' | 'SKIPPED'
+  ) => void;
   evidenceRegistry?: Record<string, EvidenceMetadata>;
   isMale?: boolean;
 }
@@ -23,6 +30,7 @@ interface RecommendationDetailModalProps {
 export const RecommendationDetailModal: React.FC<RecommendationDetailModalProps> = ({
   recommendation,
   onClose,
+  onUpdateStatus,
   evidenceRegistry,
   isMale = false,
 }) => {
@@ -46,6 +54,9 @@ export const RecommendationDetailModal: React.FC<RecommendationDetailModalProps>
   }, [recommendation, onClose]);
 
   if (!recommendation) return null;
+
+  const isCompleted = recommendation.status === 'COMPLETED';
+  const isSkipped = recommendation.status === 'SKIPPED';
 
   // Retrieve evidence from backend registry if available
   const evidence: EvidenceMetadata | null =
@@ -103,13 +114,29 @@ export const RecommendationDetailModal: React.FC<RecommendationDetailModalProps>
                 {recommendation.priority} Priority
               </span>
 
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <TrendingUp className="w-3 h-3" />
-                <span>{recommendation.status}</span>
-              </span>
+              {isCompleted ? (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-700" />
+                  <span>Completed</span>
+                </span>
+              ) : isSkipped ? (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                  <span>Skipped</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <TrendingUp className="w-3 h-3" />
+                  <span>{recommendation.status}</span>
+                </span>
+              )}
             </div>
 
-            <h2 id="modal-rec-title" className="text-xl sm:text-2xl font-bold text-[#073B72]">
+            <h2
+              id="modal-rec-title"
+              className={`text-xl sm:text-2xl font-bold ${
+                isCompleted ? 'text-emerald-950 line-through decoration-emerald-500/60' : 'text-[#073B72]'
+              }`}
+            >
               {recommendation.title}
             </h2>
           </div>
@@ -245,8 +272,54 @@ export const RecommendationDetailModal: React.FC<RecommendationDetailModalProps>
           )}
         </div>
 
-        {/* Modal Footer */}
-        <div className="pt-2 flex justify-end">
+        {/* Modal Footer with Interactive Status Controls */}
+        <div className="pt-4 border-t border-[#D7EAF2] flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            {onUpdateStatus && (
+              <>
+                {isCompleted ? (
+                  <button
+                    type="button"
+                    onClick={() => onUpdateStatus(recommendation.id, 'ACTIVE')}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Undo Completion</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => onUpdateStatus(recommendation.id, 'COMPLETED')}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition-colors cursor-pointer shadow-xs"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Mark as Completed</span>
+                  </button>
+                )}
+
+                {!isSkipped ? (
+                  <button
+                    type="button"
+                    onClick={() => onUpdateStatus(recommendation.id, 'SKIPPED')}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
+                  >
+                    <MinusCircle className="w-3.5 h-3.5" />
+                    <span>Skip Action</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => onUpdateStatus(recommendation.id, 'ACTIVE')}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Restore Action</span>
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+
           <button
             type="button"
             onClick={onClose}

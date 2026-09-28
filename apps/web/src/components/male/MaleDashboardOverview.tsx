@@ -5,8 +5,6 @@ import { InfoCircle } from '@untitledui/icons';
 import { ROUTES } from '../../constants/routes';
 import { useUserHealth } from '../../context/UserHealthContext';
 import {
-  MalePageHeader,
-  MaleStatusBadge,
   MaleCard,
   APPLE_SPRINGS,
 } from './MaleDesignPrimitives';
@@ -19,7 +17,6 @@ import { MaleClinicalLabsModal } from '../adaptive/MaleClinicalLabsModal';
 export const MaleDashboardOverview: React.FC = () => {
   const navigate = useNavigate();
   const {
-    userProfile,
     activeAssessment,
     mlAssessment,
     assessmentLoading,
@@ -31,14 +28,6 @@ export const MaleDashboardOverview: React.FC = () => {
 
   const [isLabsModalOpen, setIsLabsModalOpen] = useState(false);
 
-  // 1. Time-aware greeting
-  const greeting = useMemo(() => {
-    const hour = new Date().getHours();
-    const name = userProfile?.fullName?.split(' ')[0] || 'there';
-    if (hour < 12) return `Good morning, ${name}`;
-    if (hour < 17) return `Good afternoon, ${name}`;
-    return `Good evening, ${name}`;
-  }, [userProfile]);
 
   // 2. Authoritative Assessment State
   const isMaleAssessment =
@@ -102,16 +91,6 @@ export const MaleDashboardOverview: React.FC = () => {
 
   const loading = assessmentLoading || mlAssessmentLoading;
 
-  // Contextual status badge
-  const headerBadge = useMemo(() => {
-    if (!hasAssessment) {
-      return <MaleStatusBadge variant="neutral">Screening Not Started</MaleStatusBadge>;
-    }
-    if (assessmentLevel === 'tier_1_2' || (assessmentLevel as string) === 'tier_2') {
-      return <MaleStatusBadge variant="blue">Tier 2 Clinical Labs</MaleStatusBadge>;
-    }
-    return <MaleStatusBadge variant="blue">Tier 1 Initial</MaleStatusBadge>;
-  }, [hasAssessment, assessmentLevel]);
 
   // Primary action handler
   const handlePrimaryAction = async () => {
@@ -133,14 +112,7 @@ export const MaleDashboardOverview: React.FC = () => {
       transition={APPLE_SPRINGS.instant}
       className="max-w-6xl mx-auto space-y-6 sm:space-y-7 pb-16 text-left select-none"
     >
-      {/* ── 1. Apple-Style Page Header ──────────────────────────────────────── */}
-      <MalePageHeader
-        title={greeting}
-        subtitle="Here’s your male hormonal health and hypogonadism screening overview."
-        badge={headerBadge}
-      />
-
-      {/* ── 2. Primary 2-Column Clinical Grid ───────────────────────────────── */}
+      {/* ── Primary 2-Column Clinical Grid ───────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-stretch">
         {/* Left Column (7 cols): Primary Screening Card */}
         <div className="lg:col-span-7 flex flex-col">

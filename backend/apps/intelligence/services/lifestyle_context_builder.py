@@ -15,6 +15,8 @@ Guarantees 100% independence from legacy Meal Directory.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -136,6 +138,7 @@ class ComprehensiveLifestyleContext:
     labs: LabBiomarkers
     longitudinal: LongitudinalSummary
     missing_data: List[str] = field(default_factory=list)
+    context_version: str = ""
     generated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
@@ -144,6 +147,18 @@ class LifestyleContextBuilder:
     Authoritative builder that constructs ComprehensiveLifestyleContext from verified
     patient health records, active screening assessments, and longitudinal trends.
     """
+
+    @staticmethod
+    def normalize_module(module: Optional[str], gender: Optional[str] = None) -> str:
+        m = str(module or "").strip().lower()
+        if m in ("ovasense", "pcos", "female_pcos", "female"):
+            return "female_pcos"
+        if m in ("androsense", "hypogonadism", "male_hypogonadism", "male"):
+            return "male_hypogonadism"
+        g = str(gender or "").strip().lower()
+        if g == "male":
+            return "male_hypogonadism"
+        return "female_pcos"
 
     @classmethod
     def build_context(
@@ -167,10 +182,10 @@ class LifestyleContextBuilder:
         gender = "female"
         if profile_obj:
             gender = str(getattr(profile_obj, "gender", "female") or "female").lower()
-        if not module:
-            module = "male_hypogonadism" if gender == "male" else "female_pcos"
 
-        pathway = module
+        canonical_module = cls.normalize_module(module, gender=gender)
+        module = canonical_module
+        pathway = canonical_module
         age = None
         height_cm = None
         weight_kg = None
@@ -512,7 +527,7 @@ class LifestyleContextBuilder:
         if not longitudinal.has_history:
             missing_data.append("longitudinal_history")
 
-        return ComprehensiveLifestyleContext(
+        ctx = ComprehensiveLifestyleContext(
             user_id=user_id_str,
             demographics=demographics,
             screening=screening,
@@ -523,3 +538,45 @@ class LifestyleContextBuilder:
             longitudinal=longitudinal,
             missing_data=missing_data,
         )
+        ctx.context_version = cls.compute_context_version(ctx)
+        return ctx
+
+    @classmethod
+    def compute_context_version(cls, context: ComprehensiveLifestyleContext) -> str:
+        """
+        Computes a deterministic 16-character SHA-256 fingerprint of the patient's
+        clinically relevant state:
+        - pathway / demographics (weight, height, age, bmi, activity, diet, symptoms)
+        - screening assessment (id, level, probability, risk_category)
+        - top SHAP drivers
+        - laboratory biomarkers (fasting glucose, hba1c, testosterone, insulin, lipids)
+        - longitudinal trajectory (weight delta, probability trend)
+        """
+        demo = context.demographics
+        screening = context.screening
+        labs = context.labs
+        longitudinal = context.longitudinal
+
+        state_digest = {
+            "pathway": demo.pathway,
+            "weight_kg": round(demo.weight_kg, 1) if demo.weight_kg is not None else None,
+            "height_cm": round(demo.height_cm, 1) if demo.height_cm is not None else None,
+            "bmi": round(demo.bmi, 1) if demo.bmi is not None else None,
+            "activity_level": demo.activity_level or "",
+            "dietary_preference": demo.dietary_preference or "",
+            "allergens": sorted(demo.allergens or []),
+            "assessment_id": screening.assessment_id or "",
+            "assessment_level": screening.assessment_level,
+            "risk_category": screening.risk_category,
+            "probability": round(screening.probability, 3),
+            "shap_drivers": sorted([d.feature_name for d in context.shap_drivers]),
+            "symptoms": sorted(context.symptoms.active_symptoms),
+            "fasting_glucose": labs.fasting_glucose_mg_dl,
+            "hba1c": labs.hba1c_percent,
+            "total_t": labs.total_testosterone_ng_dl,
+            "fasting_insulin": labs.fasting_insulin_uIU_ml,
+            "weight_trend_30d": longitudinal.weight_trend_30d,
+            "probability_trend": longitudinal.probability_trend,
+        }
+        encoded = json.dumps(state_digest, sort_keys=True, default=str).encode("utf-8")
+        return hashlib.sha256(encoded).hexdigest()[:16]

@@ -12,6 +12,10 @@ interface LifestylePillarViewProps {
   lifestyle: LifestylePillar;
   recommendations: RecommendationItem[];
   onSelectRecommendation: (rec: RecommendationItem) => void;
+  onUpdateStatus?: (
+    recommendationId: string,
+    status: 'NEW' | 'ACTIVE' | 'IMPROVING' | 'MAINTAIN' | 'REASSESS' | 'COMPLETED' | 'SKIPPED'
+  ) => void;
   isMale?: boolean;
 }
 
@@ -19,6 +23,7 @@ export const LifestylePillarView: React.FC<LifestylePillarViewProps> = ({
   lifestyle,
   recommendations,
   onSelectRecommendation,
+  onUpdateStatus,
   isMale = false,
 }) => {
   const lifestyleRecs = recommendations.filter(
@@ -143,6 +148,7 @@ export const LifestylePillarView: React.FC<LifestylePillarViewProps> = ({
                 key={rec.id}
                 recommendation={rec}
                 onSelect={onSelectRecommendation}
+                onUpdateStatus={onUpdateStatus}
                 isMale={isMale}
               />
             ))}

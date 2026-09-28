@@ -12,6 +12,10 @@ interface FitnessPillarViewProps {
   fitness: FitnessPillar;
   recommendations: RecommendationItem[];
   onSelectRecommendation: (rec: RecommendationItem) => void;
+  onUpdateStatus?: (
+    recommendationId: string,
+    status: 'NEW' | 'ACTIVE' | 'IMPROVING' | 'MAINTAIN' | 'REASSESS' | 'COMPLETED' | 'SKIPPED'
+  ) => void;
   isMale?: boolean;
 }
 
@@ -19,6 +23,7 @@ export const FitnessPillarView: React.FC<FitnessPillarViewProps> = ({
   fitness,
   recommendations,
   onSelectRecommendation,
+  onUpdateStatus,
   isMale = false,
 }) => {
   const fitnessRecs = recommendations.filter((r) => r.category === 'fitness');
@@ -205,6 +210,7 @@ export const FitnessPillarView: React.FC<FitnessPillarViewProps> = ({
                 key={rec.id}
                 recommendation={rec}
                 onSelect={onSelectRecommendation}
+                onUpdateStatus={onUpdateStatus}
                 isMale={isMale}
               />
             ))}

@@ -48,7 +48,7 @@ export const LifestyleRecommendationsPage: React.FC = () => {
   const [dietaryPref, setDietaryPref] = useState<string>('standard');
   const [activityLevel, setActivityLevel] = useState<string>('moderate');
 
-  const fetchRecommendations = async (override?: LifestyleSimulationOverride) => {
+  const fetchRecommendations = async (override?: LifestyleSimulationOverride, refresh = false) => {
     try {
       if (override) {
         setSimulating(true);
@@ -56,7 +56,7 @@ export const LifestyleRecommendationsPage: React.FC = () => {
         setData(result);
       } else {
         setLoading(true);
-        const result = await lifestyleService.getRecommendations(defaultPathway);
+        const result = await lifestyleService.getRecommendations(defaultPathway, refresh);
         setData(result);
       }
       setError(null);
@@ -89,6 +89,43 @@ export const LifestyleRecommendationsPage: React.FC = () => {
       dietary_preference: dietaryPref,
       activity_level: newLevel,
     });
+  };
+
+  // Adherence tracking: Optimistic update with persistent backend mutation
+  const handleUpdateStatus = async (
+    recommendationId: string,
+    newStatus: 'NEW' | 'ACTIVE' | 'IMPROVING' | 'MAINTAIN' | 'REASSESS' | 'COMPLETED' | 'SKIPPED'
+  ) => {
+    if (!data) return;
+    const oldRecommendations = data.recommendations;
+    const updatedRecommendations = data.recommendations.map((rec) =>
+      rec.id === recommendationId ? { ...rec, status: newStatus } : rec
+    );
+
+    // Optimistic UI update
+    setData({
+      ...data,
+      recommendations: updatedRecommendations,
+    });
+
+    if (selectedRecommendation?.id === recommendationId) {
+      setSelectedRecommendation({
+        ...selectedRecommendation,
+        status: newStatus,
+      });
+    }
+
+    try {
+      await lifestyleService.updateRecommendationStatus({
+        recommendation_id: recommendationId,
+        status: newStatus,
+        module: data.pathway || defaultPathway,
+      });
+    } catch (err) {
+      console.error('Failed to persist recommendation status:', err);
+      // Revert optimistic update on backend failure
+      setData((prev) => (prev ? { ...prev, recommendations: oldRecommendations } : null));
+    }
   };
 
   // Find Today's Priority recommendation (highest priority item)
@@ -153,8 +190,8 @@ export const LifestyleRecommendationsPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
-      {/* A. Clean Compact Header (No giant hero banner, no prominent probability) */}
-      <header className="rounded-2xl bg-white border border-[#D7EAF2] p-6 sm:p-7 shadow-xs space-y-3">
+      {/* A. Clean Compact Toolbar */}
+      <div className="rounded-2xl bg-white border border-[#D7EAF2] p-4 sm:p-5 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5 max-w-2xl">
             {/* Metadata Tags: Pathway, Tier, Date */}
@@ -184,13 +221,6 @@ export const LifestyleRecommendationsPage: React.FC = () => {
                 </span>
               )}
             </div>
-
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight font-display text-[#073B72]">
-              Lifestyle Recommendations
-            </h1>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              Personalized guidance based on your latest BioPulse health data.
-            </p>
           </div>
 
           {/* Interactive Customization Controls */}
@@ -232,15 +262,25 @@ export const LifestyleRecommendationsPage: React.FC = () => {
               </select>
             </div>
 
-            {simulating && (
+            {simulating ? (
               <span className="text-xs font-medium text-[#16B8C4] flex items-center gap-1">
                 <RefreshCw className="w-3 h-3 animate-spin" />
                 <span>Updating...</span>
               </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fetchRecommendations(undefined, true)}
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg text-slate-600 hover:text-[#073B72] hover:bg-white border border-transparent hover:border-[#D7EAF2] transition-colors cursor-pointer"
+                title="Recalculate recommendations from current health data"
+              >
+                <RefreshCw className="w-3 h-3" />
+                <span className="hidden sm:inline">Refresh</span>
+              </button>
             )}
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Clinician Review Banner if recommended (Calm, non-alarming) */}
       {data.clinician_review?.recommended && (
@@ -257,6 +297,7 @@ export const LifestyleRecommendationsPage: React.FC = () => {
         <TodayPriorityCard
           priorityRecommendation={topPriorityRecommendation}
           onViewRecommendation={(rec) => setSelectedRecommendation(rec)}
+          onUpdateStatus={handleUpdateStatus}
           isMale={isMale}
         />
       )}
@@ -339,6 +380,7 @@ export const LifestyleRecommendationsPage: React.FC = () => {
               nutrition={nutrition}
               recommendations={data.recommendations}
               onSelectRecommendation={(rec) => setSelectedRecommendation(rec)}
+              onUpdateStatus={handleUpdateStatus}
               isMale={isMale}
             />
           </div>
@@ -350,6 +392,7 @@ export const LifestyleRecommendationsPage: React.FC = () => {
               fitness={fitness}
               recommendations={data.recommendations}
               onSelectRecommendation={(rec) => setSelectedRecommendation(rec)}
+              onUpdateStatus={handleUpdateStatus}
               isMale={isMale}
             />
           </div>
@@ -361,6 +404,7 @@ export const LifestyleRecommendationsPage: React.FC = () => {
               lifestyle={lifestyle}
               recommendations={data.recommendations}
               onSelectRecommendation={(rec) => setSelectedRecommendation(rec)}
+              onUpdateStatus={handleUpdateStatus}
               isMale={isMale}
             />
           </div>
@@ -386,6 +430,7 @@ export const LifestyleRecommendationsPage: React.FC = () => {
       <RecommendationDetailModal
         recommendation={selectedRecommendation}
         onClose={() => setSelectedRecommendation(null)}
+        onUpdateStatus={handleUpdateStatus}
         evidenceRegistry={evidence_registry}
         isMale={isMale}
       />

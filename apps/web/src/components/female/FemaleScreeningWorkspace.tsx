@@ -346,25 +346,8 @@ export const FemaleScreeningWorkspace: React.FC = () => {
 
   return (
     <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-      {/* ── Breadcrumb ───────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 text-xs text-[#667085]">
-        <LayersThree01 className="w-3.5 h-3.5 text-[#98A2B3]" aria-hidden="true" />
-        <span>BioPulse AI</span>
-        <span>&gt;</span>
-        <span className="font-medium text-[#111318]">PCOS Screening</span>
-      </div>
-
-      {/* ── Page Header ──────────────────────────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative">
-        <div className="space-y-1">
-          <h1 className="text-3xl sm:text-4xl font-bold text-[#111318] tracking-tight">
-            PCOS Screening
-          </h1>
-          <p className="text-sm text-[#667085]">
-            Understand your current screening status and next best step.
-          </p>
-        </div>
-
+      {/* ── Page Actions Toolbar ────────────────────────────────────────────── */}
+      <div className="flex items-center justify-end gap-6 relative">
         {/* Right side: Assessment History button + Decorative Botanical Art & Slogan */}
         <div className="flex items-center gap-6 shrink-0">
           <button

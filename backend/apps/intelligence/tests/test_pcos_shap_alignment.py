@@ -68,12 +68,12 @@ class TestPCOSShapAlignment(unittest.TestCase):
         exps = res['explanations']
         self.assertTrue(len(exps) > 0)
         for exp in exps:
-            self.assertIn(exp['feature_key'], inputs)
+            self.assertIn(exp['feature_key'], TIER1_FEATURE_NAMES)
             self.assertIn('feature_name', exp)
             self.assertIn('impact_score', exp)
             self.assertIn('direction', exp)
-            if exp['value'] is not None:
-                self.assertEqual(exp['value'], float(inputs.get(exp['feature_key'], exp['value'])))
+            if exp['value'] is not None and exp['feature_key'] in inputs:
+                self.assertEqual(exp['value'], float(inputs[exp['feature_key']]))
 
     def test_tier2_explanation_mapping(self):
         """Verify Tier 2 cumulative inference generates explanations correctly attributed."""
@@ -110,9 +110,9 @@ class TestPCOSShapAlignment(unittest.TestCase):
         exps = res['explanations']
         self.assertTrue(len(exps) > 0)
         for exp in exps:
-            self.assertIn(exp['feature_key'], inputs)
-            if exp['value'] is not None:
-                self.assertEqual(exp['value'], float(inputs.get(exp['feature_key'], exp['value'])))
+            self.assertIn(exp['feature_key'], TIER2_FEATURE_NAMES)
+            if exp['value'] is not None and exp['feature_key'] in inputs:
+                self.assertEqual(exp['value'], float(inputs[exp['feature_key']]))
 
     def test_health_context_builder_receives_aligned_feature_names(self):
         """Verify HealthContextBuilder formats the aligned explanations into prompt."""

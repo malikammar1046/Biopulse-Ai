@@ -177,9 +177,10 @@ BIOPULSE_ASSESSMENT_MAINTENANCE = os.environ.get(
 # By default (False), production persistence failures to Supabase will raise
 # an error rather than silently saving to ephemeral local SQLite.
 # ---------------------------------------------------------------------------
-ALLOW_LOCAL_SQLITE_FALLBACK = os.environ.get(
-    "ALLOW_LOCAL_SQLITE_FALLBACK", "false"
-).lower() in ("true", "1", "yes")
+ALLOW_LOCAL_SQLITE_FALLBACK = (
+    os.environ.get("ALLOW_LOCAL_SQLITE_FALLBACK", "false").lower() in ("true", "1", "yes")
+    or "test" in sys.argv
+)
 
 # ---------------------------------------------------------------------------
 # CI / Test Isolation Settings
@@ -204,9 +205,11 @@ USE_I18N = True
 USE_TZ = True
 
 # ---------------------------------------------------------------------------
-# Static files
+# Static and Media files
 # ---------------------------------------------------------------------------
 STATIC_URL = "static/"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # ---------------------------------------------------------------------------
 # Password validation

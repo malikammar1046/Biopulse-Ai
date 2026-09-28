@@ -102,7 +102,7 @@ export interface RecommendationItem {
   title: string;
   action_summary: string;
   priority: 'high' | 'moderate' | 'routine';
-  status: 'NEW' | 'ACTIVE' | 'IMPROVING' | 'MAINTAIN' | 'REASSESS';
+  status: 'NEW' | 'ACTIVE' | 'IMPROVING' | 'MAINTAIN' | 'REASSESS' | 'COMPLETED' | 'SKIPPED';
   why_this_is_recommended: string;
   based_on_patient_data: string[];
   longitudinal_basis: string;
@@ -146,6 +146,14 @@ export interface LifestyleRecommendationsResult {
   lifestyle: LifestylePillar;
   evidence_rationale: EvidenceRationale;
   evidence_registry?: Record<string, EvidenceMetadata>;
+  context_version?: string;
+}
+
+export interface RecommendationStatusUpdate {
+  module?: string;
+  recommendation_id: string;
+  status: 'NEW' | 'ACTIVE' | 'IMPROVING' | 'MAINTAIN' | 'REASSESS' | 'COMPLETED' | 'SKIPPED';
+  note?: string;
 }
 
 export interface LifestyleSimulationOverride {

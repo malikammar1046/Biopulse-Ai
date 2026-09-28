@@ -15,6 +15,10 @@ interface NutritionPillarViewProps {
   nutrition: NutritionPillar;
   recommendations: RecommendationItem[];
   onSelectRecommendation: (rec: RecommendationItem) => void;
+  onUpdateStatus?: (
+    recommendationId: string,
+    status: 'NEW' | 'ACTIVE' | 'IMPROVING' | 'MAINTAIN' | 'REASSESS' | 'COMPLETED' | 'SKIPPED'
+  ) => void;
   isMale?: boolean;
 }
 
@@ -22,6 +26,7 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
   nutrition,
   recommendations,
   onSelectRecommendation,
+  onUpdateStatus,
   isMale = false,
 }) => {
   const nutritionRecs = recommendations.filter((r) => r.category === 'nutrition');
@@ -330,6 +335,7 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
                 key={rec.id}
                 recommendation={rec}
                 onSelect={onSelectRecommendation}
+                onUpdateStatus={onUpdateStatus}
                 isMale={isMale}
               />
             ))}

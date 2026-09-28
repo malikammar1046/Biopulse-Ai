@@ -175,6 +175,7 @@ class LifestyleRecommendationsResult:
     lifestyle: LifestylePillar
     evidence_rationale: EvidenceRationale
     evidence_registry: Dict[str, Any] = field(default_factory=dict)
+    context_version: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -878,4 +879,5 @@ class LifestyleRecommendationEngine:
             lifestyle=lifestyle_pillar,
             evidence_rationale=evidence_rationale,
             evidence_registry=evidence_registry,
+            context_version=getattr(context, "context_version", ""),
         )
