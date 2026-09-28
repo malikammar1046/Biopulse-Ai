@@ -109,6 +109,23 @@ class Doctor(models.Model):
         default=0,
         help_text="Sort order index (lower numbers appear first).",
     )
+    PATHWAY_CHOICES = [
+        ("female_pcos", "Female PCOS"),
+        ("male_hypogonadism", "Male Hypogonadism"),
+        ("both", "Both Genders / General Endocrine"),
+    ]
+    pathway = models.CharField(
+        max_length=50,
+        choices=PATHWAY_CHOICES,
+        default="female_pcos",
+        help_text="Clinical pathway served by this doctor (female_pcos, male_hypogonadism, both).",
+    )
+    relevance_reason = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="Concise clinical relevance rationale (e.g., 'Specialist for PCOS care', 'Specialist for hormonal evaluation').",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

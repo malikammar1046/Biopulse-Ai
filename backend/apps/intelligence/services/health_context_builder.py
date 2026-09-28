@@ -480,7 +480,7 @@ class HealthContextBuilder:
         try:
             from apps.intelligence.services.lifestyle_repository import lifestyle_repository
             active_lifestyle = lifestyle_repository.get_active_recommendations(
-                user_id=user_id_str,
+                user_id=patient_uuid,
                 module=pathway,
                 auth_token=auth_token,
             )

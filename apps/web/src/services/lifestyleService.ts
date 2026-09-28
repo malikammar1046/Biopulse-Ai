@@ -56,9 +56,12 @@ class LifestyleService {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(
+      const errorObj = new Error(
         err.error || err.detail || `Failed to fetch lifestyle recommendations (${res.status})`
-      );
+      ) as any;
+      errorObj.status = res.status;
+      errorObj.detail = err.detail;
+      throw errorObj;
     }
 
     return res.json();

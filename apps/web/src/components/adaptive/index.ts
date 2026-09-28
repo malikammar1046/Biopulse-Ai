@@ -10,3 +10,4 @@ export { ClinicalLabsModal } from './ClinicalLabsModal';
 export { MaleClinicalLabsModal } from './MaleClinicalLabsModal';
 export { UltrasoundUploadModal } from './UltrasoundUploadModal';
 export { AssessmentHistoryModal } from './AssessmentHistoryModal';
+export * from './ClinicalModalPrimitives';

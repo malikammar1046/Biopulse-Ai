@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Apple,
   Dumbbell,
@@ -7,6 +8,10 @@ import {
   AlertTriangle,
   SlidersHorizontal,
   Calendar,
+  WifiOff,
+  LogIn,
+  ClipboardCheck,
+  ArrowRight,
 } from 'lucide-react';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { lifestyleService } from '../../services/lifestyleService';
@@ -29,8 +34,10 @@ import { RecommendationDetailModal } from '../../components/lifestyle/Recommenda
 import { LifestyleEmptyState } from '../../components/lifestyle/LifestyleEmptyState';
 
 type PillarTab = 'nutrition' | 'fitness' | 'lifestyle';
+type ErrorClassification = 'NETWORK' | 'SESSION' | 'NO_ASSESSMENT' | 'SERVER';
 
 export const LifestyleRecommendationsPage: React.FC = () => {
+  const navigate = useNavigate();
   const { userProfile } = useUserHealth();
   const isMale = userProfile?.pathway === 'male' || userProfile?.gender === 'male';
   const defaultPathway = isMale ? 'androsense' : 'ovasense';
@@ -40,6 +47,7 @@ export const LifestyleRecommendationsPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [simulating, setSimulating] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorType, setErrorType] = useState<ErrorClassification | null>(null);
 
   // Selected recommendation for the detail modal/drawer
   const [selectedRecommendation, setSelectedRecommendation] = useState<RecommendationItem | null>(null);
@@ -50,6 +58,8 @@ export const LifestyleRecommendationsPage: React.FC = () => {
 
   const fetchRecommendations = async (override?: LifestyleSimulationOverride, refresh = false) => {
     try {
+      setError(null);
+      setErrorType(null);
       if (override) {
         setSimulating(true);
         const result = await lifestyleService.simulateRecommendations(override);
@@ -60,9 +70,41 @@ export const LifestyleRecommendationsPage: React.FC = () => {
         setData(result);
       }
       setError(null);
+      setErrorType(null);
     } catch (err: any) {
       console.error('Failed to load lifestyle recommendations:', err);
-      setError(err?.message || 'Unable to load lifestyle recommendations at this time.');
+      const msg = String(err?.message || '');
+      const statusCode = err?.status || (err?.response && err.response.status);
+
+      if (
+        statusCode === 401 ||
+        msg.includes('401') ||
+        msg.toLowerCase().includes('session') ||
+        msg.toLowerCase().includes('unauthorized') ||
+        msg.toLowerCase().includes('log in')
+      ) {
+        setErrorType('SESSION');
+        setError('Your session has expired.');
+      } else if (
+        statusCode === 404 ||
+        msg.includes('404') ||
+        msg.toLowerCase().includes('no active assessment') ||
+        msg.toLowerCase().includes('screening assessment')
+      ) {
+        setErrorType('NO_ASSESSMENT');
+        setError('Complete your screening to unlock personalized recommendations.');
+      } else if (
+        err?.name === 'TypeError' ||
+        msg.includes('Failed to fetch') ||
+        msg.includes('NetworkError') ||
+        (typeof navigator !== 'undefined' && !navigator.onLine)
+      ) {
+        setErrorType('NETWORK');
+        setError("We couldn't connect to BioPulse.");
+      } else {
+        setErrorType('SERVER');
+        setError("We couldn't prepare your recommendations right now.");
+      }
     } finally {
       setLoading(false);
       setSimulating(false);
@@ -156,18 +198,87 @@ export const LifestyleRecommendationsPage: React.FC = () => {
     return <LifestyleSkeleton />;
   }
 
-  // 2. Error State (Calm, professional, with retry)
+  // 2. Error State (Calm, professional, differentiated, with retry)
   if (error && !data) {
+    if (errorType === 'SESSION') {
+      return (
+        <div className="max-w-2xl mx-auto py-16 px-4 text-center space-y-4">
+          <div className="w-12 h-12 mx-auto rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
+            <LogIn className="w-6 h-6" />
+          </div>
+          <h2 className="text-xl font-bold text-[#073B72]">Your session has expired.</h2>
+          <p className="text-sm text-slate-600 max-w-md mx-auto">
+            Please sign in again to access your personalized recommendations.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate('/login')}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#073B72] hover:bg-[#0B4A8B] text-white text-sm font-semibold transition-colors cursor-pointer"
+          >
+            <LogIn className="w-4 h-4" />
+            <span>Sign In Again</span>
+          </button>
+        </div>
+      );
+    }
+
+    if (errorType === 'NO_ASSESSMENT') {
+      return (
+        <div className="max-w-2xl mx-auto py-16 px-4 text-center space-y-4">
+          <div className="w-12 h-12 mx-auto rounded-2xl bg-pink-50 text-[#F43F7D] flex items-center justify-center">
+            <ClipboardCheck className="w-6 h-6" />
+          </div>
+          <h2 className="text-xl font-bold text-[#073B72]">
+            Complete your screening to unlock personalized recommendations.
+          </h2>
+          <p className="text-sm text-slate-600 max-w-md mx-auto">
+            Your recommendations are dynamically tailored to your screening results, symptoms, and biomarkers.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate('/app/assessment')}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#F43F7D] hover:bg-[#DC326C] text-white text-sm font-semibold transition-colors cursor-pointer"
+          >
+            <span>Go to Screening</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      );
+    }
+
+    if (errorType === 'NETWORK') {
+      return (
+        <div className="max-w-2xl mx-auto py-16 px-4 text-center space-y-4">
+          <div className="w-12 h-12 mx-auto rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
+            <WifiOff className="w-6 h-6" />
+          </div>
+          <h2 className="text-xl font-bold text-[#073B72]">We couldn&apos;t connect to BioPulse.</h2>
+          <p className="text-sm text-slate-600 max-w-md mx-auto">
+            Please check your internet connection and try again.
+          </p>
+          <button
+            type="button"
+            onClick={() => fetchRecommendations()}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#073B72] hover:bg-[#0B4A8B] text-white text-sm font-semibold transition-colors cursor-pointer"
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span>Try Again</span>
+          </button>
+        </div>
+      );
+    }
+
+    // Default: SERVER error
     return (
       <div className="max-w-2xl mx-auto py-16 px-4 text-center space-y-4">
         <div className="w-12 h-12 mx-auto rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
           <AlertTriangle className="w-6 h-6" />
         </div>
         <h2 className="text-xl font-bold text-[#073B72]">
-          We couldn&apos;t load your lifestyle recommendations.
+          We couldn&apos;t prepare your recommendations right now.
         </h2>
         <p className="text-sm text-slate-600 max-w-md mx-auto">
-          Please check your connection or try refreshing your recommendations.
+          Our recommendation service encountered an issue. Please try again in a few moments.
         </p>
         <button
           type="button"
@@ -175,7 +286,7 @@ export const LifestyleRecommendationsPage: React.FC = () => {
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#073B72] hover:bg-[#0B4A8B] text-white text-sm font-semibold transition-colors cursor-pointer"
         >
           <RefreshCw className="w-4 h-4" />
-          <span>Try again</span>
+          <span>Try Again</span>
         </button>
       </div>
     );
@@ -189,7 +300,7 @@ export const LifestyleRecommendationsPage: React.FC = () => {
   const { nutrition, fitness, lifestyle, evidence_rationale, evidence_registry } = data;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
+    <div className="max-w-7xl mx-auto space-y-5 sm:space-y-6 pb-16 text-left">
       {/* A. Clean Compact Toolbar */}
       <div className="rounded-2xl bg-white border border-[#D7EAF2] p-4 sm:p-5 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

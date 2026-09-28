@@ -12,6 +12,7 @@ import { FemaleScreeningCard } from './FemaleScreeningCard';
 import { FemaleTopFactors } from './FemaleTopFactors';
 import { FemaleNextBestAction } from './FemaleNextBestAction';
 import { FemaleRecentActivity } from './FemaleRecentActivity';
+import { RecommendedCareCard } from '../dashboard/RecommendedCareCard';
 
 export const FemaleDashboardOverview: React.FC = () => {
   const navigate = useNavigate();
@@ -143,7 +144,10 @@ export const FemaleDashboardOverview: React.FC = () => {
         </div>
       </div>
 
-      {/* ── 3. Recent Clinical Activity (Latest Report & Appointment) ───────── */}
+      {/* ── 3. Contextual Recommended Specialists ────────────────────────── */}
+      <RecommendedCareCard pathway="female" />
+
+      {/* ── 4. Recent Clinical Activity (Latest Report & Appointment) ───────── */}
       <div className="space-y-2">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-[#667085] px-1">
           Recent Health Records
