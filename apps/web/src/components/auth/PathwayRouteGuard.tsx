@@ -3,6 +3,7 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getPathwayDashboardRoute, getPathwayOnboardingRoute } from '../../constants/routes';
 import { resolvePathway, type HealthPathway } from '../../types/onboarding';
+
 import { BioPulseLoadingScreen } from '../brand/BioPulseLoadingScreen';
 
 interface PathwayRouteGuardProps {
@@ -18,7 +19,7 @@ export const PathwayRouteGuard: React.FC<PathwayRouteGuardProps> = ({ allowedPat
   const { userProfile, isOnboarded, loading } = useAuth();
 
   if (loading) {
-    return <BioPulseLoadingScreen message="Verifying pathway authorization..." />;
+    return <BioPulseLoadingScreen message="Verifying Pathway..." />;
   }
 
   // If onboarding is incomplete, redirect directly to user's dedicated pathway onboarding

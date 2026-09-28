@@ -1,0 +1,967 @@
+{
+  "pdf_name": "fct_toc",
+  "page_num": 9,
+  "img_path": "Meal/data/raw/rendered_pages/fct_toc_page_009.png",
+  "boxes": [
+    {
+      "text": "OF.DATA AND",
+      "confidence": 0.8303910940885544,
+      "box": [
+        [
+          415.0,
+          131.0
+        ],
+        [
+          719.0,
+          131.0
+        ],
+        [
+          719.0,
+          164.0
+        ],
+        [
+          415.0,
+          164.0
+        ]
+      ],
+      "x_center": 567.0,
+      "y_center": 147.5
+    },
+    {
+      "text": "SOURCES",
+      "confidence": 0.8082246705889702,
+      "box": [
+        [
+          210.0,
+          134.0
+        ],
+        [
+          397.0,
+          134.0
+        ],
+        [
+          397.0,
+          161.0
+        ],
+        [
+          210.0,
+          161.0
+        ]
+      ],
+      "x_center": 303.5,
+      "y_center": 147.5
+    },
+    {
+      "text": "METHODOLOGY",
+      "confidence": 0.8917484482129415,
+      "box": [
+        [
+          737.0,
+          129.0
+        ],
+        [
+          1040.0,
+          132.0
+        ],
+        [
+          1039.0,
+          165.0
+        ],
+        [
+          736.0,
+          162.0
+        ]
+      ],
+      "x_center": 888.0,
+      "y_center": 147.0
+    },
+    {
+      "text": "The data on food composition has been compiled",
+      "confidence": 0.9316357019099784,
+      "box": [
+        [
+          260.0,
+          224.0
+        ],
+        [
+          832.0,
+          223.0
+        ],
+        [
+          833.0,
+          250.0
+        ],
+        [
+          260.0,
+          251.0
+        ]
+      ],
+      "x_center": 546.25,
+      "y_center": 237.0
+    },
+    {
+      "text": "dishes were adopted from the local methods used in",
+      "confidence": 0.916612842503716,
+      "box": [
+        [
+          904.0,
+          224.0
+        ],
+        [
+          1531.0,
+          224.0
+        ],
+        [
+          1531.0,
+          250.0
+        ],
+        [
+          904.0,
+          250.0
+        ]
+      ],
+      "x_center": 1217.5,
+      "y_center": 237.0
+    },
+    {
+      "text": "from the results of analysis carried out by various",
+      "confidence": 0.8918038434707202,
+      "box": [
+        [
+          207.0,
+          269.0
+        ],
+        [
+          833.0,
+          269.0
+        ],
+        [
+          833.0,
+          295.0
+        ],
+        [
+          207.0,
+          295.0
+        ]
+      ],
+      "x_center": 520.0,
+      "y_center": 282.0
+    },
+    {
+      "text": "majority of homes. Prepared food samples were then mixed",
+      "confidence": 0.930569681159237,
+      "box": [
+        [
+          904.0,
+          268.0
+        ],
+        [
+          1532.0,
+          266.0
+        ],
+        [
+          1532.0,
+          295.0
+        ],
+        [
+          904.0,
+          297.0
+        ]
+      ],
+      "x_center": 1218.0,
+      "y_center": 281.5
+    },
+    {
+      "text": "laboratories in Pakistan and elsewhere. The variation of",
+      "confidence": 0.9172371594529403,
+      "box": [
+        [
+          206.0,
+          315.0
+        ],
+        [
+          834.0,
+          312.0
+        ],
+        [
+          835.0,
+          339.0
+        ],
+        [
+          206.0,
+          341.0
+        ]
+      ],
+      "x_center": 520.25,
+      "y_center": 326.75
+    },
+    {
+      "text": "in a moulinex blender and stored. Perishable commodities",
+      "confidence": 0.9182073358903852,
+      "box": [
+        [
+          904.0,
+          313.0
+        ],
+        [
+          1531.0,
+          313.0
+        ],
+        [
+          1531.0,
+          340.0
+        ],
+        [
+          904.0,
+          340.0
+        ]
+      ],
+      "x_center": 1217.5,
+      "y_center": 326.5
+    },
+    {
+      "text": "results obtained from different laboratories were checked.",
+      "confidence": 0.9304802902674271,
+      "box": [
+        [
+          205.0,
+          360.0
+        ],
+        [
+          832.0,
+          357.0
+        ],
+        [
+          833.0,
+          383.0
+        ],
+        [
+          205.0,
+          386.0
+        ]
+      ],
+      "x_center": 518.75,
+      "y_center": 371.5
+    },
+    {
+      "text": "were kept in a freezer and analysed as early as possible.",
+      "confidence": 0.9428613370862501,
+      "box": [
+        [
+          905.0,
+          357.0
+        ],
+        [
+          1531.0,
+          357.0
+        ],
+        [
+          1531.0,
+          386.0
+        ],
+        [
+          905.0,
+          386.0
+        ]
+      ],
+      "x_center": 1218.0,
+      "y_center": 371.5
+    },
+    {
+      "text": "Formulated. weaning and supplementary food mixes and",
+      "confidence": 0.8995682873107769,
+      "box": [
+        [
+          201.0,
+          403.0
+        ],
+        [
+          834.0,
+          401.0
+        ],
+        [
+          835.0,
+          431.0
+        ],
+        [
+          201.0,
+          433.0
+        ]
+      ],
+      "x_center": 517.75,
+      "y_center": 417.0
+    },
+    {
+      "text": "The samples were analysed by the standard methods of",
+      "confidence": 0.9202008179898532,
+      "box": [
+        [
+          902.0,
+          400.0
+        ],
+        [
+          1533.0,
+          401.0
+        ],
+        [
+          1533.0,
+          430.0
+        ],
+        [
+          902.0,
+          429.0
+        ]
+      ],
+      "x_center": 1217.5,
+      "y_center": 415.0
+    },
+    {
+      "text": "traditional dishes were analyzed at the laboratories of the",
+      "confidence": 0.9100948462883631,
+      "box": [
+        [
+          206.0,
+          448.0
+        ],
+        [
+          834.0,
+          446.0
+        ],
+        [
+          835.0,
+          473.0
+        ],
+        [
+          206.0,
+          475.0
+        ]
+      ],
+      "x_center": 520.25,
+      "y_center": 460.5
+    },
+    {
+      "text": "analysis of the AOAC (i994).",
+      "confidence": 0.9072474385129994,
+      "box": [
+        [
+          905.0,
+          446.0
+        ],
+        [
+          1211.0,
+          445.0
+        ],
+        [
+          1211.0,
+          472.0
+        ],
+        [
+          905.0,
+          473.0
+        ]
+      ],
+      "x_center": 1058.0,
+      "y_center": 459.0
+    },
+    {
+      "text": "NWFP Agricultural University, Peshawar. In addition to",
+      "confidence": 0.925224494934082,
+      "box": [
+        [
+          206.0,
+          491.0
+        ],
+        [
+          833.0,
+          490.0
+        ],
+        [
+          833.0,
+          517.0
+        ],
+        [
+          206.0,
+          518.0
+        ]
+      ],
+      "x_center": 519.5,
+      "y_center": 504.0
+    },
+    {
+      "text": "Energy",
+      "confidence": 0.7387852839061192,
+      "box": [
+        [
+          902.0,
+          505.0
+        ],
+        [
+          992.0,
+          512.0
+        ],
+        [
+          990.0,
+          544.0
+        ],
+        [
+          900.0,
+          537.0
+        ]
+      ],
+      "x_center": 946.0,
+      "y_center": 524.5
+    },
+    {
+      "text": "the previously reported nutrients (proximate composition,",
+      "confidence": 0.9529228929815621,
+      "box": [
+        [
+          206.0,
+          537.0
+        ],
+        [
+          832.0,
+          536.0
+        ],
+        [
+          832.0,
+          562.0
+        ],
+        [
+          206.0,
+          563.0
+        ]
+      ],
+      "x_center": 519.0,
+      "y_center": 549.5
+    },
+    {
+      "text": "Ca, P, Fe, Bi, B2, niacin ant ascorbic acid) the foods .were",
+      "confidence": 0.9226218418019717,
+      "box": [
+        [
+          205.0,
+          580.0
+        ],
+        [
+          833.0,
+          578.0
+        ],
+        [
+          834.0,
+          604.0
+        ],
+        [
+          205.0,
+          606.0
+        ]
+      ],
+      "x_center": 519.25,
+      "y_center": 592.0
+    },
+    {
+      "text": "The calorific value of the food sample was determined",
+      "confidence": 0.9169998803624401,
+      "box": [
+        [
+          954.0,
+          576.0
+        ],
+        [
+          1530.0,
+          577.0
+        ],
+        [
+          1530.0,
+          603.0
+        ],
+        [
+          954.0,
+          602.0
+        ]
+      ],
+      "x_center": 1242.0,
+      "y_center": 589.5
+    },
+    {
+      "text": "also analysed for zinc, iodine, b-carotene, vitamin-A and",
+      "confidence": 0.9209128577133705,
+      "box": [
+        [
+          205.0,
+          624.0
+        ],
+        [
+          832.0,
+          621.0
+        ],
+        [
+          833.0,
+          647.0
+        ],
+        [
+          205.0,
+          650.0
+        ]
+      ],
+      "x_center": 518.75,
+      "y_center": 635.5
+    },
+    {
+      "text": "by an adiabatic bomb calorimeter:",
+      "confidence": 0.8927039021954817,
+      "box": [
+        [
+          905.0,
+          622.0
+        ],
+        [
+          1267.0,
+          621.0
+        ],
+        [
+          1267.0,
+          647.0
+        ],
+        [
+          905.0,
+          648.0
+        ]
+      ],
+      "x_center": 1086.0,
+      "y_center": 634.5
+    },
+    {
+      "text": "cholesterol content.",
+      "confidence": 0.8832540540468126,
+      "box": [
+        [
+          207.0,
+          669.0
+        ],
+        [
+          412.0,
+          669.0
+        ],
+        [
+          412.0,
+          692.0
+        ],
+        [
+          207.0,
+          692.0
+        ]
+      ],
+      "x_center": 309.5,
+      "y_center": 680.5
+    },
+    {
+      "text": "Moisture",
+      "confidence": 0.8421816958321465,
+      "box": [
+        [
+          903.0,
+          682.0
+        ],
+        [
+          1015.0,
+          685.0
+        ],
+        [
+          1014.0,
+          713.0
+        ],
+        [
+          902.0,
+          710.0
+        ]
+      ],
+      "x_center": 958.5,
+      "y_center": 697.5
+    },
+    {
+      "text": "Sampliny",
+      "confidence": 0.8091080254978604,
+      "box": [
+        [
+          204.0,
+          727.0
+        ],
+        [
+          326.0,
+          729.0
+        ],
+        [
+          326.0,
+          764.0
+        ],
+        [
+          203.0,
+          762.0
+        ]
+      ],
+      "x_center": 264.75,
+      "y_center": 745.5
+    },
+    {
+      "text": "Moisture in food samples was determined by direct",
+      "confidence": 0.9440236902236938,
+      "box": [
+        [
+          954.0,
+          751.0
+        ],
+        [
+          1531.0,
+          753.0
+        ],
+        [
+          1531.0,
+          779.0
+        ],
+        [
+          954.0,
+          777.0
+        ]
+      ],
+      "x_center": 1242.5,
+      "y_center": 765.0
+    },
+    {
+      "text": "Samples of each commodity were purchased from",
+      "confidence": 0.9025787775931151,
+      "box": [
+        [
+          258.0,
+          799.0
+        ],
+        [
+          831.0,
+          797.0
+        ],
+        [
+          832.0,
+          823.0
+        ],
+        [
+          258.0,
+          825.0
+        ]
+      ],
+      "x_center": 544.75,
+      "y_center": 811.0
+    },
+    {
+      "text": "heating at 110 °C in a precision oven",
+      "confidence": 0.9271182723735508,
+      "box": [
+        [
+          902.0,
+          798.0
+        ],
+        [
+          1290.0,
+          798.0
+        ],
+        [
+          1290.0,
+          824.0
+        ],
+        [
+          902.0,
+          824.0
+        ]
+      ],
+      "x_center": 1096.0,
+      "y_center": 811.0
+    },
+    {
+      "text": "various markets. They were mixed manually to prepare a",
+      "confidence": 0.915081914988431,
+      "box": [
+        [
+          207.0,
+          843.0
+        ],
+        [
+          832.0,
+          843.0
+        ],
+        [
+          832.0,
+          869.0
+        ],
+        [
+          207.0,
+          869.0
+        ]
+      ],
+      "x_center": 519.5,
+      "y_center": 856.0
+    },
+    {
+      "text": "Protein",
+      "confidence": 0.8279803767800331,
+      "box": [
+        [
+          902.0,
+          857.0
+        ],
+        [
+          998.0,
+          861.0
+        ],
+        [
+          997.0,
+          892.0
+        ],
+        [
+          901.0,
+          888.0
+        ]
+      ],
+      "x_center": 949.5,
+      "y_center": 874.5
+    },
+    {
+      "text": "composite sample. Solid samples were powdered in dry",
+      "confidence": 0.9455617846183058,
+      "box": [
+        [
+          206.0,
+          886.0
+        ],
+        [
+          831.0,
+          886.0
+        ],
+        [
+          831.0,
+          915.0
+        ],
+        [
+          206.0,
+          915.0
+        ]
+      ],
+      "x_center": 518.5,
+      "y_center": 900.5
+    },
+    {
+      "text": "mill and stored in airtight bottles with name and date of",
+      "confidence": 0.9082225591971956,
+      "box": [
+        [
+          206.0,
+          931.0
+        ],
+        [
+          833.0,
+          929.0
+        ],
+        [
+          834.0,
+          955.0
+        ],
+        [
+          206.0,
+          958.0
+        ]
+      ],
+      "x_center": 519.75,
+      "y_center": 943.25
+    },
+    {
+      "text": "Protein confent was estimated using.. kjeltec",
+      "confidence": 0.8982162125732588,
+      "box": [
+        [
+          952.0,
+          927.0
+        ],
+        [
+          1531.0,
+          929.0
+        ],
+        [
+          1531.0,
+          959.0
+        ],
+        [
+          952.0,
+          956.0
+        ]
+      ],
+      "x_center": 1241.5,
+      "y_center": 942.75
+    },
+    {
+      "text": "purchase written on it. Liquid samples were homogenised",
+      "confidence": 0.91642555807318,
+      "box": [
+        [
+          205.0,
+          976.0
+        ],
+        [
+          831.0,
+          971.0
+        ],
+        [
+          832.0,
+          1002.0
+        ],
+        [
+          205.0,
+          1006.0
+        ]
+      ],
+      "x_center": 518.25,
+      "y_center": 988.75
+    },
+    {
+      "text": "autoanalyser. Nitrogen content obtained was multiplied by",
+      "confidence": 0.9047801659024995,
+      "box": [
+        [
+          901.0,
+          974.0
+        ],
+        [
+          1526.0,
+          975.0
+        ],
+        [
+          1526.0,
+          1004.0
+        ],
+        [
+          901.0,
+          1003.0
+        ]
+      ],
+      "x_center": 1213.5,
+      "y_center": 989.0
+    },
+    {
+      "text": "and stored. Weaning, supplementary food mixes and",
+      "confidence": 0.9338765335083008,
+      "box": [
+        [
+          205.0,
+          1021.0
+        ],
+        [
+          831.0,
+          1018.0
+        ],
+        [
+          832.0,
+          1045.0
+        ],
+        [
+          205.0,
+          1048.0
+        ]
+      ],
+      "x_center": 518.25,
+      "y_center": 1033.0
+    },
+    {
+      "text": "an appropriate conversion factor to get the value of crude",
+      "confidence": 0.947090208530426,
+      "box": [
+        [
+          901.0,
+          1019.0
+        ],
+        [
+          1527.0,
+          1016.0
+        ],
+        [
+          1527.0,
+          1046.0
+        ],
+        [
+          901.0,
+          1049.0
+        ]
+      ],
+      "x_center": 1214.0,
+      "y_center": 1032.5
+    },
+    {
+      "text": "traditional dishes were prepared in the laboratories of the",
+      "confidence": 0.9313112050294876,
+      "box": [
+        [
+          205.0,
+          1066.0
+        ],
+        [
+          831.0,
+          1064.0
+        ],
+        [
+          832.0,
+          1090.0
+        ],
+        [
+          205.0,
+          1092.0
+        ]
+      ],
+      "x_center": 518.25,
+      "y_center": 1078.0
+    },
+    {
+      "text": "protein",
+      "confidence": 0.8557408973574638,
+      "box": [
+        [
+          899.0,
+          1066.0
+        ],
+        [
+          983.0,
+          1061.0
+        ],
+        [
+          985.0,
+          1089.0
+        ],
+        [
+          901.0,
+          1094.0
+        ]
+      ],
+      "x_center": 942.0,
+      "y_center": 1077.5
+    },
+    {
+      "text": "NWFP Agricultural University, Peshawar. Recipes for the",
+      "confidence": 0.954573504626751,
+      "box": [
+        [
+          205.0,
+          1110.0
+        ],
+        [
+          830.0,
+          1108.0
+        ],
+        [
+          831.0,
+          1134.0
+        ],
+        [
+          205.0,
+          1136.0
+        ]
+      ],
+      "x_center": 517.75,
+      "y_center": 1122.0
+    }
+  ]
+}

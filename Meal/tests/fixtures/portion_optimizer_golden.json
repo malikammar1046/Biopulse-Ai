@@ -1,0 +1,172 @@
+{
+  "description": "Deterministic hand-computable golden test cases for Phase 6B portion LP solver.",
+  "cases": [
+    {
+      "case_id": "case_1_one_food_exact_energy",
+      "description": "Single food with 1.0 kcal/g, 0.1g P/g, 0.05g F/g, 0.2g C/g. Target energy exactly [200.0, 200.0] kcal. Expected portion: exactly 200.0g with zero violation. No preferences: secondary minimizes total grams (200.0g).",
+      "nutrient_coefficients": {
+        "energy": [1.0],
+        "protein": [0.1],
+        "carb": [0.2],
+        "fat": [0.05]
+      },
+      "target_ranges": {
+        "energy": [200.0, 200.0],
+        "protein": [15.0, 25.0],
+        "carb": [30.0, 50.0],
+        "fat": [5.0, 15.0]
+      },
+      "gram_bounds": [[0.0, 300.0]],
+      "preferred_grams": [null],
+      "expected": {
+        "success": true,
+        "optimized_grams": [200.0],
+        "primary_objective_value": 0.0,
+        "secondary_objective_mode": "TOTAL_GRAMS_TIE_BREAKER",
+        "secondary_objective_value": 200.0,
+        "violations": {
+          "energy": [0.0, 0.0],
+          "protein": [0.0, 0.0],
+          "carb": [0.0, 0.0],
+          "fat": [0.0, 0.0]
+        }
+      }
+    },
+    {
+      "case_id": "case_2_two_food_macro_balance",
+      "description": "Two foods: Food A (high protein: 0.2g P/g, 0.5 kcal/g) and Food B (high carb: 0.4g C/g, 2.0 kcal/g). Targets Energy [300, 400], Protein [25, 35], Carb [40, 60], Fat [0, 50]. Feasible with zero range violation. No preferences: secondary minimizes total grams.",
+      "nutrient_coefficients": {
+        "energy": [0.5, 2.0],
+        "protein": [0.2, 0.02],
+        "carb": [0.05, 0.4],
+        "fat": [0.01, 0.02]
+      },
+      "target_ranges": {
+        "energy": [300.0, 400.0],
+        "protein": [25.0, 35.0],
+        "carb": [40.0, 60.0],
+        "fat": [0.0, 50.0]
+      },
+      "gram_bounds": [[50.0, 300.0], [50.0, 300.0]],
+      "preferred_grams": [null, null],
+      "expected": {
+        "success": true,
+        "primary_objective_value": 0.0,
+        "secondary_objective_mode": "TOTAL_GRAMS_TIE_BREAKER",
+        "secondary_objective_value": 234.6153846153846,
+        "violations": {
+          "energy": [0.0, 0.0],
+          "protein": [0.0, 0.0],
+          "carb": [0.0, 0.0],
+          "fat": [0.0, 0.0]
+        }
+      }
+    },
+    {
+      "case_id": "case_3_unreachable_energy_target",
+      "description": "Bounds cap food at max 100g (100 kcal). Target energy is [200.0, 250.0] kcal. Optimal solution hits 100g, u_energy = 100.0 kcal, status OPTIMAL_WITH_TARGET_DEVIATIONS. No preferences: secondary minimizes total grams = 100.0g.",
+      "nutrient_coefficients": {
+        "energy": [1.0],
+        "protein": [0.1],
+        "carb": [0.1],
+        "fat": [0.05]
+      },
+      "target_ranges": {
+        "energy": [200.0, 250.0],
+        "protein": [0.0, 50.0],
+        "carb": [0.0, 50.0],
+        "fat": [0.0, 50.0]
+      },
+      "gram_bounds": [[50.0, 100.0]],
+      "preferred_grams": [null],
+      "expected": {
+        "success": true,
+        "optimized_grams": [100.0],
+        "primary_objective_value": 0.4444444444444444,
+        "secondary_objective_mode": "TOTAL_GRAMS_TIE_BREAKER",
+        "secondary_objective_value": 100.0,
+        "violations": {
+          "energy": [100.0, 0.0]
+        }
+      }
+    },
+    {
+      "case_id": "case_4_overconstrained_target_with_preferred_grams",
+      "description": "Food lower bound 200g (200 kcal) exceeds target max 150 kcal. Target energy [100.0, 150.0] kcal (scale 125.0). Optimal solution hits 200.0g (J* = 50/125 = 0.400000). Preferred portion 250.0g with bounds [200, 300]. Secondary objective: |200 - 250| / 100 = 0.500000, mode PREFERENCE_DEVIATION.",
+      "nutrient_coefficients": {
+        "energy": [1.0],
+        "protein": [0.05],
+        "carb": [0.1],
+        "fat": [0.02]
+      },
+      "target_ranges": {
+        "energy": [100.0, 150.0],
+        "protein": [0.0, 50.0],
+        "carb": [0.0, 50.0],
+        "fat": [0.0, 50.0]
+      },
+      "gram_bounds": [[200.0, 300.0]],
+      "preferred_grams": [250.0],
+      "expected": {
+        "success": true,
+        "optimized_grams": [200.0],
+        "primary_objective_value": 0.4,
+        "secondary_objective_mode": "PREFERENCE_DEVIATION",
+        "secondary_objective_value": 0.5,
+        "violations": {
+          "energy": [0.0, 50.0]
+        }
+      }
+    },
+    {
+      "case_id": "case_5_zero_preferred_grams_safe_normalization",
+      "description": "Food has preferred_grams = 0.0g with bounds [0.0, 100.0]. Scale is max(100 - 0, 1.0) = 100.0. No divide by zero. Feasible J*=0.0, secondary deviation = 0.0.",
+      "nutrient_coefficients": {
+        "energy": [1.0],
+        "protein": [0.05],
+        "carb": [0.1],
+        "fat": [0.02]
+      },
+      "target_ranges": {
+        "energy": [0.0, 100.0],
+        "protein": [0.0, 50.0],
+        "carb": [0.0, 50.0],
+        "fat": [0.0, 50.0]
+      },
+      "gram_bounds": [[0.0, 100.0]],
+      "preferred_grams": [0.0],
+      "expected": {
+        "success": true,
+        "optimized_grams": [0.0],
+        "primary_objective_value": 0.0,
+        "secondary_objective_mode": "PREFERENCE_DEVIATION",
+        "secondary_objective_value": 0.0
+      }
+    },
+    {
+      "case_id": "case_6_preferred_away_from_optimum",
+      "description": "Preferred portion is 100.0g, but target range [160.0, 200.0] kcal forces portion to 160.0g to achieve primary feasibility (J*=0.0). Expected secondary objective: |160 - 100| / 150 = 0.400000 > 0, mode PREFERENCE_DEVIATION.",
+      "nutrient_coefficients": {
+        "energy": [1.0],
+        "protein": [0.1],
+        "carb": [0.2],
+        "fat": [0.05]
+      },
+      "target_ranges": {
+        "energy": [160.0, 200.0],
+        "protein": [0.0, 50.0],
+        "carb": [0.0, 50.0],
+        "fat": [0.0, 50.0]
+      },
+      "gram_bounds": [[50.0, 200.0]],
+      "preferred_grams": [100.0],
+      "expected": {
+        "success": true,
+        "optimized_grams": [160.0],
+        "primary_objective_value": 0.0,
+        "secondary_objective_mode": "PREFERENCE_DEVIATION",
+        "secondary_objective_value": 0.4
+      }
+    }
+  ]
+}

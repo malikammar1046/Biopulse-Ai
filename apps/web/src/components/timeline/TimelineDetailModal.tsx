@@ -65,7 +65,7 @@ export const TimelineDetailModal: React.FC<TimelineDetailModalProps> = ({
       case 'medication':
         return ROUTES.APP.MEDICATIONS;
       case 'nutrition':
-        return ROUTES.APP.DIET;
+        return ROUTES.APP.LIFESTYLE;
       case 'fitness':
         return ROUTES.APP.FITNESS;
       case 'appointment':

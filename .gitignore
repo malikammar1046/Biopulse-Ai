@@ -1,79 +1,25 @@
 # ==============================================================================
-# BioPulse AI - Risk Assessment Platform
-# Git Exclusion & Repository Hygiene Rules
+# PMOSense Monorepo - .gitignore
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
-# 1. Secrets & Environment Configurations (CRITICAL)
+# 1. Environment & Secret Credentials (CRITICAL - NEVER COMMIT)
 # ------------------------------------------------------------------------------
 .env
 .env.*
 !.env.example
+*.env
 *.pem
 *.key
 *.cert
-*.crt
-*.pfx
 *.p12
-credentials.json
-service-account*.json
+*.keystore
+id_rsa
+serviceAccountKey.json
+supabase-service-key*
 
 # ------------------------------------------------------------------------------
-# 2. Local Databases & State Engines
-# ------------------------------------------------------------------------------
-*.sqlite3
-*.sqlite3-journal
-*.db
-*.sqlite
-db.sqlite3
-test_fallback.sqlite3
-test_fallback.sqlite3-journal
-
-# ------------------------------------------------------------------------------
-# 3. Python & Virtual Environments
-# ------------------------------------------------------------------------------
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-.venv/
-ENV/
-env.bak/
-venv.bak/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# Pytest & Coverage
-.pytest_cache/
-.coverage
-.coverage.*
-htmlcov/
-.tox/
-.nox/
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-
-# ------------------------------------------------------------------------------
-# 4. Node.js & Frontend Artifacts
+# 2. Node.js & JavaScript/TypeScript Packages
 # ------------------------------------------------------------------------------
 node_modules/
 npm-debug.log*
@@ -81,35 +27,123 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
-# Vite / Frontend Build Outputs
-apps/web/dist/
-apps/web/dist-ssr/
-dist/
-dist-ssr/
-
-# Reticle & IDE Extensions
-.reticle/
-.agents/
+.pnpm-store/
+.turbo/
+.npm/
 
 # ------------------------------------------------------------------------------
-# 5. Mobile & Expo Runtime
+# 3. Web & Frontend Build Artifacts (React / Vite)
+# ------------------------------------------------------------------------------
+dist/
+build/
+out/
+.vite/
+.next/
+.cache/
+.parcel-cache/
+storybook-static/
+
+# ------------------------------------------------------------------------------
+# 4. Mobile & React Native / Expo
 # ------------------------------------------------------------------------------
 .expo/
 .expo-shared/
+dist-expo/
 web-build/
+*.jks
+*.p8
+*.mobileprovision
 *.orig.*
 
-# ------------------------------------------------------------------------------
-# 6. Django Media & Runtime Logs
-# ------------------------------------------------------------------------------
-backend/media/*
-!backend/media/.gitkeep
-*.log
-logs/
+# Android build outputs
+apps/mobile/android/app/build/
+apps/mobile/android/.gradle/
+apps/mobile/android/local.properties
+
+# iOS build outputs
+apps/mobile/ios/Pods/
+apps/mobile/ios/build/
+*.xcworkspace
+!apps/mobile/ios/*.xcworkspace/contents.xcworkspacedata
 
 # ------------------------------------------------------------------------------
-# 7. Operating System & Editor Metadata
+# 5. Python & Django
+# ------------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.sqlite3
+*.db
+local_settings.py
+db.sqlite3-journal
+media/
+staticfiles/
+
+# Python Virtual Environments
+venv/
+env/
+ENV/
+.venv/
+env.bak/
+venv.bak/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ------------------------------------------------------------------------------
+# 6. AI/ML, Data & Clinical Privacy (HIPAA / Privacy Protection)
+# ------------------------------------------------------------------------------
+# Raw patient data, clinical records, DICOM, or unstructured scans
+data/raw/
+data/patient_records/
+*.dcm
+*.nii
+*.nii.gz
+*.csv_raw
+machine-learning/ml/checkpoints/
+machine-learning/ml/runs/
+machine-learning/ml/wandb/
+machine-learning/ml/mlruns/
+*.h5
+*.onnx_large
+*.pt
+*.pth
+*.joblib_large
+
+# Jupyter Notebooks checkpoints
+.ipynb_checkpoints/
+*-checkpoint.ipynb
+
+# ------------------------------------------------------------------------------
+# 7. Testing & Coverage
+# ------------------------------------------------------------------------------
+coverage/
+.nyc_output/
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+
+# ------------------------------------------------------------------------------
+# 8. IDEs & Editors
+# ------------------------------------------------------------------------------
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# ------------------------------------------------------------------------------
+# 9. OS-Generated Files
 # ------------------------------------------------------------------------------
 .DS_Store
 .DS_Store?
@@ -118,18 +152,19 @@ logs/
 .Trashes
 ehthumbs.db
 Thumbs.db
-[Dd]esktop.ini
+Desktop.ini
 
-# Editors
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
-*.sublime-workspace
-*.sublime-project
+# ------------------------------------------------------------------------------
+# 10. Logs & Diagnostics
+# ------------------------------------------------------------------------------
+logs/
+*.log
 
-# Scratch & Temporary Notes
+# ------------------------------------------------------------------------------
+# 11. Scratch & Agent Diagnostics
+# ------------------------------------------------------------------------------
 scratch/
-tmp/
-temp/
+.reticle/
+**/.reticle/
+**/.reticle.json
+walkthrough.md

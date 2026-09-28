@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ActivityHeart, Plus, RefreshCw01 } from '@untitledui/icons';
+import { Plus, RefreshCw01 } from '@untitledui/icons';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { TodayCheckInCard } from '../../components/symptoms/TodayCheckInCard';
 import { SymptomPatternSection } from '../../components/symptoms/SymptomPatternSection';
@@ -78,43 +78,29 @@ export const SymptomsPage: React.FC = () => {
       transition={{ duration: 0.3 }}
       className="max-w-6xl mx-auto space-y-6 sm:space-y-8 text-left select-none pb-16"
     >
-      {/* ── 1. Page Header Bar ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2.5">
-            <ActivityHeart className={`w-6 h-6 shrink-0 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`} aria-hidden="true" />
-            <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-[#0F172A] tracking-tight">
-              Symptoms & Body Journal
-            </h1>
-          </div>
-          <p className="text-xs text-[#64748B]">
-            Track how your body feels, connect symptoms to your clinical rhythm, and uncover patterns over time.
-          </p>
-        </div>
+      {/* ── 1. Page Actions Toolbar ── */}
+      <div className="flex items-center justify-end gap-3 pb-2">
+        <button
+          type="button"
+          onClick={() => refreshSymptomRecords()}
+          className={`h-10 w-10 flex items-center justify-center rounded-xl bg-white border border-[#EAECF0] text-[#64748B] transition-colors cursor-pointer ${
+            isMale ? 'hover:text-[#0288D1] hover:bg-[#F8FAFC]' : 'hover:text-[#F43F7D] hover:bg-[#FDE6EF]/30'
+          }`}
+          title="Refresh symptom logs"
+        >
+          <RefreshCw01 className={`w-4 h-4 shrink-0 ${symptomsLoading ? 'animate-spin' : ''}`} aria-hidden="true" />
+        </button>
 
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => refreshSymptomRecords()}
-            className={`h-10 w-10 flex items-center justify-center rounded-xl bg-white border border-[#EAECF0] text-[#64748B] transition-colors cursor-pointer ${
-              isMale ? 'hover:text-[#0288D1] hover:bg-[#F8FAFC]' : 'hover:text-[#F43F7D] hover:bg-[#FDE6EF]/30'
-            }`}
-            title="Refresh symptom logs"
-          >
-            <RefreshCw01 className={`w-4 h-4 shrink-0 ${symptomsLoading ? 'animate-spin' : ''}`} aria-hidden="true" />
-          </button>
-
-          <button
-            type="button"
-            onClick={handleOpenGeneralModal}
-            className={`h-10 px-4 rounded-xl font-medium text-sm text-white shadow-xs transition-all cursor-pointer flex items-center gap-2 ${
-              isMale ? 'bg-[#0288D1] hover:bg-[#0277BD]' : 'bg-[#F43F7D] hover:bg-[#DC326C]'
-            }`}
-          >
-            <Plus className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span>Log a Symptom</span>
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={handleOpenGeneralModal}
+          className={`h-10 px-4 rounded-xl font-medium text-sm text-white shadow-xs transition-all cursor-pointer flex items-center gap-2 ${
+            isMale ? 'bg-[#0288D1] hover:bg-[#0277BD]' : 'bg-[#F43F7D] hover:bg-[#DC326C]'
+          }`}
+        >
+          <Plus className="w-4 h-4 shrink-0" aria-hidden="true" />
+          <span>Log a Symptom</span>
+        </button>
       </div>
 
       {/* ── 2. Today's Hero Check-In Card ── */}

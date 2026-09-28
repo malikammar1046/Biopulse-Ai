@@ -1,0 +1,11 @@
+food_id,sr_no,food_name_en,food_group,field_name,extracted_value,rule_violated,plausible_range,note
+PK_FCT_002,2,Corn Whole grain,Cereals and Cereal Products,energy_kcal,276.0,ATWATER_ENERGY_DISCREPANCY,317 - 377 kcal,Atwater theoretical energy is 347 kcal (discrepancy: 71 kcal; heuristic flag only).
+PK_FCT_023,23,Wheat Flour,Cereals and Cereal Products,energy_kcal,440.0,ATWATER_ENERGY_DISCREPANCY,366 - 426 kcal,Atwater theoretical energy is 396 kcal (discrepancy: 44 kcal; heuristic flag only).
+PK_FCT_033,33,Lentil cooked,Legumes,energy_kcal,178.0,ATWATER_ENERGY_DISCREPANCY,94 - 154 kcal,Atwater theoretical energy is 124 kcal (discrepancy: 54 kcal; heuristic flag only).
+PK_FCT_043,43,Sunflower Seed,Legumes,energy_kcal,236.0,ATWATER_ENERGY_DISCREPANCY,456 - 516 kcal,Atwater theoretical energy is 486 kcal (discrepancy: 250 kcal; heuristic flag only).
+PK_FCT_093,93,Jaman,Fruits,proximate_mass_sum,119.7,PROXIMATE_SUM_OUT_OF_BOUNDS,90.0 - 108.0 g,Total proximate mass sums to 119.7g per 100g (heuristic flag only).
+PK_FCT_093,93,Jaman,Fruits,energy_kcal,30.0,ATWATER_ENERGY_DISCREPANCY,187 - 247 kcal,Atwater theoretical energy is 217 kcal (discrepancy: 187 kcal; heuristic flag only).
+PK_FCT_098,98,Loquat,Fruits,proximate_mass_sum,118.6,PROXIMATE_SUM_OUT_OF_BOUNDS,90.0 - 108.0 g,Total proximate mass sums to 118.6g per 100g (heuristic flag only).
+PK_FCT_098,98,Loquat,Fruits,energy_kcal,64.0,ATWATER_ENERGY_DISCREPANCY,115 - 175 kcal,Atwater theoretical energy is 145 kcal (discrepancy: 81 kcal; heuristic flag only).
+PK_FCT_131,131,Cheese,Dairy Products,energy_kcal,35.0,ATWATER_ENERGY_DISCREPANCY,317 - 377 kcal,Atwater theoretical energy is 347 kcal (discrepancy: 312 kcal; heuristic flag only).
+PK_FCT_149,149,Goat Liver Kalajee,Meat and Meat Products,proximate_mass_sum,114.6,PROXIMATE_SUM_OUT_OF_BOUNDS,90.0 - 108.0 g,Total proximate mass sums to 114.6g per 100g (heuristic flag only).

@@ -11,12 +11,33 @@ const BACKEND_API_URL =
 
 export const DOCTORS_ENDPOINT = `${BACKEND_API_URL}/v1/doctors/`;
 
+export interface GetDoctorsOptions {
+  pathway?: 'female_pcos' | 'male_hypogonadism' | 'both' | 'female' | 'male' | string;
+  strict?: boolean;
+  recommended_only?: boolean;
+}
+
 /**
- * Public API client to fetch active doctors ordered by display_order.
+ * Public API client to fetch active doctors ordered by display_order,
+ * with optional pathway filtering or prioritization.
  */
-export async function getDoctors(): Promise<Doctor[]> {
+export async function getDoctors(options?: GetDoctorsOptions): Promise<Doctor[]> {
   try {
-    const res = await fetch(DOCTORS_ENDPOINT, {
+    const params = new URLSearchParams();
+    if (options?.pathway) {
+      params.append('pathway', options.pathway);
+    }
+    if (options?.strict) {
+      params.append('strict', 'true');
+    }
+    if (options?.recommended_only) {
+      params.append('recommended_only', 'true');
+    }
+
+    const queryString = params.toString();
+    const url = queryString ? `${DOCTORS_ENDPOINT}?${queryString}` : DOCTORS_ENDPOINT;
+
+    const res = await fetch(url, {
       method: 'GET',
       headers: {
         Accept: 'application/json',
@@ -53,23 +74,31 @@ export interface UseDoctorsResult {
 /**
  * React hook for consuming dynamic doctors data with loading, empty, and error states.
  */
-export function useDoctors(): UseDoctorsResult {
+export function useDoctors(options?: GetDoctorsOptions): UseDoctorsResult {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  const pathwayKey = options?.pathway || '';
+  const strictKey = !!options?.strict;
+  const recommendedKey = !!options?.recommended_only;
 
   const loadDoctors = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await getDoctors();
+      const data = await getDoctors({
+        pathway: pathwayKey,
+        strict: strictKey,
+        recommended_only: recommendedKey,
+      });
       setDoctors(data);
     } catch (err: any) {
       setError('Unable to load doctors at this moment. Please try again later.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [pathwayKey, strictKey, recommendedKey]);
 
   useEffect(() => {
     loadDoctors();

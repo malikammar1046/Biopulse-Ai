@@ -1,0 +1,86 @@
+{
+  "description": "Deterministic hand-computable golden test cases for Phase 6E Deterministic 7-Day Meal Planning, Variety & Repetition Control.",
+  "cases": [
+    {
+      "case_id": "case_1_exact_7day_valid_week",
+      "description": "Exact 7-day valid week where each day satisfies daily nutrition targets without target deviations. sum_J_day = 0.0, days_full_targets_met = 7.",
+      "planning_days": 7,
+      "expected": {
+        "status": "FULL_WEEK_GENERATED",
+        "days_requested": 7,
+        "days_generated": 7,
+        "days_full_targets_met": 7,
+        "days_with_target_deviations": 0,
+        "sum_J_day": 0.0,
+        "mean_J_day": 0.0,
+        "max_J_day": 0.0
+      }
+    },
+    {
+      "case_id": "case_2_optimal_repetition_vs_varied_alternative",
+      "description": "Comparing a sequence repeating the single best day vs selecting slightly varied alternative days. Under soft variety policy, varied sequence can be selected when nutrition is comparable.",
+      "planning_days": 7,
+      "expected": {
+        "variety_reduces_monotony": true,
+        "soft_penalty_lower_for_varied_sequence": true
+      }
+    },
+    {
+      "case_id": "case_3_equivalence_group_repetition_across_entity_ids",
+      "description": "Alternating between PK_DISH_001 (Chapati) and PK_PORTION_001 (Standard Chapati) must map to the same EQ_CHAPATI concept and correctly trigger concept occurrence penalties.",
+      "planning_days": 7,
+      "expected": {
+        "concept_key": "EQ_CHAPATI",
+        "fake_diversity_prevented": true
+      }
+    },
+    {
+      "case_id": "case_4_soft_variety_violated_nutrition_priority",
+      "description": "Week A has sum_J_day = 0.0 with soft repetition penalty > 0. Week B has sum_J_day = 0.80 with soft repetition penalty = 0. Week A must be selected because daily nutrition strictly takes priority over soft variety.",
+      "planning_days": 7,
+      "expected": {
+        "nutrition_priority_preserved": true,
+        "selected_week_has_lower_sum_J_day": true
+      }
+    },
+    {
+      "case_id": "case_5_search_truncation_diagnostics",
+      "description": "When possible weekly candidate combinations exceed maximum_week_candidate_sequences_evaluated, search is deterministically truncated and surfaces BETTER_UNEVALUATED_WEEK_MAY_EXIST.",
+      "planning_days": 7,
+      "evaluation_limit": 5,
+      "expected": {
+        "week_search_truncated": true,
+        "week_search_exhaustive": false,
+        "warning_contains": "BETTER_UNEVALUATED_WEEK_MAY_EXIST"
+      }
+    },
+    {
+      "case_id": "case_6_hard_constraint_violation_rejection",
+      "description": "Candidate week violating a caller-specified HARD constraint is rejected completely and never returned as best_week or in alternative_weeks. If all sequences violate hard constraints, returns NO_VALID_WEEK_PLAN.",
+      "planning_days": 7,
+      "expected": {
+        "status_when_all_violate": "NO_VALID_WEEK_PLAN",
+        "hard_invalid_weeks_returned": 0
+      }
+    },
+    {
+      "case_id": "case_7_condition_isolation",
+      "description": "Identical candidate day pool and variety policy under GENERAL, PCOS, and MALE_HYPOGONADISM. Must produce 100% identical sequence selection, repetition metrics, and rankings.",
+      "tested_pathways": ["GENERAL", "PCOS", "MALE_HYPOGONADISM"],
+      "expected": {
+        "identical_canonical_week_id": true,
+        "identical_sum_J_day": true,
+        "identical_soft_penalty": true,
+        "numerical_disease_manipulation_effect": 0.0
+      }
+    },
+    {
+      "case_id": "case_8_missing_fiber_propagation",
+      "description": "Days containing foods with missing fiber propagate to the weekly summary without converting missing fiber to zero. Status is PARTIAL or UNAVAILABLE.",
+      "expected": {
+        "weekly_fiber_status_not_complete": true,
+        "missing_fiber_entity_ids_preserved": true
+      }
+    }
+  ]
+}

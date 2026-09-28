@@ -1,0 +1,58 @@
+recipe_source_id,recipe_id,source_role,source_document,pdf_page,printed_page,source_table_or_appendix
+PK_RCS_001,PK_RCP_001,formulation,Food Composition Table for Pakistan (Revised 2001),60,54,Traditional Foods Ingredients and Methods of Preparation
+PK_RCS_002,PK_RCP_001,cultural_frequency,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,4,32,Table 1 Dish Consumption Frequency
+PK_RCS_003,PK_RCP_001,acceptability,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,6,34,Table 3 Hedonic Sensory Evaluation
+PK_RCS_004,PK_RCP_002,formulation,Food Composition Table for Pakistan (Revised 2001),60,54,Traditional Foods Ingredients and Methods of Preparation
+PK_RCS_005,PK_RCP_002,cultural_frequency,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,4,32,Table 1 Dish Consumption Frequency
+PK_RCS_006,PK_RCP_002,acceptability,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,6,34,Table 3 Hedonic Sensory Evaluation
+PK_RCS_007,PK_RCP_003,formulation,Food Composition Table for Pakistan (Revised 2001),60,54,Traditional Foods Ingredients and Methods of Preparation
+PK_RCS_008,PK_RCP_003,cultural_frequency,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,4,32,Table 1 Dish Consumption Frequency
+PK_RCS_009,PK_RCP_003,acceptability,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,6,34,Table 3 Hedonic Sensory Evaluation
+PK_RCS_010,PK_RCP_004,formulation,Food Composition Table for Pakistan (Revised 2001),61,55,Traditional Foods Ingredients and Methods of Preparation
+PK_RCS_011,PK_RCP_004,cultural_frequency,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,4,32,Table 1 Dish Consumption Frequency
+PK_RCS_012,PK_RCP_004,acceptability,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,6,34,Table 3 Hedonic Sensory Evaluation
+PK_RCS_013,PK_RCP_005,formulation,Food Composition Table for Pakistan (Revised 2001),61,55,Traditional Foods Ingredients and Methods of Preparation
+PK_RCS_014,PK_RCP_005,cultural_frequency,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,4,32,Table 1 Dish Consumption Frequency
+PK_RCS_015,PK_RCP_005,acceptability,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,6,34,Table 3 Hedonic Sensory Evaluation
+PK_RCS_016,PK_RCP_006,formulation,Food Composition Table for Pakistan (Revised 2001),62,56,Traditional Foods Ingredients and Methods of Preparation
+PK_RCS_017,PK_RCP_006,cultural_frequency,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,4,32,Table 1 Dish Consumption Frequency
+PK_RCS_018,PK_RCP_006,acceptability,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,6,34,Table 3 Hedonic Sensory Evaluation
+PK_RCS_019,PK_RCP_007,formulation,Food Composition Table for Pakistan (Revised 2001),62,56,Traditional Foods Ingredients and Methods of Preparation
+PK_RCS_020,PK_RCP_007,cultural_frequency,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,4,32,Table 1 Dish Consumption Frequency
+PK_RCS_021,PK_RCP_007,acceptability,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,6,34,Table 3 Hedonic Sensory Evaluation
+PK_RCS_022,PK_RCP_008,formulation,Food Composition Table for Pakistan (Revised 2001),63,57,Traditional Foods Ingredients and Methods of Preparation
+PK_RCS_023,PK_RCP_008,cultural_frequency,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,4,32,Table 1 Dish Consumption Frequency
+PK_RCS_024,PK_RCP_008,acceptability,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,6,34,Table 3 Hedonic Sensory Evaluation
+PK_RCS_025,PK_RCP_009,formulation,Food Composition Table for Pakistan (Revised 2001),63,57,Traditional Foods Ingredients and Methods of Preparation
+PK_RCS_026,PK_RCP_009,cultural_frequency,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,4,32,Table 1 Dish Consumption Frequency
+PK_RCS_027,PK_RCP_009,acceptability,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,6,34,Table 3 Hedonic Sensory Evaluation
+PK_RCS_028,PK_RCP_010,formulation,Food Composition Table for Pakistan (Revised 2001),64,58,Traditional Foods Ingredients and Methods of Preparation
+PK_RCS_029,PK_RCP_010,cultural_frequency,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,4,32,Table 1 Dish Consumption Frequency
+PK_RCS_030,PK_RCP_010,acceptability,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,6,34,Table 3 Hedonic Sensory Evaluation
+PK_RCS_031,PK_RCP_011,formulation,Food Composition Table for Pakistan (Revised 2001),64,58,Traditional Foods Ingredients and Methods of Preparation
+PK_RCS_032,PK_RCP_011,cultural_frequency,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,4,32,Table 1 Dish Consumption Frequency
+PK_RCS_033,PK_RCP_011,acceptability,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,6,34,Table 3 Hedonic Sensory Evaluation
+PK_RCS_034,PK_RCP_012,formulation,Food Composition Table for Pakistan (Revised 2001),64,58,Traditional Foods Ingredients and Methods of Preparation
+PK_RCS_035,PK_RCP_012,cultural_frequency,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,4,32,Table 1 Dish Consumption Frequency
+PK_RCS_036,PK_RCP_012,acceptability,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,6,34,Table 3 Hedonic Sensory Evaluation
+PK_RCS_037,PK_RCP_013,formulation,Food Composition Table for Pakistan (Revised 2001),65,59,Traditional Foods Ingredients and Methods of Preparation
+PK_RCS_038,PK_RCP_013,cultural_frequency,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,4,32,Table 1 Dish Consumption Frequency
+PK_RCS_039,PK_RCP_013,acceptability,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,6,34,Table 3 Hedonic Sensory Evaluation
+PK_RCS_040,PK_RCP_014,formulation,Food Composition Table for Pakistan (Revised 2001),65,59,Traditional Foods Ingredients and Methods of Preparation
+PK_RCS_041,PK_RCP_014,cultural_frequency,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,4,32,Table 1 Dish Consumption Frequency
+PK_RCS_042,PK_RCP_014,acceptability,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,6,34,Table 3 Hedonic Sensory Evaluation
+PK_RCS_043,PK_RCP_015,formulation,Food Composition Table for Pakistan (Revised 2001),65,59,Traditional Foods Ingredients and Methods of Preparation
+PK_RCS_044,PK_RCP_015,cultural_frequency,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,4,32,Table 1 Dish Consumption Frequency
+PK_RCS_045,PK_RCP_015,acceptability,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,6,34,Table 3 Hedonic Sensory Evaluation
+PK_RCS_046,PK_RCP_016,formulation,Food Composition Table for Pakistan (Revised 2001),66,60,Traditional Foods Ingredients and Methods of Preparation
+PK_RCS_047,PK_RCP_016,cultural_frequency,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,4,32,Table 1 Dish Consumption Frequency
+PK_RCS_048,PK_RCP_016,acceptability,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,6,34,Table 3 Hedonic Sensory Evaluation
+PK_RCS_049,PK_RCP_017,formulation,Food Composition Table for Pakistan (Revised 2001),66,60,Traditional Foods Ingredients and Methods of Preparation
+PK_RCS_050,PK_RCP_017,cultural_frequency,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,4,32,Table 1 Dish Consumption Frequency
+PK_RCS_051,PK_RCP_017,acceptability,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,6,34,Table 3 Hedonic Sensory Evaluation
+PK_RCS_052,PK_RCP_018,formulation,Pakistan Dietary Guidelines for Better Nutrition (2019),93,79,Annexure-XV Portion Size of Selected Foods
+PK_RCS_053,PK_RCP_018,cultural_frequency,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,4,32,Table 1 Dish Consumption Frequency
+PK_RCS_054,PK_RCP_018,acceptability,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,6,34,Table 3 Hedonic Sensory Evaluation
+PK_RCS_055,PK_RCP_019,formulation,Pakistan Dietary Guidelines for Better Nutrition (2019),93,79,Annexure-XV Portion Size of Selected Foods
+PK_RCS_056,PK_RCP_019,cultural_frequency,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,4,32,Table 1 Dish Consumption Frequency
+PK_RCS_057,PK_RCP_019,acceptability,Standardizing the Essence of Pakistani Gastronomy: Traditional Cereal and Vegetable-Based Dishes in Focus,6,34,Table 3 Hedonic Sensory Evaluation

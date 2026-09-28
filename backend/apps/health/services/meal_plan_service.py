@@ -17,18 +17,32 @@ import logging
 from datetime import date, datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Set
 
-from Meal.daily.orchestrator import generate_full_day_plan
-from Meal.daily.schemas import (
-    DailyMealSchedule,
-    FullDayPlanningPolicy,
-    MealAllocation,
-)
-from Meal.engine.orchestrator import build_nutrition_target_profile
-from Meal.evidence.orchestrator import build_condition_nutrition_profile
-from Meal.optimizer.schemas import PortionOptimizationTarget
-from Meal.planner.schemas import MealRole
-from Meal.weekly.orchestrator import generate_weekly_plan
-from Meal.weekly.schemas import WeeklyVarietyPolicy
+try:
+    from Meal.daily.orchestrator import generate_full_day_plan
+    from Meal.daily.schemas import (
+        DailyMealSchedule,
+        FullDayPlanningPolicy,
+        MealAllocation,
+    )
+    from Meal.engine.orchestrator import build_nutrition_target_profile
+    from Meal.evidence.orchestrator import build_condition_nutrition_profile
+    from Meal.optimizer.schemas import PortionOptimizationTarget
+    from Meal.planner.schemas import MealRole
+    from Meal.weekly.orchestrator import generate_weekly_plan
+    from Meal.weekly.schemas import WeeklyVarietyPolicy
+    HAS_MEAL_MODULE = True
+except (ImportError, ModuleNotFoundError):
+    HAS_MEAL_MODULE = False
+    generate_full_day_plan = None
+    DailyMealSchedule = None
+    FullDayPlanningPolicy = None
+    MealAllocation = None
+    build_nutrition_target_profile = None
+    build_condition_nutrition_profile = None
+    PortionOptimizationTarget = None
+    MealRole = None
+    generate_weekly_plan = None
+    WeeklyVarietyPolicy = None
 
 from apps.health.services.meal_constraint_provider import (
     get_production_eligible_entity_ids,

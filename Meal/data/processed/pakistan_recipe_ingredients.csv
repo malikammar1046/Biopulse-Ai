@@ -1,0 +1,85 @@
+recipe_ingredient_id,recipe_id,ingredient_name_original,ingredient_name_normalized,quantity_original,unit_original,quantity_g,food_id,match_method,match_confidence,review_status,source_document,pdf_page,printed_page
+PK_ING_001,PK_RCP_001,Wheat flour / Atta,wheat whole grain flour atta,60,g,60.0,PK_FCT_015,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),60,54
+PK_ING_002,PK_RCP_001,Water,water,35,ml,35.0,,unmapped_solvent,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),60,54
+PK_ING_003,PK_RCP_002,Lentil (daal masur),lentil raw red,125,g,125.0,PK_FCT_032,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),60,54
+PK_ING_004,PK_RCP_002,Ghee / Cooking oil,desi ghee butter fat,40,g,40.0,PK_FCT_173,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),60,54
+PK_ING_005,PK_RCP_002,Onion,onion raw,1/2 medium,household_piece,,PK_FCT_070,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),60,54
+PK_ING_006,PK_RCP_002,Garlic,garlic raw,3 cloves,household_clove,,PK_FCT_068,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),60,54
+PK_ING_007,PK_RCP_002,Spices and salt,spices blend and iodized salt,to taste,ad_libitum,,,unresolved_blend,0.5,partial_verified,Food Composition Table for Pakistan (Revised 2001),60,54
+PK_ING_008,PK_RCP_003,Beef / Meat,beef meat raw,250,g,250.0,PK_FCT_141,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),60,54
+PK_ING_009,PK_RCP_003,Potatoes,potato raw,250,g,250.0,PK_FCT_071,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),60,54
+PK_ING_010,PK_RCP_003,Ghee / Oil,desi ghee butter fat,40,g,40.0,PK_FCT_173,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),60,54
+PK_ING_011,PK_RCP_003,Onion,onion raw,1 medium,household_piece,,PK_FCT_070,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),60,54
+PK_ING_012,PK_RCP_003,Tomatoes,tomato raw,2 medium,household_piece,,PK_FCT_063,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),60,54
+PK_ING_013,PK_RCP_003,Spices and salt,spices blend and iodized salt,to taste,ad_libitum,,,unresolved_blend,0.5,partial_verified,Food Composition Table for Pakistan (Revised 2001),60,54
+PK_ING_014,PK_RCP_004,Red kidney beans (Kalool),kidney bean raw rajma kalool,200,g,200.0,PK_FCT_031,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),61,55
+PK_ING_015,PK_RCP_004,Ghee / Cooking oil,desi ghee butter fat,40,g,40.0,PK_FCT_173,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),61,55
+PK_ING_016,PK_RCP_004,"Spices (Turmeric, Red chilli, Salt)",spices blend,to taste,ad_libitum,,,unresolved_compound,0.5,partial_verified,Food Composition Table for Pakistan (Revised 2001),61,55
+PK_ING_017,PK_RCP_005,Beef minced (Keema),beef minced raw,300,g,300.0,PK_FCT_141,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),61,55
+PK_ING_018,PK_RCP_005,Gram flour (Besan / Channa),chickpea raw channa,30,g,30.0,PK_FCT_026,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),61,55
+PK_ING_019,PK_RCP_005,Ghee / Cooking oil,desi ghee butter fat,50,g,50.0,PK_FCT_173,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),61,55
+PK_ING_020,PK_RCP_006,Rice basmati,rice polished basmati,250,g,250.0,PK_FCT_008,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),62,56
+PK_ING_021,PK_RCP_006,Beef meat,beef meat raw,250,g,250.0,PK_FCT_141,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),62,56
+PK_ING_022,PK_RCP_006,Ghee / Cooking oil,desi ghee butter fat,40,g,40.0,PK_FCT_173,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),62,56
+PK_ING_023,PK_RCP_007,Beef minced,beef minced raw,250,g,250.0,PK_FCT_141,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),62,56
+PK_ING_024,PK_RCP_007,Channa daal (Split chickpea),chickpea raw channa,100,g,100.0,PK_FCT_026,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),62,56
+PK_ING_025,PK_RCP_007,Cooking oil for frying,desi ghee butter fat,40,g,40.0,PK_FCT_173,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),62,56
+PK_ING_026,PK_RCP_007,Egg for dipping,egg whole chicken raw,1,household_piece,,PK_FCT_136,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),62,56
+PK_ING_027,PK_RCP_008,Beef minced with fat,beef minced raw,300,g,300.0,PK_FCT_141,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),63,57
+PK_ING_028,PK_RCP_008,Maize flour (Makai atta),corn whole grain flour makai,30,g,30.0,PK_FCT_002,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),63,57
+PK_ING_029,PK_RCP_008,Cooking oil / Animal fat,desi ghee butter fat,50,g,50.0,PK_FCT_173,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),63,57
+PK_ING_030,PK_RCP_008,Onion and pomegranate seeds,vegetable and spice blend,to taste,ad_libitum,,,unresolved_blend,0.5,partial_verified,Food Composition Table for Pakistan (Revised 2001),63,57
+PK_ING_031,PK_RCP_009,Chicken meat,chicken meat broiler raw,300,g,300.0,PK_FCT_146,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),63,57
+PK_ING_032,PK_RCP_009,Cooking oil / Ghee,desi ghee butter fat,50,g,50.0,PK_FCT_173,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),63,57
+PK_ING_033,PK_RCP_009,Onions and tomatoes,vegetables blend curry base,2 medium,household_piece,,,unresolved_blend,0.5,partial_verified,Food Composition Table for Pakistan (Revised 2001),63,57
+PK_ING_034,PK_RCP_010,Beef boneless,beef meat raw,200,g,200.0,PK_FCT_141,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),64,58
+PK_ING_035,PK_RCP_010,Wheat grain crushed (Dalia),wheat whole grain flour atta,80,g,80.0,PK_FCT_015,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),64,58
+PK_ING_036,PK_RCP_010,Barley (Jou),barley whole jou,40,g,40.0,PK_FCT_001,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),64,58
+PK_ING_037,PK_RCP_010,Channa daal,chickpea raw channa,30,g,30.0,PK_FCT_026,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),64,58
+PK_ING_038,PK_RCP_010,Masoor daal,lentil raw red,30,g,30.0,PK_FCT_032,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),64,58
+PK_ING_039,PK_RCP_010,Moong daal,mung bean raw green gram,30,g,30.0,PK_FCT_033,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),64,58
+PK_ING_040,PK_RCP_010,Ghee / Cooking oil,desi ghee butter fat,40,g,40.0,PK_FCT_173,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),64,58
+PK_ING_041,PK_RCP_011,Fish cleaned (cut into pieces),fish rohu raw freshwater,500,g,500.0,PK_FCT_150,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),64,58
+PK_ING_042,PK_RCP_011,Ghee / Oil for frying,desi ghee butter fat,80,g,80.0,PK_FCT_173,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),64,58
+PK_ING_043,PK_RCP_011,Garlic crushed,garlic raw,15,g,15.0,PK_FCT_068,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),64,58
+PK_ING_044,PK_RCP_011,Iodized salt,salt iodized table,4,g,4.0,,unmapped_condiment,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),64,58
+PK_ING_045,PK_RCP_011,Red chilli powder,red chilli powder dry,2,g,2.0,PK_FCT_182,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),64,58
+PK_ING_046,PK_RCP_011,Coriander powder,coriander seed dry whole powder,4,g,4.0,PK_FCT_179,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),64,58
+PK_ING_047,PK_RCP_011,Garam masala,spices blend garam masala,2,g,2.0,,unmapped_compound,0.8,auto_verified,Food Composition Table for Pakistan (Revised 2001),64,58
+PK_ING_048,PK_RCP_011,Ajwain (Carom seed),ajwain carom seeds,1,g,1.0,,unmapped_spice,0.8,auto_verified,Food Composition Table for Pakistan (Revised 2001),64,58
+PK_ING_049,PK_RCP_011,Vinegar,vinegar commercial synthetic,40,ml,40.0,,unmapped_solvent,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),64,58
+PK_ING_050,PK_RCP_012,Lamb's leg meat,mutton lamb meat raw,500,g,500.0,PK_FCT_142,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_051,PK_RCP_012,Iodized salt,salt iodized table,12,g,12.0,,unmapped_condiment,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_052,PK_RCP_012,Ghee / Oil basting,desi ghee butter fat,40,g,40.0,PK_FCT_173,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_053,PK_RCP_013,Chicken meat,chicken meat broiler raw,250,g,250.0,PK_FCT_146,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_054,PK_RCP_013,Rice basmati,rice polished basmati,200,g,200.0,PK_FCT_008,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_055,PK_RCP_013,Onion (chopped),onion raw,100,g,100.0,PK_FCT_070,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_056,PK_RCP_013,Tomatoes (chopped),tomato raw,100,g,100.0,PK_FCT_063,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_057,PK_RCP_013,Garlic (crushed),garlic raw,10,g,10.0,PK_FCT_068,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_058,PK_RCP_013,Ginger (crushed),ginger raw fresh,10,g,10.0,PK_FCT_069,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_059,PK_RCP_013,Ghee / Oil,desi ghee butter fat,50,g,50.0,PK_FCT_173,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_060,PK_RCP_013,Iodized salt,salt iodized table,8,g,8.0,,unmapped_condiment,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_061,PK_RCP_013,Red chilli powder,red chilli powder dry,4,g,4.0,PK_FCT_182,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_062,PK_RCP_013,Coriander powder,coriander seed dry whole powder,8,g,8.0,PK_FCT_179,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_063,PK_RCP_013,Garam masala,spices blend garam masala,4,g,4.0,,unmapped_compound,0.8,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_064,PK_RCP_013,Yogurt,yogurt curd dahi whole milk,100,g,100.0,PK_FCT_135,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_065,PK_RCP_013,Water,water,500,ml,500.0,,unmapped_solvent,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_066,PK_RCP_014,Semolina (Suji),wheat semolina suji,150,g,150.0,PK_FCT_017,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_067,PK_RCP_014,Desi Ghee,desi ghee butter fat,100,g,100.0,PK_FCT_173,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_068,PK_RCP_014,Sugar,sugar cane white refined,100,g,100.0,PK_FCT_185,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_069,PK_RCP_014,Cardamom (green),cardamom small green,2,g,2.0,,unmapped_spice,0.8,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_070,PK_RCP_014,Water,water,300,ml,300.0,,unmapped_solvent,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_071,PK_RCP_015,Rice basmati,rice polished basmati,250,g,250.0,PK_FCT_008,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_072,PK_RCP_015,Sugar,sugar cane white refined,200,g,200.0,PK_FCT_185,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_073,PK_RCP_015,Desi Ghee,desi ghee butter fat,50,g,50.0,PK_FCT_173,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_074,PK_RCP_015,Cardamom (green),cardamom small green,2,g,2.0,,unmapped_spice,0.8,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_075,PK_RCP_015,Almonds and Pistachio,nuts blend almond pistachio,50,g,50.0,PK_FCT_117,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_076,PK_RCP_015,Orange food Colour,food coloring non-nutritive,1,g,1.0,,unmapped_condiment,0.8,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_077,PK_RCP_015,Water,water,1000,ml,1000.0,,unmapped_solvent,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),65,59
+PK_ING_078,PK_RCP_016,Whole milk,milk buffalo fluid whole,500,ml,500.0,PK_FCT_133,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),66,60
+PK_ING_079,PK_RCP_016,Rice (broken),rice polished chaval,50,g,50.0,PK_FCT_008,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),66,60
+PK_ING_080,PK_RCP_016,Sugar,sugar cane white refined,60,g,60.0,PK_FCT_185,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),66,60
+PK_ING_081,PK_RCP_017,Red carrots (shredded),carrot raw gajar,500,g,500.0,PK_FCT_066,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),66,60
+PK_ING_082,PK_RCP_017,Sugar,sugar cane white refined,250,g,250.0,PK_FCT_185,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),66,60
+PK_ING_083,PK_RCP_017,Whole milk,milk buffalo fluid whole,250,ml,250.0,PK_FCT_133,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),66,60
+PK_ING_084,PK_RCP_017,Desi Ghee,desi ghee butter fat,100,g,100.0,PK_FCT_173,exact_slug,1.0,auto_verified,Food Composition Table for Pakistan (Revised 2001),66,60

@@ -1,0 +1,50 @@
+expected_sr_no,food_name_if_identifiable,food_group,source_pages,priority,recovery_attempted,recovery_method,failure_reason,status
+3,Corn Flakes,Cereals and Cereal Products,13-14,MEDIUM,YES,Dual_Pass_Grid_Recovery,NONE,RECOVERED_PARTIAL
+44,Bath Sponge,Vegetables,21-22,HIGH,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_FULL
+51,Kulfa,Vegetables,21-22,HIGH,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_FULL
+71,Potato,Roots and Tubers,25-26,CRITICAL,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_FULL
+72,Reddish,Roots and Tubers,25-26,MEDIUM,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_PARTIAL
+77,Cumin Seed,Spices and Condiments,27-28,HIGH,YES,Dual_Pass_Grid_Recovery,NONE,RECOVERED_PARTIAL
+83,Apple Seb,Fruits,29-30,HIGH,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_FULL
+84,Apricot,Fruits,29-30,MEDIUM,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_FULL
+85,Banana Ripe Kela,Fruits,29-30,HIGH,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_PARTIAL
+86,Black Berry,Fruits,29-30,LOW,YES,Dual_Pass_Grid_Recovery,NONE,RECOVERED_FULL
+87,Dates Dried,Fruits,29-30,HIGH,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_FULL
+89,Fig Fresh,Fruits,29-30,MEDIUM,YES,Dual_Pass_Grid_Recovery,NONE,RECOVERED_FULL
+90,Grapes,Fruits,29-30,MEDIUM,YES,Dual_Pass_Grid_Recovery,NONE,RECOVERED_FULL
+91,Grapes,Fruits,29-30,HIGH,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_FULL
+92,Guava whole,Fruits,29-30,HIGH,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_FULL
+93,Jaman,Fruits,29-30,MEDIUM,YES,Dual_Pass_Grid_Recovery,NONE,RECOVERED_PARTIAL
+94,Lemon,Fruits,29-30,HIGH,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_FULL
+95,Lichi,Fruits,29-30,MEDIUM,YES,Dual_Pass_Grid_Recovery,NONE,RECOVERED_FULL
+96,Lime,Fruits,29-30,LOW,YES,Dual_Pass_Grid_Recovery,NONE,RECOVERED_FULL
+97,Lime Sweet,Fruits,29-30,HIGH,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_FULL
+99,Mango Ripe,Fruits,29-30,LOW,YES,Dual_Pass_Grid_Recovery,NONE,RECOVERED_PARTIAL
+100,Melon Musk,Fruits,31-32,HIGH,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_FULL
+122,Coconut,Nuts and Dry Fruits,33-34,HIGH,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_FULL
+123,Chilgoza,Nuts and Dry Fruits,33-34,HIGH,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_FULL
+124,Pistachio Pista,Nuts and Dry Fruits,33-34,MEDIUM,YES,Dual_Pass_Grid_Recovery,NONE,RECOVERED_PARTIAL
+125,Popy seed,Nuts and Dry Fruits,33-34,HIGH,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_FULL
+126,Peanut,Nuts and Dry Fruits,33-34,HIGH,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_PARTIAL
+139,Yogurt,Dairy Products,35-36,CRITICAL,YES,Targeted_Cell_Crop_OCR,NONE,RECOVERED_PARTIAL
+144,Beef heart .Dil,Meat and Meat Products,37-38,CRITICAL,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_PARTIAL
+147,Duck Meat,Meat and Meat Products,37-38,CRITICAL,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_FULL
+150,Goat Gurday,Meat and Meat Products,37-38,CRITICAL,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_FULL
+151,Goat Heart Di,Meat and Meat Products,37-38,CRITICAL,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_PARTIAL
+152,Sheep meat,Meat and Meat Products,37-38,CRITICAL,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_PARTIAL
+153,Pigeon meat,Meat and Meat Products,37-38,CRITICAL,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_PARTIAL
+157,.Fish (Khaga),Fish,39-40,HIGH,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_PARTIAL
+158,Fish (Shanghara),Fish,39-40,HIGH,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_PARTIAL
+159,Fish (Soal),Fish,39-40,MEDIUM,YES,Dual_Pass_Grid_Recovery,NONE,RECOVERED_PARTIAL
+160,Fish(Surmai),Fish,39-40,MEDIUM,YES,Dual_Pass_Grid_Recovery,NONE,RECOVERED_FULL
+170,Duck egg whole (Raw),Eggs,41-42,MEDIUM,YES,Dual_Pass_Grid_Recovery,NONE,RECOVERED_FULL
+171,Duck egg boiled,Eggs,41-42,CRITICAL,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_PARTIAL
+172,Butter,Fats and Oils,43-44,CRITICAL,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_PARTIAL
+173,Ghee,Fats and Oils,43-44,CRITICAL,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_FULL
+174,Ghee (buffalo),Fats and Oils,43-44,CRITICAL,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_FULL
+175,Lard (Raw),Fats and Oils,43-44,CRITICAL,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_PARTIAL
+176,Dalda (Hydrogenated oil),Fats and Oils,43-44,CRITICAL,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_FULL
+177,Corn Oil,Fats and Oils,43-44,CRITICAL,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_FULL
+178,Soybean oil,Fats and Oils,43-44,MEDIUM,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_FULL
+181,Cotton oil,Fats and Oils,43-44,CRITICAL,YES,Dual_Pass_Grid_Recovery,NONE,RECOVERED_FULL
+186,Sugar Brown,"Sugar, Sweets and Beverages",45-46,HIGH,YES,Targeted_Baseline_Anchor_OCR,NONE,RECOVERED_PARTIAL

@@ -37,7 +37,7 @@ from apps.intelligence.services.intelligence_orchestrator import (
 )
 
 
-@override_settings(BIOPULSE_ASSESSMENT_MAINTENANCE=False, ALLOW_LOCAL_SQLITE_FALLBACK=True)
+@override_settings(BIOPULSE_ASSESSMENT_MAINTENANCE=False)
 class Stage12SmokeGateTests(TestCase):
     """
     Stage 12 Controlled Smoke Gate application-level tests.
@@ -71,8 +71,10 @@ class Stage12SmokeGateTests(TestCase):
 
         self.sb_patcher1 = patch("apps.intelligence.services.clinical_state_repository.get_supabase_client", return_value=None)
         self.sb_patcher2 = patch("apps.intelligence.services.assessment_repository.get_supabase_client", return_value=None)
+        self.sb_patcher3 = patch("apps.intelligence.services.observation_repository.get_supabase_client", return_value=None)
         self.sb_patcher1.start()
         self.sb_patcher2.start()
+        self.sb_patcher3.start()
 
         self.female_tier1_inputs = {
             "age": 26,
@@ -109,6 +111,7 @@ class Stage12SmokeGateTests(TestCase):
         self.fetch_patcher.stop()
         self.sb_patcher1.stop()
         self.sb_patcher2.stop()
+        self.sb_patcher3.stop()
 
     def test_stage12_female_smoke_gate(self):
         """

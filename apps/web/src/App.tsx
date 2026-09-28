@@ -12,7 +12,6 @@ import { PathwayRouteGuard } from './components/auth/PathwayRouteGuard';
 import { useUserHealth } from './context/UserHealthContext';
 import { getPathwayDashboardRoute } from './constants/routes';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
-import { BioPulseLoadingScreen } from './components/brand/BioPulseLoadingScreen';
 
 // Dynamic redirection to user's authorized pathway dashboard
 const DashboardRedirect: React.FC = () => {
@@ -21,8 +20,12 @@ const DashboardRedirect: React.FC = () => {
   return <Navigate to={destination} replace />;
 };
 
-// Clinical Page Loading Fallback with Glowing BioPulse Logo
-const PageLoadingFallback: React.FC = () => <BioPulseLoadingScreen fullScreen={true} />;
+import { BioPulseLoadingScreen } from './components/brand/BioPulseLoadingScreen';
+
+// Lightweight Page Loading Fallback (BioPulse Splash Screen)
+const PageLoadingFallback: React.FC = () => (
+  <BioPulseLoadingScreen message="Preparing your health experience" />
+);
 
 // Route-Level Lazy Loading (Code Splitting)
 const Home = lazy(() => import('./pages/public/Home').then((m) => ({ default: m.Home })));
@@ -51,12 +54,7 @@ const UnderstandMaleHypogonadism = lazy(() =>
 const TrustAndPrivacy = lazy(() =>
   import('./pages/public/TrustAndPrivacy').then((m) => ({ default: m.TrustAndPrivacy }))
 );
-const Doctors = lazy(() =>
-  import('./pages/public/Doctors').then((m) => ({ default: m.Doctors }))
-);
-const CareCircle = lazy(() =>
-  import('./pages/public/CareCircle').then((m) => ({ default: m.CareCircle }))
-);
+const Doctors = lazy(() => import('./pages/public/Doctors'));
 
 // Auth & Onboarding Pages (Lazy-Loaded)
 const Login = lazy(() => import('./pages/auth/Login').then((m) => ({ default: m.Login })));
@@ -71,7 +69,10 @@ const Dashboard = lazy(() => import('./pages/app/Dashboard').then((m) => ({ defa
 const MasterHealthHub = lazy(() => import('./pages/app/MasterHealthHub').then((m) => ({ default: m.MasterHealthHub })));
 const CyclePage = lazy(() => import('./pages/app/CyclePage').then((m) => ({ default: m.CyclePage })));
 const SymptomsPage = lazy(() => import('./pages/app/SymptomsPage').then((m) => ({ default: m.SymptomsPage })));
-const DietPage = lazy(() => import('./pages/app/DietPage').then((m) => ({ default: m.DietPage })));
+
+const LifestyleRecommendationsPage = lazy(() =>
+  import('./pages/app/LifestyleRecommendationsPage').then((m) => ({ default: m.LifestyleRecommendationsPage }))
+);
 const FitnessPage = lazy(() => import('./pages/app/FitnessPage').then((m) => ({ default: m.FitnessPage })));
 const ReportsPage = lazy(() => import('./pages/app/ReportsPage').then((m) => ({ default: m.ReportsPage })));
 const MedicationsPage = lazy(() => import('./pages/app/MedicationsPage').then((m) => ({ default: m.MedicationsPage })));
@@ -104,17 +105,16 @@ export function App() {
                 <Route path={ROUTES.UNDERSTAND_MALE_FERTILITY} element={<Navigate to={ROUTES.UNDERSTAND_MALE_HYPOGONADISM} replace />} />
                 <Route path={ROUTES.WOMENS_HEALTH} element={<Navigate to={ROUTES.UNDERSTAND_PCOS_CANONICAL} replace />} />
                 <Route path={ROUTES.MENS_HEALTH} element={<Navigate to={ROUTES.UNDERSTAND_MALE_HYPOGONADISM} replace />} />
-                <Route path={ROUTES.CARE_CIRCLE} element={<CareCircle />} />
-                <Route path="/carecircle" element={<Navigate to={ROUTES.CARE_CIRCLE} replace />} />
-                <Route path={ROUTES.FOR_DOCTORS} element={<Navigate to={ROUTES.DOCTORS} replace />} />
+                <Route path={ROUTES.CARE_CIRCLE} element={<Navigate to={ROUTES.ABOUT} replace />} />
+                <Route path={ROUTES.FOR_DOCTORS} element={<Navigate to={ROUTES.ABOUT} replace />} />
                 <Route path="/ai-that-explains" element={<Navigate to={ROUTES.HOW_IT_WORKS} replace />} />
                 
                 <Route path={ROUTES.TRUST_PRIVACY} element={<TrustAndPrivacy />} />
                 <Route path={ROUTES.ABOUT} element={<About />} />
                 <Route path={ROUTES.HOW_IT_WORKS} element={<HowItWorks />} />
                 <Route path={ROUTES.FEATURES} element={<Features />} />
-                <Route path={ROUTES.CONTACT} element={<Contact />} />
                 <Route path={ROUTES.DOCTORS} element={<Doctors />} />
+                <Route path={ROUTES.CONTACT} element={<Contact />} />
 
                 {/* Public Only Auth Pages */}
                 <Route element={<PublicOnlyRoute />}>
@@ -185,13 +185,13 @@ export function App() {
                   <Route path="ai" element={<ChatPage />} />
                   <Route path="assistant" element={<ChatPage />} />
                   <Route path="symptoms" element={<SymptomsPage />} />
-                  <Route path="diet" element={<DietPage />} />
-                  <Route path="diet/week" element={<DietPage />} />
+                  <Route path="lifestyle" element={<LifestyleRecommendationsPage />} />
+                  <Route path="diet" element={<LifestyleRecommendationsPage />} />
+                  <Route path="diet/week" element={<LifestyleRecommendationsPage />} />
                   <Route path="fitness" element={<FitnessPage />} />
                   <Route path="reports" element={<ReportsPage />} />
                   <Route path="medications" element={<MedicationsPage />} />
                   <Route path="care-circle" element={<CareCirclePage />} />
-                  <Route path="carecircle" element={<Navigate to={ROUTES.APP.CARE_CIRCLE} replace />} />
                   <Route path="appointments" element={<AppointmentsPage />} />
                   <Route path="timeline" element={<TimelinePage />} />
                   <Route path="progress" element={<ProgressPage />} />
@@ -199,7 +199,7 @@ export function App() {
                   <Route path="settings" element={<SettingsPage />} />
                   {/* Backward compatibility aliases */}
                   <Route path="profile" element={<Navigate to={ROUTES.APP.SETTINGS} replace />} />
-                  <Route path="lifestyle" element={<Navigate to={ROUTES.APP.DIET} replace />} />
+
                 </Route>
               </Route>
 

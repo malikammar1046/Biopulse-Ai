@@ -837,7 +837,6 @@ class PCOSMLService:
         """
         self.load()
         self.load_vision()
-
         img_rgb = pil_image.convert('RGB')
         feat_1280 = None
 
