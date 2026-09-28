@@ -1,14 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { XClose, Calendar, AlertCircle, Plus } from '@untitledui/icons';
 import type { CareCircleMember } from '../../types/careCircle';
 import type { AppointmentInput, AppointmentType } from '../../types/appointment';
+import type { Doctor } from '../../types/doctor';
+import { useDoctors } from '../../services/doctorService';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { resolvePathway } from '../../types/onboarding';
 
 interface BookAppointmentModalProps {
   isOpen: boolean;
   careCircleMembers: CareCircleMember[];
+  preselectedDoctor?: Doctor | null;
+  sourceContext?: string;
   onClose: () => void;
   onBook: (input: AppointmentInput) => Promise<{ success: boolean; error?: string }>;
 }
@@ -24,6 +28,8 @@ const APPOINTMENT_TYPES: { type: AppointmentType; label: string }[] = [
 export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
   isOpen,
   careCircleMembers,
+  preselectedDoctor,
+  sourceContext,
   onClose,
   onBook,
 }) => {
@@ -31,18 +37,26 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
   const pathway = resolvePathway(userProfile.gender, userProfile.pathway);
   const isMale = pathway === 'male';
 
-  const doctors = careCircleMembers.filter((m) => m.role === 'doctor' && m.status === 'active');
-  const defaultDoctor = doctors[0]?.name || (isMale ? 'Dr. Tariq Mahmood' : 'Dr. Sarah Malik');
+  const { doctors: canonicalDoctors } = useDoctors({
+    pathway: isMale ? 'male_hypogonadism' : 'female_pcos',
+  });
+
+  const careDoctors = careCircleMembers.filter((m) => m.role === 'doctor' && m.status === 'active');
 
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
-  const [providerName, setProviderName] = useState(defaultDoctor);
-  const [providerSpecialty, setProviderSpecialty] = useState(
-    isMale ? 'Endocrinology & Men’s Health Specialist' : 'Specialist Gynecologist & Endocrinologist'
+  const [selectedDoctorId, setSelectedDoctorId] = useState<string>(
+    preselectedDoctor ? String(preselectedDoctor.id) : ''
   );
-  const [selectedCareCircleId, setSelectedCareCircleId] = useState(doctors[0]?.id || '');
+  const [providerName, setProviderName] = useState(preselectedDoctor?.name || '');
+  const [providerSpecialty, setProviderSpecialty] = useState(
+    preselectedDoctor?.specialty ||
+      (isMale ? 'Endocrinology & Men’s Health Specialist' : 'Specialist Gynecologist & Endocrinologist')
+  );
+  const [selectedCareCircleId, setSelectedCareCircleId] = useState('');
+  const [selectMode, setSelectMode] = useState<string>('doctor');
   const [title, setTitle] = useState('Clinical Consultation & Review');
   const [appointmentType, setAppointmentType] = useState<AppointmentType>('consultation');
   const [scheduledDate, setScheduledDate] = useState(tomorrowStr);
@@ -60,21 +74,60 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Sync state if preselectedDoctor changes or when modal opens
+  useEffect(() => {
+    if (preselectedDoctor) {
+      setSelectedDoctorId(String(preselectedDoctor.id));
+      setProviderName(preselectedDoctor.name);
+      setProviderSpecialty(
+        preselectedDoctor.specialty ||
+          (isMale ? 'Endocrinology & Men’s Health Specialist' : 'Specialist Gynecologist')
+      );
+      setSelectedCareCircleId('');
+      setSelectMode(`doc-${preselectedDoctor.id}`);
+    } else if (canonicalDoctors.length > 0 && !providerName) {
+      const firstDoc = canonicalDoctors[0];
+      setSelectedDoctorId(String(firstDoc.id));
+      setProviderName(firstDoc.name);
+      setProviderSpecialty(
+        firstDoc.specialty ||
+          (isMale ? 'Endocrinology & Men’s Health Specialist' : 'Specialist Gynecologist')
+      );
+      setSelectMode(`doc-${firstDoc.id}`);
+    }
+  }, [preselectedDoctor, canonicalDoctors, isMale]);
+
   if (!isOpen) return null;
 
-  const handleProviderSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleProviderSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
-    if (val === 'custom') {
+    setSelectMode(val);
+
+    if (val.startsWith('doc-')) {
+      const docId = Number(val.replace('doc-', ''));
+      const doc = canonicalDoctors.find((d) => d.id === docId);
+      if (doc) {
+        setSelectedDoctorId(String(doc.id));
+        setProviderName(doc.name);
+        setProviderSpecialty(
+          doc.specialty || (isMale ? 'Endocrinologist / Urologist' : 'Specialist Gynecologist')
+        );
+        setSelectedCareCircleId('');
+      }
+    } else if (val.startsWith('care-')) {
+      const memberId = val.replace('care-', '');
+      const member = careDoctors.find((m) => m.id === memberId);
+      if (member) {
+        setSelectedDoctorId('');
+        setSelectedCareCircleId(member.id);
+        setProviderName(member.name);
+        setProviderSpecialty(member.relationship || 'Care Circle Doctor');
+      }
+    } else if (val === 'custom') {
+      setSelectedDoctorId('');
       setSelectedCareCircleId('');
       setProviderName('');
       setProviderSpecialty('Healthcare Professional');
-    } else {
-      const doc = doctors.find((d) => d.id === val);
-      if (doc) {
-        setSelectedCareCircleId(doc.id);
-        setProviderName(doc.name);
-        setProviderSpecialty(doc.relationship || (isMale ? 'Endocrinologist / Urologist' : 'Specialist Gynecologist'));
-      }
     }
   };
 
@@ -104,24 +157,26 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
     setIsSubmitting(true);
     try {
       const res = await onBook({
-        providerName,
-        providerSpecialty,
+        providerId: selectedDoctorId || undefined,
+        providerName: providerName.trim(),
+        providerSpecialty: providerSpecialty?.trim(),
         careCircleMemberId: selectedCareCircleId || undefined,
-        title,
+        title: title.trim(),
         appointmentType,
         scheduledDate,
         scheduledTime,
         durationMinutes,
-        location: isOnline ? 'Online Video Consultation' : location,
+        location: isOnline ? 'Online Video Consultation' : location.trim(),
         meetingUrl: isOnline ? meetingUrl : undefined,
-        reason,
-        patientNotes,
+        reason: reason.trim(),
+        patientNotes: patientNotes.trim(),
+        bookingSource: sourceContext || (preselectedDoctor ? 'doctor_profile' : 'dashboard_appointments'),
       });
 
       if (res.success) {
         onClose();
       } else {
-        setErrorMsg(res.error || 'Failed to book appointment.');
+        setErrorMsg(res.error || 'Failed to request appointment.');
       }
     } catch (err: any) {
       setErrorMsg(err?.message || 'Unexpected booking error.');
@@ -129,6 +184,13 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
       setIsSubmitting(false);
     }
   };
+
+  const pathwayDoctors = canonicalDoctors.filter(
+    (d) => d.pathway === (isMale ? 'male_hypogonadism' : 'female_pcos') || d.pathway === 'both'
+  );
+  const otherDoctors = canonicalDoctors.filter(
+    (d) => isMale ? d.pathway === 'female_pcos' : d.pathway === 'male_hypogonadism'
+  );
 
   return (
     <AnimatePresence>
@@ -153,10 +215,10 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
               <Calendar className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
               <div>
                 <h2 className="text-lg font-bold font-display text-[#0F172A]">
-                  Book an Appointment
+                  Request an Appointment
                 </h2>
                 <p className="text-xs text-[#64748B]">
-                  Schedule your consultation and link it with your Care Circle
+                  Schedule a clinical consultation with BioPulse specialists or care circle
                 </p>
               </div>
             </div>
@@ -182,41 +244,65 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
             {/* Provider Selection */}
             <div className="space-y-1.5">
               <label className="font-bold text-[#0F172A] block">
-                Healthcare Provider
+                Healthcare Specialist / Provider
               </label>
-              {doctors.length > 0 ? (
-                <div className="space-y-2">
-                  <select
-                    value={selectedCareCircleId || (providerName === defaultDoctor ? doctors[0].id : 'custom')}
-                    onChange={handleProviderSelect}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-xs text-[#0F172A] focus:ring-2 focus:ring-[#0288D1]/30 focus:border-[#0288D1]"
-                  >
-                    {doctors.map((d) => (
-                      <option key={d.id} value={d.id}>
-                        {d.name} ({d.relationship || 'Care Circle Doctor'})
+
+              <select
+                value={selectMode}
+                onChange={handleProviderSelectChange}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-xs text-[#0F172A] focus:ring-2 focus:ring-[#0288D1]/30 focus:border-[#0288D1]"
+              >
+                {pathwayDoctors.length > 0 && (
+                  <optgroup label={isMale ? 'Specialists for Male Hormonal Health' : 'Specialists for PCOS Care'}>
+                    {pathwayDoctors.map((d) => (
+                      <option key={d.id} value={`doc-${d.id}`}>
+                        {d.name} — {d.specialty}
                       </option>
                     ))}
-                    <option value="custom">+ Other / External Provider</option>
-                  </select>
+                  </optgroup>
+                )}
 
-                  {!selectedCareCircleId && (
-                    <input
-                      type="text"
-                      value={providerName}
-                      onChange={(e) => setProviderName(e.target.value)}
-                      placeholder="Doctor or Clinic Name"
-                      className="w-full px-3.5 py-2 rounded-xl border border-[#E2E8F0] text-xs text-[#0F172A] focus:outline-none focus:border-[#0288D1]"
-                    />
-                  )}
+                {otherDoctors.length > 0 && (
+                  <optgroup label="Other BioPulse Specialists">
+                    {otherDoctors.map((d) => (
+                      <option key={d.id} value={`doc-${d.id}`}>
+                        {d.name} — {d.specialty}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+
+                {careDoctors.length > 0 && (
+                  <optgroup label="Your Care Circle">
+                    {careDoctors.map((d) => (
+                      <option key={d.id} value={`care-${d.id}`}>
+                        {d.name} ({d.relationship || 'Doctor'})
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+
+                <option value="custom">+ Other / External Provider</option>
+              </select>
+
+              {selectMode === 'custom' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1.5">
+                  <input
+                    type="text"
+                    required
+                    value={providerName}
+                    onChange={(e) => setProviderName(e.target.value)}
+                    placeholder="Doctor Name (e.g. Dr. A. Khan)"
+                    className="w-full px-3.5 py-2 rounded-xl border border-[#E2E8F0] text-xs text-[#0F172A] focus:outline-none focus:border-[#0288D1]"
+                  />
+                  <input
+                    type="text"
+                    value={providerSpecialty}
+                    onChange={(e) => setProviderSpecialty(e.target.value)}
+                    placeholder="Specialty (e.g. Endocrinologist)"
+                    className="w-full px-3.5 py-2 rounded-xl border border-[#E2E8F0] text-xs text-[#0F172A] focus:outline-none focus:border-[#0288D1]"
+                  />
                 </div>
-              ) : (
-                <input
-                  type="text"
-                  value={providerName}
-                  onChange={(e) => setProviderName(e.target.value)}
-                  placeholder="e.g. Dr. Sarah Malik"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] text-xs text-[#0F172A] focus:ring-2 focus:ring-[#0288D1]/30 focus:border-[#0288D1]"
-                />
               )}
             </div>
 
@@ -382,7 +468,7 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
                 className="px-5 py-2.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white font-bold shadow-xs transition-all disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
               >
                 <Plus className="w-4 h-4 shrink-0" aria-hidden="true" />
-                <span>{isSubmitting ? 'Booking...' : 'Confirm Appointment'}</span>
+                <span>{isSubmitting ? 'Requesting Appointment...' : 'Request Appointment'}</span>
               </button>
             </div>
           </form>

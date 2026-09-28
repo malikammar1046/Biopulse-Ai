@@ -1,0 +1,31 @@
+{
+  "pdf_name": "fct",
+  "page_num": 68,
+  "img_path": "Meal/data/raw/rendered_pages/fct_page_068.png",
+  "boxes": [
+    {
+      "text": "BIBLIOGRAPHY",
+      "confidence": 0.9000858802061814,
+      "box": [
+        [
+          595.0,
+          574.0
+        ],
+        [
+          1025.0,
+          577.0
+        ],
+        [
+          1024.0,
+          624.0
+        ],
+        [
+          594.0,
+          621.0
+        ]
+      ],
+      "x_center": 809.5,
+      "y_center": 599.0
+    }
+  ]
+}

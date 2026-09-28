@@ -4,6 +4,8 @@ import type { AppointmentItem } from '../../types/appointment';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { resolvePathway } from '../../types/onboarding';
 
+import { useNavigate } from 'react-router-dom';
+
 interface UpcomingAppointmentCardProps {
   appointment: AppointmentItem | null;
   onPrepare: (appointment: AppointmentItem) => void;
@@ -17,6 +19,7 @@ export const UpcomingAppointmentCard: React.FC<UpcomingAppointmentCardProps> = (
   onViewDetails,
   onBookNew,
 }) => {
+  const navigate = useNavigate();
   const { userProfile } = useUserHealth();
   const pathway = resolvePathway(userProfile.gender, userProfile.pathway);
   const isMale = pathway === 'male';
@@ -29,20 +32,30 @@ export const UpcomingAppointmentCard: React.FC<UpcomingAppointmentCardProps> = (
         </div>
         <div className="max-w-md mx-auto space-y-1">
           <h3 className="text-lg font-bold font-display text-[#0F172A]">
-            No Upcoming Visits Scheduled
+            No upcoming appointments
           </h3>
           <p className="text-xs text-[#475569]">
-            Plan your next consultation, lab review, or routine health check-up and generate a personalized health brief.
+            When you're ready, you can explore specialists relevant to your BioPulse pathway.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onBookNew}
-          className="px-5 py-2.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white font-semibold text-xs shadow-xs transition-all cursor-pointer inline-flex items-center gap-1.5 active:scale-[0.98]"
-        >
-          <Calendar className="w-3.5 h-3.5" aria-hidden="true" />
-          <span>Book an Appointment</span>
-        </button>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-1">
+          <button
+            type="button"
+            onClick={onBookNew}
+            className="px-5 py-2.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white font-semibold text-xs shadow-xs transition-all cursor-pointer inline-flex items-center gap-1.5 active:scale-[0.98]"
+          >
+            <Calendar className="w-3.5 h-3.5" aria-hidden="true" />
+            <span>Request an Appointment</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate(`/doctors?pathway=${isMale ? 'male_hypogonadism' : 'female_pcos'}`)}
+            className="px-5 py-2.5 rounded-xl bg-white border border-[#BAE6FD] hover:bg-[#F0F9FF] text-[#0288D1] font-semibold text-xs shadow-xs transition-all cursor-pointer inline-flex items-center gap-1.5 active:scale-[0.98]"
+          >
+            <MedicalCircle className="w-3.5 h-3.5" aria-hidden="true" />
+            <span>Find Relevant Specialists</span>
+          </button>
+        </div>
       </div>
     );
   }

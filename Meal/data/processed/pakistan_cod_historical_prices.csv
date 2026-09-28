@@ -1,0 +1,20 @@
+price_id,food_name,food_group,historical_price,price_unit,price_year,province,urban_rural,source_document,pdf_page,printed_page,source_table_or_appendix
+PK_COD_001,Atta / Wheat flour,Cereals,42.5,per kg,2016,Punjab,Combined,"Minimum Cost of the Diet (CoD), Pakistan",34,28,Annex 3 Market Survey Food List
+PK_COD_002,Atta / Wheat flour,Cereals,44.0,per kg,2016,Sindh,Combined,"Minimum Cost of the Diet (CoD), Pakistan",34,28,Annex 3 Market Survey Food List
+PK_COD_003,Atta / Wheat flour,Cereals,45.5,per kg,2016,KPK,Rural,"Minimum Cost of the Diet (CoD), Pakistan",34,28,Annex 3 Market Survey Food List
+PK_COD_004,Atta / Wheat flour,Cereals,46.0,per kg,2016,Balochistan,Rural,"Minimum Cost of the Diet (CoD), Pakistan",34,28,Annex 3 Market Survey Food List
+PK_COD_005,Rice Basmati,Cereals,85.0,per kg,2016,Punjab,Urban,"Minimum Cost of the Diet (CoD), Pakistan",34,28,Annex 3 Market Survey Food List
+PK_COD_006,Rice Irri / Coarse,Cereals,48.0,per kg,2016,Sindh,Rural,"Minimum Cost of the Diet (CoD), Pakistan",34,28,Annex 3 Market Survey Food List
+PK_COD_007,Daal Masoor (Red Lentil),Legumes,148.0,per kg,2016,National,,"Minimum Cost of the Diet (CoD), Pakistan",35,29,Annex 3 Market Survey Food List
+PK_COD_008,Daal Moong (Green Gram),Legumes,152.0,per kg,2016,National,,"Minimum Cost of the Diet (CoD), Pakistan",35,29,Annex 3 Market Survey Food List
+PK_COD_009,Daal Chana (Gram split),Legumes,120.0,per kg,2016,Punjab,Combined,"Minimum Cost of the Diet (CoD), Pakistan",35,29,Annex 3 Market Survey Food List
+PK_COD_010,Potatoes (Alu),Vegetables,32.0,per kg,2016,Punjab,Combined,"Minimum Cost of the Diet (CoD), Pakistan",35,29,Annex 3 Market Survey Food List
+PK_COD_011,Onions (Piaz),Vegetables,38.0,per kg,2016,National,,"Minimum Cost of the Diet (CoD), Pakistan",35,29,Annex 3 Market Survey Food List
+PK_COD_012,Tomatoes (Tamater),Vegetables,45.0,per kg,2016,National,,"Minimum Cost of the Diet (CoD), Pakistan",35,29,Annex 3 Market Survey Food List
+PK_COD_013,Spinach (Palak),Vegetables,25.0,per kg,2016,Punjab,Rural,"Minimum Cost of the Diet (CoD), Pakistan",35,29,Annex 3 Market Survey Food List
+PK_COD_014,Fresh Milk (Cow/Buffalo),Dairy,75.0,per liter,2016,Punjab,Combined,"Minimum Cost of the Diet (CoD), Pakistan",36,30,Annex 3 Market Survey Food List
+PK_COD_015,Eggs (Farm),Poultry,92.0,per dozen,2016,National,,"Minimum Cost of the Diet (CoD), Pakistan",36,30,Annex 3 Market Survey Food List
+PK_COD_016,Chicken (Broiler),Meat & Poultry,165.0,per kg,2016,Punjab,Urban,"Minimum Cost of the Diet (CoD), Pakistan",36,30,Annex 3 Market Survey Food List
+PK_COD_017,Beef (with bone),Meat,320.0,per kg,2016,National,,"Minimum Cost of the Diet (CoD), Pakistan",36,30,Annex 3 Market Survey Food List
+PK_COD_018,Mutton,Meat,620.0,per kg,2016,National,,"Minimum Cost of the Diet (CoD), Pakistan",36,30,Annex 3 Market Survey Food List
+PK_COD_019,Cooking Oil / Ghee,Fats and Oils,155.0,per kg,2016,National,,"Minimum Cost of the Diet (CoD), Pakistan",36,30,Annex 3 Market Survey Food List

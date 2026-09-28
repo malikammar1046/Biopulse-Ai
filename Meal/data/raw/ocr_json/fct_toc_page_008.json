@@ -1,0 +1,1111 @@
+{
+  "pdf_name": "fct_toc",
+  "page_num": 8,
+  "img_path": "Meal/data/raw/rendered_pages/fct_toc_page_008.png",
+  "boxes": [
+    {
+      "text": "INTRODUCTION",
+      "confidence": 0.8484928195293133,
+      "box": [
+        [
+          56.0,
+          104.0
+        ],
+        [
+          362.0,
+          102.0
+        ],
+        [
+          363.0,
+          133.0
+        ],
+        [
+          56.0,
+          136.0
+        ]
+      ],
+      "x_center": 209.25,
+      "y_center": 118.75
+    },
+    {
+      "text": "Food is a major component of man's environment.",
+      "confidence": 0.8928896325329939,
+      "box": [
+        [
+          107.0,
+          197.0
+        ],
+        [
+          680.0,
+          194.0
+        ],
+        [
+          680.0,
+          220.0
+        ],
+        [
+          107.0,
+          223.0
+        ]
+      ],
+      "x_center": 393.5,
+      "y_center": 208.5
+    },
+    {
+      "text": "academic institutions and dieticians in the country used",
+      "confidence": 0.9375383121925488,
+      "box": [
+        [
+          753.0,
+          195.0
+        ],
+        [
+          1380.0,
+          195.0
+        ],
+        [
+          1380.0,
+          221.0
+        ],
+        [
+          753.0,
+          221.0
+        ]
+      ],
+      "x_center": 1066.5,
+      "y_center": 208.0
+    },
+    {
+      "text": "Man has used food primarily to satisfy his hunger but",
+      "confidence": 0.9378103956028268,
+      "box": [
+        [
+          54.0,
+          230.0
+        ],
+        [
+          682.0,
+          229.0
+        ],
+        [
+          682.0,
+          255.0
+        ],
+        [
+          54.0,
+          256.0
+        ]
+      ],
+      "x_center": 368.0,
+      "y_center": 242.5
+    },
+    {
+      "text": "this table. Because of the high demand for this fable, it was",
+      "confidence": 0.9233194243523383,
+      "box": [
+        [
+          752.0,
+          227.0
+        ],
+        [
+          1379.0,
+          228.0
+        ],
+        [
+          1379.0,
+          254.0
+        ],
+        [
+          752.0,
+          253.0
+        ]
+      ],
+      "x_center": 1065.5,
+      "y_center": 240.5
+    },
+    {
+      "text": "satisfaction of hunger is not a safe criteria for sustaining a",
+      "confidence": 0.894297297511782,
+      "box": [
+        [
+          53.0,
+          261.0
+        ],
+        [
+          682.0,
+          261.0
+        ],
+        [
+          682.0,
+          290.0
+        ],
+        [
+          53.0,
+          290.0
+        ]
+      ],
+      "x_center": 367.5,
+      "y_center": 275.5
+    },
+    {
+      "text": "necessary to reprint it in 1991. As many changes in the food",
+      "confidence": 0.9251071136505877,
+      "box": [
+        [
+          752.0,
+          262.0
+        ],
+        [
+          1379.0,
+          262.0
+        ],
+        [
+          1379.0,
+          288.0
+        ],
+        [
+          752.0,
+          288.0
+        ]
+      ],
+      "x_center": 1065.5,
+      "y_center": 275.0
+    },
+    {
+      "text": "healthy and active life. It is now established that for",
+      "confidence": 0.9181188504610743,
+      "box": [
+        [
+          54.0,
+          296.0
+        ],
+        [
+          684.0,
+          292.0
+        ],
+        [
+          684.0,
+          321.0
+        ],
+        [
+          54.0,
+          325.0
+        ]
+      ],
+      "x_center": 369.0,
+      "y_center": 308.5
+    },
+    {
+      "text": "habit have occurred in the last fifteen years and latest",
+      "confidence": 0.9122603169658727,
+      "box": [
+        [
+          750.0,
+          294.0
+        ],
+        [
+          1380.0,
+          296.0
+        ],
+        [
+          1380.0,
+          322.0
+        ],
+        [
+          750.0,
+          320.0
+        ]
+      ],
+      "x_center": 1065.0,
+      "y_center": 308.0
+    },
+    {
+      "text": "keeping a good health, an individual needs to eat a diet",
+      "confidence": 0.9235449015048512,
+      "box": [
+        [
+          55.0,
+          330.0
+        ],
+        [
+          683.0,
+          324.0
+        ],
+        [
+          683.0,
+          353.0
+        ],
+        [
+          55.0,
+          359.0
+        ]
+      ],
+      "x_center": 369.0,
+      "y_center": 341.5
+    },
+    {
+      "text": "analytical instruments have become available which has.",
+      "confidence": 0.9417646527290344,
+      "box": [
+        [
+          753.0,
+          329.0
+        ],
+        [
+          1379.0,
+          328.0
+        ],
+        [
+          1379.0,
+          352.0
+        ],
+        [
+          753.0,
+          353.0
+        ]
+      ],
+      "x_center": 1066.0,
+      "y_center": 340.5
+    },
+    {
+      "text": "which is balanced in terms of quantity and quality. The",
+      "confidence": 0.8840658451829638,
+      "box": [
+        [
+          57.0,
+          362.0
+        ],
+        [
+          681.0,
+          362.0
+        ],
+        [
+          681.0,
+          389.0
+        ],
+        [
+          57.0,
+          389.0
+        ]
+      ],
+      "x_center": 369.0,
+      "y_center": 375.5
+    },
+    {
+      "text": "resulted in the production of more analytical data on foods,",
+      "confidence": 0.9242157437762276,
+      "box": [
+        [
+          753.0,
+          363.0
+        ],
+        [
+          1379.0,
+          363.0
+        ],
+        [
+          1379.0,
+          387.0
+        ],
+        [
+          753.0,
+          387.0
+        ]
+      ],
+      "x_center": 1066.0,
+      "y_center": 375.0
+    },
+    {
+      "text": "quality of food refers to the nutrients presents in the food",
+      "confidence": 0.9508212795023059,
+      "box": [
+        [
+          56.0,
+          397.0
+        ],
+        [
+          683.0,
+          390.0
+        ],
+        [
+          683.0,
+          421.0
+        ],
+        [
+          56.0,
+          427.0
+        ]
+      ],
+      "x_center": 369.5,
+      "y_center": 408.75
+    },
+    {
+      "text": "it was considered necessary to revise the food composition",
+      "confidence": 0.9086951522503869,
+      "box": [
+        [
+          751.0,
+          396.0
+        ],
+        [
+          1379.0,
+          396.0
+        ],
+        [
+          1379.0,
+          422.0
+        ],
+        [
+          751.0,
+          422.0
+        ]
+      ],
+      "x_center": 1065.0,
+      "y_center": 409.0
+    },
+    {
+      "text": "and data on what is actually in food has been important for",
+      "confidence": 0.916925719877084,
+      "box": [
+        [
+          55.0,
+          430.0
+        ],
+        [
+          681.0,
+          427.0
+        ],
+        [
+          681.0,
+          453.0
+        ],
+        [
+          55.0,
+          456.0
+        ]
+      ],
+      "x_center": 368.0,
+      "y_center": 441.5
+    },
+    {
+      "text": "table for Pakistan. Because of the importance of",
+      "confidence": 0.916387291587129,
+      "box": [
+        [
+          751.0,
+          427.0
+        ],
+        [
+          1380.0,
+          428.0
+        ],
+        [
+          1380.0,
+          454.0
+        ],
+        [
+          751.0,
+          453.0
+        ]
+      ],
+      "x_center": 1065.5,
+      "y_center": 440.5
+    },
+    {
+      "text": "keeping an individual healthy. Since the composition of",
+      "confidence": 0.9094919690064022,
+      "box": [
+        [
+          54.0,
+          462.0
+        ],
+        [
+          683.0,
+          458.0
+        ],
+        [
+          683.0,
+          487.0
+        ],
+        [
+          54.0,
+          491.0
+        ]
+      ],
+      "x_center": 368.5,
+      "y_center": 474.5
+    },
+    {
+      "text": "micronutrients in the well being of humans, a number of",
+      "confidence": 0.9354508785264832,
+      "box": [
+        [
+          747.0,
+          460.0
+        ],
+        [
+          1380.0,
+          461.0
+        ],
+        [
+          1380.0,
+          488.0
+        ],
+        [
+          747.0,
+          487.0
+        ]
+      ],
+      "x_center": 1063.5,
+      "y_center": 474.0
+    },
+    {
+      "text": "food has become immensely important to issues of human",
+      "confidence": 0.9315083037723194,
+      "box": [
+        [
+          53.0,
+          495.0
+        ],
+        [
+          681.0,
+          494.0
+        ],
+        [
+          681.0,
+          520.0
+        ],
+        [
+          53.0,
+          521.0
+        ]
+      ],
+      "x_center": 367.0,
+      "y_center": 507.5
+    },
+    {
+      "text": "micronutrients like zinc, iodine, vitamin-A, B-carotene as",
+      "confidence": 0.937160350508609,
+      "box": [
+        [
+          752.0,
+          494.0
+        ],
+        [
+          1378.0,
+          497.0
+        ],
+        [
+          1378.0,
+          520.0
+        ],
+        [
+          752.0,
+          517.0
+        ]
+      ],
+      "x_center": 1065.0,
+      "y_center": 507.0
+    },
+    {
+      "text": "health, food consumption surveys, meal planning, food",
+      "confidence": 0.9324195727154061,
+      "box": [
+        [
+          53.0,
+          528.0
+        ],
+        [
+          683.0,
+          527.0
+        ],
+        [
+          683.0,
+          554.0
+        ],
+        [
+          53.0,
+          555.0
+        ]
+      ],
+      "x_center": 368.0,
+      "y_center": 541.0
+    },
+    {
+      "text": "well, as cholesterol have been included in this food",
+      "confidence": 0.9025031980478538,
+      "box": [
+        [
+          753.0,
+          528.0
+        ],
+        [
+          1378.0,
+          528.0
+        ],
+        [
+          1378.0,
+          551.0
+        ],
+        [
+          753.0,
+          551.0
+        ]
+      ],
+      "x_center": 1065.5,
+      "y_center": 539.5
+    },
+    {
+      "text": "processing, health assessment, dietary counseling,",
+      "confidence": 0.9278996750420215,
+      "box": [
+        [
+          52.0,
+          559.0
+        ],
+        [
+          680.0,
+          556.0
+        ],
+        [
+          680.0,
+          589.0
+        ],
+        [
+          52.0,
+          592.0
+        ]
+      ],
+      "x_center": 366.0,
+      "y_center": 574.0
+    },
+    {
+      "text": "composition table.",
+      "confidence": 0.902798404819087,
+      "box": [
+        [
+          751.0,
+          562.0
+        ],
+        [
+          950.0,
+          560.0
+        ],
+        [
+          950.0,
+          583.0
+        ],
+        [
+          751.0,
+          585.0
+        ]
+      ],
+      "x_center": 850.5,
+      "y_center": 572.5
+    },
+    {
+      "text": "epidemiological research, food safety, food assistance,",
+      "confidence": 0.9318669438362122,
+      "box": [
+        [
+          54.0,
+          593.0
+        ],
+        [
+          681.0,
+          590.0
+        ],
+        [
+          681.0,
+          620.0
+        ],
+        [
+          54.0,
+          623.0
+        ]
+      ],
+      "x_center": 367.5,
+      "y_center": 606.5
+    },
+    {
+      "text": "We have also given recipes and nutrient data of the",
+      "confidence": 0.9239387741455665,
+      "box": [
+        [
+          802.0,
+          616.0
+        ],
+        [
+          1379.0,
+          617.0
+        ],
+        [
+          1379.0,
+          645.0
+        ],
+        [
+          802.0,
+          643.0
+        ]
+      ],
+      "x_center": 1090.5,
+      "y_center": 630.25
+    },
+    {
+      "text": "national and international trade in food and consumers'",
+      "confidence": 0.9296390350375857,
+      "box": [
+        [
+          54.0,
+          627.0
+        ],
+        [
+          680.0,
+          624.0
+        ],
+        [
+          680.0,
+          650.0
+        ],
+        [
+          54.0,
+          654.0
+        ]
+      ],
+      "x_center": 367.0,
+      "y_center": 638.75
+    },
+    {
+      "text": "dema'nd for selecting food consistent with healthy diet, a",
+      "confidence": 0.9057197995105032,
+      "box": [
+        [
+          55.0,
+          660.0
+        ],
+        [
+          680.0,
+          660.0
+        ],
+        [
+          680.0,
+          686.0
+        ],
+        [
+          55.0,
+          686.0
+        ]
+      ],
+      "x_center": 367.5,
+      "y_center": 673.0
+    },
+    {
+      "text": "weaning and supplementary food mixes prepared from",
+      "confidence": 0.9270240325553745,
+      "box": [
+        [
+          750.0,
+          651.0
+        ],
+        [
+          1376.0,
+          651.0
+        ],
+        [
+          1376.0,
+          677.0
+        ],
+        [
+          750.0,
+          677.0
+        ]
+      ],
+      "x_center": 1063.0,
+      "y_center": 664.0
+    },
+    {
+      "text": "number of countries have developed food composition",
+      "confidence": 0.9189907438479937,
+      "box": [
+        [
+          55.0,
+          694.0
+        ],
+        [
+          678.0,
+          694.0
+        ],
+        [
+          678.0,
+          717.0
+        ],
+        [
+          55.0,
+          717.0
+        ]
+      ],
+      "x_center": 366.5,
+      "y_center": 705.5
+    },
+    {
+      "text": "Iocally available foodstuffs for infants and children of the",
+      "confidence": 0.9531441369994742,
+      "box": [
+        [
+          752.0,
+          686.0
+        ],
+        [
+          1376.0,
+          686.0
+        ],
+        [
+          1376.0,
+          709.0
+        ],
+        [
+          752.0,
+          709.0
+        ]
+      ],
+      "x_center": 1064.0,
+      "y_center": 697.5
+    },
+    {
+      "text": "low-income families. Besides we have also determined the",
+      "confidence": 0.9187752573113692,
+      "box": [
+        [
+          752.0,
+          718.0
+        ],
+        [
+          1375.0,
+          718.0
+        ],
+        [
+          1375.0,
+          741.0
+        ],
+        [
+          752.0,
+          741.0
+        ]
+      ],
+      "x_center": 1063.5,
+      "y_center": 729.5
+    },
+    {
+      "text": "tables containing the analytical data on the nutrients in",
+      "confidence": 0.9454125032342714,
+      "box": [
+        [
+          54.0,
+          728.0
+        ],
+        [
+          680.0,
+          724.0
+        ],
+        [
+          680.0,
+          750.0
+        ],
+        [
+          54.0,
+          754.0
+        ]
+      ],
+      "x_center": 367.0,
+      "y_center": 739.0
+    },
+    {
+      "text": "foods consumed in those countries. As various cultural and",
+      "confidence": 0.9196199350437876,
+      "box": [
+        [
+          54.0,
+          760.0
+        ],
+        [
+          679.0,
+          758.0
+        ],
+        [
+          679.0,
+          782.0
+        ],
+        [
+          54.0,
+          784.0
+        ]
+      ],
+      "x_center": 366.5,
+      "y_center": 771.0
+    },
+    {
+      "text": "nutrient composition of seventeen (17) 'popular traditional",
+      "confidence": 0.8974679658810297,
+      "box": [
+        [
+          752.0,
+          751.0
+        ],
+        [
+          1376.0,
+          751.0
+        ],
+        [
+          1376.0,
+          777.0
+        ],
+        [
+          752.0,
+          777.0
+        ]
+      ],
+      "x_center": 1064.0,
+      "y_center": 764.0
+    },
+    {
+      "text": "dishes commonly consumed in Pakistan.",
+      "confidence": 0.9021405436490711,
+      "box": [
+        [
+          752.0,
+          782.0
+        ],
+        [
+          1188.0,
+          783.0
+        ],
+        [
+          1187.0,
+          809.0
+        ],
+        [
+          752.0,
+          808.0
+        ]
+      ],
+      "x_center": 969.75,
+      "y_center": 795.5
+    },
+    {
+      "text": "economic factors are involved. in selection of foods,",
+      "confidence": 0.8922522531615363,
+      "box": [
+        [
+          54.0,
+          792.0
+        ],
+        [
+          682.0,
+          790.0
+        ],
+        [
+          682.0,
+          816.0
+        ],
+        [
+          54.0,
+          818.0
+        ]
+      ],
+      "x_center": 368.0,
+      "y_center": 804.0
+    },
+    {
+      "text": "therefore food composition tables also vary from country to",
+      "confidence": 0.9318274060885111,
+      "box": [
+        [
+          55.0,
+          825.0
+        ],
+        [
+          679.0,
+          825.0
+        ],
+        [
+          679.0,
+          851.0
+        ],
+        [
+          55.0,
+          851.0
+        ]
+      ],
+      "x_center": 367.0,
+      "y_center": 838.0
+    },
+    {
+      "text": "country.",
+      "confidence": 0.8189083668920729,
+      "box": [
+        [
+          54.0,
+          860.0
+        ],
+        [
+          145.0,
+          860.0
+        ],
+        [
+          145.0,
+          888.0
+        ],
+        [
+          54.0,
+          888.0
+        ]
+      ],
+      "x_center": 99.5,
+      "y_center": 874.0
+    },
+    {
+      "text": "Since independence different organizations of the",
+      "confidence": 0.947368791103363,
+      "box": [
+        [
+          105.0,
+          916.0
+        ],
+        [
+          679.0,
+          914.0
+        ],
+        [
+          679.0,
+          941.0
+        ],
+        [
+          105.0,
+          943.0
+        ]
+      ],
+      "x_center": 392.0,
+      "y_center": 928.5
+    },
+    {
+      "text": "country were usinig food composition tables of USA or",
+      "confidence": 0.9080070908422824,
+      "box": [
+        [
+          53.0,
+          952.0
+        ],
+        [
+          679.0,
+          948.0
+        ],
+        [
+          679.0,
+          974.0
+        ],
+        [
+          53.0,
+          978.0
+        ]
+      ],
+      "x_center": 366.0,
+      "y_center": 963.0
+    },
+    {
+      "text": "FAO. In 1985, we developed a food composition table for",
+      "confidence": 0.9228662859116282,
+      "box": [
+        [
+          53.0,
+          980.0
+        ],
+        [
+          679.0,
+          981.0
+        ],
+        [
+          679.0,
+          1010.0
+        ],
+        [
+          53.0,
+          1009.0
+        ]
+      ],
+      "x_center": 366.0,
+      "y_center": 995.0
+    },
+    {
+      "text": "Pakistan in which we presented the nutrient content of",
+      "confidence": 0.9099234472621571,
+      "box": [
+        [
+          53.0,
+          1015.0
+        ],
+        [
+          680.0,
+          1015.0
+        ],
+        [
+          680.0,
+          1044.0
+        ],
+        [
+          53.0,
+          1044.0
+        ]
+      ],
+      "x_center": 366.5,
+      "y_center": 1029.5
+    },
+    {
+      "text": "various foods available in Pakistan. The personals in",
+      "confidence": 0.9560894491495909,
+      "box": [
+        [
+          50.0,
+          1049.0
+        ],
+        [
+          678.0,
+          1048.0
+        ],
+        [
+          678.0,
+          1074.0
+        ],
+        [
+          50.0,
+          1075.0
+        ]
+      ],
+      "x_center": 364.0,
+      "y_center": 1061.5
+    },
+    {
+      "text": "health and agriculture, faculties and 'students in the",
+      "confidence": 0.922833421013572,
+      "box": [
+        [
+          52.0,
+          1082.0
+        ],
+        [
+          680.0,
+          1081.0
+        ],
+        [
+          680.0,
+          1108.0
+        ],
+        [
+          52.0,
+          1109.0
+        ]
+      ],
+      "x_center": 366.0,
+      "y_center": 1095.0
+    }
+  ]
+}

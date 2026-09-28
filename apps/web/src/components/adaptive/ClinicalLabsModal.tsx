@@ -1,22 +1,25 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import {
-  Beaker01,
-  XClose,
-  AlertCircle,
-  CheckCircle,
-  Loading01,
-  InfoCircle,
-  Trash01,
-  Upload01,
-  RefreshCw01,
   Check,
-  FileCheck02,
+  CheckCircle,
+  AlertCircle,
+  Loading01,
+  Trash01,
+  RefreshCw01,
+  Beaker01,
 } from '@untitledui/icons';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { ocrService } from '../../services/ocrService';
 import type { ReportResultInput } from '../../types/report';
 import { parseNumericValue } from '../../utils/reportCalculations';
+import {
+  ClinicalModalLayout,
+  ClinicalSection,
+  ClinicalField,
+  EntryMethodSelector,
+  ReportUploadZone,
+} from './ClinicalModalPrimitives';
 
 interface ClinicalLabsModalProps {
   isOpen: boolean;
@@ -39,24 +42,24 @@ export const FIELD_CONFIGS: FieldConfig[] = [
   { key: 'fsh', label: 'FSH', unit: 'mIU/mL', min: 0, max: 200, step: '0.01', category: 'hormonal' },
   { key: 'lh', label: 'LH', unit: 'mIU/mL', min: 0, max: 200, step: '0.01', category: 'hormonal' },
   { key: 'amh', label: 'AMH', unit: 'ng/mL', min: 0, max: 100, step: '0.01', category: 'hormonal' },
-  { key: 'tsh', label: 'TSH', unit: 'mIU/L', min: 0, max: 100, step: '0.01', category: 'hormonal' },
   { key: 'prolactin', label: 'Prolactin (PRL)', unit: 'ng/mL', min: 0, max: 500, step: '0.01', category: 'hormonal' },
+  { key: 'tsh', label: 'TSH', unit: 'mIU/L', min: 0, max: 100, step: '0.01', category: 'hormonal' },
   { key: 'progesterone', label: 'Progesterone (PRG)', unit: 'ng/mL', min: 0, max: 100, step: '0.01', category: 'hormonal' },
   // Metabolic & Blood
-  { key: 'vitamin_d3', label: 'Vitamin D3', unit: 'ng/mL', min: 0, max: 250, step: '0.01', category: 'metabolic' },
   { key: 'rbs', label: 'RBS (Random Glucose)', unit: 'mg/dL', min: 20, max: 600, step: '0.1', category: 'metabolic' },
+  { key: 'vitamin_d3', label: 'Vitamin D3', unit: 'ng/mL', min: 0, max: 250, step: '0.01', category: 'metabolic' },
   { key: 'hemoglobin', label: 'Hemoglobin', unit: 'g/dL', min: 2, max: 25, step: '0.1', category: 'metabolic' },
   { key: 'beta_hcg_i', label: 'Beta HCG I', unit: 'mIU/mL', min: 0, max: 1000000, step: '0.01', category: 'metabolic' },
   { key: 'beta_hcg_ii', label: 'Beta HCG II', unit: 'mIU/mL', min: 0, max: 1000000, step: '0.01', category: 'metabolic' },
   // Vitals
-  { key: 'pulse_rate_bpm', label: 'Pulse Rate', unit: 'bpm', min: 30, max: 240, step: '1', category: 'vitals' },
-  { key: 'respiratory_rate', label: 'Respiratory Rate', unit: 'breaths/min', min: 6, max: 60, step: '1', category: 'vitals' },
   { key: 'bp_systolic', label: 'BP Systolic', unit: 'mmHg', min: 50, max: 260, step: '1', category: 'vitals' },
   { key: 'bp_diastolic', label: 'BP Diastolic', unit: 'mmHg', min: 30, max: 160, step: '1', category: 'vitals' },
+  { key: 'pulse_rate_bpm', label: 'Pulse Rate', unit: 'bpm', min: 30, max: 240, step: '1', category: 'vitals' },
+  { key: 'respiratory_rate', label: 'Respiratory Rate', unit: 'breaths/min', min: 6, max: 60, step: '1', category: 'vitals' },
 ];
 
 /**
- * Standard medically plausible sample / mock measurements for quick 1-click testing.
+ * Standard sample measurements for development testing only (gated behind DEV).
  */
 export const SAMPLE_MOCK_DATA: Record<string, string> = {
   fsh: '6.5',
@@ -242,35 +245,44 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
 }) => {
   const { activeAssessment, submitTier2, clearTier2, fetchClinicalState } = useUserHealth();
 
-  // Form state
+  // Workflow entry mode: 'manual' vs 'upload'
+  const [entryMode, setEntryMode] = useState<'manual' | 'upload'>('manual');
+
+  // Form values & tracking
   const [formValues, setFormValues] = useState<Record<string, string>>({});
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [removedFields, setRemovedFields] = useState<string[]>([]);
   const [ocrExtractedFields, setOcrExtractedFields] = useState<string[]>([]);
-  const [entryMode, setEntryMode] = useState<'manual' | 'mock'>('manual');
-  const [showConfirmClear, setShowConfirmClear] = useState(false);
-  const [clearingTier2, setClearingTier2] = useState(false);
 
-  // OCR Upload / Processing state
+  // OCR state
   const [isScanningReport, setIsScanningReport] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
   const [ocrBanner, setOcrBanner] = useState<{
     type: 'success' | 'warning' | 'info';
     message: string;
   } | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Clear Tier 2 confirmation
+  const [showConfirmClear, setShowConfirmClear] = useState(false);
+  const [clearingTier2, setClearingTier2] = useState(false);
 
   // Async submission state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // Prepopulate form when modal opens from authoritative clinical state
+  const isDev = Boolean(import.meta.env.DEV);
+
+  // Hydrate authoritative existing values when modal opens
   useEffect(() => {
     if (!isOpen) return;
 
     let isMounted = true;
     const hydrateState = async () => {
-      let savedInputs = activeAssessment?.tier_2_inputs || (activeAssessment as any)?.authoritative_tier_2_inputs || activeAssessment?.input_features || {};
+      let savedInputs =
+        activeAssessment?.tier_2_inputs ||
+        (activeAssessment as any)?.authoritative_tier_2_inputs ||
+        activeAssessment?.input_features ||
+        {};
 
       try {
         if (fetchClinicalState) {
@@ -296,6 +308,7 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
       });
 
       setFormValues(initial);
+      setFieldErrors({});
       setRemovedFields([]);
       setOcrExtractedFields([]);
       setOcrBanner(null);
@@ -314,68 +327,74 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
 
   if (!isOpen) return null;
 
+  // Handle single field change with calm inline validation
   const handleFieldChange = (key: string, val: string) => {
     setFormValues((prev) => ({ ...prev, [key]: val }));
-    // If user types a value in a field that was marked for removal, unmark it
+
+    // Unmark removal if user types a value
     if (val.trim() !== '') {
       setRemovedFields((prev) => prev.filter((f) => f !== key));
     }
+
+    // Inline validation check
+    const cfg = FIELD_CONFIGS.find((f) => f.key === key);
+    if (!cfg) return;
+
+    const trimmed = val.trim();
+    if (trimmed === '') {
+      setFieldErrors((prev) => {
+        const copy = { ...prev };
+        delete copy[key];
+        return copy;
+      });
+      return;
+    }
+
+    const num = parseFloat(trimmed);
+    if (isNaN(num)) {
+      setFieldErrors((prev) => ({ ...prev, [key]: 'Enter a valid numeric result.' }));
+    } else if (num < cfg.min || num > cfg.max) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        [key]: `Result must be between ${cfg.min} and ${cfg.max} ${cfg.unit}.`,
+      }));
+    } else {
+      setFieldErrors((prev) => {
+        const copy = { ...prev };
+        delete copy[key];
+        return copy;
+      });
+    }
   };
 
+  // Clear single field
   const handleClearField = (key: string) => {
     setFormValues((prev) => ({ ...prev, [key]: '' }));
     setOcrExtractedFields((prev) => prev.filter((k) => k !== key));
+    setFieldErrors((prev) => {
+      const copy = { ...prev };
+      delete copy[key];
+      return copy;
+    });
+
     const savedInputs = activeAssessment?.tier_2_inputs || activeAssessment?.input_features || {};
     if (savedInputs[key] !== undefined && savedInputs[key] !== null) {
       setRemovedFields((prev) => (prev.includes(key) ? prev : [...prev, key]));
     }
   };
 
-  const handleFillMockData = () => {
+  // Development only: fill sample values
+  const handleDevFillMock = () => {
     setFormValues({ ...SAMPLE_MOCK_DATA });
+    setFieldErrors({});
     setRemovedFields([]);
-    setEntryMode('mock');
     setOcrBanner({
       type: 'info',
-      message: 'Populated all 15 biomarker cells with realistic mock clinical lab measurements.',
+      message: 'Populated sample lab measurements for development verification.',
     });
   };
 
-  const handleClearAll = () => {
-    const cleared: Record<string, string> = {};
-    const allPreviouslySaved = Object.keys(
-      activeAssessment?.tier_2_inputs || activeAssessment?.input_features || {}
-    ).filter((k) => FIELD_CONFIGS.some((cfg) => cfg.key === k));
-
-    FIELD_CONFIGS.forEach((cfg) => {
-      cleared[cfg.key] = '';
-    });
-
-    setFormValues(cleared);
-    setRemovedFields(allPreviouslySaved);
-    setOcrExtractedFields([]);
-    setEntryMode('manual');
-    setOcrBanner(null);
-  };
-
-  const handleToggleEntryMode = (newMode: 'manual' | 'mock') => {
-    setEntryMode(newMode);
-    if (newMode === 'mock') {
-      handleFillMockData();
-    } else {
-      // Revert to initial activeAssessment saved inputs or clear
-      const savedInputs = activeAssessment?.tier_2_inputs || activeAssessment?.input_features || {};
-      const restored: Record<string, string> = {};
-      FIELD_CONFIGS.forEach((cfg) => {
-        const val = savedInputs[cfg.key];
-        restored[cfg.key] = val !== undefined && val !== null ? String(val) : '';
-      });
-      setFormValues(restored);
-      setOcrExtractedFields([]);
-      setOcrBanner(null);
-    }
-  };
-
+  // Process OCR lab report
   const handleProcessReportFile = async (file: File) => {
     if (!file) return;
     setIsScanningReport(true);
@@ -384,7 +403,7 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
 
     try {
       const extracted = await ocrService.extractReportData(file, 'hormone_test');
-      const { mapped, count } = mapOcrResultsToTier2(extracted.extractedResults);
+      const { mapped, count } = mapOcrResultsToTier2(extracted.extractedResults || []);
 
       if (count > 0) {
         setFormValues((prev) => ({ ...prev, ...mapped }));
@@ -392,60 +411,43 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
         setOcrExtractedFields((prev) => Array.from(new Set([...prev, ...newlyExtractedKeys])));
         setRemovedFields((prev) => prev.filter((f) => !newlyExtractedKeys.includes(f)));
 
+        // Automatically hand off to manual review of extracted values
+        setEntryMode('manual');
         setOcrBanner({
           type: 'success',
-          message: `Extracted ${count} biomarker measurement(s) from "${file.name}" via OCR. You can review or refine any values below before submitting.`,
+          message: `Extracted ${count} result${count > 1 ? 's' : ''} from "${file.name}". You can review or adjust values below before saving.`,
         });
       } else {
+        setEntryMode('manual');
         setOcrBanner({
           type: 'warning',
-          message: `Scanned "${file.name}", but no recognized Tier 2 biomarkers were found. You can enter measurements manually or fill mock data.`,
+          message: `No recognized PCOS laboratory biomarkers found in "${file.name}". You can type values manually below.`,
         });
       }
     } catch (err: any) {
       console.error('OCR report extraction failed:', err);
+      setEntryMode('manual');
       setOcrBanner({
         type: 'warning',
-        message: 'Could not automatically scan this document. You can still input your lab values manually.',
+        message: 'Could not automatically scan this document. You can input your lab values manually.',
       });
     } finally {
       setIsScanningReport(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
     }
   };
 
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleProcessReportFile(file);
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      handleProcessReportFile(file);
-    }
-  };
-
+  // Count populated fields
   const countEnteredFields = () => {
     return FIELD_CONFIGS.filter((cfg) => formValues[cfg.key]?.trim() !== '').length;
   };
 
+  const countCategoryAdded = (category: 'hormonal' | 'metabolic' | 'vitals') => {
+    return FIELD_CONFIGS.filter(
+      (cfg) => cfg.category === category && formValues[cfg.key]?.trim() !== ''
+    ).length;
+  };
+
+  // Submit Handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -453,6 +455,7 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
 
     try {
       const payload: Record<string, any> = {};
+      const errors: Record<string, string> = {};
       let enteredCount = 0;
 
       for (const cfg of FIELD_CONFIGS) {
@@ -460,30 +463,31 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
         if (rawStr !== undefined && rawStr !== '') {
           const num = parseFloat(rawStr);
           if (isNaN(num)) {
-            throw new Error(`Invalid measurement for ${cfg.label}: please enter a valid number.`);
+            errors[cfg.key] = 'Enter a valid numeric result.';
+          } else if (num < cfg.min || num > cfg.max) {
+            errors[cfg.key] = `Must be between ${cfg.min} and ${cfg.max} ${cfg.unit}.`;
+          } else {
+            payload[cfg.key] = num;
+            enteredCount++;
           }
-          if (num < cfg.min || num > cfg.max) {
-            const unitText = cfg.unit ? ` ${cfg.unit}` : '';
-            throw new Error(
-              `${cfg.label} (${num}${unitText}) is outside medically plausible range (${cfg.min}–${cfg.max}${unitText}).`
-            );
-          }
-          payload[cfg.key] = num;
-          enteredCount++;
         }
+      }
+
+      if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors);
+        throw new Error('Please resolve highlighted measurement errors before saving.');
       }
 
       if (removedFields.length > 0) {
         payload.remove_fields = removedFields;
       }
 
-      // Check if user has at least 1 field entered (or existing unremoved fields)
       const existingRemainingCount = Object.keys(activeAssessment?.tier_2_inputs || {}).filter(
         (k) => !removedFields.includes(k) && !payload[k]
       ).length;
 
       if (enteredCount === 0 && existingRemainingCount === 0) {
-        throw new Error('Please provide at least one clinical or laboratory result to run a Tier 2 assessment.');
+        throw new Error('Please add at least one test result from your lab report before saving.');
       }
 
       await submitTier2(payload);
@@ -492,10 +496,10 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
       setTimeout(() => {
         setSuccess(false);
         onClose();
-      }, 1500);
+      }, 1200);
     } catch (err: any) {
       console.error('Failed to submit clinical labs:', err);
-      setError(err?.message || 'Failed to submit clinical lab data. Please check your inputs.');
+      setError(err?.message || 'Failed to save clinical laboratory data. Please check your inputs.');
     } finally {
       setLoading(false);
     }
@@ -515,371 +519,251 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
     }
   };
 
-  const renderSection = (category: 'hormonal' | 'metabolic' | 'vitals', title: string) => {
-
-    const fields = FIELD_CONFIGS.filter((f) => f.category === category);
-    return (
-      <div className="space-y-3">
-        <h4 className="text-xs font-mono uppercase tracking-wider text-[#A797BD]">
-          {title}
-        </h4>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {fields.map((cfg) => {
-            const val = formValues[cfg.key] || '';
-            const isPopulated = val.trim() !== '';
-            const isOcrExtracted = ocrExtractedFields.includes(cfg.key);
-
-            return (
-              <div key={cfg.key} className="space-y-1 relative group">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 overflow-hidden">
-                    <label className="text-[11px] font-mono text-[#CDBDD8] truncate">
-                      {cfg.label} {cfg.unit ? `(${cfg.unit})` : ''}
-                    </label>
-                    {isOcrExtracted && (
-                      <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 border border-emerald-500/30 text-[9px] font-mono text-emerald-300">
-                        OCR
-                      </span>
-                    )}
-                  </div>
-
-                  {isPopulated && (
-                    <button
-                      type="button"
-                      onClick={() => handleClearField(cfg.key)}
-                      title="Clear / Remove value"
-                      className="text-[10px] text-rose-400 hover:text-rose-300 transition-colors flex items-center gap-0.5 cursor-pointer shrink-0"
-                    >
-                      <Trash01 className="w-2.5 h-2.5" aria-hidden="true" />
-                      <span>Clear</span>
-                    </button>
-                  )}
-                </div>
-                <div className="relative">
-                  <input
-                    type="number"
-                    step={cfg.step || 'any'}
-                    value={val}
-                    placeholder="Not available"
-                    onChange={(e) => handleFieldChange(cfg.key, e.target.value)}
-                    className={`w-full px-3.5 py-2 rounded-xl bg-white/10 border text-xs font-mono focus:outline-none transition-colors ${
-                      isOcrExtracted
-                        ? 'border-emerald-400/60 bg-emerald-500/15 text-white font-semibold'
-                        : isPopulated
-                        ? 'border-[#BAE6FD] text-white font-semibold'
-                        : 'border-white/20 text-white placeholder:text-white/40 focus:border-[#BAE6FD]'
-                    }`}
-                  />
-                  {isPopulated && (
-                    <span
-                      className={`absolute right-2.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full ${
-                        isOcrExtracted ? 'bg-emerald-300' : 'bg-[#BAE6FD]'
-                      }`}
-                    />
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
   const enteredCount = countEnteredFields();
+  const hormonalCount = countCategoryAdded('hormonal');
+  const metabolicCount = countCategoryAdded('metabolic');
+  const vitalsCount = countCategoryAdded('vitals');
+
+  const hasExistingSavedData = Boolean(
+    (activeAssessment?.tier_2_inputs && Object.keys(activeAssessment.tier_2_inputs).length > 0) ||
+      ((activeAssessment as any)?.authoritative_tier_2_inputs &&
+        Object.keys((activeAssessment as any).authoritative_tier_2_inputs).length > 0)
+  );
 
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
-        <motion.div
-          initial={{ scale: 0.95, opacity: 0, y: 10 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.95, opacity: 0, y: 10 }}
-          className="relative max-w-2xl w-full my-8 p-6 sm:p-8 rounded-[32px] bg-[#01579B] border border-[#BAE6FD] text-white shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header */}
-          <div className="flex items-start justify-between gap-4 border-b border-white/15 pb-4">
-            <div className="space-y-1">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 border border-white/25 text-xs font-mono text-white">
-                <Beaker01 className="w-3.5 h-3.5 text-[#BAE6FD]" aria-hidden="true" />
-                <span>Tier 2 Clinical Biomarkers</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-bold font-display text-white">
-                Add Clinical & Laboratory Data
-              </h2>
-              <p className="text-xs text-sky-100 font-sans">
-                You can provide only the tests you currently have, auto-extract them from an uploaded lab report, or fill mock data.
-              </p>
-            </div>
+    <ClinicalModalLayout
+      isOpen={isOpen}
+      onClose={onClose}
+      badgeText="Tier 2"
+      title="Add Clinical & Laboratory Data"
+      description="Add the test results you currently have. You don't need to complete every field. You can return and add more later."
+      accentColor="pink"
+      isSubmitting={loading}
+      submitButtonText={loading ? 'Saving Results...' : 'Save Results →'}
+      submitDisabled={enteredCount === 0 && !hasExistingSavedData}
+      onSubmit={handleSubmit}
+      footerLeft={
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-xs text-slate-500 font-medium">
+            {enteredCount > 0 ? (
+              <span className="text-pink-700 font-semibold">
+                {enteredCount} result{enteredCount > 1 ? 's' : ''} added
+              </span>
+            ) : (
+              'No results entered yet'
+            )}
+          </span>
 
+          {/* Development mock data button */}
+          {isDev && (
             <button
               type="button"
-              onClick={onClose}
-              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-colors cursor-pointer"
-              aria-label="Close modal"
+              onClick={handleDevFillMock}
+              className="px-2.5 py-1 text-[11px] font-mono text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+              title="Development only: Quick fill sample values"
             >
-              <XClose className="w-5 h-5" aria-hidden="true" />
+              <Beaker01 className="w-3 h-3 text-[#F43F7D]" aria-hidden="true" />
+              <span>Fill Sample Values (Dev)</span>
             </button>
-          </div>
-
-          {/* Quick Actions Toolbar: Mock / Manual Toggle + Upload OCR */}
-          <div className="p-4 rounded-2xl bg-white/10 border border-white/15 space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              {/* Mode Toggle */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-mono text-sky-100">Input Mode:</span>
-                <div className="inline-flex p-1 rounded-xl bg-black/20 border border-white/15 text-xs font-mono">
-                  <button
-                    type="button"
-                    onClick={() => handleToggleEntryMode('manual')}
-                    className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                      entryMode === 'manual'
-                        ? 'bg-white text-[#01579B] font-bold shadow-xs'
-                        : 'text-white/70 hover:text-white'
-                    }`}
-                  >
-                    Manual Entry
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleToggleEntryMode('mock')}
-                    className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
-                      entryMode === 'mock'
-                        ? 'bg-white text-[#01579B] font-bold shadow-xs'
-                        : 'text-white/70 hover:text-white'
-                    }`}
-                  >
-                    <Beaker01 className="w-3 h-3 text-[#0288D1]" aria-hidden="true" />
-                    <span>Mock / Sample Data</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Quick Fill / Clear Buttons */}
-              <div className="flex items-center gap-2">
-                {entryMode === 'manual' && (
-                  <button
-                    type="button"
-                    onClick={handleFillMockData}
-                    className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-mono text-sky-100 hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Beaker01 className="w-3.5 h-3.5 text-[#BAE6FD]" aria-hidden="true" />
-                    <span>Fill Sample Values</span>
-                  </button>
-                )}
-
-                {enteredCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={handleClearAll}
-                    className="px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/30 text-xs font-mono text-rose-100 transition-colors flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <RefreshCw01 className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>Clear All</span>
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Upload & Auto-Extract OCR Dropzone */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,image/png,image/jpeg,image/jpg,image/webp"
-              onChange={handleFileInputChange}
-              className="hidden"
-            />
-
-            <div
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              onClick={() => !isScanningReport && fileInputRef.current?.click()}
-              className={`p-3.5 rounded-xl border border-dashed transition-all cursor-pointer flex flex-col sm:flex-row items-center justify-between gap-3 ${
-                isDragging
-                  ? 'border-white bg-white/20'
-                  : 'border-white/30 bg-black/20 hover:border-white/50 hover:bg-white/10'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-white/15 border border-white/25 text-white shrink-0">
-                  {isScanningReport ? (
-                    <Loading01 className="w-5 h-5 animate-spin text-[#BAE6FD]" aria-hidden="true" />
-                  ) : (
-                    <Upload01 className="w-5 h-5 text-[#BAE6FD]" aria-hidden="true" />
-                  )}
-                </div>
-                <div>
-                  <div className="text-xs font-bold font-sans text-white flex items-center gap-2">
-                    <span>Upload Lab Report (OCR Auto-Extract)</span>
-                    <span className="px-1.5 py-0.5 rounded bg-white/15 text-[10px] font-mono text-white">
-                      PDF or Image
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-sky-100 font-sans">
-                    {isScanningReport
-                      ? 'Extracting hormonal & metabolic biomarkers with OCR...'
-                      : 'Drop your test report here or click to auto-populate biomarker cells'}
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                disabled={isScanningReport}
-                className="px-3.5 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-xs font-mono text-white transition-colors shrink-0 flex items-center gap-1.5"
-              >
-                {isScanningReport ? (
-                  <>
-                    <Loading01 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
-                    <span>Scanning...</span>
-                  </>
-                ) : (
-                  <>
-                    <FileCheck02 className="w-3.5 h-3.5 text-[#BAE6FD]" aria-hidden="true" />
-                    <span>Select Report</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* OCR / Status Banners */}
-          {ocrBanner && (
-            <motion.div
-              initial={{ opacity: 0, y: -5 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`p-3.5 rounded-2xl text-xs flex items-center gap-2.5 border ${
-                ocrBanner.type === 'success'
-                  ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-100'
-                  : ocrBanner.type === 'info'
-                  ? 'bg-white/15 border-white/25 text-white'
-                  : 'bg-amber-500/20 border-amber-400/40 text-amber-100'
-              }`}
-            >
-              {ocrBanner.type === 'success' ? (
-                <Check className="w-4 h-4 text-emerald-300 shrink-0" aria-hidden="true" />
-              ) : (
-                <InfoCircle className="w-4 h-4 text-[#BAE6FD] shrink-0" aria-hidden="true" />
-              )}
-              <span className="flex-1">{ocrBanner.message}</span>
-              <button
-                type="button"
-                onClick={() => setOcrBanner(null)}
-                className="text-white/70 hover:text-white text-[11px] cursor-pointer"
-              >
-                Dismiss
-              </button>
-            </motion.div>
           )}
 
-          {/* Cumulative Model Notice & Partial Indicator */}
-          <div className="p-3.5 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-between gap-3 text-xs text-sky-100">
-            <div className="flex items-center gap-2.5">
-              <InfoCircle className="w-4 h-4 text-[#BAE6FD] shrink-0" aria-hidden="true" />
-              <span>
-                Enter at least 1 test to upgrade your assessment. You can always add more results later.
-              </span>
-            </div>
-            <span className="px-2.5 py-1 rounded-lg bg-white/15 text-[11px] font-mono text-white shrink-0">
-              {enteredCount} / {FIELD_CONFIGS.length} tests
-            </span>
-          </div>
-
-          {error && (
-            <div className="p-3.5 rounded-2xl bg-rose-500/20 border border-rose-400/40 text-rose-100 text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0 text-rose-300" aria-hidden="true" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {success && (
-            <div className="p-3.5 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-100 text-xs flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 shrink-0 text-emerald-300" aria-hidden="true" />
-              <span>Clinical lab data processed! Your active assessment has been upgraded.</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {renderSection('hormonal', 'Hormonal Panel')}
-            {renderSection('metabolic', 'Metabolic & Micronutrient Biomarkers')}
-            {renderSection('vitals', 'Clinical Vitals')}
-
-            {/* Form Actions */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-white/15">
-              <div className="flex items-center gap-2 flex-wrap">
-                {showConfirmClear ? (
-                  <div className="flex items-center gap-2 p-1.5 rounded-xl bg-rose-500/20 border border-rose-400/30">
-                    <span className="text-[11px] text-rose-200">Revert to Tier 1?</span>
-                    <button
-                      type="button"
-                      onClick={handleConfirmClearTier2}
-                      disabled={clearingTier2}
-                      className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold transition-colors cursor-pointer flex items-center gap-1"
-                    >
-                      {clearingTier2 ? <Loading01 className="w-3 h-3 animate-spin" aria-hidden="true" /> : <Trash01 className="w-3 h-3" aria-hidden="true" />}
-                      <span>Confirm</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmClear(false)}
-                      className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-[11px] transition-colors cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  ((activeAssessment?.tier_2_inputs && Object.keys(activeAssessment.tier_2_inputs).length > 0) ||
-                   ((activeAssessment as any)?.authoritative_tier_2_inputs && Object.keys((activeAssessment as any).authoritative_tier_2_inputs).length > 0)) && (
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmClear(true)}
-                      className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-300 text-xs font-sans flex items-center gap-1.5 transition-colors cursor-pointer"
-                      title="Explicitly remove all stored Tier 2 laboratory data and revert to Tier 1 screening"
-                    >
-                      <Trash01 className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>Clear Tier 2 Data</span>
-                    </button>
-                  )
-                )}
-                <span className="text-[11px] font-mono text-sky-200">
-                  {enteredCount > 0 ? `${enteredCount} measurement(s) ready` : 'No measurements entered'}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3">
+          {/* Revert / Clear Tier 2 Data */}
+          {hasExistingSavedData && (
+            showConfirmClear ? (
+              <div className="flex items-center gap-2 p-1.5 rounded-xl bg-rose-50 border border-rose-200">
+                <span className="text-[11px] text-rose-700 font-medium">Revert to Tier 1?</span>
                 <button
                   type="button"
-                  onClick={onClose}
-                  disabled={loading || clearingTier2}
-                  className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-sans text-white transition-colors cursor-pointer"
+                  onClick={handleConfirmClearTier2}
+                  disabled={clearingTier2}
+                  className="px-2 py-0.5 rounded-md bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-medium transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  {clearingTier2 ? <Loading01 className="w-3 h-3 animate-spin" aria-hidden="true" /> : null}
+                  <span>Confirm</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmClear(false)}
+                  className="px-2 py-0.5 rounded-md text-slate-600 hover:text-slate-900 text-[11px] transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  disabled={loading || clearingTier2}
-                  className="px-6 py-2.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold font-sans transition-all flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
-                >
-                  {loading ? (
-                    <>
-                      <Loading01 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                      <span>Evaluating Cumulative Model...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Beaker01 className="w-4 h-4" aria-hidden="true" />
-                      <span>{enteredCount > 0 ? 'Submit & Run Cumulative Tier 2' : 'Submit Clinical Data'}</span>
-                    </>
-                  )}
-                </button>
               </div>
-            </div>
-
-          </form>
-        </motion.div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowConfirmClear(true)}
+                className="text-[11px] text-slate-400 hover:text-rose-600 flex items-center gap-1 transition-colors cursor-pointer"
+                title="Remove previously saved Tier 2 results and revert to Tier 1"
+              >
+                <Trash01 className="w-3 h-3" aria-hidden="true" />
+                <span>Clear Stored Labs</span>
+              </button>
+            )
+          )}
+        </div>
+      }
+    >
+      {/* Informative Guidance */}
+      <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs text-slate-600 leading-relaxed">
+        <span className="font-semibold text-slate-900">Partial data is normal: </span>
+        Add only the tests available on your lab report. Your previously saved results are preserved when adding new ones.
       </div>
-    </AnimatePresence>
+
+      {/* Choice of Entry Method: OCR vs Manual */}
+      <EntryMethodSelector
+        mode={entryMode}
+        onSelectMode={(mode) => {
+          setEntryMode(mode);
+          setOcrBanner(null);
+        }}
+        accentColor="pink"
+      />
+
+      {/* OCR Upload View */}
+      {entryMode === 'upload' && (
+        <div className="space-y-4">
+          <ReportUploadZone
+            isScanning={isScanningReport}
+            onFileSelect={handleProcessReportFile}
+            accentColor="pink"
+            formatDescription="PDF, JPG or PNG • Max 15MB"
+          />
+        </div>
+      )}
+
+      {/* OCR Status Banner */}
+      {ocrBanner && (
+        <motion.div
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`p-3.5 rounded-2xl text-xs flex items-center justify-between gap-3 border ${
+            ocrBanner.type === 'success'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+              : ocrBanner.type === 'info'
+              ? 'bg-sky-50 border-sky-200 text-sky-800'
+              : 'bg-amber-50 border-amber-200 text-amber-800'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            {ocrBanner.type === 'success' ? (
+              <Check className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
+            ) : (
+              <RefreshCw01 className="w-4 h-4 text-amber-600 shrink-0" aria-hidden="true" />
+            )}
+            <span>{ocrBanner.message}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setOcrBanner(null)}
+            className="text-[11px] underline opacity-70 hover:opacity-100 cursor-pointer shrink-0"
+          >
+            Dismiss
+          </button>
+        </motion.div>
+      )}
+
+      {/* Error & Success Messages */}
+      {error && (
+        <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" aria-hidden="true" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {success && (
+        <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
+          <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600" aria-hidden="true" />
+          <span>Clinical results updated! Recalculating your assessment.</span>
+        </div>
+      )}
+
+      {/* Form Fields: Progressive Disclosure in 2-Column Sections */}
+      <div className="space-y-4">
+        {/* Section 1: Hormone Tests (Always open) */}
+        <ClinicalSection
+          title="Hormone Tests"
+          description="Core reproductive hormones used in your PCOS screening assessment."
+          addedCount={hormonalCount}
+          collapsible={false}
+          defaultExpanded={true}
+          accentColor="pink"
+        >
+          {FIELD_CONFIGS.filter((f) => f.category === 'hormonal').map((cfg) => (
+            <ClinicalField
+              key={cfg.key}
+              id={cfg.key}
+              label={cfg.label}
+              unit={cfg.unit}
+              value={formValues[cfg.key] || ''}
+              min={cfg.min}
+              max={cfg.max}
+              step={cfg.step}
+              isOcrExtracted={ocrExtractedFields.includes(cfg.key)}
+              accentColor="pink"
+              onChange={(val) => handleFieldChange(cfg.key, val)}
+              onClear={() => handleClearField(cfg.key)}
+              errorMessage={fieldErrors[cfg.key]}
+            />
+          ))}
+        </ClinicalSection>
+
+        {/* Section 2: Metabolic & Blood Tests (Collapsible) */}
+        <ClinicalSection
+          title="Metabolic & Blood Chemistry"
+          description="Glycemic and nutritional biomarkers that influence hormonal balance."
+          addedCount={metabolicCount}
+          collapsible={true}
+          defaultExpanded={metabolicCount > 0}
+          accentColor="pink"
+        >
+          {FIELD_CONFIGS.filter((f) => f.category === 'metabolic').map((cfg) => (
+            <ClinicalField
+              key={cfg.key}
+              id={cfg.key}
+              label={cfg.label}
+              unit={cfg.unit}
+              value={formValues[cfg.key] || ''}
+              min={cfg.min}
+              max={cfg.max}
+              step={cfg.step}
+              isOcrExtracted={ocrExtractedFields.includes(cfg.key)}
+              accentColor="pink"
+              onChange={(val) => handleFieldChange(cfg.key, val)}
+              onClear={() => handleClearField(cfg.key)}
+              errorMessage={fieldErrors[cfg.key]}
+            />
+          ))}
+        </ClinicalSection>
+
+        {/* Section 3: Physical Vitals (Collapsible) */}
+        <ClinicalSection
+          title="Clinical Vitals"
+          description="Resting blood pressure and physiological baseline vitals."
+          addedCount={vitalsCount}
+          collapsible={true}
+          defaultExpanded={vitalsCount > 0}
+          accentColor="pink"
+        >
+          {FIELD_CONFIGS.filter((f) => f.category === 'vitals').map((cfg) => (
+            <ClinicalField
+              key={cfg.key}
+              id={cfg.key}
+              label={cfg.label}
+              unit={cfg.unit}
+              value={formValues[cfg.key] || ''}
+              min={cfg.min}
+              max={cfg.max}
+              step={cfg.step}
+              isOcrExtracted={ocrExtractedFields.includes(cfg.key)}
+              accentColor="pink"
+              onChange={(val) => handleFieldChange(cfg.key, val)}
+              onClear={() => handleClearField(cfg.key)}
+              errorMessage={fieldErrors[cfg.key]}
+            />
+          ))}
+        </ClinicalSection>
+      </div>
+    </ClinicalModalLayout>
   );
 };

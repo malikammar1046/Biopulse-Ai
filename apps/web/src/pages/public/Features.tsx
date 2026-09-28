@@ -14,7 +14,6 @@ import {
   Sparkles,
   ArrowRight,
   ShieldCheck,
-  Users,
 } from 'lucide-react';
 import { Container } from '../../components/ui/Container';
 import { Button } from '../../components/ui/Button';
@@ -151,24 +150,6 @@ export const Features: React.FC = () => {
         'Strict non-diagnostic guardrails — never prescribes treatments or alters medications',
       ],
     },
-    {
-      id: 'care-circle',
-      num: '09',
-      title: 'Care Circle Ecosystem',
-      subtitle: 'Zero-compromise consent & clinician-family sharing',
-      icon: Users,
-      accent: '#0284C7',
-      bg: 'bg-sky-50',
-      tag: 'Care Network',
-      desc: 'Health journeys shouldn’t be walked alone. Securely invite your treating physician, reproductive endocrinologist, or trusted loved ones to view your longitudinal summaries on your exact terms, with granular permissions and instant access revocation.',
-      bullets: [
-        'Weekly doctor brief synthesis tailored for rapid clinical consultations',
-        'Custom view permissions: separate clinical data from sensitive personal logs',
-        'Instant one-click revocation: you always retain 100% patient ownership',
-      ],
-      link: ROUTES.CARE_CIRCLE,
-      linkLabel: 'Explore Care Circle Platform',
-    },
   ];
 
   return (
@@ -296,18 +277,6 @@ export const Features: React.FC = () => {
                         <span className="leading-snug">{b}</span>
                       </div>
                     ))}
-
-                    {pillar.link && (
-                      <div className="pt-2">
-                        <Link
-                          to={pillar.link}
-                          className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0284C7] hover:text-[#0369A1] transition-colors"
-                        >
-                          <span>{pillar.linkLabel || 'Learn more'}</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </Link>
-                      </div>
-                    )}
                   </div>
                 </motion.div>
               );

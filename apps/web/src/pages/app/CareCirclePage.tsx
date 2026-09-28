@@ -62,54 +62,46 @@ export const CareCirclePage: React.FC = () => {
       className="max-w-6xl mx-auto space-y-6 sm:space-y-8 text-left select-none pb-16"
     >
       {/* ── 1. HERO & OWNERSHIP BANNER ── */}
-      <div className="relative p-6 sm:p-10 rounded-2xl bg-[#01579B] text-white shadow-md border border-[#BAE6FD] overflow-hidden">
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-3 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-xs font-mono font-bold text-[#BAE6FD]">
-              <ShieldTick className="w-3.5 h-3.5 text-[#BAE6FD]" aria-hidden="true" />
+      <div className="rounded-2xl bg-white border border-[#EAECF0] p-5 sm:p-6 shadow-xs select-none">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+          <div className="space-y-2.5 max-w-2xl text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F0F9FF] text-xs font-mono font-semibold text-[#0288D1] border border-[#BAE6FD]">
+              <ShieldTick className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
               <span>Zero-Compromise Patient Consent</span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold font-display text-white tracking-tight">
-              My Care Circle
-            </h1>
-
-            <p className="text-xs sm:text-sm text-[#E0F2FE] font-sans leading-relaxed">
-              Choose who can support you and control what they can see. People you trust can support your health journey — with your permission.
-            </p>
-
             {/* Quick Stat Badges */}
-            <div className="flex flex-wrap items-center gap-3 pt-2">
-              <div className="px-3.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-xs font-mono text-white">
-                <span className="text-[#BAE6FD] font-bold">{activeMembers.length}</span> Active Connections
+            <div className="flex flex-wrap items-center gap-2.5">
+              <div className="px-3 py-1.5 rounded-xl bg-[#F8FAFC] border border-[#EAECF0] text-xs font-mono text-[#0F172A]">
+                <span className="text-[#0288D1] font-bold">{activeMembers.length}</span> Active Connections
               </div>
-              <div className="px-3.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-xs font-mono text-white">
-                <span className="text-[#FCD34D] font-bold">{careCircleInvitations.length || pendingMembers.length}</span> Pending
+              <div className="px-3 py-1.5 rounded-xl bg-[#F8FAFC] border border-[#EAECF0] text-xs font-mono text-[#0F172A]">
+                <span className="text-[#F79009] font-bold">{careCircleInvitations.length || pendingMembers.length}</span> Pending
               </div>
-              <div className="px-3.5 py-1.5 rounded-xl bg-white/10 border border-white/15 text-xs font-mono text-[#6EE7B7] flex items-center gap-1.5">
-                <Lock01 className="w-3 h-3 text-[#6EE7B7]" aria-hidden="true" />
+              <div className="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-mono text-emerald-700 flex items-center gap-1.5 font-medium">
+                <Lock01 className="w-3 h-3 text-emerald-600" aria-hidden="true" />
                 <span>Instant Revocation Enabled</span>
               </div>
             </div>
           </div>
 
           {/* Quick Action Button Group */}
-          <div className="flex flex-col sm:flex-row lg:flex-col gap-3 shrink-0">
+          <div className="flex items-center gap-3 shrink-0 flex-wrap">
             <button
               type="button"
               onClick={() => handleOpenAddModal('doctor')}
-              className="px-5 py-3 rounded-xl font-sans font-semibold text-xs sm:text-sm text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="px-4 py-2.5 rounded-xl font-sans font-semibold text-xs sm:text-sm text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
             >
-              <MedicalCircle className="w-4 h-4 text-[#BAE6FD]" aria-hidden="true" />
+              <MedicalCircle className="w-4 h-4 text-white" aria-hidden="true" />
               <span>Add Doctor / Clinician</span>
             </button>
 
             <button
               type="button"
               onClick={() => handleOpenAddModal('family')}
-              className="px-5 py-3 rounded-xl font-sans font-semibold text-xs sm:text-sm text-[#01579B] bg-white hover:bg-[#F0F9FF] shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="px-4 py-2.5 rounded-xl font-sans font-semibold text-xs sm:text-sm text-[#344054] bg-[#FAFAFC] hover:bg-[#F2F4F7] border border-[#EAECF0] shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
             >
-              <Heart className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
+              <Heart className="w-4 h-4 text-[#F43F7D]" aria-hidden="true" />
               <span>Add Family Member</span>
             </button>
           </div>

@@ -27,7 +27,6 @@ import {
   Calendar,
   Settings01,
   User01,
-  Users01,
   Shield01,
   LogOut01,
 
@@ -78,7 +77,6 @@ export const dashboardIcons = {
   appointments: CalendarCheck01,
   medications: MedicalCross,
   cycle: Calendar,
-  careCircle: Users01,
   settings: Settings01,
   profile: User01,
   shield: Shield01,
@@ -135,7 +133,6 @@ export {
   Calendar,
   Settings01,
   User01,
-  Users01,
   Shield01,
   LogOut01,
   ArrowRight,

@@ -5,8 +5,6 @@ import { InfoCircle } from '@untitledui/icons';
 import { ROUTES } from '../../constants/routes';
 import { useUserHealth } from '../../context/UserHealthContext';
 import {
-  FemalePageHeader,
-  FemaleStatusBadge,
   FemaleCard,
   APPLE_SPRINGS,
 } from './FemaleDesignPrimitives';
@@ -14,12 +12,11 @@ import { FemaleScreeningCard } from './FemaleScreeningCard';
 import { FemaleTopFactors } from './FemaleTopFactors';
 import { FemaleNextBestAction } from './FemaleNextBestAction';
 import { FemaleRecentActivity } from './FemaleRecentActivity';
-import { CareCircleCard } from '../dashboard/CareCircleCard';
+import { RecommendedCareCard } from '../dashboard/RecommendedCareCard';
 
 export const FemaleDashboardOverview: React.FC = () => {
   const navigate = useNavigate();
   const {
-    userProfile,
     activeAssessment,
     mlAssessment,
     assessmentLoading,
@@ -28,14 +25,6 @@ export const FemaleDashboardOverview: React.FC = () => {
     appointments,
   } = useUserHealth();
 
-  // 1. Time-aware greeting
-  const greeting = useMemo(() => {
-    const hour = new Date().getHours();
-    const name = userProfile?.fullName?.split(' ')[0] || 'there';
-    if (hour < 12) return `Good morning, ${name}`;
-    if (hour < 17) return `Good afternoon, ${name}`;
-    return `Good evening, ${name}`;
-  }, [userProfile]);
 
   // 2. Authoritative Assessment State
   const hasAssessment = Boolean(
@@ -97,19 +86,6 @@ export const FemaleDashboardOverview: React.FC = () => {
 
   const loading = assessmentLoading || mlAssessmentLoading;
 
-  // Contextual status badge
-  const headerBadge = useMemo(() => {
-    if (!hasAssessment) {
-      return <FemaleStatusBadge variant="neutral">Screening Not Started</FemaleStatusBadge>;
-    }
-    if (assessmentLevel === 'tier_1_2_3') {
-      return <FemaleStatusBadge variant="pink">Tier 3 Multimodal</FemaleStatusBadge>;
-    }
-    if (assessmentLevel === 'tier_1_2') {
-      return <FemaleStatusBadge variant="pink">Tier 2 Clinical Labs</FemaleStatusBadge>;
-    }
-    return <FemaleStatusBadge variant="pink">Tier 1 Initial</FemaleStatusBadge>;
-  }, [hasAssessment, assessmentLevel]);
 
   // Primary action handler
   const handlePrimaryAction = async () => {
@@ -131,14 +107,7 @@ export const FemaleDashboardOverview: React.FC = () => {
       transition={APPLE_SPRINGS.instant}
       className="max-w-6xl mx-auto space-y-6 sm:space-y-7 pb-16 text-left select-none"
     >
-      {/* ── 1. Apple-Style Page Header ──────────────────────────────────────── */}
-      <FemalePageHeader
-        title={greeting}
-        subtitle="Here’s your reproductive health and PCOS screening overview."
-        badge={headerBadge}
-      />
-
-      {/* ── 2. Primary 2-Column Clinical Grid ───────────────────────────────── */}
+      {/* ── Primary 2-Column Clinical Grid ───────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-stretch">
         {/* Left Column (7 cols): Primary Screening Card */}
         <div className="lg:col-span-7 flex flex-col">
@@ -175,7 +144,10 @@ export const FemaleDashboardOverview: React.FC = () => {
         </div>
       </div>
 
-      {/* ── 3. Recent Clinical Activity (Latest Report & Appointment) ───────── */}
+      {/* ── 3. Contextual Recommended Specialists ────────────────────────── */}
+      <RecommendedCareCard pathway="female" />
+
+      {/* ── 4. Recent Clinical Activity (Latest Report & Appointment) ───────── */}
       <div className="space-y-2">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-[#667085] px-1">
           Recent Health Records
@@ -183,26 +155,6 @@ export const FemaleDashboardOverview: React.FC = () => {
         <FemaleRecentActivity
           latestReport={latestReport}
           upcomingAppointment={nextAppointment}
-        />
-      </div>
-
-      {/* ── 4. My Care Circle & Collaborative Support ───────── */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between px-1">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-[#667085]">
-            Care Circle &amp; Consent Management
-          </h3>
-          <button
-            type="button"
-            onClick={() => navigate(ROUTES.APP.CARE_CIRCLE)}
-            className="text-xs font-semibold text-[#F43F7D] hover:text-[#DC326C] transition-colors cursor-pointer"
-          >
-            Manage Care Circle →
-          </button>
-        </div>
-        <CareCircleCard
-          pathway="female"
-          onPrepareAppointment={() => navigate(ROUTES.APP.CARE_CIRCLE)}
         />
       </div>
 

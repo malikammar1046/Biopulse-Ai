@@ -217,21 +217,6 @@ export const Footer: React.FC = () => {
                   </Link>
                 </li>
                 <li>
-                  <Link to={ROUTES.CARE_CIRCLE} className="hover:text-[#0891B2] transition-colors">
-                    Care Circle Ecosystem
-                  </Link>
-                </li>
-                <li>
-                  <Link to={ROUTES.DOCTORS} className="hover:text-[#0891B2] transition-colors">
-                    Doctors Directory
-                  </Link>
-                </li>
-                <li>
-                  <Link to={ROUTES.FEATURES} className="hover:text-[#0891B2] transition-colors">
-                    Resources &amp; Capabilities
-                  </Link>
-                </li>
-                <li>
                   <Link to={ROUTES.CONTACT} className="hover:text-[#0891B2] transition-colors">
                     Contact Support
                   </Link>
@@ -257,17 +242,12 @@ export const Footer: React.FC = () => {
                 </li>
                 <li>
                   <Link to={ROUTES.FEATURES} className="hover:text-[#0891B2] transition-colors">
-                    Clinical Resources &amp; Meal Plans
+                    Pakistani Nutrition Planning
                   </Link>
                 </li>
                 <li>
                   <Link to={ROUTES.HOW_IT_WORKS} className="hover:text-[#0891B2] transition-colors">
                     Cost-Aware Progression
-                  </Link>
-                </li>
-                <li>
-                  <Link to={ROUTES.CARE_CIRCLE} className="hover:text-[#0891B2] transition-colors">
-                    Doctor &amp; Family Sharing
                   </Link>
                 </li>
                 <li>
