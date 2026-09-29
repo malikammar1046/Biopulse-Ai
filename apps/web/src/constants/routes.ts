@@ -15,10 +15,10 @@ export const ROUTES = {
   FOR_DOCTORS: '/for-doctors',
   TRUST_PRIVACY: '/trust-and-privacy',
   FEATURES: '/features',
+  DOCTORS: '/doctors',
   CARE_CIRCLE: '/care-circle',
   CARE_PROVIDER_PORTAL: '/care-provider/:token',
   CONTACT: '/contact',
-  DOCTORS: '/doctors',
 
   // Authentication & Onboarding Routes
   LOGIN: '/login',

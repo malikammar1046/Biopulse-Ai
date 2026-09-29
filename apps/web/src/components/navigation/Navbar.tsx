@@ -5,13 +5,24 @@ import {
   Menu, 
   X, 
   Search, 
+  ChevronDown, 
   Heart, 
-  ArrowRight 
+  Activity, 
+  ArrowRight,
+  type LucideIcon
 } from 'lucide-react';
 import { ROUTES } from '../../constants/routes';
 import { Logo } from '../brand/Logo';
 import { HeaderLeftBotanical, HeaderRightBotanical } from '../brand/BotanicalFoliage';
 import { useAuth } from '../../context/AuthContext';
+
+interface NavDropdownItem {
+  label: string;
+  sublabel: string;
+  path: string;
+  icon: LucideIcon;
+  color?: string;
+}
 
 const SEARCH_SUGGESTIONS = [
   { title: 'PCOS Screening & Guidelines', path: ROUTES.UNDERSTAND_PCOS_CANONICAL, category: 'Women\'s Health' },
@@ -19,9 +30,6 @@ const SEARCH_SUGGESTIONS = [
   { title: 'Pakistani Nutrition & 7-Day Meal Plan', path: ROUTES.FEATURES, category: 'Nutrition' },
   { title: 'Progressive Cost-Aware Screening', path: ROUTES.HOW_IT_WORKS, category: 'Screening' },
   { title: 'Supported Conditions Overview', path: ROUTES.CONDITIONS, category: 'Clinical Pathways' },
-  { title: 'Care Circle & Clinician Sharing', path: ROUTES.CARE_CIRCLE, category: 'Care Network' },
-  { title: 'Doctor Summary & Patient Permissions', path: ROUTES.CARE_CIRCLE, category: 'Privacy & Sharing' },
-  { title: 'Meet Our Doctors & Specialists', path: ROUTES.DOCTORS, category: 'Clinical Team' },
   { title: 'Explainable AI & Feature Importance', path: ROUTES.FEATURES, category: 'Technology' },
   { title: 'Medical Report OCR Support', path: ROUTES.FEATURES, category: 'Features' },
   { title: 'Contact Clinical Support', path: ROUTES.CONTACT, category: 'Support' },
@@ -30,9 +38,10 @@ const SEARCH_SUGGESTIONS = [
 export const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<'education' | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const navRef = useRef<HTMLDivElement>(null);
@@ -48,6 +57,7 @@ export const Navbar: React.FC = () => {
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
+    setActiveDropdown(null);
     setIsSearchOpen(false);
   }, [location.pathname]);
 
@@ -60,13 +70,46 @@ export const Navbar: React.FC = () => {
     }
   }, [isSearchOpen]);
 
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) {
+        setActiveDropdown(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Education Dropdown: Understand PCOS, Understand Male Hypogonadism
+  const understandItems: NavDropdownItem[] = [
+    {
+      label: 'Understand PCOS',
+      sublabel: 'Ovarian biology, metabolic signals & Rotterdam criteria',
+      path: ROUTES.UNDERSTAND_PCOS_CANONICAL,
+      icon: Heart,
+      color: '#E11D48',
+    },
+    {
+      label: 'Understand Male Hypogonadism',
+      sublabel: 'Morning testosterone, HPT axis & endocrine guidelines',
+      path: ROUTES.UNDERSTAND_MALE_HYPOGONADISM,
+      icon: Activity,
+      color: '#0891B2',
+    },
+  ];
+
   const isHomeActive = location.pathname === ROUTES.HOME;
   const isAboutActive = location.pathname === ROUTES.ABOUT;
   const isHowItWorksActive = location.pathname === ROUTES.HOW_IT_WORKS;
-  const isConditionsActive = location.pathname === ROUTES.CONDITIONS;
   const isCareCircleActive = location.pathname === ROUTES.CARE_CIRCLE;
   const isDoctorsActive = location.pathname === ROUTES.DOCTORS;
   const isContactActive = location.pathname === ROUTES.CONTACT;
+  const isEducationActive =
+    location.pathname === ROUTES.UNDERSTAND_PCOS ||
+    location.pathname === ROUTES.UNDERSTAND_PCOS_CANONICAL ||
+    location.pathname === ROUTES.UNDERSTAND_MALE_HYPOGONADISM ||
+    location.pathname === ROUTES.UNDERSTAND_HYPOGONADISM;
 
   const filteredSuggestions = searchQuery.trim() === ''
     ? SEARCH_SUGGESTIONS
@@ -167,23 +210,6 @@ export const Navbar: React.FC = () => {
                 )}
               </Link>
 
-              {/* Conditions */}
-              <Link
-                to={ROUTES.CONDITIONS}
-                className={`relative py-1 transition-colors whitespace-nowrap ${
-                  isConditionsActive ? 'text-[#0891B2] font-bold' : 'text-slate-600 hover:text-[#0891B2]'
-                }`}
-              >
-                Conditions
-                {isConditionsActive && (
-                  <motion.div
-                    layoutId="navbar-active-indicator"
-                    className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-[#0891B2] rounded-full"
-                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                  />
-                )}
-              </Link>
-
               {/* Care Circle */}
               <Link
                 to={ROUTES.CARE_CIRCLE}
@@ -201,7 +227,79 @@ export const Navbar: React.FC = () => {
                 )}
               </Link>
 
-              {/* Doctors */}
+              {/* Education (Dropdown) */}
+              <div
+                className="relative"
+                onMouseEnter={() => setActiveDropdown('education')}
+                onMouseLeave={() => setActiveDropdown(null)}
+              >
+                <button
+                  type="button"
+                  onClick={() => setActiveDropdown(activeDropdown === 'education' ? null : 'education')}
+                  className={`relative py-1 flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap ${
+                    isEducationActive ? 'text-[#0891B2] font-bold' : 'text-slate-600 hover:text-[#0891B2]'
+                  }`}
+                  aria-expanded={activeDropdown === 'education'}
+                >
+                  <span>Education</span>
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                      activeDropdown === 'education' ? 'rotate-180 text-[#0891B2]' : 'text-slate-400'
+                    }`}
+                  />
+                  {isEducationActive && (
+                    <motion.div
+                      layoutId="navbar-active-indicator"
+                      className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-[#0891B2] rounded-full"
+                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                </button>
+
+                {/* Dropdown Menu */}
+                <AnimatePresence>
+                  {activeDropdown === 'education' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 6, scale: 0.98 }}
+                      transition={{ duration: 0.16 }}
+                      className="absolute top-full left-1/2 -translate-x-1/2 pt-2 w-72 z-50"
+                    >
+                      <div className="p-2 rounded-2xl bg-white/98 backdrop-blur-xl border border-slate-200/90 shadow-xl shadow-slate-300/40 space-y-1">
+                        {understandItems.map((item) => {
+                          const Icon = item.icon;
+                          const isActive = location.pathname === item.path;
+                          return (
+                            <Link
+                              key={item.path}
+                              to={item.path}
+                              className={`flex items-start gap-3 p-2.5 rounded-xl transition-all ${
+                                isActive
+                                  ? 'bg-sky-50/80 text-[#0891B2]'
+                                  : 'hover:bg-slate-50 text-[#162A45]'
+                              }`}
+                            >
+                              <div
+                                className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+                                style={{ backgroundColor: `${item.color}15`, color: item.color }}
+                              >
+                                <Icon className="w-4 h-4" />
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-xs font-bold font-display">{item.label}</span>
+                                <span className="text-[11px] text-slate-500 line-clamp-1">{item.sublabel}</span>
+                              </div>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Doctors Directory */}
               <Link
                 to={ROUTES.DOCTORS}
                 className={`relative py-1 transition-colors whitespace-nowrap ${
@@ -250,36 +348,31 @@ export const Navbar: React.FC = () => {
               </button>
 
               {/* Auth Buttons */}
-              {isAuthenticated ? (
-                <div className="flex items-center gap-2">
-                  <Link
-                    to={ROUTES.APP.ROOT}
-                    className="hidden sm:inline-flex items-center justify-center px-4 sm:px-5 py-1.5 rounded-full border-[1.5px] border-[#38BDF8] text-xs sm:text-sm font-semibold text-[#0284C7] bg-white hover:bg-sky-50 transition-all whitespace-nowrap shadow-2xs"
-                  >
-                    Dashboard
-                  </Link>
-                  <Link
-                    to={ROUTES.APP.ROOT}
-                    className="inline-flex items-center justify-center px-5 sm:px-6 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-[#00C4DF] to-[#0284C7] hover:from-[#00B4CB] hover:to-[#0369A1] text-xs sm:text-sm font-bold text-white shadow-[0_4px_14px_rgba(0,196,223,0.35)] hover:shadow-lg transition-all whitespace-nowrap flex items-center gap-1.5"
-                  >
-                    <span>Go to App</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
+              {loading ? (
+                <div className="h-8 sm:h-9 w-24 sm:w-28 rounded-full bg-slate-100/70 animate-pulse" />
+              ) : isAuthenticated ? (
+                <Link
+                  to={ROUTES.APP.ROOT}
+                  className="inline-flex items-center justify-center px-5 sm:px-6 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-[#00C4DF] to-[#0284C7] hover:from-[#00B4CB] hover:to-[#0369A1] text-xs sm:text-sm font-bold text-white shadow-[0_4px_14px_rgba(0,196,223,0.35)] hover:shadow-lg transition-all whitespace-nowrap flex items-center gap-1.5"
+                >
+                  <span>Dashboard</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
               ) : (
                 <div className="flex items-center gap-2 sm:gap-2.5">
                   <Link
                     to={ROUTES.LOGIN}
                     className="hidden sm:inline-flex items-center justify-center px-4 sm:px-5 py-1.5 rounded-full border-[1.5px] border-[#38BDF8] text-xs sm:text-sm font-semibold text-[#0284C7] bg-white hover:bg-sky-50 hover:border-[#0284C7] transition-all whitespace-nowrap shadow-2xs"
                   >
-                    Log in
+                    Log In
                   </Link>
 
                   <Link
                     to={ROUTES.REGISTER}
-                    className="inline-flex items-center justify-center px-5 sm:px-6 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-[#00C4DF] to-[#0284C7] hover:from-[#00B4CB] hover:to-[#0369A1] text-xs sm:text-sm font-bold text-white shadow-[0_4px_14px_rgba(0,196,223,0.35)] hover:shadow-lg transition-all whitespace-nowrap"
+                    className="inline-flex items-center justify-center px-5 sm:px-6 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-[#00C4DF] to-[#0284C7] hover:from-[#00B4CB] hover:to-[#0369A1] text-xs sm:text-sm font-bold text-white shadow-[0_4px_14px_rgba(0,196,223,0.35)] hover:shadow-lg transition-all whitespace-nowrap flex items-center gap-1.5"
                   >
-                    Sign Up
+                    <span>Get Started</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
               )}
@@ -359,15 +452,6 @@ export const Navbar: React.FC = () => {
                     How It Works
                   </Link>
                   <Link
-                    to={ROUTES.CONDITIONS}
-                    className={`p-2.5 rounded-xl transition-colors ${
-                      isConditionsActive ? 'bg-sky-50 text-[#0891B2] font-bold' : 'hover:bg-slate-50'
-                    }`}
-                  >
-                    Conditions We Support
-                  </Link>
-
-                  <Link
                     to={ROUTES.CARE_CIRCLE}
                     className={`p-2.5 rounded-xl transition-colors ${
                       isCareCircleActive ? 'bg-sky-50 text-[#0891B2] font-bold' : 'hover:bg-slate-50'
@@ -375,7 +459,28 @@ export const Navbar: React.FC = () => {
                   >
                     Care Circle
                   </Link>
-
+                  {/* Sub-menu for Education */}
+                  <div className="pt-2 pb-1 px-2.5">
+                    <span className="text-[11px] font-mono uppercase font-bold text-slate-400 block mb-1">
+                      Education Pathways
+                    </span>
+                    <div className="space-y-1 pl-1">
+                      <Link
+                        to={ROUTES.UNDERSTAND_PCOS_CANONICAL}
+                        className="flex items-center gap-2 p-2 rounded-lg text-xs font-bold text-[#E11D48] hover:bg-rose-50/70"
+                      >
+                        <Heart className="w-3.5 h-3.5" />
+                        <span>Understand PCOS</span>
+                      </Link>
+                      <Link
+                        to={ROUTES.UNDERSTAND_MALE_HYPOGONADISM}
+                        className="flex items-center gap-2 p-2 rounded-lg text-xs font-bold text-[#0891B2] hover:bg-sky-50/70"
+                      >
+                        <Activity className="w-3.5 h-3.5" />
+                        <span>Understand Male Hypogonadism</span>
+                      </Link>
+                    </div>
+                  </div>
                   <Link
                     to={ROUTES.DOCTORS}
                     className={`p-2.5 rounded-xl transition-colors ${
@@ -384,7 +489,6 @@ export const Navbar: React.FC = () => {
                   >
                     Doctors Directory
                   </Link>
-
                   <Link
                     to={ROUTES.CONTACT}
                     className={`p-2.5 rounded-xl transition-colors ${
@@ -397,29 +501,32 @@ export const Navbar: React.FC = () => {
 
                 {/* Mobile Auth Actions */}
                 <div className="pt-4 border-t border-slate-100 flex flex-col gap-2.5">
-                  {!isAuthenticated ? (
+                  {loading ? (
+                    <div className="w-full h-11 rounded-xl bg-slate-100/70 animate-pulse" />
+                  ) : isAuthenticated ? (
+                    <Link
+                      to={ROUTES.APP.ROOT}
+                      className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#00C4DF] to-[#0284C7] text-white text-center font-bold text-sm shadow-md flex items-center justify-center gap-2"
+                    >
+                      <span>Dashboard</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  ) : (
                     <>
                       <Link
                         to={ROUTES.REGISTER}
-                        className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#00C4DF] to-[#0284C7] text-white text-center font-bold text-sm shadow-md"
+                        className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#00C4DF] to-[#0284C7] text-white text-center font-bold text-sm shadow-md flex items-center justify-center gap-2"
                       >
-                        Sign Up Now
+                        <span>Get Started</span>
+                        <ArrowRight className="w-4 h-4" />
                       </Link>
                       <Link
                         to={ROUTES.LOGIN}
                         className="w-full py-2.5 rounded-xl border border-slate-200 text-[#0284C7] text-center font-semibold text-sm hover:bg-slate-50"
                       >
-                        Log in to Account
+                        Log In
                       </Link>
                     </>
-                  ) : (
-                    <Link
-                      to={ROUTES.APP.ROOT}
-                      className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#00C4DF] to-[#0284C7] text-white text-center font-bold text-sm shadow-md flex items-center justify-center gap-2"
-                    >
-                      <span>Launch Health App</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </Link>
                   )}
                 </div>
 

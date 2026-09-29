@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Plus, RefreshCw01 } from '@untitledui/icons';
+import { Plus, RefreshCw01 } from '@untitledui/icons';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { CycleOverviewCard } from '../../components/cycle/CycleOverviewCard';
 import { CycleTimelineVisualizer } from '../../components/cycle/CycleTimelineVisualizer';
@@ -69,39 +69,25 @@ export const CyclePage: React.FC = () => {
       transition={{ duration: 0.3 }}
       className="max-w-6xl mx-auto space-y-6 sm:space-y-8 text-left select-none pb-16"
     >
-      {/* ── 1. Page Header Bar ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#EAECF0]">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2.5">
-            <Calendar className="w-6 h-6 text-[#F43F7D] shrink-0" aria-hidden="true" />
-            <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-[#0F172A] tracking-tight">
-              Your Cycle & Period Tracker
-            </h1>
-          </div>
-          <p className="text-xs text-[#64748B]">
-            Track your period dates, see your estimated cycle phases, and understand your natural rhythm.
-          </p>
-        </div>
+      {/* ── 1. Page Actions Toolbar ── */}
+      <div className="flex items-center justify-end gap-3 pb-2">
+        <button
+          type="button"
+          onClick={() => refreshCycleRecords()}
+          className="p-2.5 rounded-xl bg-white border border-[#EAECF0] text-[#475569] hover:text-[#F43F7D] hover:bg-[#FDE6EF]/50 transition-colors cursor-pointer"
+          title="Refresh cycle records"
+        >
+          <RefreshCw01 className={`w-4 h-4 shrink-0 ${cycleLoading ? 'animate-spin' : ''}`} aria-hidden="true" />
+        </button>
 
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => refreshCycleRecords()}
-            className="p-2.5 rounded-xl bg-white border border-[#EAECF0] text-[#475569] hover:text-[#F43F7D] hover:bg-[#FDE6EF]/50 transition-colors cursor-pointer"
-            title="Refresh cycle records"
-          >
-            <RefreshCw01 className={`w-4 h-4 shrink-0 ${cycleLoading ? 'animate-spin' : ''}`} aria-hidden="true" />
-          </button>
-
-          <button
-            type="button"
-            onClick={handleOpenLogModal}
-            className="flex items-center gap-2 h-10 px-4 rounded-lg font-medium text-sm text-white bg-[#F43F7D] hover:bg-[#DC326C] shadow-xs transition-all cursor-pointer"
-          >
-            <Plus className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span>Log Period</span>
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={handleOpenLogModal}
+          className="flex items-center gap-2 h-10 px-4 rounded-lg font-medium text-sm text-white bg-[#F43F7D] hover:bg-[#DC326C] shadow-xs transition-all cursor-pointer"
+        >
+          <Plus className="w-4 h-4 shrink-0" aria-hidden="true" />
+          <span>Log Period</span>
+        </button>
       </div>
 
       {/* ── 2. Loading State ── */}

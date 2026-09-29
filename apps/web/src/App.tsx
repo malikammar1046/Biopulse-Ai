@@ -21,8 +21,10 @@ const DashboardRedirect: React.FC = () => {
   return <Navigate to={destination} replace />;
 };
 
-// Clinical Page Loading Fallback with Glowing BioPulse Logo
-const PageLoadingFallback: React.FC = () => <BioPulseLoadingScreen fullScreen={true} />;
+// Clinical Page Loading Fallback (BioPulse Splash Screen)
+const PageLoadingFallback: React.FC = () => (
+  <BioPulseLoadingScreen message="Preparing your health experience" fullScreen={true} />
+);
 
 // Route-Level Lazy Loading (Code Splitting)
 const Home = lazy(() => import('./pages/public/Home').then((m) => ({ default: m.Home })));
@@ -71,7 +73,10 @@ const Dashboard = lazy(() => import('./pages/app/Dashboard').then((m) => ({ defa
 const MasterHealthHub = lazy(() => import('./pages/app/MasterHealthHub').then((m) => ({ default: m.MasterHealthHub })));
 const CyclePage = lazy(() => import('./pages/app/CyclePage').then((m) => ({ default: m.CyclePage })));
 const SymptomsPage = lazy(() => import('./pages/app/SymptomsPage').then((m) => ({ default: m.SymptomsPage })));
-const DietPage = lazy(() => import('./pages/app/DietPage').then((m) => ({ default: m.DietPage })));
+
+const LifestyleRecommendationsPage = lazy(() =>
+  import('./pages/app/LifestyleRecommendationsPage').then((m) => ({ default: m.LifestyleRecommendationsPage }))
+);
 const FitnessPage = lazy(() => import('./pages/app/FitnessPage').then((m) => ({ default: m.FitnessPage })));
 const ReportsPage = lazy(() => import('./pages/app/ReportsPage').then((m) => ({ default: m.ReportsPage })));
 const MedicationsPage = lazy(() => import('./pages/app/MedicationsPage').then((m) => ({ default: m.MedicationsPage })));
@@ -90,10 +95,10 @@ export function App() {
     <AuthProvider>
       <ErrorBoundary>
         <UserHealthProvider>
-          <AIChatProvider>
-            <BrowserRouter>
-          <Suspense fallback={<PageLoadingFallback />}>
-            <Routes>
+          <BrowserRouter>
+            <AIChatProvider>
+              <Suspense fallback={<PageLoadingFallback />}>
+                <Routes>
               {/* Public Marketing Website */}
               <Route element={<PublicLayout />}>
                 <Route path={ROUTES.HOME} element={<Home />} />
@@ -116,8 +121,8 @@ export function App() {
                 <Route path={ROUTES.ABOUT} element={<About />} />
                 <Route path={ROUTES.HOW_IT_WORKS} element={<HowItWorks />} />
                 <Route path={ROUTES.FEATURES} element={<Features />} />
-                <Route path={ROUTES.CONTACT} element={<Contact />} />
                 <Route path={ROUTES.DOCTORS} element={<Doctors />} />
+                <Route path={ROUTES.CONTACT} element={<Contact />} />
 
                 {/* Public Only Auth Pages */}
                 <Route element={<PublicOnlyRoute />}>
@@ -188,8 +193,9 @@ export function App() {
                   <Route path="ai" element={<ChatPage />} />
                   <Route path="assistant" element={<ChatPage />} />
                   <Route path="symptoms" element={<SymptomsPage />} />
-                  <Route path="diet" element={<DietPage />} />
-                  <Route path="diet/week" element={<DietPage />} />
+                  <Route path="lifestyle" element={<LifestyleRecommendationsPage />} />
+                  <Route path="diet" element={<LifestyleRecommendationsPage />} />
+                  <Route path="diet/week" element={<LifestyleRecommendationsPage />} />
                   <Route path="fitness" element={<FitnessPage />} />
                   <Route path="reports" element={<ReportsPage />} />
                   <Route path="medications" element={<MedicationsPage />} />
@@ -202,7 +208,7 @@ export function App() {
                   <Route path="settings" element={<SettingsPage />} />
                   {/* Backward compatibility aliases */}
                   <Route path="profile" element={<Navigate to={ROUTES.APP.SETTINGS} replace />} />
-                  <Route path="lifestyle" element={<Navigate to={ROUTES.APP.DIET} replace />} />
+
                 </Route>
               </Route>
 
@@ -210,8 +216,8 @@ export function App() {
               <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
             </Routes>
           </Suspense>
-          </BrowserRouter>
           </AIChatProvider>
+          </BrowserRouter>
         </UserHealthProvider>
       </ErrorBoundary>
     </AuthProvider>

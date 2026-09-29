@@ -86,27 +86,22 @@ export const MasterHealthHub: React.FC = () => {
       transition={{ duration: 0.4, ease: 'easeOut' }}
       className="max-w-7xl mx-auto space-y-6 sm:space-y-8 pb-16 text-left select-none"
     >
-      {/* ── Top Header Banner for Master Health Hub ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 sm:p-8 rounded-[32px] bg-[#01579B] border border-[#0288D1] text-white shadow-md">
-        <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0288D1]/40 border border-[#BAE6FD]/40 text-xs font-mono text-[#E0F2FE] mb-1">
-            <Grid01 className="w-3.5 h-3.5 text-[#29B6F6] shrink-0" aria-hidden="true" />
+      {/* ── Actions Toolbar ── */}
+      <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-white border border-[#EAECF0] shadow-xs">
+        <div className="flex items-center gap-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F0F9FF] border border-[#BAE6FD] text-xs font-mono text-[#0288D1] font-semibold">
+            <Grid01 className="w-3.5 h-3.5 text-[#0288D1] shrink-0" aria-hidden="true" />
             <span>Master Clinical Hub</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold font-display tracking-tight text-white">
-            Comprehensive Health Hub
-          </h1>
-          <p className="text-xs sm:text-sm text-[#E0F2FE] font-sans">
-            {isMale
-              ? 'Full multi-module intelligence snapshot uniting your longitudinal health profile, endocrine rhythms, nutrition, medications, and clinical care.'
-              : 'Full multi-module intelligence snapshot uniting your longitudinal health profile, cycle rhythms, nutrition, medications, and clinical care.'}
-          </p>
+          <span className="text-xs text-[#64748B] hidden sm:inline">
+            Multi-module intelligence snapshot uniting your longitudinal data
+          </span>
         </div>
 
         <button
           type="button"
           onClick={() => openAiChatWithPrompt('Generate a comprehensive health summary across all my logged modules.')}
-          className="px-5 py-3 rounded-2xl bg-[#0288D1] hover:bg-[#0277BD] text-white font-sans text-xs font-bold shadow-md transition-all flex items-center gap-2 self-start sm:self-auto cursor-pointer"
+          className="px-4 py-2.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white font-sans text-xs font-bold shadow-xs transition-all flex items-center gap-2 cursor-pointer shrink-0"
         >
           <MessageChatCircle className="w-4 h-4 text-white shrink-0" aria-hidden="true" />
           <span>Ask Health Hub AI</span>

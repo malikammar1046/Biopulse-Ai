@@ -41,7 +41,8 @@ def _validate_user_id(user_id: Any) -> str:
     return uid
 
 _clinical_lock = threading.Lock()
-_sqlite_clinical_initialized = False
+_initialized_clinical_db_paths: set[str] = set()
+_clinical_init_lock = threading.Lock()
 _in_memory_clinical_state: dict[str, dict[str, Any]] = {}
 
 
@@ -63,12 +64,70 @@ def _get_sqlite_path() -> str:
     return str(default_path)
 
 
+class _DjangoSQLiteWrapper:
+    def __init__(self, django_conn: Any):
+        self._django_conn = django_conn
+        self._raw_conn = django_conn.connection
+
+    @property
+    def row_factory(self):
+        return getattr(self._raw_conn, "row_factory", None)
+
+    @row_factory.setter
+    def row_factory(self, val):
+        self._raw_conn.row_factory = val
+
+    def cursor(self):
+        return self._raw_conn.cursor()
+
+    def execute(self, sql: str, params: Any = ()):
+        return self._raw_conn.execute(sql, params)
+
+    def executemany(self, sql: str, seq_of_params: Any):
+        return self._raw_conn.executemany(sql, seq_of_params)
+
+    def close(self) -> None:
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return False
+
+
+def _connect_sqlite(db_path: str | None = None, timeout: float = 15.0) -> Any:
+    if db_path is None:
+        db_path = _get_sqlite_path()
+    try:
+        from django.db import connection
+        default_name = settings.DATABASES.get("default", {}).get("NAME")
+        if default_name and str(default_name) == str(db_path):
+            connection.ensure_connection()
+            if connection.connection:
+                return _DjangoSQLiteWrapper(connection)
+    except Exception:
+        pass
+    is_uri = str(db_path).startswith("file:")
+    conn = sqlite3.connect(db_path, timeout=timeout, uri=is_uri)
+    try:
+        conn.execute("PRAGMA busy_timeout = 15000;")
+    except Exception:
+        pass
+    return conn
+
+
 def init_sqlite_clinical_store() -> None:
     """Initializes the local SQLite clinical state persistence table for offline/test environments."""
-    with _clinical_lock:
-        db_path = _get_sqlite_path()
+    db_path = _get_sqlite_path()
+    if db_path in _initialized_clinical_db_paths:
+        return
+
+    with _clinical_init_lock:
+        if db_path in _initialized_clinical_db_paths:
+            return
+        conn = _connect_sqlite(db_path, timeout=10.0)
         try:
-            conn = sqlite3.connect(db_path, timeout=10.0)
             with conn:
                 conn.execute(
                     """
@@ -91,20 +150,29 @@ def init_sqlite_clinical_store() -> None:
                     conn.execute("ALTER TABLE patient_clinical_state ADD COLUMN created_at TEXT NOT NULL DEFAULT ''")
                 except Exception:
                     pass
-            conn.close()
-            _sqlite_clinical_initialized = True
+            # Mark initialized ONLY after successful DDL completion
+            _initialized_clinical_db_paths.add(db_path)
             logger.info("ClinicalStateRepository persistent SQLite store initialized at %s", db_path)
         except Exception as e:
             logger.warning("Failed to initialize SQLite clinical state store: %s", e)
+        finally:
+            conn.close()
+
 
 
 _cached_service_client = None
 _client_lock = threading.Lock()
 
 
+def _is_supabase_network_disabled() -> bool:
+    return getattr(settings, "DISABLE_SUPABASE_NETWORK", False) or os.environ.get("DISABLE_SUPABASE_NETWORK", "").strip().lower() in ("true", "1", "yes")
+
+
 def get_supabase_client(auth_token: str | None = None) -> Any:
     """Returns an authenticated Supabase client using SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY and caller JWT."""
     global _cached_service_client
+    if _is_supabase_network_disabled():
+        return None
     if auth_token:
         try:
             from supabase import create_client
@@ -210,11 +278,10 @@ class ClinicalStateRepository:
 
         # 2. SQLite Persistent Fallback
         if state is None:
-            init_sqlite_clinical_store()
             conn = None
             try:
                 db_path = _get_sqlite_path()
-                conn = sqlite3.connect(db_path, timeout=5.0)
+                conn = _connect_sqlite(db_path, timeout=5.0)
                 with conn:
                     cursor = conn.cursor()
                     cursor.execute(
@@ -367,11 +434,10 @@ class ClinicalStateRepository:
                     logger.debug("Supabase patient_clinical_state upsert notice: %s", e)
 
         # 2. SQLite Persistent write (guarantees offline & local test durability)
-        init_sqlite_clinical_store()
         conn = None
         try:
             db_path = _get_sqlite_path()
-            conn = sqlite3.connect(db_path, timeout=5.0)
+            conn = _connect_sqlite(db_path, timeout=5.0)
             with conn:
                 conn.execute(
                     """

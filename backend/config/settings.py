@@ -182,6 +182,19 @@ ALLOW_LOCAL_SQLITE_FALLBACK = (
     or "test" in sys.argv
 )
 
+# ---------------------------------------------------------------------------
+# CI / Test Isolation Settings
+# Explicit flags to eliminate background thread pre-warming and external network
+# requests during automated test execution. Production defaults remain false.
+# ---------------------------------------------------------------------------
+DISABLE_INTELLIGENCE_PREWARM = os.environ.get(
+    "DISABLE_INTELLIGENCE_PREWARM", "false"
+).lower() in ("true", "1", "yes")
+
+DISABLE_SUPABASE_NETWORK = os.environ.get(
+    "DISABLE_SUPABASE_NETWORK", "false"
+).lower() in ("true", "1", "yes")
+
 
 # ---------------------------------------------------------------------------
 # Internationalization

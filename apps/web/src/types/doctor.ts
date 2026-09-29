@@ -19,6 +19,8 @@ export interface Doctor {
   reviews_count?: number | null;
   wait_time?: string | null;
   services_offered?: string | null;
+  pathway?: 'female_pcos' | 'male_hypogonadism' | 'both';
+  relevance_reason?: string | null;
   is_active: boolean;
   display_order: number;
 }

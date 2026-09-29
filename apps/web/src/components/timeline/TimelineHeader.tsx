@@ -16,7 +16,6 @@ export const TimelineHeader: React.FC<TimelineHeaderProps> = ({
   onExportPdf,
 }) => {
   const { userProfile, cycleStats } = useUserHealth();
-  const userName = userProfile.fullName?.split(' ')[0] || 'Ayesha';
 
   const currentCycleDay = cycleStats?.currentCycleDay || userProfile.womensHealth?.currentCycleDay || 14;
   const currentPhase =
@@ -29,32 +28,23 @@ export const TimelineHeader: React.FC<TimelineHeaderProps> = ({
       : 'Follicular Phase');
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-[#01579B] p-6 sm:p-7 text-white border border-[#0288D1] shadow-md select-none">
-      <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        {/* Left Title & Longitudinal Explainer */}
-        <div className="space-y-3 max-w-2xl text-left">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 border border-white/20 text-xs font-mono text-white">
-            <LineChartUp01 className="w-3.5 h-3.5 text-[#29B6F6]" aria-hidden="true" />
-            <span>Unified Longitudinal Health Journey</span>
+    <div className="rounded-2xl bg-white border border-[#EAECF0] p-5 sm:p-6 shadow-xs select-none text-left">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+        {/* Left: Metadata Badges */}
+        <div className="space-y-2.5 max-w-2xl">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F0F9FF] border border-[#BAE6FD] text-xs font-mono text-[#0288D1] font-semibold">
+            <LineChartUp01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
+            <span>Unified Longitudinal Journey</span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-            {userName}’s Health Timeline
-          </h1>
-
-          <p className="text-xs sm:text-sm text-[#E0F2FE] leading-relaxed">
-            BIOPulse AI synthesizes your physiological rhythms, reported symptoms, nutrition, movement, lab biomarkers, and clinical consultations into one connected longitudinal story.
-          </p>
-
-          {/* Quick Metrics Badges */}
-          <div className="flex flex-wrap items-center gap-2.5 pt-1">
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/15 text-xs font-semibold text-white border border-white/20">
-              <Calendar className="w-3.5 h-3.5 text-[#29B6F6]" aria-hidden="true" />
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F8FAFC] border border-[#EAECF0] text-xs font-semibold text-[#344054]">
+              <Calendar className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
               <span>Day {currentCycleDay} • {currentPhase}</span>
             </div>
 
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/15 text-xs font-semibold text-white border border-white/20">
-              <Activity className="w-3.5 h-3.5 text-[#29B6F6]" aria-hidden="true" />
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F8FAFC] border border-[#EAECF0] text-xs font-semibold text-[#344054]">
+              <Activity className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
               <span>
                 {filteredEventsCount} of {totalEvents} events shown
               </span>
@@ -68,12 +58,12 @@ export const TimelineHeader: React.FC<TimelineHeaderProps> = ({
             <button
               type="button"
               onClick={onExportPdf}
-              className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-white text-[#01579B] hover:bg-[#F0F9FF] text-xs font-semibold shadow-sm transition-all duration-200 cursor-pointer"
+              className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-white border border-[#EAECF0] text-[#111318] hover:bg-[#F9FAFB] text-xs font-semibold shadow-xs transition-all duration-200 cursor-pointer active:scale-[0.98]"
             >
               <Download01 className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
               <div className="text-left">
-                <span className="block font-bold leading-tight">Download Health Journey</span>
-                <span className="block text-[10px] text-[#64748B] font-normal leading-tight">Doctor-ready summary</span>
+                <span className="block font-bold leading-tight">Download Journey</span>
+                <span className="block text-[10px] text-[#64748B] font-normal leading-tight">Doctor-ready PDF</span>
               </div>
             </button>
           )}
@@ -82,9 +72,9 @@ export const TimelineHeader: React.FC<TimelineHeaderProps> = ({
             <button
               type="button"
               onClick={onOpenAiInsights}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#29B6F6] hover:bg-[#4FC3F7] text-[#0F172A] text-xs font-bold shadow-sm transition-all duration-200 cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold shadow-xs transition-all duration-200 cursor-pointer active:scale-[0.98]"
             >
-              <MessageChatCircle className="w-4 h-4 text-[#0F172A]" aria-hidden="true" />
+              <MessageChatCircle className="w-4 h-4 text-white" aria-hidden="true" />
               <span>Ask AI Patterns</span>
             </button>
           )}

@@ -1,7 +1,18 @@
 import React from 'react';
-import { Ruler, Scales01 } from '@untitledui/icons';
+import {
+  Ruler,
+  Scales01,
+  Camera01,
+  Trash01,
+  CheckCircle,
+  AlertCircle,
+  Loading01,
+} from '@untitledui/icons';
 import type { UserProfile } from '../../../../types/onboarding';
 import { AssessmentImpactBadge } from '../AssessmentImpactBadge';
+import { useAuth } from '../../../../context/AuthContext';
+import { avatarService, validateAvatarFile } from '../../../../services/avatarService';
+import { UserAvatar } from '../../../../components/common/UserAvatar';
 import {
   cmToFtInNullable,
   ftInToCm,
@@ -67,8 +78,224 @@ export const PersonalTab: React.FC<PersonalTabProps> = ({
     }
   }, [draft.dateOfBirth]);
 
+  // Auth context for persisting photo updates
+  const { user, userProfile, updateUserProfile } = useAuth();
+
+  // Avatar upload and remove state
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = React.useState(false);
+  const [isRemoving, setIsRemoving] = React.useState(false);
+  const [uploadError, setUploadError] = React.useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = React.useState<string | null>(null);
+  const [showRemoveConfirm, setShowRemoveConfirm] = React.useState(false);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset native input so selecting the same file triggers again if needed
+    e.target.value = '';
+
+    setUploadError(null);
+    setUploadSuccess(null);
+
+    const validation = validateAvatarFile(file);
+    if (!validation.isValid) {
+      setUploadError(validation.error || 'Invalid file format or size.');
+      return;
+    }
+
+    const activeUserId = user?.id || userProfile?.id || draft?.id;
+    if (!activeUserId) {
+      setUploadError('Active session not found. Please log in again.');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const res = await avatarService.uploadAvatar(activeUserId, file);
+      if (!res.success || !res.avatarUrl) {
+        setUploadError(res.error || 'Failed to upload profile photo.');
+        return;
+      }
+
+      // Update state across AuthContext and draft
+      await updateUserProfile({ avatarUrl: res.avatarUrl });
+      setDraft((prev) => ({ ...prev, avatarUrl: res.avatarUrl }));
+      setUploadSuccess('Profile photo updated successfully!');
+      setTimeout(() => setUploadSuccess(null), 4000);
+    } catch (err: any) {
+      setUploadError(err?.message || 'An unexpected error occurred during photo upload.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleConfirmRemove = async () => {
+    const activeUserId = user?.id || userProfile?.id || draft?.id;
+    if (!activeUserId) return;
+
+    setIsRemoving(true);
+    setUploadError(null);
+    setUploadSuccess(null);
+
+    try {
+      const res = await avatarService.removeAvatar(activeUserId);
+      if (!res.success) {
+        setUploadError(res.error || 'Failed to remove photo.');
+        return;
+      }
+
+      await updateUserProfile({ avatarUrl: '' });
+      setDraft((prev) => ({ ...prev, avatarUrl: undefined }));
+      setShowRemoveConfirm(false);
+      setUploadSuccess('Profile photo removed.');
+      setTimeout(() => setUploadSuccess(null), 4000);
+    } catch (err: any) {
+      setUploadError(err?.message || 'An unexpected error occurred while removing photo.');
+    } finally {
+      setIsRemoving(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* ── PROFILE PHOTO SECTION ── */}
+      <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs">
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h3 className="text-base font-bold text-slate-800">Profile Photo</h3>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Personal avatar shown across your BioPulse dashboard, header, and care circle
+            </p>
+          </div>
+          {isMale ? (
+            <span className="text-[11px] font-semibold text-[#0284C7] bg-[#E0F2FE] px-2.5 py-1 rounded-full">
+              Male Pathway
+            </span>
+          ) : (
+            <span className="text-[11px] font-semibold text-[#E11D48] bg-[#FDE6EF] px-2.5 py-1 rounded-full">
+              Female Pathway
+            </span>
+          )}
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 pt-1">
+          {/* Circular Avatar */}
+          <div className="relative group">
+            <UserAvatar
+              avatarUrl={draft.avatarUrl || userProfile?.avatarUrl}
+              name={draft.fullName || userProfile?.fullName}
+              email={draft.email || userProfile?.email}
+              size="xl"
+              pathway={draft.pathway || userProfile?.pathway}
+              gender={draft.gender || userProfile?.gender}
+              className="ring-4 ring-slate-100 shadow-md transition-transform group-hover:scale-[1.02]"
+            />
+            {isUploading && (
+              <div className="absolute inset-0 rounded-full bg-slate-900/60 flex flex-col items-center justify-center text-white backdrop-blur-[1px]">
+                <Loading01 className="w-7 h-7 animate-spin text-white" />
+                <span className="text-[10px] font-semibold mt-1">Uploading...</span>
+              </div>
+            )}
+          </div>
+
+          {/* User Details & Action Controls */}
+          <div className="flex-1 text-center sm:text-left space-y-3">
+            <div>
+              <h4 className="text-lg font-bold text-slate-800">
+                {draft.fullName?.trim() || userProfile?.fullName?.trim() || 'BioPulse Member'}
+              </h4>
+              <p className="text-xs font-mono text-slate-400 mt-0.5">
+                {draft.email || userProfile?.email || 'member@biopulse.ai'}
+              </p>
+            </div>
+
+            {/* Error or Success notification banner */}
+            {uploadError && (
+              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+                <span>{uploadError}</span>
+              </div>
+            )}
+            {uploadSuccess && (
+              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-700">
+                <CheckCircle className="w-4 h-4 shrink-0 text-emerald-500" />
+                <span>{uploadSuccess}</span>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-1">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handleFileChange}
+                disabled={isUploading || isRemoving}
+              />
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading || isRemoving}
+                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
+                  isMale
+                    ? 'bg-[#0284C7] hover:bg-[#0369A1] text-white disabled:opacity-50'
+                    : 'bg-[#E11D48] hover:bg-[#BE123C] text-white disabled:opacity-50'
+                }`}
+              >
+                <Camera01 className="w-4 h-4" />
+                <span>{isUploading ? 'Optimizing...' : 'Change Photo'}</span>
+              </button>
+
+              {(draft.avatarUrl || userProfile?.avatarUrl) && (
+                <>
+                  {!showRemoveConfirm ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowRemoveConfirm(true)}
+                      disabled={isUploading || isRemoving}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100/80 transition-colors border border-rose-200/60 cursor-pointer disabled:opacity-50"
+                    >
+                      <Trash01 className="w-3.5 h-3.5" />
+                      <span>Remove</span>
+                    </button>
+                  ) : (
+                    <div className="inline-flex items-center gap-2 p-1.5 rounded-xl bg-slate-100 border border-slate-200">
+                      <span className="text-[11px] font-medium text-slate-600 px-1">
+                        Remove photo?
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleConfirmRemove}
+                        disabled={isRemoving}
+                        className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold transition-colors cursor-pointer"
+                      >
+                        {isRemoving ? 'Removing...' : 'Yes, Remove'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowRemoveConfirm(false)}
+                        disabled={isRemoving}
+                        className="px-2 py-1 rounded-lg text-slate-500 hover:text-slate-700 text-[11px] font-semibold transition-colors cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            <p className="text-[11px] text-slate-400">
+              Supported formats: JPEG, PNG, WebP. Maximum size: 5 MB. Photos are automatically cropped to a square and optimized.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Section 1: Demographics */}
       <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs">
         <div className="flex items-center justify-between mb-5">

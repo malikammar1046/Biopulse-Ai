@@ -1,4 +1,4 @@
-export type AppointmentStatus = 'scheduled' | 'completed' | 'cancelled' | 'rescheduled';
+export type AppointmentStatus = 'requested' | 'scheduled' | 'completed' | 'cancelled' | 'rescheduled';
 
 export type AppointmentType =
   | 'consultation'
@@ -40,6 +40,7 @@ export interface AppointmentItem {
 }
 
 export interface AppointmentInput {
+  providerId?: string;
   providerName: string;
   providerSpecialty?: string;
   careCircleMemberId?: string;
@@ -52,6 +53,7 @@ export interface AppointmentInput {
   meetingUrl?: string;
   reason?: string;
   patientNotes?: string;
+  bookingSource?: string;
   doctorQuestions?: ConsultationQuestion[];
 }
 
