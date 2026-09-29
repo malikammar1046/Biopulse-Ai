@@ -18,6 +18,7 @@ from __future__ import annotations
 import io
 import json
 import logging
+import time
 from typing import Any, Dict, List, Optional
 from PIL import Image
 
@@ -51,6 +52,7 @@ from apps.intelligence.services.pcos_ml_service import pcos_ml_service
 from apps.intelligence.services.male_ml_service import male_ml_service
 from apps.intelligence.services.safety_guardrails import SafetyGuardrails
 from apps.intelligence.services.health_context_builder import HealthContextBuilder
+from apps.intelligence.services.context_sanitizer import LLMContextSanitizer
 from apps.intelligence.services.llm_provider import get_llm_provider, LLMProviderError
 from apps.intelligence.maintenance import is_assessment_maintenance_active, assessment_maintenance_response
 
@@ -679,17 +681,56 @@ class IntelligenceChatView(APIView):
             ctx = ""
             used_context = {}
 
-        # 3. Generate response using configured LLM Provider (defaults to Qwen3 1.7B)
+        # 3. Enforce deterministic privacy sanitization boundary
+        patient_email = getattr(request.user, "email", "") or ""
+        patient_name = ""
+        if hasattr(request.user, "raw_token") and request.user.raw_token:
+            try:
+                import jwt
+                decoded = jwt.decode(request.user.raw_token, options={"verify_signature": False})
+                meta = decoded.get("user_metadata", {})
+                patient_name = meta.get("full_name") or meta.get("name") or ""
+            except Exception:
+                pass
+
+        sys_prompt = LLMContextSanitizer.sanitize_system_instruction(
+            sys_prompt, patient_uuid=patient_uuid, patient_name=patient_name, patient_email=patient_email
+        )
+        ctx = LLMContextSanitizer.sanitize_clinical_context(
+            ctx, patient_uuid=patient_uuid, patient_name=patient_name, patient_email=patient_email
+        )
+        history = LLMContextSanitizer.sanitize_conversation_history(
+            history, patient_uuid=patient_uuid, patient_name=patient_name, patient_email=patient_email
+        )
+        clean_user_msg = LLMContextSanitizer.sanitize_user_message(
+            user_msg, patient_uuid=patient_uuid, patient_name=patient_name, patient_email=patient_email
+        )
+
+        # 4. Generate response using configured LLM Provider (defaults to Qwen3 1.7B)
+        start_time = time.perf_counter()
         try:
             provider = get_llm_provider()
             llm_res = provider.generate_chat_response(
                 system_instruction=sys_prompt,
-                user_message=user_msg,
+                user_message=clean_user_msg,
                 health_context=ctx,
                 conversation_history=history,
+                patient_uuid=patient_uuid,
+                patient_name=patient_name,
+                patient_email=patient_email,
             )
             sanitized_answer, safety_level = SafetyGuardrails.sanitize_llm_response(llm_res.answer)
             final_safety = "caution" if safety_level == "caution" else llm_res.safety_level
+            latency_ms = (time.perf_counter() - start_time) * 1000
+
+            # Safe operational logging (Never log patient queries, prompts, or clinical context)
+            logger.info(
+                "BioPulse AI Companion chat completed: model=%s status=success safety_level=%s needs_clinician=%s latency_ms=%.1f",
+                llm_res.model_name,
+                final_safety,
+                llm_res.needs_clinician,
+                latency_ms,
+            )
 
             return Response({
                 "success": True,
@@ -702,8 +743,14 @@ class IntelligenceChatView(APIView):
                 "model": llm_res.model_name,
             }, status=status.HTTP_200_OK)
         except LLMProviderError as l_err:
-            logger.error("LLM Provider failed: %s", l_err)
+            latency_ms = (time.perf_counter() - start_time) * 1000
             model_name = getattr(provider, "model_name", "qwen3:1.7b") if "provider" in locals() else "qwen3:1.7b"
+            logger.warning(
+                "BioPulse AI Companion LLM provider failed: model=%s status=failure error_type=%s latency_ms=%.1f",
+                model_name,
+                type(l_err).__name__,
+                latency_ms,
+            )
             fallback_text = (
                 "The BioPulse AI Companion is temporarily unavailable (conversational assistant is currently offline or unreachable). "
                 "Your screening data and other BioPulse features are unaffected."
@@ -719,7 +766,8 @@ class IntelligenceChatView(APIView):
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
         except Exception as exc:
-            logger.error("Unexpected chat error: %s", exc, exc_info=True)
+            latency_ms = (time.perf_counter() - start_time) * 1000
+            logger.error("Unexpected chat error: %s latency_ms=%.1f", type(exc).__name__, latency_ms)
             fallback_text = (
                 "The BioPulse AI Companion is temporarily unavailable. "
                 "Your screening data and other BioPulse features are unaffected."

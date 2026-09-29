@@ -915,9 +915,11 @@ export async function sendChatMessage(
     return null;
   }
 
+  const pathway = clientTelemetry?.pathway || '';
   const payload = {
     message,
     conversation_id: conversationId || '',
+    pathway,
     conversation_history: conversationHistory || [],
     client_telemetry: clientTelemetry || {},
   };
@@ -933,7 +935,7 @@ export async function sendChatMessage(
         },
         body: JSON.stringify(payload),
       },
-      25000
+      REQUEST_TIMEOUT_MS
     );
 
     // If 200 OK or 503 Service Unavailable with a structured payload, parse JSON
