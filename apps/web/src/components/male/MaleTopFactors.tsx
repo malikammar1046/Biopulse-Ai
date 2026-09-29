@@ -182,8 +182,8 @@ export const MaleTopFactors: React.FC<MaleTopFactorsProps> = ({
   }, [explanations]);
 
   return (
-    <MaleCard className="space-y-4 select-none">
-      <div className="flex items-center justify-between border-b border-[#EAECF0] pb-3">
+    <MaleCard className="p-5 sm:p-6 select-none">
+      <div className="flex items-center justify-between border-b border-[#EAECF0] pb-4">
         <div className="flex items-center gap-2">
           <BarChart01 className="w-5 h-5 text-[#0868B9] shrink-0" aria-hidden="true" />
           <h3 className="text-sm sm:text-base font-semibold text-[#111318]">
@@ -203,16 +203,16 @@ export const MaleTopFactors: React.FC<MaleTopFactorsProps> = ({
         )}
       </div>
 
-      <div className="space-y-3">
+      <div className="pt-4 sm:pt-4.5 space-y-3 sm:space-y-3.5">
         {factors.map((factor, idx) => (
           <div
             key={idx}
-            className="p-3 rounded-xl bg-[#FAFAFC] border border-[#EAECF0] flex items-start gap-3"
+            className="p-3.5 sm:p-4 rounded-xl bg-[#FAFAFC] border border-[#EAECF0] flex items-start gap-3"
           >
             <div className="w-5 h-5 rounded-full bg-[#DDEFFD] text-[#0868B9] flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5">
               {idx + 1}
             </div>
-            <div className="space-y-0.5 min-w-0 flex-1">
+            <div className="space-y-1 min-w-0 flex-1">
               <div className="flex items-center justify-between gap-2">
                 <h4 className="text-xs sm:text-sm font-semibold text-[#111318]">
                   {factor.label}
