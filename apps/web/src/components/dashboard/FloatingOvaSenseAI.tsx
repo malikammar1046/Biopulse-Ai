@@ -8,345 +8,331 @@ import {
   AlertTriangle,
   MedicalCross,
 } from '@untitledui/icons';
-import { useUserHealth } from '../../context/UserHealthContext';
-import { sendChatMessage } from '../../services/intelligenceService';
-import { resolvePathway } from '../../types/onboarding';
+import { Maximize2, Minus, Sparkles } from 'lucide-react';
+import { useAIChat } from '../../context/AIChatContext';
+import { AIMessageContent } from '../common/AIMessageContent';
 import { ROUTES } from '../../constants/routes';
-
-interface ChatMessage {
-  id: string;
-  sender: 'user' | 'ai';
-  text: string;
-  timestamp: string;
-  safetyLevel?: 'normal' | 'caution' | 'urgent';
-  needsClinician?: boolean;
-}
-
-const FEMALE_QUICK_PROMPTS = [
-  'Explain my PCOS screening result',
-  'What factors influenced my result?',
-  'What does my next screening step mean?',
-  'What should I discuss with my doctor?',
-  'What foods support my nutritional plan?',
-  'What does my lab report mean?',
-];
-
-const MALE_QUICK_PROMPTS = [
-  'Explain my hypogonadism screening result',
-  'What factors influenced my result?',
-  'Why is morning testosterone relevant?',
-  'What questions should I ask my doctor about hormones?',
-  'What lifestyle factors support vitality and stamina?',
-  'What does my testosterone or metabolic result mean?',
-];
-
-const GENERAL_QUICK_PROMPTS = [
-  'Explain my general health overview',
-  'What habits improve daily energy and recovery?',
-  'What questions should I ask my doctor?',
-  'What do my lab report results mean?',
-  'What foods support metabolic wellness?',
-];
 
 export const FloatingOvaSenseAI: React.FC = () => {
   const location = useLocation();
-  const isChatPage = location.pathname === ROUTES.APP.CHAT || location.pathname.startsWith('/app/chat');
-  const { userProfile, snapshotMetrics, isAiChatOpen, activeAiPrompt, toggleAiChat, closeAiChat } = useUserHealth();
+  const isChatPage =
+    location.pathname === ROUTES.APP.CHAT || location.pathname.startsWith('/app/chat');
+
+  const {
+    messages,
+    isLoading,
+    compactOpen,
+    isFemale,
+    aiBrandName,
+    quickPrompts,
+    placeholderText,
+    sendMessage,
+    toggleCompact,
+    closeCompact,
+    expandToFullScreen,
+  } = useAIChat();
+
   const [inputText, setInputText] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const lastProcessedPrompt = useRef<string | undefined>(undefined);
-  const conversationId = useRef<string>(
-    typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `conv_${Date.now()}`
-  );
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const pathway = resolvePathway(userProfile.gender, userProfile.pathway);
-  const isFemale = pathway === 'female';
-  const aiBrandName = 'BioPulse AI Companion';
-
-
-  const quickPrompts =
-    pathway === 'male'
-      ? MALE_QUICK_PROMPTS
-      : pathway === 'female'
-      ? FEMALE_QUICK_PROMPTS
-      : GENERAL_QUICK_PROMPTS;
-
-  const initialGreeting = `Hello ${userProfile.fullName ? userProfile.fullName.split(' ')[0] : 'there'}! I'm ${aiBrandName}, your health companion. ${
-    pathway === 'female' && snapshotMetrics.cycleDay > 0
-      ? `Observations from your recorded history indicate you are currently on Day ${snapshotMetrics.cycleDay} (${snapshotMetrics.phaseName}).`
-      : 'I am here to help you navigate your screening insights, biomarker patterns, and preparation for your clinician appointments.'
-  }`;
-
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'welcome',
-      sender: 'ai',
-      text: initialGreeting,
-      timestamp: 'Just now',
-    },
-  ]);
-
-  // Handle triggered AI prompt from other sections
+  // Auto-scroll to latest message
   useEffect(() => {
-    if (activeAiPrompt && activeAiPrompt !== lastProcessedPrompt.current) {
-      lastProcessedPrompt.current = activeAiPrompt;
-      handleSendMessage(activeAiPrompt);
-    }
-  }, [activeAiPrompt]);
-
-  // Auto-scroll to bottom of conversation
-  useEffect(() => {
-    if (isAiChatOpen) {
+    if (compactOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, isTyping, isAiChatOpen]);
+  }, [messages, isLoading, compactOpen]);
 
-  const handleSendMessage = async (textToSend?: string) => {
-    const text = textToSend || inputText;
-    if (!text.trim() || isTyping) return;
-
-    const userMsg: ChatMessage = {
-      id: `user_${Date.now()}`,
-      sender: 'user',
-      text: text.trim(),
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
-    if (!textToSend) setInputText('');
-    setIsTyping(true);
-
-    try {
-      const response = await sendChatMessage(
-        text.trim(),
-        conversationId.current,
-        messages.map((m) => ({ sender: m.sender, text: m.text })),
-        { profileId: userProfile?.id }
-      );
-
-      const replyText = response?.reply || response?.message || 'I could not process your request at this moment.';
-      const aiMsg: ChatMessage = {
-        id: `ai_${Date.now()}`,
-        sender: 'ai',
-        text: replyText,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        safetyLevel: response?.safety_level || 'normal',
-        needsClinician: Boolean(response?.needs_clinician),
-      };
-
-      setMessages((prev) => [...prev, aiMsg]);
-    } catch (err) {
-      console.error('AI chat failed:', err);
-      const errorMsg: ChatMessage = {
-        id: `err_${Date.now()}`,
-        sender: 'ai',
-        text: 'A connection error occurred while consulting the intelligence service. Please try again in a moment.',
-        timestamp: 'Just now',
-        safetyLevel: 'caution',
-        needsClinician: false,
-      };
-      setMessages((prev) => [...prev, errorMsg]);
-    } finally {
-      setIsTyping(false);
+  // Handle textarea resize
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInputText(e.target.value);
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 100)}px`;
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const handleSend = async (textToSend?: string) => {
+    const text = textToSend || inputText;
+    if (!text.trim() || isLoading) return;
+    if (!textToSend) {
+      setInputText('');
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+      }
+    }
+    await sendMessage(text.trim());
+  };
+
+  // If currently on dedicated chat page, do not show floating trigger or duplicate widget
+  if (isChatPage) {
+    return null;
+  }
+
+  const primaryLightBg = isFemale ? 'bg-[#FDE6EF]' : 'bg-[#E1F5FE]';
+  const primaryBorder = isFemale ? 'border-[#F43F7D]/30' : 'border-[#BAE6FD]';
+  const primaryText = isFemale ? 'text-[#F43F7D]' : 'text-[#0868B9]';
+
   return (
     <>
-      {/* ── Chat Modal Panel (Desktop & Mobile) ── */}
+      {/* ── Compact Floating Chat Popup Modal ── */}
       <AnimatePresence>
-        {isAiChatOpen && (
+        {compactOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            initial={{ opacity: 0, y: 18, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="fixed bottom-20 sm:bottom-24 right-3 sm:right-6 w-[calc(100vw-1.5rem)] sm:w-[440px] max-h-[calc(100vh-140px)] sm:max-h-[620px] h-[78vh] rounded-[24px] sm:rounded-[28px] bg-white border border-[#E2E8F0] shadow-2xl z-50 flex flex-col justify-between overflow-hidden text-[#0F172A] select-none"
+            exit={{ opacity: 0, y: 18, scale: 0.96 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+            className="fixed bottom-20 md:bottom-24 right-3 sm:right-6 w-[calc(100vw-1.5rem)] sm:w-[410px] h-[78vh] sm:h-[580px] max-h-[620px] rounded-[24px] bg-white border border-[#E2E8F0] shadow-2xl z-50 flex flex-col overflow-hidden text-[#0F172A] select-none"
+            role="dialog"
+            aria-label={aiBrandName}
           >
-            {/* Panel Header */}
-            <div className="p-4 sm:p-5 bg-[#F8FAFC] border-b border-[#E2E8F0] flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center text-[#0288D1] shrink-0">
-                  <MessageChatCircle className="w-5 h-5" aria-hidden="true" />
+            {/* Header */}
+            <div className="px-4 py-3.5 bg-white border-b border-[#E2E8F0] flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${primaryLightBg} border ${primaryBorder}`}
+                >
+                  <Sparkles className={`w-4 h-4 ${primaryText}`} aria-hidden="true" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold font-display text-[#0F172A]">{aiBrandName}</h3>
-                    <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
-                      Online
+                    <h3 className="text-xs sm:text-sm font-bold font-display text-[#0F172A] truncate">
+                      {aiBrandName}
+                    </h3>
+                    <span className="inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200 shrink-0">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      Active
                     </span>
                   </div>
-                  <span className="text-[11px] text-[#64748B] font-sans block">
-                    {pathway === 'male'
-                      ? 'Male hypogonadism & health screening companion'
-                      : pathway === 'female'
-                      ? 'Conversational health & ML insights companion'
-                      : 'Baseline health & wellness insights companion'}
+                  <span className="text-[10px] text-[#64748B] block truncate">
+                    {isFemale ? 'PCOS & reproductive health literacy' : 'Hormonal vitality & health literacy'}
                   </span>
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={closeAiChat}
-                className="p-1.5 rounded-xl bg-white hover:bg-[#F1F5F9] text-[#64748B] hover:text-[#0F172A] border border-[#E2E8F0] transition-colors cursor-pointer"
-                aria-label="Close AI Chat"
-              >
-                <XClose className="w-4 h-4" aria-hidden="true" />
-              </button>
+              {/* Header Actions: Minimize, Full Screen / Expand, Close */}
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={closeCompact}
+                  className="p-1.5 rounded-lg text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] transition-colors cursor-pointer"
+                  title="Minimize"
+                  aria-label="Minimize Chat"
+                >
+                  <Minus className="w-4 h-4" aria-hidden="true" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={expandToFullScreen}
+                  className={`p-1.5 rounded-lg text-[#64748B] hover:${primaryText} hover:bg-[#F1F5F9] transition-colors cursor-pointer`}
+                  title="Expand to Full Screen (/app/chat)"
+                  aria-label="Expand to Full Screen"
+                >
+                  <Maximize2 className="w-3.5 h-3.5" aria-hidden="true" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={closeCompact}
+                  className="p-1.5 rounded-lg text-[#64748B] hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                  title="Close"
+                  aria-label="Close Chat"
+                >
+                  <XClose className="w-4 h-4" aria-hidden="true" />
+                </button>
+              </div>
             </div>
 
             {/* Messages Scroll Area */}
-            <div className="flex-1 p-4 overflow-y-auto space-y-3.5 text-left text-xs font-sans bg-[#F8FAFC]/50">
-              {messages.map((m) => (
-                <div
-                  key={m.id}
-                  className={`flex flex-col ${
-                    m.sender === 'user' ? 'items-end' : 'items-start'
-                  }`}
-                >
-                  <div className="flex items-start gap-2 max-w-[90%]">
-                    {m.sender === 'ai' && (
-                      <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
-                        isFemale ? 'bg-[#FDE6EF] border border-[#F43F7D]/20 text-[#F43F7D]' : 'bg-[#E1F5FE] border border-[#B3E5FC] text-[#29B6F6]'
-                      }`}>
-                        <MessageChatCircle className={`w-3.5 h-3.5 ${isFemale ? 'text-[#F43F7D]' : 'text-[#29B6F6]'}`} aria-hidden="true" />
-                      </div>
-                    )}
+            <div className="flex-1 p-3.5 sm:p-4 overflow-y-auto space-y-3.5 text-left text-xs bg-[#F5FBFD]/40">
+              {messages.map((m) => {
+                const isUser = m.sender === 'user';
+                return (
+                  <div
+                    key={m.id}
+                    className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
+                  >
                     <div
-                      className={`p-3.5 rounded-2xl leading-relaxed whitespace-pre-line ${
-                        m.sender === 'user'
-                          ? (isFemale ? 'bg-[#F43F7D] text-white rounded-br-xs shadow-xs' : 'bg-[#29B6F6] text-white rounded-br-xs shadow-xs')
-                          : m.safetyLevel === 'urgent'
-                          ? 'bg-rose-50 text-rose-950 border-2 border-rose-300 rounded-bl-xs shadow-xs'
-                          : m.safetyLevel === 'caution'
-                          ? 'bg-amber-50 text-amber-950 border border-amber-300 rounded-bl-xs'
-                          : 'bg-white text-[#0F172A] border border-[#E2E8F0] rounded-bl-xs shadow-xs'
+                      className={`flex items-start gap-2 ${
+                        isUser ? 'max-w-[85%] justify-end' : 'max-w-[92%]'
                       }`}
                     >
-                      {m.safetyLevel === 'urgent' && (
-                        <div className="flex items-center gap-1.5 pb-2 mb-2 border-b border-rose-200 text-rose-700 font-bold text-[11px]">
-                          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                          <span>Immediate Medical Attention Recommended</span>
+                      {!isUser && (
+                        <div
+                          className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${primaryLightBg} border ${primaryBorder}`}
+                        >
+                          <Sparkles className={`w-3.5 h-3.5 ${primaryText}`} aria-hidden="true" />
                         </div>
                       )}
-                      {m.needsClinician && m.safetyLevel !== 'urgent' && (
-                        <div className={`inline-flex items-center gap-1 px-2 py-0.5 mb-2 rounded-md text-[10px] font-semibold border ${
-                          isFemale ? 'bg-[#FDE6EF] text-[#DC326C] border-[#F43F7D]/20' : 'bg-[#E0F2FE] text-[#0288D1] border-[#BAE6FD]'
-                        }`}>
-                          <MedicalCross className="w-3.5 h-3.5" aria-hidden="true" />
-                          <span>Recommended for Doctor Consultation</span>
-                        </div>
-                      )}
-                      <div>{m.text}</div>
-                    </div>
-                  </div>
-                  <span className="text-[9px] font-mono text-[#64748B] mt-1 px-1">
-                    {m.timestamp}
-                  </span>
-                </div>
-              ))}
 
-              {isTyping && (
-                <div className="flex items-center gap-2 p-3 rounded-2xl bg-white border border-[#E2E8F0] w-fit">
-                  <div className="flex items-center gap-1">
-                    <div className={`w-2 h-2 rounded-full animate-bounce ${isFemale ? 'bg-[#F43F7D]' : 'bg-[#29B6F6]'}`} />
-                    <div className={`w-2 h-2 rounded-full animate-bounce delay-150 ${isFemale ? 'bg-[#DC326C]' : 'bg-[#0288D1]'}`} />
-                    <div className={`w-2 h-2 rounded-full animate-bounce delay-300 ${isFemale ? 'bg-[#BE185D]' : 'bg-[#01579B]'}`} />
+                      <div
+                        className={`p-3 rounded-2xl leading-relaxed text-xs ${
+                          isUser
+                            ? isFemale
+                              ? 'bg-[#F43F7D] text-white rounded-br-xs shadow-xs'
+                              : 'bg-[#0868B9] text-white rounded-br-xs shadow-xs'
+                            : m.safetyLevel === 'urgent'
+                            ? 'bg-rose-50 text-rose-950 border-2 border-rose-300 rounded-bl-xs shadow-xs'
+                            : m.safetyLevel === 'caution'
+                            ? 'bg-amber-50 text-amber-950 border border-amber-300 rounded-bl-xs'
+                            : 'bg-white text-[#0F172A] border border-[#E2E8F0] rounded-bl-xs shadow-xs'
+                        }`}
+                      >
+                        {m.safetyLevel === 'urgent' && (
+                          <div className="flex items-center gap-1.5 pb-2 mb-2 border-b border-rose-200 text-rose-700 font-bold text-[11px]">
+                            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                            <span>Immediate Medical Attention Recommended</span>
+                          </div>
+                        )}
+                        {m.needsClinician && m.safetyLevel !== 'urgent' && (
+                          <div
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 mb-2 rounded-md text-[10px] font-semibold border ${
+                              isFemale
+                                ? 'bg-[#FDE6EF] text-[#DC326C] border-[#F43F7D]/20'
+                                : 'bg-[#E1F5FE] text-[#0868B9] border-[#BAE6FD]'
+                            }`}
+                          >
+                            <MedicalCross className="w-3 h-3" aria-hidden="true" />
+                            <span>Doctor Discussion Recommended</span>
+                          </div>
+                        )}
+
+                        {isUser ? (
+                          <div className="whitespace-pre-wrap">{m.text}</div>
+                        ) : (
+                          <AIMessageContent content={m.text} isFemale={isFemale} />
+                        )}
+                      </div>
+                    </div>
+
+                    <span className="text-[9px] font-mono text-[#64748B] mt-1 px-1">
+                      {m.timestamp}
+                    </span>
                   </div>
-                  <span className="text-[11px] font-medium text-[#64748B]">{aiBrandName} is consulting your records...</span>
+                );
+              })}
+
+              {/* Typing / Reviewing Context indicator */}
+              {isLoading && (
+                <div className="flex items-center gap-2 p-3 rounded-2xl bg-white border border-[#E2E8F0] w-fit shadow-xs">
+                  <div className="flex items-center gap-1">
+                    <div
+                      className={`w-2 h-2 rounded-full animate-bounce ${
+                        isFemale ? 'bg-[#F43F7D]' : 'bg-[#0868B9]'
+                      }`}
+                    />
+                    <div
+                      className={`w-2 h-2 rounded-full animate-bounce delay-150 ${
+                        isFemale ? 'bg-[#0E9EAA]' : 'bg-[#2196E3]'
+                      }`}
+                    />
+                    <div
+                      className={`w-2 h-2 rounded-full animate-bounce delay-300 ${
+                        isFemale ? 'bg-[#16B8C4]' : 'bg-[#0868B9]'
+                      }`}
+                    />
+                  </div>
+                  <span className="text-[11px] font-medium text-[#64748B]">
+                    BioPulse AI is reviewing your context...
+                  </span>
                 </div>
               )}
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Quick Prompt Chips */}
-            <div className="p-3 bg-white border-t border-[#E2E8F0] flex gap-1.5 overflow-x-auto no-scrollbar">
-              {quickPrompts.map((prompt, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => handleSendMessage(prompt)}
-                  className={`px-2.5 py-1 rounded-full text-[10px] font-medium whitespace-nowrap transition-colors cursor-pointer border ${
-                    isFemale
-                      ? 'bg-[#F8FAFC] hover:bg-[#FDE6EF] text-[#DC326C] border-[#E2E8F0] hover:border-[#F43F7D]/30'
-                      : 'bg-[#F8FAFC] hover:bg-[#E0F2FE] text-[#0288D1] border-[#E2E8F0] hover:border-[#BAE6FD]'
-                  }`}
-                >
-                  {prompt}
-                </button>
-              ))}
-            </div>
+            {/* Quick Prompts (Only visible if conversation is near start) */}
+            {messages.length <= 2 && (
+              <div className="px-3 py-2 bg-white border-t border-[#E2E8F0] flex gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+                {quickPrompts.map((prompt, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleSend(prompt)}
+                    className={`px-2.5 py-1 rounded-full text-[10px] font-medium whitespace-nowrap transition-colors cursor-pointer border ${
+                      isFemale
+                        ? 'bg-[#F8FAFC] hover:bg-[#FDE6EF] text-[#DC326C] border-[#E2E8F0] hover:border-[#F43F7D]/30'
+                        : 'bg-[#F8FAFC] hover:bg-[#E1F5FE] text-[#0868B9] border-[#E2E8F0] hover:border-[#BAE6FD]'
+                    }`}
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            )}
 
-            {/* Message Input Box */}
-            <div className="p-3 sm:p-4 bg-[#F8FAFC] border-t border-[#E2E8F0] space-y-2">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleSendMessage();
-                }}
-                className="flex items-center gap-2"
-              >
-                <input
-                  type="text"
-                  placeholder={
-                    pathway === 'male'
-                      ? 'Ask about hypogonadism screening, hormone vitality, symptoms, or doctor prep...'
-                      : pathway === 'female'
-                      ? 'Ask about your PCOS screening, cycle, symptoms, or doctor prep...'
-                      : 'Ask about your health indicators, symptoms, lab reports, or doctor prep...'
-                  }
+            {/* Bottom Composer */}
+            <div className="p-3 bg-white border-t border-[#E2E8F0] space-y-2 shrink-0">
+              <div className="flex items-end gap-2 bg-[#F8FAFC] border border-[#CBD5E1] rounded-2xl p-1.5 focus-within:ring-2 focus-within:ring-offset-1 focus-within:border-transparent transition-all">
+                <textarea
+                  ref={textareaRef}
+                  rows={1}
                   value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  className={`flex-1 px-4 py-2.5 rounded-2xl bg-white border border-[#CBD5E1] text-xs text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 ${
-                    isFemale ? 'focus:ring-[#F43F7D]/30 focus:border-[#F43F7D]' : 'focus:ring-[#29B6F6]'
-                  }`}
+                  onChange={handleTextareaChange}
+                  onKeyDown={handleKeyDown}
+                  placeholder={placeholderText}
+                  disabled={isLoading}
+                  className="flex-1 bg-transparent px-2.5 py-1 text-xs text-[#0F172A] placeholder-[#94A3B8] focus:outline-none resize-none max-h-24 disabled:opacity-60"
+                  aria-label="Type message"
                 />
                 <button
-                  type="submit"
-                  disabled={!inputText.trim()}
-                  className={`p-2.5 rounded-2xl text-white shadow-sm disabled:opacity-40 transition-all cursor-pointer ${
-                    isFemale ? 'bg-[#F43F7D] hover:bg-[#DC326C]' : 'bg-[#29B6F6] hover:bg-[#039BE5]'
+                  type="button"
+                  onClick={() => handleSend()}
+                  disabled={!inputText.trim() || isLoading}
+                  className={`p-2 rounded-xl text-white shadow-xs disabled:opacity-40 transition-all cursor-pointer shrink-0 ${
+                    isFemale ? 'bg-[#F43F7D] hover:bg-[#DC326C]' : 'bg-[#0868B9] hover:bg-[#065293]'
                   }`}
                   aria-label="Send Message"
                 >
                   <Send01 className="w-4 h-4" aria-hidden="true" />
                 </button>
-              </form>
+              </div>
 
-              <p className="text-[9px] text-[#64748B] font-sans text-center">
-                {aiBrandName} provides educational explanations and is not a medical diagnostic device.
-              </p>
+              <div className="flex items-center justify-between text-[9px] text-[#64748B] px-1">
+                <span>Educational screening companion • Not a diagnosis</span>
+                <button
+                  type="button"
+                  onClick={expandToFullScreen}
+                  className={`hover:underline font-medium cursor-pointer ${primaryText}`}
+                >
+                  Open Full Screen
+                </button>
+              </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ── Floating Trigger Button (Available Globally, except on dedicated full-screen Chat Page) ── */}
-      {!isChatPage && (
-        <div className="fixed bottom-20 md:bottom-8 right-5 sm:right-8 z-40 select-none">
-          <motion.button
-            type="button"
-            onClick={toggleAiChat}
-            whileHover={{ scale: 1.06 }}
-            whileTap={{ scale: 0.94 }}
-            className={`relative group p-3.5 sm:p-4 rounded-full text-white shadow-lg flex items-center justify-center cursor-pointer transition-all ${
-              isFemale
-                ? 'bg-[#F43F7D] hover:bg-[#DC326C] border border-[#FDE6EF]/40'
-                : 'bg-[#29B6F6] hover:bg-[#039BE5] border border-[#B3E5FC]/40'
-            }`}
-            aria-label={`Consult ${aiBrandName}`}
-          >
-            <MessageChatCircle className="w-6 h-6 text-white" aria-hidden="true" />
+      {/* ── Floating Trigger Button (Bottom-Right) ── */}
+      <div className="fixed bottom-20 md:bottom-8 right-5 sm:right-8 z-40 select-none">
+        <motion.button
+          type="button"
+          onClick={toggleCompact}
+          whileHover={{ scale: 1.06 }}
+          whileTap={{ scale: 0.94 }}
+          className={`relative group p-3.5 sm:p-4 rounded-full text-white shadow-lg flex items-center justify-center cursor-pointer transition-all ${
+            isFemale
+              ? 'bg-[#F43F7D] hover:bg-[#DC326C] border border-[#FDE6EF]/40'
+              : 'bg-[#0868B9] hover:bg-[#065293] border border-[#BAE6FD]/40'
+          }`}
+          aria-label={aiBrandName}
+        >
+          <MessageChatCircle className="w-6 h-6 text-white" aria-hidden="true" />
 
-            {/* Hover Tooltip (Desktop) */}
-            <span className="hidden sm:group-hover:block absolute right-full mr-3 px-3 py-1.5 rounded-xl bg-[#0F172A] text-white text-xs font-mono font-bold whitespace-nowrap shadow-md border border-[#334155]">
-              Consult {aiBrandName}
-            </span>
-          </motion.button>
-        </div>
-      )}
+          {/* Desktop Hover Tooltip */}
+          <span className="hidden sm:group-hover:block absolute right-full mr-3 px-3 py-1.5 rounded-xl bg-[#0F172A] text-white text-xs font-mono font-bold whitespace-nowrap shadow-md border border-[#334155]">
+            {aiBrandName}
+          </span>
+        </motion.button>
+      </div>
     </>
   );
 };
