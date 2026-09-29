@@ -31,10 +31,19 @@ import {
 import { Container } from '../../components/ui/Container';
 import { useDoctors } from '../../services/doctorService';
 import type { Doctor } from '../../types/doctor';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useUserHealth } from '../../context/UserHealthContext';
+import { resolvePathway } from '../../types/onboarding';
 
 type HealthBranch = 'all' | 'female' | 'male' | 'both';
 
 export const Doctors: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const { userProfile } = useUserHealth();
+  const authenticatedPathway = userProfile?.id
+    ? resolvePathway(userProfile.gender, userProfile.pathway)
+    : null;
+
   const { doctors, loading, error, refetch } = useDoctors();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeBranch, setActiveBranch] = useState<HealthBranch>('all');
@@ -43,8 +52,45 @@ export const Doctors: React.FC = () => {
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
 
   useEffect(() => {
-    document.title = 'Meet Our Specialists | PCOS, Hypogonadism & Sexology | PMOSense';
+    document.title = 'Meet Our Specialists | PCOS, Hypogonadism & Care | BioPulse';
   }, []);
+
+  // Sync pathway from URL query parameter
+  useEffect(() => {
+    const urlPathway = searchParams.get('pathway') || searchParams.get('filter');
+    if (urlPathway === 'female_pcos' || urlPathway === 'female' || urlPathway === 'pcos') {
+      setActiveBranch('female');
+    } else if (urlPathway === 'male_hypogonadism' || urlPathway === 'male' || urlPathway === 'hypogonadism') {
+      setActiveBranch('male');
+    }
+  }, [searchParams]);
+
+  // Check intent / restore selected doctor after login or direct deep-link
+  useEffect(() => {
+    const targetDocId = searchParams.get('doctorId');
+    let savedDocId: number | null = null;
+    if (typeof window !== 'undefined') {
+      const intentRaw = sessionStorage.getItem('biopulse_booking_intent');
+      if (intentRaw) {
+        try {
+          const parsed = JSON.parse(intentRaw);
+          if (parsed?.doctorId) savedDocId = Number(parsed.doctorId);
+        } catch {
+          // ignore
+        }
+      }
+    }
+    const docIdToSelect = targetDocId ? Number(targetDocId) : savedDocId;
+    if (docIdToSelect && doctors.length > 0) {
+      const match = doctors.find((d) => d.id === docIdToSelect);
+      if (match) {
+        setSelectedDoctor(match);
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('biopulse_booking_intent');
+        }
+      }
+    }
+  }, [searchParams, doctors]);
 
   // Helper to parse min fee numeric value for sorting
   const extractMinFee = (feeStr: string | null | undefined): number => {
@@ -56,6 +102,10 @@ export const Doctors: React.FC = () => {
 
   // Helper to determine clinical branch (female, male, or both genders)
   const getDoctorBranch = (doc: Doctor): 'female' | 'male' | 'both' => {
+    if (doc.pathway === 'female_pcos') return 'female';
+    if (doc.pathway === 'male_hypogonadism') return 'male';
+    if (doc.pathway === 'both') return 'both';
+
     const s = `${doc.specialty || ''} ${doc.services_offered || ''} ${doc.short_bio || ''} ${doc.qualifications || ''}`.toLowerCase();
 
     // Dual-gender Sexologists, Reproductive Medicine & Endocrine Specialists
@@ -138,6 +188,17 @@ export const Doctors: React.FC = () => {
 
     // Sorting
     result.sort((a, b) => {
+      // Prioritize authenticated patient's clinical pathway
+      if (authenticatedPathway === 'female') {
+        const pA = a.pathway === 'female_pcos' ? 0 : a.pathway === 'both' ? 1 : 2;
+        const pB = b.pathway === 'female_pcos' ? 0 : b.pathway === 'both' ? 1 : 2;
+        if (pA !== pB) return pA - pB;
+      } else if (authenticatedPathway === 'male') {
+        const pA = a.pathway === 'male_hypogonadism' ? 0 : a.pathway === 'both' ? 1 : 2;
+        const pB = b.pathway === 'male_hypogonadism' ? 0 : b.pathway === 'both' ? 1 : 2;
+        if (pA !== pB) return pA - pB;
+      }
+
       if (activeSort === 'name') {
         return a.name.localeCompare(b.name);
       }
@@ -160,7 +221,7 @@ export const Doctors: React.FC = () => {
     });
 
     return result;
-  }, [doctors, activeBranch, searchTerm, activeFilter, activeSort]);
+  }, [doctors, activeBranch, searchTerm, activeFilter, activeSort, authenticatedPathway]);
 
   // Counts for tabs
   const femaleCount = useMemo(() => doctors.filter((d) => getDoctorBranch(d) === 'female').length, [doctors]);
@@ -544,6 +605,45 @@ export const Doctors: React.FC = () => {
                 </div>
               )}
 
+              {/* Authenticated Patient Pathway Priority Banner */}
+              {authenticatedPathway === 'female' && (
+                <div className="mb-6 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-pink-50 via-rose-50 to-white border border-pink-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-left shadow-2xs">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-pink-100 text-pink-700 flex items-center justify-center shrink-0">
+                      <Venus className="w-5 h-5 text-pink-600" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-[#073B72]">Recommended for your PCOS Pathway</h4>
+                      <p className="text-xs text-[#55718F]">
+                        Specialists in polycystic ovary syndrome, reproductive endocrinology, and hormonal cycle care are prioritized below.
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[11px] font-bold text-pink-700 bg-pink-100/70 border border-pink-200 px-3 py-1 rounded-full self-start sm:self-auto shrink-0">
+                    Prioritized Care
+                  </span>
+                </div>
+              )}
+
+              {authenticatedPathway === 'male' && (
+                <div className="mb-6 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-indigo-50 via-sky-50 to-white border border-indigo-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-left shadow-2xs">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
+                      <Mars className="w-5 h-5 text-indigo-600" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-[#073B72]">Recommended for your Male Hormonal Pathway</h4>
+                      <p className="text-xs text-[#55718F]">
+                        Specialists in male hypogonadism, andrology, and testosterone deficiency evaluation are prioritized below.
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[11px] font-bold text-indigo-700 bg-indigo-100/70 border border-indigo-200 px-3 py-1 rounded-full self-start sm:self-auto shrink-0">
+                    Prioritized Care
+                  </span>
+                </div>
+              )}
+
               {/* 3-Column Responsive Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
                 {filteredAndSortedDoctors.map((doctor) => {
@@ -671,8 +771,8 @@ const DoctorCard: React.FC<{
             </span>
           )}
 
-          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200/60">
-            <ShieldCheck className="w-2.5 h-2.5 text-emerald-600" /> PMDC
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-bold border border-slate-200">
+            <ShieldCheck className="w-2.5 h-2.5 text-slate-500" /> BioPulse Specialist
           </span>
         </div>
 
@@ -743,6 +843,13 @@ const DoctorCard: React.FC<{
                 }`}
               >
                 {doctor.specialty}
+              </p>
+            )}
+
+            {doctor.relevance_reason && (
+              <p className="text-[11px] font-medium text-emerald-700 mt-1 flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-emerald-600 shrink-0" />
+                <span>{doctor.relevance_reason}</span>
               </p>
             )}
           </div>
@@ -866,20 +973,83 @@ const DoctorCard: React.FC<{
  * Detailed Consultation & Booking Modal.
  * Shows verified profile, complete fee details, clinic address, and direct booking actions.
  */
+/**
+ * Detailed Consultation & Booking Modal.
+ * Shows specialist profile, fee details, clinic address, and direct booking actions.
+ * Connected directly to patient appointments and authenticated care flow.
+ */
 const ConsultationModal: React.FC<{
   doctor: Doctor;
   branch: 'female' | 'male' | 'both';
   onClose: () => void;
 }> = ({ doctor, branch, onClose }) => {
-  const [formSent, setFormSent] = useState(false);
-  const [patientName, setPatientName] = useState('');
-  const [patientPhone, setPatientPhone] = useState('');
-  const [preferredDate, setPreferredDate] = useState('');
-  const [patientNote, setPatientNote] = useState('');
+  const navigate = useNavigate();
+  const { userProfile, bookAppointment } = useUserHealth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [formSent, setFormSent] = useState(false);
+  const [patientName, setPatientName] = useState(userProfile?.fullName || '');
+  const [patientPhone, setPatientPhone] = useState(userProfile?.phone || '');
+  const [preferredDate, setPreferredDate] = useState('');
+  const preferredTime = '15:30';
+  const [consultationMode, setConsultationMode] = useState<'video' | 'clinic'>('video');
+  const [patientNote, setPatientNote] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormSent(true);
+    setErrorMessage('');
+
+    // If not authenticated, store booking intent and redirect to login
+    if (!userProfile?.id) {
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(
+          'biopulse_booking_intent',
+          JSON.stringify({
+            doctorId: doctor.id,
+            doctorName: doctor.name,
+            specialty: doctor.specialty,
+            pathway: doctor.pathway,
+            preferredDate,
+            preferredTime,
+            patientNote,
+          })
+        );
+      }
+      navigate(`/login?redirect=${encodeURIComponent(`/doctors?intent=book&doctorId=${doctor.id}`)}`);
+      return;
+    }
+
+    // Authenticated user: create genuine appointment
+    setIsSubmitting(true);
+    try {
+      const tomorrowStr = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+      const res = await bookAppointment({
+        providerId: String(doctor.id),
+        providerName: doctor.name,
+        providerSpecialty: doctor.specialty || undefined,
+        title: `Clinical Consultation with ${doctor.name}`,
+        appointmentType: 'consultation',
+        scheduledDate: preferredDate || tomorrowStr,
+        scheduledTime: preferredTime || '15:30',
+        durationMinutes: 30,
+        location: consultationMode === 'video' ? 'Online Video Consultation' : (doctor.location || 'Clinic Consultation'),
+        meetingUrl: consultationMode === 'video' ? 'https://meet.biopulse.ai/consultation' : undefined,
+        reason: patientNote || (doctor.relevance_reason ? `Consultation: ${doctor.relevance_reason}` : 'Clinical Consultation'),
+        patientNotes: patientPhone ? `Contact Phone: ${patientPhone}` : '',
+        bookingSource: 'public_doctors_directory',
+      });
+
+      if (res.success) {
+        setFormSent(true);
+      } else {
+        setErrorMessage(res.error || 'Unable to create appointment at this time.');
+      }
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'An unexpected error occurred while booking.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getBranchBadge = () => {
@@ -905,9 +1075,9 @@ const ConsultationModal: React.FC<{
   };
 
   const getReasonPlaceholder = () => {
-    if (branch === 'both') return 'Reason (e.g., couples consultation, reproductive hormones, libido)';
-    if (branch === 'male') return 'Reason (e.g., testosterone check, low energy)';
-    return 'Reason (e.g., PCOS checkup, period delay)';
+    if (branch === 'both') return 'Reason (e.g., hormone panel review, reproductive consultation)';
+    if (branch === 'male') return 'Reason (e.g., testosterone evaluation, fatigue, vitality)';
+    return 'Reason (e.g., PCOS follow-up, cycle regularity, ultrasound review)';
   };
 
   const getSubmitBtnStyle = () => {
@@ -951,14 +1121,20 @@ const ConsultationModal: React.FC<{
             <div className="flex items-center gap-2 flex-wrap">
               {getBranchBadge()}
 
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
-                <ShieldCheck className="w-3 h-3 text-emerald-600" /> PMDC Verified
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold border border-slate-200">
+                <ShieldCheck className="w-3 h-3 text-slate-500" /> BioPulse Specialist
               </span>
             </div>
 
             <h2 className="text-xl font-bold text-[#073B72] mt-1.5">{doctor.name}</h2>
             <p className="text-xs text-[#55718F] font-medium">{doctor.qualifications}</p>
             <p className="text-xs font-semibold text-[#16B8C4]">{doctor.specialty}</p>
+            {doctor.relevance_reason && (
+              <p className="text-[11px] font-medium text-emerald-700 mt-0.5 flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-emerald-600 shrink-0" />
+                <span>{doctor.relevance_reason}</span>
+              </p>
+            )}
           </div>
         </div>
 
@@ -1016,25 +1192,71 @@ const ConsultationModal: React.FC<{
         {/* Booking Form or Confirmation */}
         <div className="mt-5">
           {formSent ? (
-            <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-200 text-center space-y-2">
-              <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
-              <h4 className="text-sm font-bold text-emerald-900">Consultation Request Received!</h4>
-              <p className="text-xs text-emerald-700">
-                Our care coordinator will contact you at <strong>{patientPhone}</strong> within 15 minutes to confirm your appointment with {doctor.name}.
+            <div className="p-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-center space-y-3">
+              <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
+              <h4 className="text-base font-bold text-emerald-900">Consultation Requested!</h4>
+              <p className="text-xs text-emerald-700 leading-relaxed max-w-sm mx-auto">
+                Your appointment with <strong>{doctor.name}</strong> has been created and linked to your BioPulse Care Dashboard.
               </p>
-              <button
-                type="button"
-                onClick={onClose}
-                className="mt-3 px-4 py-1.5 rounded-xl bg-emerald-700 text-white text-xs font-bold cursor-pointer"
-              >
-                Done
-              </button>
+              <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    navigate('/app/appointments');
+                  }}
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <span>View in My Appointments</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white border border-emerald-300 text-emerald-800 text-xs font-bold hover:bg-emerald-50 transition-colors cursor-pointer"
+                >
+                  Done
+                </button>
+              </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-3">
-              <h4 className="text-xs font-bold text-[#073B72] uppercase tracking-wider flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-[#16B8C4]" /> Request In-Person or Video Consultation
-              </h4>
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-bold text-[#073B72] uppercase tracking-wider flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-[#16B8C4]" /> Request Consultation
+                </h4>
+                <div className="flex items-center gap-1.5 text-[11px]">
+                  <button
+                    type="button"
+                    onClick={() => setConsultationMode('video')}
+                    className={`px-2 py-0.5 rounded-lg font-bold transition-colors cursor-pointer ${
+                      consultationMode === 'video'
+                        ? 'bg-[#16B8C4] text-white'
+                        : 'bg-[#F4F9FC] text-[#55718F] hover:bg-slate-200'
+                    }`}
+                  >
+                    Video Call
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConsultationMode('clinic')}
+                    className={`px-2 py-0.5 rounded-lg font-bold transition-colors cursor-pointer ${
+                      consultationMode === 'clinic'
+                        ? 'bg-[#073B72] text-white'
+                        : 'bg-[#F4F9FC] text-[#55718F] hover:bg-slate-200'
+                    }`}
+                  >
+                    In-Person
+                  </button>
+                </div>
+              </div>
+
+              {errorMessage && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{errorMessage}</span>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input
@@ -1047,7 +1269,6 @@ const ConsultationModal: React.FC<{
                 />
                 <input
                   type="tel"
-                  required
                   placeholder="Phone Number (e.g. 0300 1234567)"
                   value={patientPhone}
                   onChange={(e) => setPatientPhone(e.target.value)}
@@ -1058,6 +1279,8 @@ const ConsultationModal: React.FC<{
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input
                   type="date"
+                  required
+                  min={new Date().toISOString().split('T')[0]}
                   value={preferredDate}
                   onChange={(e) => setPreferredDate(e.target.value)}
                   className="px-3 py-2 rounded-xl bg-[#F8FCFD] border border-[#D7EAF2] text-xs text-[#073B72] focus:outline-none focus:ring-1 focus:ring-[#16B8C4]"
@@ -1074,9 +1297,14 @@ const ConsultationModal: React.FC<{
               <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
                 <button
                   type="submit"
-                  className={`w-full sm:flex-1 py-2.5 px-4 rounded-xl text-white text-xs font-bold transition-colors cursor-pointer ${getSubmitBtnStyle()}`}
+                  disabled={isSubmitting}
+                  className={`w-full sm:flex-1 py-2.5 px-4 rounded-xl text-white text-xs font-bold transition-colors cursor-pointer disabled:opacity-50 ${getSubmitBtnStyle()}`}
                 >
-                  Confirm Consultation Request
+                  {isSubmitting
+                    ? 'Requesting Appointment...'
+                    : userProfile?.id
+                    ? 'Request Consultation'
+                    : 'Sign In & Request Consultation'}
                 </button>
 
                 {doctor.phone && (

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   CheckDone01,
@@ -10,6 +11,8 @@ import {
   Image01,
   Eye,
   ShieldTick,
+  Clock,
+  Activity,
 } from '@untitledui/icons';
 import { useAuth } from '../../context/AuthContext';
 import { useUserHealth } from '../../context/UserHealthContext';
@@ -45,6 +48,7 @@ export const AssessmentPage: React.FC = () => {
     submitTier1,
     submitMaleTier1,
   } = useUserHealth();
+  const navigate = useNavigate();
 
   // Active view tab: 'overview' (4-tier progressive profile) or 'intake' (quick update)
   const [activeTab, setActiveTab] = useState<'overview' | 'intake'>('overview');
@@ -115,17 +119,17 @@ export const AssessmentPage: React.FC = () => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: 'easeOut' }}
-      className="max-w-7xl mx-auto space-y-6 sm:space-y-8 pb-20 text-left select-none"
+      className="max-w-7xl mx-auto space-y-4 sm:space-y-5 pb-16 text-left select-none"
     >
-      {/* ── Screening Sub-Tabs & Actions Toolbar ─────────────────────────── */}
-      <div className="flex items-center justify-between gap-4 flex-wrap bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
+      {/* ── Top Utility Row / Actions Toolbar ─────────────────────────── */}
+      <div className="flex items-center justify-between gap-3 flex-wrap bg-white p-2.5 sm:p-3 rounded-2xl border border-slate-200 shadow-xs">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-2">View:</span>
-          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-1 sm:px-2">View:</span>
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100">
             <button
               type="button"
               onClick={() => setActiveTab('overview')}
-              className={`px-4 py-2 rounded-lg text-xs font-sans font-bold transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-sans font-bold transition-all cursor-pointer ${
                 activeTab === 'overview'
                   ? 'bg-white text-[#01579B] shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
@@ -136,7 +140,7 @@ export const AssessmentPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setActiveTab('intake')}
-              className={`px-4 py-2 rounded-lg text-xs font-sans font-bold transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-sans font-bold transition-all cursor-pointer ${
                 activeTab === 'intake'
                   ? 'bg-white text-[#01579B] shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
@@ -147,14 +151,29 @@ export const AssessmentPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="text-xs text-slate-500 hidden sm:block pr-2">
-          Progressively build your profile without mandatory clinical testing
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => navigate('/doctors?pathway=male_hypogonadism')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#F0F9FF] hover:bg-[#E0F2FE] text-[#0369A1] text-xs font-semibold rounded-full border border-[#BAE6FD] shadow-xs transition-colors cursor-pointer"
+          >
+            <Activity className="w-3.5 h-3.5 text-[#0284C7]" aria-hidden="true" />
+            <span>Find Relevant Specialists</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsHistoryModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-full border border-slate-200 shadow-xs transition-colors cursor-pointer"
+          >
+            <Clock className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" />
+            <span>Assessment History</span>
+          </button>
         </div>
       </div>
 
       {/* ── 2. Primary 4-Tier Screening Content ────────────────────────────── */}
       {activeTab === 'overview' && (
-        <div className="space-y-6 sm:space-y-8">
+        <div className="space-y-4 sm:space-y-5">
           {/* Progressive Clinical Assessment Card (Tier 1 / Tier 1+2 / Tier 1+2+3 Multimodal) */}
           <ProgressiveAssessmentCard
             assessment={activeAssessment}
@@ -176,17 +195,17 @@ export const AssessmentPage: React.FC = () => {
 
           {/* Dedicated Ultrasound AI Analysis Card (Side-by-Side Original & Grad-CAM) */}
           {hasUltrasoundEvidence && (
-            <div className="p-6 sm:p-8 rounded-[32px] bg-white border border-[#BAE6FD] text-[#0F172A] shadow-xs space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E2E8F0] pb-4">
+            <div className="p-6 sm:p-8 rounded-[32px] bg-white border border-slate-200/90 text-slate-900 shadow-xs space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
                 <div className="space-y-1">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E0F2FE] border border-[#BAE6FD] text-xs font-mono text-[#0288D1] font-bold">
-                    <Image01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-50 border border-pink-200/80 text-xs font-mono text-pink-700 font-bold">
+                    <Image01 className="w-3.5 h-3.5 text-pink-600" aria-hidden="true" />
                     <span>Tier 3 Pelvic Ultrasound Spatial Inspection</span>
                   </div>
-                  <h3 className="text-lg sm:text-xl font-bold font-display text-[#01579B]">
+                  <h3 className="text-lg sm:text-xl font-bold font-display text-slate-900">
                     Ultrasound AI Analysis & Neural Focus Heatmap
                   </h3>
-                  <p className="text-xs sm:text-sm text-[#475569]">
+                  <p className="text-xs sm:text-sm text-slate-500">
                     Visual interpretation of deep learning morphological assessment for polycystic ovarian features.
                   </p>
                 </div>
@@ -214,11 +233,11 @@ export const AssessmentPage: React.FC = () => {
                 {/* Original Image */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-[#0F172A] flex items-center gap-1.5">
-                      <LayersThree01 className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
+                    <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                      <LayersThree01 className="w-4 h-4 text-pink-600" aria-hidden="true" />
                       Original Pelvic Ultrasound Scan
                     </span>
-                    <span className="text-[11px] font-mono text-[#64748B]">B-mode Grayscale</span>
+                    <span className="text-[11px] font-mono text-slate-500">B-mode Grayscale</span>
                   </div>
                   <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-950 border border-slate-200 flex items-center justify-center shadow-inner">
                     <img
@@ -236,7 +255,7 @@ export const AssessmentPage: React.FC = () => {
                       Source Scan
                     </div>
                   </div>
-                  <p className="text-[11px] text-[#64748B] leading-relaxed">
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
                     Input transvaginal or transabdominal scan processed for acoustic and ovarian boundary attributes.
                   </p>
                 </div>
@@ -244,13 +263,13 @@ export const AssessmentPage: React.FC = () => {
                 {/* Grad-CAM Heatmap */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-[#01579B] flex items-center gap-1.5">
-                      <Eye className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
+                    <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                      <Eye className="w-4 h-4 text-pink-600" aria-hidden="true" />
                       AI Attention Heatmap (Grad-CAM)
                     </span>
-                    <span className="text-[11px] font-mono text-[#0288D1] font-bold">Jet Colormap</span>
+                    <span className="text-[11px] font-mono text-pink-700 font-bold">Jet Colormap</span>
                   </div>
-                  <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-950 border border-[#BAE6FD] flex items-center justify-center shadow-inner">
+                  <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-950 border border-slate-200 flex items-center justify-center shadow-inner">
                     <img
                       src={
                         activeAssessment?.gradcam_b64?.startsWith('data:')
@@ -260,24 +279,24 @@ export const AssessmentPage: React.FC = () => {
                       alt="Grad-CAM Neural Focus Heatmap"
                       className="w-full h-full object-contain"
                     />
-                    <div className="absolute bottom-2 left-2 px-2.5 py-1 rounded-md bg-[#01579B]/80 backdrop-blur-xs text-[10px] font-mono text-white font-semibold">
+                    <div className="absolute bottom-2 left-2 px-2.5 py-1 rounded-md bg-slate-900/80 backdrop-blur-xs text-[10px] font-mono text-white font-semibold">
                       Red / Warm = Higher Neural Attention
                     </div>
                   </div>
-                  <p className="text-[11px] text-[#64748B] leading-relaxed">
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
                     Grad-CAM highlights specific follicle clusters and stromal tissue regions that most strongly drove the morphological screening result.
                   </p>
                 </div>
               </div>
 
               {/* Clinical Non-Diagnostic Safety Callout */}
-              <div className="p-4 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-start gap-3 text-xs text-[#0F172A]">
-                <ShieldTick className="w-4 h-4 text-[#0288D1] shrink-0 mt-0.5" aria-hidden="true" />
+              <div className="p-4 rounded-2xl bg-pink-50/50 border border-pink-100 flex items-start gap-3 text-xs text-slate-800">
+                <ShieldTick className="w-4 h-4 text-pink-600 shrink-0 mt-0.5" aria-hidden="true" />
                 <div className="space-y-1">
-                  <p className="font-bold text-[#01579B]">
+                  <p className="font-bold text-pink-900">
                     Informational Explainability & Spatial Visualization Only
                   </p>
-                  <p className="text-[#475569] leading-relaxed">
+                  <p className="text-slate-600 leading-relaxed">
                     This heatmap shows internal machine learning attention to assist user understanding of visual screening features. It is not an automated medical diagnosis, biopsy, or radiologist report. Clinical correlation with a gynecologist or sonographer is essential.
                   </p>
                 </div>
@@ -482,7 +501,9 @@ export const AssessmentPage: React.FC = () => {
             <button
               type="submit"
               disabled={isSaving}
-              className="px-5 py-2.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold font-sans transition-all flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
+              className={`px-5 py-2.5 rounded-xl text-white text-xs font-bold font-sans transition-all flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50 ${
+                isMale ? 'bg-[#0288D1] hover:bg-[#0277BD]' : 'bg-[#F43F7D] hover:bg-[#DC326C]'
+              }`}
             >
               {isSaving ? <RefreshCw01 className="w-4 h-4 animate-spin text-white" aria-hidden="true" /> : <Save01 className="w-4 h-4 text-white" aria-hidden="true" />}
               <span>Save & Update Profile</span>

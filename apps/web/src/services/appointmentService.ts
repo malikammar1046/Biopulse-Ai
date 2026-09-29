@@ -104,9 +104,21 @@ class AppointmentService {
   ): Promise<{ success: boolean; appointment?: AppointmentItem; error?: string }> {
     const scheduledAtIso = `${input.scheduledDate}T${input.scheduledTime || '15:30'}:00.000Z`;
 
+    const isUuid = (val?: string) =>
+      !!val && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+
+    const formattedPatientNotes = [
+      input.bookingSource ? `[Source: ${input.bookingSource}]` : '',
+      input.providerId && !isUuid(input.providerId) ? `[Doctor ID: ${input.providerId}]` : '',
+      input.patientNotes?.trim() || '',
+    ]
+      .filter(Boolean)
+      .join(' ');
+
     const newAppointment: AppointmentItem = {
       id: crypto.randomUUID(),
       patientId,
+      providerId: input.providerId,
       careCircleMemberId: input.careCircleMemberId,
       providerName: input.providerName.trim() || 'Healthcare Professional',
       providerSpecialty: input.providerSpecialty ? input.providerSpecialty.trim() : undefined,
@@ -116,11 +128,11 @@ class AppointmentService {
       scheduledDate: input.scheduledDate,
       scheduledTime: input.scheduledTime || '15:30',
       durationMinutes: Math.max(15, input.durationMinutes || 30),
-      status: 'scheduled',
+      status: 'requested',
       location: input.location.trim() || 'Clinic Consultation',
       meetingUrl: input.meetingUrl?.trim() || '',
       reason: input.reason?.trim() || '',
-      patientNotes: input.patientNotes?.trim() || '',
+      patientNotes: formattedPatientNotes,
       doctorQuestions: input.doctorQuestions || [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -137,7 +149,10 @@ class AppointmentService {
         await supabase.from('appointments').insert({
           id: newAppointment.id,
           patient_id: patientId,
-          care_circle_member_id: newAppointment.careCircleMemberId || null,
+          provider_id: isUuid(newAppointment.providerId) ? newAppointment.providerId : null,
+          care_circle_member_id: isUuid(newAppointment.careCircleMemberId)
+            ? newAppointment.careCircleMemberId
+            : null,
           provider_name: newAppointment.providerName,
           provider_specialty: newAppointment.providerSpecialty || null,
           title: newAppointment.title,

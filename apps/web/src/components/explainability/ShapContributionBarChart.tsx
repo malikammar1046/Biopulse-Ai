@@ -34,7 +34,7 @@ export const ShapContributionBarChart: React.FC<ShapContributionBarChartProps> =
           <div
             key={factor.feature_key}
             onClick={() => onSelectFactor?.(factor)}
-            className="group p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-800"
+            className="group p-2.5 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-transparent hover:border-slate-200"
           >
             <div className="flex items-center justify-between text-xs mb-1.5">
               <div className="flex items-center gap-2 truncate pr-2">
@@ -47,27 +47,27 @@ export const ShapContributionBarChart: React.FC<ShapContributionBarChartProps> =
                 ) : (
                   <span className="w-3.5 h-3.5 shrink-0 text-slate-400">•</span>
                 )}
-                <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                <span className="font-semibold text-slate-800 truncate">
                   {factor.patient_label}
                 </span>
-                <span className="text-[11px] text-slate-400 dark:text-slate-500 shrink-0">
+                <span className="text-[11px] text-slate-400 shrink-0">
                   ({factor.patient_value})
                 </span>
               </div>
 
               <div className="flex items-center gap-2 shrink-0 font-mono text-[11px]">
-                <span className="font-medium text-slate-700 dark:text-slate-300">
+                <span className="font-medium text-slate-700">
                   {factor.explanation_share_percent}%
                 </span>
                 <span
-                  className={`text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded ${
+                  className={`text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded border ${
                     isMixed
-                      ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300'
+                      ? 'bg-amber-50 text-amber-800 border-amber-200/70'
                       : factor.influence_level === 'strong'
-                      ? 'bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300'
+                      ? 'bg-rose-50 text-rose-800 border-rose-200/70'
                       : factor.influence_level === 'moderate'
-                      ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300'
-                      : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                      ? 'bg-amber-50 text-amber-800 border-amber-200/70'
+                      : 'bg-sky-50 text-[#0288D1] border-sky-200/70'
                   }`}
                 >
                   {isMixed ? 'Mixed' : factor.influence_level}
@@ -76,11 +76,11 @@ export const ShapContributionBarChart: React.FC<ShapContributionBarChartProps> =
             </div>
 
             {/* Horizontal Bar */}
-            <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+            <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${
                   isMixed
-                    ? 'bg-amber-400 dark:bg-amber-500'
+                    ? 'bg-amber-400'
                     : isHigher
                     ? isFemale
                       ? 'bg-gradient-to-r from-rose-400 to-pink-500'

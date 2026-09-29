@@ -24,6 +24,12 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
+from apps.health.services.supabase_health_service import (
+    PatientHealthData,
+    PatientProfile,
+    SymptomRecordData,
+)
+from apps.intelligence.services.clinical_state_repository import clinical_state_repository
 from apps.intelligence.services.canonical_lifestyle_evidence import (
     LIFESTYLE_EVIDENCE_REGISTRY,
     get_evidence_entry,
@@ -1211,3 +1217,122 @@ class LifestyleEvidenceAndMedicalLanguageAuditTests(TestCase):
         forbidden_terms = ["menstrual", "period", "pcos", "ovary", "ovarian", "follicular", "luteal", "pcom", "pregnant"]
         for term in forbidden_terms:
             self.assertNotIn(term, res_str, f"Forbidden term '{term}' leaked into male recommendations!")
+
+    @patch("apps.intelligence.services.lifestyle_context_builder.health_service.fetch_all")
+    def test_regression_symptom_string_severity_does_not_crash(self, mock_fetch_all):
+        """
+        REGRESSION TEST:
+        Supabase symptom_records store string severities ('mild', 'moderate', 'severe')
+        and attribute name 'symptom_type'.
+        Previously, build_context crashed with ValueError: invalid literal for int() with base 10: 'moderate'.
+        Verify that build_context parses string severities smoothly and classifies high severity appropriately.
+        """
+        user_id = str(uuid.uuid4())
+        mock_profile = PatientProfile(
+            user_id=user_id,
+            gender="female",
+            pathway="female_pcos",
+            height_cm=165.0,
+            weight_kg=68.0,
+        )
+        mock_symptoms = [
+            SymptomRecordData(
+                id="sym-1",
+                symptom_type="acne",
+                category="dermatological",
+                severity="moderate",
+                occurred_at="2026-09-01T10:00:00Z",
+                cycle_day=14,
+            ),
+            SymptomRecordData(
+                id="sym-2",
+                symptom_type="hair_growth",
+                category="androgenic",
+                severity="severe",
+                occurred_at="2026-09-02T10:00:00Z",
+                cycle_day=15,
+            ),
+            SymptomRecordData(
+                id="sym-3",
+                symptom_type="irregular_periods",
+                category="menstrual",
+                severity="mild",
+                occurred_at="2026-09-03T10:00:00Z",
+                cycle_day=16,
+            ),
+        ]
+        mock_health = PatientHealthData(
+            profile=mock_profile,
+            symptom_records=mock_symptoms,
+        )
+        mock_fetch_all.return_value = mock_health
+
+        # Build context - must NOT raise ValueError
+        ctx = LifestyleContextBuilder.build_context(user_id=user_id, module="female_pcos")
+        self.assertIn("acne", ctx.symptoms.active_symptoms)
+        self.assertIn("hair_growth", ctx.symptoms.active_symptoms)
+        self.assertIn("irregular_periods", ctx.symptoms.active_symptoms)
+        # 'severe' string maps to severity >= 3 -> in high_severity_symptoms
+        self.assertIn("hair_growth", ctx.symptoms.high_severity_symptoms)
+        self.assertEqual(ctx.symptoms.total_logs_30d, 3)
+
+        # End-to-end recommendation generation must succeed
+        safety = LifestyleSafetyEngine.evaluate_safety(ctx)
+        res = LifestyleRecommendationEngine.generate(ctx, safety)
+        self.assertGreater(len(res.recommendations), 0)
+
+    def test_regression_tier2_clinical_labs_included_in_lifestyle_context(self):
+        """
+        REGRESSION TEST:
+        When a patient has Tier 2 clinical laboratory values recorded via clinical_state_repository,
+        build_context must reliably extract them into LabBiomarkers and raw_markers.
+        """
+        user_id = str(uuid.uuid4())
+        module = "female_pcos"
+        clinical_state_repository.save_patient_clinical_state(
+            user_id=user_id,
+            module=module,
+            tier_2_inputs={
+                "fasting_glucose": 112.0,
+                "total_testosterone": 78.0,
+                "lh": 15.0,
+                "fsh": 5.0,
+                "fasting_insulin": 18.0,
+            },
+        )
+
+        ctx = LifestyleContextBuilder.build_context(user_id=user_id, module=module)
+        self.assertEqual(ctx.labs.fasting_glucose_mg_dl, 112.0)
+        self.assertEqual(ctx.labs.total_testosterone_ng_dl, 78.0)
+        self.assertEqual(ctx.labs.lh_mIU_ml, 15.0)
+        self.assertEqual(ctx.labs.fsh_mIU_ml, 5.0)
+        self.assertEqual(ctx.labs.lh_fsh_ratio, 3.0)
+        self.assertEqual(ctx.labs.fasting_insulin_uIU_ml, 18.0)
+
+        # Generates recommendations reflecting elevated glycemic/hormonal state
+        safety = LifestyleSafetyEngine.evaluate_safety(ctx)
+        res = LifestyleRecommendationEngine.generate(ctx, safety)
+        self.assertGreater(len(res.recommendations), 0)
+
+    def test_regression_minimal_tier1_patient_lifestyle_generation(self):
+        """
+        REGRESSION TEST:
+        Minimal patient with only Tier 1 assessment, no labs, no symptoms, no food logs, no fitness logs.
+        Endpoint and recommendation engine must degrade gracefully and generate valid recommendations.
+        """
+        user_id = str(uuid.uuid4())
+        module = "female_pcos"
+
+        ctx = LifestyleContextBuilder.build_context(user_id=user_id, module=module)
+        self.assertIsInstance(ctx, ComprehensiveLifestyleContext)
+        self.assertEqual(ctx.demographics.pathway, "female_pcos")
+
+        safety = LifestyleSafetyEngine.evaluate_safety(ctx)
+        self.assertIn(safety.safety_status, ("ALLOW", "MODIFY"))
+
+        res = LifestyleRecommendationEngine.generate(ctx, safety)
+        self.assertGreater(len(res.recommendations), 0)
+        self.assertIsNotNone(res.nutrition.strategy_title)
+        self.assertIsNotNone(res.fitness.protocol_name)
+        self.assertIsNotNone(res.lifestyle.circadian_headline)
+

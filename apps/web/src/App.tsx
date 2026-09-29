@@ -84,14 +84,17 @@ const ChatPage = lazy(() => import('./pages/app/ChatPage').then((m) => ({ defaul
 const AssessmentPage = lazy(() => import('./pages/app/AssessmentPage').then((m) => ({ default: m.AssessmentPage })));
 const ProgressPage = lazy(() => import('./pages/app/ProgressPage').then((m) => ({ default: m.ProgressPage })));
 
+import { AIChatProvider } from './context/AIChatContext';
+
 export function App() {
   return (
     <AuthProvider>
       <ErrorBoundary>
         <UserHealthProvider>
           <BrowserRouter>
-          <Suspense fallback={<PageLoadingFallback />}>
-            <Routes>
+            <AIChatProvider>
+              <Suspense fallback={<PageLoadingFallback />}>
+                <Routes>
               {/* Public Marketing Website */}
               <Route element={<PublicLayout />}>
                 <Route path={ROUTES.HOME} element={<Home />} />
@@ -207,6 +210,7 @@ export function App() {
               <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
             </Routes>
           </Suspense>
+          </AIChatProvider>
           </BrowserRouter>
         </UserHealthProvider>
       </ErrorBoundary>

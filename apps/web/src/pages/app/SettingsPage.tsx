@@ -191,7 +191,7 @@ export const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-28 pt-4 sm:pt-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-left">
+    <div className="max-w-7xl mx-auto space-y-6 pb-28 text-left">
       {/* ── 1. Protocol & Status Toolbar ── */}
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">

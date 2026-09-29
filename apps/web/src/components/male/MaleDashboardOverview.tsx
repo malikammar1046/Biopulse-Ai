@@ -13,6 +13,7 @@ import { MaleTopFactors } from './MaleTopFactors';
 import { MaleNextBestAction } from './MaleNextBestAction';
 import { MaleRecentActivity } from './MaleRecentActivity';
 import { MaleClinicalLabsModal } from '../adaptive/MaleClinicalLabsModal';
+import { RecommendedCareCard } from '../dashboard/RecommendedCareCard';
 
 export const MaleDashboardOverview: React.FC = () => {
   const navigate = useNavigate();
@@ -148,7 +149,10 @@ export const MaleDashboardOverview: React.FC = () => {
         </div>
       </div>
 
-      {/* ── 3. Recent Clinical Activity (Latest Report & Appointment) ───────── */}
+      {/* ── 3. Contextual Recommended Specialists ────────────────────────── */}
+      <RecommendedCareCard pathway="male" />
+
+      {/* ── 4. Recent Clinical Activity (Latest Report & Appointment) ───────── */}
       <div className="space-y-2">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-[#667085] px-1">
           Recent Health Records

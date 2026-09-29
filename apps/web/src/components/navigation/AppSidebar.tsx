@@ -313,36 +313,34 @@ export const AppSidebar: React.FC = () => {
           </div>
         </div>
 
-        {/* ── 4. TOOLS Section (Male Only) ── */}
-        {!isFemale && (
-          <nav className="space-y-1 pt-1">
-            <span className={sectionLabelClass}>
-              Tools
-            </span>
+        {/* ── 4. AI INTELLIGENCE Section (Both Female & Male) ── */}
+        <nav className="space-y-1 pt-1">
+          <span className={sectionLabelClass}>
+            Intelligence
+          </span>
 
-            {toolItems.map((item) => {
-              const active = isItemActive(item.path);
-              const Icon = item.icon;
+          {toolItems.map((item) => {
+            const active = isItemActive(item.path);
+            const Icon = item.icon;
 
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all duration-150 group border ${getLinkClasses(active)}`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Icon
-                      className={`w-5 h-5 transition-colors ${getIconClasses(active)}`}
-                      aria-hidden="true"
-                    />
-                    <span>{item.label}</span>
-                  </div>
-                  {active && <span className={`w-1.5 h-1.5 rounded-full ${getDotClass()}`} />}
-                </Link>
-              );
-            })}
-          </nav>
-        )}
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all duration-150 group border ${getLinkClasses(active)}`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Icon
+                    className={`w-5 h-5 transition-colors ${getIconClasses(active)}`}
+                    aria-hidden="true"
+                  />
+                  <span>{item.label}</span>
+                </div>
+                {active && <span className={`w-1.5 h-1.5 rounded-full ${getDotClass()}`} />}
+              </Link>
+            );
+          })}
+        </nav>
       </div>
 
       {/* ── 5. ACCOUNT & Bottom Area ── */}

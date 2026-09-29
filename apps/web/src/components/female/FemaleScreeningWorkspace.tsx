@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayersThree01,
@@ -29,32 +30,6 @@ import { UltrasoundUploadModal } from '../adaptive/UltrasoundUploadModal';
 import { AssessmentHistoryModal } from '../adaptive/AssessmentHistoryModal';
 import { PatientShapExplanation } from '../explainability/PatientShapExplanation';
 
-/**
- * Botanical Petal Artwork SVG matching reference screenshot top-right decoration
- */
-const BotanicalPetalArtwork: React.FC = () => (
-  <svg
-    className="w-16 h-16 sm:w-20 sm:h-20 text-[#FDE6EF] opacity-80 pointer-events-none select-none shrink-0"
-    viewBox="0 0 100 100"
-    fill="currentColor"
-    aria-hidden="true"
-  >
-    <path
-      d="M30 75 C 30 45, 55 25, 75 20 C 70 45, 50 65, 30 75 Z"
-      fill="#FDE6EF"
-    />
-    <path
-      d="M50 85 C 50 60, 70 45, 88 40 C 85 62, 68 78, 50 85 Z"
-      fill="#FDE6EF"
-      opacity="0.8"
-    />
-    <path
-      d="M20 60 C 25 38, 45 22, 60 18 C 52 38, 38 52, 20 60 Z"
-      fill="#FDE6EF"
-      opacity="0.6"
-    />
-  </svg>
-);
 
 export interface RiskRangeConfig {
   lowCutoffPercent: number;
@@ -244,6 +219,7 @@ export const FemaleScreeningWorkspace: React.FC = () => {
     activeAssessment,
     submitTier1,
   } = useUserHealth();
+  const navigate = useNavigate();
 
   const [isLabsModalOpen, setIsLabsModalOpen] = useState(false);
   const [isUltrasoundModalOpen, setIsUltrasoundModalOpen] = useState(false);
@@ -345,33 +321,17 @@ export const FemaleScreeningWorkspace: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-      {/* ── Page Actions Toolbar ────────────────────────────────────────────── */}
-      <div className="flex items-center justify-end gap-6 relative">
-        {/* Right side: Assessment History button + Decorative Botanical Art & Slogan */}
-        <div className="flex items-center gap-6 shrink-0">
-          <button
-            type="button"
-            onClick={() => setIsHistoryModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-[#F9FAFB] active:bg-[#F2F4F7] text-[#111318] text-sm font-medium rounded-full border border-[#EAECF0] shadow-xs transition-colors"
-          >
-            <Clock className="w-4 h-4 text-[#667085]" aria-hidden="true" />
-            <span>Assessment History</span>
-          </button>
-
-          {/* Decorative Petal Art & Slogan (Desktop) */}
-          <div className="hidden lg:flex items-center gap-2">
-            <BotanicalPetalArtwork />
-            <div className="flex flex-col items-start select-none">
-              <span className="text-xs italic font-serif text-[#DC326C] tracking-wide leading-tight">
-                Healthier tomorrows
-                <br />
-                for every woman
-              </span>
-              <span className="w-6 h-0.5 bg-[#F43F7D] rounded-full mt-1 opacity-70" />
-            </div>
-          </div>
-        </div>
+    <div className="w-full max-w-[1280px] mx-auto space-y-4 sm:space-y-5 pb-16 text-left">
+      {/* ── Top Utility Row ────────────────────────────────────────────── */}
+      <div className="flex items-center justify-end">
+        <button
+          type="button"
+          onClick={() => setIsHistoryModalOpen(true)}
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 sm:px-4 sm:py-2 bg-white hover:bg-[#F9FAFB] active:bg-[#F2F4F7] text-[#111318] text-xs sm:text-sm font-medium rounded-full border border-[#EAECF0] shadow-xs transition-colors cursor-pointer"
+        >
+          <Clock className="w-4 h-4 text-[#667085]" aria-hidden="true" />
+          <span>Assessment History</span>
+        </button>
       </div>
 
       {/* ── Primary Assessment Area (2 Columns) ──────────────────────────────── */}
@@ -617,6 +577,17 @@ export const FemaleScreeningWorkspace: React.FC = () => {
               >
                 <Beaker01 className="w-4 h-4" aria-hidden="true" />
                 <span>Add Clinical Labs (Tier 2) →</span>
+              </button>
+            )}
+
+            {hasAssessment && (
+              <button
+                type="button"
+                onClick={() => navigate('/doctors?pathway=female_pcos')}
+                className="w-full h-10 px-4 bg-white hover:bg-[#FDF2F8] active:scale-[0.98] text-[#DC326C] text-sm font-medium rounded-xl border border-[#FBCFE8] transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Heart className="w-4 h-4 text-[#F43F7D]" aria-hidden="true" />
+                <span>Find Relevant Specialists</span>
               </button>
             )}
 

@@ -24,6 +24,7 @@ from typing import Any, Dict, List, Optional, Set
 
 from apps.health.services.supabase_health_service import health_service, PatientHealthData
 from apps.intelligence.services.assessment_repository import assessment_repository
+from apps.intelligence.services.clinical_state_repository import clinical_state_repository
 from apps.intelligence.services.canonical_shap_registry import CANONICAL_SHAP_REGISTRY, get_feature_metadata
 
 logger = logging.getLogger(__name__)
@@ -361,13 +362,38 @@ class LifestyleContextBuilder:
 
         for r in symptom_records:
             sym_name = None
-            severity = 1
+            raw_severity = 1
             if isinstance(r, dict):
-                sym_name = r.get("symptom_name") or r.get("name")
-                severity = int(r.get("severity") or 1)
+                sym_name = r.get("symptom_type") or r.get("symptom_name") or r.get("name")
+                raw_severity = r.get("severity")
             else:
-                sym_name = getattr(r, "symptom_name", None) or getattr(r, "name", None)
-                severity = int(getattr(r, "severity", 1) or 1)
+                sym_name = (
+                    getattr(r, "symptom_type", None)
+                    or getattr(r, "symptom_name", None)
+                    or getattr(r, "name", None)
+                )
+                raw_severity = getattr(r, "severity", 1)
+
+            # Robust severity parsing: handles ints, numeric strings, and descriptive labels ('mild', 'moderate', 'severe')
+            severity = 1
+            if isinstance(raw_severity, (int, float)):
+                try:
+                    severity = int(raw_severity)
+                except (ValueError, TypeError):
+                    severity = 1
+            elif isinstance(raw_severity, str):
+                s_str = raw_severity.strip().lower()
+                if s_str.isdigit():
+                    try:
+                        severity = int(s_str)
+                    except (ValueError, TypeError):
+                        severity = 1
+                elif any(word in s_str for word in ("sev", "high", "crit")):
+                    severity = 3
+                elif any(word in s_str for word in ("mod", "med")):
+                    severity = 2
+                elif any(word in s_str for word in ("mild", "low")):
+                    severity = 1
 
             if sym_name:
                 s_clean = str(sym_name).strip().lower()
@@ -376,6 +402,14 @@ class LifestyleContextBuilder:
                 if severity >= 3 and s_clean not in high_severity:
                     high_severity.append(s_clean)
 
+        # Include profile-level common symptoms if available
+        if profile_obj and getattr(profile_obj, "common_symptoms", None):
+            for s in profile_obj.common_symptoms:
+                if s:
+                    s_clean = str(s).strip().lower()
+                    active_symptoms_set.add(s_clean)
+                    symptom_counts[s_clean] = symptom_counts.get(s_clean, 0) + 1
+
         symptoms = SymptomSummary(
             active_symptoms=sorted(list(active_symptoms_set)),
             symptom_frequencies=symptom_counts,
@@ -383,57 +417,86 @@ class LifestyleContextBuilder:
             total_logs_30d=len(symptom_records),
         )
 
-        # 6. Extract Lab Biomarkers
-        medical_reports = getattr(health_data, "medical_reports", []) if health_data else []
+        # 6. Extract Lab Biomarkers from all available clinical sources:
+        # A) Authoritative patient clinical state (Tier 2 labs)
+        # B) Active assessment features
+        # C) Supabase report_results / medical_reports
         lab_markers = LabBiomarkers()
         raw_labs: Dict[str, Any] = {}
 
+        def _record_lab(key_name: str, val_num: Any) -> None:
+            if val_num is None:
+                return
+            try:
+                fval = float(val_num)
+            except (ValueError, TypeError):
+                return
+            k = str(key_name).lower().strip()
+            raw_labs[k] = fval
+            if "glucose" in k and lab_markers.fasting_glucose_mg_dl is None:
+                lab_markers.fasting_glucose_mg_dl = fval
+            elif "hba1c" in k and lab_markers.hba1c_percent is None:
+                lab_markers.hba1c_percent = fval
+            elif "insulin" in k and lab_markers.fasting_insulin_uIU_ml is None:
+                lab_markers.fasting_insulin_uIU_ml = fval
+            elif "total_testosterone" in k or ("testosterone" in k and "free" not in k):
+                if lab_markers.total_testosterone_ng_dl is None:
+                    lab_markers.total_testosterone_ng_dl = fval
+            elif "free_testosterone" in k and lab_markers.free_testosterone_pg_ml is None:
+                lab_markers.free_testosterone_pg_ml = fval
+            elif k in ("lh", "luteinizing_hormone") and lab_markers.lh_mIU_ml is None:
+                lab_markers.lh_mIU_ml = fval
+            elif k in ("fsh", "follicle_stimulating_hormone") and lab_markers.fsh_mIU_ml is None:
+                lab_markers.fsh_mIU_ml = fval
+            elif "prolactin" in k and lab_markers.prolactin_ng_ml is None:
+                lab_markers.prolactin_ng_ml = fval
+            elif "dhea" in k and lab_markers.dhea_s_ug_dl is None:
+                lab_markers.dhea_s_ug_dl = fval
+            elif "triglyceride" in k and lab_markers.triglycerides_mg_dl is None:
+                lab_markers.triglycerides_mg_dl = fval
+            elif "hdl" in k and lab_markers.hdl_mg_dl is None:
+                lab_markers.hdl_mg_dl = fval
+            elif "ldl" in k and lab_markers.ldl_mg_dl is None:
+                lab_markers.ldl_mg_dl = fval
+            elif "cholesterol" in k and lab_markers.total_cholesterol_mg_dl is None:
+                lab_markers.total_cholesterol_mg_dl = fval
+            elif "crp" in k and lab_markers.crp_mg_l is None:
+                lab_markers.crp_mg_l = fval
+            elif "vitamin_d" in k and lab_markers.vitamin_d_ng_ml is None:
+                lab_markers.vitamin_d_ng_ml = fval
+
+        # A) From Clinical State Repository (Tier 2 labs)
+        try:
+            clin_state = clinical_state_repository.get_patient_clinical_state(user_id_str, module=module, auth_token=auth_token)
+            if clin_state and isinstance(clin_state.get("tier_2_inputs"), dict):
+                for k, v in clin_state["tier_2_inputs"].items():
+                    _record_lab(k, v)
+        except Exception as e:
+            logger.debug("Failed querying clinical_state in lifestyle context: %s", e)
+
+        # B) From Active Assessment features
+        if active_rec and isinstance(active_rec.get("features"), dict):
+            for k, v in active_rec["features"].items():
+                _record_lab(k, v)
+
+        # C) From Supabase report_results
+        report_results = getattr(health_data, "report_results", []) if health_data else []
+        for rep in report_results:
+            t_name = getattr(rep, "test_name", None) or (rep.get("test_name") if isinstance(rep, dict) else None)
+            res_num = getattr(rep, "result_numeric", None) or (rep.get("result_numeric") if isinstance(rep, dict) else None)
+            if t_name and res_num is not None:
+                _record_lab(t_name, res_num)
+
+        # D) From legacy medical_reports if present
+        medical_reports = getattr(health_data, "medical_reports", []) if health_data else []
         for rep in medical_reports:
             results = getattr(rep, "results", None) or (rep.get("results") if isinstance(rep, dict) else None)
             if isinstance(results, list):
                 for marker in results:
-                    if not isinstance(marker, dict):
-                        continue
-                    k = str(marker.get("marker_key") or marker.get("name") or "").lower().strip()
-                    val = marker.get("value")
-                    try:
-                        fval = float(val) if val is not None else None
-                    except (ValueError, TypeError):
-                        fval = None
-
-                    if fval is not None:
-                        raw_labs[k] = fval
-                        if "glucose" in k and lab_markers.fasting_glucose_mg_dl is None:
-                            lab_markers.fasting_glucose_mg_dl = fval
-                        elif "hba1c" in k and lab_markers.hba1c_percent is None:
-                            lab_markers.hba1c_percent = fval
-                        elif "insulin" in k and lab_markers.fasting_insulin_uIU_ml is None:
-                            lab_markers.fasting_insulin_uIU_ml = fval
-                        elif "total_testosterone" in k or ("testosterone" in k and "free" not in k):
-                            if lab_markers.total_testosterone_ng_dl is None:
-                                lab_markers.total_testosterone_ng_dl = fval
-                        elif "free_testosterone" in k and lab_markers.free_testosterone_pg_ml is None:
-                            lab_markers.free_testosterone_pg_ml = fval
-                        elif k in ("lh", "luteinizing_hormone") and lab_markers.lh_mIU_ml is None:
-                            lab_markers.lh_mIU_ml = fval
-                        elif k in ("fsh", "follicle_stimulating_hormone") and lab_markers.fsh_mIU_ml is None:
-                            lab_markers.fsh_mIU_ml = fval
-                        elif "prolactin" in k and lab_markers.prolactin_ng_ml is None:
-                            lab_markers.prolactin_ng_ml = fval
-                        elif "dhea" in k and lab_markers.dhea_s_ug_dl is None:
-                            lab_markers.dhea_s_ug_dl = fval
-                        elif "triglyceride" in k and lab_markers.triglycerides_mg_dl is None:
-                            lab_markers.triglycerides_mg_dl = fval
-                        elif "hdl" in k and lab_markers.hdl_mg_dl is None:
-                            lab_markers.hdl_mg_dl = fval
-                        elif "ldl" in k and lab_markers.ldl_mg_dl is None:
-                            lab_markers.ldl_mg_dl = fval
-                        elif "cholesterol" in k and lab_markers.total_cholesterol_mg_dl is None:
-                            lab_markers.total_cholesterol_mg_dl = fval
-                        elif "crp" in k and lab_markers.crp_mg_l is None:
-                            lab_markers.crp_mg_l = fval
-                        elif "vitamin_d" in k and lab_markers.vitamin_d_ng_ml is None:
-                            lab_markers.vitamin_d_ng_ml = fval
+                    if isinstance(marker, dict):
+                        k = marker.get("marker_key") or marker.get("name") or ""
+                        val = marker.get("value")
+                        _record_lab(k, val)
 
         if lab_markers.lh_mIU_ml and lab_markers.fsh_mIU_ml and lab_markers.fsh_mIU_ml > 0:
             lab_markers.lh_fsh_ratio = round(lab_markers.lh_mIU_ml / lab_markers.fsh_mIU_ml, 2)

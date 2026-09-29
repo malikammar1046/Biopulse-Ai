@@ -30,6 +30,8 @@ class DoctorSerializer(serializers.ModelSerializer):
             "reviews_count",
             "wait_time",
             "services_offered",
+            "pathway",
+            "relevance_reason",
             "is_active",
             "display_order",
         ]
