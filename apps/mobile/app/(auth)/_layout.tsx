@@ -1,4 +1,6 @@
+import React from 'react';
 import { Stack } from 'expo-router';
+import { BioPulseColors } from '../../constants/Colors';
 
 export default function AuthLayout() {
   return (
@@ -6,9 +8,22 @@ export default function AuthLayout() {
       screenOptions={{
         headerShown: false,
         contentStyle: {
-          backgroundColor: '#090d16',
+          backgroundColor: BioPulseColors.background,
         },
       }}
-    />
+    >
+      <Stack.Screen
+        name="login"
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="register"
+        options={{
+          headerShown: false,
+        }}
+      />
+    </Stack>
   );
 }

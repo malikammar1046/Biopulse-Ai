@@ -34,6 +34,12 @@ export default function RootLayout() {
           }}
         />
         <Stack.Screen
+          name="onboarding"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
           name="design-system"
           options={{
             headerShown: true,

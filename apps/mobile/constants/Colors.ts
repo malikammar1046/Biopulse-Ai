@@ -217,3 +217,44 @@ export const Colors: { dark: ColorTheme; light: ColorTheme } = {
 };
 
 export type ColorKey = keyof ColorTheme;
+
+/**
+ * BioPulse AI Brand Design Tokens
+ * Supporting both Female (PCOS) and Male (Hypogonadism / Endocrine) Health Pathways.
+ */
+export const BioPulseColors = {
+  // Brand Identity
+  teal: '#16B8C4',
+  tealSoft: '#E5F6F8',
+  navy: '#073B72',
+  navyDark: '#052B54',
+  secondaryText: '#55718F',
+  textMuted: '#8BA1B7',
+
+  // Surfaces & Backgrounds
+  background: '#FEF8FA', // Warm blush healthcare tint matching visual reference
+  backgroundPure: '#FFFFFF',
+  surface: '#FFFFFF',
+  border: '#D7EAF2',
+  borderSubtle: '#E4EFF5',
+
+  // Dual-Pathway Accents
+  femaleAccent: '#F43F7D', // Primary pink
+  femaleSoft: '#FDF0F4',
+  femaleTrack: '#FCE7F0',
+  malePrimary: '#0868B9',
+  maleSecondary: '#2196E3',
+  maleSoft: '#EBF4FC',
+
+  // Trust Indicators
+  indicatorLeftBg: '#FDF0F4',
+  indicatorCenterBg: '#E5F6F8',
+  indicatorRightBg: '#FDF0F4',
+
+  // Loading & Progress
+  progressTrack: '#FCE7F0',
+  progressFill: '#F43F7D',
+  loadingText: '#55718F',
+} as const;
+
+export type BioPulseColorKey = keyof typeof BioPulseColors;

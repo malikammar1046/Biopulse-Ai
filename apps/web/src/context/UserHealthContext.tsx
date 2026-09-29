@@ -25,7 +25,6 @@ import type {
   ReportSummaryStats,
 } from '../types/report';
 import {
-  DEFAULT_CARE_CIRCLE,
   deriveInsightFromProfile,
 } from '../data/mockDashboardData';
 import { calculateCycleMetrics } from '../utils/profileCompletion';
@@ -1405,7 +1404,7 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const careCircle: CareCircleContact[] = useMemo(() => {
     const active = careCircleMembers.filter((m) => m.status === 'active');
     if (active.length === 0) {
-      return DEFAULT_CARE_CIRCLE;
+      return [];
     }
     return active.map((m) => ({
       id: m.id,
