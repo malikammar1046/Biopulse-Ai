@@ -9,6 +9,8 @@ import { ROUTES, getPathwayDashboardRoute } from '../constants/routes';
 import { useUserHealth } from '../context/UserHealthContext';
 import { ArrowLeft } from '@untitledui/icons';
 
+import { AppDashboardHeader } from '../components/navigation/AppDashboardHeader';
+
 export const AppLayout: React.FC = () => {
   const { userProfile } = useUserHealth();
   const overviewRoute = getPathwayDashboardRoute(userProfile);
@@ -39,8 +41,11 @@ export const AppLayout: React.FC = () => {
           </Link>
         </header>
 
-        {/* Page Content Viewport */}
-        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 max-w-7xl w-full mx-auto">
+        {/* Standardized Authenticated BioPulse Dashboard Header */}
+        <AppDashboardHeader />
+
+        {/* Page Content Viewport with standardized header-to-content spacing */}
+        <main className="flex-1 px-4 sm:px-6 lg:px-8 pt-4 sm:pt-5 lg:pt-6 pb-12 sm:pb-16 max-w-7xl w-full mx-auto">
           <Outlet />
         </main>
       </div>

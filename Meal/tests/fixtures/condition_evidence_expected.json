@@ -1,0 +1,70 @@
+{
+  "registry_metadata": {
+    "expected_version": "1.0.0",
+    "expected_total_rules": 17,
+    "expected_pcos_rules": 9,
+    "expected_hypogonadism_rules": 6,
+    "expected_general_rules": 2,
+    "expected_safeguard_rules": 6,
+    "expected_clinical_recommendations": 4,
+    "expected_practice_points": 5,
+    "expected_general_context": 2
+  },
+  "expected_rule_ids": [
+    "GENERAL_PP_001",
+    "GENERAL_SAFEGUARD_001",
+    "HYPOGONADISM_CONTEXT_001",
+    "HYPOGONADISM_CONTEXT_002",
+    "HYPOGONADISM_EBR_002",
+    "HYPOGONADISM_SAFEGUARD_001",
+    "HYPOGONADISM_SAFEGUARD_002",
+    "HYPOGONADISM_SAFEGUARD_003",
+    "PCOS_CR_002",
+    "PCOS_EBR_001",
+    "PCOS_EBR_004",
+    "PCOS_PP_003",
+    "PCOS_PP_005",
+    "PCOS_PP_006",
+    "PCOS_PP_009",
+    "PCOS_SAFEGUARD_001",
+    "PCOS_SAFEGUARD_002"
+  ],
+  "matrix_expectations": {
+    "pcos_screening_adult": {
+      "directly_applicable": [
+        "PCOS_CR_002",
+        "PCOS_EBR_001",
+        "PCOS_EBR_004",
+        "PCOS_PP_003",
+        "PCOS_PP_005",
+        "PCOS_SAFEGUARD_001",
+        "PCOS_SAFEGUARD_002"
+      ],
+      "conditional": [
+        "PCOS_PP_006"
+      ]
+    },
+    "pcos_adolescent": {
+      "directly_applicable_includes": [
+        "PCOS_PP_009"
+      ],
+      "unsupported_scope_includes": [
+        "PCOS_PP_006"
+      ]
+    },
+    "hypogonadism_screening_adult": {
+      "conditional_includes": [
+        "HYPOGONADISM_EBR_002"
+      ]
+    },
+    "hypogonadism_confirmed_overweight_adult": {
+      "directly_applicable_includes": [
+        "HYPOGONADISM_EBR_002"
+      ]
+    },
+    "hypogonadism_adolescent": {
+      "scope_supported": false,
+      "expected_limitation": "UNSUPPORTED_CONDITION_EVIDENCE_AGE_SCOPE"
+    }
+  }
+}

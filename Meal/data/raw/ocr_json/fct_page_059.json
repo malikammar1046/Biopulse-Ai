@@ -1,0 +1,55 @@
+{
+  "pdf_name": "fct",
+  "page_num": 59,
+  "img_path": "Meal/data/raw/rendered_pages/fct_page_059.png",
+  "boxes": [
+    {
+      "text": "TRADITIONALFOODS",
+      "confidence": 0.8983480158974143,
+      "box": [
+        [
+          456.0,
+          515.0
+        ],
+        [
+          1004.0,
+          526.0
+        ],
+        [
+          1003.0,
+          567.0
+        ],
+        [
+          455.0,
+          555.0
+        ]
+      ],
+      "x_center": 729.5,
+      "y_center": 540.75
+    },
+    {
+      "text": "INGREDIENTS AND METHODS OF PREPARATION",
+      "confidence": 0.8628026827787741,
+      "box": [
+        [
+          124.0,
+          574.0
+        ],
+        [
+          1333.0,
+          597.0
+        ],
+        [
+          1332.0,
+          644.0
+        ],
+        [
+          123.0,
+          621.0
+        ]
+      ],
+      "x_center": 728.0,
+      "y_center": 609.0
+    }
+  ]
+}

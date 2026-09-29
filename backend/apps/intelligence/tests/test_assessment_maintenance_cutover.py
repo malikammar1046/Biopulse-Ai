@@ -12,7 +12,12 @@ from rest_framework.test import APIClient
 
 from apps.intelligence.services.pcos_ml_service import pcos_ml_service
 from apps.intelligence.services.male_ml_service import male_ml_service
-from apps.intelligence.services.assessment_repository import assessment_repository, _get_sqlite_path
+from apps.intelligence.services.assessment_repository import (
+    assessment_repository,
+    init_sqlite_store,
+    _get_sqlite_path,
+    _connect_sqlite,
+)
 from apps.intelligence.services.intelligence_orchestrator import (
     reassess_from_current_patient_state,
     run_assessment,
@@ -73,10 +78,13 @@ class AssessmentMaintenanceModeTests(TestCase):
         self.sb_patcher2.stop()
 
     def _get_sqlite_assessment_count(self) -> int:
-        with sqlite3.connect(_get_sqlite_path()) as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT count(*) FROM intelligence_assessments")
-            return cursor.fetchone()[0]
+        init_sqlite_store()
+        conn = _connect_sqlite()
+        cursor = conn.cursor()
+        cursor.execute("SELECT count(*) FROM intelligence_assessments")
+        count = cursor.fetchone()[0]
+        conn.close()
+        return count
 
     @override_settings(BIOPULSE_ASSESSMENT_MAINTENANCE=True)
     def test_maintenance_mode_active_flag(self):
@@ -128,7 +136,7 @@ class AssessmentMaintenanceModeTests(TestCase):
     @override_settings(BIOPULSE_ASSESSMENT_MAINTENANCE=True)
     def test_active_and_history_reads_remain_available_for_existing_records(self):
         # Create an assessment while maintenance is false
-        with override_settings(BIOPULSE_ASSESSMENT_MAINTENANCE=False, ALLOW_LOCAL_SQLITE_FALLBACK=True):
+        with override_settings(BIOPULSE_ASSESSMENT_MAINTENANCE=False):
             saved = assessment_repository.save_assessment(
                 str(self.test_user.id),
                 {

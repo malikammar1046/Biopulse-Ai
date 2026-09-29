@@ -1,0 +1,415 @@
+{
+  "pdf_name": "fct_toc",
+  "page_num": 6,
+  "img_path": "Meal/data/raw/rendered_pages/fct_toc_page_006.png",
+  "boxes": [
+    {
+      "text": "ACKNOWLEDGEMENTS",
+      "confidence": 0.865412620937123,
+      "box": [
+        [
+          209.0,
+          127.0
+        ],
+        [
+          645.0,
+          125.0
+        ],
+        [
+          645.0,
+          155.0
+        ],
+        [
+          210.0,
+          157.0
+        ]
+      ],
+      "x_center": 427.25,
+      "y_center": 141.0
+    },
+    {
+      "text": "The author would like to express his sincere thanks to the following persons,",
+      "confidence": 0.9476966261863708,
+      "box": [
+        [
+          247.0,
+          215.0
+        ],
+        [
+          1081.0,
+          215.0
+        ],
+        [
+          1081.0,
+          244.0
+        ],
+        [
+          247.0,
+          244.0
+        ]
+      ],
+      "x_center": 664.0,
+      "y_center": 229.5
+    },
+    {
+      "text": "who initiated this study and for their help and continued interest during the course",
+      "confidence": 0.9346923901754267,
+      "box": [
+        [
+          208.0,
+          252.0
+        ],
+        [
+          1081.0,
+          249.0
+        ],
+        [
+          1081.0,
+          275.0
+        ],
+        [
+          208.0,
+          278.0
+        ]
+      ],
+      "x_center": 644.5,
+      "y_center": 263.5
+    },
+    {
+      "text": "of this investigation.",
+      "confidence": 0.8687378375426583,
+      "box": [
+        [
+          210.0,
+          286.0
+        ],
+        [
+          429.0,
+          286.0
+        ],
+        [
+          429.0,
+          311.0
+        ],
+        [
+          210.0,
+          311.0
+        ]
+      ],
+      "x_center": 319.5,
+      "y_center": 298.5
+    },
+    {
+      "text": "Dr. Mushtaq A. Khan, Senior Chief, Health and Nutrition, Planning and",
+      "confidence": 0.9231870016881398,
+      "box": [
+        [
+          243.0,
+          336.0
+        ],
+        [
+          1081.0,
+          333.0
+        ],
+        [
+          1081.0,
+          362.0
+        ],
+        [
+          243.0,
+          365.0
+        ]
+      ],
+      "x_center": 662.0,
+      "y_center": 349.0
+    },
+    {
+      "text": "Development Division, Government of Pakistan for overall supervision.",
+      "confidence": 0.9047471169914518,
+      "box": [
+        [
+          209.0,
+          372.0
+        ],
+        [
+          978.0,
+          367.0
+        ],
+        [
+          978.0,
+          393.0
+        ],
+        [
+          210.0,
+          397.0
+        ]
+      ],
+      "x_center": 593.75,
+      "y_center": 382.25
+    },
+    {
+      "text": "Dr. Saba Mebrahatu, Nutrition Project Officer, UNICEF, Islamabad for useful",
+      "confidence": 0.9342928175863466,
+      "box": [
+        [
+          246.0,
+          423.0
+        ],
+        [
+          1081.0,
+          420.0
+        ],
+        [
+          1081.0,
+          446.0
+        ],
+        [
+          246.0,
+          449.0
+        ]
+      ],
+      "x_center": 663.5,
+      "y_center": 434.5
+    },
+    {
+      "text": "suggestions and monitoring of study.",
+      "confidence": 0.9299659680675816,
+      "box": [
+        [
+          208.0,
+          457.0
+        ],
+        [
+          605.0,
+          453.0
+        ],
+        [
+          605.0,
+          482.0
+        ],
+        [
+          209.0,
+          485.0
+        ]
+      ],
+      "x_center": 406.75,
+      "y_center": 469.25
+    },
+    {
+      "text": "Ms. Farzana Yasmeen and Mr. Javaid Iqbal; Lecturers, NWFP Agricultural",
+      "confidence": 0.9452354278362972,
+      "box": [
+        [
+          245.0,
+          508.0
+        ],
+        [
+          1081.0,
+          505.0
+        ],
+        [
+          1081.0,
+          531.0
+        ],
+        [
+          245.0,
+          534.0
+        ]
+      ],
+      "x_center": 663.0,
+      "y_center": 519.5
+    },
+    {
+      "text": "University, Peshawar for analytical work and data analysis.",
+      "confidence": 0.9527918706337611,
+      "box": [
+        [
+          209.0,
+          540.0
+        ],
+        [
+          835.0,
+          538.0
+        ],
+        [
+          835.0,
+          565.0
+        ],
+        [
+          209.0,
+          567.0
+        ]
+      ],
+      "x_center": 522.0,
+      "y_center": 552.5
+    },
+    {
+      "text": "Mr. Anwar Ali Shad, Ms. Samia Ikram, Miss Momina Batool and Miss",
+      "confidence": 0.9035654196372399,
+      "box": [
+        [
+          244.0,
+          592.0
+        ],
+        [
+          1081.0,
+          589.0
+        ],
+        [
+          1081.0,
+          614.0
+        ],
+        [
+          244.0,
+          618.0
+        ]
+      ],
+      "x_center": 662.5,
+      "y_center": 603.25
+    },
+    {
+      "text": "Afsheen, graduate students, Department of Agricultural Chemistry, NWFP",
+      "confidence": 0.9144225305234882,
+      "box": [
+        [
+          208.0,
+          625.0
+        ],
+        [
+          1080.0,
+          620.0
+        ],
+        [
+          1080.0,
+          649.0
+        ],
+        [
+          209.0,
+          654.0
+        ]
+      ],
+      "x_center": 644.25,
+      "y_center": 637.0
+    },
+    {
+      "text": "Agricultural University, Peshawar for their assistance in analytical work and",
+      "confidence": 0.9240257518413739,
+      "box": [
+        [
+          209.0,
+          659.0
+        ],
+        [
+          1081.0,
+          655.0
+        ],
+        [
+          1081.0,
+          682.0
+        ],
+        [
+          209.0,
+          686.0
+        ]
+      ],
+      "x_center": 645.0,
+      "y_center": 670.5
+    },
+    {
+      "text": "collection of reference materials.",
+      "confidence": 0.9392261896814619,
+      "box": [
+        [
+          208.0,
+          691.0
+        ],
+        [
+          553.0,
+          690.0
+        ],
+        [
+          553.0,
+          715.0
+        ],
+        [
+          208.0,
+          716.0
+        ]
+      ],
+      "x_center": 380.5,
+      "y_center": 703.0
+    },
+    {
+      "text": "Financial assistance for this study received from UNICEF Islamabad is",
+      "confidence": 0.9186502465179989,
+      "box": [
+        [
+          247.0,
+          743.0
+        ],
+        [
+          1082.0,
+          738.0
+        ],
+        [
+          1082.0,
+          765.0
+        ],
+        [
+          247.0,
+          770.0
+        ]
+      ],
+      "x_center": 664.5,
+      "y_center": 754.0
+    },
+    {
+      "text": "gratefully acknowledged.",
+      "confidence": 0.9278931498527527,
+      "box": [
+        [
+          207.0,
+          779.0
+        ],
+        [
+          480.0,
+          774.0
+        ],
+        [
+          480.0,
+          801.0
+        ],
+        [
+          208.0,
+          805.0
+        ]
+      ],
+      "x_center": 343.75,
+      "y_center": 789.75
+    },
+    {
+      "text": "(Prof. Dr. Tajammal Hussain)",
+      "confidence": 0.9052859945543881,
+      "box": [
+        [
+          750.0,
+          929.0
+        ],
+        [
+          1059.0,
+          928.0
+        ],
+        [
+          1059.0,
+          954.0
+        ],
+        [
+          750.0,
+          955.0
+        ]
+      ],
+      "x_center": 904.5,
+      "y_center": 941.5
+    }
+  ]
+}

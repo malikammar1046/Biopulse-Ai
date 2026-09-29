@@ -15,7 +15,7 @@
       name="description"
       content="BIOPulse AI is a unified reproductive-health screening and risk-assessment platform designed for Women's Health (PCOS), Men's Health (Male Hypogonadism), and baseline health monitoring."
     />
-    <meta name="theme-color" content="#6E2D8B" />
+    <meta name="theme-color" content="#0891B2" />
 
     <!-- Google Fonts: Plus Jakarta Sans, Outfit & Caveat -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -25,8 +25,25 @@
       rel="stylesheet"
     />
   </head>
-  <body class="bg-[#F8F5FA] text-[#1C1326] antialiased selection:bg-[#6E2D8B] selection:text-white font-sans min-h-screen">
-    <div id="root"></div>
+  <body class="bg-[#F8FAFC] text-[#162A45] antialiased selection:bg-[#0891B2] selection:text-white font-sans min-h-screen">
+    <div id="root">
+      <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background-color: #F8FAFC; color: #162A45; font-family: 'Plus Jakarta Sans', system-ui, sans-serif;">
+        <div style="text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+          <div style="width: 52px; height: 52px; border-radius: 20px; background: #ffffff; border: 1px solid #E2E8F0; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+            <svg width="36" height="36" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M50 88C48 86 14 62 14 36C14 20 26 10 40 10C46 10 50 14 50 14C50 14 54 10 60 10C74 10 86 20 86 36C86 62 52 86 50 88Z" fill="#0891B2"/>
+              <path d="M20 48H36L42 34L50 62L58 40L64 52H80" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div style="font-size: 22px; font-weight: 800; color: #0B1E38; letter-spacing: -0.02em;">
+            BioPulse <span style="color: #0891B2;">AI</span>
+          </div>
+          <div style="font-size: 12px; color: #64748B; font-weight: 500;">
+            Personalized reproductive health intelligence
+          </div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

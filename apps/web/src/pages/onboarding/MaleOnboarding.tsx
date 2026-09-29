@@ -27,7 +27,7 @@ const MALE_STEPS = [
 
 export const MaleOnboarding: React.FC = () => {
   const navigate = useNavigate();
-  const { userProfile, completeOnboarding } = useUserHealth();
+  const { userProfile, completeOnboarding, submitMaleTier1 } = useUserHealth();
   const shouldReduceMotion = useReducedMotion();
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -213,12 +213,55 @@ export const MaleOnboarding: React.FC = () => {
         isOnboarded: true,
       });
 
-      if (res.success) {
-        navigate(ROUTES.APP.ANDROSENSE, { replace: true });
-      } else {
+      if (!res.success) {
         setSaveError(res.error || 'Unable to save profile. Please try again.');
         setIsSubmitting(false);
+        return;
       }
+
+      // Calculate Tier 1 inputs for immediate screening execution
+      const dob = draftProfile.dateOfBirth;
+      let calculatedAge = 35;
+      if (dob) {
+        try {
+          const bdate = new Date(dob);
+          const today = new Date();
+          calculatedAge = today.getFullYear() - bdate.getFullYear() - ((today.getMonth() < bdate.getMonth() || (today.getMonth() === bdate.getMonth() && today.getDate() < bdate.getDate())) ? 1 : 0);
+        } catch {
+          calculatedAge = 35;
+        }
+      }
+
+      const conds = (draftProfile.medical?.conditions || []).join(' ').toLowerCase();
+      const isHbp = conds.includes('hypertension') || conds.includes('blood pressure') ? 1 : 0;
+      const isDm = conds.includes('diabetes') || conds.includes('insulin resistance') ? 1 : 0;
+
+      const adam = draftProfile.mensHealth?.adamResponses || {};
+      const lowEnergy = adam.adam_q2 === true || draftProfile.mensHealth?.energyLevel === 'low' || draftProfile.mensHealth?.energyLevel === 'very_low' ? 1 : 0;
+      const sleepTrouble = adam.adam_q9 === true || draftProfile.mensHealth?.sleepQuality === 'poor' || draftProfile.mensHealth?.sleepQuality === 'frequently_waking' ? 1 : 0;
+      const lowMood = adam.adam_q6 === true || adam.adam_q5 === true || (draftProfile.mensHealth?.moodChanges && draftProfile.mensHealth.moodChanges.length > 0) ? 1 : 0;
+      const lowInterest = adam.adam_q1 === true || draftProfile.mensHealth?.sexDrive === 'reduced' || draftProfile.mensHealth?.sexDrive === 'significantly_reduced' ? 1 : 0;
+
+      const tier1Payload = {
+        age: calculatedAge,
+        height_cm: Number(draftProfile.heightCm) || 178,
+        weight_kg: Number(draftProfile.weightKg) || 80,
+        waist_cm: Number(draftProfile.waistCm) || 88,
+        low_energy: lowEnergy,
+        sleep_trouble: sleepTrouble,
+        low_mood: lowMood,
+        low_interest: lowInterest,
+        high_blood_pressure: isHbp,
+        diabetes: isDm,
+      };
+
+      try {
+        await submitMaleTier1(tier1Payload);
+      } catch (assessErr) {
+        console.warn('Male Tier 1 assessment execution warning during onboarding:', assessErr);
+      }
+
+      navigate(ROUTES.APP.ANDROSENSE, { replace: true });
     } catch {
       setSaveError('A network error occurred while finalizing your profile.');
       setIsSubmitting(false);

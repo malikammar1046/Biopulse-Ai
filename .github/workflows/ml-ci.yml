@@ -49,4 +49,4 @@ jobs:
 
       - name: Run Production Model Artifact & Inference Smoke Tests
         run: |
-          python -m pytest machine-learning/test_production_models.py -v
+          python -m pytest machine-learning/ml/test_imports.py machine-learning/test_production_models.py -v

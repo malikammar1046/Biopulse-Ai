@@ -71,12 +71,22 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
     return `data:image/png;base64,${b64}`;
   };
 
+  const isMale =
+    assessment?.module === 'male_hypogonadism' ||
+    assessment?.model_name?.toLowerCase().includes('logistic') ||
+    assessment?.model_name?.toLowerCase().includes('male');
+
   if (loading && !assessment) {
     return (
-      <div className="p-8 rounded-[32px] bg-[#01579B] border border-[#BAE6FD] text-white shadow-sm flex items-center justify-center min-h-[220px]">
+      <div className="p-8 rounded-[32px] bg-white border border-slate-200 text-slate-900 shadow-xs flex items-center justify-center min-h-[220px]">
         <div className="flex flex-col items-center gap-3">
-          <RefreshCw01 className="w-8 h-8 text-[#BAE6FD] animate-spin" aria-hidden="true" />
-          <p className="text-sm font-sans text-sky-100">Evaluating progressive clinical assessment...</p>
+          <RefreshCw01
+            className={`w-8 h-8 animate-spin ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`}
+            aria-hidden="true"
+          />
+          <p className="text-sm font-sans text-slate-500">
+            Evaluating progressive clinical assessment...
+          </p>
         </div>
       </div>
     );
@@ -84,29 +94,28 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
 
   if (!assessment) {
     return (
-      <div className="p-8 rounded-[32px] bg-[#01579B] border border-[#BAE6FD] text-white shadow-sm flex flex-col items-center justify-center min-h-[200px] text-center space-y-4">
-        <AlertCircle className="w-10 h-10 text-amber-300" />
+      <div className="p-8 rounded-[32px] bg-white border border-slate-200 text-slate-900 shadow-xs flex flex-col items-center justify-center min-h-[200px] text-center space-y-4">
+        <AlertCircle className="w-10 h-10 text-amber-500" />
         <div className="space-y-1">
-          <h3 className="text-lg font-bold font-display">No Active Assessment</h3>
-          <p className="text-xs text-sky-100 max-w-md">
+          <h3 className="text-lg font-bold font-display text-slate-900">
+            No Active Assessment
+          </h3>
+          <p className="text-xs text-slate-500 max-w-md">
             Complete your initial health inputs to generate your personalized Tier 1 screening result.
           </p>
         </div>
         <button
           type="button"
           onClick={onRefresh}
-          className="px-5 py-2.5 rounded-2xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold font-sans cursor-pointer shadow-xs transition-all"
+          className={`px-5 py-2.5 rounded-2xl text-white text-xs font-bold font-sans cursor-pointer shadow-xs transition-all ${
+            isMale ? 'bg-[#0288D1] hover:bg-[#0277BD]' : 'bg-[#F43F7D] hover:bg-[#DC326C]'
+          }`}
         >
           Initialize Tier 1 Screening
         </button>
       </div>
     );
   }
-
-  const isMale =
-    assessment.module === 'male_hypogonadism' ||
-    assessment.model_name?.toLowerCase().includes('logistic') ||
-    assessment.model_name?.toLowerCase().includes('male');
 
   const level = assessment.assessment_level;
   const isTier1 = level === 'tier_1';
@@ -166,16 +175,28 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
   const probPct = `${assessment.probability_percent?.toFixed(1) ?? (assessment.probability * 100).toFixed(1)}%`;
   const thresholdPct = `${Math.round(assessment.threshold * 100)}%`;
 
+  const badgeClass = isMale
+    ? 'bg-sky-50 border-sky-200/80 text-[#0288D1]'
+    : 'bg-pink-50 border-pink-200/80 text-pink-700';
+
+  const primaryBtnClass = isMale
+    ? 'bg-[#0288D1] hover:bg-[#0277BD] text-white shadow-xs'
+    : 'bg-[#F43F7D] hover:bg-[#DC326C] text-white shadow-xs';
+
+  const secondaryBtnClass = isMale
+    ? 'bg-sky-50 hover:bg-sky-100 border border-sky-200 text-[#0288D1]'
+    : 'bg-pink-50 hover:bg-pink-100 border border-pink-200 text-pink-700';
+
   return (
-    <div className="relative p-6 sm:p-8 rounded-[32px] bg-[#01579B] text-white shadow-sm border border-[#BAE6FD] space-y-6 overflow-hidden">
+    <div className="relative p-6 sm:p-8 rounded-[32px] bg-white text-slate-900 shadow-xs border border-slate-200/90 space-y-6 overflow-hidden">
       {/* ── 1. Top Level Badge & History Action ──────────────────────────── */}
       <div className="relative z-10 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <span className="px-3.5 py-1 rounded-full bg-white/15 border border-white/25 text-white text-xs font-mono font-bold flex items-center gap-1.5">
-            <LayersThree01 className="w-3.5 h-3.5 text-[#BAE6FD]" aria-hidden="true" />
+          <span className={`px-3.5 py-1 rounded-full border text-xs font-mono font-bold flex items-center gap-1.5 ${badgeClass}`}>
+            <LayersThree01 className={`w-3.5 h-3.5 ${isMale ? 'text-[#0288D1]' : 'text-pink-600'}`} aria-hidden="true" />
             <span>{getLevelBadgeText()}</span>
           </span>
-          <span className="text-[11px] font-mono text-sky-200">
+          <span className="text-[11px] font-mono text-slate-400">
             {assessment.model_version || (isMale ? 'Male Hypogonadism ML' : 'PCOS-ML')}
           </span>
         </div>
@@ -183,9 +204,9 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
         <button
           type="button"
           onClick={onOpenHistoryModal}
-          className="px-3.5 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/25 text-xs font-sans text-white transition-all flex items-center gap-1.5 cursor-pointer"
+          className="px-3.5 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-sans text-slate-700 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
         >
-          <Clock className="w-3.5 h-3.5 text-[#BAE6FD]" aria-hidden="true" />
+          <Clock className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
           <span>Assessment History</span>
         </button>
       </div>
@@ -202,15 +223,15 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
             aria-live="polite"
             className={`relative z-10 p-3.5 rounded-2xl border flex items-center justify-between gap-3 text-xs font-sans ${
               activeNotification.type === 'error'
-                ? 'bg-rose-500/20 border-rose-400/40 text-rose-100'
-                : 'bg-emerald-500/20 border-emerald-400/40 text-emerald-100'
+                ? 'bg-rose-50 border-rose-200 text-rose-800'
+                : 'bg-emerald-50 border-emerald-200 text-emerald-800'
             }`}
           >
             <div className="flex items-center gap-3">
               {activeNotification.type === 'error' ? (
-                <AlertCircle className="w-4 h-4 text-rose-300 shrink-0" aria-hidden="true" />
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" aria-hidden="true" />
               ) : (
-                <CheckCircle className="w-4 h-4 text-emerald-300 shrink-0" aria-hidden="true" />
+                <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
               )}
               <span>
                 <strong>{activeNotification.type === 'error' ? 'Notice:' : 'Updated Result:'}</strong>{' '}
@@ -221,7 +242,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
               type="button"
               onClick={handleDismiss}
               aria-label="Dismiss notification"
-              className="p-1 rounded-lg text-white/70 hover:text-white hover:bg-white/15 transition-colors cursor-pointer"
+              className="p-1 rounded-lg text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
             >
               <XClose className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
@@ -234,12 +255,14 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
         <motion.div
           initial={{ opacity: 0, y: -5 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative z-10 p-4 rounded-2xl bg-amber-500/20 border border-amber-400/40 flex items-start gap-3 text-amber-100 text-xs font-sans"
+          className="relative z-10 p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-start gap-3 text-amber-900 text-xs font-sans"
         >
-          <InfoCircle className="w-4 h-4 text-amber-300 shrink-0 mt-0.5" aria-hidden="true" />
+          <InfoCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" aria-hidden="true" />
           <div className="space-y-1">
-            <p className="font-semibold text-white">Clinical Labs Required for Combined Multimodal Fusion</p>
-            <p className="text-amber-100/90 leading-relaxed">{assessment.notice}</p>
+            <p className="font-semibold text-slate-900">
+              Clinical Labs Required for Combined Multimodal Fusion
+            </p>
+            <p className="text-slate-600 leading-relaxed">{assessment.notice}</p>
           </div>
         </motion.div>
       )}
@@ -249,11 +272,11 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
         {/* Left: Probability Score & Classification */}
         <div className="lg:col-span-7 space-y-3">
           <div className="space-y-1">
-            <span className="text-xs font-mono uppercase tracking-wider text-sky-200">
+            <span className="text-xs font-mono uppercase tracking-wider text-slate-400">
               Statistical Screening Probability
             </span>
             <div className="flex items-baseline gap-3">
-              <span className="text-4xl sm:text-5xl font-extrabold font-mono text-white tracking-tight">
+              <span className="text-4xl sm:text-5xl font-extrabold font-mono text-slate-900 tracking-tight">
                 {probPct}
               </span>
               <span
@@ -264,34 +287,34 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
             </div>
           </div>
 
-          <p className="text-xs sm:text-sm text-sky-100 font-sans leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-600 font-sans leading-relaxed">
             {getLevelDescription()}
           </p>
 
-          <div className="pt-2 flex flex-wrap items-center gap-4 text-xs font-mono text-sky-200">
+          <div className="pt-2 flex flex-wrap items-center gap-4 text-xs font-mono text-slate-500">
             <span>
-              Calibrated Screening Cutoff: <strong className="text-white">{thresholdPct}</strong>
+              Calibrated Screening Cutoff: <strong className="text-slate-900">{thresholdPct}</strong>
             </span>
             <span>·</span>
             <span>
-              Active Status: <strong className="text-emerald-300">Current Authoritative</strong>
+              Active Status: <strong className="text-emerald-600">Current Authoritative</strong>
             </span>
           </div>
         </div>
 
         {/* Right: Ultrasound / PCOM Snapshot (if processed for Tier 3 or Tier 1+3) */}
         {!isMale && (isTier3Multimodal || hasUltrasoundOnly) && assessment.pcom_status && (
-          <div className="lg:col-span-5 p-4 rounded-2xl bg-white/10 border border-white/15 space-y-3">
+          <div className="lg:col-span-5 p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono text-sky-200 flex items-center gap-1.5">
-                <Image01 className="w-3.5 h-3.5 text-[#BAE6FD]" aria-hidden="true" />
+              <span className="text-xs font-mono text-slate-600 flex items-center gap-1.5">
+                <Image01 className="w-3.5 h-3.5 text-pink-600" aria-hidden="true" />
                 <span>Pelvic Ultrasound Analysis</span>
               </span>
               <span
                 className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
                   assessment.pcom_status === 'PCOM Detected'
-                    ? 'bg-rose-400/20 text-rose-200 border-rose-400/40'
-                    : 'bg-emerald-400/20 text-emerald-200 border-emerald-400/40'
+                    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                    : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                 }`}
               >
                 {assessment.pcom_status}
@@ -299,7 +322,10 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
             </div>
 
             {assessment.gradcam_b64 && (
-              <div className="relative group cursor-pointer overflow-hidden rounded-xl border border-white/15" onClick={() => setShowGradCamModal(true)}>
+              <div
+                className="relative group cursor-pointer overflow-hidden rounded-xl border border-slate-200"
+                onClick={() => setShowGradCamModal(true)}
+              >
                 <img
                   src={getGradcamSrc(assessment.gradcam_b64)}
                   alt="Grad-CAM spatial heatmap"
@@ -314,14 +340,18 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
             )}
 
             {isTier3Multimodal && assessment.fusion_details && (
-              <div className="text-[11px] font-mono text-sky-100 space-y-1 pt-1 border-t border-white/10">
+              <div className="text-[11px] font-mono text-slate-600 space-y-1 pt-1 border-t border-slate-200">
                 <div className="flex justify-between">
                   <span>Clinical Weight (95%):</span>
-                  <strong className="text-white">{(assessment.fusion_details.clinical_probability * 100).toFixed(1)}%</strong>
+                  <strong className="text-slate-900">
+                    {(assessment.fusion_details.clinical_probability * 100).toFixed(1)}%
+                  </strong>
                 </div>
                 <div className="flex justify-between">
                   <span>Ultrasound Weight (5%):</span>
-                  <strong className="text-white">{(assessment.fusion_details.ultrasound_pcom_probability * 100).toFixed(1)}%</strong>
+                  <strong className="text-slate-900">
+                    {(assessment.fusion_details.ultrasound_pcom_probability * 100).toFixed(1)}%
+                  </strong>
                 </div>
               </div>
             )}
@@ -330,36 +360,36 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
 
         {/* Right: Male Pituitary-Gonadal Hormone Evaluator (Tier 2 only) */}
         {isMale && isTier2 && assessment.hormone_pattern_interpretation && (
-          <div className="lg:col-span-5 p-4 rounded-2xl bg-white/10 border border-white/15 space-y-3">
+          <div className="lg:col-span-5 p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono text-sky-200 flex items-center gap-1.5">
-                <Beaker01 className="w-3.5 h-3.5 text-[#BAE6FD]" aria-hidden="true" />
+              <span className="text-xs font-mono text-slate-600 flex items-center gap-1.5">
+                <Beaker01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
                 <span>Pituitary-Gonadal Signaling</span>
               </span>
-              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-white/15 text-white border border-white/25">
+              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-sky-50 text-[#0288D1] border border-sky-200">
                 {assessment.hormone_pattern_interpretation.pattern_name}
               </span>
             </div>
 
-            <p className="text-xs text-sky-100 leading-relaxed font-sans">
+            <p className="text-xs text-slate-600 leading-relaxed font-sans">
               {assessment.hormone_pattern_interpretation.pattern_description}
             </p>
 
             {assessment.hormone_pattern_interpretation.direct_measurements && (
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10 text-[11px] font-mono">
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200 text-[11px] font-mono">
                 {assessment.hormone_pattern_interpretation.direct_measurements.total_testosterone && (
-                  <div className="p-2 rounded-lg bg-black/20">
-                    <span className="text-sky-200 block text-[9px] uppercase">Total Testosterone</span>
-                    <span className="text-white font-bold">
+                  <div className="p-2 rounded-lg bg-white border border-slate-200">
+                    <span className="text-slate-400 block text-[9px] uppercase">Total Testosterone</span>
+                    <span className="text-slate-900 font-bold">
                       {assessment.hormone_pattern_interpretation.direct_measurements.total_testosterone.value}{' '}
                       {assessment.hormone_pattern_interpretation.direct_measurements.total_testosterone.unit}
                     </span>
                   </div>
                 )}
                 {assessment.hormone_pattern_interpretation.direct_measurements.calculated_free_testosterone && (
-                  <div className="p-2 rounded-lg bg-black/20">
-                    <span className="text-sky-200 block text-[9px] uppercase">Free Testosterone</span>
-                    <span className="text-white font-bold">
+                  <div className="p-2 rounded-lg bg-white border border-slate-200">
+                    <span className="text-slate-400 block text-[9px] uppercase">Free Testosterone</span>
+                    <span className="text-slate-900 font-bold">
                       {assessment.hormone_pattern_interpretation.direct_measurements.calculated_free_testosterone.value}{' '}
                       {assessment.hormone_pattern_interpretation.direct_measurements.calculated_free_testosterone.unit}
                     </span>
@@ -373,15 +403,13 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
 
       {/* ── 5. TreeSHAP Influential Factors ─────────────────────────────────── */}
       {assessment.explanations && assessment.explanations.length > 0 && (
-        <div className="relative z-10 pt-4 border-t border-white/15 space-y-3">
+        <div className="relative z-10 pt-4 border-t border-slate-100 space-y-3">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-mono uppercase tracking-wider text-sky-200 flex items-center gap-2">
-              <BarChart01 className="w-3.5 h-3.5 text-[#BAE6FD]" aria-hidden="true" />
+            <h4 className="text-xs font-mono uppercase tracking-wider text-slate-400 flex items-center gap-2">
+              <BarChart01 className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
               <span>Primary Contributing Factors {isMale ? '(Clinical Rules)' : '(TreeSHAP)'}</span>
             </h4>
-            <span className="text-[10px] font-mono text-sky-200">
-              Direction of influence
-            </span>
+            <span className="text-[10px] font-mono text-slate-400">Direction of influence</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -391,20 +419,24 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
               return (
                 <div
                   key={idx}
-                  className="p-3.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 transition-colors space-y-1.5"
+                  className="p-3.5 rounded-2xl bg-slate-50/80 hover:bg-slate-100/80 border border-slate-200/80 transition-colors space-y-1.5"
                 >
                   <div className="flex items-center justify-between gap-1">
-                    <span className="text-xs font-bold text-white font-sans truncate">
+                    <span className="text-xs font-semibold text-slate-900 font-sans truncate">
                       {factorName}
                     </span>
                     {isPositive ? (
-                      <LineChartUp01 className="w-3.5 h-3.5 text-rose-300 shrink-0" aria-hidden="true" />
+                      <LineChartUp01 className="w-3.5 h-3.5 text-rose-500 shrink-0" aria-hidden="true" />
                     ) : (
-                      <LineChartDown01 className="w-3.5 h-3.5 text-emerald-300 shrink-0" aria-hidden="true" />
+                      <LineChartDown01 className="w-3.5 h-3.5 text-emerald-600 shrink-0" aria-hidden="true" />
                     )}
                   </div>
-                  <p className="text-[11px] text-sky-100 leading-tight line-clamp-2">
-                    {exp.description || exp.patient_explanation || (isPositive ? 'Associated with higher screening probability.' : 'Associated with lower screening probability.')}
+                  <p className="text-[11px] text-slate-500 leading-tight line-clamp-2">
+                    {exp.description ||
+                      exp.patient_explanation ||
+                      (isPositive
+                        ? 'Associated with higher screening probability.'
+                        : 'Associated with lower screening probability.')}
                   </p>
                 </div>
               );
@@ -414,7 +446,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
       )}
 
       {/* ── 6. Progressive Next Steps & Tier Actions ───────────────────────── */}
-      <div className="relative z-10 pt-4 border-t border-white/15 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="relative z-10 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
           {isMale ? (
             <>
@@ -422,7 +454,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
                 <button
                   type="button"
                   onClick={onOpenClinicalModal}
-                  className="px-4 py-2.5 rounded-2xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold font-sans shadow-xs flex items-center gap-2 cursor-pointer transition-all"
+                  className={`px-4 py-2.5 rounded-2xl text-xs font-bold font-sans flex items-center gap-2 cursor-pointer transition-all ${primaryBtnClass}`}
                 >
                   <Beaker01 className="w-4 h-4" aria-hidden="true" />
                   <span>Add Clinical Labs (Tier 2)</span>
@@ -432,9 +464,9 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
                 <button
                   type="button"
                   onClick={onOpenClinicalModal}
-                  className="px-4 py-2.5 rounded-2xl bg-white/15 hover:bg-white/20 border border-white/25 text-white text-xs font-bold font-sans flex items-center gap-2 cursor-pointer transition-all shadow-xs"
+                  className={`px-4 py-2.5 rounded-2xl text-xs font-bold font-sans flex items-center gap-2 cursor-pointer transition-all ${secondaryBtnClass}`}
                 >
-                  <Beaker01 className="w-4 h-4 text-[#BAE6FD]" aria-hidden="true" />
+                  <Beaker01 className="w-4 h-4" aria-hidden="true" />
                   <span>{isPartialTier2 ? 'Add More Clinical Results' : 'Update Clinical Labs'}</span>
                 </button>
               )}
@@ -446,7 +478,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
                   <button
                     type="button"
                     onClick={onOpenClinicalModal}
-                    className="px-4 py-2.5 rounded-2xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold font-sans shadow-xs flex items-center gap-2 cursor-pointer transition-all"
+                    className={`px-4 py-2.5 rounded-2xl text-xs font-bold font-sans flex items-center gap-2 cursor-pointer transition-all ${primaryBtnClass}`}
                   >
                     <Beaker01 className="w-4 h-4" aria-hidden="true" />
                     <span>Add Clinical Labs (Tier 2)</span>
@@ -455,9 +487,9 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
                   <button
                     type="button"
                     onClick={onOpenUltrasoundModal}
-                    className="px-4 py-2.5 rounded-2xl bg-white/15 hover:bg-white/20 border border-white/25 text-white text-xs font-bold font-sans flex items-center gap-2 cursor-pointer transition-all"
+                    className={`px-4 py-2.5 rounded-2xl text-xs font-bold font-sans flex items-center gap-2 cursor-pointer transition-all ${secondaryBtnClass}`}
                   >
-                    <Image01 className="w-4 h-4 text-[#BAE6FD]" aria-hidden="true" />
+                    <Image01 className="w-4 h-4" aria-hidden="true" />
                     <span>Upload Ultrasound (Tier 3)</span>
                   </button>
                 </>
@@ -467,7 +499,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
                 <button
                   type="button"
                   onClick={onOpenClinicalModal}
-                  className="px-5 py-2.5 rounded-2xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold font-sans shadow-xs flex items-center gap-2 cursor-pointer transition-all"
+                  className={`px-5 py-2.5 rounded-2xl text-xs font-bold font-sans flex items-center gap-2 cursor-pointer transition-all ${primaryBtnClass}`}
                 >
                   <Beaker01 className="w-4 h-4" aria-hidden="true" />
                   <span>Add Clinical Labs for Complete Assessment</span>
@@ -479,16 +511,16 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
                   <button
                     type="button"
                     onClick={onOpenClinicalModal}
-                    className="px-4 py-2.5 rounded-2xl bg-white/15 hover:bg-white/20 border border-white/25 text-white text-xs font-bold font-sans flex items-center gap-2 cursor-pointer transition-all"
+                    className={`px-4 py-2.5 rounded-2xl text-xs font-bold font-sans flex items-center gap-2 cursor-pointer transition-all ${secondaryBtnClass}`}
                   >
-                    <Beaker01 className="w-4 h-4 text-[#BAE6FD]" aria-hidden="true" />
+                    <Beaker01 className="w-4 h-4" aria-hidden="true" />
                     <span>{isPartialTier2 ? 'Add More Clinical Results' : 'Update Clinical Labs'}</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={onOpenUltrasoundModal}
-                    className="px-5 py-2.5 rounded-2xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold font-sans shadow-xs flex items-center gap-2 cursor-pointer transition-all"
+                    className={`px-5 py-2.5 rounded-2xl text-xs font-bold font-sans flex items-center gap-2 cursor-pointer transition-all ${primaryBtnClass}`}
                   >
                     <Image01 className="w-4 h-4" aria-hidden="true" />
                     <span>Add Ultrasound for Complete Multimodal Assessment</span>
@@ -497,8 +529,8 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
               )}
 
               {isTier3Multimodal && (
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-sans font-bold">
-                  <ShieldTick className="w-4 h-4 text-emerald-400" aria-hidden="true" />
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-sans font-bold">
+                  <ShieldTick className="w-4 h-4 text-emerald-600" aria-hidden="true" />
                   <span>Complete Multimodal Assessment Active</span>
                 </div>
               )}
@@ -506,65 +538,79 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
           )}
         </div>
 
-        <span className="text-[10px] font-mono text-sky-200 text-center sm:text-right">
+        <span className="text-[10px] font-mono text-slate-400 text-center sm:text-right">
           Non-diagnostic statistical risk screening
         </span>
       </div>
 
       {/* ── 7. Evidence Completeness Pill (Tier 2) ─────────────────────────── */}
       {isTier2 && assessment.tier_2_available_count !== undefined && (
-        <div className="relative z-10 p-3.5 rounded-2xl bg-white/10 border border-white/15 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="relative z-10 p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#BAE6FD]" />
-            <span className="text-sky-100 font-sans">
-              <strong>Evidence Completeness:</strong> {assessment.tier_2_available_count} of {assessment.tier_2_total_count || (isMale ? 19 : 15)} clinical & lab tests provided ({assessment.evidence_completeness_percent ?? Math.round((assessment.tier_2_available_count / (assessment.tier_2_total_count || (isMale ? 19 : 15))) * 100)}%)
+            <span className={`w-2 h-2 rounded-full ${isMale ? 'bg-[#0288D1]' : 'bg-[#F43F7D]'}`} />
+            <span className="text-slate-600 font-sans">
+              <strong>Evidence Completeness:</strong> {assessment.tier_2_available_count} of{' '}
+              {assessment.tier_2_total_count || (isMale ? 19 : 15)} clinical & lab tests provided (
+              {assessment.evidence_completeness_percent ??
+                Math.round(
+                  (assessment.tier_2_available_count / (assessment.tier_2_total_count || (isMale ? 19 : 15))) *
+                    100
+                )}
+              %)
             </span>
           </div>
-          <span className="text-[11px] font-mono text-sky-200">
-            Missing values estimated from baseline population medians
-          </span>
+
+          <button
+            type="button"
+            onClick={onOpenClinicalModal}
+            className={`font-semibold cursor-pointer ${
+              isMale ? 'text-[#0288D1] hover:underline' : 'text-pink-600 hover:underline'
+            }`}
+          >
+            {isPartialTier2 ? 'Add Remaining Tests →' : 'Review Entered Labs →'}
+          </button>
         </div>
       )}
 
-      {/* Non-diagnostic clinical disclaimer */}
-      <p className="relative z-10 text-[9px] text-sky-200/80 leading-relaxed border-t border-white/10 pt-2 font-sans text-center sm:text-left">
-        {assessment.disclaimer ||
-          (isMale
-            ? 'This assessment is an AI-assisted screening estimate and does not diagnose hypogonadism. A qualified clinician and appropriate hormone testing are required for diagnosis.'
-            : 'BioPulse AI provides informational screening risk assessments. It does not provide medical diagnoses or prescribe treatment. Please consult a qualified healthcare provider for clinical evaluation.')}
-      </p>
-
-      {/* Grad-CAM Modal */}
+      {/* ── Grad-CAM Inspection Modal ──────────────────────────────────────── */}
       <AnimatePresence>
-        {showGradCamModal && !isMale && (isTier3Multimodal || hasUltrasoundOnly) && assessment.gradcam_b64 && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setShowGradCamModal(false)}>
+        {showGradCamModal && assessment.gradcam_b64 && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 1 }}
-              className="relative max-w-lg w-full p-6 rounded-[32px] bg-[#01579B] border border-[#BAE6FD] text-white space-y-4 shadow-2xl"
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative max-w-2xl w-full p-6 rounded-3xl bg-white border border-slate-200 shadow-2xl space-y-4"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between">
-                <h3 className="text-base font-bold font-display">Ultrasound Spatial Heatmap (Grad-CAM)</h3>
+                <div>
+                  <h3 className="text-lg font-bold font-display text-slate-900">
+                    Grad-CAM Morphological Focus
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Neural activation overlay identifying visual cues in pelvic ultrasound.
+                  </p>
+                </div>
                 <button
                   type="button"
                   onClick={() => setShowGradCamModal(false)}
-                  aria-label="Close modal"
-                  className="p-1 rounded-lg hover:bg-white/15 text-white/70 hover:text-white"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
                 >
                   <XClose className="w-5 h-5" aria-hidden="true" />
                 </button>
               </div>
 
-              <img
-                src={getGradcamSrc(assessment.gradcam_b64)}
-                alt="Enlarged Grad-CAM Heatmap"
-                className="w-full h-auto rounded-2xl border border-white/15"
-              />
+              <div className="rounded-2xl overflow-hidden border border-slate-200 bg-black flex items-center justify-center">
+                <img
+                  src={getGradcamSrc(assessment.gradcam_b64)}
+                  alt="Full-size Grad-CAM Heatmap"
+                  className="w-full max-h-[60vh] object-contain"
+                />
+              </div>
 
-              <p className="text-xs text-sky-100 font-sans leading-relaxed">
-                Grad-CAM highlights regions of the pelvic ultrasound image that most strongly influenced the neural network&apos;s ovarian morphology assessment.
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Warm colors indicate regions that weighed most heavily in determining ovarian morphology.
               </p>
             </motion.div>
           </div>

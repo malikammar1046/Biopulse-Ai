@@ -20,12 +20,15 @@ jobs:
   django-validate-and-test:
     name: Django Checks & Backend Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     env:
       DJANGO_SECRET_KEY: "ci-dummy-secret-key-not-for-production-use"
       DJANGO_DEBUG: "True"
       SUPABASE_URL: "https://dummy-project.supabase.co"
       SUPABASE_ANON_KEY: "dummy-anon-key"
       ALLOW_LOCAL_SQLITE_FALLBACK: "true"
+      DISABLE_INTELLIGENCE_PREWARM: "true"
+      DISABLE_SUPABASE_NETWORK: "true"
 
     steps:
       - name: Checkout Code
@@ -57,4 +60,4 @@ jobs:
       - name: Run Backend Test Suite
         run: |
           cd backend
-          python manage.py test apps.intelligence
+          python manage.py test

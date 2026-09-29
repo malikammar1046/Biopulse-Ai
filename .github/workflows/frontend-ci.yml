@@ -5,11 +5,13 @@ on:
     branches: [ main, develop ]
     paths:
       - 'apps/web/**'
+      - 'apps/mobile/**'
       - '.github/workflows/frontend-ci.yml'
   pull_request:
     branches: [ main, develop ]
     paths:
       - 'apps/web/**'
+      - 'apps/mobile/**'
       - '.github/workflows/frontend-ci.yml'
 
 concurrency:
@@ -35,7 +37,7 @@ jobs:
       - name: Install Frontend Dependencies
         working-directory: apps/web
         run: |
-          npm install --legacy-peer-deps
+          npm ci --legacy-peer-deps || npm install --legacy-peer-deps
 
       - name: Run TypeScript Type Check
         working-directory: apps/web
@@ -46,3 +48,32 @@ jobs:
         working-directory: apps/web
         run: |
           npm run build
+
+  mobile-build-and-validate:
+    name: Mobile App (Expo & React Native)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Mobile Dependencies
+        working-directory: apps/mobile
+        run: |
+          npm install --legacy-peer-deps
+
+      - name: Mobile TypeScript Type Check
+        working-directory: apps/mobile
+        run: |
+          npx tsc --noEmit
+
+      - name: Verify Expo Config
+        working-directory: apps/mobile
+        run: |
+          npx expo config
+

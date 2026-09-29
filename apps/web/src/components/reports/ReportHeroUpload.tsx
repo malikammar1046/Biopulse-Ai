@@ -85,14 +85,6 @@ export const ReportHeroUpload: React.FC<ReportHeroUploadProps> = ({
             <FileCheck02 className={`w-3.5 h-3.5 ${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'}`} aria-hidden="true" />
             <span>Health Document Hub</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold font-display tracking-tight text-[#0F172A]">
-            Your Health Reports
-          </h1>
-          <p className={`text-xs sm:text-sm font-sans leading-relaxed ${
-            isFemale ? 'text-[#667085]' : 'text-[#64748B]'
-          }`}>
-            Keep your important health reports in one secure place. BioPulse AI can help you understand what the numbers and terms mean in simple language.
-          </p>
         </div>
 
         {/* Quick Metric Pills */}

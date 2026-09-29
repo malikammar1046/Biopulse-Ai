@@ -20,18 +20,11 @@ const DashboardRedirect: React.FC = () => {
   return <Navigate to={destination} replace />;
 };
 
-// Lightweight Page Loading Skeleton / Fallback
+import { BioPulseLoadingScreen } from './components/brand/BioPulseLoadingScreen';
+
+// Lightweight Page Loading Fallback (BioPulse Splash Screen)
 const PageLoadingFallback: React.FC = () => (
-  <div className="min-h-[70vh] flex items-center justify-center bg-[#10071A]">
-    <div className="flex flex-col items-center gap-3">
-      <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#6E2D8B] via-[#8E3EAF] to-[#E87084] flex items-center justify-center shadow-lg shadow-purple-950/40 animate-pulse">
-        <div className="w-3 h-3 rounded-full bg-white animate-ping" />
-      </div>
-      <span className="text-xs font-mono font-bold tracking-widest text-[#B4A6C7] uppercase">
-        Loading...
-      </span>
-    </div>
-  </div>
+  <BioPulseLoadingScreen message="Preparing your health experience" />
 );
 
 // Route-Level Lazy Loading (Code Splitting)
@@ -61,9 +54,7 @@ const UnderstandMaleHypogonadism = lazy(() =>
 const TrustAndPrivacy = lazy(() =>
   import('./pages/public/TrustAndPrivacy').then((m) => ({ default: m.TrustAndPrivacy }))
 );
-const Doctors = lazy(() =>
-  import('./pages/public/Doctors').then((m) => ({ default: m.Doctors }))
-);
+const Doctors = lazy(() => import('./pages/public/Doctors'));
 
 // Auth & Onboarding Pages (Lazy-Loaded)
 const Login = lazy(() => import('./pages/auth/Login').then((m) => ({ default: m.Login })));
@@ -78,7 +69,10 @@ const Dashboard = lazy(() => import('./pages/app/Dashboard').then((m) => ({ defa
 const MasterHealthHub = lazy(() => import('./pages/app/MasterHealthHub').then((m) => ({ default: m.MasterHealthHub })));
 const CyclePage = lazy(() => import('./pages/app/CyclePage').then((m) => ({ default: m.CyclePage })));
 const SymptomsPage = lazy(() => import('./pages/app/SymptomsPage').then((m) => ({ default: m.SymptomsPage })));
-const DietPage = lazy(() => import('./pages/app/DietPage').then((m) => ({ default: m.DietPage })));
+
+const LifestyleRecommendationsPage = lazy(() =>
+  import('./pages/app/LifestyleRecommendationsPage').then((m) => ({ default: m.LifestyleRecommendationsPage }))
+);
 const FitnessPage = lazy(() => import('./pages/app/FitnessPage').then((m) => ({ default: m.FitnessPage })));
 const ReportsPage = lazy(() => import('./pages/app/ReportsPage').then((m) => ({ default: m.ReportsPage })));
 const MedicationsPage = lazy(() => import('./pages/app/MedicationsPage').then((m) => ({ default: m.MedicationsPage })));
@@ -119,8 +113,8 @@ export function App() {
                 <Route path={ROUTES.ABOUT} element={<About />} />
                 <Route path={ROUTES.HOW_IT_WORKS} element={<HowItWorks />} />
                 <Route path={ROUTES.FEATURES} element={<Features />} />
-                <Route path={ROUTES.CONTACT} element={<Contact />} />
                 <Route path={ROUTES.DOCTORS} element={<Doctors />} />
+                <Route path={ROUTES.CONTACT} element={<Contact />} />
 
                 {/* Public Only Auth Pages */}
                 <Route element={<PublicOnlyRoute />}>
@@ -191,8 +185,9 @@ export function App() {
                   <Route path="ai" element={<ChatPage />} />
                   <Route path="assistant" element={<ChatPage />} />
                   <Route path="symptoms" element={<SymptomsPage />} />
-                  <Route path="diet" element={<DietPage />} />
-                  <Route path="diet/week" element={<DietPage />} />
+                  <Route path="lifestyle" element={<LifestyleRecommendationsPage />} />
+                  <Route path="diet" element={<LifestyleRecommendationsPage />} />
+                  <Route path="diet/week" element={<LifestyleRecommendationsPage />} />
                   <Route path="fitness" element={<FitnessPage />} />
                   <Route path="reports" element={<ReportsPage />} />
                   <Route path="medications" element={<MedicationsPage />} />
@@ -204,7 +199,7 @@ export function App() {
                   <Route path="settings" element={<SettingsPage />} />
                   {/* Backward compatibility aliases */}
                   <Route path="profile" element={<Navigate to={ROUTES.APP.SETTINGS} replace />} />
-                  <Route path="lifestyle" element={<Navigate to={ROUTES.APP.DIET} replace />} />
+
                 </Route>
               </Route>
 

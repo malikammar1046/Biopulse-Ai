@@ -1,0 +1,123 @@
+{
+  "description": "Deterministic hand-computable golden test cases for Phase 6C single-meal generation engine.",
+  "cases": [
+    {
+      "case_id": "case_1_single_food_feasible",
+      "description": "Single eligible food meeting target energy and macros with J*=0. Returns fully feasible meal plan.",
+      "meal_role": "breakfast",
+      "target": {
+        "target_energy_kcal": 200.0,
+        "energy_tolerance_kcal": 50.0,
+        "protein_min_g": 10.0,
+        "protein_max_g": 30.0,
+        "carbohydrate_min_g": 15.0,
+        "carbohydrate_max_g": 40.0,
+        "fat_min_g": 2.0,
+        "fat_max_g": 15.0
+      },
+      "expected": {
+        "status": "FEASIBLE",
+        "feasibility_class": "FEASIBLE",
+        "primary_objective": 0.0,
+        "item_count": 1
+      }
+    },
+    {
+      "case_id": "case_2_two_food_macro_balance",
+      "description": "Two compatible foods balanced by optimizer to satisfy all core targets with J*=0.",
+      "meal_role": "lunch",
+      "target": {
+        "target_energy_kcal": 400.0,
+        "energy_tolerance_kcal": 50.0,
+        "protein_min_g": 20.0,
+        "protein_max_g": 40.0,
+        "carbohydrate_min_g": 35.0,
+        "carbohydrate_max_g": 65.0,
+        "fat_min_g": 8.0,
+        "fat_max_g": 25.0
+      },
+      "expected": {
+        "status": "FEASIBLE",
+        "feasibility_class": "FEASIBLE",
+        "primary_objective": 0.0,
+        "item_count": 2
+      }
+    },
+    {
+      "case_id": "case_3_required_food_fixed",
+      "description": "Enforces that a caller-specified required food is present in every valid evaluated combination.",
+      "meal_role": "breakfast",
+      "required_entity_id": "PK_PORTION_001",
+      "expected": {
+        "required_in_best_meal": true
+      }
+    },
+    {
+      "case_id": "case_4_user_preference_tie_breaker",
+      "description": "Two combinations both with J*=0; the combination containing the preferred food ranks higher by preference coverage.",
+      "meal_role": "lunch",
+      "preferred_entity_id": "PK_CANON_001",
+      "expected": {
+        "best_meal_preference_matches": 1,
+        "preference_coverage_positive": true
+      }
+    },
+    {
+      "case_id": "case_5_cross_mode_secondary_non_interference",
+      "description": "Meal A (PREFERENCE_DEVIATION, 0.8) vs Meal B (TOTAL_GRAMS_TIE_BREAKER, 100). Both J*=0 with identical preference coverage. Ranking strictly ignores secondary values (does NOT treat 0.8 < 100) and orders by canonical ID.",
+      "meal_a": {
+        "canonical_id": "FOOD_B",
+        "primary_objective": 0.0,
+        "secondary_objective": 0.8,
+        "secondary_mode": "PREFERENCE_DEVIATION",
+        "preference_coverage": 0.0
+      },
+      "meal_b": {
+        "canonical_id": "FOOD_A",
+        "primary_objective": 0.0,
+        "secondary_objective": 100.0,
+        "secondary_mode": "TOTAL_GRAMS_TIE_BREAKER",
+        "preference_coverage": 0.0
+      },
+      "expected_best_id": "FOOD_A"
+    },
+    {
+      "case_id": "case_6_same_mode_secondary_non_interference",
+      "description": "Meal A (PREFERENCE_DEVIATION, 0.8) vs Meal B (PREFERENCE_DEVIATION, 0.2). Both J*=0, same mode, identical preference coverage. Phase 6B secondary objective is NOT used for cross-meal ranking; canonical ID decides order.",
+      "meal_a": {
+        "canonical_id": "FOOD_Y",
+        "primary_objective": 0.0,
+        "secondary_objective": 0.2,
+        "secondary_mode": "PREFERENCE_DEVIATION",
+        "preference_coverage": 0.0
+      },
+      "meal_b": {
+        "canonical_id": "FOOD_X",
+        "primary_objective": 0.0,
+        "secondary_objective": 0.8,
+        "secondary_mode": "PREFERENCE_DEVIATION",
+        "preference_coverage": 0.0
+      },
+      "expected_best_id": "FOOD_X"
+    },
+    {
+      "case_id": "case_7_target_deviations_ranking",
+      "description": "When no combination is fully feasible, combinations with lower normalized violation J* rank ahead of higher J*.",
+      "meal_role": "snack",
+      "meal_a_j": 0.15,
+      "meal_b_j": 0.45,
+      "expected_best_j": 0.15
+    },
+    {
+      "case_id": "case_8_search_truncation_warning",
+      "description": "Search space exceeding maximum_combinations_evaluated is flagged as TRUNCATED_SEARCH with BETTER_UNEVALUATED_COMBINATION_MAY_EXIST warning.",
+      "max_combinations": 10,
+      "expected": {
+        "search_truncated": true,
+        "search_exhaustive": false,
+        "selection_scope": "TRUNCATED_SEARCH",
+        "warning_present": "BETTER_UNEVALUATED_COMBINATION_MAY_EXIST"
+      }
+    }
+  ]
+}

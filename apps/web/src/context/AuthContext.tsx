@@ -344,6 +344,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const optimistic: UserProfile = {
       ...userProfile,
       ...data,
+      avatarUrl: 'avatarUrl' in data ? (data.avatarUrl || undefined) : userProfile.avatarUrl,
       gender: data.gender || userProfile.gender || 'female',
       pathway: data.pathway || userProfile.pathway || 'female',
       updatedAt: new Date().toISOString(),
@@ -368,6 +369,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (res.profile) {
       const confirmed: UserProfile = {
         ...res.profile,
+        avatarUrl: 'avatarUrl' in data ? (data.avatarUrl || undefined) : res.profile.avatarUrl,
         gender: data.gender || res.profile.gender || optimistic.gender,
         pathway: data.pathway || res.profile.pathway || optimistic.pathway,
       };

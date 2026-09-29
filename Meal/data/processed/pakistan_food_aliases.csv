@@ -1,0 +1,38 @@
+alias_id,food_id,alias,alias_type,source_document,pdf_page,mapping_confidence,review_status
+PK_ALS_001,PK_FCT_015,Atta,urdu_vernacular,Food Composition Table for Pakistan,15,1.0,auto_verified
+PK_ALS_002,PK_FCT_015,Wheat whole flour,english_synonym,Food Composition Table for Pakistan,15,1.0,auto_verified
+PK_ALS_003,PK_FCT_015,Gandam atta,urdu_vernacular,Pakistan Dietary Guidelines,57,0.95,auto_verified
+PK_ALS_004,PK_FCT_016,Maida,urdu_vernacular,Food Composition Table for Pakistan,15,1.0,auto_verified
+PK_ALS_005,PK_FCT_016,Refined wheat flour,english_synonym,Food Composition Table for Pakistan,15,1.0,auto_verified
+PK_ALS_006,PK_FCT_017,Suji,urdu_vernacular,Food Composition Table for Pakistan,15,1.0,auto_verified
+PK_ALS_007,PK_FCT_017,Semolina,english_synonym,Food Composition Table for Pakistan,15,1.0,auto_verified
+PK_ALS_008,PK_FCT_018,Nan,culinary_dish,Food Composition Table for Pakistan,15,1.0,auto_verified
+PK_ALS_009,PK_FCT_019,Chapati,culinary_dish,Food Composition Table for Pakistan,15,1.0,auto_verified
+PK_ALS_010,PK_FCT_019,Roti,urdu_vernacular,Pakistan Dietary Guidelines,93,0.95,auto_verified
+PK_ALS_011,PK_FCT_020,Paratha,culinary_dish,Food Composition Table for Pakistan,15,1.0,auto_verified
+PK_ALS_012,PK_FCT_022,Double Roti,urdu_vernacular,Food Composition Table for Pakistan,15,1.0,auto_verified
+PK_ALS_013,PK_FCT_022,White bread,english_synonym,Food Composition Table for Pakistan,15,1.0,auto_verified
+PK_ALS_014,PK_FCT_008,Chaval,urdu_vernacular,Food Composition Table for Pakistan,13,1.0,auto_verified
+PK_ALS_015,PK_FCT_008,Polished rice,english_synonym,Food Composition Table for Pakistan,13,1.0,auto_verified
+PK_ALS_016,PK_FCT_008,Basmati rice,variety_commercial,"Minimum Cost of the Diet (CoD), Pakistan",34,0.9,auto_verified
+PK_ALS_017,PK_FCT_001,Jou,urdu_vernacular,Food Composition Table for Pakistan,13,1.0,auto_verified
+PK_ALS_018,PK_FCT_001,Barley,english_synonym,Food Composition Table for Pakistan,13,1.0,auto_verified
+PK_ALS_019,PK_FCT_002,Makai,urdu_vernacular,Food Composition Table for Pakistan,13,1.0,auto_verified
+PK_ALS_020,PK_FCT_005,Bajra,urdu_vernacular,Food Composition Table for Pakistan,13,1.0,auto_verified
+PK_ALS_021,PK_FCT_005,Pearl millet,english_synonym,Food Composition Table for Pakistan,13,1.0,auto_verified
+PK_ALS_022,PK_FCT_026,Channa,urdu_vernacular,Food Composition Table for Pakistan,17,1.0,auto_verified
+PK_ALS_023,PK_FCT_026,Chickpea,english_synonym,Food Composition Table for Pakistan,17,1.0,auto_verified
+PK_ALS_024,PK_FCT_026,Kala chana,variety_color,Pakistan Dietary Guidelines,57,0.95,auto_verified
+PK_ALS_025,PK_FCT_032,Masoor,urdu_vernacular,Food Composition Table for Pakistan,17,1.0,auto_verified
+PK_ALS_026,PK_FCT_032,Red lentil,english_synonym,Food Composition Table for Pakistan,17,1.0,auto_verified
+PK_ALS_027,PK_FCT_024,Lobia,urdu_vernacular,Food Composition Table for Pakistan,17,1.0,auto_verified
+PK_ALS_028,PK_FCT_028,Rawan,urdu_vernacular,Food Composition Table for Pakistan,17,1.0,auto_verified
+PK_ALS_029,PK_FCT_040,Alu,urdu_vernacular,Food Composition Table for Pakistan,21,1.0,auto_verified
+PK_ALS_030,PK_FCT_040,Potato,english_synonym,Food Composition Table for Pakistan,21,1.0,auto_verified
+PK_ALS_031,PK_FCT_045,Palak,urdu_vernacular,Food Composition Table for Pakistan,23,1.0,auto_verified
+PK_ALS_032,PK_FCT_045,Spinach,english_synonym,Food Composition Table for Pakistan,23,1.0,auto_verified
+PK_ALS_033,PK_FCT_060,Gosht,urdu_vernacular,Food Composition Table for Pakistan,33,1.0,auto_verified
+PK_ALS_034,PK_FCT_060,Mutton,english_synonym,Food Composition Table for Pakistan,33,1.0,auto_verified
+PK_ALS_035,PK_FCT_070,Ghee,urdu_vernacular,Food Composition Table for Pakistan,39,1.0,auto_verified
+PK_ALS_036,PK_FCT_070,Desi Ghee,urdu_vernacular,Food Composition Table for Pakistan,39,1.0,auto_verified
+PK_ALS_037,PK_FCT_070,Cooking oil,culinary_fat,"Minimum Cost of the Diet (CoD), Pakistan",35,0.85,auto_verified

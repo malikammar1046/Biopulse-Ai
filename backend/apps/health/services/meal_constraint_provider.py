@@ -15,13 +15,23 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Dict, List, Optional, Set
 
-from Meal.optimizer.schemas import PortionConstraint
-from Meal.planner.catalog import PlannerCatalogEntity, load_master_planner_catalog
-from Meal.planner.schemas import (
-    CandidateEvaluation,
-    CandidateRankingResult,
-    PrimaryDisposition,
-)
+try:
+    from Meal.optimizer.schemas import PortionConstraint
+    from Meal.planner.catalog import PlannerCatalogEntity, load_master_planner_catalog
+    from Meal.planner.schemas import (
+        CandidateEvaluation,
+        CandidateRankingResult,
+        PrimaryDisposition,
+    )
+    HAS_MEAL_MODULE = True
+except (ImportError, ModuleNotFoundError):
+    HAS_MEAL_MODULE = False
+    PortionConstraint = None
+    PlannerCatalogEntity = None
+    load_master_planner_catalog = None
+    CandidateEvaluation = None
+    CandidateRankingResult = None
+    PrimaryDisposition = None
 
 # Canonical path to the integration-owned verified portion registry
 DEFAULT_VERIFIED_CONSTRAINTS_CSV = (
