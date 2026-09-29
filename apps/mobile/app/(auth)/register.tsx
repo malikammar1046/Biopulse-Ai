@@ -9,6 +9,9 @@ import { UserProfile } from '../../features/authentication';
  *
  * Screen 4: Inclusive account registration for both Female (PCOS)
  * and Male (Hypogonadism) health pathways.
+ *
+ * Replaces simulated signup with real Supabase user provisioning.
+ * Post-signup routes directly to pathway selection (never /design-system).
  */
 export default function RegisterRoute() {
   const router = useRouter();
@@ -24,9 +27,9 @@ export default function RegisterRoute() {
 
   // 2. Successful Registration Handler
   const handleSignupSuccess = useCallback((user: UserProfile) => {
-    // Retain pathway neutrality: subsequent onboarding handles pathway questionnaire.
-    // Transition to application entry point.
-    router.replace('/design-system');
+    // Retain pathway neutrality: newly registered users transition to pathway selection
+    // to choose between the Female (PCOS) or Male (Hypogonadism) care journeys.
+    router.replace('/pathway-selection');
   }, [router]);
 
   // 3. Navigate to Login
@@ -38,29 +41,21 @@ export default function RegisterRoute() {
     }
   }, [router]);
 
-  // 4. Terms of Service Integration Boundary
+  // 4. Terms of Service Integration Route
   const handleTermsPress = useCallback(() => {
-    Alert.alert(
-      'Terms of Service',
-      'BioPulse AI provides personalized health intelligence and screening support. It is not an acute diagnostic service. By using BioPulse AI, you agree to our standard terms.\n\n(Route boundary: /(legal)/terms).',
-      [{ text: 'Close' }]
-    );
-  }, []);
+    router.push('/(auth)/terms');
+  }, [router]);
 
-  // 5. Privacy Policy Integration Boundary
+  // 5. Privacy Policy Integration Route
   const handlePrivacyPress = useCallback(() => {
-    Alert.alert(
-      'Privacy Policy',
-      'All biometric, symptom, and hormonal health information is securely encrypted. We never share or sell personal health telemetry.\n\n(Route boundary: /(legal)/privacy).',
-      [{ text: 'Close' }]
-    );
-  }, []);
+    router.push('/(auth)/privacy');
+  }, [router]);
 
   // 6. Social Sign-Up Integration Boundaries
   const handleGoogleSignup = useCallback(() => {
     Alert.alert(
       'Google Sign-Up',
-      'Google Authentication SDK is not configured in this environment. Please register using your full name, email, and password.',
+      'Google OAuth is configured via our Supabase backend. On mobile, please register with your full name, email, and password or use the BioPulse web portal.',
       [{ text: 'OK' }]
     );
   }, []);
@@ -68,7 +63,7 @@ export default function RegisterRoute() {
   const handleAppleSignup = useCallback(() => {
     Alert.alert(
       'Apple Sign-Up',
-      'Apple Authentication SDK is not configured in this environment. Please register using your full name, email, and password.',
+      'Apple ID Registration is not currently enabled for this project environment. Please register with your email and password.',
       [{ text: 'OK' }]
     );
   }, []);

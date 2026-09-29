@@ -7,25 +7,23 @@ import { BioPulseOnboardingIntroScreen } from '../components/onboarding';
  *
  * Appears immediately following the Splash / Launch Screen.
  * Dual-pathway introduction to female (PCOS) and male (hypogonadism) health monitoring.
+ *
+ * Directs users into the real account creation, sign-in, or pathway selection flows.
  */
 export default function OnboardingScreen() {
   const router = useRouter();
 
-  // 1. Skip action integration boundary
+  // 1. Skip action -> navigate to account login
   const handleSkip = useCallback(() => {
-    // When authentication / home routes are added in future screens,
-    // this can navigate directly to the auth or app entry point.
-    router.replace('/design-system');
+    router.replace('/(auth)/login');
   }, [router]);
 
-  // 2. Primary CTA: Get Started integration boundary
+  // 2. Primary CTA: Get Started -> navigate to account creation
   const handleGetStarted = useCallback(() => {
-    // When subsequent onboarding slides (e.g. pathway selection) are built,
-    // continue to the next step.
-    router.replace('/design-system');
+    router.push('/(auth)/register');
   }, [router]);
 
-  // 3. Secondary CTA: I already have an account navigation
+  // 3. Secondary CTA: I already have an account -> navigate to login
   const handleSignIn = useCallback(() => {
     router.push('/(auth)/login');
   }, [router]);
