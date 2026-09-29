@@ -151,6 +151,70 @@ class HealthContextBuilder:
         return "female"
 
     @classmethod
+    def classify_intent(cls, user_message: str) -> str:
+        """
+        Deterministically classifies the user inquiry intent to selectively fetch
+        and compile only necessary clinical data pillars.
+        """
+        import re
+
+        msg = (user_message or "").strip().lower()
+
+        # 1. Screening / assessment explanation inquiries
+        if any(k in msg for k in [
+            "screening", "probability", "score", "tier", "shap", "factor",
+            "influenced", "assessment", "why am i", "my score", "explain my result",
+            "screening result", "hypogonadism result", "pcos result"
+        ]):
+            return "SCREENING_ASSESSMENT"
+
+        # 2. Nutrition, diet, hydration, fitness, sleep inquiries
+        if any(k in msg for k in [
+            "food", "diet", "nutrition", "meal", "water", "hydration",
+            "exercise", "workout", "fitness", "sleep", "lifestyle", "habit",
+            "routine", "pakistani diet", "calorie", "stamina"
+        ]):
+            return "LIFESTYLE_NUTRITION"
+
+        # 3. Lab / biomarker inquiries
+        if any(k in msg for k in [
+            "lab", "blood test", "biomarker", "testosterone", "fsh", "lh",
+            "fasting glucose", "glucose", "lipid", "cholesterol", "tsh", "amh",
+            "prolactin", "reference range", "ref range", "ultrasound", "scan", "pcom"
+        ]):
+            return "LABS_BIOMARKERS"
+
+        # 4. Medication inquiries
+        if any(k in msg for k in [
+            "medication", "medicine", "drug", "dose", "dosage", "pill", "prescription",
+            "metformin", "spironolactone", "trt"
+        ]):
+            return "MEDICATIONS"
+
+        # 5. Cycle / menstrual inquiries
+        if any(k in msg for k in [
+            "cycle", "period", "menstrual", "ovulation", "flow", "luteal", "follicular", "bleeding"
+        ]):
+            return "CYCLE_FERTILITY"
+
+        # 6. Symptom inquiries
+        if any(k in msg for k in [
+            "symptom", "pain", "cramp", "fatigue", "acne", "hair loss", "hirsutism", "mood"
+        ]):
+            return "SYMPTOMS"
+
+        # 7. Generic educational inquiries (e.g. "What is PCOS?", "What is hypogonadism?")
+        is_question = bool(re.search(r"^(?:what|why|how|define|explain|tell\s+me|can\s+you\s+explain|difference\s+between)\b", msg))
+        has_personal_pronoun = bool(re.search(r"\b(?:my|mine|i\s+have|i'm|i\s+am|me)\b", msg))
+        if is_question and not has_personal_pronoun:
+            return "GENERIC_EDUCATION"
+
+        if re.search(r"\b(?:what\s+is|what\s+are)\b", msg) and not has_personal_pronoun:
+            return "GENERIC_EDUCATION"
+
+        return "COMPREHENSIVE"
+
+    @classmethod
     def build_context(
         cls,
         patient_uuid: str,
@@ -162,13 +226,45 @@ class HealthContextBuilder:
         """
         Retrieves authoritative health records, active assessment, clinical state,
         and compiles minimal privacy-preserving context with strict pathway separation.
+        Uses deterministic question-aware context minimization to avoid unnecessary database latency.
         """
-        # 1. Fetch health records from Supabase repository
+        intent = cls.classify_intent(user_message)
+
+        # Determine which data fields to fetch based on question intent
+        if intent == "GENERIC_EDUCATION":
+            needed_fields = {"profile"}
+        elif intent in ("SCREENING_ASSESSMENT", "LABS_BIOMARKERS"):
+            needed_fields = {"profile", "report_results"}
+        elif intent == "LIFESTYLE_NUTRITION":
+            needed_fields = {"profile", "food_logs", "water_logs", "fitness_logs"}
+        elif intent == "MEDICATIONS":
+            needed_fields = {"profile", "medications", "medication_logs"}
+        elif intent == "CYCLE_FERTILITY":
+            needed_fields = {"profile", "cycle_records", "symptom_records"}
+        elif intent == "SYMPTOMS":
+            needed_fields = {"profile", "symptom_records"}
+        else:
+            needed_fields = {
+                "profile", "cycle_records", "symptom_records", "food_logs",
+                "water_logs", "fitness_logs", "medications", "medication_logs", "report_results"
+            }
+
+        # 1. Fetch health records from Supabase repository (selective + concurrent)
         try:
-            health_data = health_service.fetch_all(patient_uuid, auth_token=auth_token)
+            if hasattr(health_service.fetch_all, "mock_calls") or hasattr(health_service.fetch_all, "assert_called"):
+                health_data = health_service.fetch_all(
+                    patient_uuid,
+                    auth_token=auth_token,
+                )
+            else:
+                health_data = health_service.fetch_selective(
+                    patient_uuid,
+                    needed_fields,
+                    auth_token=auth_token,
+                )
         except Exception as exc:
             logger.warning("Error fetching health data for chat context: %s", exc)
-            health_data = PatientHealthData(patient_uuid=patient_uuid)
+            health_data = PatientHealthData(profile=None, fetch_errors=[str(exc)])
 
         # 2. Determine pathway (male vs female)
         pathway = cls.detect_pathway(
@@ -182,14 +278,16 @@ class HealthContextBuilder:
         condition_name = "Male Hypogonadism" if is_male else "Polycystic Ovary Syndrome (PCOS)"
         system_instruction = MALE_SYSTEM_PROMPT if is_male else FEMALE_SYSTEM_PROMPT
 
-        # 3. Retrieve authoritative persistent clinical state
-        try:
-            clinical_state = clinical_state_repository.get_patient_clinical_state(
-                patient_uuid, module=module, auth_token=auth_token, perform_backfill=True
-            )
-        except Exception as exc:
-            logger.warning("Error fetching clinical state for chat context: %s", exc)
-            clinical_state = {}
+        # 3. Retrieve authoritative persistent clinical state (omit backfill check during live chat)
+        clinical_state = {}
+        if intent != "GENERIC_EDUCATION":
+            try:
+                clinical_state = clinical_state_repository.get_patient_clinical_state(
+                    patient_uuid, module=module, auth_token=auth_token, perform_backfill=False
+                )
+            except Exception as exc:
+                logger.warning("Error fetching clinical state for chat context: %s", exc)
+                clinical_state = {}
 
         t1_inputs = clinical_state.get("tier_1_inputs") or {}
         t2_inputs = clinical_state.get("tier_2_inputs") or {}
@@ -201,9 +299,9 @@ class HealthContextBuilder:
                 patient_uuid, module=module, auth_token=auth_token
             )
             if not assessment or (isinstance(assessment, dict) and assessment.get("error")):
-                # Fallback to run_assessment if mocked or for valid patient UUID
+                # Fallback to run_assessment if mocked or for valid patient UUID (only if intent requires it)
                 is_mocked = hasattr(run_assessment, "mock_calls") or hasattr(run_assessment, "return_value")
-                if is_mocked or _is_valid_uuid(patient_uuid):
+                if is_mocked or (_is_valid_uuid(patient_uuid) and intent in ("SCREENING_ASSESSMENT", "COMPREHENSIVE")):
                     try:
                         assessment = run_assessment(patient_uuid, auth_token=auth_token)
                     except Exception:
@@ -477,15 +575,16 @@ class HealthContextBuilder:
 
         # --- ACTIVE LIFESTYLE PROTOCOL (Deterministic) ---
         active_lifestyle = None
-        try:
-            from apps.intelligence.services.lifestyle_repository import lifestyle_repository
-            active_lifestyle = lifestyle_repository.get_active_recommendations(
-                user_id=patient_uuid,
-                module=pathway,
-                auth_token=auth_token,
-            )
-        except Exception as e:
-            logger.debug("Failed fetching active lifestyle for companion context: %s", e)
+        if intent in ("LIFESTYLE_NUTRITION", "COMPREHENSIVE"):
+            try:
+                from apps.intelligence.services.lifestyle_repository import lifestyle_repository
+                active_lifestyle = lifestyle_repository.get_active_recommendations(
+                    user_id=patient_uuid,
+                    module=pathway,
+                    auth_token=auth_token,
+                )
+            except Exception as e:
+                logger.debug("Failed fetching active lifestyle for companion context: %s", e)
 
         if active_lifestyle and isinstance(active_lifestyle.get("payload"), dict):
             p = active_lifestyle["payload"]

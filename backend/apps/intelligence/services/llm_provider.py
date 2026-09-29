@@ -24,6 +24,8 @@ from __future__ import annotations
 import json
 import logging
 import os
+import random
+import time
 import urllib.error
 import urllib.request
 from abc import ABC, abstractmethod
@@ -62,6 +64,7 @@ class LLMProvider(ABC):
         user_message: str,
         health_context: str,
         conversation_history: Optional[List[dict[str, str]]] = None,
+        **kwargs: Any,
     ) -> LLMResponse:
         """Generates a conversational response adhering to medical safety instructions."""
         raise NotImplementedError
@@ -98,6 +101,7 @@ class MedGemmaProvider(LLMProvider):
         user_message: str,
         health_context: str,
         conversation_history: Optional[List[dict[str, str]]] = None,
+        **kwargs: Any,
     ) -> LLMResponse:
         url = f"{self.base_url}/chat/completions"
 
@@ -226,6 +230,7 @@ class OfflineDeterministicProvider(LLMProvider):
         user_message: str,
         health_context: str,
         conversation_history: Optional[List[dict[str, str]]] = None,
+        **kwargs: Any,
     ) -> LLMResponse:
         msg_lower = user_message.lower()
         used: List[str] = []
@@ -355,11 +360,141 @@ class OfflineDeterministicProvider(LLMProvider):
 
 
 class GeminiProvider(LLMProvider):
-    """Google Gemini LLM provider using direct REST API (Optional Cloud Fallback)."""
+    """Google Gemini LLM provider using direct REST API."""
 
-    def __init__(self, api_key: str, model_name: str = "gemini-2.5-flash") -> None:
+    TRANSIENT_STATUS_CODES = {408, 429, 500, 502, 503, 504}
+    NON_RETRYABLE_STATUS_CODES = {400, 401, 403, 404}
+
+    def __init__(
+        self,
+        api_key: str,
+        model_name: str = "gemini-3.8-flash",
+        fallback_model: Optional[str] = None,
+        timeout: int = 15,
+        max_retries: int = 2,
+    ) -> None:
         self.api_key = api_key
-        self.model_name = model_name
+        self.model_name = model_name or "gemini-3.8-flash"
+        self.fallback_model = fallback_model.strip() if fallback_model else None
+        self.timeout = timeout
+        self.max_retries = max_retries
+
+    def _sanitize(self, text: str) -> str:
+        """Strips raw API key from any string or exception message."""
+        if not text:
+            return ""
+        if self.api_key and self.api_key in text:
+            text = text.replace(self.api_key, "[REDACTED]")
+        return text
+
+    def _build_generation_config(self, target_model: str) -> dict[str, Any]:
+        """
+        Builds model-aware generationConfig parameters.
+        For models like gemini-3.5-flash-lite that do not support thinkingConfig,
+        thinkingConfig is omitted to prevent HTTP 400 invalid argument errors.
+        For gemini-3.8-flash, thinkingConfig with thinkingBudget: 0 is included.
+        """
+        config: dict[str, Any] = {
+            "temperature": 0.2,
+            "maxOutputTokens": 1000,
+        }
+        if "gemini-3.5-flash-lite" in target_model.lower():
+            return config
+
+        config["thinkingConfig"] = {
+            "thinkingBudget": 0,
+        }
+        return config
+
+    def _send_model_request(
+        self,
+        target_model: str,
+        request_body: dict[str, Any],
+        max_retries: int,
+    ) -> dict[str, Any]:
+        """
+        Sends generation request to target_model with bounded transient retries.
+        Raises LLMProviderError on non-retryable errors or retry exhaustion.
+        """
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{target_model}:generateContent"
+        headers = {
+            "Content-Type": "application/json",
+            "x-goog-api-key": self.api_key,
+        }
+        req_data = json.dumps(request_body).encode("utf-8")
+        max_attempts = 1 + max(0, max_retries)
+        last_error: Optional[Exception] = None
+
+        for attempt in range(max_attempts):
+            req = urllib.request.Request(
+                url,
+                data=req_data,
+                headers=headers,
+                method="POST",
+            )
+            try:
+                with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                    return json.loads(resp.read().decode("utf-8"))
+            except urllib.error.HTTPError as he:
+                status_code = he.code
+                err_body = ""
+                try:
+                    err_body = he.read().decode("utf-8")
+                except Exception:
+                    pass
+
+                clean_msg = f"HTTP {status_code}"
+                try:
+                    parsed_err = json.loads(err_body)
+                    if "error" in parsed_err and "message" in parsed_err["error"]:
+                        clean_msg = self._sanitize(parsed_err["error"]["message"])
+                except Exception:
+                    if err_body:
+                        clean_msg = self._sanitize(err_body[:200])
+
+                last_error = LLMProviderError(f"Gemini LLM provider error ({status_code}): {clean_msg}")
+
+                # Non-retryable errors abort immediately
+                if status_code in self.NON_RETRYABLE_STATUS_CODES:
+                    logger.warning("Gemini non-retryable error on %s (%s): %s", target_model, status_code, clean_msg)
+                    raise last_error
+
+                # Transient errors retry with backoff
+                if status_code in self.TRANSIENT_STATUS_CODES:
+                    if attempt < max_attempts - 1:
+                        delay = (0.5 * (2 ** attempt)) + random.uniform(0.05, 0.25)
+                        logger.info(
+                            "Gemini transient error on %s (%s). Retrying attempt %d/%d after %.2fs...",
+                            target_model,
+                            status_code,
+                            attempt + 2,
+                            max_attempts,
+                            delay,
+                        )
+                        time.sleep(delay)
+                        continue
+                    else:
+                        logger.error("Gemini transient retries exhausted on %s (%s): %s", target_model, status_code, clean_msg)
+                        raise last_error
+
+                raise last_error
+
+            except urllib.error.URLError as ue:
+                sanitized_reason = self._sanitize(str(ue.reason))
+                last_error = LLMProviderError(f"Gemini connection error on {target_model}: {sanitized_reason}")
+                if attempt < max_attempts - 1:
+                    delay = (0.5 * (2 ** attempt)) + random.uniform(0.05, 0.25)
+                    time.sleep(delay)
+                    continue
+                raise last_error
+            except LLMProviderError:
+                raise
+            except Exception as exc:
+                sanitized_exc = self._sanitize(str(exc))
+                logger.error("Unexpected Gemini error on %s: %s", target_model, sanitized_exc)
+                raise LLMProviderError(f"Gemini LLM provider error on {target_model}: {sanitized_exc}") from exc
+
+        raise last_error or LLMProviderError(f"Gemini request to {target_model} failed.")
 
     def generate_chat_response(
         self,
@@ -367,62 +502,173 @@ class GeminiProvider(LLMProvider):
         user_message: str,
         health_context: str,
         conversation_history: Optional[List[dict[str, str]]] = None,
+        **kwargs: Any,
     ) -> LLMResponse:
-        url = (
-            f"https://generativelanguage.googleapis.com/v1beta/models/{self.model_name}:generateContent"
-            f"?key={self.api_key}"
+        from apps.intelligence.services.context_sanitizer import LLMContextSanitizer
+
+        patient_uuid = kwargs.get("patient_uuid")
+        patient_name = kwargs.get("patient_name")
+        patient_email = kwargs.get("patient_email")
+
+        # Enforce deterministic privacy sanitization boundary for external Gemini API
+        clean_system_instruction = LLMContextSanitizer.sanitize_system_instruction(
+            system_instruction,
+            patient_uuid=patient_uuid,
+            patient_name=patient_name,
+            patient_email=patient_email,
+        )
+        clean_user_message = LLMContextSanitizer.sanitize_user_message(
+            user_message,
+            patient_uuid=patient_uuid,
+            patient_name=patient_name,
+            patient_email=patient_email,
+        )
+        clean_health_context = LLMContextSanitizer.sanitize_clinical_context(
+            health_context,
+            patient_uuid=patient_uuid,
+            patient_name=patient_name,
+            patient_email=patient_email,
+        )
+        clean_history = LLMContextSanitizer.sanitize_conversation_history(
+            conversation_history,
+            patient_uuid=patient_uuid,
+            patient_name=patient_name,
+            patient_email=patient_email,
         )
 
         contents: List[dict[str, Any]] = []
 
-        if conversation_history:
-            for item in conversation_history[-6:]:
+        if clean_history:
+            for item in clean_history[-8:]:
                 role = "user" if item.get("sender") == "user" else "model"
-                contents.append({"role": role, "parts": [{"text": item.get("text", "")}]})
+                text = item.get("text", "")
+                if text:
+                    contents.append({"role": role, "parts": [{"text": text}]})
 
         prompt_with_context = (
-            f"--- RELEVANT PATIENT HEALTH CONTEXT ---\n{health_context}\n\n"
-            f"--- PATIENT'S QUESTION ---\n{user_message}"
+            f"--- RELEVANT PATIENT HEALTH CONTEXT ---\n{clean_health_context}\n\n"
+            f"--- PATIENT'S QUESTION ---\n{clean_user_message}"
         )
         contents.append({"role": "user", "parts": [{"text": prompt_with_context}]})
 
-        request_body = {
-            "system_instruction": {"parts": [{"text": system_instruction}]},
-            "contents": contents,
-            "generationConfig": {
-                "temperature": 0.2,
-                "maxOutputTokens": 800,
-                "responseMimeType": "application/json",
-            },
-        }
-
-        try:
-            req_data = json.dumps(request_body).encode("utf-8")
-            req = urllib.request.Request(
-                url,
-                data=req_data,
-                headers={"Content-Type": "application/json"},
-                method="POST",
-            )
-            with urllib.request.urlopen(req, timeout=15) as resp:
-                resp_json = json.loads(resp.read().decode("utf-8"))
-
-            candidates = resp_json.get("candidates", [])
-            if candidates:
-                raw_text = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "")
-                parsed = json.loads(raw_text)
-                return LLMResponse(
-                    answer=parsed.get("answer", raw_text),
-                    confidence=parsed.get("confidence", "high"),
-                    used_context=parsed.get("used_context", []),
-                    needs_clinician=bool(parsed.get("needs_clinician", False)),
-                    safety_level=parsed.get("safety_level", "normal"),
-                    model_name=self.model_name,
+        # Final defense-in-depth verification pass across all outbound content parts
+        for entry in contents:
+            for part in entry.get("parts", []):
+                part["text"] = LLMContextSanitizer.strip_identifiers_and_pii(
+                    part.get("text", ""),
+                    patient_uuid=patient_uuid,
+                    patient_name=patient_name,
+                    patient_email=patient_email,
                 )
-            raise LLMProviderError("Empty candidates list returned by Gemini.")
-        except Exception as exc:
-            logger.error("Gemini LLM call failed: %s", exc)
-            raise LLMProviderError(f"Gemini LLM provider error: {exc}") from exc
+
+        # 1. Attempt generation with primary configured model
+        actual_model_used = self.model_name
+        primary_body: dict[str, Any] = {
+            "system_instruction": {"parts": [{"text": clean_system_instruction}]},
+            "contents": contents,
+            "generationConfig": self._build_generation_config(self.model_name),
+        }
+        resp_json = None
+        try:
+            resp_json = self._send_model_request(self.model_name, primary_body, self.max_retries)
+        except LLMProviderError as primary_err:
+            # Check if fallback is allowed: ONLY on transient failures and if fallback_model is configured
+            can_fallback = False
+            if self.fallback_model:
+                for code in self.TRANSIENT_STATUS_CODES:
+                    if f"({code})" in str(primary_err):
+                        can_fallback = True
+                        break
+                if "connection error" in str(primary_err).lower() or "timed out" in str(primary_err).lower():
+                    can_fallback = True
+
+            if can_fallback and self.fallback_model:
+                logger.warning(
+                    "Primary Gemini model '%s' exhausted transient retries. Attempting configured fallback model '%s'...",
+                    self.model_name,
+                    self.fallback_model,
+                )
+                fallback_body: dict[str, Any] = {
+                    "system_instruction": {"parts": [{"text": clean_system_instruction}]},
+                    "contents": contents,
+                    "generationConfig": self._build_generation_config(self.fallback_model),
+                }
+                try:
+                    # Bounded retry on fallback model (1 retry / 2 attempts)
+                    resp_json = self._send_model_request(self.fallback_model, fallback_body, max_retries=1)
+                    actual_model_used = self.fallback_model
+                except LLMProviderError as fb_err:
+                    logger.error(
+                        "Both primary ('%s') and fallback ('%s') Gemini models failed.",
+                        self.model_name,
+                        self.fallback_model,
+                    )
+                    raise fb_err from primary_err
+            else:
+                raise primary_err
+
+        if resp_json is None:
+            raise LLMProviderError(f"Gemini model '{actual_model_used}' failed to return a response.")
+
+        candidates = resp_json.get("candidates", [])
+        if not candidates:
+            raise LLMProviderError(f"Empty candidates list returned by Gemini model '{actual_model_used}'.")
+
+        parts = candidates[0].get("content", {}).get("parts", [])
+        if not parts:
+            raise LLMProviderError(f"Gemini model '{actual_model_used}' candidate contains no content parts.")
+
+        raw_text = parts[0].get("text", "")
+        if not isinstance(raw_text, str):
+            raw_text = str(raw_text)
+
+        # Conservative defaults for plain-text responses
+        answer = raw_text.strip()
+        confidence = "moderate"
+        used_context: List[str] = []
+        needs_clinician = False
+        safety_level = "normal"
+
+        # Attempt to parse structured JSON if returned
+        cleaned_text = raw_text.strip()
+        if cleaned_text.startswith("```"):
+            lines = cleaned_text.splitlines()
+            if lines and lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines and lines[-1].startswith("```"):
+                lines = lines[:-1]
+            cleaned_text = "\n".join(lines).strip()
+
+        if cleaned_text.startswith("{") and cleaned_text.endswith("}"):
+            try:
+                parsed = json.loads(cleaned_text)
+                if isinstance(parsed, dict) and "answer" in parsed:
+                    answer = str(parsed.get("answer", "")).strip() or raw_text.strip()
+                    if "confidence" in parsed and parsed["confidence"] in ("high", "moderate", "limited"):
+                        confidence = str(parsed["confidence"])
+                    if "used_context" in parsed and isinstance(parsed["used_context"], list):
+                        used_context = [str(x) for x in parsed["used_context"]]
+                    if "needs_clinician" in parsed:
+                        needs_clinician = bool(parsed["needs_clinician"])
+                    if "safety_level" in parsed and parsed["safety_level"] in ("normal", "caution", "urgent"):
+                        safety_level = str(parsed["safety_level"])
+            except (json.JSONDecodeError, ValueError, TypeError):
+                answer = raw_text.strip()
+
+        if not needs_clinician:
+            needs_clinician = any(
+                term in user_message.lower()
+                for term in ["doctor", "physician", "prescribe", "medication", "dose", "severe", "pain"]
+            )
+
+        return LLMResponse(
+            answer=answer,
+            confidence=confidence,
+            used_context=used_context,
+            needs_clinician=needs_clinician,
+            safety_level=safety_level,
+            model_name=actual_model_used,
+        )
 
 
 class GroqProvider(LLMProvider):
@@ -438,6 +684,7 @@ class GroqProvider(LLMProvider):
         user_message: str,
         health_context: str,
         conversation_history: Optional[List[dict[str, str]]] = None,
+        **kwargs: Any,
     ) -> LLMResponse:
         url = "https://api.groq.com/openai/v1/chat/completions"
 
@@ -509,6 +756,7 @@ class OpenAIProvider(LLMProvider):
         user_message: str,
         health_context: str,
         conversation_history: Optional[List[dict[str, str]]] = None,
+        **kwargs: Any,
     ) -> LLMResponse:
         url = "https://api.openai.com/v1/chat/completions"
 
@@ -595,6 +843,7 @@ class QwenOllamaProvider(LLMProvider):
         user_message: str,
         health_context: str,
         conversation_history: Optional[List[dict[str, str]]] = None,
+        **kwargs: Any,
     ) -> LLMResponse:
         messages: List[dict[str, str]] = []
 
@@ -682,13 +931,44 @@ def get_llm_provider() -> LLMProvider:
         )
 
     # 4. Optional Cloud Providers (Preserved behind LLMProvider abstraction)
-    model_name = os.environ.get("LLM_MODEL", "").strip()
-
     if provider_name == "gemini":
-        api_key = os.environ.get("LLM_API_KEY") or os.environ.get("GEMINI_API_KEY", "").strip()
+        api_key = (
+            os.environ.get("GEMINI_API_KEY")
+            or os.environ.get("LLM_API_KEY")
+            or getattr(settings, "GEMINI_API_KEY", "")
+            or getattr(settings, "LLM_API_KEY", "")
+        )
+        if isinstance(api_key, str):
+            api_key = api_key.strip()
         if not api_key:
             raise LLMProviderError("LLM_PROVIDER is set to 'gemini' but no GEMINI_API_KEY is configured.")
-        return GeminiProvider(api_key, model_name=model_name or "gemini-2.5-flash")
+
+        # Gemini model resolution precedence: GEMINI_MODEL -> LLM_MODEL -> "gemini-3.8-flash"
+        gemini_model = (
+            os.environ.get("GEMINI_MODEL", "").strip()
+            or os.environ.get("LLM_MODEL", "").strip()
+            or getattr(settings, "GEMINI_MODEL", "")
+            or getattr(settings, "LLM_MODEL", "")
+            or "gemini-3.8-flash"
+        )
+        if isinstance(gemini_model, str):
+            gemini_model = gemini_model.strip()
+        if not gemini_model:
+            gemini_model = "gemini-3.8-flash"
+
+        # Optional configurable demo fallback model
+        gemini_fallback = (
+            os.environ.get("GEMINI_FALLBACK_MODEL", "").strip()
+            or getattr(settings, "GEMINI_FALLBACK_MODEL", "")
+        )
+        if isinstance(gemini_fallback, str):
+            gemini_fallback = gemini_fallback.strip()
+        if not gemini_fallback or gemini_fallback == gemini_model:
+            gemini_fallback = None
+
+        return GeminiProvider(api_key, model_name=gemini_model, fallback_model=gemini_fallback)
+
+    model_name = os.environ.get("LLM_MODEL", "").strip()
 
     if provider_name == "groq":
         api_key = os.environ.get("LLM_API_KEY") or os.environ.get("GROQ_API_KEY", "").strip()

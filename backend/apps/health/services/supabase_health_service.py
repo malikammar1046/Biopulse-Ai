@@ -786,6 +786,74 @@ class SupabaseHealthService:
 
         return health_data
 
+    def fetch_selective(
+        self,
+        patient_uuid: str,
+        include_fields: set[str],
+        auth_token: str | None = None,
+        client_health_data: dict | None = None,
+    ) -> PatientHealthData:
+        """
+        Selectively retrieves only the requested health data sub-pillars in parallel.
+        Used by conversational context builders to minimize unnecessary database round-trips.
+        """
+        from concurrent.futures import ThreadPoolExecutor
+
+        errors: list[str] = []
+        tasks: dict[str, Any] = {}
+        results: dict[str, Any] = {}
+
+        workers = min(4, max(1, len(include_fields)))
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            if "profile" in include_fields:
+                tasks["profile"] = executor.submit(self.fetch_profile, patient_uuid, auth_token=auth_token)
+            if "cycle_records" in include_fields:
+                tasks["cycle_records"] = executor.submit(self.fetch_cycle_records, patient_uuid, auth_token=auth_token)
+            if "symptom_records" in include_fields:
+                tasks["symptom_records"] = executor.submit(self.fetch_symptom_records, patient_uuid, auth_token=auth_token)
+            if "food_logs" in include_fields:
+                tasks["food_logs"] = executor.submit(self.fetch_food_logs, patient_uuid, auth_token=auth_token)
+            if "water_logs" in include_fields:
+                tasks["water_logs"] = executor.submit(self.fetch_water_logs, patient_uuid, auth_token=auth_token)
+            if "fitness_logs" in include_fields:
+                tasks["fitness_logs"] = executor.submit(self.fetch_fitness_logs, patient_uuid, auth_token=auth_token)
+            if "medications" in include_fields:
+                tasks["medications"] = executor.submit(self.fetch_medications, patient_uuid, auth_token=auth_token)
+            if "medication_logs" in include_fields:
+                tasks["medication_logs"] = executor.submit(self.fetch_medication_logs, patient_uuid, auth_token=auth_token)
+            if "report_results" in include_fields:
+                tasks["report_results"] = executor.submit(self.fetch_report_results, patient_uuid, auth_token=auth_token)
+
+            for field_name, fut in tasks.items():
+                try:
+                    results[field_name] = fut.result()
+                except Exception as exc:
+                    logger.warning("fetch_selective sub-fetch '%s' error: %s", field_name, exc)
+                    errors.append(f"{field_name}: {exc}")
+                    results[field_name] = None if field_name == "profile" else []
+
+        profile = results.get("profile")
+        if profile is None and "profile" not in include_fields:
+            profile = PatientProfile(id=patient_uuid)
+
+        health_data = PatientHealthData(
+            profile=profile,
+            cycle_records=results.get("cycle_records", []),
+            symptom_records=results.get("symptom_records", []),
+            food_logs=results.get("food_logs", []),
+            water_logs=results.get("water_logs", []),
+            fitness_logs=results.get("fitness_logs", []),
+            medications=results.get("medications", []),
+            medication_logs=results.get("medication_logs", []),
+            report_results=results.get("report_results", []),
+            fetch_errors=errors,
+        )
+
+        if client_health_data:
+            health_data = self.merge_client_payload(health_data, client_health_data)
+
+        return health_data
+
     def fetch_all(
         self,
         patient_uuid: str,
@@ -796,41 +864,33 @@ class SupabaseHealthService:
         """
         Retrieve the patient health dataset required for ML inference or context resolution.
         If include_logs is False, retrieves only the profile and omits non-profile sub-fetches.
-        All sub-fetches are best-effort; failures are logged but don't crash the pipeline.
-        Merges with client_health_data if provided.
+        Uses concurrent execution for sub-fetches to minimize overall query latency.
         """
-        errors: list[str] = []
-
-        profile = self.fetch_profile(patient_uuid, auth_token=auth_token)
-
         if not include_logs:
-            return PatientHealthData(profile=profile, fetch_errors=[])
+            return self.fetch_selective(
+                patient_uuid,
+                {"profile"},
+                auth_token=auth_token,
+                client_health_data=client_health_data,
+            )
 
-        def safe(name: str, fn):
-            try:
-                return fn()
-            except Exception as exc:
-                logger.error("fetch_all sub-fetch '%s' error: %s", name, exc)
-                errors.append(f"{name}: {exc}")
-                return []
-
-        health_data = PatientHealthData(
-            profile=profile,
-            cycle_records=safe("cycle_records", lambda: self.fetch_cycle_records(patient_uuid, auth_token=auth_token)),
-            symptom_records=safe("symptom_records", lambda: self.fetch_symptom_records(patient_uuid, auth_token=auth_token)),
-            food_logs=safe("food_logs", lambda: self.fetch_food_logs(patient_uuid, auth_token=auth_token)),
-            water_logs=safe("water_logs", lambda: self.fetch_water_logs(patient_uuid, auth_token=auth_token)),
-            fitness_logs=safe("fitness_logs", lambda: self.fetch_fitness_logs(patient_uuid, auth_token=auth_token)),
-            medications=safe("medications", lambda: self.fetch_medications(patient_uuid, auth_token=auth_token)),
-            medication_logs=safe("medication_logs", lambda: self.fetch_medication_logs(patient_uuid, auth_token=auth_token)),
-            report_results=safe("report_results", lambda: self.fetch_report_results(patient_uuid, auth_token=auth_token)),
-            fetch_errors=errors,
+        all_fields = {
+            "profile",
+            "cycle_records",
+            "symptom_records",
+            "food_logs",
+            "water_logs",
+            "fitness_logs",
+            "medications",
+            "medication_logs",
+            "report_results",
+        }
+        return self.fetch_selective(
+            patient_uuid,
+            all_fields,
+            auth_token=auth_token,
+            client_health_data=client_health_data,
         )
-
-        if client_health_data:
-            health_data = self.merge_client_payload(health_data, client_health_data)
-
-        return health_data
 
 
 # Singleton instance — shared across Django views within a worker process
