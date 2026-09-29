@@ -16,13 +16,13 @@ import {
   LineChartUp01,
   ChevronDown,
   Calendar,
-  Users01,
 } from '../icons';
 import { ROUTES, getPathwayDashboardRoute } from '../../constants/routes';
 import { resolvePathway } from '../../types/onboarding';
 import { Logo } from '../brand/Logo';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { useAuth } from '../../context/AuthContext';
+import { UserAvatar } from '../common/UserAvatar';
 
 interface NavItem {
   label: string;
@@ -72,7 +72,7 @@ export const AppSidebar: React.FC = () => {
   // Section 1: MAIN
   const maleMainItems: NavItem[] = [
     { label: 'Overview', path: overviewPath, icon: LayoutGrid01 },
-    { label: 'Nutrition Plan', path: ROUTES.APP.DIET, icon: Scales01 },
+    { label: 'Lifestyle & Nutrition', path: ROUTES.APP.LIFESTYLE, icon: Scales01 },
     { label: 'Screening', path: ROUTES.APP.ASSESSMENT, icon: ClipboardCheck },
     { label: 'Progress', path: ROUTES.APP.PROGRESS, icon: LineChartUp01 },
   ];
@@ -89,15 +89,13 @@ export const AppSidebar: React.FC = () => {
   const maleHealthItems: NavItem[] = [
     { label: 'Reports', path: ROUTES.APP.REPORTS, icon: File06 },
     { label: 'Appointments', path: ROUTES.APP.APPOINTMENTS, icon: CalendarCheck01 },
-    { label: 'Care Circle', path: ROUTES.APP.CARE_CIRCLE, icon: Users01 },
   ];
 
   const femaleHealthItems: NavItem[] = [
-    { label: 'Nutrition', path: ROUTES.APP.DIET, icon: Scales01 },
+    { label: 'Lifestyle & Nutrition', path: ROUTES.APP.LIFESTYLE, icon: Scales01 },
     { label: 'Fitness / Movement', path: ROUTES.APP.FITNESS, icon: Activity },
     { label: 'Reports', path: ROUTES.APP.REPORTS, icon: File06 },
     { label: 'Appointments', path: ROUTES.APP.APPOINTMENTS, icon: CalendarCheck01 },
-    { label: 'Care Circle', path: ROUTES.APP.CARE_CIRCLE, icon: Users01 },
   ];
 
   const healthItems = pathway === 'female' ? femaleHealthItems : maleHealthItems;
@@ -315,36 +313,34 @@ export const AppSidebar: React.FC = () => {
           </div>
         </div>
 
-        {/* ── 4. TOOLS Section (Male Only) ── */}
-        {!isFemale && (
-          <nav className="space-y-1 pt-1">
-            <span className={sectionLabelClass}>
-              Tools
-            </span>
+        {/* ── 4. AI INTELLIGENCE Section (Both Female & Male) ── */}
+        <nav className="space-y-1 pt-1">
+          <span className={sectionLabelClass}>
+            Intelligence
+          </span>
 
-            {toolItems.map((item) => {
-              const active = isItemActive(item.path);
-              const Icon = item.icon;
+          {toolItems.map((item) => {
+            const active = isItemActive(item.path);
+            const Icon = item.icon;
 
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all duration-150 group border ${getLinkClasses(active)}`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Icon
-                      className={`w-5 h-5 transition-colors ${getIconClasses(active)}`}
-                      aria-hidden="true"
-                    />
-                    <span>{item.label}</span>
-                  </div>
-                  {active && <span className={`w-1.5 h-1.5 rounded-full ${getDotClass()}`} />}
-                </Link>
-              );
-            })}
-          </nav>
-        )}
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all duration-150 group border ${getLinkClasses(active)}`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Icon
+                    className={`w-5 h-5 transition-colors ${getIconClasses(active)}`}
+                    aria-hidden="true"
+                  />
+                  <span>{item.label}</span>
+                </div>
+                {active && <span className={`w-1.5 h-1.5 rounded-full ${getDotClass()}`} />}
+              </Link>
+            );
+          })}
+        </nav>
       </div>
 
       {/* ── 5. ACCOUNT & Bottom Area ── */}
@@ -378,26 +374,19 @@ export const AppSidebar: React.FC = () => {
             userProfile?.fullName ||
             (userProfile?.email ? userProfile.email.split('@')[0] : 'User');
           const displayEmail = userProfile?.email || '';
-          const initial = displayName.charAt(0).toUpperCase() || 'U';
 
           return (
             <div className="p-2.5 rounded-xl bg-white border border-[#EAECF0] flex items-center justify-between gap-2.5 shadow-xs">
               <div className="flex items-center gap-2 min-w-0">
-                <div className={`w-7 h-7 rounded-full overflow-hidden border flex items-center justify-center shrink-0 ${
-                  isFemale ? 'border-[#F43F7D]/30 bg-[#F43F7D]' : 'border-[#B3E5FC] bg-[#29B6F6]'
-                }`}>
-                  {userProfile?.avatarUrl ? (
-                    <img
-                      src={userProfile.avatarUrl}
-                      alt={displayName}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-xs font-bold text-white font-mono">
-                      {initial}
-                    </span>
-                  )}
-                </div>
+                <UserAvatar
+                  avatarUrl={userProfile?.avatarUrl}
+                  name={displayName}
+                  email={displayEmail}
+                  size="sm"
+                  pathway={pathway}
+                  gender={userProfile?.gender}
+                  showBorder={false}
+                />
                 <div className="min-w-0">
                   <span className="text-xs font-semibold text-[#111318] block truncate">
                     {displayName}

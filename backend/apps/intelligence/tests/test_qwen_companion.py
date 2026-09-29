@@ -256,6 +256,14 @@ class BioPulseChatApiIntegrationTests(TestCase):
             password="test-password-123",
             id=999777,
         )
+        self.prev_provider = os.environ.get("LLM_PROVIDER")
+        os.environ["LLM_PROVIDER"] = "qwen"
+
+    def tearDown(self):
+        if self.prev_provider is not None:
+            os.environ["LLM_PROVIDER"] = self.prev_provider
+        else:
+            os.environ.pop("LLM_PROVIDER", None)
 
     # 1. General: What is BioPulse AI?
     def test_general_question_authenticated(self):

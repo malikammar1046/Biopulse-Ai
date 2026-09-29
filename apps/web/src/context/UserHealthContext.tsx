@@ -25,6 +25,7 @@ import type {
   ReportSummaryStats,
 } from '../types/report';
 import {
+  DEFAULT_CARE_CIRCLE,
   deriveInsightFromProfile,
 } from '../data/mockDashboardData';
 import { calculateCycleMetrics } from '../utils/profileCompletion';
@@ -859,9 +860,12 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, [fitnessLogs]);
 
   const suggestedFitnessRoutines = useMemo(() => {
-    const activePhaseName = cycleStats.hasData && cycleStats.estimatedPhase
-      ? cycleStats.estimatedPhase.name
-      : userProfile.womensHealth?.currentPhase || 'Follicular Phase';
+    const isMale = userProfile?.pathway === 'male' || userProfile?.gender === 'male';
+    const activePhaseName = isMale
+      ? 'Vitality & Stamina'
+      : (cycleStats.hasData && cycleStats.estimatedPhase
+          ? cycleStats.estimatedPhase.name
+          : userProfile.womensHealth?.currentPhase || 'Follicular Phase');
     return fitnessService.generateSuggestedRoutines(userProfile, activePhaseName, todayFitnessActivities);
   }, [userProfile, cycleStats, todayFitnessActivities]);
 
@@ -1404,7 +1408,7 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const careCircle: CareCircleContact[] = useMemo(() => {
     const active = careCircleMembers.filter((m) => m.status === 'active');
     if (active.length === 0) {
-      return [];
+      return DEFAULT_CARE_CIRCLE;
     }
     return active.map((m) => ({
       id: m.id,
