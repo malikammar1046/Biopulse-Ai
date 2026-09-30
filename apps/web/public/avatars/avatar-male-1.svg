@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <radialGradient id="m1-bg" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#F0F9FF" />
+      <stop offset="100%" stop-color="#E0F2FE" />
+    </radialGradient>
+    <linearGradient id="m1-hair" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5C3826" />
+      <stop offset="100%" stop-color="#3D2214" />
+    </linearGradient>
+    <linearGradient id="m1-shirt" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0288D1" />
+      <stop offset="100%" stop-color="#01579B" />
+    </linearGradient>
+    <filter id="m1-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#073B72" flood-opacity="0.08" />
+    </filter>
+  </defs>
+
+  <!-- Background Circle -->
+  <circle cx="60" cy="60" r="58" fill="url(#m1-bg)" stroke="#BAE6FD" stroke-width="2" />
+
+  <!-- Body / Shoulders -->
+  <g filter="url(#m1-shadow)">
+    <!-- Base Shirt -->
+    <path d="M26 104 C26 88 40 82 60 82 C80 82 94 88 94 104 L94 116 L26 116 Z" fill="url(#m1-shirt)" />
+    <!-- Collar Detail -->
+    <path d="M48 82 L60 94 L72 82 Z" fill="#E0F2FE" />
+    <path d="M46 82 L58 95 L52 98 L40 85 Z" fill="#BAE6FD" opacity="0.6" />
+    <path d="M74 82 L62 95 L68 98 L80 85 Z" fill="#BAE6FD" opacity="0.6" />
+    <!-- Neck -->
+    <path d="M52 70 L52 86 C54 88 66 88 68 86 L68 70 Z" fill="#F8C9AA" />
+    <path d="M52 74 C56 78 64 78 68 74 L68 78 C64 82 56 82 52 78 Z" fill="#E5AA84" opacity="0.4" />
+  </g>
+
+  <!-- Head & Ears -->
+  <g id="m1-head">
+    <!-- Left Ear -->
+    <circle cx="36" cy="58" r="6" fill="#F8C9AA" />
+    <circle cx="36" cy="58" r="3.5" fill="#EAA882" opacity="0.5" />
+    <!-- Right Ear -->
+    <circle cx="84" cy="58" r="6" fill="#F8C9AA" />
+    <circle cx="84" cy="58" r="3.5" fill="#EAA882" opacity="0.5" />
+
+    <!-- Face Oval -->
+    <path d="M38 52 C38 34 82 34 82 52 C82 69 73 78 60 78 C47 78 38 69 38 52 Z" fill="#FBD5BD" />
+
+    <!-- Cheeks (Blush) -->
+    <circle cx="45" cy="62" r="4.5" fill="#F48E82" opacity="0.3" />
+    <circle cx="75" cy="62" r="4.5" fill="#F48E82" opacity="0.3" />
+
+    <!-- Eyebrows -->
+    <path d="M43 45 C47 43 51 44 54 46" stroke="#4A2D19" stroke-width="2" stroke-linecap="round" fill="none" />
+    <path d="M66 46 C69 44 73 43 77 45" stroke="#4A2D19" stroke-width="2" stroke-linecap="round" fill="none" />
+
+    <!-- Eyes -->
+    <circle cx="48" cy="52" r="3.5" fill="#243342" />
+    <circle cx="49.2" cy="50.8" r="1.2" fill="#FFFFFF" />
+    <circle cx="72" cy="52" r="3.5" fill="#243342" />
+    <circle cx="73.2" cy="50.8" r="1.2" fill="#FFFFFF" />
+
+    <!-- Gentle Nose -->
+    <path d="M59 54 C60 57 61 57 62 57" stroke="#D78F6A" stroke-width="1.8" stroke-linecap="round" fill="none" />
+
+    <!-- Warm Friendly Smile -->
+    <path d="M52 64 C56 68 64 68 68 64" stroke="#A94848" stroke-width="2" stroke-linecap="round" fill="none" />
+  </g>
+
+  <!-- Hair (Clean Modern Side-Part) -->
+  <path d="M36 48 C34 35 44 24 60 24 C75 24 84 32 84 45 C84 48 83 52 82 54 C80 47 78 43 72 40 C65 37 54 39 48 38 C42 38 38 43 36 48 Z" fill="url(#m1-hair)" />
+  <path d="M36 48 C38 41 42 36 48 35 C54 34 65 35 72 38 C70 33 63 26 54 26 C42 26 36 34 36 48 Z" fill="#6B422D" opacity="0.5" />
+</svg>

@@ -23,7 +23,7 @@ export const MaleDashboardOverview: React.FC = () => {
     assessmentLoading,
     mlAssessmentLoading,
     reports,
-    appointments,
+    upcomingAppointment,
     refreshActiveAssessment,
   } = useUserHealth();
 
@@ -76,13 +76,7 @@ export const MaleDashboardOverview: React.FC = () => {
   }, [reports]);
 
   // Next upcoming scheduled appointment
-  const nextAppointment = useMemo(() => {
-    const scheduled = (appointments || []).filter((a) => a.status === 'scheduled');
-    if (scheduled.length === 0) return null;
-    return scheduled.sort(
-      (a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime()
-    )[0];
-  }, [appointments]);
+  const nextAppointment = upcomingAppointment;
 
   // Latest lab report
   const latestReport = useMemo(() => {
@@ -114,7 +108,7 @@ export const MaleDashboardOverview: React.FC = () => {
       className="max-w-6xl mx-auto space-y-6 sm:space-y-7 pb-16 text-left select-none"
     >
       {/* ── Primary 2-Column Clinical Grid ───────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 lg:gap-6 items-stretch">
         {/* Left Column (7 cols): Primary Screening Card */}
         <div className="lg:col-span-7 flex flex-col">
           <MaleScreeningCard
@@ -134,7 +128,7 @@ export const MaleDashboardOverview: React.FC = () => {
         </div>
 
         {/* Right Column (5 cols): Single Next Best Action + Top Factors */}
-        <div className="lg:col-span-5 flex flex-col justify-between space-y-5 sm:space-y-6">
+        <div className="lg:col-span-5 flex flex-col justify-between gap-4 sm:gap-5 lg:gap-6">
           <MaleNextBestAction
             hasAssessment={hasAssessment}
             assessmentLevel={assessmentLevel}

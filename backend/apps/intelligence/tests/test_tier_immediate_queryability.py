@@ -111,8 +111,10 @@ class TierImmediateQueryabilityTests(TestCase):
         # Patch remote Supabase calls to isolate pure SQLite persistence
         self.sb_patch1 = patch("apps.intelligence.services.clinical_state_repository.get_supabase_client", return_value=None)
         self.sb_patch2 = patch("apps.intelligence.services.assessment_repository.get_supabase_client", return_value=None)
+        self.sb_patch3 = patch("apps.intelligence.services.observation_repository.get_supabase_client", return_value=None)
         self.sb_patch1.start()
         self.sb_patch2.start()
+        self.sb_patch3.start()
 
         self.female_t1_base_inputs = {
             "age": 26,
@@ -132,14 +134,17 @@ class TierImmediateQueryabilityTests(TestCase):
         self.health_patcher.stop()
         self.sb_patch1.stop()
         self.sb_patch2.stop()
+        self.sb_patch3.stop()
 
     def _get_active_sqlite_count_and_id(self, user_id: str, module: str):
         """Helper to directly query SQLite for active assessment count and id."""
         db_path = _get_sqlite_path()
-        conn = sqlite3.connect(db_path, timeout=5.0)
+        is_uri = str(db_path).startswith("file:")
+        conn = sqlite3.connect(db_path, timeout=30.0, uri=is_uri)
         try:
-            with conn:
-                cursor = conn.cursor()
+            conn.execute("PRAGMA busy_timeout = 30000;")
+            cursor = conn.cursor()
+            try:
                 cursor.execute(
                     """
                     SELECT id FROM intelligence_assessments
@@ -151,6 +156,8 @@ class TierImmediateQueryabilityTests(TestCase):
                 count = len(rows)
                 active_id = rows[0][0] if count > 0 else None
                 return count, active_id
+            finally:
+                cursor.close()
         finally:
             conn.close()
 

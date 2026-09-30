@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { spawn, execSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -17,8 +17,29 @@ const candidates = [
 let pythonExe = 'python';
 for (const cand of candidates) {
   if (existsSync(cand)) {
-    pythonExe = cand;
-    break;
+    try {
+      execSync(`"${cand}" -c "pass"`, { stdio: 'ignore' });
+      pythonExe = cand;
+      break;
+    } catch {
+      // Stale or broken venv pointer on this machine
+    }
+  }
+}
+
+if (pythonExe === 'python') {
+  try {
+    const lookupCmd = process.platform === 'win32' ? 'where python' : 'which python';
+    const stdout = execSync(lookupCmd, { encoding: 'utf8' });
+    const lines = stdout.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    for (const line of lines) {
+      if (existsSync(line)) {
+        pythonExe = line;
+        break;
+      }
+    }
+  } catch {
+    // Keep 'python' as fallback
   }
 }
 

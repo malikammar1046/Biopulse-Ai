@@ -21,7 +21,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from PIL import Image
 from rest_framework.test import APIClient
@@ -153,6 +153,7 @@ class TestPCOSMLProgressiveService(TestCase):
         self.assertEqual(mm_res["fusion_details"]["ultrasound_weight"], 0.05)
 
 
+@override_settings(ALLOW_LOCAL_SQLITE_FALLBACK=True)
 class TestProgressiveAssessmentAPI(TestCase):
     """Integration API tests for progressive assessment flow."""
 

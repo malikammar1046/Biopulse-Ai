@@ -40,6 +40,7 @@ import { dietService } from '../services/dietService';
 import { fitnessService } from '../services/fitnessService';
 import { medicationService } from '../services/medicationService';
 import { appointmentService } from '../services/appointmentService';
+import { getNearestUpcomingAppointment } from '../utils/appointmentUtils';
 import type {
   CareCircleMember,
   CareCircleInvitation,
@@ -1221,11 +1222,9 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     [userProfile?.id, refreshAppointments]
   );
 
-  // Derived Upcoming Appointment
+  // Derived Upcoming Appointment using date-safe logic
   const upcomingAppointment: AppointmentItem | null = useMemo(() => {
-    const scheduled = appointments.filter((a) => a.status === 'scheduled');
-    if (scheduled.length === 0) return null;
-    return scheduled[0];
+    return getNearestUpcomingAppointment(appointments);
   }, [appointments]);
 
   // Generate Pre-Consultation Snapshot from real live data

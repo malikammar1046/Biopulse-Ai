@@ -66,30 +66,32 @@ export const MaleNextBestAction: React.FC<MaleNextBestActionProps> = ({
   const Icon = action.icon;
 
   return (
-    <MaleCard className="space-y-4 select-none">
-      <div className="flex items-center justify-between border-b border-[#EAECF0] pb-3">
-        <div className="flex items-center gap-2">
-          <Icon className="w-5 h-5 text-[#0868B9] shrink-0" aria-hidden="true" />
-          <h3 className="text-sm sm:text-base font-semibold text-[#111318]">
-            Recommended Next Step
-          </h3>
+    <MaleCard className="flex flex-col justify-between p-5 sm:p-6 select-none">
+      <div className="space-y-5">
+        <div className="flex items-center justify-between border-b border-[#EAECF0] pb-4">
+          <div className="flex items-center gap-2">
+            <Icon className="w-5 h-5 text-[#0868B9] shrink-0" aria-hidden="true" />
+            <h3 className="text-sm sm:text-base font-semibold text-[#111318]">
+              Recommended Next Step
+            </h3>
+          </div>
+
+          <span className="text-[11px] font-semibold text-[#0868B9] px-2.5 py-0.5 rounded-full bg-[#DDEFFD]">
+            {action.badge}
+          </span>
         </div>
 
-        <span className="text-[11px] font-semibold text-[#0868B9] px-2 py-0.5 rounded-full bg-[#DDEFFD]">
-          {action.badge}
-        </span>
+        <div className="space-y-2">
+          <h4 className="text-sm sm:text-base font-semibold text-[#111318]">
+            {action.title}
+          </h4>
+          <p className="text-xs text-[#667085] leading-relaxed">
+            {action.description}
+          </p>
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <h4 className="text-sm sm:text-base font-semibold text-[#111318]">
-          {action.title}
-        </h4>
-        <p className="text-xs text-[#667085] leading-relaxed">
-          {action.description}
-        </p>
-      </div>
-
-      <div className="pt-4">
+      <div className="pt-5 sm:pt-6">
         <MalePrimaryButton onClick={onAction}>
           <span>{action.buttonText}</span>
           <ArrowRight className="w-4 h-4 shrink-0" aria-hidden="true" />

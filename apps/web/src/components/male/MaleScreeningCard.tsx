@@ -91,7 +91,7 @@ export const MaleScreeningCard: React.FC<MaleScreeningCardProps> = ({
 
   return (
     <MaleCard className="flex flex-col justify-between space-y-6 h-full select-none">
-      <div className="space-y-5">
+      <div className="space-y-6">
         {/* Card Header */}
         <div className="flex items-center justify-between gap-3 border-b border-[#EAECF0] pb-4">
           <div className="flex items-center gap-2.5">
@@ -165,8 +165,8 @@ export const MaleScreeningCard: React.FC<MaleScreeningCardProps> = ({
         </div>
 
         {/* 2-Tier Progressive Roadmap Indicator (NO Tier 3) */}
-        <div className="pt-3 border-t border-[#EAECF0]">
-          <span className="text-[11px] font-semibold text-[#667085] block mb-2">
+        <div className="pt-6 border-t border-[#EAECF0]">
+          <span className="text-[11px] font-semibold text-[#667085] block mb-2.5">
             Screening Progression
           </span>
           <div className="flex items-center gap-2 text-xs">
@@ -202,8 +202,8 @@ export const MaleScreeningCard: React.FC<MaleScreeningCardProps> = ({
 
         {/* Tier 2 Hormone Pattern Summary Preview if available */}
         {isTier2 && hormonePatternInterpretation?.pattern_name && (
-          <div className="pt-2 border-t border-[#EAECF0]">
-            <div className="p-3 rounded-2xl bg-[#DDEFFD]/40 border border-[#BAE6FD] flex items-center justify-between gap-3">
+          <div className="pt-5 border-t border-[#EAECF0]">
+            <div className="p-3.5 rounded-2xl bg-[#DDEFFD]/40 border border-[#BAE6FD] flex items-center justify-between gap-3">
               <div className="space-y-0.5 min-w-0">
                 <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#0868B9] block">
                   Hormone Pattern Interpretation
@@ -230,7 +230,7 @@ export const MaleScreeningCard: React.FC<MaleScreeningCardProps> = ({
       </div>
 
       {/* Card Footer: Actions & Medical Non-Diagnostic Disclaimer */}
-      <div className="pt-4 border-t border-[#EAECF0] space-y-3">
+      <div className="pt-6 border-t border-[#EAECF0] space-y-4">
         <div className="flex flex-wrap items-center gap-3">
           <MalePrimaryButton onClick={onViewAssessment}>
             <span>View Full Assessment</span>

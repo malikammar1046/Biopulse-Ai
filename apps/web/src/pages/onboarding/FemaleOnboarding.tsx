@@ -44,6 +44,7 @@ export const FemaleOnboarding: React.FC = () => {
     email: userProfile.email || '',
     phone: userProfile.phone || '',
     dateOfBirth: userProfile.dateOfBirth || '',
+    avatarUrl: userProfile.avatarUrl || '',
     heightCm: userProfile.heightCm || 165,
     weightKg: userProfile.weightKg || 62,
     womensHealth: {
@@ -107,6 +108,10 @@ export const FemaleOnboarding: React.FC = () => {
       if (!phoneCheck.isValid) errs.phone = phoneCheck.error!;
 
       if (!draftProfile.email.trim()) errs.email = 'Email address is required.';
+
+      if (!draftProfile.avatarUrl?.trim()) {
+        errs.avatarUrl = 'Choose an avatar or upload a photo to continue.';
+      }
     }
 
     setErrors(errs);
