@@ -13,6 +13,7 @@ import json
 import logging
 import os
 import sqlite3
+import sys
 import threading
 import uuid
 from datetime import datetime, timezone
@@ -47,9 +48,16 @@ _in_memory_clinical_state: dict[str, dict[str, Any]] = {}
 
 def _get_sqlite_path() -> str:
     try:
+        if any("test" in str(arg).lower() or "pytest" in str(arg).lower() for arg in sys.argv):
+            return str(Path(__file__).resolve().parent.parent.parent.parent / "test_fallback.sqlite3")
         db_path = settings.DATABASES.get("default", {}).get("NAME")
         if db_path:
-            return str(db_path)
+            db_path_str = str(db_path)
+            # In Django test suites, NAME can be 'file:memorydb_default?mode=memory&cache=shared'
+            # or ':memory:'. Raw sqlite3.connect to a shared in-memory database locks tables
+            # against Django's open test transactions. We fallback to disk db.sqlite3.
+            if not db_path_str.startswith("file:") and ":memory:" not in db_path_str:
+                return db_path_str
     except Exception:
         pass
     default_path = Path(__file__).resolve().parent.parent.parent.parent / "db.sqlite3"

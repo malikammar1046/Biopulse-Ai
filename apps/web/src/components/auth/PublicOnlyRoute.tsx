@@ -2,14 +2,13 @@ import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { ROUTES, getPathwayDashboardRoute } from '../../constants/routes';
-
 import { BioPulseLoadingScreen } from '../brand/BioPulseLoadingScreen';
 
 export const PublicOnlyRoute: React.FC = () => {
   const { userProfile, isAuthenticated, isOnboarded, loading } = useAuth();
 
   if (loading) {
-    return <BioPulseLoadingScreen message="Preparing your health experience" />;
+    return <BioPulseLoadingScreen message="Checking authorization..." />;
   }
 
   if (isAuthenticated) {

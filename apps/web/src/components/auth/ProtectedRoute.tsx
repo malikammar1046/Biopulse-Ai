@@ -2,7 +2,6 @@ import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { ROUTES, getPathwayOnboardingRoute } from '../../constants/routes';
-
 import { BioPulseLoadingScreen } from '../brand/BioPulseLoadingScreen';
 
 export const ProtectedRoute: React.FC = () => {
@@ -10,7 +9,7 @@ export const ProtectedRoute: React.FC = () => {
   const location = useLocation();
 
   if (loading) {
-    return <BioPulseLoadingScreen message="Verifying Session..." />;
+    return <BioPulseLoadingScreen message="Verifying session..." />;
   }
 
   if (!isAuthenticated) {

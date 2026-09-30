@@ -5,12 +5,12 @@
   "description": "PMOSense Fullstack Application",
   "scripts": {
     "dev": "concurrently -n BACKEND,WEB -c \"magenta.bold,cyan.bold\" --kill-others-on-fail \"npm run dev:backend\" \"npm run dev:web\"",
-    "dev:backend": "python backend/manage.py runserver",
+    "dev:backend": "node scripts/run-python.mjs backend/manage.py runserver 127.0.0.1:8000",
     "dev:web": "npm run dev --prefix apps/web",
     "build": "npm run build --prefix apps/web",
     "install:all": "npm install && npm install --prefix apps/web",
-    "train:ml": "python machine-learning/ml/training/train_pipeline.py",
-    "test:backend": "python backend/manage.py test apps.intelligence"
+    "train:ml": "node scripts/run-python.mjs machine-learning/ml/training/train_pipeline.py",
+    "test:backend": "node scripts/run-python.mjs backend/manage.py test apps.intelligence"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

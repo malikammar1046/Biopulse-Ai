@@ -34,12 +34,10 @@ class IntelligenceConfig(AppConfig):
         disable_prewarm = (
             getattr(settings, 'DISABLE_INTELLIGENCE_PREWARM', False)
             or os.environ.get('DISABLE_INTELLIGENCE_PREWARM', '').strip().lower() in ('true', '1', 'yes')
+            or 'test' in sys.argv
         )
         if disable_prewarm:
             return
-
-        # Only run in main process for production runserver or WSGI / ASGI server
-        # (prevent double execution with runserver reloader and avoid test startup warmup)
         if os.environ.get('RUN_MAIN') == 'true' or not sys.argv or 'manage.py' not in sys.argv[0]:
             def _warmup():
                 try:

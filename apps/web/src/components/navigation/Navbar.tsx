@@ -102,6 +102,7 @@ export const Navbar: React.FC = () => {
   const isHomeActive = location.pathname === ROUTES.HOME;
   const isAboutActive = location.pathname === ROUTES.ABOUT;
   const isHowItWorksActive = location.pathname === ROUTES.HOW_IT_WORKS;
+  const isCareCircleActive = location.pathname === ROUTES.CARE_CIRCLE;
   const isDoctorsActive = location.pathname === ROUTES.DOCTORS;
   const isContactActive = location.pathname === ROUTES.CONTACT;
   const isEducationActive =
@@ -201,6 +202,23 @@ export const Navbar: React.FC = () => {
               >
                 How It Works
                 {isHowItWorksActive && (
+                  <motion.div
+                    layoutId="navbar-active-indicator"
+                    className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-[#0891B2] rounded-full"
+                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                  />
+                )}
+              </Link>
+
+              {/* Care Circle */}
+              <Link
+                to={ROUTES.CARE_CIRCLE}
+                className={`relative py-1 transition-colors whitespace-nowrap ${
+                  isCareCircleActive ? 'text-[#0891B2] font-bold' : 'text-slate-600 hover:text-[#0891B2]'
+                }`}
+              >
+                Care Circle
+                {isCareCircleActive && (
                   <motion.div
                     layoutId="navbar-active-indicator"
                     className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-[#0891B2] rounded-full"
@@ -432,6 +450,14 @@ export const Navbar: React.FC = () => {
                     }`}
                   >
                     How It Works
+                  </Link>
+                  <Link
+                    to={ROUTES.CARE_CIRCLE}
+                    className={`p-2.5 rounded-xl transition-colors ${
+                      isCareCircleActive ? 'bg-sky-50 text-[#0891B2] font-bold' : 'hover:bg-slate-50'
+                    }`}
+                  >
+                    Care Circle
                   </Link>
                   {/* Sub-menu for Education */}
                   <div className="pt-2 pb-1 px-2.5">

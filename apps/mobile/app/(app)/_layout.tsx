@@ -1,17 +1,23 @@
+import React from 'react';
 import { Stack } from 'expo-router';
+import { BioPulseColors } from '../../constants/Colors';
 
 export default function AppGroupLayout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: {
-          backgroundColor: '#0f172a',
-        },
-        headerTintColor: '#f8fafc',
+        headerShown: false,
         contentStyle: {
-          backgroundColor: '#090d16',
+          backgroundColor: BioPulseColors.background,
         },
       }}
-    />
+    >
+      <Stack.Screen
+        name="index"
+        options={{
+          headerShown: false,
+        }}
+      />
+    </Stack>
   );
 }

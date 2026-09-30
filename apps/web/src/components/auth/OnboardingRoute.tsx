@@ -2,7 +2,6 @@ import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { ROUTES, getPathwayDashboardRoute } from '../../constants/routes';
-
 import { BioPulseLoadingScreen } from '../brand/BioPulseLoadingScreen';
 
 export const OnboardingRoute: React.FC = () => {
@@ -10,7 +9,7 @@ export const OnboardingRoute: React.FC = () => {
   const location = useLocation();
 
   if (loading) {
-    return <BioPulseLoadingScreen message="Preparing Health Setup..." />;
+    return <BioPulseLoadingScreen message="Preparing health setup..." />;
   }
 
   if (!isAuthenticated) {

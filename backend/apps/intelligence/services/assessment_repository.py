@@ -15,6 +15,7 @@ import json
 import logging
 import os
 import sqlite3
+import sys
 import threading
 import uuid
 from datetime import date, datetime, timezone
@@ -34,10 +35,10 @@ class PersistenceError(Exception):
 
 def _is_local_sqlite_fallback_allowed() -> bool:
     """Checks whether local SQLite fallback is explicitly permitted."""
-    return (
-        getattr(settings, "ALLOW_LOCAL_SQLITE_FALLBACK", False)
-        or os.environ.get("ALLOW_LOCAL_SQLITE_FALLBACK", "false").strip().lower() in ("true", "1", "yes")
-    )
+    if getattr(settings, "ALLOW_LOCAL_SQLITE_FALLBACK", False):
+        return True
+    env_val = os.environ.get("ALLOW_LOCAL_SQLITE_FALLBACK", "").strip().lower()
+    return env_val in ("true", "1", "yes")
 
 
 # In-memory store for unit testing
@@ -51,9 +52,16 @@ _sqlite_init_lock = threading.Lock()
 
 def _get_sqlite_path() -> str:
     try:
+        if any("test" in str(arg).lower() or "pytest" in str(arg).lower() for arg in sys.argv):
+            return str(Path(__file__).resolve().parent.parent.parent.parent / "test_fallback.sqlite3")
         db_path = settings.DATABASES.get("default", {}).get("NAME")
         if db_path:
-            return str(db_path)
+            db_path_str = str(db_path)
+            # In Django test suites, NAME can be 'file:memorydb_default?mode=memory&cache=shared'
+            # or ':memory:'. Raw sqlite3.connect to a shared in-memory database locks tables
+            # against Django's open test transactions. We fallback to disk db.sqlite3.
+            if not db_path_str.startswith("file:") and ":memory:" not in db_path_str:
+                return db_path_str
     except Exception:
         pass
     default_path = Path(__file__).resolve().parent.parent.parent.parent / "db.sqlite3"

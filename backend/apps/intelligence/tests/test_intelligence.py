@@ -21,7 +21,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from PIL import Image
 from rest_framework.test import APIClient
@@ -153,6 +153,7 @@ class TestPCOSMLProgressiveService(TestCase):
         self.assertEqual(mm_res["fusion_details"]["ultrasound_weight"], 0.05)
 
 
+@override_settings(ALLOW_LOCAL_SQLITE_FALLBACK=True)
 class TestProgressiveAssessmentAPI(TestCase):
     """Integration API tests for progressive assessment flow."""
 
@@ -270,7 +271,7 @@ class TestProgressiveAssessmentAPI(TestCase):
         self.assertEqual(data_us.get("status_code"), "tier_1_3_model_unavailable")
         self.assertIn("pcom_status", data_us)
 
-        # Active assessment records Tier 1+3 morphology state
+        # Active assessment preserves Tier 1 / Tier 1+3 state
         active_res = self.client.get("/api/v1/intelligence/assessment/active/")
         self.assertIn(active_res.json()["assessment_level"], ["tier_1", "tier_1_3"])
 
