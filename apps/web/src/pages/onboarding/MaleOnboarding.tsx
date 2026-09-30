@@ -59,7 +59,7 @@ export const MaleOnboarding: React.FC = () => {
         medications: userProfile.medical?.medications || [],
         conditions: userProfile.medical?.conditions?.length
           ? userProfile.medical.conditions
-          : ['None of these conditions'],
+          : ['None of these'],
         surgeries: userProfile.medical?.surgeries || [],
         familyHistory: userProfile.medical?.familyHistory?.length
           ? userProfile.medical.familyHistory

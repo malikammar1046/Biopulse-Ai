@@ -69,7 +69,9 @@ export const MaleStep5ReviewReady: React.FC<MaleStep5Props> = ({
     {
       label: 'Medical Baseline',
       val:
-        (profile.medical?.conditions?.length || 0) === 0 || profile.medical?.conditions?.includes('None of these conditions')
+        (profile.medical?.conditions?.length || 0) === 0 ||
+        profile.medical?.conditions?.includes('None of these conditions') ||
+        profile.medical?.conditions?.includes('None of these')
           ? 'No chronic conditions reported'
           : profile.medical?.conditions?.join(', '),
     },
