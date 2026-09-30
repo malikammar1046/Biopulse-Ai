@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <radialGradient id="f2-bg" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#F5F3FF" />
+      <stop offset="100%" stop-color="#EDE9FE" />
+    </radialGradient>
+    <linearGradient id="f2-hair" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#262626" />
+      <stop offset="100%" stop-color="#171717" />
+    </linearGradient>
+    <linearGradient id="f2-shirt" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#14B8A6" />
+      <stop offset="100%" stop-color="#0D9488" />
+    </linearGradient>
+    <filter id="f2-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#0D9488" flood-opacity="0.12" />
+    </filter>
+  </defs>
+
+  <!-- Background Circle -->
+  <circle cx="60" cy="60" r="58" fill="url(#f2-bg)" stroke="#DDD6FE" stroke-width="2" />
+
+  <!-- High Hair Bun Behind -->
+  <circle cx="60" cy="18" r="12" fill="url(#f2-hair)" />
+  <!-- Hair Tie Ribbon in Pastel Coral -->
+  <ellipse cx="60" cy="24" rx="7" ry="2.5" fill="#F43F7D" />
+
+  <!-- Body / Shoulders -->
+  <g filter="url(#f2-shadow)">
+    <!-- Base Top with V-Neckline -->
+    <path d="M26 104 C26 88 40 82 60 82 C80 82 94 88 94 104 L94 116 L26 116 Z" fill="url(#f2-shirt)" />
+    <!-- V-Neck Trim -->
+    <path d="M48 82 L60 93 L72 82 Z" fill="#CCFBF1" />
+    <!-- Neck -->
+    <path d="M52 70 L52 86 C54 88 66 88 68 86 L68 70 Z" fill="#F5C7A9" />
+    <path d="M52 74 C56 78 64 78 68 74 L68 78 C64 82 56 82 52 78 Z" fill="#DE9F7B" opacity="0.35" />
+  </g>
+
+  <!-- Head & Ears -->
+  <g id="f2-head">
+    <!-- Left Ear -->
+    <circle cx="37" cy="57" r="5.5" fill="#F5C7A9" />
+    <circle cx="37" cy="57" r="3" fill="#DE9F7B" opacity="0.4" />
+    <!-- Small pearl stud earring -->
+    <circle cx="36" cy="60" r="1.5" fill="#FFFFFF" stroke="#DDD6FE" stroke-width="0.5" />
+
+    <!-- Right Ear -->
+    <circle cx="83" cy="57" r="5.5" fill="#F5C7A9" />
+    <circle cx="83" cy="57" r="3" fill="#DE9F7B" opacity="0.4" />
+    <!-- Small pearl stud earring -->
+    <circle cx="84" cy="60" r="1.5" fill="#FFFFFF" stroke="#DDD6FE" stroke-width="0.5" />
+
+    <!-- Face Oval -->
+    <path d="M39 51 C39 34 81 34 81 51 C81 68 72 77 60 77 C48 77 39 68 39 51 Z" fill="#F5C7A9" />
+
+    <!-- Rosy Cheeks -->
+    <circle cx="46" cy="62" r="4.8" fill="#F87171" opacity="0.25" />
+    <circle cx="74" cy="62" r="4.8" fill="#F87171" opacity="0.25" />
+
+    <!-- Gentle Eyebrows -->
+    <path d="M44 44 C47 41 52 42 55 44" stroke="#171717" stroke-width="2" stroke-linecap="round" fill="none" />
+    <path d="M65 44 C68 42 73 41 76 44" stroke="#171717" stroke-width="2" stroke-linecap="round" fill="none" />
+
+    <!-- Bright Innocent Eyes -->
+    <circle cx="49" cy="51" r="3.5" fill="#171717" />
+    <circle cx="50.2" cy="49.8" r="1.3" fill="#FFFFFF" />
+    <circle cx="48" cy="52.2" r="0.6" fill="#FFFFFF" opacity="0.8" />
+
+    <circle cx="71" cy="51" r="3.5" fill="#171717" />
+    <circle cx="72.2" cy="49.8" r="1.3" fill="#FFFFFF" />
+    <circle cx="70" cy="52.2" r="0.6" fill="#FFFFFF" opacity="0.8" />
+
+    <!-- Eyelash Accents -->
+    <path d="M52.5 49 C54 48 55 49 55 49" stroke="#171717" stroke-width="1.2" stroke-linecap="round" fill="none" />
+    <path d="M67.5 49 C66 48 65 49 65 49" stroke="#171717" stroke-width="1.2" stroke-linecap="round" fill="none" />
+
+    <!-- Gentle Nose -->
+    <path d="M59 54 C60 56.5 61 56.5 62 56.5" stroke="#C98B66" stroke-width="1.8" stroke-linecap="round" fill="none" />
+
+    <!-- Cheerful Innocent Smile -->
+    <path d="M52 63 C56 68 64 68 68 63" stroke="#B91C1C" stroke-width="2.2" stroke-linecap="round" fill="none" />
+  </g>
+
+  <!-- Front Hair (Sleek Pulled Back Style with Natural Part) -->
+  <path d="M36 48 C34 32 44 23 60 23 C76 23 86 32 84 48 C81 42 74 36 60 36 C46 36 39 42 36 48 Z" fill="url(#f2-hair)" />
+  <path d="M42 36 C50 31 70 31 78 36" stroke="#404040" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.5" />
+</svg>

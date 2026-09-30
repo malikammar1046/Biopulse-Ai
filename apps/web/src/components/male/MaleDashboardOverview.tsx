@@ -23,7 +23,7 @@ export const MaleDashboardOverview: React.FC = () => {
     assessmentLoading,
     mlAssessmentLoading,
     reports,
-    appointments,
+    upcomingAppointment,
     refreshActiveAssessment,
   } = useUserHealth();
 
@@ -76,13 +76,7 @@ export const MaleDashboardOverview: React.FC = () => {
   }, [reports]);
 
   // Next upcoming scheduled appointment
-  const nextAppointment = useMemo(() => {
-    const scheduled = (appointments || []).filter((a) => a.status === 'scheduled');
-    if (scheduled.length === 0) return null;
-    return scheduled.sort(
-      (a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime()
-    )[0];
-  }, [appointments]);
+  const nextAppointment = upcomingAppointment;
 
   // Latest lab report
   const latestReport = useMemo(() => {

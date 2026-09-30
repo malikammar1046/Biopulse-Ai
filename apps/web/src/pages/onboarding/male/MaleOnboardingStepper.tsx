@@ -19,8 +19,8 @@ export const MaleOnboardingStepper: React.FC<MaleOnboardingStepperProps> = ({
   onStepClick,
 }) => {
   return (
-    <div className="w-full py-1 mb-3">
-      <div className="relative flex items-center justify-between max-w-2xl mx-auto px-2">
+    <div className="w-full py-0.5 mb-2">
+      <div className="relative flex items-center justify-between max-w-3xl xl:max-w-4xl mx-auto px-2">
         {/* Connector Line behind nodes */}
         <div className="absolute top-3.5 left-8 right-8 h-[2px] bg-[#E2EEF4] -z-0" />
 
@@ -46,7 +46,7 @@ export const MaleOnboardingStepper: React.FC<MaleOnboardingStepperProps> = ({
                   scale: isActive ? 1.05 : 1,
                 }}
                 transition={{ duration: 0.2 }}
-                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-[11px] sm:text-xs font-bold font-mono transition-all duration-300 ${
+                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-[13px] font-bold font-sans transition-all duration-300 ${
                   isActive
                     ? 'bg-[#0E9EAA] text-white shadow-sm shadow-teal-500/25 ring-3 ring-[#DDF7F7]'
                     : isCompleted
@@ -63,7 +63,7 @@ export const MaleOnboardingStepper: React.FC<MaleOnboardingStepperProps> = ({
 
               {/* Step Label */}
               <span
-                className={`mt-1.5 text-[10px] sm:text-[11px] tracking-tight transition-colors duration-200 text-center whitespace-nowrap ${
+                className={`mt-1.5 text-xs sm:text-[13px] tracking-tight transition-colors duration-200 text-center whitespace-nowrap ${
                   isActive
                     ? 'text-[#073B72] font-bold'
                     : isCompleted

@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <radialGradient id="f1-bg" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#FFF5F8" />
+      <stop offset="100%" stop-color="#FDE8EF" />
+    </radialGradient>
+    <linearGradient id="f1-hair" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#543627" />
+      <stop offset="100%" stop-color="#3B2013" />
+    </linearGradient>
+    <linearGradient id="f1-shirt" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F43F7D" />
+      <stop offset="100%" stop-color="#DC2865" />
+    </linearGradient>
+    <filter id="f1-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#F43F7D" flood-opacity="0.1" />
+    </filter>
+  </defs>
+
+  <!-- Background Circle -->
+  <circle cx="60" cy="60" r="58" fill="url(#f1-bg)" stroke="#FBCFE8" stroke-width="2" />
+
+  <!-- Back Hair (Shoulder length waves behind) -->
+  <path d="M34 50 C28 66 30 88 38 98 C42 100 48 98 48 94 C46 84 44 70 44 60 Z" fill="url(#f1-hair)" />
+  <path d="M86 50 C92 66 90 88 82 98 C78 100 72 98 72 94 C74 84 76 70 76 60 Z" fill="url(#f1-hair)" />
+
+  <!-- Body / Shoulders -->
+  <g filter="url(#f1-shadow)">
+    <!-- Base Top with Soft Curved Neckline -->
+    <path d="M26 104 C26 88 40 82 60 82 C80 82 94 88 94 104 L94 116 L26 116 Z" fill="url(#f1-shirt)" />
+    <!-- Collar Detail -->
+    <path d="M48 82 C52 90 68 90 72 82 C68 85 52 85 48 82 Z" fill="#FDE6EF" />
+    <!-- Neck -->
+    <path d="M52 70 L52 85 C55 87 65 87 68 85 L68 70 Z" fill="#FCE4D6" />
+    <path d="M52 74 C56 78 64 78 68 74 L68 78 C64 82 56 82 52 78 Z" fill="#E8B89F" opacity="0.35" />
+  </g>
+
+  <!-- Head & Ears -->
+  <g id="f1-head">
+    <!-- Left Ear -->
+    <circle cx="37" cy="57" r="5.5" fill="#FCE4D6" />
+    <circle cx="37" cy="57" r="3" fill="#EAA882" opacity="0.4" />
+    <!-- Right Ear -->
+    <circle cx="83" cy="57" r="5.5" fill="#FCE4D6" />
+    <circle cx="83" cy="57" r="3" fill="#EAA882" opacity="0.4" />
+
+    <!-- Face Oval -->
+    <path d="M39 51 C39 34 81 34 81 51 C81 68 72 77 60 77 C48 77 39 68 39 51 Z" fill="#FCE4D6" />
+
+    <!-- Rosy Cheeks (Soft Glow) -->
+    <circle cx="46" cy="62" r="5" fill="#F43F7D" opacity="0.25" />
+    <circle cx="74" cy="62" r="5" fill="#F43F7D" opacity="0.25" />
+
+    <!-- Gentle Arched Eyebrows -->
+    <path d="M44 44 C47 41 52 42 55 44" stroke="#4A2A1A" stroke-width="1.8" stroke-linecap="round" fill="none" />
+    <path d="M65 44 C68 42 73 41 76 44" stroke="#4A2A1A" stroke-width="1.8" stroke-linecap="round" fill="none" />
+
+    <!-- Bright Innocent Eyes -->
+    <circle cx="49" cy="51" r="3.5" fill="#241B18" />
+    <circle cx="50.2" cy="49.8" r="1.3" fill="#FFFFFF" />
+    <circle cx="48" cy="52.2" r="0.6" fill="#FFFFFF" opacity="0.8" />
+
+    <circle cx="71" cy="51" r="3.5" fill="#241B18" />
+    <circle cx="72.2" cy="49.8" r="1.3" fill="#FFFFFF" />
+    <circle cx="70" cy="52.2" r="0.6" fill="#FFFFFF" opacity="0.8" />
+
+    <!-- Eyelash Accents -->
+    <path d="M52.5 49 C54 48 55 49 55 49" stroke="#3B2013" stroke-width="1.2" stroke-linecap="round" fill="none" />
+    <path d="M67.5 49 C66 48 65 49 65 49" stroke="#3B2013" stroke-width="1.2" stroke-linecap="round" fill="none" />
+
+    <!-- Cute Nose -->
+    <path d="M59 54 C60 56.5 61 56.5 62 56.5" stroke="#DCA284" stroke-width="1.8" stroke-linecap="round" fill="none" />
+
+    <!-- Sweet Innocent Smile -->
+    <path d="M52 63 C56 68 64 68 68 63" stroke="#D83060" stroke-width="2.2" stroke-linecap="round" fill="none" />
+  </g>
+
+  <!-- Front Hair (Soft Curving Side Parting) -->
+  <path d="M35 48 C33 33 44 22 60 22 C76 22 86 32 85 48 C83 44 80 38 72 37 C64 36 56 42 46 41 C40 40 37 44 35 48 Z" fill="url(#f1-hair)" />
+  <!-- Delicate Side Fringe Strands -->
+  <path d="M35 47 C37 54 38 62 42 66 C40 60 39 52 38 46 Z" fill="url(#f1-hair)" />
+  <path d="M85 47 C83 54 82 62 78 66 C80 60 81 52 82 46 Z" fill="url(#f1-hair)" />
+</svg>

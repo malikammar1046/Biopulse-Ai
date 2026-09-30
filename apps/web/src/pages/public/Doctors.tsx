@@ -1028,6 +1028,8 @@ const ConsultationModal: React.FC<{
         providerId: String(doctor.id),
         providerName: doctor.name,
         providerSpecialty: doctor.specialty || undefined,
+        providerImage: doctor.profile_image || undefined,
+        fee: doctor.fee || undefined,
         title: `Clinical Consultation with ${doctor.name}`,
         appointmentType: 'consultation',
         scheduledDate: preferredDate || tomorrowStr,

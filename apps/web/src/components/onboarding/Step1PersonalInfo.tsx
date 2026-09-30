@@ -41,10 +41,10 @@ interface Step1Props {
 }
 
 const PRESET_AVATARS = [
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+  '/avatars/avatar-male-1.svg',
+  '/avatars/avatar-male-2.svg',
+  '/avatars/avatar-female-1.svg',
+  '/avatars/avatar-female-2.svg',
 ];
 
 export const Step1PersonalInfo: React.FC<Step1Props> = ({ data, onChange, errors, hideGenderSelection }) => {
