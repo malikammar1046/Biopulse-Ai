@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   CheckCircle,
   ShieldTick,
@@ -6,7 +6,7 @@ import {
   Beaker01,
 } from '@untitledui/icons';
 import type { UserProfile } from '../../../types/onboarding';
-import { MaleWhyWeAskCard } from './MaleWhyWeAskCard';
+import { OnboardingWhyModal, OnboardingWhyTrigger } from '../../../components/onboarding/OnboardingWhyModal';
 import { UserAvatar } from '../../../components/common/UserAvatar';
 
 interface MaleStep5Props {
@@ -18,6 +18,7 @@ export const MaleStep5ReviewReady: React.FC<MaleStep5Props> = ({
   profile,
   saveError,
 }) => {
+  const [showWhyModal, setShowWhyModal] = useState(false);
   const mh = profile.mensHealth || {
     energyLevel: 'moderate',
     sexDrive: 'normal',
@@ -99,25 +100,34 @@ export const MaleStep5ReviewReady: React.FC<MaleStep5Props> = ({
   ];
 
   return (
-    <div className="space-y-6 text-left">
-      {/* ── Question Header ── */}
-      <div className="flex items-center gap-3">
-        <div className="w-11 h-11 rounded-full bg-[#E0F2FE] flex items-center justify-center shrink-0 shadow-2xs">
-          <ShieldTick className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
+    <div className="space-y-5 text-left max-w-4xl mx-auto">
+      {/* ── Question Header with Why We Ask Trigger ── */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#E0F2FE] flex items-center justify-center shrink-0 shadow-2xs">
+            <ShieldTick className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
+          </div>
+
+          <div>
+            <span className="text-xs font-bold font-sans text-[#0288D1] uppercase tracking-wider block leading-none">
+              Final Confirmation
+            </span>
+            <h2 className="text-xl sm:text-2xl font-bold font-display text-[#073B72] tracking-tight leading-tight mt-1">
+              Review your BioPulse AI profile
+            </h2>
+          </div>
         </div>
 
-        <div>
-          <span className="text-xs font-bold font-sans text-[#0288D1] uppercase tracking-wider block leading-none">
-            Final Confirmation
-          </span>
-          <h2 className="text-2xl sm:text-[26px] font-bold font-display text-[#073B72] tracking-tight leading-tight mt-1">
-            Review your BioPulse AI profile
-          </h2>
-          <p className="text-[14px] sm:text-[15px] text-[#55718F] font-sans leading-relaxed mt-1">
-            Confirm your baseline information below to finalize your secure profile and generate your initial hypogonadism screening.
-          </p>
-        </div>
+        <OnboardingWhyTrigger
+          onClick={() => setShowWhyModal(true)}
+          label="Privacy & Security"
+          accentColor="blue"
+        />
       </div>
+
+      <p className="text-xs sm:text-sm text-[#55718F] font-sans leading-relaxed">
+        Confirm your baseline information below to finalize your secure profile and generate your initial hypogonadism screening.
+      </p>
 
       {/* ── Error Banner if Save Failed ── */}
       {saveError && (
@@ -127,10 +137,8 @@ export const MaleStep5ReviewReady: React.FC<MaleStep5Props> = ({
         </div>
       )}
 
-      {/* ── Main Form Layout: Fields + Why We Ask Card ── */}
-      <div className="flex flex-col xl:flex-row gap-5 xl:gap-6 items-start">
-        {/* Review Cards Column */}
-        <div className="flex-1 w-full min-w-0 space-y-4">
+      {/* ── Main Review Content (Full Width) ── */}
+      <div className="w-full space-y-4">
           {/* Profile Hero Card with Avatar */}
           <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-[#FAFCFF] via-[#F0F9FF] to-[#E0F2FE]/30 border border-[#D7EAF2] flex items-center gap-4">
             <UserAvatar
@@ -205,24 +213,30 @@ export const MaleStep5ReviewReady: React.FC<MaleStep5Props> = ({
               ))}
             </div>
           </div>
-        </div>
-
-        {/* Contextual Helper Card Column */}
-        <div className="w-full xl:w-[230px] 2xl:w-[250px] shrink-0 space-y-3">
-          <MaleWhyWeAskCard
-            title="Screening Confirmation"
-            description="BioPulse AI calculates an initial non-diagnostic screening score calibrated against CDC epidemiological reference data. Your profile provides the foundation for progressive assessment."
-            icon={ShieldTick}
-          />
-
-          <div className="p-3.5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] text-[11px] text-[#55718F] space-y-1.5">
-            <span className="font-bold text-[#073B72] block">Privacy & Security:</span>
-            <p>
-              Your health data is encrypted and strictly confidential. You retain full control over your profile and can update measurements or symptoms anytime.
-            </p>
-          </div>
-        </div>
       </div>
+
+      {/* ── "Why We Ask This" Modal Dialog ── */}
+      <OnboardingWhyModal
+        isOpen={showWhyModal}
+        onClose={() => setShowWhyModal(false)}
+        title="Screening & Privacy Confirmation"
+        icon={ShieldTick}
+        accentColor="blue"
+      >
+        <div className="p-3.5 rounded-xl bg-[#F0F8FF] border border-[#BAE6FD]">
+          <span className="font-bold text-[#0288D1] block mb-1">Epidemiological Foundation</span>
+          <p>
+            BioPulse AI calculates an initial non-diagnostic screening score calibrated against CDC epidemiological reference data. Your profile provides the foundation for progressive assessment.
+          </p>
+        </div>
+
+        <div className="p-3.5 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2]">
+          <span className="font-bold text-[#073B72] block mb-1">Privacy &amp; Security:</span>
+          <p>
+            Your health data is encrypted and strictly confidential. You retain full control over your profile and can update measurements or symptoms anytime.
+          </p>
+        </div>
+      </OnboardingWhyModal>
     </div>
   );
 };

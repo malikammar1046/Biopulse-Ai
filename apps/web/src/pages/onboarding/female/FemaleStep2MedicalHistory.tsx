@@ -15,7 +15,7 @@ import {
   DEFAULT_CONDITION_OPTIONS,
   DEFAULT_FAMILY_HISTORY_OPTIONS,
 } from '../../../data/mockOnboardingData';
-import { WhyWeAskCard } from './WhyWeAskCard';
+import { OnboardingWhyModal, OnboardingWhyTrigger } from '../../../components/onboarding/OnboardingWhyModal';
 
 interface FemaleStep2Props {
   data: MedicalProfile;
@@ -32,6 +32,7 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
   lifestyle,
   onLifestyleChange,
 }) => {
+  const [showWhyModal, setShowWhyModal] = useState(false);
   const [customAllergy, setCustomAllergy] = useState('');
   const [customCondition, setCustomCondition] = useState('');
   const [newMedName, setNewMedName] = useState('');
@@ -119,30 +120,33 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
   };
 
   return (
-    <div className="space-y-4 text-left">
-      {/* ── Compact Question Header ── */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-[#E0F2FE] flex items-center justify-center shrink-0 shadow-2xs">
-          <MedicalCross className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
+    <div className="space-y-4 text-left max-w-4xl mx-auto">
+      {/* ── Compact Question Header with Why We Ask Trigger ── */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#E0F2FE] flex items-center justify-center shrink-0 shadow-2xs">
+            <MedicalCross className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
+          </div>
+
+          <div>
+            <span className="text-[10px] font-bold font-mono text-[#0288D1] uppercase tracking-wider block leading-none">
+              Health Profile
+            </span>
+            <h2 className="text-xl sm:text-2xl font-extrabold font-display text-[#073B72] tracking-tight leading-tight mt-0.5">
+              Medical History &amp; Lifestyle Factors
+            </h2>
+          </div>
         </div>
 
-        <div>
-          <span className="text-[10px] font-bold font-mono text-[#0288D1] uppercase tracking-wider block leading-none">
-            Health Profile
-          </span>
-          <h2 className="text-xl sm:text-2xl font-extrabold font-display text-[#073B72] tracking-tight leading-tight mt-0.5">
-            Medical History & Lifestyle Factors
-          </h2>
-          <p className="text-xs text-[#55718F] font-sans leading-tight mt-0.5">
-            All fields here are optional. Sharing your baseline helps BioPulse AI personalize your clinical insights.
-          </p>
-        </div>
+        <OnboardingWhyTrigger onClick={() => setShowWhyModal(true)} accentColor="blue" />
       </div>
 
-      {/* ── Main Form Layout: Fields + Why We Ask Card ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Form Inputs Column */}
-        <div className="lg:col-span-8 space-y-3">
+      <p className="text-xs text-[#55718F] font-sans leading-tight">
+        All fields here are optional. Sharing your baseline helps BioPulse AI personalize your clinical insights.
+      </p>
+
+      {/* ── Main Form Inputs (Full Width) ── */}
+      <div className="w-full space-y-3">
           {/* 1. Blood Type */}
           <div className="p-3 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-1.5">
             <div className="flex items-center justify-between">
@@ -478,13 +482,21 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
           )}
         </div>
 
-        {/* Right Column: Single Concise "Why we ask this" Card */}
-        <div className="lg:col-span-4">
-          <WhyWeAskCard
-            description="Certain health conditions, medications, and lifestyle patterns provide critical context for distinguishing PCOS indicators from metabolic or endocrine overlaps."
-          />
+      {/* ── "Why We Ask This" Modal Dialog ── */}
+      <OnboardingWhyModal
+        isOpen={showWhyModal}
+        onClose={() => setShowWhyModal(false)}
+        title="Why we ask about medical history"
+        icon={MedicalCross}
+        accentColor="blue"
+      >
+        <div className="p-3.5 rounded-xl bg-[#F0F8FF] border border-[#BAE6FD]">
+          <span className="font-bold text-[#0288D1] block mb-1">Clinical Baseline</span>
+          <p>
+            Certain health conditions, medications, and lifestyle patterns provide critical context for distinguishing PCOS indicators from metabolic or endocrine overlaps.
+          </p>
         </div>
-      </div>
+      </OnboardingWhyModal>
     </div>
   );
 };

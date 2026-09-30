@@ -1,14 +1,13 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   ActivityHeart,
   Check,
   CheckCircle,
-  InfoCircle,
   ShieldTick,
 } from '@untitledui/icons';
 import type { MensHealthProfile } from '../../../types/onboarding';
 import { getInitialADAMQuestions } from '../../../services/adaptiveProfileService';
-import { MaleWhyWeAskCard } from './MaleWhyWeAskCard';
+import { OnboardingWhyModal, OnboardingWhyTrigger } from '../../../components/onboarding/OnboardingWhyModal';
 
 interface MaleStep3Props {
   data: MensHealthProfile;
@@ -16,6 +15,7 @@ interface MaleStep3Props {
 }
 
 export const MaleStep3SymptomsADAM: React.FC<MaleStep3Props> = ({ data, onChange }) => {
+  const [showWhyModal, setShowWhyModal] = useState(false);
   const initialQuestions = useMemo(() => getInitialADAMQuestions().questions, []);
 
   // Hydrate responses from data.adamResponses or fallback to clinical fields
@@ -99,25 +99,34 @@ export const MaleStep3SymptomsADAM: React.FC<MaleStep3Props> = ({ data, onChange
   };
 
   return (
-    <div className="space-y-4 text-left">
-      {/* ── Compact Question Header ── */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-[#DDEFFD] flex items-center justify-center shrink-0 shadow-2xs">
-          <ActivityHeart className="w-5 h-5 text-[#0868B9]" aria-hidden="true" />
+    <div className="space-y-4 text-left max-w-4xl mx-auto">
+      {/* ── Compact Question Header with Why We Ask Trigger ── */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#DDEFFD] flex items-center justify-center shrink-0 shadow-2xs">
+            <ActivityHeart className="w-5 h-5 text-[#0868B9]" aria-hidden="true" />
+          </div>
+
+          <div>
+            <span className="text-[10px] font-bold font-mono text-[#0868B9] uppercase tracking-wider block leading-none">
+              Vitality &amp; ADAM Questionnaire
+            </span>
+            <h2 className="text-xl sm:text-2xl font-extrabold font-display text-[#073B72] tracking-tight leading-tight mt-0.5">
+              Tell us about your energy and symptoms
+            </h2>
+          </div>
         </div>
 
-        <div>
-          <span className="text-[10px] font-bold font-mono text-[#0868B9] uppercase tracking-wider block leading-none">
-            Vitality & ADAM Questionnaire
-          </span>
-          <h2 className="text-xl sm:text-2xl font-extrabold font-display text-[#073B72] tracking-tight leading-tight mt-0.5">
-            Tell us about your energy and symptoms
-          </h2>
-          <p className="text-xs text-[#55718F] font-sans leading-tight mt-0.5">
-            Answer the 10 validated ADAM (Androgen Deficiency in the Aging Male) questions below to calibrate your Tier 1 screening.
-          </p>
-        </div>
+        <OnboardingWhyTrigger
+          onClick={() => setShowWhyModal(true)}
+          label="About ADAM"
+          accentColor="blue"
+        />
       </div>
+
+      <p className="text-xs text-[#55718F] font-sans leading-tight">
+        Answer the 10 validated ADAM (Androgen Deficiency in the Aging Male) questions below to calibrate your Tier 1 screening.
+      </p>
 
       {/* ── Progress Counter & Quick Actions ── */}
       <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2]">
@@ -145,10 +154,8 @@ export const MaleStep3SymptomsADAM: React.FC<MaleStep3Props> = ({ data, onChange
         )}
       </div>
 
-      {/* ── Main Form Layout: Questions List + Why We Ask Card ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Questions Column */}
-        <div className="lg:col-span-8 space-y-2.5">
+      {/* ── Main Questions List (Full Width) ── */}
+      <div className="space-y-2.5">
           {initialQuestions.map((q) => {
             const currentResponse = responses[q.id];
             const isAnswered = currentResponse !== undefined && currentResponse !== null;
@@ -217,30 +224,33 @@ export const MaleStep3SymptomsADAM: React.FC<MaleStep3Props> = ({ data, onChange
               </div>
             );
           })}
-        </div>
-
-        {/* Contextual Helper Column */}
-        <div className="lg:col-span-4 space-y-3">
-          <MaleWhyWeAskCard
-            title="The ADAM Questionnaire"
-            description="The Androgen Deficiency in the Aging Male (ADAM) questionnaire is a clinically established 10-item screening tool designed to identify subjective symptoms of hormonal and vitality decline."
-            icon={InfoCircle}
-          />
-
-          <div className="p-3.5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] text-[11px] text-[#55718F] space-y-2">
-            <span className="font-bold text-[#073B72] block flex items-center gap-1.5">
-              <ShieldTick className="w-3.5 h-3.5 text-[#0868B9]" aria-hidden="true" />
-              Clinical Context:
-            </span>
-            <p className="leading-relaxed">
-              In clinical medicine (Morley et al., 2000), a positive screening is noted if question 1 (libido) or question 7 (erections) is positive, or if any 3 other questions are positive.
-            </p>
-            <p className="leading-relaxed text-[10px] text-[#0868B9] font-medium border-t border-[#D7EAF2] pt-1.5">
-              ADAM is an epidemiological screening aid, not a definitive diagnosis. Diagnosis requires physician evaluation and morning serum testosterone tests.
-            </p>
-          </div>
-        </div>
       </div>
+
+      {/* ── "Why We Ask This" Modal Dialog ── */}
+      <OnboardingWhyModal
+        isOpen={showWhyModal}
+        onClose={() => setShowWhyModal(false)}
+        title="The ADAM Questionnaire"
+        icon={ShieldTick}
+        accentColor="blue"
+      >
+        <div className="p-3.5 rounded-xl bg-[#F0F8FF] border border-[#BAE6FD]">
+          <span className="font-bold text-[#0868B9] block mb-1">Clinical Screening Tool</span>
+          <p>
+            The Androgen Deficiency in the Aging Male (ADAM) questionnaire is a clinically established 10-item screening tool designed to identify subjective symptoms of hormonal and vitality decline.
+          </p>
+        </div>
+
+        <div className="p-3.5 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-2">
+          <span className="font-bold text-[#073B72] block">Clinical Context:</span>
+          <p className="leading-relaxed">
+            In clinical medicine (Morley et al., 2000), a positive screening is noted if question 1 (libido) or question 7 (erections) is positive, or if any 3 other questions are positive.
+          </p>
+          <p className="leading-relaxed text-[11px] text-[#0868B9] font-medium border-t border-[#D7EAF2] pt-1.5">
+            ADAM is an epidemiological screening aid, not a definitive diagnosis. Diagnosis requires physician evaluation and morning serum testosterone tests.
+          </p>
+        </div>
+      </OnboardingWhyModal>
     </div>
   );
 };

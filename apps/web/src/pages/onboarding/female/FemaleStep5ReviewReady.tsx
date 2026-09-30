@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   CheckCircle,
   ShieldTick,
   AlertCircle,
 } from '@untitledui/icons';
 import type { UserProfile } from '../../../types/onboarding';
-import { WhyWeAskCard } from './WhyWeAskCard';
+import { OnboardingWhyModal, OnboardingWhyTrigger } from '../../../components/onboarding/OnboardingWhyModal';
 import { UserAvatar } from '../../../components/common/UserAvatar';
 
 interface FemaleStep5Props {
@@ -17,6 +17,7 @@ export const FemaleStep5ReviewReady: React.FC<FemaleStep5Props> = ({
   profile,
   saveError,
 }) => {
+  const [showWhyModal, setShowWhyModal] = useState(false);
   const symptomsList = profile.womensHealth?.commonSymptoms || [];
   const symptomsText =
     symptomsList.length === 0
@@ -73,25 +74,34 @@ export const FemaleStep5ReviewReady: React.FC<FemaleStep5Props> = ({
   ];
 
   return (
-    <div className="space-y-6 text-left">
-      {/* ── Question Header ── */}
-      <div className="flex items-center gap-3">
-        <div className="w-11 h-11 rounded-full bg-[#FCE7F3] flex items-center justify-center shrink-0 shadow-2xs">
-          <ShieldTick className="w-5 h-5 text-[#F43F7D]" aria-hidden="true" />
+    <div className="space-y-5 text-left max-w-4xl mx-auto">
+      {/* ── Question Header with Why We Ask Trigger ── */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#FCE7F3] flex items-center justify-center shrink-0 shadow-2xs">
+            <ShieldTick className="w-5 h-5 text-[#F43F7D]" aria-hidden="true" />
+          </div>
+
+          <div>
+            <span className="text-xs font-bold font-sans text-[#F43F7D] uppercase tracking-wider block leading-none">
+              Final Confirmation
+            </span>
+            <h2 className="text-xl sm:text-2xl font-bold font-display text-[#073B72] tracking-tight leading-tight mt-1">
+              Review your BioPulse AI profile
+            </h2>
+          </div>
         </div>
 
-        <div>
-          <span className="text-xs font-bold font-sans text-[#F43F7D] uppercase tracking-wider block leading-none">
-            Final Confirmation
-          </span>
-          <h2 className="text-2xl sm:text-[26px] font-bold font-display text-[#073B72] tracking-tight leading-tight mt-1">
-            Review your BioPulse AI profile
-          </h2>
-          <p className="text-[14px] sm:text-[15px] text-[#55718F] font-sans leading-relaxed mt-1">
-            Confirm your baseline information below to finalize your secure profile and begin exploring PCOS screening.
-          </p>
-        </div>
+        <OnboardingWhyTrigger
+          onClick={() => setShowWhyModal(true)}
+          label="Why we verify this"
+          accentColor="rose"
+        />
       </div>
+
+      <p className="text-xs sm:text-sm text-[#55718F] font-sans leading-relaxed">
+        Confirm your baseline information below to finalize your secure profile and begin exploring PCOS screening.
+      </p>
 
       {/* ── Error Banner if Save Failed ── */}
       {saveError && (
@@ -101,10 +111,8 @@ export const FemaleStep5ReviewReady: React.FC<FemaleStep5Props> = ({
         </div>
       )}
 
-      {/* ── Main Form Layout: Fields + Why We Ask Card ── */}
-      <div className="flex flex-col xl:flex-row gap-5 xl:gap-6 items-start">
-        {/* Main Content Column */}
-        <div className="flex-1 w-full min-w-0 space-y-4">
+      {/* ── Main Review Content (Full Width) ── */}
+      <div className="w-full space-y-4">
           {/* Profile Hero Card with Avatar */}
           <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-[#FAFCFF] via-[#FDF2F8]/40 to-[#F0FDF4]/30 border border-[#D7EAF2] flex items-center gap-4">
             <UserAvatar
@@ -169,25 +177,32 @@ export const FemaleStep5ReviewReady: React.FC<FemaleStep5Props> = ({
               ))}
             </div>
           </div>
-        </div>
-
-        {/* Right Column: Single Concise "Why we ask this" Card */}
-        <div className="w-full xl:w-[230px] 2xl:w-[250px] shrink-0 space-y-3">
-          <WhyWeAskCard
-            title="Why we verify this"
-            description="Reviewing your baseline ensures maximum accuracy for non-diagnostic PCOS stratification. You can update your biometrics, cycle dates, and symptom logs at any point from your dashboard."
-          />
-
-          <div className="p-3.5 rounded-2xl bg-[#E0F2FE]/50 border border-[#BAE6FD] text-xs text-[#073B72] space-y-1">
-            <span className="font-bold text-[#0288D1] block font-mono text-[10px] uppercase tracking-wide">
-              Clinical Disclaimer
-            </span>
-            <p className="text-[#55718F] text-[10px] leading-relaxed">
-              BioPulse AI provides evidence-informed screening. It is not a diagnostic tool and does not replace professional medical consultation.
-            </p>
-          </div>
-        </div>
       </div>
+
+      {/* ── "Why We Ask This" Modal Dialog ── */}
+      <OnboardingWhyModal
+        isOpen={showWhyModal}
+        onClose={() => setShowWhyModal(false)}
+        title="Why we verify your baseline"
+        icon={ShieldTick}
+        accentColor="rose"
+      >
+        <div className="p-3.5 rounded-xl bg-[#FFF1F2] border border-[#FECDD3]">
+          <span className="font-bold text-[#F43F7D] block mb-1">Baseline Accuracy</span>
+          <p>
+            Reviewing your baseline ensures maximum accuracy for non-diagnostic PCOS stratification. You can update your biometrics, cycle dates, and symptom logs at any point from your dashboard.
+          </p>
+        </div>
+
+        <div className="p-3.5 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-1">
+          <span className="font-bold text-[#0288D1] block font-mono text-[10px] uppercase tracking-wide">
+            Clinical Disclaimer
+          </span>
+          <p className="text-[#55718F] text-xs leading-relaxed">
+            BioPulse AI provides evidence-informed screening. It is not a diagnostic tool and does not replace professional medical consultation.
+          </p>
+        </div>
+      </OnboardingWhyModal>
     </div>
   );
 };

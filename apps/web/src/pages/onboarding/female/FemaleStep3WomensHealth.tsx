@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { CheckCircle, Heart, User01, CalendarHeart01 } from '@untitledui/icons';
 import type { WomensHealthProfile } from '../../../types/onboarding';
-import { WhyWeAskCard } from './WhyWeAskCard';
+import { OnboardingWhyModal, OnboardingWhyTrigger } from '../../../components/onboarding/OnboardingWhyModal';
 
 interface FemaleStep3Props {
   data: WomensHealthProfile;
@@ -17,36 +17,40 @@ const REGULARITY_OPTIONS = [
 ];
 
 export const FemaleStep3WomensHealth: React.FC<FemaleStep3Props> = ({ data, onChange }) => {
+  const [showWhyModal, setShowWhyModal] = useState(false);
   const maritalStatus = data.maritalStatus || 'unmarried';
   const marriageYears = data.marriageYears ?? 0;
   const isPregnant = data.isPregnant ?? false;
   const abortionsCount = data.abortionsCount ?? 0;
 
   return (
-    <div className="space-y-4 text-left">
-      {/* ── Compact Question Header ── */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-[#E0F2FE] flex items-center justify-center shrink-0 shadow-2xs">
-          <CalendarHeart01 className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
+    <div className="space-y-4 text-left max-w-4xl mx-auto">
+      {/* ── Compact Question Header with Why We Ask Trigger ── */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#E0F2FE] flex items-center justify-center shrink-0 shadow-2xs">
+            <CalendarHeart01 className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
+          </div>
+
+          <div>
+            <span className="text-[10px] font-bold font-mono text-[#0288D1] uppercase tracking-wider block leading-none">
+              Period &amp; Cycle
+            </span>
+            <h2 className="text-xl sm:text-2xl font-extrabold font-display text-[#073B72] tracking-tight leading-tight mt-0.5">
+              Menstrual Rhythm &amp; Reproductive Factors
+            </h2>
+          </div>
         </div>
 
-        <div>
-          <span className="text-[10px] font-bold font-mono text-[#0288D1] uppercase tracking-wider block leading-none">
-            Period & Cycle
-          </span>
-          <h2 className="text-xl sm:text-2xl font-extrabold font-display text-[#073B72] tracking-tight leading-tight mt-0.5">
-            Menstrual Rhythm & Reproductive Factors
-          </h2>
-          <p className="text-xs text-[#55718F] font-sans leading-tight mt-0.5">
-            Your menstrual regularity and cycle length are primary markers for PCOS screening.
-          </p>
-        </div>
+        <OnboardingWhyTrigger onClick={() => setShowWhyModal(true)} accentColor="blue" />
       </div>
 
-      {/* ── Main Form Layout: Fields + Why We Ask Card ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Form Inputs Column */}
-        <div className="lg:col-span-8 space-y-3">
+      <p className="text-xs text-[#55718F] font-sans leading-tight">
+        Your menstrual regularity and cycle length are primary markers for PCOS screening.
+      </p>
+
+      {/* ── Main Form Inputs (Full Width) ── */}
+      <div className="w-full space-y-3">
           {/* 1. Cycle Length Slider */}
           <div className="p-3 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-2">
             <div className="flex items-center justify-between">
@@ -263,15 +267,23 @@ export const FemaleStep3WomensHealth: React.FC<FemaleStep3Props> = ({ data, onCh
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Right Column: Single Concise "Why we ask this" Card */}
-        <div className="lg:col-span-4">
-          <WhyWeAskCard
-            description="Menstrual cycle frequency and regularity are cardinal indicators for evaluating ovulatory function and hormonal balance."
-          />
-        </div>
       </div>
+
+      {/* ── "Why We Ask This" Modal Dialog ── */}
+      <OnboardingWhyModal
+        isOpen={showWhyModal}
+        onClose={() => setShowWhyModal(false)}
+        title="Why we ask about your cycle & reproductive factors"
+        icon={CalendarHeart01}
+        accentColor="blue"
+      >
+        <div className="p-3.5 rounded-xl bg-[#F0F8FF] border border-[#BAE6FD]">
+          <span className="font-bold text-[#0288D1] block mb-1">Ovulatory &amp; Endocrine Markers</span>
+          <p>
+            Menstrual cycle frequency and regularity are cardinal indicators for evaluating ovulatory function and hormonal balance in PCOS risk assessment.
+          </p>
+        </div>
+      </OnboardingWhyModal>
     </div>
   );
 };

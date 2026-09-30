@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ActivityHeart,
   AlertCircle,
@@ -11,7 +11,7 @@ import {
 } from '@untitledui/icons';
 import type { WomensHealthProfile } from '../../../types/onboarding';
 import { DEFAULT_SYMPTOM_OPTIONS } from '../../../data/mockOnboardingData';
-import { WhyWeAskCard } from './WhyWeAskCard';
+import { OnboardingWhyModal, OnboardingWhyTrigger } from '../../../components/onboarding/OnboardingWhyModal';
 
 interface FemaleStep4Props {
   data: WomensHealthProfile;
@@ -31,6 +31,7 @@ const SYMPTOM_ICON_MAP: Record<string, React.ComponentType<React.SVGProps<SVGSVG
 };
 
 export const FemaleStep4Symptoms: React.FC<FemaleStep4Props> = ({ data, onChange }) => {
+  const [showWhyModal, setShowWhyModal] = useState(false);
   const currentSymptoms = data.commonSymptoms || [];
 
   const toggleSymptom = (label: string) => {
@@ -57,30 +58,33 @@ export const FemaleStep4Symptoms: React.FC<FemaleStep4Props> = ({ data, onChange
   const isNoneSelected = currentSymptoms.length === 0;
 
   return (
-    <div className="space-y-4 text-left">
-      {/* ── Compact Question Header ── */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-[#E0F2FE] flex items-center justify-center shrink-0 shadow-2xs">
-          <ActivityHeart className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
+    <div className="space-y-4 text-left max-w-4xl mx-auto">
+      {/* ── Compact Question Header with Why We Ask Trigger ── */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#E0F2FE] flex items-center justify-center shrink-0 shadow-2xs">
+            <ActivityHeart className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
+          </div>
+
+          <div>
+            <span className="text-[10px] font-bold font-mono text-[#0288D1] uppercase tracking-wider block leading-none">
+              Symptoms &amp; Patterns
+            </span>
+            <h2 className="text-xl sm:text-2xl font-extrabold font-display text-[#073B72] tracking-tight leading-tight mt-0.5">
+              Tell us what you've noticed
+            </h2>
+          </div>
         </div>
 
-        <div>
-          <span className="text-[10px] font-bold font-mono text-[#0288D1] uppercase tracking-wider block leading-none">
-            Symptoms & Patterns
-          </span>
-          <h2 className="text-xl sm:text-2xl font-extrabold font-display text-[#073B72] tracking-tight leading-tight mt-0.5">
-            Tell us what you've noticed
-          </h2>
-          <p className="text-xs text-[#55718F] font-sans leading-tight mt-0.5">
-            Select any symptoms you've experienced. This helps BioPulse AI understand patterns relevant to PCOS screening.
-          </p>
-        </div>
+        <OnboardingWhyTrigger onClick={() => setShowWhyModal(true)} accentColor="blue" />
       </div>
 
-      {/* ── Main Form Layout: Fields + Why We Ask Card ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Symptoms Cards Grid Column */}
-        <div className="lg:col-span-8 space-y-3">
+      <p className="text-xs text-[#55718F] font-sans leading-tight">
+        Select any symptoms you've experienced. This helps BioPulse AI understand patterns relevant to PCOS screening.
+      </p>
+
+      {/* ── Main Form Inputs (Full Width) ── */}
+      <div className="w-full space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {DEFAULT_SYMPTOM_OPTIONS.map((sym) => {
               const isSelected = currentSymptoms.includes(sym.label);
@@ -148,25 +152,33 @@ export const FemaleStep4Symptoms: React.FC<FemaleStep4Props> = ({ data, onChange
               <span>None of these / No noticeable symptoms</span>
             </button>
           </div>
-        </div>
-
-        {/* Right Column: Single Concise "Why we ask this" Card */}
-        <div className="lg:col-span-4 space-y-3">
-          <WhyWeAskCard
-            description="PCOS can present differently from person to person. Looking at symptom patterns alongside other health information helps provide a more informed screening estimate."
-          />
-
-          <div className="p-3.5 rounded-2xl bg-[#E0F2FE]/40 border border-[#BAE6FD] text-xs text-[#073B72] space-y-1">
-            <div className="flex items-center gap-1.5 text-[#0288D1] font-bold text-[11px] font-mono uppercase tracking-wide">
-              <ShieldTick className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
-              <span>Non-Diagnostic</span>
-            </div>
-            <p className="text-[#55718F] text-[10px] leading-relaxed">
-              Reporting symptoms does not mean a clinical diagnosis. It guides the algorithmic confidence score for early awareness.
-            </p>
-          </div>
-        </div>
       </div>
+
+      {/* ── "Why We Ask This" Modal Dialog ── */}
+      <OnboardingWhyModal
+        isOpen={showWhyModal}
+        onClose={() => setShowWhyModal(false)}
+        title="Why we ask about symptom patterns"
+        icon={ActivityHeart}
+        accentColor="blue"
+      >
+        <div className="p-3.5 rounded-xl bg-[#F0F8FF] border border-[#BAE6FD]">
+          <span className="font-bold text-[#0288D1] block mb-1">Symptom Phenotypes</span>
+          <p>
+            PCOS can present differently from person to person. Looking at symptom patterns alongside other health information helps provide a more informed screening estimate.
+          </p>
+        </div>
+
+        <div className="p-3.5 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-1">
+          <div className="flex items-center gap-1.5 text-[#0288D1] font-bold text-[11px] font-mono uppercase tracking-wide">
+            <ShieldTick className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
+            <span>Non-Diagnostic</span>
+          </div>
+          <p className="text-[#55718F] text-xs leading-relaxed">
+            Reporting symptoms does not mean a clinical diagnosis. It guides the algorithmic confidence score for early awareness and physician discussions.
+          </p>
+        </div>
+      </OnboardingWhyModal>
     </div>
   );
 };

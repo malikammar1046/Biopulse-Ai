@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   ActivityHeart,
   Check,
-  InfoCircle,
-  XClose,
 } from '@untitledui/icons';
 import type { MedicalProfile, MensHealthProfile } from '../../../types/onboarding';
+import { OnboardingWhyModal, OnboardingWhyTrigger } from '../../../components/onboarding/OnboardingWhyModal';
 
 interface MaleStep2Props {
   medical: MedicalProfile;
@@ -140,15 +138,7 @@ export const MaleStep2HealthProfile: React.FC<MaleStep2Props> = ({
           <span>Health Profile</span>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setShowWhyModal(true)}
-          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-[#0E9EAA] bg-[#F0FDFE] hover:bg-[#E0F8FA] border border-[#CCFBF1] transition-all cursor-pointer shadow-2xs hover:shadow-xs group"
-          aria-label="View why clinical background is requested"
-        >
-          <InfoCircle className="w-3.5 h-3.5 text-[#0E9EAA] group-hover:scale-110 transition-transform" aria-hidden="true" />
-          <span>Why we ask this</span>
-        </button>
+        <OnboardingWhyTrigger onClick={() => setShowWhyModal(true)} accentColor="teal" />
       </div>
 
       {/* ── Title & Subtitle ── */}
@@ -263,73 +253,27 @@ export const MaleStep2HealthProfile: React.FC<MaleStep2Props> = ({
       </div>
 
       {/* ── "Why We Ask This" Modal Dialog ── */}
-      <AnimatePresence>
-        {showWhyModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowWhyModal(false)}
-              className="fixed inset-0 bg-[#073B72]/30 backdrop-blur-xs cursor-pointer"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              transition={{ duration: 0.2 }}
-              className="relative w-full max-w-lg bg-white rounded-2xl border border-[#D7EAF2] shadow-2xl p-5 sm:p-6 space-y-4 z-10 select-text"
-              role="dialog"
-              aria-modal="true"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-[#DDF7F7] flex items-center justify-center text-[#0E9EAA]">
-                    <ActivityHeart className="w-4 h-4 text-[#0E9EAA]" aria-hidden="true" />
-                  </div>
-                  <h3 className="text-base font-bold font-display text-[#073B72]">
-                    Why we ask this
-                  </h3>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowWhyModal(false)}
-                  className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-[#55718F] hover:text-[#073B72] transition-colors cursor-pointer"
-                  aria-label="Close modal"
-                >
-                  <XClose className="w-4 h-4" aria-hidden="true" />
-                </button>
-              </div>
+      <OnboardingWhyModal
+        isOpen={showWhyModal}
+        onClose={() => setShowWhyModal(false)}
+        title="Why we ask about your health profile"
+        icon={ActivityHeart}
+        accentColor="teal"
+      >
+        <div className="p-3.5 rounded-xl bg-[#F0FDFE] border border-[#CCFBF1]">
+          <span className="font-bold text-[#0E9EAA] block mb-1">Metabolic &amp; Hormone Link</span>
+          <p>
+            High blood pressure and impaired glucose metabolism are recognized metabolic risk factors that directly co-occur with lower bioavailable testosterone and microvascular dysfunction.
+          </p>
+        </div>
 
-              <div className="space-y-3 text-xs sm:text-sm text-[#55718F] leading-relaxed">
-                <div className="p-3.5 rounded-xl bg-[#F0FDFE] border border-[#CCFBF1]">
-                  <span className="font-bold text-[#0E9EAA] block mb-1">Metabolic &amp; Hormone Link</span>
-                  <p>
-                    High blood pressure and impaired glucose metabolism are recognized metabolic risk factors that directly co-occur with lower bioavailable testosterone and microvascular dysfunction.
-                  </p>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2]">
-                  <span className="font-bold text-[#073B72] block mb-1">Clinical Note:</span>
-                  <p>
-                    Certain medications like chronic glucocorticoids or prior exogenous hormone therapy can suppress endogenous pituitary signaling (LH/FSH). Noting them ensures balanced, context-aware screening.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex justify-end pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowWhyModal(false)}
-                  className="px-5 py-2 rounded-full bg-[#0E9EAA] hover:bg-[#0C8B96] text-white text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer shadow-xs"
-                >
-                  Got it
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+        <div className="p-3.5 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2]">
+          <span className="font-bold text-[#073B72] block mb-1">Clinical Note:</span>
+          <p>
+            Certain medications like chronic glucocorticoids or prior exogenous hormone therapy can suppress endogenous pituitary signaling (LH/FSH). Noting them ensures balanced, context-aware screening.
+          </p>
+        </div>
+      </OnboardingWhyModal>
     </div>
   );
 };

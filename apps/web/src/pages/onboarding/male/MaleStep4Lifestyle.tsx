@@ -1,14 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Activity,
   Moon01,
   ActivityHeart,
   Droplets01,
   Scales01,
-  InfoCircle,
 } from '@untitledui/icons';
 import type { LifestyleProfile } from '../../../types/onboarding';
-import { MaleWhyWeAskCard } from './MaleWhyWeAskCard';
+import { OnboardingWhyModal, OnboardingWhyTrigger } from '../../../components/onboarding/OnboardingWhyModal';
 
 interface MaleStep4Props {
   data: LifestyleProfile;
@@ -38,6 +37,7 @@ const FAST_FOOD_OPTIONS = [
 ] as const;
 
 export const MaleStep4Lifestyle: React.FC<MaleStep4Props> = ({ data, onChange }) => {
+  const [showWhyModal, setShowWhyModal] = useState(false);
   const currentExercises = data.exercisePreferences || [];
 
   const toggleExercise = (ex: string) => {
@@ -55,30 +55,33 @@ export const MaleStep4Lifestyle: React.FC<MaleStep4Props> = ({ data, onChange })
   };
 
   return (
-    <div className="space-y-4 text-left">
-      {/* ── Compact Question Header ── */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-[#DDF7F7] flex items-center justify-center shrink-0 shadow-2xs">
-          <Activity className="w-5 h-5 text-[#0E9EAA]" aria-hidden="true" />
+    <div className="space-y-4 sm:space-y-5 text-left max-w-4xl mx-auto">
+      {/* ── Compact Question Header with Why We Ask Trigger ── */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#DDF7F7] flex items-center justify-center shrink-0 shadow-2xs">
+            <Activity className="w-5 h-5 text-[#0E9EAA]" aria-hidden="true" />
+          </div>
+
+          <div>
+            <span className="text-[10px] font-bold font-mono text-[#0E9EAA] uppercase tracking-wider block leading-none">
+              Lifestyle &amp; Metabolic Context
+            </span>
+            <h2 className="text-xl sm:text-2xl font-extrabold font-display text-[#073B72] tracking-tight leading-tight mt-0.5">
+              Physical habits, sleep &amp; recovery
+            </h2>
+          </div>
         </div>
 
-        <div>
-          <span className="text-[10px] font-bold font-mono text-[#0E9EAA] uppercase tracking-wider block leading-none">
-            Lifestyle & Metabolic Context
-          </span>
-          <h2 className="text-xl sm:text-2xl font-extrabold font-display text-[#073B72] tracking-tight leading-tight mt-0.5">
-            Physical habits, sleep & recovery
-          </h2>
-          <p className="text-xs text-[#55718F] font-sans leading-tight mt-0.5">
-            Sleep cycles and physical activity profoundly affect circulating testosterone synthesis and metabolic vigor.
-          </p>
-        </div>
+        <OnboardingWhyTrigger onClick={() => setShowWhyModal(true)} accentColor="teal" />
       </div>
 
-      {/* ── Main Form Layout: Fields + Why We Ask Card ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Form Inputs Column */}
-        <div className="lg:col-span-8 space-y-3.5">
+      <p className="text-xs sm:text-sm text-[#55718F] font-sans leading-normal">
+        Sleep cycles and physical activity profoundly affect circulating testosterone synthesis and metabolic vigor.
+      </p>
+
+      {/* ── Main Form Inputs (Full Width) ── */}
+      <div className="w-full space-y-4">
           {/* 1. Daily Physical Activity Level */}
           <div className="space-y-1.5">
             <label className="text-[11px] font-bold font-mono text-[#073B72] uppercase tracking-wide block">
@@ -247,24 +250,30 @@ export const MaleStep4Lifestyle: React.FC<MaleStep4Props> = ({ data, onChange })
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Contextual Helper Card Column */}
-        <div className="lg:col-span-4 space-y-3">
-          <MaleWhyWeAskCard
-            title="Why we ask this"
-            description="Regular resistance training and adequate deep sleep are two of the most effective non-pharmacological drivers of healthy testosterone synthesis."
-            icon={InfoCircle}
-          />
-
-          <div className="p-3.5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] text-[11px] text-[#55718F] space-y-1.5">
-            <span className="font-bold text-[#073B72] block">Biological Mechanism:</span>
-            <p>
-              Up to 70% of daily testosterone output occurs during consolidated nocturnal sleep. Disrupted or short sleep suppresses the hypothalamic-pituitary-gonadal axis and increases daytime cortisol.
-            </p>
-          </div>
-        </div>
       </div>
+
+      {/* ── "Why We Ask This" Modal Dialog ── */}
+      <OnboardingWhyModal
+        isOpen={showWhyModal}
+        onClose={() => setShowWhyModal(false)}
+        title="Why we ask about physical habits & sleep"
+        icon={Activity}
+        accentColor="teal"
+      >
+        <div className="p-3.5 rounded-xl bg-[#F0FDFE] border border-[#CCFBF1]">
+          <span className="font-bold text-[#0E9EAA] block mb-1">Metabolic Influence</span>
+          <p>
+            Regular resistance training and adequate deep sleep are two of the most effective non-pharmacological drivers of healthy testosterone synthesis.
+          </p>
+        </div>
+
+        <div className="p-3.5 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2]">
+          <span className="font-bold text-[#073B72] block mb-1">Biological Mechanism:</span>
+          <p>
+            Up to 70% of daily testosterone output occurs during consolidated nocturnal sleep. Disrupted or short sleep suppresses the hypothalamic-pituitary-gonadal axis and increases daytime cortisol.
+          </p>
+        </div>
+      </OnboardingWhyModal>
     </div>
   );
 };
