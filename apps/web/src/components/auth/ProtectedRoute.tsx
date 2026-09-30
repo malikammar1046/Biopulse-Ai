@@ -9,7 +9,7 @@ export const ProtectedRoute: React.FC = () => {
   const location = useLocation();
 
   if (loading) {
-    return <BioPulseLoadingScreen message="Verifying session..." />;
+    return <BioPulseLoadingScreen message="Preparing your health experience" fullScreen={true} />;
   }
 
   if (!isAuthenticated) {

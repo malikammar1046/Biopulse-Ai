@@ -8,7 +8,7 @@ export const PublicOnlyRoute: React.FC = () => {
   const { userProfile, isAuthenticated, isOnboarded, loading } = useAuth();
 
   if (loading) {
-    return <BioPulseLoadingScreen message="Checking authorization..." />;
+    return <BioPulseLoadingScreen message="Preparing your health experience" fullScreen={true} />;
   }
 
   if (isAuthenticated) {

@@ -9,7 +9,7 @@ export const OnboardingRoute: React.FC = () => {
   const location = useLocation();
 
   if (loading) {
-    return <BioPulseLoadingScreen message="Preparing health setup..." />;
+    return <BioPulseLoadingScreen message="Preparing your health experience" fullScreen={true} />;
   }
 
   if (!isAuthenticated) {
