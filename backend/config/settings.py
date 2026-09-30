@@ -166,6 +166,14 @@ OLLAMA_TIMEOUT_SECONDS = int(os.environ.get("OLLAMA_TIMEOUT_SECONDS", "30"))
 LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "qwen").strip().lower()
 
 # ---------------------------------------------------------------------------
+# Gemini & Cloud LLM Providers
+# ---------------------------------------------------------------------------
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash").strip()
+GEMINI_FALLBACK_MODEL = os.environ.get("GEMINI_FALLBACK_MODEL", "gemini-3.5-flash-lite").strip()
+GEMINI_TIMEOUT_SECONDS = int(os.environ.get("GEMINI_TIMEOUT_SECONDS", "30"))
+GEMINI_MAX_OUTPUT_TOKENS = int(os.environ.get("GEMINI_MAX_OUTPUT_TOKENS", "2500"))
+
+# ---------------------------------------------------------------------------
 # BioPulse Assessment Maintenance Mode (Enforces 503 on writes & suppresses auto-reassess)
 # ---------------------------------------------------------------------------
 BIOPULSE_ASSESSMENT_MAINTENANCE = os.environ.get(

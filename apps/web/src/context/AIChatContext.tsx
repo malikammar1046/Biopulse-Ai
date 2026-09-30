@@ -195,7 +195,7 @@ export const AIChatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       };
 
       const nextMessages = [...messages, userMsg];
-      setMessages(nextMessages);
+      setMessages((prev) => [...prev, userMsg]);
       setIsLoading(true);
 
       try {

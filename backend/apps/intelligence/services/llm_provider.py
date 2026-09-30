@@ -137,7 +137,7 @@ class MedGemmaProvider(LLMProvider):
             "model": self.model_name,
             "messages": messages,
             "temperature": 0.2,
-            "max_tokens": 850,
+            "max_tokens": 2048,
             "response_format": {"type": "json_object"},
         }
 
@@ -370,14 +370,16 @@ class GeminiProvider(LLMProvider):
         api_key: str,
         model_name: str = "gemini-3.8-flash",
         fallback_model: Optional[str] = None,
-        timeout: int = 15,
+        timeout: int = 30,
         max_retries: int = 2,
+        max_output_tokens: int = 2500,
     ) -> None:
         self.api_key = api_key
         self.model_name = model_name or "gemini-3.8-flash"
         self.fallback_model = fallback_model.strip() if fallback_model else None
         self.timeout = timeout
         self.max_retries = max_retries
+        self.max_output_tokens = max(max_output_tokens, 2048)
 
     def _sanitize(self, text: str) -> str:
         """Strips raw API key from any string or exception message."""
@@ -396,7 +398,7 @@ class GeminiProvider(LLMProvider):
         """
         config: dict[str, Any] = {
             "temperature": 0.2,
-            "maxOutputTokens": 1000,
+            "maxOutputTokens": self.max_output_tokens,
         }
         if "gemini-3.5-flash-lite" in target_model.lower():
             return config
@@ -614,7 +616,16 @@ class GeminiProvider(LLMProvider):
         if not candidates:
             raise LLMProviderError(f"Empty candidates list returned by Gemini model '{actual_model_used}'.")
 
-        parts = candidates[0].get("content", {}).get("parts", [])
+        candidate = candidates[0]
+        finish_reason = candidate.get("finishReason")
+        if finish_reason == "MAX_TOKENS":
+            logger.warning(
+                "Gemini model '%s' hit MAX_TOKENS limit (%d); response may be truncated.",
+                actual_model_used,
+                self.max_output_tokens,
+            )
+
+        parts = candidate.get("content", {}).get("parts", [])
         if not parts:
             raise LLMProviderError(f"Gemini model '{actual_model_used}' candidate contains no content parts.")
 
@@ -624,6 +635,12 @@ class GeminiProvider(LLMProvider):
 
         # Conservative defaults for plain-text responses
         answer = raw_text.strip()
+        # Gracefully balance unclosed markdown formatting if model output stopped abruptly
+        if answer.count("**") % 2 == 1:
+            answer += "**"
+        elif answer.count("*") % 2 == 1:
+            answer += "*"
+
         confidence = "moderate"
         used_context: List[str] = []
         needs_clinician = False
@@ -707,7 +724,7 @@ class GroqProvider(LLMProvider):
             "model": self.model_name,
             "messages": messages,
             "temperature": 0.2,
-            "max_tokens": 800,
+            "max_tokens": 2048,
             "response_format": {"type": "json_object"},
         }
 
@@ -779,7 +796,7 @@ class OpenAIProvider(LLMProvider):
             "model": self.model_name,
             "messages": messages,
             "temperature": 0.2,
-            "max_tokens": 800,
+            "max_tokens": 2048,
             "response_format": {"type": "json_object"},
         }
 
@@ -963,10 +980,19 @@ def get_llm_provider() -> LLMProvider:
         )
         if isinstance(gemini_fallback, str):
             gemini_fallback = gemini_fallback.strip()
-        if not gemini_fallback or gemini_fallback == gemini_model:
-            gemini_fallback = None
+        timeout_str = os.environ.get("GEMINI_TIMEOUT_SECONDS", "") or getattr(settings, "GEMINI_TIMEOUT_SECONDS", "")
+        timeout = int(timeout_str) if str(timeout_str).isdigit() else 30
 
-        return GeminiProvider(api_key, model_name=gemini_model, fallback_model=gemini_fallback)
+        tokens_str = os.environ.get("GEMINI_MAX_OUTPUT_TOKENS", "") or getattr(settings, "GEMINI_MAX_OUTPUT_TOKENS", "")
+        max_output_tokens = int(tokens_str) if str(tokens_str).isdigit() else 2500
+
+        return GeminiProvider(
+            api_key,
+            model_name=gemini_model,
+            fallback_model=gemini_fallback,
+            timeout=timeout,
+            max_output_tokens=max_output_tokens,
+        )
 
     model_name = os.environ.get("LLM_MODEL", "").strip()
 
