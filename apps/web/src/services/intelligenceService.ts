@@ -983,38 +983,85 @@ export async function checkCompanionHealth(): Promise<{
 /**
  * Fetches authoritative longitudinal health summary and historical trends.
  * Supports period filtering ('30d' | '90d' | '180d' | '1y' | 'all') and pathway scoping.
+ * Implements bounded retries (0ms, 250ms, 500ms) with rich diagnostics.
  */
 export async function getLongitudinalHealth(
   period: MonitoringPeriodFilter = '90d',
   module?: string,
   signal?: AbortSignal
 ): Promise<LongitudinalHealthResponse | null> {
-  try {
-    const token = await getAccessToken();
-    if (!token) return null;
-    const headers: Record<string, string> = {
-      'Authorization': `Bearer ${token}`,
-    };
+  const retryDelays = [0, 250, 500];
 
-    const params = new URLSearchParams();
-    if (period) params.set('period', period);
-    if (module) params.set('module', module);
+  for (let attempt = 0; attempt < retryDelays.length; attempt++) {
+    if (attempt > 0) {
+      if (signal?.aborted) return null;
+      await new Promise((resolve) => setTimeout(resolve, retryDelays[attempt]));
+    }
 
-    const url = `${LONGITUDINAL_HEALTH_ENDPOINT}?${params.toString()}`;
-    const response = await fetchWithTimeout(url, { method: 'GET', headers, signal }, 15000);
-    if (!response.ok) {
-      console.warn(`[Intelligence API] getLongitudinalHealth failed with status ${response.status}`);
-      return null;
+    try {
+      let token = await getAccessToken();
+      if (!token) {
+        // Attempt a quick session refresh if token is initially missing
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          token = session?.access_token ?? null;
+        } catch {
+          // ignore
+        }
+      }
+
+      if (!token) {
+        console.warn('[Intelligence API] getLongitudinalHealth: No active auth token available.');
+        return null;
+      }
+
+      const headers: Record<string, string> = {
+        Authorization: `Bearer ${token}`,
+      };
+
+      const params = new URLSearchParams();
+      if (period) params.set('period', period);
+      if (module) params.set('module', module);
+
+      const url = `${LONGITUDINAL_HEALTH_ENDPOINT}?${params.toString()}`;
+      const response = await fetchWithTimeout(url, { method: 'GET', headers, signal }, 15000);
+
+      if (!response.ok) {
+        let errorBody = '';
+        try {
+          errorBody = await response.text();
+        } catch {
+          errorBody = '(could not parse response body)';
+        }
+        console.warn(
+          `[Intelligence API] getLongitudinalHealth attempt ${attempt + 1}/${retryDelays.length} failed: HTTP ${response.status} | body: ${errorBody}`
+        );
+
+        // Do not retry 401 Unauthorized or 403 Forbidden; session problem must be handled by auth
+        if (response.status === 401 || response.status === 403) {
+          return null;
+        }
+
+        // Retry on 422 (transient hydration race) or 500/503
+        if (attempt < retryDelays.length - 1) {
+          continue;
+        }
+        return null;
+      }
+
+      return (await response.json()) as LongitudinalHealthResponse;
+    } catch (err: any) {
+      if (err?.name === 'AbortError' || signal?.aborted) {
+        return null;
+      }
+      console.error(`[Intelligence API] getLongitudinalHealth network error attempt ${attempt + 1}:`, err);
+      if (attempt === retryDelays.length - 1) {
+        return null;
+      }
     }
-    return (await response.json()) as LongitudinalHealthResponse;
-  } catch (err: any) {
-    if (err?.name === 'AbortError' || signal?.aborted) {
-      // Aborted cleanly due to unmount or newer request; do not log as error
-      return null;
-    }
-    console.error('[Intelligence API] getLongitudinalHealth error:', err);
-    return null;
   }
+
+  return null;
 }
 
 

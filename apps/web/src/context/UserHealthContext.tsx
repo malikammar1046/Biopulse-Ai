@@ -91,7 +91,9 @@ import {
   uploadUltrasoundAssessment,
   clearTier2Assessment,
   fetchPatientClinicalState,
+  getLongitudinalHealth,
 } from '../services/intelligenceService';
+import { lifestyleService } from '../services/lifestyleService';
 
 import { useAuth } from './AuthContext';
 import type { AdaptiveHealthProfile, ADAMQuestionnaireState } from '../types/adaptiveScreening';
@@ -219,11 +221,15 @@ interface UserHealthContextType {
   addReminder: (title: string, time: string, category: TodayReminder['category']) => void;
   registerUser: (data: { fullName: string; email: string; dateOfBirth?: string }) => void;
   completeOnboarding: (data: Partial<UserProfile>) => Promise<{ success: boolean; error?: string }>;
+  postOnboardingReadiness: 'idle' | 'initializing' | 'ready' | 'error';
+  setPostOnboardingReadiness: (state: 'idle' | 'initializing' | 'ready' | 'error') => void;
   finalizeOnboardingAndScreen: (
     profileData: Partial<UserProfile>,
     pathway: 'female' | 'male',
     tier1Inputs?: Record<string, any>,
-    onProgress?: (step: 'saving_profile' | 'analyzing_patterns' | 'preparing_dashboard') => void
+    onProgress?: (
+      step: 'saving_profile' | 'analyzing_patterns' | 'syncing_timeline' | 'preparing_guidance' | 'preparing_dashboard'
+    ) => void
   ) => Promise<{ success: boolean; assessment?: ProgressiveAssessment; error?: string }>;
   updateUserProfile: (data: Partial<UserProfile>) => Promise<{ success: boolean; error?: string }>;
   resetToDefaultProfile: () => void;
@@ -255,6 +261,17 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   } = useAuth();
 
   const authoritativeUserId = authUser?.id || userProfile?.id;
+
+  // Post-onboarding atomic readiness lifecycle ('idle' | 'initializing' | 'ready' | 'error')
+  const [postOnboardingReadiness, setPostOnboardingReadiness] = useState<
+    'idle' | 'initializing' | 'ready' | 'error'
+  >(userProfile?.isOnboarded ? 'ready' : 'idle');
+
+  useEffect(() => {
+    if (userProfile?.isOnboarded && postOnboardingReadiness === 'idle') {
+      setPostOnboardingReadiness('ready');
+    }
+  }, [userProfile?.isOnboarded, postOnboardingReadiness]);
 
   // Cycle Records State
   const [cycleRecords, setCycleRecords] = useState<CycleRecord[]>([]);
@@ -2347,11 +2364,12 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   );
 
   // Automatically trigger assessment on profile load or when health factors change
+  // Strictly gated to fully onboarded users to prevent racing against onboarding finalization
   useEffect(() => {
-    if (authoritativeUserId) {
+    if (authoritativeUserId && userProfile?.isOnboarded && !isFinalizingOnboardingRef.current) {
       refreshMlAssessment(false);
     }
-  }, [refreshMlAssessment, authoritativeUserId]);
+  }, [refreshMlAssessment, authoritativeUserId, userProfile?.isOnboarded]);
 
   const registerUser = useCallback(
     (_data: { fullName: string; email: string; dateOfBirth?: string }) => {
@@ -2418,25 +2436,29 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   /**
    * Deterministically finalizes onboarding: saves profile, bridges medications,
    * runs canonical Tier 1 screening for the user's pathway, confirms persistence
-   * via active assessment fetch with bounded retry, and updates context state.
+   * of assessment and clinical state, pre-warms longitudinal health and recommendations,
+   * and updates postOnboardingReadiness to 'ready'.
    */
   const finalizeOnboardingAndScreen = useCallback(
     async (
       profileData: Partial<UserProfile>,
       pathway: 'female' | 'male',
       tier1Inputs?: Record<string, any>,
-      onProgress?: (step: 'saving_profile' | 'analyzing_patterns' | 'preparing_dashboard') => void
+      onProgress?: (
+        step: 'saving_profile' | 'analyzing_patterns' | 'syncing_timeline' | 'preparing_guidance' | 'preparing_dashboard'
+      ) => void
     ): Promise<{ success: boolean; assessment?: ProgressiveAssessment; error?: string }> => {
       if (isFinalizingOnboardingRef.current) {
         console.warn('[UserHealthContext] finalizeOnboardingAndScreen already in flight, skipping duplicate call.');
         return { success: false, error: 'Screening finalization already in progress.' };
       }
       isFinalizingOnboardingRef.current = true;
+      setPostOnboardingReadiness('initializing');
 
       const t0 = performance.now();
       const logTs = (msg: string) => {
         if (import.meta.env?.DEV) {
-          console.log(`[INITIAL_SCREENING] ${msg} +${Math.round(performance.now() - t0)}ms`);
+          console.log(`[ONBOARDING_SYNC] ${msg} +${Math.round(performance.now() - t0)}ms`);
         }
       };
 
@@ -2454,6 +2476,7 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
         if (!saveRes.success) {
           logTs('profile_save_failed');
+          setPostOnboardingReadiness('error');
           return { success: false, error: saveRes.error || 'Failed to save health profile.' };
         }
         logTs('profile_save_complete');
@@ -2506,20 +2529,21 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
         if (!assessment) {
           logTs('tier1_failed_no_result');
+          setPostOnboardingReadiness('error');
           return {
             success: false,
             error: 'Screening model was unable to generate an assessment score. Please try again.',
           };
         }
 
-        onProgress?.('preparing_dashboard');
+        onProgress?.('syncing_timeline');
         logTs('active_fetch_start');
 
         const targetModule = pathway === 'male' ? 'male_hypogonadism' : 'female_pcos';
         let confirmedActive: ProgressiveAssessment | null = null;
 
-        // Bounded retry (0ms, 300ms, 600ms, 1000ms - max 4 checks, total <= 2s)
-        const retryDelays = [0, 300, 600, 1000];
+        // Bounded retry (0ms, 250ms, 500ms, 1000ms - max 4 checks, total <= 2s)
+        const retryDelays = [0, 250, 500, 1000];
         for (let attempt = 0; attempt < retryDelays.length; attempt++) {
           if (attempt > 0) {
             await new Promise((resolve) => setTimeout(resolve, retryDelays[attempt]));
@@ -2537,6 +2561,14 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
         const authoritativeResult = confirmedActive || assessment;
         logTs('active_synced');
+
+        // Confirm patient clinical state queryability
+        try {
+          await fetchClinicalState(targetModule);
+          logTs('clinical_state_synced');
+        } catch (csErr) {
+          console.warn('[UserHealthContext] Clinical state confirmation notice:', csErr);
+        }
 
         const mutationSeq = ++latestSequenceIdRef.current;
         const currentState: AssessmentSyncState = {
@@ -2556,6 +2588,22 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setAssessmentLoading(false);
         setMlAssessmentLoading(false);
 
+        // Pre-warm longitudinal health and lifestyle recommendations concurrently
+        onProgress?.('preparing_guidance');
+        logTs('prewarm_guidance_start');
+        try {
+          const pathwaySlug = pathway === 'male' ? 'androsense' : 'ovasense';
+          await Promise.allSettled([
+            getLongitudinalHealth('90d', targetModule),
+            lifestyleService.getRecommendations(pathwaySlug),
+          ]);
+          logTs('prewarm_guidance_complete');
+        } catch (warmupErr) {
+          console.warn('[UserHealthContext] Pre-warm non-blocking notice:', warmupErr);
+        }
+
+        setPostOnboardingReadiness('ready');
+
         try {
           window.dispatchEvent(new CustomEvent('biopulse:longitudinal-refresh'));
         } catch {
@@ -2566,6 +2614,7 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         return { success: true, assessment: authoritativeResult };
       } catch (err: any) {
         logTs(`finalization_error: ${err?.message || err}`);
+        setPostOnboardingReadiness('error');
         return {
           success: false,
           error: err?.message || 'A network error occurred while generating your initial screening.',
@@ -2582,6 +2631,7 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       submitTier1,
       activeAssessment,
       assessmentHistory,
+      fetchClinicalState,
     ]
   );
 
@@ -2737,6 +2787,8 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         addReminder,
         registerUser,
         completeOnboarding,
+        postOnboardingReadiness,
+        setPostOnboardingReadiness,
         finalizeOnboardingAndScreen,
         updateUserProfile,
         resetToDefaultProfile,

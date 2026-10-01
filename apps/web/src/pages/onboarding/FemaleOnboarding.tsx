@@ -155,7 +155,7 @@ export const FemaleOnboarding: React.FC = () => {
     setIsSubmitting(true);
     setIsProcessingScreening(true);
     setSaveError(undefined);
-    setScreeningStatusMessage('Preparing your health profile...');
+    setScreeningStatusMessage('Saving your health profile...');
 
     try {
       const femaleTier1Inputs = deriveFemaleTier1InputsFromProfile(draftProfile);
@@ -166,11 +166,13 @@ export const FemaleOnboarding: React.FC = () => {
         femaleTier1Inputs,
         (step) => {
           if (step === 'saving_profile') {
-            setScreeningStatusMessage('Preparing your health profile...');
+            setScreeningStatusMessage('Saving your health profile...');
           } else if (step === 'analyzing_patterns') {
-            setScreeningStatusMessage('Analyzing your screening patterns...');
-          } else if (step === 'preparing_dashboard') {
-            setScreeningStatusMessage('Preparing your personalized dashboard...');
+            setScreeningStatusMessage('Preparing your screening baseline...');
+          } else if (step === 'syncing_timeline') {
+            setScreeningStatusMessage('Synchronizing your health timeline...');
+          } else if (step === 'preparing_guidance' || step === 'preparing_dashboard') {
+            setScreeningStatusMessage('Preparing your personalized guidance...');
           }
         }
       );

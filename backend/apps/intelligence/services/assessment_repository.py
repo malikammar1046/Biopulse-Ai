@@ -302,6 +302,7 @@ class AssessmentRepository:
         user_id: str,
         module: str = "female_pcos",
         auth_token: str | None = None,
+        perform_backfill: bool = True,
     ) -> dict[str, Any]:
         """
         Retrieves the authoritative patient clinical state (Tier 1 & Tier 2 inputs).
@@ -312,6 +313,7 @@ class AssessmentRepository:
             user_id=user_id,
             module=module,
             auth_token=auth_token,
+            perform_backfill=perform_backfill,
         )
 
     @classmethod
@@ -373,7 +375,9 @@ class AssessmentRepository:
 
         def _attach_authoritative(res_dict: dict[str, Any]) -> dict[str, Any]:
             try:
-                st = cls.get_patient_clinical_state(user_id_str, module=module_name, auth_token=auth_token)
+                st = cls.get_patient_clinical_state(
+                    user_id_str, module=module_name, auth_token=auth_token, perform_backfill=False
+                )
                 t2 = st.get("tier_2_inputs") or {}
                 t1 = st.get("tier_1_inputs") or {}
                 res_dict["authoritative_tier_2_inputs"] = t2
@@ -469,12 +473,9 @@ class AssessmentRepository:
             user_records = _in_memory_assessments.get(user_id_str, [])
             for rec in reversed(user_records):
                 if rec.get("is_active", False):
-                    if rec.get("module", "female_pcos") == module_name:
+                    rec_mod = rec.get("module") or "female_pcos"
+                    if rec_mod == module_name:
                         return _attach_authoritative(rec)
-            # Fallback if module was not explicitly matched
-            for rec in reversed(user_records):
-                if rec.get("is_active", False):
-                    return _attach_authoritative(rec)
         return None
 
     @classmethod
