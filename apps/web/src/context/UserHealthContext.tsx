@@ -111,6 +111,7 @@ import {
   deriveFemaleTier1InputsFromProfile,
   deriveMaleTier1InputsFromProfile,
 } from '../utils/tier1InputMappers';
+import { logProbabilityTrace } from '../utils/probabilityTrace';
 
 interface UserHealthContextType {
   userProfile: UserProfile;
@@ -1849,6 +1850,24 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           setMlAssessment(result.nextState.activeAssessment as unknown as IntelligenceAssessment);
           setAssessmentHistory(result.nextState.assessmentHistory);
           activeProgressionIdRef.current = result.nextState.activeProgressionId;
+
+          const act = result.nextState.activeAssessment;
+          if (act) {
+            logProbabilityTrace('refreshActiveAssessment', {
+              userId: authoritativeUserId,
+              pathway: isMale ? 'male' : 'female',
+              displaySource: 'active_assessment',
+              assessmentId: act.assessment_id || act.id,
+              module: act.module || targetModule,
+              probability: act.probability,
+              probabilityPercent: act.probability_percent,
+              assessmentLevel: act.assessment_level,
+              createdAt: act.created_at,
+              modelName: act.model_name,
+              modelVersion: act.model_version,
+              inputHash: act.input_hash,
+            });
+          }
         } else {
           setAssessmentHistory(result.nextState.assessmentHistory);
         }
@@ -2340,6 +2359,8 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setMlAssessmentLoading(true);
       setMlAssessmentError(false);
       try {
+        const isMale = resolvePathway(userProfile?.gender, userProfile?.pathway) === 'male';
+        const targetModule = isMale ? 'male_hypogonadism' : 'female_pcos';
         const clientPayload = {
           userProfile,
           cycleRecords,
@@ -2347,9 +2368,19 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           foodLogs,
           fitnessLogs,
         };
-        const result = await fetchBackendAssessment(force, clientPayload);
+        const result = await fetchBackendAssessment(force, clientPayload, targetModule);
         if (result) {
           setMlAssessment(result);
+          logProbabilityTrace('refreshMlAssessment', {
+            userId: authoritativeUserId,
+            pathway: isMale ? 'male' : 'female',
+            displaySource: 'ml_assessment',
+            probability: result.pcos_probability,
+            cycleRecordsCount: Array.isArray(cycleRecords) ? cycleRecords.length : 0,
+            symptomRecordsCount: Array.isArray(symptomRecords) ? symptomRecords.length : 0,
+            foodLogsCount: Array.isArray(foodLogs) ? foodLogs.length : 0,
+            fitnessLogsCount: Array.isArray(fitnessLogs) ? fitnessLogs.length : 0,
+          });
         } else {
           setMlAssessmentError(true);
         }
@@ -2363,13 +2394,20 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     [authoritativeUserId, userProfile, cycleRecords, symptomRecords, foodLogs, fitnessLogs]
   );
 
-  // Automatically trigger assessment on profile load or when health factors change
-  // Strictly gated to fully onboarded users to prevent racing against onboarding finalization
-  useEffect(() => {
-    if (authoritativeUserId && userProfile?.isOnboarded && !isFinalizingOnboardingRef.current) {
-      refreshMlAssessment(false);
-    }
-  }, [refreshMlAssessment, authoritativeUserId, userProfile?.isOnboarded]);
+  /**
+   * ============================================================================
+   * CORE SOURCE OF TRUTH RULE:
+   * "Authentication and application hydration must never be treated as
+   * a screening event. The persisted active pathway assessment is the
+   * authoritative screening result until screening-relevant health data
+   * is intentionally reassessed."
+   * ============================================================================
+   *
+   * Note: The automatic ML re-inference effect previously present here has been
+   * intentionally removed. Onboarded users hydrate their authoritative screening
+   * probability strictly via refreshActiveAssessment(). Dynamic derived ML insights
+   * are computed only on explicit user request or targeted re-screening.
+   */
 
   const registerUser = useCallback(
     (_data: { fullName: string; email: string; dateOfBirth?: string }) => {

@@ -339,6 +339,7 @@ export interface ProgressiveAssessment {
   notice?: string;
   disclaimer: string;
   created_at?: string;
+  input_hash?: string;
 }
 
 // ---------------------------------------------------------------------------

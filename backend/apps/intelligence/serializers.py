@@ -54,6 +54,7 @@ class ProgressiveAssessmentSerializer(serializers.Serializer):
     created_at = serializers.CharField(required=False, allow_blank=True)
     notice = serializers.CharField(required=False, allow_blank=True)
     status_code = serializers.CharField(required=False, allow_blank=True)
+    input_hash = serializers.CharField(required=False, allow_blank=True)
 
     # Module & Categorization
     module = serializers.CharField(required=False, default="female_pcos")

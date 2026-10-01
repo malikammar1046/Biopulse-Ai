@@ -14,6 +14,7 @@ import {
   getRiskPatternDisplay,
   formatConfidence,
 } from '../../services/intelligenceService';
+import { getAuthoritativeAssessmentForPathway, type Pathway } from '../../utils/authoritativeAssessmentSelector';
 
 interface DigitalTwinProps {
   insight: DigitalTwinInsight; // local fallback context (for prompt guidance only)
@@ -28,10 +29,9 @@ export const DigitalTwinInsightCard: React.FC<DigitalTwinProps> = ({
 }) => {
   const navigate = useNavigate();
   const {
+    userProfile,
     mlAssessment,
-    mlAssessmentLoading,
     mlAssessmentError,
-    refreshMlAssessment,
     adaptiveProfile,
     activeAssessment,
     assessmentLoading,
@@ -39,66 +39,77 @@ export const DigitalTwinInsightCard: React.FC<DigitalTwinProps> = ({
   } = useUserHealth();
 
   // ---------------------------------------------------------------------------
-  // Derived display values prioritizing authoritative progressive PCOS-ML model
+  // Derived display values prioritizing authoritative progressive model
   // ---------------------------------------------------------------------------
-  const hasActive = Boolean(activeAssessment);
-  const probVal = activeAssessment ? activeAssessment.probability : mlAssessment?.pcos_probability;
-  const probPercent =
-    activeAssessment?.probability_percent !== undefined
-      ? activeAssessment.probability_percent
-      : probVal !== null && probVal !== undefined
-      ? probVal * 100
-      : null;
+  const pathway: Pathway = userProfile?.gender === 'male' ? 'male' : 'female';
+  const {
+    authoritativeAssessment,
+    probabilityPercent,
+    riskCategory,
+    threshold: authThreshold,
+  } = React.useMemo(() => {
+    return getAuthoritativeAssessmentForPathway({
+      activeAssessment,
+      pathway,
+      userId: userProfile?.id,
+    });
+  }, [activeAssessment, pathway, userProfile?.id]);
 
-  const isML = Boolean(hasActive || (mlAssessment && mlAssessment.risk_category !== 'insufficient_data'));
-  const isInsufficient = !isML && Boolean(mlAssessment?.risk_category === 'insufficient_data');
+  const hasAuthoritative = Boolean(authoritativeAssessment);
+  const isML = hasAuthoritative;
+  const isInsufficient = !hasAuthoritative && !assessmentLoading && (adaptiveProfile?.overallCompletenessPercentage ?? 0) < 30;
 
-  const isLoading = (mlAssessmentLoading || assessmentLoading) && !activeAssessment && !mlAssessment;
+  const isError = !hasAuthoritative && !assessmentLoading && Boolean(mlAssessmentError);
+  const isLoading = assessmentLoading && !hasAuthoritative;
   const loadState: LoadState = isLoading
     ? 'loading'
     : isInsufficient
     ? 'insufficient_data'
     : isML
     ? 'ml'
-    : mlAssessmentError
+    : isError
     ? 'error'
-    : mlAssessmentLoading || assessmentLoading
-    ? 'loading'
     : 'idle';
 
-  const currentCategory = activeAssessment?.risk_category || mlAssessment?.risk_category || mlAssessment?.risk_pattern || 'lower';
+  const currentCategory = riskCategory || 'lower';
   const patternDisplay = isML ? getRiskPatternDisplay(currentCategory) : null;
-  const pcosProbStr = probPercent !== null && probPercent !== undefined ? `${probPercent.toFixed(1)}%` : null;
+  const probStr = probabilityPercent !== null && probabilityPercent !== undefined ? `${probabilityPercent.toFixed(1)}%` : null;
   const confidenceStr = mlAssessment?.confidence ? formatConfidence(mlAssessment.confidence) : null;
-  const threshold = activeAssessment?.threshold ?? mlAssessment?.screening_threshold ?? 0.38;
+  const threshold = authThreshold ?? 0.38;
 
   const handleRetry = async () => {
     await refreshActiveAssessment();
-    await refreshMlAssessment(true);
   };
 
   const getTierBadgeText = () => {
     if (!isML) return 'Building Profile';
-    if (activeAssessment?.assessment_level === 'tier_1_2_3') return 'Complete Multimodal';
-    if (activeAssessment?.assessment_level === 'tier_1_2') return 'Tier 1 + Clinical';
-    if (activeAssessment?.pcom_status || activeAssessment?.status_code === 'tier_1_3_model_unavailable') return 'Tier 1 + Ultrasound';
-    return 'Tier 1 Active';
+    if (authoritativeAssessment?.assessment_level === 'tier_1_2_3') return 'Complete Multimodal';
+    if (authoritativeAssessment?.assessment_level === 'tier_1_2') return 'Tier 1 + Clinical';
+    if (authoritativeAssessment?.pcom_status || authoritativeAssessment?.status_code === 'tier_1_3_model_unavailable') return 'Tier 1 + Ultrasound';
+    if (authoritativeAssessment?.assessment_level === 'tier_1') return 'Tier 1 Active';
+    return 'Active Screening';
   };
 
   const getAssessmentDescription = () => {
-    if (activeAssessment?.assessment_level === 'tier_1_2_3') {
-      return 'Comprehensive multimodal screening combining 32 cumulative lifestyle & clinical biomarkers with deep ultrasound vision analysis.';
+    if (authoritativeAssessment?.assessment_level === 'tier_1_2_3') {
+      return pathway === 'male'
+        ? 'Comprehensive multimodal screening combining clinical biomarkers and advanced hormone evaluation.'
+        : 'Comprehensive multimodal screening combining 32 cumulative lifestyle & clinical biomarkers with deep ultrasound vision analysis.';
     }
-    if (activeAssessment?.assessment_level === 'tier_1_2') {
-      return 'Cumulative screening model synthesizing 32 features (demographics, cycle rhythms, symptoms, and clinical laboratory biomarkers).';
+    if (authoritativeAssessment?.assessment_level === 'tier_1_2') {
+      return pathway === 'male'
+        ? 'Tier 1 non-invasive ADAM clinical indicators synthesized with biochemical hormone profile.'
+        : 'Cumulative screening model synthesizing 32 features (demographics, cycle rhythms, symptoms, and clinical laboratory biomarkers).';
     }
-    if (activeAssessment?.pcom_status) {
+    if (authoritativeAssessment?.pcom_status) {
       return 'Tier 1 biometrics evaluated with pelvic ultrasound morphology analysis.';
     }
-    if (activeAssessment) {
-      return 'Screening model utilizing non-invasive cycle regularity, biometrics, symptoms, and lifestyle indicators.';
+    if (authoritativeAssessment) {
+      return pathway === 'male'
+        ? 'Screening model utilizing non-invasive ADAM clinical indicators, biometrics, and lifestyle factors.'
+        : 'Screening model utilizing non-invasive cycle regularity, biometrics, symptoms, and lifestyle indicators.';
     }
-    return mlAssessment?.risk_category_description || mlAssessment?.risk_pattern_description || 'Algorithmic screening synthesis of your clinical records.';
+    return 'Complete your initial screening profile to view your algorithmic clinical risk score.';
   };
 
   // ---------------------------------------------------------------------------
@@ -117,7 +128,7 @@ export const DigitalTwinInsightCard: React.FC<DigitalTwinProps> = ({
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-base font-bold font-display text-[#0F172A]">
-                BioPulse AI PCOS Screening
+                {pathway === 'male' ? 'BioPulse AI Hypogonadism Screening' : 'BioPulse AI PCOS Screening'}
               </h3>
               <span className="text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD]">
                 {getTierBadgeText()}
@@ -248,9 +259,11 @@ export const DigitalTwinInsightCard: React.FC<DigitalTwinProps> = ({
                 </span>
                 <div className="flex items-baseline gap-2 mt-0.5">
                   <span className="text-3xl sm:text-4xl font-extrabold font-mono text-[#0F172A] tracking-tight">
-                    {pcosProbStr || '—'}
+                    {probStr || '—'}
                   </span>
-                  <span className="text-xs font-mono text-[#64748B]">PCOS screening score</span>
+                  <span className="text-xs font-mono text-[#64748B]">
+                    {pathway === 'male' ? 'Hypogonadism screening score' : 'PCOS screening score'}
+                  </span>
                 </div>
               </div>
 
@@ -282,7 +295,7 @@ export const DigitalTwinInsightCard: React.FC<DigitalTwinProps> = ({
         <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
           <button
             type="button"
-            onClick={() => onOpenChat(insight.suggestedChatPrompt || 'Explain my PCOS screening assessment and key factors')}
+            onClick={() => onOpenChat(insight.suggestedChatPrompt || (pathway === 'male' ? 'Explain my hypogonadism screening assessment and key factors' : 'Explain my PCOS screening assessment and key factors'))}
             className="px-5 py-2.5 rounded-2xl font-sans font-bold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer group"
           >
             <MessageChatCircle className="w-4 h-4 text-white" aria-hidden="true" />
@@ -307,8 +320,7 @@ export const DigitalTwinInsightCard: React.FC<DigitalTwinProps> = ({
 
       {/* Standard non-diagnostic clinical disclaimer */}
       <p className="relative z-10 text-[9px] text-[#64748B] leading-relaxed border-t border-[#E2E8F0] pt-2 font-sans text-center sm:text-left">
-        {activeAssessment?.disclaimer ||
-          mlAssessment?.disclaimer ||
+        {authoritativeAssessment?.disclaimer ||
           'This assessment is generated by machine learning for informational screening purposes only and does not constitute a medical diagnosis. Consult a qualified healthcare professional for diagnostic evaluation.'}
       </p>
     </div>

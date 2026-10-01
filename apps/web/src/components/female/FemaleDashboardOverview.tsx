@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { InfoCircle } from '@untitledui/icons';
@@ -14,55 +14,63 @@ import { FemaleNextBestAction } from './FemaleNextBestAction';
 import { FemaleRecentActivity } from './FemaleRecentActivity';
 import { RecommendedCareCard } from '../dashboard/RecommendedCareCard';
 
+import { getAuthoritativeAssessmentForPathway } from '../../utils/authoritativeAssessmentSelector';
+import { logDashboardRenderTrace } from '../../utils/probabilityTrace';
+
 export const FemaleDashboardOverview: React.FC = () => {
   const navigate = useNavigate();
   const {
     userProfile,
     activeAssessment,
-    mlAssessment,
     assessmentLoading,
-    mlAssessmentLoading,
     reports,
     upcomingAppointment,
     submitTier1,
   } = useUserHealth();
 
+  // 2. Authoritative Assessment State strictly bound to female_pcos
+  const authoritative = useMemo(() => {
+    return getAuthoritativeAssessmentForPathway({
+      activeAssessment,
+      pathway: 'female',
+      userId: userProfile?.id,
+    });
+  }, [activeAssessment, userProfile?.id]);
 
-  // 2. Authoritative Assessment State
-  const hasAssessment = Boolean(
-    (activeAssessment && activeAssessment.has_assessment !== false) ||
-    (mlAssessment && mlAssessment.risk_category && mlAssessment.risk_category !== 'insufficient_data')
-  );
+  const {
+    authoritativeAssessment,
+    hasAssessment,
+    probabilityPercent,
+    riskCategory,
+    riskLabel,
+    assessmentLevel,
+    threshold,
+    inputHash,
+    source: displaySource,
+  } = authoritative;
 
-  const probabilityPercent = useMemo(() => {
-    if (!hasAssessment) return null;
-    if (activeAssessment?.probability_percent !== undefined && activeAssessment.probability_percent !== null) {
-      return Math.round(activeAssessment.probability_percent);
-    }
-    if (activeAssessment?.probability !== undefined && activeAssessment.probability !== null) {
-      return Math.round(activeAssessment.probability * 100);
-    }
-    if (mlAssessment?.pcos_probability !== undefined && mlAssessment.pcos_probability !== null) {
-      return Math.round(mlAssessment.pcos_probability * 100);
-    }
-    return null;
-  }, [hasAssessment, activeAssessment, mlAssessment]);
-
-  const riskCategory = activeAssessment?.risk_category || mlAssessment?.risk_category || 'lower';
-  const riskLabel = activeAssessment?.risk_label || mlAssessment?.risk_pattern_description;
-  const assessmentLevel = activeAssessment?.assessment_level || (activeAssessment?.pcom_status ? 'tier_1_3' : 'tier_1');
+  // Diagnostic DEV trace
+  useEffect(() => {
+    logDashboardRenderTrace({
+      pathway: 'female',
+      userId: userProfile?.id,
+      dashboardSource: displaySource,
+      displayedProbability: probabilityPercent,
+      assessmentId: authoritativeAssessment?.assessment_id || authoritativeAssessment?.id,
+      module: authoritativeAssessment?.module,
+      inputHash,
+    });
+  }, [displaySource, probabilityPercent, authoritativeAssessment, userProfile?.id, inputHash]);
 
   const lastAssessmentDateFormatted = useMemo(() => {
-    const rawDate = activeAssessment?.created_at;
+    const rawDate = authoritativeAssessment?.created_at;
     if (!rawDate) return null;
     return new Date(rawDate).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
     });
-  }, [activeAssessment?.created_at]);
-
-  const threshold = activeAssessment?.threshold ?? mlAssessment?.screening_threshold ?? 0.38;
+  }, [authoritativeAssessment?.created_at]);
 
   // Unverified reports count
   const unverifiedReportsCount = useMemo(() => {
@@ -80,7 +88,7 @@ export const FemaleDashboardOverview: React.FC = () => {
     return reports[0];
   }, [reports]);
 
-  const loading = assessmentLoading || mlAssessmentLoading;
+  const loading = assessmentLoading;
   const isOnboarded = Boolean(userProfile?.isOnboarded);
 
   const screeningState: 'not_started' | 'processing' | 'ready' | 'error' = useMemo(() => {
@@ -154,7 +162,7 @@ export const FemaleDashboardOverview: React.FC = () => {
           />
 
           <FemaleTopFactors
-            explanations={activeAssessment?.explanations || mlAssessment?.explanations}
+            explanations={authoritativeAssessment?.explanations}
             onViewExplanation={() => navigate(ROUTES.APP.ASSESSMENT)}
           />
         </div>
