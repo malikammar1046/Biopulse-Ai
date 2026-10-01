@@ -99,14 +99,14 @@ export const FemaleStep5ReviewReady: React.FC<FemaleStep5Props> = ({
         />
       </div>
 
-      <p className="text-xs sm:text-sm text-[#55718F] font-sans leading-relaxed">
+      <p className="text-[14px] sm:text-[15px] text-[#55718F] font-sans leading-relaxed">
         Confirm your baseline information below to finalize your secure profile and begin exploring PCOS screening.
       </p>
 
       {/* ── Error Banner if Save Failed ── */}
       {saveError && (
-        <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-sm text-rose-700 flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" aria-hidden="true" />
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-[14px] sm:text-[15px] text-rose-700 flex items-center gap-2.5">
+          <AlertCircle className="w-5 h-5 text-rose-500 shrink-0" aria-hidden="true" />
           <span>{saveError}</span>
         </div>
       )}
@@ -114,48 +114,48 @@ export const FemaleStep5ReviewReady: React.FC<FemaleStep5Props> = ({
       {/* ── Main Review Content (Full Width) ── */}
       <div className="w-full space-y-4">
           {/* Profile Hero Card with Avatar */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-[#FAFCFF] via-[#FDF2F8]/40 to-[#F0FDF4]/30 border border-[#D7EAF2] flex items-center gap-4">
+          <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-[#FAFCFF] via-[#FDF2F8]/40 to-[#F0FDF4]/30 border border-[#D7EAF2] flex items-center gap-5">
             <UserAvatar
               avatarUrl={profile.avatarUrl}
               name={profile.fullName}
               pathway="female"
               size="lg"
-              className="ring-2 ring-[#F43F7D]/30 shadow-xs shrink-0"
+              className="ring-3 ring-[#F43F7D]/30 shadow-xs shrink-0"
             />
 
             <div>
-              <h3 className="text-lg sm:text-xl font-bold font-display text-[#073B72] leading-tight">
+              <h3 className="text-xl sm:text-2xl font-bold font-display text-[#073B72] leading-tight">
                 {profile.fullName ? `Welcome, ${profile.fullName}` : 'Your BioPulse AI profile is ready'}
               </h3>
-              <p className="text-sm text-[#55718F] font-sans mt-0.5">
+              <p className="text-[14px] sm:text-[15px] text-[#55718F] font-sans mt-1">
                 Baseline calibrated • Ready to explore personalized insights
               </p>
             </div>
           </div>
 
           {/* Configured Baselines Checklist */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-[#D7EAF2] text-sm font-sans text-[#073B72]">
-              <span className="flex items-center gap-2 font-bold tracking-wide text-[13px] sm:text-sm uppercase text-[#073B72]">
-                <ShieldTick className="w-4 h-4 text-[#F43F7D]" aria-hidden="true" />
+          <div className="p-5 sm:p-6 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#D7EAF2]">
+              <span className="flex items-center gap-2.5 font-bold tracking-wide text-[15px] sm:text-[16px] uppercase text-[#073B72]">
+                <ShieldTick className="w-5 h-5 text-[#F43F7D]" aria-hidden="true" />
                 Configured Baselines
               </span>
-              <span className="text-[#0E9EAA] font-bold text-xs sm:text-[13px] bg-[#EAFBFC] px-2.5 py-0.5 rounded-full border border-[#B2EBF2]">
+              <span className="text-[#0E9EAA] font-bold text-[13px] bg-[#EAFBFC] px-3 py-1 rounded-full border border-[#B2EBF2]">
                 100% Complete
               </span>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               {checks.map((item, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between text-sm py-1.5 border-b border-[#E8F1F5] last:border-none"
+                  className="flex items-center justify-between py-2.5 sm:py-3 border-b border-[#E8F1F5] last:border-none gap-4"
                 >
-                  <div className="flex items-center gap-2 text-[#073B72] font-medium">
-                    <CheckCircle className="w-4 h-4 text-[#0E9EAA] shrink-0" aria-hidden="true" />
-                    <span className="text-[13px] sm:text-sm font-sans">{item.label}</span>
+                  <div className="flex items-center gap-2.5 text-[#073B72] font-semibold shrink-0">
+                    <CheckCircle className="w-5 h-5 text-[#0E9EAA] shrink-0" aria-hidden="true" />
+                    <span className="text-[14px] sm:text-[15px] font-sans">{item.label}</span>
                   </div>
-                  <span className="text-[12px] sm:text-[13px] text-[#55718F] font-sans truncate max-w-[240px] text-right">
+                  <span className="text-[14px] sm:text-[15px] text-[#486581] font-sans text-right max-w-sm sm:max-w-md">
                     {item.val}
                   </span>
                 </div>
@@ -164,15 +164,15 @@ export const FemaleStep5ReviewReady: React.FC<FemaleStep5Props> = ({
           </div>
 
           {/* What You Can Explore Overview */}
-          <div className="p-4 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-2">
-            <span className="text-xs font-bold font-sans uppercase tracking-wider text-[#073B72] block">
+          <div className="p-5 sm:p-6 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-3">
+            <span className="text-[14px] sm:text-[15px] font-bold font-sans uppercase tracking-wider text-[#073B72] block">
               You can now explore:
             </span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-[#55718F]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[#486581]">
               {focusList.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#F43F7D] shrink-0" />
-                  <span className="leading-snug text-xs sm:text-[13px] font-sans">{item}</span>
+                <div key={idx} className="flex items-center gap-2.5">
+                  <span className="w-2 h-2 rounded-full bg-[#F43F7D] shrink-0" />
+                  <span className="leading-snug text-[14px] sm:text-[15px] font-sans font-medium">{item}</span>
                 </div>
               ))}
             </div>
@@ -187,18 +187,18 @@ export const FemaleStep5ReviewReady: React.FC<FemaleStep5Props> = ({
         icon={ShieldTick}
         accentColor="rose"
       >
-        <div className="p-3.5 rounded-xl bg-[#FFF1F2] border border-[#FECDD3]">
-          <span className="font-bold text-[#F43F7D] block mb-1">Baseline Accuracy</span>
-          <p>
+        <div className="p-4 sm:p-4.5 rounded-2xl bg-[#FFF1F2] border border-[#FECDD3]">
+          <span className="font-bold text-[14px] sm:text-[15px] text-[#F43F7D] block mb-1">Baseline Accuracy</span>
+          <p className="text-[13px] sm:text-[14px] text-[#486581] leading-relaxed">
             Reviewing your baseline ensures maximum accuracy for non-diagnostic PCOS stratification. You can update your biometrics, cycle dates, and symptom logs at any point from your dashboard.
           </p>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-1">
-          <span className="font-bold text-[#0288D1] block font-mono text-[10px] uppercase tracking-wide">
+        <div className="p-4 sm:p-4.5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-1">
+          <span className="font-bold text-[12px] sm:text-[13px] text-[#0288D1] block uppercase tracking-wide">
             Clinical Disclaimer
           </span>
-          <p className="text-[#55718F] text-xs leading-relaxed">
+          <p className="text-[13px] sm:text-[14px] text-[#55718F] leading-relaxed">
             BioPulse AI provides evidence-informed screening. It is not a diagnostic tool and does not replace professional medical consultation.
           </p>
         </div>

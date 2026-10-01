@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ROUTES } from '../../constants/routes';
@@ -16,6 +16,9 @@ import { FemaleStep2MedicalHistory } from './female/FemaleStep2MedicalHistory';
 import { FemaleStep3WomensHealth } from './female/FemaleStep3WomensHealth';
 import { FemaleStep4Symptoms } from './female/FemaleStep4Symptoms';
 import { FemaleStep5ReviewReady } from './female/FemaleStep5ReviewReady';
+import { preloadDashboardRoutes } from '../../utils/routePreloaders';
+import { BioPulseLoadingScreen } from '../../components/brand/BioPulseLoadingScreen';
+import { deriveFemaleTier1InputsFromProfile } from '../../utils/tier1InputMappers';
 
 const FEMALE_STEPS = [
   { number: '1', label: 'Basic Info' },
@@ -27,13 +30,15 @@ const FEMALE_STEPS = [
 
 export const FemaleOnboarding: React.FC = () => {
   const navigate = useNavigate();
-  const { userProfile, completeOnboarding } = useUserHealth();
+  const { userProfile, finalizeOnboardingAndScreen } = useUserHealth();
   const shouldReduceMotion = useReducedMotion();
 
   const [currentStep, setCurrentStep] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [saveError, setSaveError] = useState<string | undefined>(undefined);
+  const [isProcessingScreening, setIsProcessingScreening] = useState(false);
+  const [screeningStatusMessage, setScreeningStatusMessage] = useState('Preparing your health profile...');
 
   // Editable draft profile state — 100% preserved
   const [draftProfile, setDraftProfile] = useState<UserProfile>(() => ({
@@ -86,6 +91,13 @@ export const FemaleOnboarding: React.FC = () => {
           },
         ],
   }));
+
+  // Preload dashboard route chunk when user reaches late onboarding steps
+  useEffect(() => {
+    if (currentStep >= 4) {
+      preloadDashboardRoutes();
+    }
+  }, [currentStep]);
 
   // Route protection: If already onboarded, go directly to OvaSense app
   if (userProfile.isOnboarded) {
@@ -141,24 +153,39 @@ export const FemaleOnboarding: React.FC = () => {
 
   const handleEnterOvaSense = async () => {
     setIsSubmitting(true);
+    setIsProcessingScreening(true);
     setSaveError(undefined);
-    try {
-      const res = await completeOnboarding({
-        ...draftProfile,
-        gender: 'female',
-        pathway: 'female',
-        isOnboarded: true,
-      });
+    setScreeningStatusMessage('Preparing your health profile...');
 
-      if (res.success) {
+    try {
+      const femaleTier1Inputs = deriveFemaleTier1InputsFromProfile(draftProfile);
+
+      const res = await finalizeOnboardingAndScreen(
+        draftProfile,
+        'female',
+        femaleTier1Inputs,
+        (step) => {
+          if (step === 'saving_profile') {
+            setScreeningStatusMessage('Preparing your health profile...');
+          } else if (step === 'analyzing_patterns') {
+            setScreeningStatusMessage('Analyzing your screening patterns...');
+          } else if (step === 'preparing_dashboard') {
+            setScreeningStatusMessage('Preparing your personalized dashboard...');
+          }
+        }
+      );
+
+      if (res.success && res.assessment) {
         navigate(ROUTES.APP.OVASENSE, { replace: true });
       } else {
-        setSaveError(res.error || 'Unable to save profile. Please try again.');
+        setIsProcessingScreening(false);
         setIsSubmitting(false);
+        setSaveError(res.error || "We couldn't prepare your screening result. Please try again.");
       }
     } catch {
-      setSaveError('A network error occurred while finalizing your profile. Please try again.');
+      setIsProcessingScreening(false);
       setIsSubmitting(false);
+      setSaveError('A network error occurred while finalizing your profile. Please try again.');
     }
   };
 
@@ -168,6 +195,15 @@ export const FemaleOnboarding: React.FC = () => {
     animate: shouldReduceMotion ? { opacity: 1 } : { opacity: 1, x: 0 },
     exit: shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: -12 },
   };
+
+  if (isProcessingScreening) {
+    return (
+      <BioPulseLoadingScreen
+        message={screeningStatusMessage}
+        fullScreen={true}
+      />
+    );
+  }
 
   return (
     <FemaleOnboardingLayout

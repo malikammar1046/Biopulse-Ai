@@ -20,7 +20,10 @@ interface MaleScreeningCardProps {
   onStartScreening: () => void;
   onViewAssessment: () => void;
   onAddLabs?: () => void;
+  onRetry?: () => void;
   loading?: boolean;
+  isOnboarded?: boolean;
+  screeningState?: 'not_started' | 'processing' | 'ready' | 'error';
   hormonePatternInterpretation?: {
     pattern_name?: string;
     pattern_description?: string;
@@ -38,20 +41,37 @@ export const MaleScreeningCard: React.FC<MaleScreeningCardProps> = ({
   onStartScreening,
   onViewAssessment,
   onAddLabs,
+  onRetry,
   loading = false,
+  isOnboarded = false,
+  screeningState,
   hormonePatternInterpretation,
 }) => {
-  // 1. Loading State
-  if (loading && (!hasAssessment || probabilityPercent === null)) {
+  // 1. Loading / Processing State
+  if (screeningState === 'processing' || (loading && (!hasAssessment || probabilityPercent === null))) {
     return (
       <MaleLoadingState
-        title="Checking Screening Status"
-        message="Verifying your latest male assessment records..."
+        title="Calculating your screening result..."
+        message="Evaluating your vitality indicators, ADAM responses, and baseline metabolic factors..."
       />
     );
   }
 
-  // 2. Empty State (Only shown when not loading)
+  // 2. Error State (When user is onboarded but assessment calculation is missing or failed)
+  if (screeningState === 'error' || (isOnboarded && (!hasAssessment || probabilityPercent === null) && !loading)) {
+    return (
+      <MaleEmptyState
+        badge="Screening Notice"
+        title="We couldn't prepare your result"
+        description="Your onboarding profile is saved, but your initial screening calculation was interrupted. You can calculate your screening result now."
+        actionLabel="Calculate Screening Result"
+        onAction={onRetry || onStartScreening}
+        icon={Activity}
+      />
+    );
+  }
+
+  // 3. Not Started State (Only shown when not loading and user has not completed onboarding)
   if (!hasAssessment || probabilityPercent === null) {
     return (
       <MaleEmptyState

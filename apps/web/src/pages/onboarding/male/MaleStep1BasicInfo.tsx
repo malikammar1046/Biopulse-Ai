@@ -429,16 +429,16 @@ export const MaleStep1BasicInfo: React.FC<MaleStep1Props> = ({
         title="Why we ask about physical metrics"
         accentColor="blue"
       >
-        <div className="p-3.5 rounded-xl bg-[#F0F8FF] border border-[#BAE6FD]">
-          <span className="font-bold text-[#0288D1] block mb-1">Clinical Significance</span>
-          <p>
+        <div className="p-4 sm:p-4.5 rounded-2xl bg-[#F0F8FF] border border-[#BAE6FD]">
+          <span className="font-bold text-[14px] sm:text-[15px] text-[#0288D1] block mb-1">Clinical Significance</span>
+          <p className="text-[13px] sm:text-[14px] text-[#486581] leading-relaxed">
             Age, waist circumference, and BMI are primary physical metrics in clinical male hypogonadism screening. Waist circumference in particular directly reflects visceral adiposity and endocrine balance.
           </p>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2]">
-          <span className="font-bold text-[#073B72] block mb-1">Screening Context:</span>
-          <p>
+        <div className="p-4 sm:p-4.5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2]">
+          <span className="font-bold text-[14px] sm:text-[15px] text-[#073B72] block mb-1">Screening Context:</span>
+          <p className="text-[13px] sm:text-[14px] text-[#486581] leading-relaxed">
             Under CDC reference data, waist measurement (&ge;94 cm or &ge;102 cm) is the single strongest clinical indicator of circulating testosterone and metabolic health.
           </p>
         </div>

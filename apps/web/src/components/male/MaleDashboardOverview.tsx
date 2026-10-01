@@ -18,6 +18,7 @@ import { RecommendedCareCard } from '../dashboard/RecommendedCareCard';
 export const MaleDashboardOverview: React.FC = () => {
   const navigate = useNavigate();
   const {
+    userProfile,
     activeAssessment,
     mlAssessment,
     assessmentLoading,
@@ -25,6 +26,7 @@ export const MaleDashboardOverview: React.FC = () => {
     reports,
     upcomingAppointment,
     refreshActiveAssessment,
+    submitMaleTier1,
   } = useUserHealth();
 
   const [isLabsModalOpen, setIsLabsModalOpen] = useState(false);
@@ -85,7 +87,24 @@ export const MaleDashboardOverview: React.FC = () => {
   }, [reports]);
 
   const loading = assessmentLoading || mlAssessmentLoading;
+  const isOnboarded = Boolean(userProfile?.isOnboarded);
 
+  const screeningState: 'not_started' | 'processing' | 'ready' | 'error' = useMemo(() => {
+    if (hasAssessment && probabilityPercent !== null) {
+      return 'ready';
+    }
+    if (loading) {
+      return 'processing';
+    }
+    if (isOnboarded) {
+      return 'error';
+    }
+    return 'not_started';
+  }, [hasAssessment, probabilityPercent, loading, isOnboarded]);
+
+  const handleRetryScreening = async () => {
+    await submitMaleTier1();
+  };
 
   // Primary action handler
   const handlePrimaryAction = async () => {
@@ -122,7 +141,10 @@ export const MaleDashboardOverview: React.FC = () => {
             onStartScreening={() => navigate(ROUTES.APP.ASSESSMENT)}
             onViewAssessment={() => navigate(ROUTES.APP.ASSESSMENT)}
             onAddLabs={() => setIsLabsModalOpen(true)}
+            onRetry={handleRetryScreening}
             loading={loading}
+            isOnboarded={isOnboarded}
+            screeningState={screeningState}
             hormonePatternInterpretation={activeAssessment?.hormone_pattern_interpretation}
           />
         </div>

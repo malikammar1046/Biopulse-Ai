@@ -99,8 +99,8 @@ export const MaleStep3SymptomsADAM: React.FC<MaleStep3Props> = ({ data, onChange
   };
 
   return (
-    <div className="space-y-4 text-left max-w-4xl mx-auto">
-      {/* ── Compact Question Header with Why We Ask Trigger ── */}
+    <div className="space-y-5 text-left max-w-4xl mx-auto">
+      {/* ── Question Header with Why We Ask Trigger ── */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-[#DDEFFD] flex items-center justify-center shrink-0 shadow-2xs">
@@ -108,10 +108,10 @@ export const MaleStep3SymptomsADAM: React.FC<MaleStep3Props> = ({ data, onChange
           </div>
 
           <div>
-            <span className="text-[10px] font-bold font-mono text-[#0868B9] uppercase tracking-wider block leading-none">
+            <span className="text-xs font-bold font-sans text-[#0868B9] uppercase tracking-wider block leading-none">
               Vitality &amp; ADAM Questionnaire
             </span>
-            <h2 className="text-xl sm:text-2xl font-extrabold font-display text-[#073B72] tracking-tight leading-tight mt-0.5">
+            <h2 className="text-xl sm:text-2xl font-bold font-display text-[#073B72] tracking-tight leading-tight mt-1">
               Tell us about your energy and symptoms
             </h2>
           </div>
@@ -124,19 +124,19 @@ export const MaleStep3SymptomsADAM: React.FC<MaleStep3Props> = ({ data, onChange
         />
       </div>
 
-      <p className="text-xs text-[#55718F] font-sans leading-tight">
+      <p className="text-xs sm:text-sm text-[#55718F] font-sans leading-relaxed">
         Answer the 10 validated ADAM (Androgen Deficiency in the Aging Male) questions below to calibrate your Tier 1 screening.
       </p>
 
       {/* ── Progress Counter & Quick Actions ── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2]">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-[#0868B9]" />
-          <span className="text-xs font-mono font-bold text-[#073B72]">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2]">
+        <div className="flex items-center gap-2.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-[#0868B9]" />
+          <span className="text-[14px] sm:text-[15px] font-bold text-[#073B72]">
             {answeredCount} of {initialQuestions.length} Questions Answered
           </span>
           {yesCount > 0 && (
-            <span className="text-[11px] font-mono text-[#55718F]">
+            <span className="text-[13px] font-medium text-[#55718F]">
               ({yesCount} positive indicator{yesCount > 1 ? 's' : ''})
             </span>
           )}
@@ -146,16 +146,16 @@ export const MaleStep3SymptomsADAM: React.FC<MaleStep3Props> = ({ data, onChange
           <button
             type="button"
             onClick={handleMarkAllRemainingNo}
-            className="text-xs font-semibold text-[#0868B9] hover:text-[#07589D] flex items-center gap-1 cursor-pointer transition-colors"
+            className="text-[13px] sm:text-[14px] font-semibold text-[#0868B9] hover:text-[#07589D] flex items-center gap-1.5 cursor-pointer transition-colors"
           >
-            <CheckCircle className="w-3.5 h-3.5 text-[#0868B9]" aria-hidden="true" />
+            <CheckCircle className="w-4 h-4 text-[#0868B9]" aria-hidden="true" />
             <span>Mark remaining as "No"</span>
           </button>
         )}
       </div>
 
       {/* ── Main Questions List (Full Width) ── */}
-      <div className="space-y-2.5">
+      <div className="space-y-3 sm:space-y-3.5">
           {initialQuestions.map((q) => {
             const currentResponse = responses[q.id];
             const isAnswered = currentResponse !== undefined && currentResponse !== null;
@@ -163,61 +163,61 @@ export const MaleStep3SymptomsADAM: React.FC<MaleStep3Props> = ({ data, onChange
             return (
               <div
                 key={q.id}
-                className={`p-3.5 rounded-xl border text-left transition-all duration-200 ${
+                className={`p-4 sm:p-5 rounded-2xl border text-left transition-all duration-200 ${
                   isAnswered
                     ? currentResponse === true
-                      ? 'bg-[#F0F8FF] border-[#0868B9]/40 shadow-2xs'
+                      ? 'bg-[#F0F8FF] border-2 border-[#0868B9]/60 shadow-2xs'
                       : 'bg-white border-[#D7EAF2]'
-                    : 'bg-white border-[#E2E8F0] hover:border-[#0868B9]/30'
+                    : 'bg-white border-[#D7EAF2] hover:border-[#0868B9]/40 hover:bg-[#F8FDFF]'
                 }`}
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="space-y-1 max-w-xl">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1.5 max-w-xl">
                     <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-mono font-bold text-[#0868B9]">
-                        Q{q.questionNumber}
+                      <span className="text-[12px] sm:text-[13px] font-mono font-bold text-[#0868B9]">
+                        Question {q.questionNumber}
                       </span>
                       {q.isCriticalQuestion && (
-                        <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-800 font-bold uppercase">
+                        <span className="text-[11px] font-sans px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 font-bold uppercase">
                           Primary Clinical Indicator
                         </span>
                       )}
                     </div>
-                    <p className="text-xs sm:text-sm font-sans text-[#073B72] font-medium leading-snug">
+                    <p className="text-[15px] sm:text-[16px] font-sans text-[#073B72] font-semibold leading-snug">
                       {q.prompt}
                     </p>
                   </div>
 
                   {/* Yes / No Toggle Controls */}
-                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                  <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-auto">
                     <button
                       type="button"
-                      onClick={() => handleAnswer(q.id, true)}
-                      className={`min-w-[68px] px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                        currentResponse === true
-                          ? 'bg-[#0868B9] text-white shadow-2xs ring-1 ring-[#0868B9]'
-                          : 'bg-[#FAFCFF] border border-[#D7EAF2] text-[#55718F] hover:border-[#0868B9]/50 hover:bg-[#F0F8FF]'
+                      onClick={() => handleAnswer(q.id, false)}
+                      className={`min-w-[84px] sm:min-w-[92px] min-h-[48px] px-5 py-2.5 rounded-xl text-[14px] sm:text-[15px] font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                        currentResponse === false
+                          ? 'bg-[#073B72] text-white shadow-xs'
+                          : 'bg-white border-2 border-[#D7EAF2] text-[#55718F] hover:border-[#073B72]/40 hover:text-[#073B72]'
                       }`}
                     >
-                      {currentResponse === true && (
-                        <Check className="w-3 h-3 stroke-[3]" aria-hidden="true" />
+                      {currentResponse === false && (
+                        <Check className="w-4 h-4 stroke-[3]" aria-hidden="true" />
                       )}
-                      <span>Yes</span>
+                      <span>No</span>
                     </button>
 
                     <button
                       type="button"
-                      onClick={() => handleAnswer(q.id, false)}
-                      className={`min-w-[68px] px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                        currentResponse === false
-                          ? 'bg-[#073B72] text-white shadow-2xs ring-1 ring-[#073B72]'
-                          : 'bg-[#FAFCFF] border border-[#D7EAF2] text-[#55718F] hover:border-[#0868B9]/50 hover:bg-[#F0F8FF]'
+                      onClick={() => handleAnswer(q.id, true)}
+                      className={`min-w-[84px] sm:min-w-[92px] min-h-[48px] px-5 py-2.5 rounded-xl text-[14px] sm:text-[15px] font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                        currentResponse === true
+                          ? 'bg-[#0868B9] text-white shadow-xs'
+                          : 'bg-white border-2 border-[#D7EAF2] text-[#55718F] hover:border-[#0868B9]/40 hover:text-[#0868B9]'
                       }`}
                     >
-                      {currentResponse === false && (
-                        <Check className="w-3 h-3 stroke-[3]" aria-hidden="true" />
+                      {currentResponse === true && (
+                        <Check className="w-4 h-4 stroke-[3]" aria-hidden="true" />
                       )}
-                      <span>No</span>
+                      <span>Yes</span>
                     </button>
                   </div>
                 </div>
@@ -234,19 +234,19 @@ export const MaleStep3SymptomsADAM: React.FC<MaleStep3Props> = ({ data, onChange
         icon={ShieldTick}
         accentColor="blue"
       >
-        <div className="p-3.5 rounded-xl bg-[#F0F8FF] border border-[#BAE6FD]">
-          <span className="font-bold text-[#0868B9] block mb-1">Clinical Screening Tool</span>
-          <p>
+        <div className="p-4 sm:p-4.5 rounded-2xl bg-[#F0F8FF] border border-[#BAE6FD]">
+          <span className="font-bold text-[14px] sm:text-[15px] text-[#0868B9] block mb-1">Clinical Screening Tool</span>
+          <p className="text-[13px] sm:text-[14px] text-[#486581] leading-relaxed">
             The Androgen Deficiency in the Aging Male (ADAM) questionnaire is a clinically established 10-item screening tool designed to identify subjective symptoms of hormonal and vitality decline.
           </p>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-2">
-          <span className="font-bold text-[#073B72] block">Clinical Context:</span>
-          <p className="leading-relaxed">
+        <div className="p-4 sm:p-4.5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-2">
+          <span className="font-bold text-[14px] sm:text-[15px] text-[#073B72] block">Clinical Context:</span>
+          <p className="text-[13px] sm:text-[14px] text-[#486581] leading-relaxed">
             In clinical medicine (Morley et al., 2000), a positive screening is noted if question 1 (libido) or question 7 (erections) is positive, or if any 3 other questions are positive.
           </p>
-          <p className="leading-relaxed text-[11px] text-[#0868B9] font-medium border-t border-[#D7EAF2] pt-1.5">
+          <p className="text-[12px] sm:text-[13px] text-[#0868B9] font-medium leading-relaxed border-t border-[#D7EAF2] pt-2">
             ADAM is an epidemiological screening aid, not a definitive diagnosis. Diagnosis requires physician evaluation and morning serum testosterone tests.
           </p>
         </div>

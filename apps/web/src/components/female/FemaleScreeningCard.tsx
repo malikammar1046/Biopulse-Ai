@@ -20,7 +20,10 @@ interface FemaleScreeningCardProps {
   onStartScreening: () => void;
   onViewAssessment: () => void;
   onAddLabs?: () => void;
+  onRetry?: () => void;
   loading?: boolean;
+  isOnboarded?: boolean;
+  screeningState?: 'not_started' | 'processing' | 'ready' | 'error';
   gradcamB64?: string | null;
   pcomStatus?: string | null;
 }
@@ -36,21 +39,38 @@ export const FemaleScreeningCard: React.FC<FemaleScreeningCardProps> = ({
   onStartScreening,
   onViewAssessment,
   onAddLabs,
+  onRetry,
   loading = false,
+  isOnboarded = false,
+  screeningState,
   gradcamB64,
   pcomStatus,
 }) => {
-  // 1. Loading State
-  if (loading && (!hasAssessment || probabilityPercent === null)) {
+  // 1. Loading / Processing State
+  if (screeningState === 'processing' || (loading && (!hasAssessment || probabilityPercent === null))) {
     return (
       <FemaleLoadingState
-        title="Checking Screening Status"
-        message="Verifying your latest assessment records..."
+        title="Calculating your screening result..."
+        message="Analyzing your symptoms, cycle patterns, and biometrics..."
       />
     );
   }
 
-  // 2. Empty State (Only shown when not loading)
+  // 2. Error State (When user is onboarded but assessment calculation is missing or failed)
+  if (screeningState === 'error' || (isOnboarded && (!hasAssessment || probabilityPercent === null) && !loading)) {
+    return (
+      <FemaleEmptyState
+        badge="Screening Notice"
+        title="We couldn't prepare your result"
+        description="Your onboarding profile is saved, but your initial screening calculation was interrupted. You can calculate your screening result now."
+        actionLabel="Calculate Screening Result"
+        onAction={onRetry || onStartScreening}
+        icon={Activity}
+      />
+    );
+  }
+
+  // 3. Not Started State (Only shown when not loading and user has not completed onboarding)
   if (!hasAssessment || probabilityPercent === null) {
     return (
       <FemaleEmptyState

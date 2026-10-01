@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ROUTES } from '../../constants/routes';
@@ -16,6 +16,9 @@ import { MaleStep2HealthProfile } from './male/MaleStep2HealthProfile';
 import { MaleStep3SymptomsADAM } from './male/MaleStep3SymptomsADAM';
 import { MaleStep4Lifestyle } from './male/MaleStep4Lifestyle';
 import { MaleStep5ReviewReady } from './male/MaleStep5ReviewReady';
+import { preloadDashboardRoutes } from '../../utils/routePreloaders';
+import { BioPulseLoadingScreen } from '../../components/brand/BioPulseLoadingScreen';
+import { deriveMaleTier1InputsFromProfile } from '../../utils/tier1InputMappers';
 
 const MALE_STEPS = [
   { number: '1', label: 'Basic Info' },
@@ -27,13 +30,15 @@ const MALE_STEPS = [
 
 export const MaleOnboarding: React.FC = () => {
   const navigate = useNavigate();
-  const { userProfile, completeOnboarding, submitMaleTier1 } = useUserHealth();
+  const { userProfile, finalizeOnboardingAndScreen } = useUserHealth();
   const shouldReduceMotion = useReducedMotion();
 
   const [currentStep, setCurrentStep] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [saveError, setSaveError] = useState<string | undefined>(undefined);
+  const [isProcessingScreening, setIsProcessingScreening] = useState(false);
+  const [screeningStatusMessage, setScreeningStatusMessage] = useState('Preparing your health profile...');
 
   // Editable draft profile state — 100% preserved with safe defaults
   const [draftProfile, setDraftProfile] = useState<UserProfile>(() => {
@@ -131,6 +136,13 @@ export const MaleOnboarding: React.FC = () => {
     };
   });
 
+  // Preload dashboard route chunk when user reaches late onboarding steps
+  useEffect(() => {
+    if (currentStep >= 4) {
+      preloadDashboardRoutes();
+    }
+  }, [currentStep]);
+
   // Route protection: If already onboarded, go directly to AndroSense app
   if (userProfile.isOnboarded) {
     return <Navigate to={ROUTES.APP.ANDROSENSE} replace />;
@@ -208,67 +220,39 @@ export const MaleOnboarding: React.FC = () => {
 
   const handleEnterAndroSense = async () => {
     setIsSubmitting(true);
+    setIsProcessingScreening(true);
     setSaveError(undefined);
+    setScreeningStatusMessage('Preparing your health profile...');
+
     try {
-      const res = await completeOnboarding({
-        ...draftProfile,
-        gender: 'male',
-        pathway: 'male',
-        isOnboarded: true,
-      });
+      const maleTier1Inputs = deriveMaleTier1InputsFromProfile(draftProfile);
 
-      if (!res.success) {
-        setSaveError(res.error || 'Unable to save profile. Please try again.');
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Calculate Tier 1 inputs for immediate screening execution
-      const dob = draftProfile.dateOfBirth;
-      let calculatedAge = 35;
-      if (dob) {
-        try {
-          const bdate = new Date(dob);
-          const today = new Date();
-          calculatedAge = today.getFullYear() - bdate.getFullYear() - ((today.getMonth() < bdate.getMonth() || (today.getMonth() === bdate.getMonth() && today.getDate() < bdate.getDate())) ? 1 : 0);
-        } catch {
-          calculatedAge = 35;
+      const res = await finalizeOnboardingAndScreen(
+        draftProfile,
+        'male',
+        maleTier1Inputs,
+        (step) => {
+          if (step === 'saving_profile') {
+            setScreeningStatusMessage('Preparing your health profile...');
+          } else if (step === 'analyzing_patterns') {
+            setScreeningStatusMessage('Analyzing your screening patterns...');
+          } else if (step === 'preparing_dashboard') {
+            setScreeningStatusMessage('Preparing your personalized dashboard...');
+          }
         }
+      );
+
+      if (res.success && res.assessment) {
+        navigate(ROUTES.APP.ANDROSENSE, { replace: true });
+      } else {
+        setIsProcessingScreening(false);
+        setIsSubmitting(false);
+        setSaveError(res.error || "We couldn't prepare your screening result. Please try again.");
       }
-
-      const conds = (draftProfile.medical?.conditions || []).join(' ').toLowerCase();
-      const isHbp = conds.includes('hypertension') || conds.includes('blood pressure') ? 1 : 0;
-      const isDm = conds.includes('diabetes') || conds.includes('insulin resistance') ? 1 : 0;
-
-      const adam = draftProfile.mensHealth?.adamResponses || {};
-      const lowEnergy = adam.adam_q2 === true || draftProfile.mensHealth?.energyLevel === 'low' || draftProfile.mensHealth?.energyLevel === 'very_low' ? 1 : 0;
-      const sleepTrouble = adam.adam_q9 === true || draftProfile.mensHealth?.sleepQuality === 'poor' || draftProfile.mensHealth?.sleepQuality === 'frequently_waking' ? 1 : 0;
-      const lowMood = adam.adam_q6 === true || adam.adam_q5 === true || (draftProfile.mensHealth?.moodChanges && draftProfile.mensHealth.moodChanges.length > 0) ? 1 : 0;
-      const lowInterest = adam.adam_q1 === true || draftProfile.mensHealth?.sexDrive === 'reduced' || draftProfile.mensHealth?.sexDrive === 'significantly_reduced' ? 1 : 0;
-
-      const tier1Payload = {
-        age: calculatedAge,
-        height_cm: Number(draftProfile.heightCm) || 178,
-        weight_kg: Number(draftProfile.weightKg) || 80,
-        waist_cm: Number(draftProfile.waistCm) || 88,
-        low_energy: lowEnergy,
-        sleep_trouble: sleepTrouble,
-        low_mood: lowMood,
-        low_interest: lowInterest,
-        high_blood_pressure: isHbp,
-        diabetes: isDm,
-      };
-
-      try {
-        await submitMaleTier1(tier1Payload);
-      } catch (assessErr) {
-        console.warn('Male Tier 1 assessment execution warning during onboarding:', assessErr);
-      }
-
-      navigate(ROUTES.APP.ANDROSENSE, { replace: true });
     } catch {
-      setSaveError('A network error occurred while finalizing your profile.');
+      setIsProcessingScreening(false);
       setIsSubmitting(false);
+      setSaveError('A network error occurred while finalizing your profile. Please try again.');
     }
   };
 
@@ -278,6 +262,15 @@ export const MaleOnboarding: React.FC = () => {
     animate: shouldReduceMotion ? { opacity: 1 } : { opacity: 1, x: 0 },
     exit: shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: -12 },
   };
+
+  if (isProcessingScreening) {
+    return (
+      <BioPulseLoadingScreen
+        message={screeningStatusMessage}
+        fullScreen={true}
+      />
+    );
+  }
 
   return (
     <MaleOnboardingLayout

@@ -425,9 +425,9 @@ export const FemaleStep1BasicInfo: React.FC<FemaleStep1Props> = ({
         title="Why we ask about physical metrics"
         accentColor="rose"
       >
-        <div className="p-3.5 rounded-xl bg-[#FFF1F2] border border-[#FECDD3]">
-          <span className="font-bold text-[#F43F7D] block mb-1">Health Context</span>
-          <p>
+        <div className="p-4 sm:p-4.5 rounded-2xl bg-[#FFF1F2] border border-[#FECDD3]">
+          <span className="font-bold text-[14px] sm:text-[15px] text-[#F43F7D] block mb-1">Health Context</span>
+          <p className="text-[13px] sm:text-[14px] text-[#486581] leading-relaxed">
             Age and body measurements help BioPulse AI interpret your screening information in the appropriate clinical and endocrine context.
           </p>
         </div>

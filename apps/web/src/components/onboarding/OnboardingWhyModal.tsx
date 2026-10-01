@@ -61,33 +61,33 @@ export const OnboardingWhyModal: React.FC<OnboardingWhyModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ duration: 0.2 }}
-            className="relative w-full max-w-lg bg-white rounded-2xl border border-[#D7EAF2] shadow-2xl p-5 sm:p-6 space-y-4 z-10 select-text"
+            className="relative w-full max-w-xl bg-white rounded-2xl border border-[#D7EAF2] shadow-2xl p-6 sm:p-7 space-y-4 sm:space-y-5 z-10 select-text"
             role="dialog"
             aria-modal="true"
             aria-label={title}
           >
             {/* Header */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
+            <div className="flex items-center justify-between pb-1 border-b border-[#F0F4F8]">
+              <div className="flex items-center gap-3">
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${colorStyles.iconBg}`}
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-2xs ${colorStyles.iconBg}`}
                 >
-                  <Icon className="w-4 h-4" aria-hidden="true" />
+                  <Icon className="w-5 h-5" aria-hidden="true" />
                 </div>
-                <h3 className="text-base font-bold font-display text-[#073B72]">{title}</h3>
+                <h3 className="text-lg sm:text-xl font-bold font-display text-[#073B72]">{title}</h3>
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-[#55718F] hover:text-[#073B72] transition-colors cursor-pointer"
+                className="w-9 h-9 rounded-full hover:bg-slate-100 flex items-center justify-center text-[#55718F] hover:text-[#073B72] transition-colors cursor-pointer"
                 aria-label="Close dialog"
               >
-                <XClose className="w-4 h-4" aria-hidden="true" />
+                <XClose className="w-4.5 h-4.5" aria-hidden="true" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="space-y-3 text-xs sm:text-sm text-[#55718F] leading-relaxed">
+            <div className="space-y-3.5 text-[14px] sm:text-[15px] text-[#486581] leading-relaxed">
               {children}
             </div>
 
@@ -96,7 +96,7 @@ export const OnboardingWhyModal: React.FC<OnboardingWhyModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className={`px-5 py-2 rounded-full text-white text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer shadow-xs ${colorStyles.buttonBg}`}
+                className={`min-h-[44px] px-6 py-2.5 rounded-full text-white text-[13px] sm:text-sm font-semibold uppercase tracking-wider transition-colors cursor-pointer shadow-xs ${colorStyles.buttonBg}`}
               >
                 Got it
               </button>
@@ -131,10 +131,10 @@ export const OnboardingWhyTrigger: React.FC<OnboardingWhyTriggerProps> = ({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all cursor-pointer shadow-2xs hover:shadow-xs group ${triggerStyles} ${className}`}
+      className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] sm:text-sm font-semibold border transition-all cursor-pointer shadow-2xs hover:shadow-xs group ${triggerStyles} ${className}`}
       aria-label={label}
     >
-      <InfoCircle className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" aria-hidden="true" />
+      <InfoCircle className="w-4 h-4 group-hover:scale-110 transition-transform" aria-hidden="true" />
       <span>{label}</span>
     </button>
   );

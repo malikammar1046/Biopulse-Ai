@@ -131,10 +131,10 @@ export const MaleStep2HealthProfile: React.FC<MaleStep2Props> = ({
   };
 
   return (
-    <div className="space-y-4 sm:space-y-5 text-left max-w-4xl mx-auto">
+    <div className="space-y-5 text-left max-w-4xl mx-auto">
       {/* ── Top Header Row with Health Profile badge and "Why we ask this" ── */}
       <div className="flex items-center justify-between gap-3">
-        <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-[#EAFBFC] border border-[#B2EBF2] text-[11px] font-bold text-[#0E9EAA] tracking-wider uppercase font-mono shadow-2xs">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAFBFC] border border-[#B2EBF2] text-xs font-bold text-[#0E9EAA] tracking-wider uppercase font-sans shadow-2xs">
           <span>Health Profile</span>
         </div>
 
@@ -143,20 +143,20 @@ export const MaleStep2HealthProfile: React.FC<MaleStep2Props> = ({
 
       {/* ── Title & Subtitle ── */}
       <div>
-        <h2 className="text-xl sm:text-2xl font-extrabold font-display text-[#073B72] tracking-tight leading-tight">
+        <h2 className="text-xl sm:text-2xl font-bold font-display text-[#073B72] tracking-tight leading-tight">
           Clinical background &amp; diagnosed conditions
         </h2>
-        <p className="text-xs sm:text-sm text-[#55718F] font-sans leading-normal mt-1">
+        <p className="text-xs sm:text-sm text-[#55718F] font-sans leading-relaxed mt-1">
           Tell us about conditions or treatments relevant to your hormone health.
         </p>
       </div>
 
       {/* ── 1. Blood Group ── */}
-      <div className="space-y-2 pt-1">
-        <label className="text-xs sm:text-sm font-bold font-sans text-[#073B72] block">
+      <div className="p-4 sm:p-5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-3">
+        <label className="text-[15px] sm:text-[16px] font-bold font-sans text-[#073B72] block">
           Blood Group
         </label>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 sm:gap-2.5">
           {BLOOD_TYPES.map((bt) => {
             const isSelected = medical.bloodType === bt;
             return (
@@ -164,10 +164,10 @@ export const MaleStep2HealthProfile: React.FC<MaleStep2Props> = ({
                 key={bt}
                 type="button"
                 onClick={() => onMedicalChange({ ...medical, bloodType: bt })}
-                className={`px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl border text-xs sm:text-sm font-mono font-bold transition-all cursor-pointer ${
+                className={`h-[46px] min-w-[56px] px-4 py-2.5 rounded-xl border text-[14px] sm:text-[15px] font-mono font-bold transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-[#0E9EAA] text-white border-[#0E9EAA] shadow-2xs scale-[1.02]'
-                    : 'bg-white text-[#55718F] border-[#D7EAF2] hover:border-[#0E9EAA]/40 hover:text-[#073B72] hover:bg-[#F8FDFF]'
+                    ? 'bg-[#0E9EAA] text-white border-[#0E9EAA] shadow-xs scale-[1.02]'
+                    : 'bg-white text-[#55718F] border-[#D7EAF2] hover:border-[#0E9EAA]/50 hover:text-[#073B72] hover:bg-[#F8FDFF]'
                 }`}
               >
                 {bt}
@@ -178,11 +178,11 @@ export const MaleStep2HealthProfile: React.FC<MaleStep2Props> = ({
       </div>
 
       {/* ── 2. Diagnosed Conditions (2-column layout matching wireframe) ── */}
-      <div className="space-y-2 pt-2 border-t border-[#E8F1F5]">
-        <label className="text-xs sm:text-sm font-bold font-sans text-[#073B72] block">
+      <div className="p-4 sm:p-5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-3">
+        <label className="text-[15px] sm:text-[16px] font-bold font-sans text-[#073B72] block">
           Diagnosed Conditions
         </label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3.5">
           {CONDITION_OPTIONS.map((opt) => {
             const isSelected = isConditionSelected(opt);
             return (
@@ -190,25 +190,25 @@ export const MaleStep2HealthProfile: React.FC<MaleStep2Props> = ({
                 key={opt.id}
                 type="button"
                 onClick={() => toggleCondition(opt)}
-                className={`min-h-[50px] px-4 py-3 rounded-2xl border text-left transition-all duration-150 cursor-pointer flex items-center justify-between gap-3 ${
+                className={`min-h-[56px] px-4.5 py-3.5 rounded-2xl border text-left transition-all duration-150 cursor-pointer flex items-center justify-between gap-3 ${
                   isSelected
-                    ? 'bg-[#EAFBFC] border-[#0E9EAA] text-[#073B72] ring-1 ring-[#0E9EAA]/30 shadow-2xs'
+                    ? 'bg-[#EAFBFC] border-2 border-[#0E9EAA] text-[#073B72] shadow-2xs'
                     : 'bg-white border-[#D7EAF2] text-[#334E68] hover:border-[#0E9EAA]/40 hover:bg-[#F8FDFF]'
                 }`}
               >
-                <span className={`text-xs sm:text-sm leading-snug ${isSelected ? 'font-bold text-[#073B72]' : 'font-medium text-[#486581]'}`}>
+                <span className={`text-[15px] sm:text-[16px] leading-snug ${isSelected ? 'font-bold text-[#073B72]' : 'font-medium text-[#486581]'}`}>
                   {opt.label}
                 </span>
 
                 <div
-                  className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-all ${
+                  className={`w-5.5 h-5.5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
                     isSelected
                       ? 'bg-[#0E9EAA] border-[#0E9EAA] text-white shadow-2xs'
                       : 'border-[#CBDCE6] bg-white'
                   }`}
                 >
                   {isSelected ? (
-                    <Check className="w-3 h-3 stroke-[3]" aria-hidden="true" />
+                    <Check className="w-3.5 h-3.5 stroke-[3]" aria-hidden="true" />
                   ) : null}
                 </div>
               </button>
@@ -218,11 +218,11 @@ export const MaleStep2HealthProfile: React.FC<MaleStep2Props> = ({
       </div>
 
       {/* ── 3. Medications / Previous Treatments (2x2 grid matching wireframe) ── */}
-      <div className="space-y-2 pt-2 border-t border-[#E8F1F5]">
-        <label className="text-xs sm:text-sm font-bold font-sans text-[#073B72] block">
+      <div className="p-4 sm:p-5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-3">
+        <label className="text-[15px] sm:text-[16px] font-bold font-sans text-[#073B72] block">
           Medications / Previous Treatments
         </label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3.5">
           {MEDICATION_OPTIONS.map((med) => {
             const isSelected = isMedicationSelected(med);
             return (
@@ -230,21 +230,21 @@ export const MaleStep2HealthProfile: React.FC<MaleStep2Props> = ({
                 key={med.id}
                 type="button"
                 onClick={() => toggleMedication(med)}
-                className={`min-h-[46px] px-4 py-2.5 rounded-xl border text-left transition-all duration-150 cursor-pointer flex items-center justify-between gap-2 ${
+                className={`min-h-[54px] px-4.5 py-3 rounded-2xl border text-left transition-all duration-150 cursor-pointer flex items-center justify-between gap-3 ${
                   isSelected
-                    ? 'bg-[#EAFBFC] border-[#0E9EAA] text-[#073B72] ring-1 ring-[#0E9EAA]/30 shadow-2xs font-semibold'
+                    ? 'bg-[#EAFBFC] border-2 border-[#0E9EAA] text-[#073B72] shadow-2xs font-semibold'
                     : 'bg-white border-[#D7EAF2] text-[#55718F] hover:border-[#0E9EAA]/40 hover:text-[#073B72] hover:bg-[#F8FDFF] font-medium'
                 }`}
               >
-                <span className="text-xs sm:text-sm">{med.label}</span>
+                <span className="text-[14px] sm:text-[15px] leading-snug">{med.label}</span>
                 <div
-                  className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-all ${
+                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
                     isSelected
                       ? 'bg-[#0E9EAA] border-[#0E9EAA] text-white'
                       : 'border-[#CBDCE6] bg-white'
                   }`}
                 >
-                  {isSelected ? <Check className="w-2.5 h-2.5 stroke-[3]" aria-hidden="true" /> : null}
+                  {isSelected ? <Check className="w-3 h-3 stroke-[3]" aria-hidden="true" /> : null}
                 </div>
               </button>
             );
@@ -260,16 +260,16 @@ export const MaleStep2HealthProfile: React.FC<MaleStep2Props> = ({
         icon={ActivityHeart}
         accentColor="teal"
       >
-        <div className="p-3.5 rounded-xl bg-[#F0FDFE] border border-[#CCFBF1]">
-          <span className="font-bold text-[#0E9EAA] block mb-1">Metabolic &amp; Hormone Link</span>
-          <p>
+        <div className="p-4 sm:p-4.5 rounded-2xl bg-[#F0FDFE] border border-[#CCFBF1]">
+          <span className="font-bold text-[14px] sm:text-[15px] text-[#0E9EAA] block mb-1">Metabolic &amp; Hormone Link</span>
+          <p className="text-[13px] sm:text-[14px] text-[#486581] leading-relaxed">
             High blood pressure and impaired glucose metabolism are recognized metabolic risk factors that directly co-occur with lower bioavailable testosterone and microvascular dysfunction.
           </p>
         </div>
 
-        <div className="p-3.5 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2]">
-          <span className="font-bold text-[#073B72] block mb-1">Clinical Note:</span>
-          <p>
+        <div className="p-4 sm:p-4.5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2]">
+          <span className="font-bold text-[14px] sm:text-[15px] text-[#073B72] block mb-1">Clinical Note:</span>
+          <p className="text-[13px] sm:text-[14px] text-[#486581] leading-relaxed">
             Certain medications like chronic glucocorticoids or prior exogenous hormone therapy can suppress endogenous pituitary signaling (LH/FSH). Noting them ensures balanced, context-aware screening.
           </p>
         </div>

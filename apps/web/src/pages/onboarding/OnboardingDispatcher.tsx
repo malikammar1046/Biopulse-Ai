@@ -1,31 +1,66 @@
-import React, { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { ROUTES, getPathwayDashboardRoute } from '../../constants/routes';
 import type { UserGender } from '../../types/onboarding';
 import { PathwaySelectionScreen } from '../../components/auth/PathwaySelectionScreen';
+import { BioPulseLoadingScreen } from '../../components/brand/BioPulseLoadingScreen';
+import { preloadOnboardingRoutes } from '../../utils/routePreloaders';
 
 export const OnboardingDispatcher: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { userProfile, updateUserProfile } = useUserHealth();
-  const [saving, setSaving] = useState(false);
-  const [savingPathway, setSavingPathway] = useState<'female' | 'male' | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [transitionPathway, setTransitionPathway] = useState<'female' | 'male' | null>(null);
 
-  // 1. If already onboarded, go to user's specialized dashboard
-  if (userProfile.isOnboarded) {
+  // Preload lazy onboarding route chunks
+  useEffect(() => {
+    preloadOnboardingRoutes();
+  }, []);
+
+  const isExplicitRelaunch = (location.state as any)?.allowReonboard;
+
+  // 1. If already onboarded and not explicitly re-onboarding, go to user's specialized dashboard
+  if (userProfile.isOnboarded && !isExplicitRelaunch) {
     return <Navigate to={getPathwayDashboardRoute(userProfile)} replace />;
   }
 
-  // 2. Interactive Pathway Selector matching the new Female & Male design
+  // 2. If user already has an assigned pathway and not re-onboarding, route directly
+  if (!isExplicitRelaunch && (userProfile.pathway === 'female' || userProfile.pathway === 'male')) {
+    const directTarget = userProfile.pathway === 'female' ? ROUTES.ONBOARDING_FEMALE : ROUTES.ONBOARDING_MALE;
+    return <Navigate to={directTarget} replace />;
+  }
+
+  // 3. Immediate Botanical Loading Screen on Pathway Click (Replaces selection screen instantly)
+  if (isTransitioning) {
+    return (
+      <BioPulseLoadingScreen
+        message={
+          transitionPathway === 'male'
+            ? 'Preparing your Men’s Health pathway...'
+            : 'Preparing your Women’s Health pathway...'
+        }
+        fullScreen={true}
+      />
+    );
+  }
+
+  // 4. Interactive Pathway Selector matching the new Female & Male design
   const handleSelectPathway = async (pathway: 'female' | 'male') => {
-    setSaving(true);
-    setSavingPathway(pathway);
+    // Immediately show botanical loader before executing network persistence
+    setIsTransitioning(true);
+    setTransitionPathway(pathway);
     const derivedGender: UserGender = pathway === 'female' ? 'female' : 'male';
 
-    await updateUserProfile({
-      pathway,
-      gender: derivedGender,
-    });
+    try {
+      await updateUserProfile({
+        pathway,
+        gender: derivedGender,
+      });
+    } catch (err) {
+      console.warn('Pathway profile update warning in OnboardingDispatcher:', err);
+    }
 
     const target = pathway === 'female' ? ROUTES.ONBOARDING_FEMALE : ROUTES.ONBOARDING_MALE;
     navigate(target, { replace: true });
@@ -34,8 +69,8 @@ export const OnboardingDispatcher: React.FC = () => {
   return (
     <PathwaySelectionScreen
       onSelectPathway={handleSelectPathway}
-      loading={saving}
-      loadingPathway={savingPathway}
+      loading={isTransitioning}
+      loadingPathway={transitionPathway}
     />
   );
 };

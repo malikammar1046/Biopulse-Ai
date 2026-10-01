@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { ROUTES, getPathwayDashboardRoute } from '../../constants/routes';
+import { getPathwayDashboardRoute, getPathwayOnboardingRoute } from '../../constants/routes';
 import { BioPulseLoadingScreen } from '../brand/BioPulseLoadingScreen';
 
 export const PublicOnlyRoute: React.FC = () => {
@@ -16,7 +16,8 @@ export const PublicOnlyRoute: React.FC = () => {
       const targetRoute = getPathwayDashboardRoute(userProfile);
       return <Navigate to={targetRoute} replace />;
     }
-    return <Navigate to={ROUTES.ONBOARDING} replace />;
+    const targetOnboarding = getPathwayOnboardingRoute(userProfile);
+    return <Navigate to={targetOnboarding} replace />;
   }
 
   return <Outlet />;
