@@ -17,12 +17,14 @@ import { RecommendedCareCard } from '../dashboard/RecommendedCareCard';
 export const FemaleDashboardOverview: React.FC = () => {
   const navigate = useNavigate();
   const {
+    userProfile,
     activeAssessment,
     mlAssessment,
     assessmentLoading,
     mlAssessmentLoading,
     reports,
-    appointments,
+    upcomingAppointment,
+    submitTier1,
   } = useUserHealth();
 
 
@@ -70,13 +72,7 @@ export const FemaleDashboardOverview: React.FC = () => {
   }, [reports]);
 
   // Next upcoming scheduled appointment
-  const nextAppointment = useMemo(() => {
-    const scheduled = (appointments || []).filter((a) => a.status === 'scheduled');
-    if (scheduled.length === 0) return null;
-    return scheduled.sort(
-      (a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime()
-    )[0];
-  }, [appointments]);
+  const nextAppointment = upcomingAppointment;
 
   // Latest lab report
   const latestReport = useMemo(() => {
@@ -85,7 +81,24 @@ export const FemaleDashboardOverview: React.FC = () => {
   }, [reports]);
 
   const loading = assessmentLoading || mlAssessmentLoading;
+  const isOnboarded = Boolean(userProfile?.isOnboarded);
 
+  const screeningState: 'not_started' | 'processing' | 'ready' | 'error' = useMemo(() => {
+    if (hasAssessment && probabilityPercent !== null) {
+      return 'ready';
+    }
+    if (loading) {
+      return 'processing';
+    }
+    if (isOnboarded) {
+      return 'error';
+    }
+    return 'not_started';
+  }, [hasAssessment, probabilityPercent, loading, isOnboarded]);
+
+  const handleRetryScreening = async () => {
+    await submitTier1();
+  };
 
   // Primary action handler
   const handlePrimaryAction = async () => {
@@ -122,7 +135,10 @@ export const FemaleDashboardOverview: React.FC = () => {
             onStartScreening={() => navigate(ROUTES.APP.ASSESSMENT)}
             onViewAssessment={() => navigate(ROUTES.APP.ASSESSMENT)}
             onAddLabs={() => navigate(ROUTES.APP.ASSESSMENT)}
+            onRetry={handleRetryScreening}
             loading={loading}
+            isOnboarded={isOnboarded}
+            screeningState={screeningState}
             gradcamB64={activeAssessment?.gradcam_b64}
             pcomStatus={activeAssessment?.pcom_status}
           />

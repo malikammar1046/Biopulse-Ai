@@ -105,6 +105,8 @@ class QwenOllamaService:
             "think": False,
             "options": {
                 "temperature": temperature,
+                "num_predict": 2500,
+                "num_ctx": 4096,
             },
         }
 

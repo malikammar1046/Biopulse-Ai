@@ -22,6 +22,8 @@ export interface AppointmentItem {
   careCircleMemberId?: string;
   providerName: string;
   providerSpecialty?: string;
+  providerImage?: string | null;
+  fee?: string | null;
   title: string;
   appointmentType: AppointmentType;
   scheduledAt: string; // ISO String (e.g. 2026-09-08T15:30:00Z)
@@ -43,12 +45,15 @@ export interface AppointmentInput {
   providerId?: string;
   providerName: string;
   providerSpecialty?: string;
+  providerImage?: string | null;
+  fee?: string | null;
   careCircleMemberId?: string;
   title: string;
   appointmentType: AppointmentType;
   scheduledDate: string; // YYYY-MM-DD
   scheduledTime: string; // HH:MM
   durationMinutes: number;
+  status?: AppointmentStatus;
   location: string;
   meetingUrl?: string;
   reason?: string;

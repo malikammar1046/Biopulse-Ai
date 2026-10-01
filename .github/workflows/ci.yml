@@ -51,9 +51,13 @@ jobs:
           python manage.py makemigrations --check --dry-run
           
       - name: Run Backend Tests
+        timeout-minutes: 15
+        env:
+          PYTHONUNBUFFERED: "1"
+          DJANGO_SETTINGS_MODULE: "settings.test"
         run: |
           cd backend
-          python manage.py test
+          python manage.py test --no-parallel --keepdb --verbosity=2
 
   ml-checks:
     name: AI/ML & OCR Pipeline

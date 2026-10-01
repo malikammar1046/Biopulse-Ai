@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ROUTES } from './constants/routes';
 import { PublicLayout } from './layouts/PublicLayout';
 import { AppLayout } from './layouts/AppLayout';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { UserHealthProvider } from './context/UserHealthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { OnboardingRoute } from './components/auth/OnboardingRoute';
@@ -90,15 +90,16 @@ const ProgressPage = lazy(() => import('./pages/app/ProgressPage').then((m) => (
 
 import { AIChatProvider } from './context/AIChatContext';
 
-export function App() {
+const AppContent: React.FC = () => {
+  const { loading: authLoading } = useAuth();
+
+  if (authLoading) {
+    return <BioPulseLoadingScreen message="Preparing your health experience" fullScreen={true} />;
+  }
+
   return (
-    <AuthProvider>
-      <ErrorBoundary>
-        <UserHealthProvider>
-          <BrowserRouter>
-            <AIChatProvider>
-              <Suspense fallback={<PageLoadingFallback />}>
-                <Routes>
+    <Suspense fallback={<PageLoadingFallback />}>
+      <Routes>
               {/* Public Marketing Website */}
               <Route element={<PublicLayout />}>
                 <Route path={ROUTES.HOME} element={<Home />} />
@@ -216,7 +217,18 @@ export function App() {
               <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
             </Routes>
           </Suspense>
-          </AIChatProvider>
+  );
+};
+
+export function App() {
+  return (
+    <AuthProvider>
+      <ErrorBoundary>
+        <UserHealthProvider>
+          <BrowserRouter>
+            <AIChatProvider>
+              <AppContent />
+            </AIChatProvider>
           </BrowserRouter>
         </UserHealthProvider>
       </ErrorBoundary>

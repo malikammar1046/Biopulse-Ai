@@ -156,10 +156,16 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 
     setIsSubmitting(true);
     try {
+      const selectedDoc = canonicalDoctors.find(
+        (d) => String(d.id) === selectedDoctorId || d.name.toLowerCase() === providerName.toLowerCase()
+      );
+
       const res = await onBook({
         providerId: selectedDoctorId || undefined,
         providerName: providerName.trim(),
         providerSpecialty: providerSpecialty?.trim(),
+        providerImage: selectedDoc?.profile_image || undefined,
+        fee: selectedDoc?.fee || undefined,
         careCircleMemberId: selectedCareCircleId || undefined,
         title: title.trim(),
         appointmentType,

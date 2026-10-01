@@ -1,14 +1,10 @@
 import React, { useState } from 'react';
-import {
-  Calendar,
-  MarkerPin01,
-  VideoRecorder,
-  MedicalCircle,
-  File01,
-  HelpCircle,
-  ChevronRight,
-} from '@untitledui/icons';
+import { Calendar } from '@untitledui/icons';
 import type { AppointmentItem, AppointmentStatus } from '../../types/appointment';
+import { useDoctors } from '../../services/doctorService';
+import { useUserHealth } from '../../context/UserHealthContext';
+import { resolvePathway } from '../../types/onboarding';
+import { BookedAppointmentCard } from './BookedAppointmentCard';
 
 interface AppointmentHistoryListProps {
   appointments: AppointmentItem[];
@@ -22,6 +18,11 @@ export const AppointmentHistoryList: React.FC<AppointmentHistoryListProps> = ({
   onViewDetails,
 }) => {
   const [filterStatus, setFilterStatus] = useState<'all' | AppointmentStatus>('all');
+  const { userProfile } = useUserHealth();
+  const pathway = resolvePathway(userProfile?.gender, userProfile?.pathway);
+  const isMale = pathway === 'male';
+
+  const { doctors } = useDoctors();
 
   const filtered = appointments.filter((a) => {
     if (filterStatus === 'all') return true;
@@ -29,17 +30,19 @@ export const AppointmentHistoryList: React.FC<AppointmentHistoryListProps> = ({
   });
 
   return (
-    <div className="p-6 sm:p-7 rounded-[32px] bg-white border border-[#BAE6FD] shadow-sm select-none text-left space-y-5">
+    <div className="p-6 sm:p-7 rounded-[32px] bg-white border border-[#BAE6FD] shadow-xs select-none text-left space-y-6">
       {/* Header & Filter Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
         <div className="flex items-center gap-2.5">
-          <Calendar className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
+          <div className="w-10 h-10 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-center justify-center text-[#0288D1] shrink-0">
+            <Calendar className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
+          </div>
           <div>
             <h3 className="text-base font-bold font-display text-[#0F172A]">
               Appointment History & Logs
             </h3>
             <p className="text-xs text-[#64748B]">
-              {appointments.length} total visits recorded
+              {appointments.length} total visits recorded in your clinical log
             </p>
           </div>
         </div>
@@ -64,104 +67,32 @@ export const AppointmentHistoryList: React.FC<AppointmentHistoryListProps> = ({
       </div>
 
       {/* Appointment Cards List */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         {filtered.length > 0 ? (
-          filtered.map((appt) => {
-            const questionCount = appt.doctorQuestions?.length || 0;
-            const formattedDate = new Date(appt.scheduledDate).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            });
-
-            return (
-              <div
-                key={appt.id}
-                className="p-4 sm:p-5 rounded-2xl bg-[#F8FAFC] hover:bg-[#F0F9FF] border border-[#E2E8F0] hover:border-[#BAE6FD] transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-              >
-                {/* Left: Doctor & Details */}
-                <div className="flex items-start gap-3.5 min-w-0">
-                  <div className="w-10 h-10 rounded-xl bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD]/60 flex items-center justify-center shrink-0 mt-0.5">
-                    <MedicalCircle className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
-                  </div>
-
-                  <div className="space-y-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-bold text-sm text-[#0F172A] truncate">
-                        {appt.providerName}
-                      </span>
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold capitalize ${
-                          appt.status === 'scheduled'
-                            ? 'bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]'
-                            : appt.status === 'completed'
-                            ? 'bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD]'
-                            : 'bg-[#FEF2F2] text-[#B91C1C] border border-[#FECACA]'
-                        }`}
-                      >
-                        {appt.status}
-                      </span>
-                    </div>
-
-                    <h4 className="text-xs font-semibold text-[#0288D1] truncate">
-                      {appt.title}
-                    </h4>
-
-                    <div className="flex flex-wrap items-center gap-3 text-[11px] text-[#64748B] pt-0.5">
-                      <span className="flex items-center gap-1 font-mono">
-                        <Calendar className="w-3.5 h-3.5 text-[#0288D1] shrink-0" aria-hidden="true" />
-                        {formattedDate} at {appt.scheduledTime}
-                      </span>
-
-                      <span className="flex items-center gap-1">
-                        {appt.meetingUrl ? (
-                          <VideoRecorder className="w-3.5 h-3.5 text-[#059669] shrink-0" aria-hidden="true" />
-                        ) : (
-                          <MarkerPin01 className="w-3.5 h-3.5 text-[#0288D1] shrink-0" aria-hidden="true" />
-                        )}
-                        <span className="truncate max-w-[180px]">{appt.location}</span>
-                      </span>
-
-                      {questionCount > 0 && (
-                        <span className="flex items-center gap-1 text-[#0288D1] font-semibold">
-                          <HelpCircle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                          {questionCount} {questionCount === 1 ? 'question' : 'questions'}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right: Quick Action Buttons */}
-                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                  <button
-                    type="button"
-                    onClick={() => onPrepare(appt)}
-                    className="px-3.5 py-1.5 rounded-xl bg-white border border-[#BAE6FD] hover:border-[#0288D1] text-[#0288D1] text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
-                  >
-                    <File01 className="w-4 h-4 shrink-0" aria-hidden="true" />
-                    <span>Prepare</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => onViewDetails(appt)}
-                    className="p-2 rounded-xl bg-white border border-[#E2E8F0] hover:bg-[#F0F9FF] text-[#64748B] hover:text-[#0F172A] transition-colors cursor-pointer"
-                    title="View Full Details"
-                  >
-                    <ChevronRight className="w-4 h-4 shrink-0" aria-hidden="true" />
-                  </button>
-                </div>
-              </div>
-            );
-          })
+          filtered.map((appt) => (
+            <BookedAppointmentCard
+              key={appt.id}
+              appointment={appt}
+              allDoctors={doctors}
+              isMale={isMale}
+              onPrepare={onPrepare}
+              onViewDetails={onViewDetails}
+              isFeatured={false}
+            />
+          ))
         ) : (
-          <div className="p-8 text-center rounded-2xl bg-[#F8FAFC] border border-dashed border-[#BAE6FD] text-xs text-[#64748B] space-y-1">
-            <p className="font-semibold text-[#0F172A]">No appointments match filter.</p>
-            <p>Select another filter or book a new appointment.</p>
+          <div className="p-10 text-center rounded-2xl bg-[#F8FAFC] border border-dashed border-[#BAE6FD] text-xs text-[#64748B] space-y-1.5">
+            <p className="font-bold text-sm text-[#0F172A]">No appointments found</p>
+            <p>
+              {filterStatus === 'all'
+                ? 'You do not have any consultations logged yet. Request an appointment to connect with specialists.'
+                : `There are currently no visits marked as "${filterStatus}".`}
+            </p>
           </div>
         )}
       </div>
     </div>
   );
 };
+
+export default AppointmentHistoryList;

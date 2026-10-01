@@ -7,6 +7,9 @@ import sys
 def main():
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+    if "test" in sys.argv:
+        # Normalize --no-parallel flag to standard Django sequential test execution
+        sys.argv = [arg for arg in sys.argv if arg != "--no-parallel"]
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

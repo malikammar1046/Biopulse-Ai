@@ -18,13 +18,15 @@ import { RecommendedCareCard } from '../dashboard/RecommendedCareCard';
 export const MaleDashboardOverview: React.FC = () => {
   const navigate = useNavigate();
   const {
+    userProfile,
     activeAssessment,
     mlAssessment,
     assessmentLoading,
     mlAssessmentLoading,
     reports,
-    appointments,
+    upcomingAppointment,
     refreshActiveAssessment,
+    submitMaleTier1,
   } = useUserHealth();
 
   const [isLabsModalOpen, setIsLabsModalOpen] = useState(false);
@@ -76,13 +78,7 @@ export const MaleDashboardOverview: React.FC = () => {
   }, [reports]);
 
   // Next upcoming scheduled appointment
-  const nextAppointment = useMemo(() => {
-    const scheduled = (appointments || []).filter((a) => a.status === 'scheduled');
-    if (scheduled.length === 0) return null;
-    return scheduled.sort(
-      (a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime()
-    )[0];
-  }, [appointments]);
+  const nextAppointment = upcomingAppointment;
 
   // Latest lab report
   const latestReport = useMemo(() => {
@@ -91,7 +87,24 @@ export const MaleDashboardOverview: React.FC = () => {
   }, [reports]);
 
   const loading = assessmentLoading || mlAssessmentLoading;
+  const isOnboarded = Boolean(userProfile?.isOnboarded);
 
+  const screeningState: 'not_started' | 'processing' | 'ready' | 'error' = useMemo(() => {
+    if (hasAssessment && probabilityPercent !== null) {
+      return 'ready';
+    }
+    if (loading) {
+      return 'processing';
+    }
+    if (isOnboarded) {
+      return 'error';
+    }
+    return 'not_started';
+  }, [hasAssessment, probabilityPercent, loading, isOnboarded]);
+
+  const handleRetryScreening = async () => {
+    await submitMaleTier1();
+  };
 
   // Primary action handler
   const handlePrimaryAction = async () => {
@@ -114,7 +127,7 @@ export const MaleDashboardOverview: React.FC = () => {
       className="max-w-6xl mx-auto space-y-6 sm:space-y-7 pb-16 text-left select-none"
     >
       {/* ── Primary 2-Column Clinical Grid ───────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 lg:gap-6 items-stretch">
         {/* Left Column (7 cols): Primary Screening Card */}
         <div className="lg:col-span-7 flex flex-col">
           <MaleScreeningCard
@@ -128,13 +141,16 @@ export const MaleDashboardOverview: React.FC = () => {
             onStartScreening={() => navigate(ROUTES.APP.ASSESSMENT)}
             onViewAssessment={() => navigate(ROUTES.APP.ASSESSMENT)}
             onAddLabs={() => setIsLabsModalOpen(true)}
+            onRetry={handleRetryScreening}
             loading={loading}
+            isOnboarded={isOnboarded}
+            screeningState={screeningState}
             hormonePatternInterpretation={activeAssessment?.hormone_pattern_interpretation}
           />
         </div>
 
         {/* Right Column (5 cols): Single Next Best Action + Top Factors */}
-        <div className="lg:col-span-5 flex flex-col justify-between space-y-5 sm:space-y-6">
+        <div className="lg:col-span-5 flex flex-col justify-between gap-4 sm:gap-5 lg:gap-6">
           <MaleNextBestAction
             hasAssessment={hasAssessment}
             assessmentLevel={assessmentLevel}

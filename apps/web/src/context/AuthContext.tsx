@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import type { User as SupabaseUser, Session as SupabaseSession } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { authService, type LoginPayload, type RegisterPayload } from '../services/authService';
@@ -47,6 +47,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return createEmptyUserProfile();
   });
 
+  const userProfileRef = useRef<UserProfile>(userProfile);
+  userProfileRef.current = userProfile;
+
+  // Track active registration to prevent onAuthStateChange from preempting local state with incomplete remote fetches
+  const isRegisteringRef = useRef(false);
+
+  // Track active background profile persistence to avoid write races with immediate subsequent updates
+  const activePersistencePromiseRef = useRef<Promise<{ success: boolean; error?: string }> | null>(null);
+
   const loadProfile = useCallback(async (activeUser: SupabaseUser): Promise<UserProfile> => {
     const userMeta = activeUser.user_metadata || {};
     const metaFullName =
@@ -67,18 +76,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       pathway: metaPathway,
     });
 
+    // In-memory profile fallback
+    const currentInMemory = userProfileRef.current;
+    const inMemoryPathway = currentInMemory.id === activeUser.id ? currentInMemory.pathway : undefined;
+    const inMemoryGender = currentInMemory.id === activeUser.id ? currentInMemory.gender : undefined;
+
     if (profile) {
-      // Prioritize explicit metadata and profile pathway, fallback to female
+      // Prioritize explicit metadata and profile pathway, then in-memory pathway, then gender-derived
       const resolvedPathway =
         metaPathway ||
         profile.pathway ||
+        inMemoryPathway ||
         (metaGender === 'female' ? 'female' : metaGender === 'male' ? 'male' : undefined) ||
         (profile.gender === 'female' ? 'female' : profile.gender === 'male' ? 'male' : undefined) ||
+        (inMemoryGender === 'female' ? 'female' : inMemoryGender === 'male' ? 'male' : undefined) ||
         'female';
 
       const resolvedGender =
         metaGender ||
         profile.gender ||
+        inMemoryGender ||
         (resolvedPathway === 'female' ? 'female' : resolvedPathway === 'male' ? 'male' : 'female');
 
       const updatedProfile: UserProfile = {
@@ -102,10 +119,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Create empty initial profile for new user
       const initialPathway =
         metaPathway ||
+        inMemoryPathway ||
         (metaGender === 'female' ? 'female' : metaGender === 'male' ? 'male' : undefined) ||
+        (inMemoryGender === 'female' ? 'female' : inMemoryGender === 'male' ? 'male' : undefined) ||
         'female';
       const initialGender =
         metaGender ||
+        inMemoryGender ||
         (initialPathway === 'female' ? 'female' : initialPathway === 'male' ? 'male' : 'female');
 
       const initial = createEmptyUserProfile({
@@ -169,6 +189,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(currentSession);
       const currentUser = currentSession?.user ?? null;
       setUser(currentUser);
+
+      if (isRegisteringRef.current) {
+        // Registration is orchestrating the user and profile state.
+        // Prevent onAuthStateChange from racing or overwriting the local registration profile.
+        setLoading(false);
+        return;
+      }
 
       if (currentUser) {
         await loadProfile(currentUser);
@@ -244,30 +271,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (
     payload: RegisterPayload
   ): Promise<{ success: boolean; emailConfirmationRequired?: boolean; error?: string }> => {
-    const res = await authService.register(payload);
-    if (!res.success) {
-      return { success: false, error: res.error };
-    }
+    isRegisteringRef.current = true;
+    try {
+      const res = await authService.register(payload);
+      if (!res.success) {
+        isRegisteringRef.current = false;
+        return { success: false, error: res.error };
+      }
 
-    if (res.session?.user) {
-      setUser(res.session.user);
-      setSession(res.session);
-      const newProfile = createEmptyUserProfile({
-        id: res.session.user.id,
-        email: payload.email,
-        fullName: payload.fullName,
-        dateOfBirth: '',
-        gender: payload.gender,
-        pathway: payload.pathway,
-        isOnboarded: false,
-      });
-      setUserProfile(newProfile);
-      await profileService.upsertUserProfile(newProfile, res.session.user.id);
-      return { success: true, emailConfirmationRequired: false };
-    } else if (res.user) {
-      if (!isSupabaseConfigured()) {
+      if (res.session?.user) {
+        setUser(res.session.user);
+        setSession(res.session);
         const newProfile = createEmptyUserProfile({
-          id: res.user.id,
+          id: res.session.user.id,
           email: payload.email,
           fullName: payload.fullName,
           dateOfBirth: '',
@@ -276,12 +292,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           isOnboarded: false,
         });
         setUserProfile(newProfile);
-        return { success: true, emailConfirmationRequired: false };
-      }
-      return { success: true, emailConfirmationRequired: true };
-    }
+        try {
+          localStorage.setItem(STORAGE_PROFILE_KEY, JSON.stringify(newProfile));
+        } catch {
+          // ignore
+        }
 
-    return { success: true };
+        // Start non-blocking safe persistence in background with robust tracking
+        const persistencePromise = profileService
+          .upsertUserProfile(newProfile, res.session.user.id)
+          .catch((persistErr) => {
+            console.error('Non-blocking registration profile persistence error:', persistErr);
+            return { success: false, error: persistErr?.message };
+          })
+          .finally(() => {
+            isRegisteringRef.current = false;
+          });
+
+        activePersistencePromiseRef.current = persistencePromise;
+
+        return { success: true, emailConfirmationRequired: false };
+      } else if (res.user) {
+        if (!isSupabaseConfigured()) {
+          const newProfile = createEmptyUserProfile({
+            id: res.user.id,
+            email: payload.email,
+            fullName: payload.fullName,
+            dateOfBirth: '',
+            gender: payload.gender,
+            pathway: payload.pathway,
+            isOnboarded: false,
+          });
+          setUserProfile(newProfile);
+          try {
+            localStorage.setItem(STORAGE_PROFILE_KEY, JSON.stringify(newProfile));
+          } catch {
+            // ignore
+          }
+          isRegisteringRef.current = false;
+          return { success: true, emailConfirmationRequired: false };
+        }
+        isRegisteringRef.current = false;
+        return { success: true, emailConfirmationRequired: true };
+      }
+
+      isRegisteringRef.current = false;
+      return { success: true };
+    } catch (err: any) {
+      isRegisteringRef.current = false;
+      return { success: false, error: err?.message || 'Registration failed.' };
+    }
   };
 
   const logout = async () => {
@@ -305,6 +365,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const saveOnboardingProfile = async (
     data: Partial<UserProfile>
   ): Promise<{ success: boolean; error?: string }> => {
+    // Await any pending background registration persistence to avoid write races
+    if (activePersistencePromiseRef.current) {
+      try {
+        await activePersistencePromiseRef.current;
+      } catch (e) {
+        console.warn('Pending registration persistence warning:', e);
+      }
+    }
+
     const updated: UserProfile = {
       ...userProfile,
       ...data,
@@ -340,6 +409,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateUserProfile = async (
     data: Partial<UserProfile>
   ): Promise<{ success: boolean; error?: string }> => {
+    // Await any pending background registration persistence to avoid write races
+    if (activePersistencePromiseRef.current) {
+      try {
+        await activePersistencePromiseRef.current;
+      } catch (e) {
+        console.warn('Pending registration persistence warning:', e);
+      }
+    }
+
     // 1. Optimistically update local state immediately so UI and route guards react instantly
     const optimistic: UserProfile = {
       ...userProfile,

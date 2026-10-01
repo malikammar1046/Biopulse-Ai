@@ -175,7 +175,7 @@ export const MalePrimaryButton: React.FC<MaleButtonProps> = ({
     <button
       type="button"
       disabled={disabled || isLoading}
-      className={`h-10 px-4 rounded-xl bg-[#0868B9] hover:bg-[#07589D] active:scale-[0.98] text-white text-xs sm:text-sm font-semibold transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed select-none ${className}`}
+      className={`h-11 px-5 rounded-xl bg-[#0868B9] hover:bg-[#07589D] active:scale-[0.98] text-white text-xs sm:text-sm font-semibold transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed select-none ${className}`}
       {...props}
     >
       {isLoading ? (
@@ -200,7 +200,7 @@ export const MaleSecondaryButton: React.FC<MaleButtonProps> = ({
     <button
       type="button"
       disabled={disabled || isLoading}
-      className={`h-10 px-4 rounded-xl bg-white hover:bg-[#F2F4F7] active:scale-[0.98] text-[#344054] hover:text-[#111318] border border-[#D0D5DD] text-xs sm:text-sm font-semibold transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed select-none ${className}`}
+      className={`h-11 px-5 rounded-xl bg-white hover:bg-[#F2F4F7] active:scale-[0.98] text-[#344054] hover:text-[#111318] border border-[#D0D5DD] text-xs sm:text-sm font-semibold transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed select-none ${className}`}
       {...props}
     >
       {isLoading ? (

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   CheckCircle,
   ShieldTick,
@@ -6,7 +6,8 @@ import {
   Beaker01,
 } from '@untitledui/icons';
 import type { UserProfile } from '../../../types/onboarding';
-import { MaleWhyWeAskCard } from './MaleWhyWeAskCard';
+import { OnboardingWhyModal, OnboardingWhyTrigger } from '../../../components/onboarding/OnboardingWhyModal';
+import { UserAvatar } from '../../../components/common/UserAvatar';
 
 interface MaleStep5Props {
   profile: UserProfile;
@@ -17,6 +18,7 @@ export const MaleStep5ReviewReady: React.FC<MaleStep5Props> = ({
   profile,
   saveError,
 }) => {
+  const [showWhyModal, setShowWhyModal] = useState(false);
   const mh = profile.mensHealth || {
     energyLevel: 'moderate',
     sexDrive: 'normal',
@@ -56,6 +58,10 @@ export const MaleStep5ReviewReady: React.FC<MaleStep5Props> = ({
 
   const reviewRows = [
     {
+      label: 'Profile Picture',
+      val: profile.avatarUrl ? 'Configured' : 'Avatar set',
+    },
+    {
       label: 'Personal & Biometrics',
       val: `${profile.fullName || 'User'} • ${profile.heightCm ? `${profile.heightCm} cm` : 'Height set'} / ${
         profile.weightKg ? `${profile.weightKg} kg` : 'Weight set'
@@ -64,7 +70,9 @@ export const MaleStep5ReviewReady: React.FC<MaleStep5Props> = ({
     {
       label: 'Medical Baseline',
       val:
-        (profile.medical?.conditions?.length || 0) === 0 || profile.medical?.conditions?.includes('None of these conditions')
+        (profile.medical?.conditions?.length || 0) === 0 ||
+        profile.medical?.conditions?.includes('None of these conditions') ||
+        profile.medical?.conditions?.includes('None of these')
           ? 'No chronic conditions reported'
           : profile.medical?.conditions?.join(', '),
     },
@@ -92,98 +100,143 @@ export const MaleStep5ReviewReady: React.FC<MaleStep5Props> = ({
   ];
 
   return (
-    <div className="space-y-4 text-left">
-      {/* ── Compact Question Header ── */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-[#DDEFFD] flex items-center justify-center shrink-0 shadow-2xs">
-          <ShieldTick className="w-5 h-5 text-[#0868B9]" aria-hidden="true" />
+    <div className="space-y-5 text-left max-w-4xl mx-auto">
+      {/* ── Question Header with Why We Ask Trigger ── */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#E0F2FE] flex items-center justify-center shrink-0 shadow-2xs">
+            <ShieldTick className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
+          </div>
+
+          <div>
+            <span className="text-xs sm:text-[13px] font-bold font-sans text-[#0288D1] uppercase tracking-wider block leading-none">
+              Final Confirmation
+            </span>
+            <h2 className="text-xl sm:text-2xl font-bold font-display text-[#073B72] tracking-tight leading-tight mt-1">
+              Review your BioPulse AI profile
+            </h2>
+          </div>
         </div>
 
-        <div>
-          <span className="text-[10px] font-bold font-mono text-[#0868B9] uppercase tracking-wider block leading-none">
-            Final Confirmation
-          </span>
-          <h2 className="text-xl sm:text-2xl font-extrabold font-display text-[#073B72] tracking-tight leading-tight mt-0.5">
-            Review your BioPulse AI profile
-          </h2>
-          <p className="text-xs text-[#55718F] font-sans leading-tight mt-0.5">
-            Confirm your baseline information below to finalize your secure profile and generate your initial hypogonadism screening.
-          </p>
-        </div>
+        <OnboardingWhyTrigger
+          onClick={() => setShowWhyModal(true)}
+          label="Privacy & Security"
+          accentColor="blue"
+        />
       </div>
+
+      <p className="text-[14px] sm:text-[15px] text-[#55718F] font-sans leading-relaxed">
+        Confirm your baseline information below to finalize your secure profile and generate your initial hypogonadism screening.
+      </p>
 
       {/* ── Error Banner if Save Failed ── */}
       {saveError && (
-        <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" aria-hidden="true" />
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-[14px] sm:text-[15px] text-rose-700 flex items-center gap-2.5">
+          <AlertCircle className="w-5 h-5 text-rose-500 shrink-0" aria-hidden="true" />
           <span>{saveError}</span>
         </div>
       )}
 
-      {/* ── Main Form Layout: Fields + Why We Ask Card ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Review Cards Column */}
-        <div className="lg:col-span-8 space-y-3">
+      {/* ── Main Review Content (Full Width) ── */}
+      <div className="w-full space-y-4 sm:space-y-5">
+          {/* Profile Hero Card with Avatar */}
+          <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-[#FAFCFF] via-[#F0F9FF] to-[#E0F2FE]/30 border border-[#D7EAF2] flex items-center gap-5">
+            <UserAvatar
+              avatarUrl={profile.avatarUrl}
+              name={profile.fullName}
+              pathway="male"
+              size="lg"
+              className="ring-3 ring-[#0288D1]/30 shadow-xs shrink-0"
+            />
+
+            <div>
+              <h3 className="text-xl sm:text-2xl font-bold font-display text-[#073B72] leading-tight">
+                {profile.fullName ? `Welcome, ${profile.fullName}` : 'Your BioPulse AI profile is ready'}
+              </h3>
+              <p className="text-[14px] sm:text-[15px] text-[#55718F] font-sans mt-1">
+                Baseline calibrated • Ready to explore personalized insights
+              </p>
+            </div>
+          </div>
+
           {/* Summary Details Card */}
-          <div className="p-4 rounded-xl bg-white border border-[#D7EAF2] shadow-2xs space-y-2.5">
-            {reviewRows.map((row, idx) => (
-              <div
-                key={idx}
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-2 border-b border-[#F0F5F8] last:border-0 last:pb-0"
-              >
-                <span className="text-[11px] font-bold font-mono text-[#55718F] uppercase tracking-wide">
-                  {row.label}
-                </span>
-                <span className="text-xs font-semibold text-[#073B72] text-left sm:text-right max-w-sm truncate">
-                  {row.val}
-                </span>
-              </div>
-            ))}
+          <div className="p-5 sm:p-6 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] shadow-2xs space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#D7EAF2]">
+              <span className="flex items-center gap-2.5 font-bold tracking-wide text-[15px] sm:text-[16px] uppercase text-[#073B72]">
+                <ShieldTick className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
+                Configured Baselines
+              </span>
+              <span className="text-[#0288D1] font-bold text-[13px] bg-[#E0F2FE] px-3 py-1 rounded-full border border-[#BAE6FD]">
+                100% Complete
+              </span>
+            </div>
+
+            <div className="space-y-1">
+              {reviewRows.map((row, idx) => (
+                <div
+                  key={idx}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 py-2.5 sm:py-3 border-b border-[#E8F1F5] last:border-0"
+                >
+                  <span className="text-[14px] sm:text-[15px] font-semibold font-sans text-[#073B72] shrink-0">
+                    {row.label}
+                  </span>
+                  <span className="text-[14px] sm:text-[15px] text-[#486581] font-sans font-medium text-left sm:text-right max-w-sm sm:max-w-md truncate">
+                    {row.val}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Tier 2 Laboratory Blood Tests Notice */}
-          <div className="p-3.5 rounded-xl bg-[#F0F8FF] border border-[#BAE6FD] flex items-start gap-2.5">
-            <div className="w-6 h-6 rounded-lg bg-[#DDEFFD] flex items-center justify-center text-[#0868B9] shrink-0 mt-0.5">
-              <Beaker01 className="w-3.5 h-3.5" aria-hidden="true" />
+          <div className="p-4.5 sm:p-5 rounded-2xl bg-[#F0F8FF] border border-[#BAE6FD] flex items-start gap-3.5">
+            <div className="w-9 h-9 rounded-xl bg-[#DDEFFD] flex items-center justify-center text-[#0288D1] shrink-0 mt-0.5">
+              <Beaker01 className="w-5 h-5" aria-hidden="true" />
             </div>
-            <div className="text-[11px] text-[#55718F] leading-snug">
-              <span className="font-bold text-[#073B72] block">Clinical Lab Results (Tier 2):</span>
+            <div className="text-[13px] sm:text-[14px] text-[#55718F] leading-relaxed">
+              <span className="font-bold text-[14px] sm:text-[15px] text-[#073B72] block mb-0.5">Clinical Lab Results (Tier 2):</span>
               You can add laboratory results (such as morning fasting total testosterone, SHBG, and metabolic labs) later in your AndroSense Assessment to refine your screening estimate.
             </div>
           </div>
 
           {/* What to Expect Card */}
-          <div className="p-4 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-2">
-            <span className="text-[11px] font-bold font-mono text-[#0868B9] uppercase tracking-wider block">
+          <div className="p-5 sm:p-6 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-3">
+            <span className="text-[14px] sm:text-[15px] font-bold font-sans uppercase tracking-wider text-[#0288D1] block">
               What You Can Explore in AndroSense AI:
             </span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {exploreList.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-2 text-xs text-[#55718F]">
-                  <CheckCircle className="w-3.5 h-3.5 text-[#0868B9] shrink-0" aria-hidden="true" />
+                <div key={idx} className="flex items-center gap-2.5 text-[14px] sm:text-[15px] text-[#486581] font-medium py-0.5">
+                  <CheckCircle className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
                   <span>{item}</span>
                 </div>
               ))}
             </div>
           </div>
-        </div>
-
-        {/* Contextual Helper Card Column */}
-        <div className="lg:col-span-4 space-y-3">
-          <MaleWhyWeAskCard
-            title="Screening Confirmation"
-            description="BioPulse AI calculates an initial non-diagnostic screening score calibrated against CDC epidemiological reference data. Your profile provides the foundation for progressive assessment."
-            icon={ShieldTick}
-          />
-
-          <div className="p-3.5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] text-[11px] text-[#55718F] space-y-1.5">
-            <span className="font-bold text-[#073B72] block">Privacy & Security:</span>
-            <p>
-              Your health data is encrypted and strictly confidential. You retain full control over your profile and can update measurements or symptoms anytime.
-            </p>
-          </div>
-        </div>
       </div>
+
+      {/* ── "Why We Ask This" Modal Dialog ── */}
+      <OnboardingWhyModal
+        isOpen={showWhyModal}
+        onClose={() => setShowWhyModal(false)}
+        title="Screening & Privacy Confirmation"
+        icon={ShieldTick}
+        accentColor="blue"
+      >
+        <div className="p-4 sm:p-4.5 rounded-2xl bg-[#F0F8FF] border border-[#BAE6FD]">
+          <span className="font-bold text-[14px] sm:text-[15px] text-[#0288D1] block mb-1">Epidemiological Foundation</span>
+          <p className="text-[13px] sm:text-[14px] text-[#486581] leading-relaxed">
+            BioPulse AI calculates an initial non-diagnostic screening score calibrated against CDC epidemiological reference data. Your profile provides the foundation for progressive assessment.
+          </p>
+        </div>
+
+        <div className="p-4 sm:p-4.5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2]">
+          <span className="font-bold text-[14px] sm:text-[15px] text-[#073B72] block mb-1">Privacy &amp; Security:</span>
+          <p className="text-[13px] sm:text-[14px] text-[#486581] leading-relaxed">
+            Your health data is encrypted and strictly confidential. You retain full control over your profile and can update measurements or symptoms anytime.
+          </p>
+        </div>
+      </OnboardingWhyModal>
     </div>
   );
 };
