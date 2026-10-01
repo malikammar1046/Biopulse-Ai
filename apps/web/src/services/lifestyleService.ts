@@ -22,10 +22,16 @@ const BACKEND_API_URL =
 const LIFESTYLE_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/lifestyle-recommendations/`;
 
 async function getAuthHeaders(): Promise<HeadersInit> {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const token = session?.access_token;
+  let token: string | undefined;
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    token = session?.access_token;
+  } catch {
+    // ignore
+  }
+
   return {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -37,34 +43,60 @@ class LifestyleService {
    * Fetch personalized lifestyle recommendations synthesized from
    * profile, screening risk, SHAP drivers, symptoms, and lab biomarkers.
    * If refresh is true, triggers a fresh recalculation instead of using cached fingerprint.
+   * Implements bounded retries (0ms, 250ms, 500ms) for post-onboarding resilience.
    */
   async getRecommendations(
     module?: 'ovasense' | 'androsense' | 'female_pcos' | 'male_hypogonadism',
     refresh = false
   ): Promise<LifestyleRecommendationsResult> {
-    const headers = await getAuthHeaders();
-    const params = new URLSearchParams();
-    if (module) params.set('module', module);
-    if (refresh) params.set('refresh', 'true');
-    const queryString = params.toString();
-    const url = queryString ? `${LIFESTYLE_ENDPOINT}?${queryString}` : LIFESTYLE_ENDPOINT;
+    const retryDelays = [0, 250, 500];
+    let lastError: any = null;
 
-    const res = await fetch(url, {
-      method: 'GET',
-      headers,
-    });
+    for (let attempt = 0; attempt < retryDelays.length; attempt++) {
+      if (attempt > 0) {
+        await new Promise((resolve) => setTimeout(resolve, retryDelays[attempt]));
+      }
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      const errorObj = new Error(
-        err.error || err.detail || `Failed to fetch lifestyle recommendations (${res.status})`
-      ) as any;
-      errorObj.status = res.status;
-      errorObj.detail = err.detail;
-      throw errorObj;
+      try {
+        const headers = await getAuthHeaders();
+        const params = new URLSearchParams();
+        if (module) params.set('module', module);
+        if (refresh) params.set('refresh', 'true');
+        const queryString = params.toString();
+        const url = queryString ? `${LIFESTYLE_ENDPOINT}?${queryString}` : LIFESTYLE_ENDPOINT;
+
+        const res = await fetch(url, {
+          method: 'GET',
+          headers,
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          const errorObj = new Error(
+            err.error || err.detail || `Failed to fetch lifestyle recommendations (${res.status})`
+          ) as any;
+          errorObj.status = res.status;
+          errorObj.detail = err.detail;
+          lastError = errorObj;
+
+          // Retry on 401 (auth race) or 5xx/422 if attempts remain
+          if (attempt < retryDelays.length - 1 && (res.status === 401 || res.status >= 500 || res.status === 422)) {
+            continue;
+          }
+          throw errorObj;
+        }
+
+        return await res.json();
+      } catch (err: any) {
+        lastError = err;
+        if (attempt < retryDelays.length - 1) {
+          continue;
+        }
+        throw err;
+      }
     }
 
-    return res.json();
+    throw lastError || new Error('Failed to load lifestyle recommendations.');
   }
 
   /**

@@ -179,14 +179,42 @@ class LifestyleContextBuilder:
 
         profile_obj = getattr(health_data, "profile", None) if health_data else None
 
-        # 2. Extract demographics
-        gender = "female"
+        # 2. Extract demographics with robust pathway resolution
+        gender = None
+        pathway = None
         if profile_obj:
-            gender = str(getattr(profile_obj, "gender", "female") or "female").lower()
+            gender = getattr(profile_obj, "gender", None) or (
+                profile_obj.get("gender") if isinstance(profile_obj, dict) else None
+            )
+            pathway = getattr(profile_obj, "pathway", None) or (
+                profile_obj.get("pathway") if isinstance(profile_obj, dict) else None
+            )
 
-        canonical_module = cls.normalize_module(module, gender=gender)
+        if not gender and not pathway and auth_token:
+            try:
+                import jwt
+                payload = jwt.decode(auth_token, options={"verify_signature": False})
+                user_meta = payload.get("user_metadata", {}) or {}
+                gender = user_meta.get("gender")
+                pathway = user_meta.get("pathway")
+            except Exception:
+                pass
+
+        if not gender and not pathway and not module:
+            try:
+                act_m = assessment_repository.get_active_assessment(
+                    user_id_str, module="male_hypogonadism", auth_token=auth_token
+                )
+                if act_m and act_m.get("has_assessment") is not False:
+                    gender = "male"
+                    pathway = "male_hypogonadism"
+            except Exception:
+                pass
+
+        canonical_module = cls.normalize_module(module or pathway, gender=gender)
         module = canonical_module
         pathway = canonical_module
+        gender = "male" if canonical_module == "male_hypogonadism" else "female"
         age = None
         height_cm = None
         weight_kg = None

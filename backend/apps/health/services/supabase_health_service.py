@@ -253,7 +253,7 @@ class SupabaseHealthService:
                 .maybe_single()
                 .execute()
             )
-            row: dict[str, Any] = res.data or {}
+            row: dict[str, Any] = getattr(res, "data", None) or {}
         except Exception as exc:
             logger.warning("profile fetch failed for %s: %s", patient_uuid, exc)
             row = {}
@@ -312,7 +312,7 @@ class SupabaseHealthService:
                 .limit(100)
                 .execute()
             )
-            rows = res.data or []
+            rows = getattr(res, "data", None) or []
         except Exception as exc:
             logger.warning("cycle_records fetch failed: %s", exc)
             return []
@@ -344,7 +344,7 @@ class SupabaseHealthService:
                 .limit(500)
                 .execute()
             )
-            rows = res.data or []
+            rows = getattr(res, "data", None) or []
         except Exception as exc:
             logger.warning("symptom_records fetch failed: %s", exc)
             return []
@@ -377,7 +377,7 @@ class SupabaseHealthService:
                 .limit(500)
                 .execute()
             )
-            rows = res.data or []
+            rows = getattr(res, "data", None) or []
         except Exception as exc:
             logger.warning("food_logs fetch failed: %s", exc)
             return []
@@ -426,7 +426,7 @@ class SupabaseHealthService:
                     .limit(200)
                     .execute()
                 )
-            rows = res.data or []
+            rows = getattr(res, "data", None) or []
         except Exception as exc:
             logger.warning("water_logs fetch failed: %s", exc)
             return []
@@ -456,7 +456,7 @@ class SupabaseHealthService:
                 .limit(500)
                 .execute()
             )
-            rows = res.data or []
+            rows = getattr(res, "data", None) or []
         except Exception as exc:
             logger.warning("fitness_logs fetch failed: %s", exc)
             return []
@@ -484,7 +484,7 @@ class SupabaseHealthService:
                 .eq("user_id", patient_uuid)
                 .execute()
             )
-            rows = res.data or []
+            rows = getattr(res, "data", None) or []
         except Exception as exc:
             logger.warning("medications fetch failed: %s", exc)
             return []
@@ -512,7 +512,7 @@ class SupabaseHealthService:
                 .limit(1000)
                 .execute()
             )
-            rows = res.data or []
+            rows = getattr(res, "data", None) or []
         except Exception as exc:
             logger.warning("medication_logs fetch failed: %s", exc)
             return []
@@ -551,7 +551,7 @@ class SupabaseHealthService:
                 .limit(200)
                 .execute()
             )
-            rows = res.data or []
+            rows = getattr(res, "data", None) or []
             rows.sort(
                 key=lambda r: (r.get("medical_reports") or {}).get("report_date") or "",
                 reverse=True,

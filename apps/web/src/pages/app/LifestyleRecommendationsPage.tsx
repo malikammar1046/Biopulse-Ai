@@ -38,7 +38,7 @@ type ErrorClassification = 'NETWORK' | 'SESSION' | 'NO_ASSESSMENT' | 'SERVER';
 
 export const LifestyleRecommendationsPage: React.FC = () => {
   const navigate = useNavigate();
-  const { userProfile } = useUserHealth();
+  const { userProfile, postOnboardingReadiness } = useUserHealth();
   const isMale = userProfile?.pathway === 'male' || userProfile?.gender === 'male';
   const defaultPathway = isMale ? 'androsense' : 'ovasense';
 
@@ -114,6 +114,12 @@ export const LifestyleRecommendationsPage: React.FC = () => {
   useEffect(() => {
     fetchRecommendations();
   }, [defaultPathway]);
+
+  useEffect(() => {
+    if (postOnboardingReadiness === 'ready') {
+      fetchRecommendations();
+    }
+  }, [postOnboardingReadiness]);
 
   const handleDietaryChange = (newPref: string) => {
     setDietaryPref(newPref);
@@ -193,13 +199,14 @@ export const LifestyleRecommendationsPage: React.FC = () => {
     }
   }, [data?.generated_at]);
 
-  // 1. Loading State (High-Fidelity Skeleton)
-  if (loading && !data) {
+  // 1. Loading State (High-Fidelity Skeleton) - also during post-onboarding initialization
+  const isInitializing = postOnboardingReadiness === 'initializing';
+  if ((loading && !data) || isInitializing) {
     return <LifestyleSkeleton />;
   }
 
   // 2. Error State (Calm, professional, differentiated, with retry)
-  if (error && !data) {
+  if (error && !data && !isInitializing) {
     if (errorType === 'SESSION') {
       return (
         <div className="max-w-2xl mx-auto py-16 px-4 text-center space-y-4">

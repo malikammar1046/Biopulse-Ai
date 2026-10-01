@@ -255,7 +255,7 @@ class ProfileService {
     }
 
     try {
-      // Persist pathway, gender, waist_cm, mens_health to auth user metadata so it is safely stored
+      // 1. Persist pathway, gender, waist_cm, mens_health to auth user metadata so it is safely stored
       try {
         await supabase.auth.updateUser({
           data: {
@@ -268,10 +268,13 @@ class ProfileService {
             general_health: profile.generalHealth ?? null,
           },
         });
-      } catch {
-        // Non-blocking if auth user metadata update encounters network issue
+        // Refresh session immediately so browser's cached JWT token contains updated user_metadata claims
+        await supabase.auth.refreshSession();
+      } catch (authErr) {
+        console.warn('[profileService] Auth metadata update/session refresh non-blocking notice:', authErr);
       }
 
+      // 2. Persist full profile row in profiles table
       const payload = mapUserProfileToDbRow(profile, userId);
       const { error } = await supabase
         .from('profiles')
@@ -279,6 +282,20 @@ class ProfileService {
 
       if (error) {
         return { success: false, error: error.message };
+      }
+
+      // 3. Confirm immediate queryability (read-your-writes verification)
+      try {
+        const { data: verifiedRow } = await supabase
+          .from('profiles')
+          .select('id, pathway, gender')
+          .eq('id', userId)
+          .maybeSingle();
+        if (verifiedRow) {
+          console.log('[profileService] Immediate readback verified for user:', userId);
+        }
+      } catch (verifyErr) {
+        console.warn('[profileService] Immediate readback non-blocking notice:', verifyErr);
       }
 
       return { success: true };

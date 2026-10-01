@@ -874,38 +874,73 @@ class LongitudinalHealthView(APIView):
 
     FEMALE_GENDERS = {"female", "f", "woman"}
     MALE_GENDERS = {"male", "m", "man"}
-    FEMALE_PATHWAYS = {"female", "female_pcos"}
-    MALE_PATHWAYS = {"male", "male_hypogonadism"}
+    FEMALE_PATHWAYS = {"female", "female_pcos", "ovasense", "pcos"}
+    MALE_PATHWAYS = {"male", "male_hypogonadism", "androsense", "hypogonadism"}
 
     def _resolve_authoritative_pathway(
-        self, patient_uuid: str, auth_token: str | None = None, user_obj: Any = None
+        self,
+        patient_uuid: str,
+        auth_token: str | None = None,
+        user_obj: Any = None,
+        requested_module: str | None = None,
     ) -> str | None:
         """
-        Derives the clinical pathway strictly from authoritative persisted profile/onboarding data.
-        Returns None if gender/pathway cannot be determined (fails closed).
+        Derives the clinical pathway strictly from authoritative persisted profile/onboarding data,
+        active screening assessments, clinical state, or verified JWT claims.
+        Falls back to requested_module if valid and no conflicting authoritative profile exists.
         """
-        profile = None
-        try:
-            health_data = health_service.fetch_all(patient_uuid, auth_token=auth_token, include_logs=False)
-            profile = getattr(health_data, "profile", None)
-        except Exception as e:
-            logger.warning(
-                "Could not fetch patient health profile for pathway resolution: %s", e
-            )
-            profile = None
-
         gender_val = None
         pathway_val = None
 
-        if profile is not None:
-            gender_val = getattr(profile, "gender", None) or (
-                profile.get("gender") if isinstance(profile, dict) else None
-            )
-            pathway_val = getattr(profile, "pathway", None) or (
-                profile.get("pathway") if isinstance(profile, dict) else None
-            )
+        # 1. Check patient profile directly (single table read instead of heavy fetch_all)
+        try:
+            profile = health_service.fetch_profile(patient_uuid, auth_token=auth_token)
+            if profile:
+                gender_val = getattr(profile, "gender", None) or (
+                    profile.get("gender") if isinstance(profile, dict) else None
+                )
+                pathway_val = getattr(profile, "pathway", None) or (
+                    profile.get("pathway") if isinstance(profile, dict) else None
+                )
+        except Exception as e:
+            logger.debug("Could not fetch patient profile for pathway resolution: %s", e)
 
-        # Fallback to verified JWT claims or user metadata if profile did not contain explicit gender/pathway
+        # Determine candidate module order (prioritize requested_module if specified)
+        candidate_modules = ["female_pcos", "male_hypogonadism"]
+        if requested_module:
+            req_str = str(requested_module).strip().lower()
+            if req_str in self.MALE_PATHWAYS or req_str in self.MALE_GENDERS:
+                candidate_modules = ["male_hypogonadism", "female_pcos"]
+            elif req_str in self.FEMALE_PATHWAYS or req_str in self.FEMALE_GENDERS:
+                candidate_modules = ["female_pcos", "male_hypogonadism"]
+
+        # 2. Check active screening assessments (persisted during onboarding Tier 1)
+        if not gender_val and not pathway_val:
+            try:
+                from apps.intelligence.services.assessment_repository import assessment_repository
+                for cand_mod in candidate_modules:
+                    act = assessment_repository.get_active_assessment(
+                        patient_uuid, module=cand_mod, auth_token=auth_token
+                    )
+                    if act and (act.get("module") == cand_mod or not act.get("module")) and act.get("has_assessment") is not False:
+                        return cand_mod
+            except Exception as e:
+                logger.debug("Could not check active assessments for pathway resolution: %s", e)
+
+        # 3. Check persistent clinical state
+        if not gender_val and not pathway_val:
+            try:
+                from apps.intelligence.services.clinical_state_repository import clinical_state_repository
+                for cand_mod in candidate_modules:
+                    cs = clinical_state_repository.get_patient_clinical_state(
+                        patient_uuid, module=cand_mod, auth_token=auth_token, perform_backfill=False
+                    )
+                    if cs and cs.get("tier_1_inputs"):
+                        return cand_mod
+            except Exception as e:
+                logger.debug("Could not check clinical state for pathway resolution: %s", e)
+
+        # 4. Fallback to verified JWT claims or user metadata
         if not gender_val and not pathway_val and auth_token:
             try:
                 import jwt
@@ -936,6 +971,14 @@ class LongitudinalHealthView(APIView):
         if norm_pathway in self.MALE_PATHWAYS or norm_gender in self.MALE_GENDERS:
             return "male_hypogonadism"
 
+        # 5. Final fallback to client-supplied module if valid (guarantees post-onboarding readiness)
+        if requested_module:
+            norm_req = str(requested_module).strip().lower()
+            if norm_req in self.FEMALE_PATHWAYS:
+                return "female_pcos"
+            if norm_req in self.MALE_PATHWAYS:
+                return "male_hypogonadism"
+
         return None
 
     def get(self, request):
@@ -952,9 +995,14 @@ class LongitudinalHealthView(APIView):
         if period not in ("30d", "90d", "180d", "1y", "all"):
             period = "90d"
 
-        # Authoritatively derive clinical pathway from patient profile (fails closed)
+        requested_module = request.query_params.get("module")
+
+        # Authoritatively derive clinical pathway from patient profile, assessment, clinical state, or JWT
         authoritative_module = self._resolve_authoritative_pathway(
-            patient_uuid, auth_token=auth_token, user_obj=request.user
+            patient_uuid,
+            auth_token=auth_token,
+            user_obj=request.user,
+            requested_module=requested_module,
         )
 
         if not authoritative_module:
@@ -974,7 +1022,6 @@ class LongitudinalHealthView(APIView):
             )
 
         # Enforce server-side pathway isolation: client-supplied ?module= cannot determine pathway
-        requested_module = request.query_params.get("module")
         if requested_module:
             norm_requested = str(requested_module).strip().lower()
             clean_requested = (
