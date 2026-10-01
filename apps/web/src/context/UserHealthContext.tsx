@@ -105,6 +105,10 @@ import {
   deduplicateHistory,
   type AssessmentSyncState,
 } from '../utils/assessmentStateSync';
+import {
+  deriveFemaleTier1InputsFromProfile,
+  deriveMaleTier1InputsFromProfile,
+} from '../utils/tier1InputMappers';
 
 interface UserHealthContextType {
   userProfile: UserProfile;
@@ -215,6 +219,12 @@ interface UserHealthContextType {
   addReminder: (title: string, time: string, category: TodayReminder['category']) => void;
   registerUser: (data: { fullName: string; email: string; dateOfBirth?: string }) => void;
   completeOnboarding: (data: Partial<UserProfile>) => Promise<{ success: boolean; error?: string }>;
+  finalizeOnboardingAndScreen: (
+    profileData: Partial<UserProfile>,
+    pathway: 'female' | 'male',
+    tier1Inputs?: Record<string, any>,
+    onProgress?: (step: 'saving_profile' | 'analyzing_patterns' | 'preparing_dashboard') => void
+  ) => Promise<{ success: boolean; assessment?: ProgressiveAssessment; error?: string }>;
   updateUserProfile: (data: Partial<UserProfile>) => Promise<{ success: boolean; error?: string }>;
   resetToDefaultProfile: () => void;
   clearUserData: () => void;
@@ -1755,6 +1765,7 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [assessmentLoading, setAssessmentLoading] = useState<boolean>(true);
   const latestSequenceIdRef = React.useRef<number>(0);
   const activeProgressionIdRef = React.useRef<string | null>(null);
+  const isFinalizingOnboardingRef = React.useRef<boolean>(false);
 
   const refreshActiveAssessment = useCallback(
     async (options?: { isExplicitReset?: boolean; force?: boolean }) => {
@@ -1893,7 +1904,9 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         op: 'runTier1Assessment',
       });
       try {
-        const res = await submitMaleTier1Assessment(inputs, authoritativeUserId);
+        const derived = deriveMaleTier1InputsFromProfile(userProfile);
+        const mergedInputs = { ...derived, ...inputs };
+        const res = await submitMaleTier1Assessment(mergedInputs, authoritativeUserId);
         if (res) {
           const currentState: AssessmentSyncState = {
             activeAssessment,
@@ -1949,7 +1962,7 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
       }
     },
-    [authoritativeUserId, activeAssessment, assessmentHistory, triggerAssessmentNotification]
+    [authoritativeUserId, userProfile, activeAssessment, assessmentHistory, triggerAssessmentNotification]
   );
 
   const submitMaleTier2 = useCallback(
@@ -2033,7 +2046,9 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         op: 'runTier1Assessment',
       });
       try {
-        const res = await submitTier1Assessment(inputs, authoritativeUserId);
+        const derived = deriveFemaleTier1InputsFromProfile(userProfile);
+        const mergedInputs = { ...derived, ...inputs };
+        const res = await submitTier1Assessment(mergedInputs, authoritativeUserId);
         if (res) {
           const currentState: AssessmentSyncState = {
             activeAssessment,
@@ -2089,7 +2104,7 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
       }
     },
-    [userProfile?.gender, userProfile?.pathway, authoritativeUserId, submitMaleTier1, activeAssessment, assessmentHistory, triggerAssessmentNotification]
+    [userProfile, authoritativeUserId, submitMaleTier1, activeAssessment, assessmentHistory, triggerAssessmentNotification]
   );
 
   const submitTier2 = useCallback(
@@ -2380,7 +2395,12 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
         // Force refresh assessment upon completing onboarding with new data
         try {
-          await refreshMlAssessment(true);
+          const pathway = resolvePathway(data.gender || userProfile?.gender, data.pathway || userProfile?.pathway);
+          if (pathway === 'male') {
+            await submitMaleTier1();
+          } else {
+            await submitTier1();
+          }
         } catch {
           // ignore
         }
@@ -2392,7 +2412,177 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
       return res;
     },
-    [saveOnboardingProfile, refreshMlAssessment, userProfile?.id]
+    [saveOnboardingProfile, submitMaleTier1, submitTier1, userProfile?.gender, userProfile?.pathway, userProfile?.id]
+  );
+
+  /**
+   * Deterministically finalizes onboarding: saves profile, bridges medications,
+   * runs canonical Tier 1 screening for the user's pathway, confirms persistence
+   * via active assessment fetch with bounded retry, and updates context state.
+   */
+  const finalizeOnboardingAndScreen = useCallback(
+    async (
+      profileData: Partial<UserProfile>,
+      pathway: 'female' | 'male',
+      tier1Inputs?: Record<string, any>,
+      onProgress?: (step: 'saving_profile' | 'analyzing_patterns' | 'preparing_dashboard') => void
+    ): Promise<{ success: boolean; assessment?: ProgressiveAssessment; error?: string }> => {
+      if (isFinalizingOnboardingRef.current) {
+        console.warn('[UserHealthContext] finalizeOnboardingAndScreen already in flight, skipping duplicate call.');
+        return { success: false, error: 'Screening finalization already in progress.' };
+      }
+      isFinalizingOnboardingRef.current = true;
+
+      const t0 = performance.now();
+      const logTs = (msg: string) => {
+        if (import.meta.env?.DEV) {
+          console.log(`[INITIAL_SCREENING] ${msg} +${Math.round(performance.now() - t0)}ms`);
+        }
+      };
+
+      logTs('onboarding_finalization_started');
+      onProgress?.('saving_profile');
+
+      try {
+        logTs('profile_save_start');
+        const saveRes = await saveOnboardingProfile({
+          ...profileData,
+          gender: pathway,
+          pathway,
+          isOnboarded: true,
+        });
+
+        if (!saveRes.success) {
+          logTs('profile_save_failed');
+          return { success: false, error: saveRes.error || 'Failed to save health profile.' };
+        }
+        logTs('profile_save_complete');
+
+        const targetUserId = authoritativeUserId || profileData.id || userProfile?.id;
+        if (targetUserId && profileData.medical?.medications && Array.isArray(profileData.medical.medications)) {
+          try {
+            for (const med of (profileData.medical.medications as any[])) {
+              const medName = typeof med === 'string' ? med.trim() : (med && typeof med === 'object' && 'name' in med ? String(med.name).trim() : '');
+              if (medName) {
+                const dose = typeof med === 'object' && med.dosage ? String(med.dosage).trim() : '';
+                const frequency = typeof med === 'object' && med.frequency ? String(med.frequency).trim() : 'daily';
+                const validFrequencies = ['once_daily', 'twice_daily', 'three_times_daily', 'every_other_day', 'as_needed'];
+                const freqCandidate = frequency.toLowerCase().replace(/[-\s]+/g, '_');
+                const safeFreq = validFrequencies.includes(freqCandidate) ? (freqCandidate as any) : 'once_daily';
+                await medicationService.createMedication(targetUserId, {
+                  name: medName,
+                  dose: dose || 'Standard',
+                  unit: 'mg',
+                  frequency: safeFreq,
+                  scheduledTimes: ['08:00'],
+                  isActive: true,
+                });
+              }
+            }
+          } catch (bridgeErr) {
+            console.warn('Could not bridge onboarding medications:', bridgeErr);
+          }
+        }
+
+        onProgress?.('analyzing_patterns');
+        logTs('tier1_submit_start');
+
+        let assessment: ProgressiveAssessment | null = null;
+        if (pathway === 'male') {
+          const malePayload = {
+            ...deriveMaleTier1InputsFromProfile({ ...userProfile, ...profileData }),
+            ...(tier1Inputs || {}),
+          };
+          assessment = await submitMaleTier1(malePayload);
+        } else {
+          const femalePayload = {
+            ...deriveFemaleTier1InputsFromProfile({ ...userProfile, ...profileData }),
+            ...(tier1Inputs || {}),
+          };
+          assessment = await submitTier1(femalePayload);
+        }
+
+        logTs('tier1_backend_result_received');
+
+        if (!assessment) {
+          logTs('tier1_failed_no_result');
+          return {
+            success: false,
+            error: 'Screening model was unable to generate an assessment score. Please try again.',
+          };
+        }
+
+        onProgress?.('preparing_dashboard');
+        logTs('active_fetch_start');
+
+        const targetModule = pathway === 'male' ? 'male_hypogonadism' : 'female_pcos';
+        let confirmedActive: ProgressiveAssessment | null = null;
+
+        // Bounded retry (0ms, 300ms, 600ms, 1000ms - max 4 checks, total <= 2s)
+        const retryDelays = [0, 300, 600, 1000];
+        for (let attempt = 0; attempt < retryDelays.length; attempt++) {
+          if (attempt > 0) {
+            await new Promise((resolve) => setTimeout(resolve, retryDelays[attempt]));
+          }
+          const fetched = await fetchActiveAssessment(true, targetModule, targetUserId);
+          if (
+            fetched &&
+            fetched.has_assessment !== false &&
+            (fetched.probability !== undefined || fetched.probability_percent !== undefined)
+          ) {
+            confirmedActive = fetched;
+            break;
+          }
+        }
+
+        const authoritativeResult = confirmedActive || assessment;
+        logTs('active_synced');
+
+        const mutationSeq = ++latestSequenceIdRef.current;
+        const currentState: AssessmentSyncState = {
+          activeAssessment,
+          assessmentHistory,
+          latestSequenceId: latestSequenceIdRef.current,
+          activeProgressionId: activeProgressionIdRef.current,
+        };
+        const transition = applyMutationResult(currentState, mutationSeq, authoritativeResult, targetUserId);
+        if (transition.accepted) {
+          setActiveAssessment(transition.nextState.activeAssessment);
+          setMlAssessment(transition.nextState.activeAssessment as unknown as IntelligenceAssessment);
+          setAssessmentHistory(transition.nextState.assessmentHistory);
+          activeProgressionIdRef.current = transition.nextState.activeProgressionId;
+        }
+
+        setAssessmentLoading(false);
+        setMlAssessmentLoading(false);
+
+        try {
+          window.dispatchEvent(new CustomEvent('biopulse:longitudinal-refresh'));
+        } catch {
+          // ignore
+        }
+
+        logTs('finalization_completed_successfully');
+        return { success: true, assessment: authoritativeResult };
+      } catch (err: any) {
+        logTs(`finalization_error: ${err?.message || err}`);
+        return {
+          success: false,
+          error: err?.message || 'A network error occurred while generating your initial screening.',
+        };
+      } finally {
+        isFinalizingOnboardingRef.current = false;
+      }
+    },
+    [
+      authoritativeUserId,
+      userProfile,
+      saveOnboardingProfile,
+      submitMaleTier1,
+      submitTier1,
+      activeAssessment,
+      assessmentHistory,
+    ]
   );
 
   /**
@@ -2547,6 +2737,7 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         addReminder,
         registerUser,
         completeOnboarding,
+        finalizeOnboardingAndScreen,
         updateUserProfile,
         resetToDefaultProfile,
         clearUserData,

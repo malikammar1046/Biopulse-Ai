@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -22,6 +22,8 @@ import { ROUTES, getPathwayOnboardingRoute } from '../../constants/routes';
 import type { UserGender } from '../../types/onboarding';
 import { PathwaySelectionScreen } from '../../components/auth/PathwaySelectionScreen';
 import { SmallBotanicalSprig } from '../../components/brand/BotanicalFoliage';
+import { BioPulseLoadingScreen } from '../../components/brand/BioPulseLoadingScreen';
+import { preloadOnboardingRoutes } from '../../utils/routePreloaders';
 
 interface FormErrors {
   fullName?: string;
@@ -49,6 +51,15 @@ export const Register: React.FC = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [emailConfirmReq, setEmailConfirmReq] = useState(false);
   const [loadingPathway, setLoadingPathway] = useState<'female' | 'male' | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [transitionPathway, setTransitionPathway] = useState<'female' | 'male' | null>(null);
+
+  // Preload lazy onboarding route chunks as soon as pathway selection step opens
+  useEffect(() => {
+    if (step === 'pathway') {
+      preloadOnboardingRoutes();
+    }
+  }, [step]);
 
   const validateCredentials = (): boolean => {
     const nextErrors: FormErrors = {};
@@ -82,6 +93,9 @@ export const Register: React.FC = () => {
   };
 
   const handlePathwaySelectAndSubmit = async (pathway: 'female' | 'male') => {
+    // 1. Immediately transition UI to the botanical loader without waiting for network
+    setIsTransitioning(true);
+    setTransitionPathway(pathway);
     setLoadingPathway(pathway);
     setLoading(true);
     setErrors({});
@@ -100,12 +114,14 @@ export const Register: React.FC = () => {
 
       if (!res.success) {
         setErrors({ general: res.error || 'Registration failed. Please try again.' });
+        setIsTransitioning(false);
         setLoading(false);
         setLoadingPathway(null);
         return;
       }
 
       if (res.emailConfirmationRequired) {
+        setIsTransitioning(false);
         setIsSuccess(true);
         setEmailConfirmReq(true);
       } else {
@@ -119,6 +135,7 @@ export const Register: React.FC = () => {
       setErrors({
         general: err?.message || 'Registration could not be completed. Please try again.',
       });
+      setIsTransitioning(false);
       setLoading(false);
       setLoadingPathway(null);
     }
@@ -145,6 +162,20 @@ export const Register: React.FC = () => {
       setGoogleLoading(false);
     }
   };
+
+  // Immediate Botanical Loading Screen on Pathway Click (Replaces selection screen instantly)
+  if (isTransitioning) {
+    return (
+      <BioPulseLoadingScreen
+        message={
+          transitionPathway === 'male'
+            ? 'Preparing your Men’s Health pathway...'
+            : 'Preparing your Women’s Health pathway...'
+        }
+        fullScreen={true}
+      />
+    );
+  }
 
   // If user completed Step 1 and is on Step 2: Dedicated Pathway Selection Screen
   if (!isSuccess && step === 'pathway') {

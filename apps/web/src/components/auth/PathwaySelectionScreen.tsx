@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Heart,
@@ -14,6 +14,11 @@ import {
 import { Link } from 'react-router-dom';
 import { Logo } from '../brand/Logo';
 import { ROUTES } from '../../constants/routes';
+import {
+  preloadFemaleOnboarding,
+  preloadMaleOnboarding,
+  preloadOnboardingRoutes,
+} from '../../utils/routePreloaders';
 
 interface PathwaySelectionScreenProps {
   onSelectPathway: (pathway: 'female' | 'male') => void;
@@ -118,6 +123,11 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
   error,
   onBack,
 }) => {
+  // Preload lazy onboarding chunks in the background upon mounting
+  useEffect(() => {
+    preloadOnboardingRoutes();
+  }, []);
+
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-[#FAFCFF] via-[#FFFFFF] to-[#F7F9FD] text-[#162A45] relative overflow-x-hidden flex flex-col justify-between selection:bg-[#E87084] selection:text-white">
       {/* ── Soft Ambient Glows ── */}
@@ -252,6 +262,8 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, ease: 'easeOut' }}
+            onMouseEnter={() => preloadFemaleOnboarding()}
+            onFocus={() => preloadFemaleOnboarding()}
             className="rounded-[32px] p-2.5 sm:p-3 bg-gradient-to-b from-[#FFF0F5] via-[#FFF6FA] to-[#FFE8F0] border border-pink-200/90 shadow-xl shadow-pink-100/60 relative overflow-hidden flex flex-col justify-between transition-all duration-300 hover:shadow-2xl hover:shadow-pink-200/70 hover:-translate-y-1 group"
           >
             {/* Top Portrait Image Section */}
@@ -371,6 +383,8 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, ease: 'easeOut', delay: 0.1 }}
+            onMouseEnter={() => preloadMaleOnboarding()}
+            onFocus={() => preloadMaleOnboarding()}
             className="rounded-[32px] p-2.5 sm:p-3 bg-gradient-to-b from-[#F0F9FF] via-[#F8FCFF] to-[#E0F2FE] border border-sky-200/90 shadow-xl shadow-sky-100/60 relative overflow-hidden flex flex-col justify-between transition-all duration-300 hover:shadow-2xl hover:shadow-sky-200/70 hover:-translate-y-1 group"
           >
             {/* Top Portrait Image Section */}

@@ -19,10 +19,10 @@ export const OnboardingStepper: React.FC<OnboardingStepperProps> = ({
   onStepClick,
 }) => {
   return (
-    <div className="w-full py-0.5 mb-2">
+    <div className="w-full py-1 mb-2.5">
       <div className="relative flex items-center justify-between max-w-3xl xl:max-w-4xl mx-auto px-2">
         {/* Connector Line behind nodes */}
-        <div className="absolute top-3.5 left-8 right-8 h-[2px] bg-[#E2EEF4] -z-0" />
+        <div className="absolute top-[18px] left-10 right-10 h-[2px] bg-[#E2EEF4] -z-0" />
 
         {steps.map((step, idx) => {
           const stepNum = idx + 1;
@@ -46,16 +46,16 @@ export const OnboardingStepper: React.FC<OnboardingStepperProps> = ({
                   scale: isActive ? 1.05 : 1,
                 }}
                 transition={{ duration: 0.2 }}
-                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-[13px] font-bold font-sans transition-all duration-300 ${
+                className={`w-9 h-9 sm:w-[38px] sm:h-[38px] rounded-full flex items-center justify-center text-[13px] sm:text-[14px] font-bold font-sans transition-all duration-300 ${
                   isActive
-                    ? 'bg-[#0288D1] text-white shadow-sm shadow-sky-500/25 ring-3 ring-[#E0F2FE]'
+                    ? 'bg-[#0288D1] text-white shadow-sm shadow-sky-500/25 ring-4 ring-[#E0F2FE]'
                     : isCompleted
                     ? 'bg-[#0E9EAA] text-white shadow-2xs'
-                    : 'bg-white border border-[#D7EAF2] text-[#8FA3B8]'
+                    : 'bg-white border-2 border-[#D7EAF2] text-[#8FA3B8]'
                 }`}
               >
                 {isCompleted ? (
-                  <Check className="w-3.5 h-3.5 stroke-[2.5]" aria-hidden="true" />
+                  <Check className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />
                 ) : (
                   <span>{stepNum}</span>
                 )}
@@ -63,7 +63,7 @@ export const OnboardingStepper: React.FC<OnboardingStepperProps> = ({
 
               {/* Step Label */}
               <span
-                className={`mt-1.5 text-xs sm:text-[13px] tracking-tight transition-colors duration-200 text-center whitespace-nowrap ${
+                className={`mt-2 text-[13px] sm:text-[14px] tracking-tight transition-colors duration-200 text-center whitespace-nowrap ${
                   isActive
                     ? 'text-[#073B72] font-bold'
                     : isCompleted

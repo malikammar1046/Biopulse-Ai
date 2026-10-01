@@ -15,7 +15,7 @@ import {
   DEFAULT_CONDITION_OPTIONS,
   DEFAULT_FAMILY_HISTORY_OPTIONS,
 } from '../../../data/mockOnboardingData';
-import { WhyWeAskCard } from './WhyWeAskCard';
+import { OnboardingWhyModal, OnboardingWhyTrigger } from '../../../components/onboarding/OnboardingWhyModal';
 
 interface FemaleStep2Props {
   data: MedicalProfile;
@@ -32,6 +32,7 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
   lifestyle,
   onLifestyleChange,
 }) => {
+  const [showWhyModal, setShowWhyModal] = useState(false);
   const [customAllergy, setCustomAllergy] = useState('');
   const [customCondition, setCustomCondition] = useState('');
   const [newMedName, setNewMedName] = useState('');
@@ -119,43 +120,46 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
   };
 
   return (
-    <div className="space-y-4 text-left">
-      {/* ── Compact Question Header ── */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-[#E0F2FE] flex items-center justify-center shrink-0 shadow-2xs">
-          <MedicalCross className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
+    <div className="space-y-5 text-left max-w-4xl mx-auto">
+      {/* ── Question Header with Why We Ask Trigger ── */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#E0F2FE] flex items-center justify-center shrink-0 shadow-2xs">
+            <MedicalCross className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
+          </div>
+
+          <div>
+            <span className="text-xs font-bold font-sans text-[#0288D1] uppercase tracking-wider block leading-none">
+              Health Profile
+            </span>
+            <h2 className="text-xl sm:text-2xl font-bold font-display text-[#073B72] tracking-tight leading-tight mt-1">
+              Medical History &amp; Lifestyle Factors
+            </h2>
+          </div>
         </div>
 
-        <div>
-          <span className="text-[10px] font-bold font-mono text-[#0288D1] uppercase tracking-wider block leading-none">
-            Health Profile
-          </span>
-          <h2 className="text-xl sm:text-2xl font-extrabold font-display text-[#073B72] tracking-tight leading-tight mt-0.5">
-            Medical History & Lifestyle Factors
-          </h2>
-          <p className="text-xs text-[#55718F] font-sans leading-tight mt-0.5">
-            All fields here are optional. Sharing your baseline helps BioPulse AI personalize your clinical insights.
-          </p>
-        </div>
+        <OnboardingWhyTrigger onClick={() => setShowWhyModal(true)} accentColor="blue" />
       </div>
 
-      {/* ── Main Form Layout: Fields + Why We Ask Card ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Form Inputs Column */}
-        <div className="lg:col-span-8 space-y-3">
+      <p className="text-xs sm:text-sm text-[#55718F] font-sans leading-relaxed">
+        All fields here are optional. Sharing your baseline helps BioPulse AI personalize your clinical insights.
+      </p>
+
+      {/* ── Main Form Inputs (Full Width) ── */}
+      <div className="w-full space-y-4 sm:space-y-4.5">
           {/* 1. Blood Type */}
-          <div className="p-3 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-1.5">
+          <div className="p-4 sm:p-5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold font-mono text-[#073B72] uppercase tracking-wider flex items-center gap-1.5">
-                <ActivityHeart className="w-3 h-3 text-[#0288D1]" aria-hidden="true" />
-                Blood Type
+              <span className="text-[15px] sm:text-[16px] font-bold font-sans text-[#073B72] flex items-center gap-2">
+                <ActivityHeart className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
+                Blood Group
               </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#DDF7F7] text-[#0E9EAA] font-semibold">
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#DDF7F7] text-[#0E9EAA]">
                 Optional
               </span>
             </div>
 
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2 sm:gap-2.5">
               {BLOOD_TYPES.map((bt) => {
                 const isSelected = data.bloodType === bt;
                 return (
@@ -163,10 +167,10 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
                     key={bt}
                     type="button"
                     onClick={() => onChange({ ...data, bloodType: bt })}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                    className={`h-[46px] min-w-[56px] px-4 py-2.5 rounded-xl text-[14px] sm:text-[15px] font-mono font-bold transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-[#F43F7D] text-white shadow-2xs'
-                        : 'bg-white border border-[#D7EAF2] text-[#55718F] hover:border-[#0E9EAA]/50 hover:text-[#073B72]'
+                        ? 'bg-[#0288D1] text-white shadow-xs scale-[1.02]'
+                        : 'bg-white border border-[#D7EAF2] text-[#55718F] hover:border-[#0288D1]/50 hover:text-[#073B72] hover:bg-[#F8FDFF]'
                     }`}
                   >
                     {bt}
@@ -177,18 +181,18 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
           </div>
 
           {/* 2. Known Allergies */}
-          <div className="p-3 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-1.5">
+          <div className="p-4 sm:p-5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold font-mono text-[#073B72] uppercase tracking-wider flex items-center gap-1.5">
-                <AlertCircle className="w-3 h-3 text-[#0288D1]" aria-hidden="true" />
+              <span className="text-[15px] sm:text-[16px] font-bold font-sans text-[#073B72] flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
                 Known Allergies
               </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#DDF7F7] text-[#0E9EAA] font-semibold">
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#DDF7F7] text-[#0E9EAA]">
                 Optional
               </span>
             </div>
 
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {DEFAULT_ALLERGY_OPTIONS.map((allergy) => {
                 const isSelected = data.allergies.includes(allergy);
                 return (
@@ -196,32 +200,32 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
                     key={allergy}
                     type="button"
                     onClick={() => toggleAllergy(allergy)}
-                    className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-1 ${
+                    className={`min-h-[44px] px-4 py-2.5 rounded-xl text-[14px] sm:text-[15px] font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                       isSelected
-                        ? 'bg-[#E0F2FE] text-[#0288D1] border border-[#0288D1] font-bold shadow-2xs'
-                        : 'bg-white border border-[#D7EAF2] text-[#55718F] hover:text-[#073B72]'
+                        ? 'bg-[#E0F2FE] text-[#0288D1] border-2 border-[#0288D1] font-bold shadow-2xs'
+                        : 'bg-white border border-[#D7EAF2] text-[#55718F] hover:text-[#073B72] hover:border-[#0288D1]/40'
                     }`}
                   >
-                    {isSelected && <Check className="w-3 h-3 stroke-[2.5]" aria-hidden="true" />}
+                    {isSelected && <Check className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />}
                     <span>{allergy}</span>
                   </button>
                 );
               })}
             </div>
 
-            <div className="flex gap-2 pt-0.5">
+            <div className="flex gap-2.5 pt-1">
               <input
                 type="text"
-                placeholder="Add other allergy (e.g. Ibuprofen)"
+                placeholder="Add other allergy (e.g. Ibuprofen, Penicillin)"
                 value={customAllergy}
                 onChange={(e) => setCustomAllergy(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomAllergy())}
-                className="flex-1 h-8 px-3 rounded-lg bg-white border border-[#D7EAF2] text-xs text-[#073B72] placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0288D1]"
+                className="flex-1 h-11 sm:h-12 px-4 rounded-xl bg-white border border-[#D7EAF2] text-[14px] sm:text-[15px] text-[#073B72] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0288D1]/20 focus:border-[#0288D1]"
               />
               <button
                 type="button"
                 onClick={addCustomAllergy}
-                className="px-3 h-8 rounded-lg bg-[#0E9EAA] hover:bg-[#0C8B96] text-xs font-bold text-white transition-colors cursor-pointer"
+                className="px-5 h-11 sm:h-12 rounded-xl bg-[#0E9EAA] hover:bg-[#0C8B96] text-[14px] font-bold text-white transition-colors cursor-pointer"
               >
                 Add
               </button>
@@ -229,36 +233,36 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
           </div>
 
           {/* 3. Current Medications & Supplements */}
-          <div className="p-3 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-1.5">
+          <div className="p-4 sm:p-5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold font-mono text-[#073B72] uppercase tracking-wider flex items-center gap-1.5">
-                <MedicalCross className="w-3 h-3 text-[#0288D1]" aria-hidden="true" />
-                Current Medications & Supplements
+              <span className="text-[15px] sm:text-[16px] font-bold font-sans text-[#073B72] flex items-center gap-2">
+                <MedicalCross className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
+                Current Medications &amp; Supplements
               </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#DDF7F7] text-[#0E9EAA] font-semibold">
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#DDF7F7] text-[#0E9EAA]">
                 Optional
               </span>
             </div>
 
             {data.medications.length > 0 && (
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {data.medications.map((med) => (
                   <div
                     key={med.id}
-                    className="p-2 rounded-lg bg-white border border-[#D7EAF2] flex items-center justify-between gap-3 shadow-2xs"
+                    className="p-3.5 rounded-xl bg-white border border-[#D7EAF2] flex items-center justify-between gap-3 shadow-2xs"
                   >
                     <div>
-                      <span className="text-xs font-bold text-[#073B72] block leading-tight">{med.name}</span>
-                      <span className="text-[10px] text-[#55718F]">
+                      <span className="text-[14px] sm:text-[15px] font-bold text-[#073B72] block leading-tight">{med.name}</span>
+                      <span className="text-[13px] text-[#55718F]">
                         {med.dosage} • {med.frequency}
                       </span>
                     </div>
                     <button
                       type="button"
                       onClick={() => removeMedication(med.id)}
-                      className="p-1 text-slate-400 hover:text-[#0288D1] transition-colors cursor-pointer"
+                      className="p-1.5 text-slate-400 hover:text-[#0288D1] transition-colors cursor-pointer"
                     >
-                      <XClose className="w-3.5 h-3.5" aria-hidden="true" />
+                      <XClose className="w-4 h-4" aria-hidden="true" />
                     </button>
                   </div>
                 ))}
@@ -269,48 +273,48 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
               <button
                 type="button"
                 onClick={() => setShowAddMedForm(true)}
-                className="w-full py-1.5 px-3 rounded-lg border border-dashed border-[#D7EAF2] hover:border-[#0E9EAA] text-xs font-semibold text-[#0E9EAA] flex items-center justify-center gap-1.5 transition-colors cursor-pointer bg-white"
+                className="w-full min-h-[48px] py-3 px-4 rounded-xl border border-dashed border-[#B2EBF2] hover:border-[#0E9EAA] text-[14px] sm:text-[15px] font-semibold text-[#0E9EAA] flex items-center justify-center gap-2 transition-colors cursor-pointer bg-white"
               >
-                <Plus className="w-3 h-3 text-[#0288D1]" aria-hidden="true" />
-                <span>Add Medication / Supplement (e.g. Inositol, Metformin)</span>
+                <Plus className="w-4 h-4 text-[#0E9EAA]" aria-hidden="true" />
+                <span>Add Medication / Supplement (e.g. Inositol, Metformin, Vitamin D)</span>
               </button>
             ) : (
-              <div className="p-2.5 rounded-lg bg-white border border-[#D7EAF2] space-y-2">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className="p-3.5 sm:p-4 rounded-xl bg-white border border-[#D7EAF2] space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   <input
                     type="text"
                     placeholder="Medication name"
                     value={newMedName}
                     onChange={(e) => setNewMedName(e.target.value)}
-                    className="h-8 px-2.5 rounded-lg bg-[#FAFCFF] border border-[#D7EAF2] text-xs text-[#073B72] placeholder:text-slate-400 focus:outline-none"
+                    className="h-11 px-3.5 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] text-[14px] text-[#073B72] placeholder:text-slate-400 focus:outline-none focus:border-[#0288D1]"
                   />
                   <input
                     type="text"
                     placeholder="Dosage (e.g. 500mg)"
                     value={newMedDosage}
                     onChange={(e) => setNewMedDosage(e.target.value)}
-                    className="h-8 px-2.5 rounded-lg bg-[#FAFCFF] border border-[#D7EAF2] text-xs text-[#073B72] placeholder:text-slate-400 focus:outline-none"
+                    className="h-11 px-3.5 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] text-[14px] text-[#073B72] placeholder:text-slate-400 focus:outline-none focus:border-[#0288D1]"
                   />
                   <input
                     type="text"
                     placeholder="Frequency (e.g. Daily)"
                     value={newMedFreq}
                     onChange={(e) => setNewMedFreq(e.target.value)}
-                    className="h-8 px-2.5 rounded-lg bg-[#FAFCFF] border border-[#D7EAF2] text-xs text-[#073B72] placeholder:text-slate-400 focus:outline-none"
+                    className="h-11 px-3.5 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] text-[14px] text-[#073B72] placeholder:text-slate-400 focus:outline-none focus:border-[#0288D1]"
                   />
                 </div>
-                <div className="flex justify-end gap-2">
+                <div className="flex justify-end gap-2.5">
                   <button
                     type="button"
                     onClick={() => setShowAddMedForm(false)}
-                    className="px-2.5 py-1 rounded-md text-xs text-[#55718F] hover:text-[#073B72]"
+                    className="px-4 py-2 rounded-xl text-sm font-semibold text-[#55718F] hover:text-[#073B72]"
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
                     onClick={handleAddMedication}
-                    className="px-3 py-1 rounded-md bg-[#F43F7D] hover:bg-[#E11D48] text-xs font-bold text-white cursor-pointer"
+                    className="px-5 py-2 rounded-xl bg-[#0288D1] hover:bg-[#01579B] text-sm font-bold text-white cursor-pointer shadow-xs"
                   >
                     Save
                   </button>
@@ -320,14 +324,14 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
           </div>
 
           {/* 4. Diagnosed Conditions & Family History in 2 columns */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Conditions */}
-            <div className="p-3 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-1.5">
-              <span className="text-[11px] font-bold font-mono text-[#073B72] uppercase tracking-wider flex items-center gap-1.5">
-                <MedicalCross className="w-3 h-3 text-[#0288D1]" aria-hidden="true" />
+            <div className="p-4 sm:p-5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-3">
+              <span className="text-[15px] sm:text-[16px] font-bold font-sans text-[#073B72] flex items-center gap-2">
+                <MedicalCross className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
                 Diagnosed Conditions
               </span>
-              <div className="flex flex-wrap gap-1">
+              <div className="flex flex-wrap gap-2">
                 {DEFAULT_CONDITION_OPTIONS.slice(0, 6).map((cond) => {
                   const isSelected = data.conditions.includes(cond);
                   return (
@@ -335,30 +339,31 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
                       key={cond}
                       type="button"
                       onClick={() => toggleCondition(cond)}
-                      className={`px-2 py-0.5 rounded-full text-[11px] font-medium transition-all cursor-pointer ${
+                      className={`min-h-[44px] px-3.5 py-2 rounded-xl text-[13px] sm:text-[14px] font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                         isSelected
-                          ? 'bg-[#E0F2FE] text-[#0288D1] border border-[#0288D1] font-bold'
-                          : 'bg-white border border-[#D7EAF2] text-[#55718F]'
+                          ? 'bg-[#E0F2FE] text-[#0288D1] border-2 border-[#0288D1] font-bold shadow-2xs'
+                          : 'bg-white border border-[#D7EAF2] text-[#55718F] hover:text-[#073B72]'
                       }`}
                     >
-                      {cond.split(' (')[0]}
+                      {isSelected && <Check className="w-3.5 h-3.5 stroke-[2.5]" aria-hidden="true" />}
+                      <span>{cond.split(' (')[0]}</span>
                     </button>
                   );
                 })}
               </div>
-              <div className="flex gap-1.5 pt-0.5">
+              <div className="flex gap-2 pt-1">
                 <input
                   type="text"
                   placeholder="Other condition..."
                   value={customCondition}
                   onChange={(e) => setCustomCondition(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomCondition())}
-                  className="flex-1 h-7 px-2 rounded-md bg-white border border-[#D7EAF2] text-[11px] text-[#073B72] placeholder:text-slate-400 focus:outline-none"
+                  className="flex-1 h-11 px-3.5 rounded-xl bg-white border border-[#D7EAF2] text-[14px] text-[#073B72] placeholder:text-slate-400 focus:outline-none focus:border-[#0288D1]"
                 />
                 <button
                   type="button"
                   onClick={addCustomCondition}
-                  className="px-2 h-7 rounded-md bg-[#0E9EAA] text-[11px] font-bold text-white"
+                  className="px-4 h-11 rounded-xl bg-[#0E9EAA] text-[13px] font-bold text-white cursor-pointer"
                 >
                   Add
                 </button>
@@ -366,12 +371,12 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
             </div>
 
             {/* Family History */}
-            <div className="p-3 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-1.5">
-              <span className="text-[11px] font-bold font-mono text-[#073B72] uppercase tracking-wider flex items-center gap-1.5">
-                <ActivityHeart className="w-3 h-3 text-[#0288D1]" aria-hidden="true" />
+            <div className="p-4 sm:p-5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-3">
+              <span className="text-[15px] sm:text-[16px] font-bold font-sans text-[#073B72] flex items-center gap-2">
+                <ActivityHeart className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
                 Family History
               </span>
-              <div className="flex flex-wrap gap-1">
+              <div className="flex flex-wrap gap-2">
                 {DEFAULT_FAMILY_HISTORY_OPTIONS.map((item) => {
                   const isSelected = data.familyHistory.includes(item);
                   return (
@@ -379,13 +384,14 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
                       key={item}
                       type="button"
                       onClick={() => toggleFamilyHistory(item)}
-                      className={`px-2 py-0.5 rounded-full text-[11px] font-medium transition-all cursor-pointer ${
+                      className={`min-h-[44px] px-3.5 py-2 rounded-xl text-[13px] sm:text-[14px] font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                         isSelected
-                          ? 'bg-[#E0F2FE] text-[#0288D1] border border-[#0288D1] font-bold'
-                          : 'bg-white border border-[#D7EAF2] text-[#55718F]'
+                          ? 'bg-[#E0F2FE] text-[#0288D1] border-2 border-[#0288D1] font-bold shadow-2xs'
+                          : 'bg-white border border-[#D7EAF2] text-[#55718F] hover:text-[#073B72]'
                       }`}
                     >
-                      {item.split(' (')[0]}
+                      {isSelected && <Check className="w-3.5 h-3.5 stroke-[2.5]" aria-hidden="true" />}
+                      <span>{item.split(' (')[0]}</span>
                     </button>
                   );
                 })}
@@ -395,25 +401,25 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
 
           {/* 5. Lifestyle Factors Evaluated by ML Model */}
           {lifestyle && onLifestyleChange && (
-            <div className="p-3 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-2">
+            <div className="p-4 sm:p-5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-3.5">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold font-mono text-[#073B72] uppercase tracking-wider flex items-center gap-1.5">
-                  <ActivityHeart className="w-3 h-3 text-[#0288D1]" aria-hidden="true" />
+                <span className="text-[15px] sm:text-[16px] font-bold font-sans text-[#073B72] flex items-center gap-2">
+                  <ActivityHeart className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
                   Lifestyle Factors (Model Indicators)
                 </span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#E0F2FE] text-[#0288D1] font-semibold">
+                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#E0F2FE] text-[#0288D1]">
                   ML Evaluated
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Fast Food Intake */}
-                <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-[#073B72] flex items-center gap-1">
-                    <Scales01 className="w-3 h-3 text-[#0288D1]" aria-hidden="true" />
+                <div className="space-y-2">
+                  <label className="text-[14px] font-semibold text-[#073B72] flex items-center gap-1.5">
+                    <Scales01 className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
                     <span>Fast-Food Intake</span>
                   </label>
-                  <div className="grid grid-cols-3 gap-1">
+                  <div className="grid grid-cols-3 gap-2">
                     {[
                       { id: 'frequent', label: 'Frequent' },
                       { id: 'occasional', label: 'Occasional' },
@@ -425,10 +431,10 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
                           key={opt.id}
                           type="button"
                           onClick={() => onLifestyleChange({ ...lifestyle, fastFoodIntake: opt.id as any })}
-                          className={`py-1 px-1.5 rounded-lg border text-center transition-all cursor-pointer text-[10px] font-bold ${
+                          className={`min-h-[48px] py-2.5 px-2 rounded-xl border text-center transition-all cursor-pointer text-[13px] sm:text-[14px] font-bold ${
                             isSelected
-                              ? 'bg-[#E0F2FE] border-[#0288D1] text-[#0288D1]'
-                              : 'bg-white border-[#D7EAF2] text-[#55718F]'
+                              ? 'bg-[#E0F2FE] border-2 border-[#0288D1] text-[#0288D1] shadow-2xs'
+                              : 'bg-white border-[#D7EAF2] text-[#55718F] hover:text-[#073B72]'
                           }`}
                         >
                           {opt.label}
@@ -439,21 +445,21 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
                 </div>
 
                 {/* Regular Exercise */}
-                <div className="space-y-1">
-                  <label className="text-[11px] font-semibold text-[#073B72] flex items-center gap-1">
-                    <Activity className="w-3 h-3 text-[#0E9EAA]" aria-hidden="true" />
+                <div className="space-y-2">
+                  <label className="text-[14px] font-semibold text-[#073B72] flex items-center gap-1.5">
+                    <Activity className="w-4 h-4 text-[#0E9EAA]" aria-hidden="true" />
                     <span>Regular Physical Exercise</span>
                   </label>
-                  <div className="grid grid-cols-2 gap-1">
+                  <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
                       onClick={() =>
                         onLifestyleChange({ ...lifestyle, regularExercise: true, activityLevel: 'moderate' })
                       }
-                      className={`py-1 px-2 rounded-lg border text-center transition-all cursor-pointer text-[10px] font-bold ${
+                      className={`min-h-[48px] py-2.5 px-3 rounded-xl border text-center transition-all cursor-pointer text-[14px] font-bold ${
                         lifestyle.regularExercise !== false
-                          ? 'bg-[#DDF7F7] border-[#0E9EAA] text-[#073B72]'
-                          : 'bg-white border-[#D7EAF2] text-[#55718F]'
+                          ? 'bg-[#DDF7F7] border-2 border-[#0E9EAA] text-[#073B72] shadow-2xs'
+                          : 'bg-white border-[#D7EAF2] text-[#55718F] hover:text-[#073B72]'
                       }`}
                     >
                       Yes (Active)
@@ -463,10 +469,10 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
                       onClick={() =>
                         onLifestyleChange({ ...lifestyle, regularExercise: false, activityLevel: 'sedentary' })
                       }
-                      className={`py-1 px-2 rounded-lg border text-center transition-all cursor-pointer text-[10px] font-bold ${
+                      className={`min-h-[48px] py-2.5 px-3 rounded-xl border text-center transition-all cursor-pointer text-[14px] font-bold ${
                         lifestyle.regularExercise === false
-                          ? 'bg-[#FDE6EF] border-[#F43F7D] text-[#F43F7D]'
-                          : 'bg-white border-[#D7EAF2] text-[#55718F]'
+                          ? 'bg-[#FDE6EF] border-2 border-[#F43F7D] text-[#F43F7D] shadow-2xs'
+                          : 'bg-white border-[#D7EAF2] text-[#55718F] hover:text-[#073B72]'
                       }`}
                     >
                       No (Sedentary)
@@ -478,13 +484,21 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
           )}
         </div>
 
-        {/* Right Column: Single Concise "Why we ask this" Card */}
-        <div className="lg:col-span-4">
-          <WhyWeAskCard
-            description="Certain health conditions, medications, and lifestyle patterns provide critical context for distinguishing PCOS indicators from metabolic or endocrine overlaps."
-          />
+      {/* ── "Why We Ask This" Modal Dialog ── */}
+      <OnboardingWhyModal
+        isOpen={showWhyModal}
+        onClose={() => setShowWhyModal(false)}
+        title="Why we ask about medical history"
+        icon={MedicalCross}
+        accentColor="blue"
+      >
+        <div className="p-4 sm:p-4.5 rounded-2xl bg-[#F0F8FF] border border-[#BAE6FD]">
+          <span className="font-bold text-[14px] sm:text-[15px] text-[#0288D1] block mb-1">Clinical Baseline</span>
+          <p className="text-[13px] sm:text-[14px] text-[#486581] leading-relaxed">
+            Certain health conditions, medications, and lifestyle patterns provide critical context for distinguishing PCOS indicators from metabolic or endocrine overlaps.
+          </p>
         </div>
-      </div>
+      </OnboardingWhyModal>
     </div>
   );
 };

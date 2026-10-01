@@ -18,7 +18,7 @@ export const PathwayRouteGuard: React.FC<PathwayRouteGuardProps> = ({ allowedPat
   const { userProfile, isOnboarded, loading } = useAuth();
 
   if (loading) {
-    return <BioPulseLoadingScreen message="Verifying pathway authorization..." />;
+    return <BioPulseLoadingScreen message="Preparing your health experience" fullScreen={true} />;
   }
 
   // If onboarding is incomplete, redirect directly to user's dedicated pathway onboarding

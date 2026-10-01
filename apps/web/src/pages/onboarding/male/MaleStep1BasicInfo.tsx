@@ -9,7 +9,7 @@ import {
   inchesToCm,
 } from '../../../utils/unitConversions';
 import { getDobInputBounds } from '../../../utils/profileValidation';
-import { MaleWhyWeAskCard } from './MaleWhyWeAskCard';
+import { OnboardingWhyModal, OnboardingWhyTrigger } from '../../../components/onboarding/OnboardingWhyModal';
 import { ProfilePictureSelector } from '../../../components/onboarding/ProfilePictureSelector';
 
 interface MaleStep1Props {
@@ -32,6 +32,7 @@ export const MaleStep1BasicInfo: React.FC<MaleStep1Props> = ({
   onChange,
   errors,
 }) => {
+  const [showWhyModal, setShowWhyModal] = useState(false);
   const [heightUnit, setHeightUnit] = useState<'cm' | 'ft_in'>('cm');
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg');
   const [waistUnit, setWaistUnit] = useState<'cm' | 'in'>('cm');
@@ -48,30 +49,33 @@ export const MaleStep1BasicInfo: React.FC<MaleStep1Props> = ({
     : null;
 
   return (
-    <div className="space-y-6 text-left">
-      {/* ── Question Header ── */}
-      <div className="flex items-center gap-3">
-        <div className="w-11 h-11 rounded-full bg-[#E0F2FE] flex items-center justify-center shrink-0 shadow-2xs">
-          <User01 className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
+    <div className="space-y-5 text-left max-w-4xl mx-auto">
+      {/* ── Question Header with Why We Ask Trigger ── */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#E0F2FE] flex items-center justify-center shrink-0 shadow-2xs">
+            <User01 className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
+          </div>
+
+          <div>
+            <span className="text-xs font-bold font-sans text-[#0288D1] uppercase tracking-wider block leading-none">
+              Let's get started
+            </span>
+            <h2 className="text-xl sm:text-2xl font-bold font-display text-[#073B72] tracking-tight leading-tight mt-1">
+              What is your date of birth &amp; basic profile?
+            </h2>
+          </div>
         </div>
 
-        <div>
-          <span className="text-xs font-bold font-sans text-[#0288D1] uppercase tracking-wider block leading-none">
-            Let's get started
-          </span>
-          <h2 className="text-2xl sm:text-[26px] font-bold font-display text-[#073B72] tracking-tight leading-tight mt-1">
-            What is your date of birth & basic profile?
-          </h2>
-          <p className="text-[14px] sm:text-[15px] text-[#55718F] font-sans leading-relaxed mt-1">
-            We use your date of birth and physical measurements to calibrate metabolic and male hypogonadism screening.
-          </p>
-        </div>
+        <OnboardingWhyTrigger onClick={() => setShowWhyModal(true)} accentColor="blue" />
       </div>
 
-      {/* ── Main Form Layout: Fields + Why We Ask Card ── */}
-      <div className="flex flex-col xl:flex-row gap-5 xl:gap-6 items-start">
-        {/* Form Inputs Column */}
-        <div className="flex-1 w-full min-w-0 space-y-4 sm:space-y-4.5">
+      <p className="text-xs sm:text-sm text-[#55718F] font-sans leading-relaxed">
+        We use your date of birth and physical measurements to calibrate metabolic and male hypogonadism screening.
+      </p>
+
+      {/* ── Main Form Inputs (Full-Width Responsive Grids) ── */}
+      <div className="w-full space-y-4 sm:space-y-4.5">
           {/* Row 1: Full Name & Email (Balanced 2-Column Grid) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Full Name */}
@@ -418,22 +422,27 @@ export const MaleStep1BasicInfo: React.FC<MaleStep1Props> = ({
           />
         </div>
 
-        {/* Contextual Helper Card Column */}
-        <div className="w-full xl:w-[210px] 2xl:w-[230px] shrink-0 space-y-3">
-          <MaleWhyWeAskCard
-            title="Why we ask this"
-            description="Age, waist circumference, and BMI are primary physical metrics in clinical male hypogonadism screening. Waist circumference in particular directly reflects visceral adiposity and endocrine balance."
-            icon={InfoCircle}
-          />
-
-          <div className="p-4 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] text-[13px] text-[#55718F] space-y-1.5 leading-relaxed">
-            <span className="font-bold text-[#073B72] block">Screening Context:</span>
-            <p>
-              Under CDC reference data, waist measurement (&ge;94 cm or &ge;102 cm) is the single strongest clinical indicator of circulating testosterone and metabolic health.
-            </p>
-          </div>
+      {/* ── "Why We Ask This" Modal Dialog ── */}
+      <OnboardingWhyModal
+        isOpen={showWhyModal}
+        onClose={() => setShowWhyModal(false)}
+        title="Why we ask about physical metrics"
+        accentColor="blue"
+      >
+        <div className="p-4 sm:p-4.5 rounded-2xl bg-[#F0F8FF] border border-[#BAE6FD]">
+          <span className="font-bold text-[14px] sm:text-[15px] text-[#0288D1] block mb-1">Clinical Significance</span>
+          <p className="text-[13px] sm:text-[14px] text-[#486581] leading-relaxed">
+            Age, waist circumference, and BMI are primary physical metrics in clinical male hypogonadism screening. Waist circumference in particular directly reflects visceral adiposity and endocrine balance.
+          </p>
         </div>
-      </div>
+
+        <div className="p-4 sm:p-4.5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2]">
+          <span className="font-bold text-[14px] sm:text-[15px] text-[#073B72] block mb-1">Screening Context:</span>
+          <p className="text-[13px] sm:text-[14px] text-[#486581] leading-relaxed">
+            Under CDC reference data, waist measurement (&ge;94 cm or &ge;102 cm) is the single strongest clinical indicator of circulating testosterone and metabolic health.
+          </p>
+        </div>
+      </OnboardingWhyModal>
     </div>
   );
 };

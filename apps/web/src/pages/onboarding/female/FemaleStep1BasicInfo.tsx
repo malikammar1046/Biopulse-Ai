@@ -9,7 +9,7 @@ import {
   inchesToCm,
 } from '../../../utils/unitConversions';
 import { getDobInputBounds } from '../../../utils/profileValidation';
-import { WhyWeAskCard } from './WhyWeAskCard';
+import { OnboardingWhyModal, OnboardingWhyTrigger } from '../../../components/onboarding/OnboardingWhyModal';
 import { ProfilePictureSelector } from '../../../components/onboarding/ProfilePictureSelector';
 
 interface FemaleStep1Props {
@@ -32,6 +32,7 @@ export const FemaleStep1BasicInfo: React.FC<FemaleStep1Props> = ({
   onChange,
   errors,
 }) => {
+  const [showWhyModal, setShowWhyModal] = useState(false);
   const [heightUnit, setHeightUnit] = useState<'cm' | 'ft_in'>('cm');
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg');
   const [waistUnit, setWaistUnit] = useState<'cm' | 'in'>('cm');
@@ -42,30 +43,33 @@ export const FemaleStep1BasicInfo: React.FC<FemaleStep1Props> = ({
   const displayWaistInches = cmToInches(data.waistCm);
 
   return (
-    <div className="space-y-5 text-left font-sans">
-      {/* ── Question Header ── */}
-      <div className="flex items-center gap-3.5 mb-2">
-        <div className="w-11 h-11 rounded-full bg-[#E0F2FE] flex items-center justify-center shrink-0 shadow-2xs">
-          <User01 className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
+    <div className="space-y-5 text-left font-sans max-w-4xl mx-auto">
+      {/* ── Question Header with Why We Ask Trigger ── */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#E0F2FE] flex items-center justify-center shrink-0 shadow-2xs">
+            <User01 className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
+          </div>
+
+          <div>
+            <span className="text-xs font-bold font-sans text-[#0288D1] uppercase tracking-wider block leading-none">
+              Let's get started
+            </span>
+            <h2 className="text-xl sm:text-2xl font-bold font-display text-[#073B72] tracking-tight leading-tight mt-1">
+              What is your date of birth &amp; basic profile?
+            </h2>
+          </div>
         </div>
 
-        <div>
-          <span className="text-xs font-bold font-sans text-[#0288D1] uppercase tracking-wider block leading-none">
-            Let's get started
-          </span>
-          <h2 className="text-2xl sm:text-[26px] font-bold font-display text-[#073B72] tracking-tight leading-tight mt-1">
-            What is your date of birth & basic profile?
-          </h2>
-          <p className="text-[14px] sm:text-[15px] text-[#55718F] font-sans leading-relaxed mt-1">
-            We need your date of birth to calculate your age and provide guidance suitable for you.
-          </p>
-        </div>
+        <OnboardingWhyTrigger onClick={() => setShowWhyModal(true)} accentColor="rose" />
       </div>
 
-      {/* ── Main Form Layout: Fields + Why We Ask Card ── */}
-      <div className="flex flex-col xl:flex-row gap-5 xl:gap-6 items-start">
-        {/* Form Inputs Column */}
-        <div className="flex-1 w-full min-w-0 space-y-4 sm:space-y-4.5">
+      <p className="text-xs sm:text-sm text-[#55718F] font-sans leading-relaxed">
+        We need your date of birth to calculate your age and provide guidance suitable for you.
+      </p>
+
+      {/* ── Main Form Inputs (Full Width) ── */}
+      <div className="w-full space-y-4 sm:space-y-4.5">
           {/* Row 1: Full Name & Email (Balanced 2-Column Grid) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Full Name */}
@@ -414,13 +418,20 @@ export const FemaleStep1BasicInfo: React.FC<FemaleStep1Props> = ({
           />
         </div>
 
-        {/* Right Info Column: Single Concise "Why we ask this" Card */}
-        <div className="w-full xl:w-[210px] 2xl:w-[230px] shrink-0 space-y-3">
-          <WhyWeAskCard
-            description="Age and body measurements help BioPulse AI interpret your screening information in the appropriate health context."
-          />
+      {/* ── "Why We Ask This" Modal Dialog ── */}
+      <OnboardingWhyModal
+        isOpen={showWhyModal}
+        onClose={() => setShowWhyModal(false)}
+        title="Why we ask about physical metrics"
+        accentColor="rose"
+      >
+        <div className="p-4 sm:p-4.5 rounded-2xl bg-[#FFF1F2] border border-[#FECDD3]">
+          <span className="font-bold text-[14px] sm:text-[15px] text-[#F43F7D] block mb-1">Health Context</span>
+          <p className="text-[13px] sm:text-[14px] text-[#486581] leading-relaxed">
+            Age and body measurements help BioPulse AI interpret your screening information in the appropriate clinical and endocrine context.
+          </p>
         </div>
-      </div>
+      </OnboardingWhyModal>
     </div>
   );
 };
