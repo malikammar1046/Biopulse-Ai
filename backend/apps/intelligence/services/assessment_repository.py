@@ -644,6 +644,12 @@ class AssessmentRepository:
             "next_step": assessment_data.get("next_step", ""),
             "disclaimer": assessment_data.get("disclaimer", ""),
             "evidence_used": evidence_used,
+            "input_hash": assessment_data.get("input_hash") or (
+                __import__("apps.intelligence.services.screening_hash", fromlist=["compute_canonical_input_hash"]).compute_canonical_input_hash(
+                    assessment_data.get("authoritative_tier_1_inputs") or assessment_data.get("input_features") or assessment_data.get("tier_1_inputs") or {},
+                    module=module_name
+                )
+            ),
             "created_at": now_iso,
             "updated_at": now_iso,
         }

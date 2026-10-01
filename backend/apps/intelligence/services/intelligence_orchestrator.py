@@ -398,6 +398,12 @@ def reassess_from_current_patient_state(
 
     # 2. Extract baseline Tier 1 inputs & PATCH merge incoming
     # Stored inputs are the baseline; fresh profile inputs (e.g. Weight changed in Settings) take precedence!
+    NON_TIER1_CLIENT_COLLECTIONS = {
+        'userProfile', 'cycleRecords', 'symptomRecords', 'foodLogs', 'fitnessLogs',
+        'medicationLogs', 'appointments', 'reminders', 'lifestyle', 'mensHealth',
+        'waterLog', 'profile', 'healthData'
+    }
+
     if module == "male_hypogonadism":
         baseline_t1 = extract_male_patient_raw_inputs(health_data, client_health_data or incoming_tier1)
         merged_tier1 = dict(stored_tier1)
@@ -406,6 +412,8 @@ def reassess_from_current_patient_state(
                 merged_tier1[k] = v
         if incoming_tier1 and isinstance(incoming_tier1, dict):
             for k, v in incoming_tier1.items():
+                if k in NON_TIER1_CLIENT_COLLECTIONS:
+                    continue
                 if v is not None and str(v).strip() != "":
                     try:
                         merged_tier1[k] = float(v)
@@ -419,6 +427,8 @@ def reassess_from_current_patient_state(
                 merged_tier1[k] = v
         if incoming_tier1 and isinstance(incoming_tier1, dict):
             for k, v in incoming_tier1.items():
+                if k in NON_TIER1_CLIENT_COLLECTIONS:
+                    continue
                 if v is not None and str(v).strip() != "":
                     try:
                         merged_tier1[k] = float(v)
@@ -1082,10 +1092,20 @@ def format_assessment_response(record: dict[str, Any]) -> dict[str, Any]:
             'tier_3_ultrasound': False if is_male else bool(pcom_status or record.get('pcom_status')),
         }
 
+    input_hash = record.get('input_hash')
+    if not input_hash:
+        try:
+            from apps.intelligence.services.screening_hash import compute_canonical_input_hash
+            raw_hash_source = authoritative_tier_1 or input_features or record.get('tier_1_inputs') or {}
+            input_hash = compute_canonical_input_hash(raw_hash_source, module=module_name)
+        except Exception:
+            input_hash = ''
+
     return {
         'assessment_id': str(record.get('assessment_id') or record.get('id', '')),
         'id': str(record.get('id') or record.get('assessment_id', '')),
         'module': module_name,
+        'input_hash': input_hash,
         'assessment_level': level,
         'tiers_included': tiers_inc,
         'model_version': record.get('model_version', '1.0.0'),

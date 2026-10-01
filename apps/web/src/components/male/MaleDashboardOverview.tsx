@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { InfoCircle } from '@untitledui/icons';
@@ -15,14 +15,15 @@ import { MaleRecentActivity } from './MaleRecentActivity';
 import { MaleClinicalLabsModal } from '../adaptive/MaleClinicalLabsModal';
 import { RecommendedCareCard } from '../dashboard/RecommendedCareCard';
 
+import { getAuthoritativeAssessmentForPathway } from '../../utils/authoritativeAssessmentSelector';
+import { logDashboardRenderTrace } from '../../utils/probabilityTrace';
+
 export const MaleDashboardOverview: React.FC = () => {
   const navigate = useNavigate();
   const {
     userProfile,
     activeAssessment,
-    mlAssessment,
     assessmentLoading,
-    mlAssessmentLoading,
     reports,
     upcomingAppointment,
     refreshActiveAssessment,
@@ -31,44 +32,50 @@ export const MaleDashboardOverview: React.FC = () => {
 
   const [isLabsModalOpen, setIsLabsModalOpen] = useState(false);
 
+  // 2. Authoritative Assessment State strictly bound to male_hypogonadism
+  const authoritative = useMemo(() => {
+    return getAuthoritativeAssessmentForPathway({
+      activeAssessment,
+      pathway: 'male',
+      userId: userProfile?.id,
+    });
+  }, [activeAssessment, userProfile?.id]);
 
-  // 2. Authoritative Assessment State
-  const isMaleAssessment =
-    activeAssessment?.module === 'male_hypogonadism' ||
-    activeAssessment?.model_name?.toLowerCase().includes('logistic') ||
-    activeAssessment?.model_name?.toLowerCase().includes('male');
+  const {
+    authoritativeAssessment,
+    hasAssessment,
+    probabilityPercent,
+    riskCategory,
+    riskLabel,
+    assessmentLevel,
+    threshold,
+    inputHash,
+    source: displaySource,
+    hormonePatternInterpretation,
+  } = authoritative;
 
-  const hasAssessment = Boolean(
-    (activeAssessment && activeAssessment.has_assessment !== false && isMaleAssessment) ||
-    (mlAssessment && mlAssessment.risk_category && mlAssessment.risk_category !== 'insufficient_data')
-  );
-
-  const probabilityPercent = useMemo(() => {
-    if (!hasAssessment) return null;
-    if (activeAssessment?.probability_percent !== undefined && activeAssessment.probability_percent !== null) {
-      return Math.round(activeAssessment.probability_percent);
-    }
-    if (activeAssessment?.probability !== undefined && activeAssessment.probability !== null) {
-      return Math.round(activeAssessment.probability * 100);
-    }
-    return null;
-  }, [hasAssessment, activeAssessment]);
-
-  const riskCategory = activeAssessment?.risk_category || 'lower';
-  const riskLabel = activeAssessment?.risk_label;
-  const assessmentLevel = activeAssessment?.assessment_level || 'tier_1';
+  // Diagnostic DEV trace
+  useEffect(() => {
+    logDashboardRenderTrace({
+      pathway: 'male',
+      userId: userProfile?.id,
+      dashboardSource: displaySource,
+      displayedProbability: probabilityPercent,
+      assessmentId: authoritativeAssessment?.assessment_id || authoritativeAssessment?.id,
+      module: authoritativeAssessment?.module,
+      inputHash,
+    });
+  }, [displaySource, probabilityPercent, authoritativeAssessment, userProfile?.id, inputHash]);
 
   const lastAssessmentDateFormatted = useMemo(() => {
-    const rawDate = activeAssessment?.created_at;
+    const rawDate = authoritativeAssessment?.created_at;
     if (!rawDate) return null;
     return new Date(rawDate).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
     });
-  }, [activeAssessment?.created_at]);
-
-  const threshold = activeAssessment?.threshold ?? 0.1808;
+  }, [authoritativeAssessment?.created_at]);
 
   // Unverified reports count
   const unverifiedReportsCount = useMemo(() => {
@@ -86,7 +93,7 @@ export const MaleDashboardOverview: React.FC = () => {
     return reports[0];
   }, [reports]);
 
-  const loading = assessmentLoading || mlAssessmentLoading;
+  const loading = assessmentLoading;
   const isOnboarded = Boolean(userProfile?.isOnboarded);
 
   const screeningState: 'not_started' | 'processing' | 'ready' | 'error' = useMemo(() => {
@@ -145,7 +152,7 @@ export const MaleDashboardOverview: React.FC = () => {
             loading={loading}
             isOnboarded={isOnboarded}
             screeningState={screeningState}
-            hormonePatternInterpretation={activeAssessment?.hormone_pattern_interpretation}
+            hormonePatternInterpretation={hormonePatternInterpretation}
           />
         </div>
 
@@ -159,7 +166,7 @@ export const MaleDashboardOverview: React.FC = () => {
           />
 
           <MaleTopFactors
-            explanations={activeAssessment?.explanations}
+            explanations={authoritativeAssessment?.explanations}
             onViewExplanation={() => navigate(ROUTES.APP.ASSESSMENT)}
           />
         </div>
