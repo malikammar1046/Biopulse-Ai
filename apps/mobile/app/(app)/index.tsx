@@ -12,6 +12,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BioPulseColors } from '../../constants/Colors';
 import { AuthBackgroundFoliage } from '../../components/auth/AuthBackgroundFoliage';
 import { useAuth } from '../../features/authentication';
+import { BioPulseBottomNav, BOTTOM_NAV_HEIGHT } from '../../components/navigation';
+import { FemaleDashboardOverview } from '../../components/dashboard';
 
 export default function MobileDashboardScreen() {
   const router = useRouter();
@@ -20,9 +22,16 @@ export default function MobileDashboardScreen() {
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
 
-  const isFemale = pathway === 'female_pcos' || pathway === 'female';
-  const themeColor = isFemale ? '#E11D48' : '#0284C7';
-  const themeBg = isFemale ? 'rgba(225, 29, 72, 0.08)' : 'rgba(2, 132, 199, 0.08)';
+  const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
+
+  // SCREEN 12: Female BioPulse Home / Dashboard
+  if (isFemale) {
+    return <FemaleDashboardOverview />;
+  }
+
+  // Male Endocrine Vitality Dashboard
+  const themeColor = BioPulseColors.malePrimary;
+  const themeBg = 'rgba(8, 104, 185, 0.08)';
 
   const handleLogout = async () => {
     await logout();
@@ -146,6 +155,9 @@ export default function MobileDashboardScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* Permanent BioPulse Bottom Navigation */}
+      <BioPulseBottomNav activeTab="home" />
     </View>
   );
 }
@@ -158,7 +170,8 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingTop: 12,
+    paddingBottom: BOTTOM_NAV_HEIGHT + 28,
   },
   tabletScrollContent: {
     alignItems: 'center',
