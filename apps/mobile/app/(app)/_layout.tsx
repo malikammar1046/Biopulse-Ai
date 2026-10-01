@@ -12,12 +12,10 @@ export default function AppGroupLayout() {
         },
       }}
     >
-      <Stack.Screen
-        name="index"
-        options={{
-          headerShown: false,
-        }}
-      />
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="track" options={{ headerShown: false }} />
+      <Stack.Screen name="guidance" options={{ headerShown: false }} />
+      <Stack.Screen name="more" options={{ headerShown: false }} />
     </Stack>
   );
 }
