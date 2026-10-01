@@ -646,19 +646,21 @@ class ObservationRepository:
             mh = _get_p_val("mens_health", "mensHealth") or {}
             conds = str(_get_p_val("conditions", "diagnosedConditions") or "").lower()
 
-            low_energy_val = 1.0 if (mh.get("energyLevel") in ["low", "very_low"] or "fatigue" in conds) else _parse_num(t1_inputs.get("low_energy"))
+            adam = mh.get("adamResponses") or mh.get("adam_responses") or {}
+            low_energy_val = 1.0 if (adam.get("adam_q2") is True or mh.get("energyLevel") in ["low", "very_low"] or "fatigue" in conds) else _parse_num(t1_inputs.get("low_energy"))
             if low_energy_val is not None:
                 candidates["low_energy"] = (1.0 if low_energy_val > 0 else 0.0, "")
 
-            sleep_trouble_val = 1.0 if (mh.get("sleepQuality") in ["poor", "fair"]) else _parse_num(t1_inputs.get("sleep_trouble"))
+            sleep_trouble_val = 1.0 if (adam.get("adam_q9") is True or mh.get("sleepQuality") in ["poor", "fair", "frequently_waking"]) else _parse_num(t1_inputs.get("sleep_trouble"))
             if sleep_trouble_val is not None:
                 candidates["sleep_trouble"] = (1.0 if sleep_trouble_val > 0 else 0.0, "")
 
-            low_mood_val = 1.0 if ("mood" in str(mh.get("moodFactors", "")).lower() or "depression" in conds) else _parse_num(t1_inputs.get("low_mood"))
+            mood_list = mh.get("moodChanges") or []
+            low_mood_val = 1.0 if (adam.get("adam_q6") is True or adam.get("adam_q5") is True or (isinstance(mood_list, list) and len(mood_list) > 0) or "mood" in str(mh.get("moodFactors", "")).lower() or "depression" in conds) else _parse_num(t1_inputs.get("low_mood"))
             if low_mood_val is not None:
                 candidates["low_mood"] = (1.0 if low_mood_val > 0 else 0.0, "")
 
-            low_interest_val = 1.0 if (mh.get("sexDrive") in ["low", "very_low"]) else _parse_num(t1_inputs.get("low_interest"))
+            low_interest_val = 1.0 if (adam.get("adam_q1") is True or mh.get("sexDrive") in ["low", "very_low", "reduced", "significantly_reduced"]) else _parse_num(t1_inputs.get("low_interest"))
             if low_interest_val is not None:
                 candidates["low_interest"] = (1.0 if low_interest_val > 0 else 0.0, "")
 

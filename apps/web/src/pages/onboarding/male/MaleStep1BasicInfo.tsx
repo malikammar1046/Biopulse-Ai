@@ -384,7 +384,7 @@ export const MaleStep1BasicInfo: React.FC<MaleStep1Props> = ({
                       type="number"
                       min={50}
                       max={180}
-                      placeholder="88"
+                      placeholder="e.g. 95"
                       value={data.waistCm || ''}
                       onChange={(e) => onChange('waistCm', Number(e.target.value) || null)}
                       className="w-full h-10 sm:h-11 px-3 pr-9 rounded-xl bg-white border border-[#D7EAF2] text-sm sm:text-base font-medium text-[#073B72] placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0288D1]"

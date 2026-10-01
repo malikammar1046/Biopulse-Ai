@@ -46,8 +46,8 @@ MALE_TIER1_CANONICAL_KEYS = [
 ]
 
 
-def _normalize_num(val: Any, default: float = 0.0, precision: int = 2) -> float:
-    if val is None or str(val).strip() == "":
+def _normalize_num(val: Any, default: Any = 0.0, precision: int = 2) -> Any:
+    if val is None or str(val).strip() == "" or str(val).strip().lower() in ("none", "null", "nan"):
         return default
     try:
         return round(float(val), precision)
@@ -77,7 +77,7 @@ def extract_canonical_tier1_inputs(raw: Dict[str, Any], module: str = "female_pc
         computed_bmi = round(canonical["weight_kg"] / (h_m ** 2), 2)
         canonical["bmi"] = _normalize_num(raw.get("bmi"), computed_bmi, 2)
 
-        canonical["waist_cm"] = _normalize_num(raw.get("waist_cm"), 85.0, 1)
+        canonical["waist_cm"] = _normalize_num(raw.get("waist_cm"), None, 1)
         for flag in ["low_energy", "sleep_trouble", "low_mood", "low_interest", "high_blood_pressure", "diabetes"]:
             canonical[flag] = _normalize_flag(raw.get(flag))
     else:

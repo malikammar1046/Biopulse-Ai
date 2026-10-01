@@ -91,7 +91,16 @@ export function deriveMaleTier1InputsFromProfile(
   const age = calculateAgeFromDob(profile.dateOfBirth, 35);
   const heightCm = Number(profile.heightCm) || 178;
   const weightKg = Number(profile.weightKg) || 80;
-  const waistCm = Number(profile.waistCm) || 88;
+
+  // Waist circumference: NEVER default to 88 cm. If omitted or not answered,
+  // pass null so backend leaves it NaN and SimpleImputer uses learned median (97.0 cm).
+  const waistCm =
+    profile.waistCm !== undefined &&
+    profile.waistCm !== null &&
+    !isNaN(Number(profile.waistCm)) &&
+    Number(profile.waistCm) > 0
+      ? Number(profile.waistCm)
+      : null;
 
   const conds = (profile.medical?.conditions || []).join(' ').toLowerCase();
   const isHbp = conds.includes('hypertension') || conds.includes('blood pressure') ? 1 : 0;
@@ -104,10 +113,12 @@ export function deriveMaleTier1InputsFromProfile(
     profile.mensHealth?.energyLevel === 'very_low'
       ? 1
       : 0;
+  const sleepQuality = String(profile.mensHealth?.sleepQuality || '');
   const sleepTrouble =
     adam.adam_q9 === true ||
-    profile.mensHealth?.sleepQuality === 'poor' ||
-    profile.mensHealth?.sleepQuality === 'frequently_waking'
+    sleepQuality === 'poor' ||
+    sleepQuality === 'fair' ||
+    sleepQuality === 'frequently_waking'
       ? 1
       : 0;
   const lowMood =
@@ -116,10 +127,13 @@ export function deriveMaleTier1InputsFromProfile(
     (profile.mensHealth?.moodChanges && profile.mensHealth.moodChanges.length > 0)
       ? 1
       : 0;
+  const sexDrive = String(profile.mensHealth?.sexDrive || '');
   const lowInterest =
     adam.adam_q1 === true ||
-    profile.mensHealth?.sexDrive === 'reduced' ||
-    profile.mensHealth?.sexDrive === 'significantly_reduced'
+    sexDrive === 'reduced' ||
+    sexDrive === 'significantly_reduced' ||
+    sexDrive === 'low' ||
+    sexDrive === 'very_low'
       ? 1
       : 0;
 

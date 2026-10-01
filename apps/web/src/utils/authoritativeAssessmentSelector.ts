@@ -55,8 +55,8 @@ export function computeCanonicalInputHash(
     const isMale = pathway === 'male';
     const canonical: Record<string, any> = {};
 
-    const normalizeNum = (val: any, fallback = 0, precision = 2): number => {
-      if (val === undefined || val === null || val === '') return fallback;
+    const normalizeNum = (val: any, fallback: any = 0, precision = 2): any => {
+      if (val === undefined || val === null || val === '' || String(val).toLowerCase() === 'null') return fallback;
       const num = Number(val);
       return Number.isFinite(num) ? Number(num.toFixed(precision)) : fallback;
     };
@@ -77,7 +77,7 @@ export function computeCanonicalInputHash(
       const computedBmi = Number((canonical['weight_kg'] / (hM * hM)).toFixed(2));
       canonical['bmi'] = normalizeNum(raw.bmi, computedBmi, 2);
 
-      canonical['waist_cm'] = normalizeNum(raw.waist_cm ?? raw.waistCm, 85, 1);
+      canonical['waist_cm'] = normalizeNum(raw.waist_cm ?? raw.waistCm, null, 1);
       for (const flag of [
         'low_energy',
         'sleep_trouble',
