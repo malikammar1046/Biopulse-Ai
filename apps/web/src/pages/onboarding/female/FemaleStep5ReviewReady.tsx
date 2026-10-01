@@ -27,7 +27,7 @@ export const FemaleStep5ReviewReady: React.FC<FemaleStep5Props> = ({
   const checks = [
     {
       label: 'Profile Picture',
-      val: profile.avatarUrl ? 'Configured' : 'Avatar set',
+      val: profile.avatarUrl ? 'Configured' : 'Default avatar',
     },
     {
       label: 'Personal & Biometrics',

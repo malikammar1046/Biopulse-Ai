@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <radialGradient id="def-bg" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#F8FAFC" />
+      <stop offset="100%" stop-color="#E2E8F0" />
+    </radialGradient>
+    <linearGradient id="def-figure" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#64748B" />
+      <stop offset="100%" stop-color="#475569" />
+    </linearGradient>
+    <filter id="def-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0F172A" flood-opacity="0.08" />
+    </filter>
+  </defs>
+
+  <!-- Background Circle with subtle border -->
+  <circle cx="60" cy="60" r="58" fill="url(#def-bg)" stroke="#CBD5E1" stroke-width="2" />
+
+  <!-- Person Silhouette -->
+  <g filter="url(#def-shadow)">
+    <!-- Head -->
+    <circle cx="60" cy="46" r="18" fill="url(#def-figure)" />
+    <!-- Torso / Shoulders with smooth curve -->
+    <path d="M26 102 C26 78 40 72 60 72 C80 72 94 78 94 102 C94 108 90 114 84 116 L36 116 C30 114 26 108 26 102 Z" fill="url(#def-figure)" />
+  </g>
+</svg>

@@ -9,6 +9,7 @@ import {
   CheckCircle,
 } from '@untitledui/icons';
 import type { UserProfile, EmergencyContact } from '../../../../types/onboarding';
+import { downloadHealthSummaryPdf } from '../../../../services/healthSummaryPdfService';
 
 interface AccountTabProps {
   draft: UserProfile;
@@ -26,6 +27,9 @@ export const AccountTab: React.FC<AccountTabProps> = ({
   onOpenDeleteModal,
 }) => {
   const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [downloadPdfLoading, setDownloadPdfLoading] = useState(false);
+  const [downloadPdfSuccess, setDownloadPdfSuccess] = useState(false);
+  const [downloadPdfError, setDownloadPdfError] = useState<string | null>(null);
 
   const primaryContact: EmergencyContact = draft.emergencyContacts?.[0] || {
     name: '',
@@ -53,6 +57,21 @@ export const AccountTab: React.FC<AccountTabProps> = ({
       setTimeout(() => setDownloadSuccess(false), 3000);
     } catch {
       // ignore
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (downloadPdfLoading) return; // Prevent duplicate requests
+    setDownloadPdfLoading(true);
+    setDownloadPdfError(null);
+    try {
+      await downloadHealthSummaryPdf();
+      setDownloadPdfSuccess(true);
+      setTimeout(() => setDownloadPdfSuccess(false), 3500);
+    } catch (err: any) {
+      setDownloadPdfError(err?.message || 'Unable to generate PDF report. Please try again.');
+    } finally {
+      setDownloadPdfLoading(false);
     }
   };
 
@@ -173,8 +192,61 @@ export const AccountTab: React.FC<AccountTabProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Export JSON */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* 1. Download PDF Health Summary */}
+          <div className="p-4 rounded-2xl bg-gradient-to-b from-[#F5FBFD] to-white border border-[#D7EAF2] flex flex-col justify-between shadow-xs">
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-bold text-[#073B72] flex items-center gap-1.5">
+                  <File01 className="w-3.5 h-3.5 text-[#16B8C4]" aria-hidden="true" />
+                  Health Summary (PDF)
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#16B8C4]/15 text-[#073B72]">
+                  Clinical Report
+                </span>
+              </div>
+              <p className="text-[11px] text-[#55718F] leading-relaxed mb-3">
+                Download a structured, clinical-grade multi-page PDF summary of your vitals, screening results, SHAP factors, symptoms, and medications.
+              </p>
+              {downloadPdfError && (
+                <div className="mb-3 p-2 rounded-xl bg-rose-50 border border-rose-200 text-[11px] text-rose-700 flex items-start gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-rose-600 mt-0.5" aria-hidden="true" />
+                  <span>{downloadPdfError}</span>
+                </div>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={handleDownloadPdf}
+              disabled={downloadPdfLoading}
+              className={`inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all shadow-xs cursor-pointer ${
+                downloadPdfLoading
+                  ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
+                  : downloadPdfSuccess
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  : 'bg-[#073B72] text-white hover:bg-[#073B72]/90 border border-transparent'
+              }`}
+            >
+              {downloadPdfLoading ? (
+                <>
+                  <RefreshCw01 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+                  <span>Generating PDF...</span>
+                </>
+              ) : downloadPdfSuccess ? (
+                <>
+                  <CheckCircle className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
+                  <span>PDF Downloaded ✓</span>
+                </>
+              ) : (
+                <>
+                  <Download01 className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Download Health Summary (PDF)</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* 2. Export JSON (Retained as optional alternative) */}
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
             <div>
               <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5 mb-1">
@@ -204,7 +276,7 @@ export const AccountTab: React.FC<AccountTabProps> = ({
             </button>
           </div>
 
-          {/* Re-run Onboarding */}
+          {/* 3. Re-run Onboarding (Retained) */}
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
             <div>
               <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5 mb-1">

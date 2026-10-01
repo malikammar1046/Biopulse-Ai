@@ -117,13 +117,13 @@ export const ProfilePictureSelector: React.FC<ProfilePictureSelectorProps> = ({
 
   const handleAvatarSelect = (avatarSrc: string) => {
     setUploadError(null);
-    onChange(avatarSrc);
+    // Clicking the already-selected avatar toggles it off, resetting to default avatar
+    onChange(value === avatarSrc ? '' : avatarSrc);
   };
 
   const handleRemoveCustomPhoto = () => {
     setCustomPhotoUrl(null);
     if (value === customPhotoUrl) {
-      // Default to first avatar or empty
       onChange('');
     }
   };
@@ -140,19 +140,42 @@ export const ProfilePictureSelector: React.FC<ProfilePictureSelectorProps> = ({
       {/* ── Section Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1">
         <div>
-          <h3 className="text-base sm:text-lg font-bold font-display text-[#073B72] tracking-tight leading-snug">
-            Choose your profile picture
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-base sm:text-lg font-bold font-display text-[#073B72] tracking-tight leading-snug">
+              Choose your profile picture
+            </h3>
+            <span className="text-[11px] font-semibold text-[#55718F] bg-[#E8F1F5] px-2 py-0.5 rounded-full border border-[#D7EAF2]">
+              Optional
+            </span>
+          </div>
           <p className="text-[14px] sm:text-[15px] text-[#55718F] font-sans leading-relaxed mt-0.5">
-            Upload your own photo or choose an avatar.
+            Upload your own photo or choose an avatar. If skipped, a neutral default avatar will be used.
           </p>
         </div>
 
-        {/* Selected badge if user has chosen */}
-        {value && (
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-[#D7EAF2] shadow-2xs self-start sm:self-auto">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[12px] font-semibold text-[#073B72]">Picture selected</span>
+        {/* Selected badge or Default avatar notice */}
+        {value ? (
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-[#D7EAF2] shadow-2xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[12px] font-semibold text-[#073B72]">Picture selected</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setCustomPhotoUrl(null);
+                onChange('');
+              }}
+              className="text-xs text-[#55718F] hover:text-[#073B72] hover:underline cursor-pointer transition-colors"
+              title="Reset to default avatar"
+            >
+              Reset to default
+            </button>
+          </div>
+        ) : (
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/80 border border-[#D7EAF2] text-[#55718F] self-start sm:self-auto">
+            <span className="w-2 h-2 rounded-full bg-[#0288D1]" />
+            <span className="text-[12px] font-medium text-[#55718F]">Default avatar active</span>
           </div>
         )}
       </div>

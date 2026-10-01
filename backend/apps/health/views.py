@@ -13,6 +13,7 @@ import tempfile
 from pathlib import Path
 
 from django.conf import settings
+from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -26,6 +27,7 @@ from apps.health.serializers import (
     validate_age_and_dob,
 )
 from apps.health.services.digital_twin_service import DigitalTwinService
+from apps.health.services.health_pdf_generator import generate_user_health_pdf
 from apps.health.services.medical_report_parser import medical_report_parser
 from apps.health.services.paddle_ocr_engine import paddle_ocr_engine
 from apps.health.services.supabase_health_service import health_service
@@ -224,5 +226,35 @@ class OnboardingValidationView(ProfileValidationView):
     Validates onboarding demographic inputs.
     """
     pass
+
+
+class HealthSummaryPdfExportView(APIView):
+    """
+    GET /api/v1/health/summary/pdf/
+
+    Generates and downloads a structured, publication-quality Personal Health Summary PDF
+    for the authenticated user.
+    Enforces strict user scoping using verified JWT (request.user.id).
+    """
+    authentication_classes = [SupabaseAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        patient_uuid = str(request.user.id)
+        auth_token = getattr(request, "auth", None)
+
+        try:
+            pdf_bytes, filename = generate_user_health_pdf(patient_uuid=patient_uuid, auth_token=auth_token)
+            response = HttpResponse(pdf_bytes, content_type="application/pdf")
+            response["Content-Disposition"] = f'attachment; filename="{filename}"'
+            response["Access-Control-Expose-Headers"] = "Content-Disposition"
+            return response
+        except Exception as exc:
+            logger.error("Failed to generate health summary PDF for user %s: %s", patient_uuid[:8] + "***", exc, exc_info=True)
+            return Response(
+                {"error": "Failed to generate health summary PDF report."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
 
 

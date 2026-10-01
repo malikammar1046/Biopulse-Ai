@@ -120,10 +120,6 @@ export const FemaleOnboarding: React.FC = () => {
       if (!phoneCheck.isValid) errs.phone = phoneCheck.error!;
 
       if (!draftProfile.email.trim()) errs.email = 'Email address is required.';
-
-      if (!draftProfile.avatarUrl?.trim()) {
-        errs.avatarUrl = 'Choose an avatar or upload a photo to continue.';
-      }
     }
 
     setErrors(errs);
