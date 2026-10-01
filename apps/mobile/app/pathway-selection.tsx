@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,136 +6,239 @@ import {
   StyleSheet,
   ScrollView,
   useWindowDimensions,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../constants/Colors';
 import { AuthBackgroundFoliage } from '../components/auth/AuthBackgroundFoliage';
+import {
+  PathwayHeader,
+  OnboardingStepper,
+  PathwayCard,
+  PathwayFeatureItem,
+} from '../components/onboarding';
 import { useAuth } from '../features/authentication';
 import { HealthPathway } from '../features/authentication/types';
 
+const FEMALE_HERO = require('../assets/female_pathway_hero.png');
+const MALE_HERO = require('../assets/male_pathway_hero.png');
+
+const FEMALE_FEATURES: PathwayFeatureItem[] = [
+  { icon: 'flower-outline', text: 'Hormonal & reproductive health' },
+  { icon: 'git-network-outline', text: 'Metabolic wellness' },
+  { icon: 'sparkles-outline', text: 'Personalized guidance & support' },
+];
+
+const MALE_FEATURES: PathwayFeatureItem[] = [
+  { icon: 'male-outline', text: 'Testosterone & hormonal health' },
+  { icon: 'barbell-outline', text: 'Metabolic & reproductive wellness' },
+  { icon: 'shield-checkmark-outline', text: 'Personalized guidance & support' },
+];
+
+/**
+ * Screen 5: "Choose Your Health Pathway"
+ *
+ * Implements:
+ * - Dual-pathway branching point (Female PCOS vs Male Hypogonadism)
+ * - Header with back navigation, BioPulse AI brand lockup, and Help guidance
+ * - 4-step progress stepper (Step 1 active: "Choose Path")
+ * - Female Health Card & Male Health Card with equal visual hierarchy
+ * - Mutual exclusivity & dynamic continue CTA
+ * - Responsive 2-column or stacked layout with tablet width centering
+ * - Full state persistence via AuthContext / profile architecture
+ */
 export default function PathwaySelectionScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { selectPathway, user } = useAuth();
   const { width } = useWindowDimensions();
+  const { pathway, selectPathway } = useAuth();
+
+  // Initialize with existing pathway if present in state, otherwise null
+  const [selectedPathway, setSelectedPathway] = useState<HealthPathway | null>(
+    pathway || null
+  );
+
+  // Responsive breakpoint calculations
   const isTablet = width >= 768;
+  const isVeryNarrow = width < 350;
+  const isTwoColumn = !isVeryNarrow;
 
-  const [selected, setSelected] = useState<HealthPathway>('female_pcos');
+  // Handle back navigation cleanly
+  const handleBack = useCallback(() => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/onboarding');
+    }
+  }, [router]);
 
-  const handleConfirm = () => {
-    selectPathway(selected);
-    router.replace('/(app)');
-  };
+  // Handle pathway selection
+  const handleSelectPathway = useCallback((type: 'female' | 'male') => {
+    const nextValue: HealthPathway = type === 'female' ? 'female_pcos' : 'male_hypogonadism';
+    setSelectedPathway(nextValue);
+  }, []);
+
+  // Handle continue CTA action
+  const handleContinue = useCallback(() => {
+    if (!selectedPathway) return;
+
+    // Persist choice into existing state architecture
+    selectPathway(selectedPathway);
+
+    // Route to pathway-specific onboarding flow (Step 1: Basic Info)
+    if (selectedPathway === 'female_pcos' || selectedPathway === 'female') {
+      router.push('/female-basic-info');
+    } else {
+      router.replace('/(app)');
+    }
+  }, [selectedPathway, selectPathway, router]);
+
+  const isFemaleSelected =
+    selectedPathway === 'female_pcos' || selectedPathway === 'female';
+  const isMaleSelected =
+    selectedPathway === 'male_hypogonadism' || selectedPathway === 'male';
+
+  // Dynamic button properties
+  const isButtonEnabled = Boolean(selectedPathway);
+  const buttonColor = isFemaleSelected
+    ? BioPulseColors.femaleAccent
+    : isMaleSelected
+    ? '#0284C7'
+    : '#CBD5E1';
+
+  const buttonText = isFemaleSelected
+    ? 'Continue with Female Health'
+    : isMaleSelected
+    ? 'Continue with Male Health'
+    : 'Select a Health Pathway';
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, 20) }]}>
+    <View
+      style={[
+        styles.root,
+        {
+          paddingTop: Math.max(insets.top, 10),
+          paddingBottom: Math.max(insets.bottom, 16),
+        },
+      ]}
+    >
       <AuthBackgroundFoliage />
 
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, isTablet && styles.tabletScrollContent]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          isTablet && styles.tabletScrollContent,
+        ]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={[styles.container, isTablet && styles.tabletContainer]}>
-          {/* Header */}
-          <View style={styles.headerBlock}>
-            <View style={styles.badgePill}>
-              <Text style={styles.badgeText}>DUAL-PATHWAY PLATFORM</Text>
-            </View>
-            <Text style={styles.title}>
-              Welcome{user?.fullName ? `, ${user.fullName.split(' ')[0]}` : ''}!
+          {/* 1. Header (Back button, BioPulse AI logo, Help) */}
+          <PathwayHeader onBack={handleBack} />
+
+          {/* 2. Progress Stepper (Step 1: Choose Path) */}
+          <OnboardingStepper
+            currentStep={1}
+            accentColor={
+              isMaleSelected ? '#0284C7' : BioPulseColors.femaleAccent
+            }
+          />
+
+          {/* 3. Main Content Title & Description */}
+          <View style={styles.titleBlock}>
+            <Text style={styles.screenTitle}>
+              Choose Your Health Pathway
             </Text>
-            <Text style={styles.subtitle}>
-              BioPulse AI delivers specialized clinical intelligence. Select the primary health pathway you would like to focus on:
+            <Text style={styles.screenDescription}>
+              Select the pathway that best fits your health goals.{'\n'}
+              You can always change this later in settings.
             </Text>
           </View>
 
-          {/* Pathway Cards */}
-          <View style={styles.cardsContainer}>
-            {/* 1. Female Pathway Card */}
-            <Pressable
-              onPress={() => setSelected('female_pcos')}
-              style={({ pressed }) => [
-                styles.pathwayCard,
-                styles.femaleCard,
-                selected === 'female_pcos' && styles.selectedFemaleCard,
-                pressed && styles.cardPressed,
-              ]}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: selected === 'female_pcos' }}
-            >
-              <View style={styles.cardHeaderRow}>
-                <View style={styles.femaleBadge}>
-                  <Text style={styles.femaleBadgeText}>FEMALE PATHWAY</Text>
-                </View>
-                <View style={[styles.radioCircle, selected === 'female_pcos' && styles.radioCircleFemaleActive]}>
-                  {selected === 'female_pcos' && <View style={styles.radioDotFemale} />}
-                </View>
-              </View>
-
-              <Text style={styles.cardTitle}>PCOS & Hormonal Health</Text>
-              <Text style={styles.cardDescription}>
-                Personalized cycle tracking, Rotterdam-aligned PCOS risk assessment, ovarian ultrasound imaging intelligence, and metabolic nutrition.
-              </Text>
-
-              <View style={styles.featuresList}>
-                <Text style={styles.featureItem}>• Cycle and symptom logging</Text>
-                <Text style={styles.featureItem}>• AI-assisted PCOS risk evaluation</Text>
-                <Text style={styles.featureItem}>• Personalized lifestyle recommendations</Text>
-              </View>
-            </Pressable>
-
-            {/* 2. Male Pathway Card */}
-            <Pressable
-              onPress={() => setSelected('male_hypogonadism')}
-              style={({ pressed }) => [
-                styles.pathwayCard,
-                styles.maleCard,
-                selected === 'male_hypogonadism' && styles.selectedMaleCard,
-                pressed && styles.cardPressed,
-              ]}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: selected === 'male_hypogonadism' }}
-            >
-              <View style={styles.cardHeaderRow}>
-                <View style={styles.maleBadge}>
-                  <Text style={styles.maleBadgeText}>MALE PATHWAY</Text>
-                </View>
-                <View style={[styles.radioCircle, selected === 'male_hypogonadism' && styles.radioCircleMaleActive]}>
-                  {selected === 'male_hypogonadism' && <View style={styles.radioDotMale} />}
-                </View>
-              </View>
-
-              <Text style={styles.cardTitle}>Hypogonadism & Testosterone Health</Text>
-              <Text style={styles.cardDescription}>
-                Endocrine monitoring, morning testosterone tracking, validated ADAM symptom scoring, and male vitality intelligence.
-              </Text>
-
-              <View style={styles.featuresList}>
-                <Text style={styles.featureItem}>• ADAM questionnaire & symptom trends</Text>
-                <Text style={styles.featureItem}>• Hormone lab telemetry & HPT axis analysis</Text>
-                <Text style={styles.featureItem}>• Male-specific metabolic and lifestyle guidance</Text>
-              </View>
-            </Pressable>
-          </View>
-
-          {/* Confirm Button */}
-          <Pressable
-            onPress={handleConfirm}
-            style={({ pressed }) => [
-              styles.continueBtn,
-              selected === 'female_pcos' ? styles.continueBtnFemale : styles.continueBtnMale,
-              pressed && styles.continueBtnPressed,
+          {/* 4. Pathway Cards (Female & Male) */}
+          <View
+            style={[
+              styles.cardsWrapper,
+              isTwoColumn ? styles.cardsRow : styles.cardsColumn,
             ]}
           >
-            <Text style={styles.continueBtnText}>
-              Continue with {selected === 'female_pcos' ? 'Female Pathway' : 'Male Pathway'} →
-            </Text>
-          </Pressable>
+            {/* Female Health Card */}
+            <PathwayCard
+              type="female"
+              title="Female Health"
+              subtitle="PCOS Screening"
+              illustrationSource={FEMALE_HERO}
+              features={FEMALE_FEATURES}
+              footerText="Designed for women with PCOS and related concerns"
+              isSelected={isFemaleSelected}
+              onSelect={() => handleSelectPathway('female')}
+              isTwoColumn={isTwoColumn}
+            />
 
-          <Text style={styles.footerNote}>
-            You can change your selected pathway anytime in account settings.
-          </Text>
+            {/* Male Health Card */}
+            <PathwayCard
+              type="male"
+              title="Male Health"
+              subtitle="Hypogonadism Screening"
+              illustrationSource={MALE_HERO}
+              features={MALE_FEATURES}
+              footerText="Designed for men with hypogonadism and related concerns"
+              isSelected={isMaleSelected}
+              onSelect={() => handleSelectPathway('male')}
+              isTwoColumn={isTwoColumn}
+            />
+          </View>
+
+          {/* 5. Information Banner */}
+          <View style={styles.infoBanner}>
+            <Ionicons
+              name="information-circle"
+              size={20}
+              color="#64748B"
+              style={styles.infoIcon}
+            />
+            <Text style={styles.infoText}>
+              BioPulse AI provides screening support and personalized guidance, not a medical diagnosis.
+            </Text>
+          </View>
+
+          {/* 6. Continue CTA Button */}
+          <Pressable
+            onPress={handleContinue}
+            disabled={!isButtonEnabled}
+            style={({ pressed }) => [
+              styles.continueButton,
+              { backgroundColor: buttonColor },
+              isFemaleSelected && styles.continueButtonFemaleShadow,
+              isMaleSelected && styles.continueButtonMaleShadow,
+              !isButtonEnabled && styles.continueButtonDisabled,
+              pressed && isButtonEnabled && styles.continueButtonPressed,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={buttonText}
+            accessibilityState={{ disabled: !isButtonEnabled }}
+          >
+            <View style={styles.buttonInnerRow}>
+              <Text
+                style={[
+                  styles.continueButtonText,
+                  !isButtonEnabled && styles.continueButtonTextDisabled,
+                ]}
+              >
+                {buttonText}
+              </Text>
+              {isButtonEnabled && (
+                <Ionicons
+                  name="arrow-forward"
+                  size={18}
+                  color="#FFFFFF"
+                  style={styles.arrowIcon}
+                />
+              )}
+            </View>
+          </Pressable>
         </View>
       </ScrollView>
     </View>
@@ -145,202 +248,123 @@ export default function PathwaySelectionScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: BioPulseColors.background,
+    backgroundColor: '#FEF8FA',
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 24,
   },
   tabletScrollContent: {
     alignItems: 'center',
+    paddingHorizontal: 24,
   },
   container: {
     width: '100%',
   },
   tabletContainer: {
-    maxWidth: 580,
+    maxWidth: 680,
   },
-  headerBlock: {
-    marginBottom: 20,
+  titleBlock: {
     alignItems: 'center',
     textAlign: 'center',
-  },
-  badgePill: {
-    backgroundColor: 'rgba(2, 132, 199, 0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(2, 132, 199, 0.2)',
+    marginTop: 4,
+    marginBottom: 16,
     paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 9999,
-    marginBottom: 10,
   },
-  badgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#0284C7',
-    letterSpacing: 0.8,
-  },
-  title: {
+  screenTitle: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#0B1E38',
-    marginBottom: 6,
+    color: BioPulseColors.navy,
     textAlign: 'center',
+    letterSpacing: -0.3,
+    marginBottom: 6,
   },
-  subtitle: {
-    fontSize: 13,
-    color: '#64748B',
+  screenDescription: {
+    fontSize: 13.5,
     lineHeight: 19,
-    textAlign: 'center',
-    paddingHorizontal: 10,
-  },
-  cardsContainer: {
-    gap: 16,
-    marginBottom: 24,
-  },
-  pathwayCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 2,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 2,
-  },
-  femaleCard: {
-    backgroundColor: '#FFFFFF',
-  },
-  selectedFemaleCard: {
-    borderColor: '#E11D48',
-    backgroundColor: '#FFF5F8',
-    shadowColor: '#E11D48',
-    shadowOpacity: 0.15,
-  },
-  maleCard: {
-    backgroundColor: '#FFFFFF',
-  },
-  selectedMaleCard: {
-    borderColor: '#0284C7',
-    backgroundColor: '#F0F9FF',
-    shadowColor: '#0284C7',
-    shadowOpacity: 0.15,
-  },
-  cardPressed: {
-    transform: [{ scale: 0.99 }],
-  },
-  cardHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  femaleBadge: {
-    backgroundColor: 'rgba(225, 29, 72, 0.08)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  femaleBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#E11D48',
-    letterSpacing: 0.5,
-  },
-  maleBadge: {
-    backgroundColor: 'rgba(2, 132, 199, 0.08)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  maleBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#0284C7',
-    letterSpacing: 0.5,
-  },
-  radioCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
-    borderColor: '#CBD5E1',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radioCircleFemaleActive: {
-    borderColor: '#E11D48',
-  },
-  radioDotFemale: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#E11D48',
-  },
-  radioCircleMaleActive: {
-    borderColor: '#0284C7',
-  },
-  radioDotMale: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#0284C7',
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 6,
-  },
-  cardDescription: {
-    fontSize: 12,
-    color: '#475569',
-    lineHeight: 18,
-    marginBottom: 10,
-  },
-  featuresList: {
-    gap: 3,
-  },
-  featureItem: {
-    fontSize: 11,
     color: '#64748B',
+    textAlign: 'center',
+    fontWeight: '400',
+  },
+  cardsWrapper: {
+    width: '100%',
+    marginBottom: 14,
+  },
+  cardsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'stretch',
+  },
+  cardsColumn: {
+    flexDirection: 'column',
+    gap: 12,
+  },
+  infoBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 14,
+    gap: 10,
+  },
+  infoIcon: {
+    flexShrink: 0,
+  },
+  infoText: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#475569',
     fontWeight: '500',
   },
-  continueBtn: {
-    height: 52,
-    borderRadius: 16,
+  continueButton: {
+    width: '100%',
+    height: 54,
+    borderRadius: 27,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  continueButtonFemaleShadow: {
+    shadowColor: BioPulseColors.femaleAccent,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.28,
     shadowRadius: 10,
-    elevation: 3,
-    marginBottom: 12,
+    elevation: 4,
   },
-  continueBtnFemale: {
-    backgroundColor: '#E11D48',
-    shadowColor: '#E11D48',
-  },
-  continueBtnMale: {
-    backgroundColor: '#0284C7',
+  continueButtonMaleShadow: {
     shadowColor: '#0284C7',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.28,
+    shadowRadius: 10,
+    elevation: 4,
   },
-  continueBtnPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.99 }],
+  continueButtonDisabled: {
+    opacity: 0.8,
   },
-  continueBtnText: {
-    color: '#FFFFFF',
-    fontSize: 15,
+  continueButtonPressed: {
+    transform: [{ scale: 0.985 }],
+    opacity: 0.92,
+  },
+  buttonInnerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  continueButtonText: {
+    fontSize: 16,
     fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: -0.2,
   },
-  footerNote: {
-    fontSize: 11,
-    color: '#94A3B8',
-    textAlign: 'center',
+  continueButtonTextDisabled: {
+    color: '#64748B',
+  },
+  arrowIcon: {
+    marginLeft: 8,
   },
 });
