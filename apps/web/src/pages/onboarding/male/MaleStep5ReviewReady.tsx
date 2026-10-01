@@ -59,7 +59,7 @@ export const MaleStep5ReviewReady: React.FC<MaleStep5Props> = ({
   const reviewRows = [
     {
       label: 'Profile Picture',
-      val: profile.avatarUrl ? 'Configured' : 'Avatar set',
+      val: profile.avatarUrl ? 'Configured' : 'Default avatar',
     },
     {
       label: 'Personal & Biometrics',

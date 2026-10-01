@@ -4,6 +4,7 @@ import { Navbar } from '../components/navigation/Navbar';
 import { Footer } from '../components/navigation/Footer';
 import { ScrollToTop } from '../components/common/ScrollToTop';
 import { GlobalBotanicalBackground } from '../components/brand/GlobalBotanicalBackground';
+import { PublicFloatingChatbot } from '../components/chat/PublicFloatingChatbot';
 import { ROUTES } from '../constants/routes';
 
 export const PublicLayout: React.FC = () => {
@@ -35,6 +36,9 @@ export const PublicLayout: React.FC = () => {
         <Outlet />
       </main>
       {!isAuthPage && <Footer />}
+
+      {/* ── Public AI Chatbot (Accessible on homepage & public pages without login) ── */}
+      {!isAuthPage && <PublicFloatingChatbot />}
     </div>
   );
 };
