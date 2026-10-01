@@ -145,6 +145,13 @@ export const MaleDashboardOverview: React.FC = () => {
             assessmentLevel={assessmentLevel}
             updatedAt={lastAssessmentDateFormatted}
             threshold={threshold}
+            adamResponses={
+              userProfile.mensHealth?.adamResponses ||
+              (authoritativeAssessment as any)?.input_features?.adamResponses ||
+              (authoritativeAssessment as any)?.tier_1_inputs?.adamResponses ||
+              null
+            }
+            adamScore={userProfile.mensHealth?.adamScore ?? null}
             onStartScreening={() => navigate(ROUTES.APP.ASSESSMENT)}
             onViewAssessment={() => navigate(ROUTES.APP.ASSESSMENT)}
             onAddLabs={() => setIsLabsModalOpen(true)}
