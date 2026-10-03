@@ -5,7 +5,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { Colors } from '../constants/Colors';
 import { AuthProvider } from '../features/authentication';
-import { FemaleOnboardingProvider } from '../features/onboarding';
+import { FemaleOnboardingProvider, MaleOnboardingProvider } from '../features/onboarding';
+import { RealtimeHealthStoreProvider } from '../store';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -15,8 +16,10 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <FemaleOnboardingProvider>
-          <StatusBar style={isDark ? 'light' : 'dark'} />
+        <RealtimeHealthStoreProvider>
+          <FemaleOnboardingProvider>
+            <MaleOnboardingProvider>
+              <StatusBar style={isDark ? 'light' : 'dark'} />
         <Stack
           screenOptions={{
             headerStyle: {
@@ -106,8 +109,10 @@ export default function RootLayout() {
             }}
           />
         </Stack>
+          </MaleOnboardingProvider>
         </FemaleOnboardingProvider>
-      </AuthProvider>
-    </SafeAreaProvider>
-  );
+      </RealtimeHealthStoreProvider>
+    </AuthProvider>
+  </SafeAreaProvider>
+);
 }

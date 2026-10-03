@@ -403,7 +403,7 @@ export default function FemaleScreeningResultScreen() {
       {/* Decorative upper-right female illustration matching screenshot */}
       <View pointerEvents="none" style={styles.heroIllustrationContainer}>
         <Image
-          source={require('../assets/images/female_pathway_hero.png')}
+          source={require('../assets/female_pathway_hero.png')}
           style={styles.heroIllustration}
           resizeMode="contain"
         />

@@ -112,7 +112,7 @@ export const AppointmentPreparationCard: React.FC<AppointmentPreparationCardProp
             to={ROUTES.APP.APPOINTMENTS}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-[#01579B] bg-[#E0F2FE] hover:bg-[#BAE6FD] transition-colors shrink-0"
           >
-            <span>+ Book Consultation</span>
+            <span>Book Consultation</span>
             <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
           </Link>
         </div>

@@ -203,17 +203,55 @@ export function getAuthoritativeAssessmentForPathway({
   let probabilityPercent: number | null = null;
 
   if (activeAssessment.probability_percent !== undefined && activeAssessment.probability_percent !== null) {
-    probabilityPercent = Math.round(activeAssessment.probability_percent);
-    probability = Number((activeAssessment.probability_percent / 100).toFixed(4));
+    const rawVal = Number(activeAssessment.probability_percent);
+    probabilityPercent = Number.isInteger(rawVal) ? rawVal : Number(rawVal.toFixed(1));
+    probability = Number((rawVal / 100).toFixed(4));
   } else if (activeAssessment.probability !== undefined && activeAssessment.probability !== null) {
-    probability = Number(Number(activeAssessment.probability).toFixed(4));
-    probabilityPercent = Math.round(activeAssessment.probability * 100);
+    const rawP = Number(activeAssessment.probability);
+    probability = Number(rawP.toFixed(4));
+    const scaled = rawP > 1 ? rawP : rawP * 100;
+    probabilityPercent = Number.isInteger(scaled) ? scaled : Number(scaled.toFixed(1));
   }
 
-  const riskCategory = activeAssessment.risk_category || 'lower';
-  const riskLabel = activeAssessment.risk_label || (riskCategory === 'higher' ? 'Higher Screening Risk' : 'Lower Screening Risk');
   const assessmentLevel = activeAssessment.assessment_level || (activeAssessment.pcom_status ? 'tier_1_3' : 'tier_1');
-  const threshold = activeAssessment.threshold ?? defaultThreshold;
+  const isTier2Or3 = !isMale && (assessmentLevel === 'tier_1_2' || assessmentLevel === 'tier_1_2_3' || assessmentLevel === 'tier_1_3');
+  const defaultHigh = isMale ? 18.08 : (isTier2Or3 ? 29 : 38);
+  const defaultLow = isMale ? 10 : (isTier2Or3 ? 18 : 20);
+
+  const highCutoff = activeAssessment.threshold !== undefined && activeAssessment.threshold !== null
+    ? (isMale ? Number((Number(activeAssessment.threshold) * 100).toFixed(1)) : Math.round(Number(activeAssessment.threshold) * 100))
+    : defaultHigh;
+  const lowCutoff = defaultLow;
+  const threshold = activeAssessment.threshold ?? (isMale ? 0.1808 : (isTier2Or3 ? 0.29 : 0.38));
+
+  // Authoritative clinical risk derivation strictly matching Screening Workspace cutoff ranges
+  let riskCategory: string;
+  let riskLabel: string;
+
+  if (probabilityPercent !== null) {
+    if (probabilityPercent >= highCutoff) {
+      riskCategory = 'higher';
+      riskLabel = 'Higher Screening Risk';
+    } else if (probabilityPercent >= lowCutoff) {
+      riskCategory = 'intermediate';
+      riskLabel = 'Intermediate Screening Risk';
+    } else {
+      riskCategory = 'lower';
+      riskLabel = 'Lower Screening Risk';
+    }
+  } else {
+    const rawCat = (activeAssessment.risk_category || '').toLowerCase();
+    if (rawCat.includes('high') || rawCat.includes('elevated')) {
+      riskCategory = 'higher';
+      riskLabel = 'Higher Screening Risk';
+    } else if (rawCat.includes('inter') || rawCat.includes('mod')) {
+      riskCategory = 'intermediate';
+      riskLabel = 'Intermediate Screening Risk';
+    } else {
+      riskCategory = 'lower';
+      riskLabel = 'Lower Screening Risk';
+    }
+  }
 
   const rawInputs = activeAssessment.authoritative_tier_1_inputs || activeAssessment.input_features || {};
   const inputHash = activeAssessment.input_hash || computeCanonicalInputHash(rawInputs, pathway);

@@ -42,11 +42,17 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class PatientProfile:
-    user_id: str
+    user_id: str = ""
+    id: str | None = None
+    full_name: str | None = None
     gender: str | None = None
     pathway: str | None = None
     height_cm: float | None = None
     weight_kg: float | None = None
+    waist_cm: float | None = None
+    hip_cm: float | None = None
+    waist_inch: float | None = None
+    hip_inch: float | None = None
     date_of_birth: str | None = None
     cycle_length: str | None = None        # e.g. "28" or "irregular"
     period_duration: int | None = None
@@ -57,6 +63,9 @@ class PatientProfile:
     sleep_hours: float | None = None
     daily_water_glasses: int | None = None
     dietary_preference: str | None = None
+    allergies: list[str] = field(default_factory=list)
+    food_allergies: list[str] = field(default_factory=list)
+    food_intolerances: list[str] = field(default_factory=list)
     conditions: list[str] = field(default_factory=list)
     medications_profile: list[str] = field(default_factory=list)
     # ML Model Specific Clinical & Reproductive Fields
@@ -68,6 +77,22 @@ class PatientProfile:
     regular_exercise: bool | None = None   # True | False
     updated_at: str | None = None
     created_at: str | None = None
+
+    def __post_init__(self):
+        if not self.id and self.user_id:
+            self.id = self.user_id
+        elif not self.user_id and self.id:
+            self.user_id = self.id
+        if self.waist_inch is None and self.waist_cm is not None:
+            try:
+                self.waist_inch = round(float(self.waist_cm) / 2.54, 1)
+            except (ValueError, TypeError):
+                pass
+        if self.hip_inch is None and self.hip_cm is not None:
+            try:
+                self.hip_inch = round(float(self.hip_cm) / 2.54, 1)
+            except (ValueError, TypeError):
+                pass
 
 
 @dataclass
@@ -238,24 +263,62 @@ class SupabaseHealthService:
     # ------------------------------------------------------------------
 
     def fetch_profile(self, patient_uuid: str, auth_token: str | None = None) -> PatientProfile:
+        row: dict[str, Any] = {}
+        full_select = (
+            "id,full_name,gender,pathway,height_cm,weight_kg,date_of_birth,cycle_length,"
+            "period_duration,last_period_date,period_regularity,"
+            "common_symptoms,activity_level,sleep_hours,"
+            "daily_water_glasses,dietary_preference,conditions,medications,"
+            "waist_cm,hip_cm,allergies,food_allergies,food_intolerances,"
+            "marital_status,marriage_years,is_pregnant,abortions_count,"
+            "fast_food_intake,regular_exercise,updated_at,created_at"
+        )
+        base_select = (
+            "id,gender,pathway,height_cm,weight_kg,date_of_birth,cycle_length,"
+            "period_duration,last_period_date,period_regularity,"
+            "common_symptoms,activity_level,sleep_hours,"
+            "daily_water_glasses,dietary_preference,conditions,medications,"
+            "updated_at,created_at"
+        )
+
         try:
             client = self._client_or_raise(auth_token)
-            res = (
-                client.table("profiles")
-                .select(
-                    "id,gender,pathway,height_cm,weight_kg,date_of_birth,cycle_length,"
-                    "period_duration,last_period_date,period_regularity,"
-                    "common_symptoms,activity_level,sleep_hours,"
-                    "daily_water_glasses,dietary_preference,conditions,medications,"
-                    "updated_at,created_at"
+            # 1. Authoritative lookup: profiles.id == patient_uuid
+            try:
+                res = (
+                    client.table("profiles")
+                    .select(full_select)
+                    .eq("id", patient_uuid)
+                    .maybe_single()
+                    .execute()
                 )
-                .eq("id", patient_uuid)
-                .maybe_single()
-                .execute()
-            )
-            row: dict[str, Any] = getattr(res, "data", None) or {}
+                row = getattr(res, "data", None) or {}
+            except Exception as inner_exc:
+                err_code = getattr(inner_exc, "code", "") or ""
+                err_msg = str(inner_exc)
+                logger.warning(
+                    "[P0_RUNTIME_TRACE] profile_fetch_full_fallback table=profiles operation=select user=%s code=%s message=%s",
+                    patient_uuid[:8] if patient_uuid else "unknown",
+                    err_code,
+                    err_msg,
+                )
+                res = (
+                    client.table("profiles")
+                    .select(base_select)
+                    .eq("id", patient_uuid)
+                    .maybe_single()
+                    .execute()
+                )
+                row = getattr(res, "data", None) or {}
         except Exception as exc:
-            logger.warning("profile fetch failed for %s: %s", patient_uuid, exc)
+            err_code = getattr(exc, "code", "") or ""
+            err_msg = str(exc)
+            logger.error(
+                "[P0_RUNTIME_TRACE] profile_fetch_error table=profiles operation=select user=%s code=%s message=%s",
+                patient_uuid[:8] if patient_uuid else "unknown",
+                err_code,
+                err_msg,
+            )
             row = {}
 
         def _safe_list(val) -> list:
@@ -274,12 +337,24 @@ class SupabaseHealthService:
                     names.append(m)
             return names
 
+        def _safe_float(val) -> float | None:
+            if val is None:
+                return None
+            try:
+                return float(val)
+            except (ValueError, TypeError):
+                return None
+
         return PatientProfile(
             user_id=patient_uuid,
+            id=patient_uuid,
+            full_name=row.get("full_name"),
             gender=row.get("gender"),
             pathway=row.get("pathway"),
-            height_cm=row.get("height_cm"),
-            weight_kg=row.get("weight_kg"),
+            height_cm=_safe_float(row.get("height_cm")),
+            weight_kg=_safe_float(row.get("weight_kg")),
+            waist_cm=_safe_float(row.get("waist_cm")),
+            hip_cm=_safe_float(row.get("hip_cm")),
             date_of_birth=row.get("date_of_birth"),
             cycle_length=row.get("cycle_length"),
             period_duration=row.get("period_duration"),
@@ -287,11 +362,20 @@ class SupabaseHealthService:
             period_regularity=row.get("period_regularity"),
             common_symptoms=_safe_list(row.get("common_symptoms")),
             activity_level=row.get("activity_level"),
-            sleep_hours=row.get("sleep_hours"),
+            sleep_hours=_safe_float(row.get("sleep_hours")),
             daily_water_glasses=row.get("daily_water_glasses"),
             dietary_preference=row.get("dietary_preference"),
+            allergies=_safe_list(row.get("allergies")),
+            food_allergies=_safe_list(row.get("food_allergies")),
+            food_intolerances=_safe_list(row.get("food_intolerances")),
             conditions=_safe_list(row.get("conditions")),
             medications_profile=_extract_med_names(row.get("medications")),
+            marital_status=row.get("marital_status"),
+            marriage_years=_safe_float(row.get("marriage_years")),
+            is_pregnant=row.get("is_pregnant"),
+            abortions_count=row.get("abortions_count"),
+            fast_food_intake=row.get("fast_food_intake"),
+            regular_exercise=row.get("regular_exercise"),
             updated_at=row.get("updated_at"),
             created_at=row.get("created_at"),
         )
@@ -834,7 +918,7 @@ class SupabaseHealthService:
 
         profile = results.get("profile")
         if profile is None and "profile" not in include_fields:
-            profile = PatientProfile(id=patient_uuid)
+            profile = PatientProfile(user_id=patient_uuid, id=patient_uuid)
 
         health_data = PatientHealthData(
             profile=profile,

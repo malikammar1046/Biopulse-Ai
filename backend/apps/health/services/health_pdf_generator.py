@@ -22,19 +22,29 @@ import os
 from datetime import date, datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-from reportlab.pdfgen import canvas
-from reportlab.platypus import (
-    HRFlowable,
-    KeepTogether,
-    Paragraph,
-    SimpleDocTemplate,
-    Spacer,
-    Table,
-    TableStyle,
-)
+try:
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.pdfgen import canvas
+    from reportlab.platypus import (
+        HRFlowable,
+        KeepTogether,
+        Paragraph,
+        SimpleDocTemplate,
+        Spacer,
+        Table,
+        TableStyle,
+    )
+    REPORTLAB_AVAILABLE = True
+except ImportError:
+    REPORTLAB_AVAILABLE = False
+    colors = None
+    A4 = None
+    ParagraphStyle = None
+    getSampleStyleSheet = None
+    canvas = type("canvas", (), {"Canvas": object})
+    HRFlowable = KeepTogether = Paragraph = SimpleDocTemplate = Spacer = Table = TableStyle = None
 
 
 class NumberedCanvas(canvas.Canvas):
@@ -1370,6 +1380,8 @@ def generate_user_health_pdf(patient_uuid: str, auth_token: str | None = None) -
     Assembles user health records and compiles the multi-page BioPulse Health Summary PDF.
     Returns (pdf_bytes, filename).
     """
+    if not REPORTLAB_AVAILABLE:
+        raise RuntimeError("The 'reportlab' package is required to generate health summary PDFs.")
     data = assemble_user_health_pdf_data(patient_uuid, auth_token=auth_token)
     generator = HealthSummaryPDFGenerator(data)
     pdf_bytes = generator.generate()

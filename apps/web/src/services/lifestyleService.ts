@@ -13,6 +13,7 @@ import { supabase } from '../lib/supabase';
 import type {
   LifestyleRecommendationsResult,
   LifestyleSimulationOverride,
+  AILifestylePlan,
 } from '../types/lifestyle';
 
 const BACKEND_API_URL =
@@ -20,6 +21,7 @@ const BACKEND_API_URL =
   'http://127.0.0.1:8000/api';
 
 const LIFESTYLE_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/lifestyle-recommendations/`;
+const AI_PLAN_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/lifestyle-ai-plan/`;
 
 async function getAuthHeaders(): Promise<HeadersInit> {
   let token: string | undefined;
@@ -72,8 +74,9 @@ class LifestyleService {
 
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
+          const fallbackMsg = `Unable to retrieve lifestyle recommendations (HTTP ${res.status})`;
           const errorObj = new Error(
-            err.error || err.detail || `Failed to fetch lifestyle recommendations (${res.status})`
+            err.error || err.detail || fallbackMsg
           ) as any;
           errorObj.status = res.status;
           errorObj.detail = err.detail;
@@ -147,6 +150,64 @@ class LifestyleService {
       throw new Error(
         err.error || err.detail || `Failed to simulate lifestyle recommendations (${res.status})`
       );
+    }
+
+    return res.json();
+  }
+
+  /**
+   * Retrieves active 7-Day Personalized AI Plan synthesized via Hybrid Rule-Based + Generative AI Engine.
+   */
+  async getAIPlan(
+    module?: 'ovasense' | 'androsense' | 'female_pcos' | 'male_hypogonadism'
+  ): Promise<AILifestylePlan | null> {
+    const headers = await getAuthHeaders();
+    const params = new URLSearchParams();
+    if (module) params.set('module', module);
+    const url = params.toString() ? `${AI_PLAN_ENDPOINT}?${params.toString()}` : AI_PLAN_ENDPOINT;
+
+    const res = await fetch(url, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!res.ok) {
+      if (res.status === 404) return null;
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || err.detail || `Failed to retrieve AI plan (${res.status})`);
+    }
+
+    return res.json();
+  }
+
+  /**
+   * Generates or regenerates 7-Day Personalized AI Plan.
+   * Evaluates deterministic safety rules, grounds in Pakistani catalog, invokes Gemini,
+   * validates output constraints, and persists result.
+   */
+  async generateAIPlan(
+    module?: 'ovasense' | 'androsense' | 'female_pcos' | 'male_hypogonadism',
+    overrides?: {
+      dietary_preference?: string;
+      activity_level?: string;
+      allergens?: string[];
+    }
+  ): Promise<AILifestylePlan> {
+    const headers = await getAuthHeaders();
+    const params = new URLSearchParams();
+    if (module) params.set('module', module);
+    params.set('refresh', 'true');
+    const url = `${AI_PLAN_ENDPOINT}?${params.toString()}`;
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(overrides || { refresh: true }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || err.detail || `Failed to generate AI plan (${res.status})`);
     }
 
     return res.json();

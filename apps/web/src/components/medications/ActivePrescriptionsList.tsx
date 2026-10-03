@@ -48,7 +48,7 @@ export const ActivePrescriptionsList: React.FC<ActivePrescriptionsListProps> = (
           }`}
         >
           <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-          <span>+ Add Medicine</span>
+          <span>Add Medicine</span>
         </button>
       </div>
 
@@ -156,7 +156,7 @@ export const ActivePrescriptionsList: React.FC<ActivePrescriptionsListProps> = (
               isMale ? 'text-[#0288D1]' : 'text-[#DC326C]'
             }`}
           >
-            + Add your first medicine
+            Add your first medicine
           </button>
         </div>
       )}

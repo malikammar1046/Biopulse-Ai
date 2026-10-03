@@ -25,6 +25,7 @@ from apps.intelligence.views import (
 from apps.intelligence.views_lifestyle import (
     LifestyleRecommendationsView,
     LifestyleRecommendationStatusView,
+    LifestyleAIPlanView,
 )
 
 urlpatterns = [
@@ -47,4 +48,6 @@ urlpatterns = [
     path("companion/health/", CompanionHealthView.as_view(), name="intelligence-companion-health"),
     path("lifestyle-recommendations/", LifestyleRecommendationsView.as_view(), name="intelligence-lifestyle-recommendations"),
     path("lifestyle-recommendations/status/", LifestyleRecommendationStatusView.as_view(), name="intelligence-lifestyle-recommendations-status"),
+    path("lifestyle-ai-plan/", LifestyleAIPlanView.as_view(), name="intelligence-lifestyle-ai-plan"),
 ]
+
