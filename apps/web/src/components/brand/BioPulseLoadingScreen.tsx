@@ -292,9 +292,9 @@ export const BioPulseLoadingScreen: React.FC<BioPulseLoadingScreenProps> = ({
     >
       {/* ── Left Botanical Decoration (Teal Pathway) ── */}
       <motion.div
-        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, x: -20 }}
+        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0.8, x: -6 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
         className="absolute left-0 top-0 sm:top-1/2 sm:-translate-y-1/2 pointer-events-none z-0"
       >
         <LeftTealBotanical />
@@ -302,9 +302,9 @@ export const BioPulseLoadingScreen: React.FC<BioPulseLoadingScreenProps> = ({
 
       {/* ── Right Botanical Decoration (Pink Pathway) ── */}
       <motion.div
-        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, x: 20 }}
+        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0.8, x: 6 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut', delay: 0.05 }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
         className="absolute right-0 bottom-0 sm:top-1/2 sm:-translate-y-1/2 pointer-events-none z-0"
       >
         <RightPinkBotanical />
@@ -312,9 +312,9 @@ export const BioPulseLoadingScreen: React.FC<BioPulseLoadingScreenProps> = ({
 
       {/* ── Center: BioPulse Identity & Pulse Rhythm ── */}
       <motion.div
-        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.96, y: 4 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: 'easeOut' }}
+        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0.9, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
         className="relative z-10 flex flex-col items-center text-center max-w-sm sm:max-w-md mx-auto"
       >
         {/* BioPulse Heart Emblem with Subtle Breathing Micro-Pulse */}

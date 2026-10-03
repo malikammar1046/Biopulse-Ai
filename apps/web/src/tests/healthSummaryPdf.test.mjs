@@ -74,10 +74,10 @@ test('2. AccountTab.tsx satisfies PDF download button and UX requirements', () =
     'Must display clear error message if PDF generation fails'
   );
 
-  // Verify existing JSON export remains available
+  // Verify JSON export card has been deleted per user request
   assert.ok(
-    content.includes('Download Health JSON') && content.includes('Export Health Profile (JSON)'),
-    'Must keep existing JSON export available as an optional alternative'
+    !content.includes('Download Health JSON') && !content.includes('Export Health Profile (JSON)'),
+    'Must remove JSON export card from settings per user request'
   );
 
   // Verify onboarding re-take remains available

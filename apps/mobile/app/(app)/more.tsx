@@ -151,7 +151,7 @@ export default function MoreMenuScreen() {
         id: 'screening',
         label: 'Screening',
         icon: 'shield-checkmark-outline',
-        route: isFemale ? (lastActiveScreeningRoute || '/female-symptoms') : '/(app)',
+        route: '/(app)/screening',
       },
     ];
 
@@ -160,7 +160,7 @@ export default function MoreMenuScreen() {
         id: 'cycle_tracking',
         label: 'Cycle Tracking',
         icon: 'calendar-outline',
-        route: '/female-cycle-health',
+        route: '/(app)/cycle-tracking',
       });
     }
 
@@ -169,13 +169,13 @@ export default function MoreMenuScreen() {
         id: 'symptoms',
         label: 'Symptoms',
         icon: 'heart-outline',
-        route: isFemale ? '/female-symptoms' : '/(app)',
+        route: '/(app)/symptom-log',
       },
       {
         id: 'progress',
         label: 'Progress',
         icon: 'analytics-outline',
-        route: '/(app)/track',
+        route: '/(app)/progress',
       }
     );
 
@@ -187,39 +187,39 @@ export default function MoreMenuScreen() {
       {
         title: 'DAILY HEALTH',
         items: [
-          { id: 'nutrition', label: 'Nutrition & Meals', icon: 'restaurant-outline', route: '/(app)/guidance' },
-          { id: 'fitness', label: 'Fitness & Movement', icon: 'barbell-outline', route: '/(app)/guidance' },
-          { id: 'water', label: 'Water Log', icon: 'water-outline' },
-          { id: 'medications', label: 'Medications', icon: 'medkit-outline' },
+          { id: 'nutrition', label: 'Nutrition & Meals', icon: 'restaurant-outline', route: '/(app)/nutrition' },
+          { id: 'fitness', label: 'Fitness & Movement', icon: 'barbell-outline', route: '/(app)/movement' },
+          { id: 'water', label: 'Water Log', icon: 'water-outline', route: '/(app)/water-log' },
+          { id: 'medications', label: 'Medications', icon: 'medkit-outline', route: '/(app)/medications' },
         ],
       },
       {
         title: 'CARE & SUPPORT',
         items: [
-          { id: 'appointments', label: 'Appointments', icon: 'calendar-outline' },
-          { id: 'specialist', label: 'Find a Specialist', icon: 'person-add-outline' },
-          { id: 'care_circle', label: 'Care Circle', icon: 'people-outline' },
-          { id: 'ai_assistant', label: 'AI Health Assistant', icon: 'sparkles-outline', route: '/(app)/guidance' },
+          { id: 'appointments', label: 'Appointments', icon: 'calendar-outline', route: '/(app)/appointments' },
+          { id: 'specialist', label: 'Find a Specialist', icon: 'person-add-outline', route: '/(app)/specialists' },
+          { id: 'care_circle', label: 'Care Circle', icon: 'people-outline', route: '/(app)/care-circle' },
+          { id: 'ai_assistant', label: 'AI Health Assistant', icon: 'sparkles-outline', route: '/(app)/ai-companion' },
         ],
       },
       {
         title: 'RECORDS',
         items: [
-          { id: 'reports', label: 'Reports', icon: 'document-text-outline' },
-          { id: 'lab_reports', label: 'Lab Reports', icon: 'flask-outline' },
+          { id: 'reports', label: 'Reports', icon: 'document-text-outline', route: '/(app)/reports' },
+          { id: 'lab_reports', label: 'Lab Reports', icon: 'flask-outline', route: '/(app)/add-labs' },
         ],
       },
       {
         title: 'ACCOUNT',
         items: [
-          { id: 'profile', label: 'Profile & Health Information', icon: 'person-outline' },
-          { id: 'notifications', label: 'Notifications', icon: 'notifications-outline' },
-          { id: 'privacy', label: 'Privacy & Security', icon: 'lock-closed-outline' },
-          { id: 'settings', label: 'Settings', icon: 'settings-outline' },
+          { id: 'profile', label: 'Profile & Health Information', icon: 'person-outline', route: '/(app)/profile' },
+          { id: 'notifications', label: 'Notifications', icon: 'notifications-outline', route: '/(app)/notifications' },
+          { id: 'privacy', label: 'Privacy & Security', icon: 'lock-closed-outline', route: '/(app)/settings' },
+          { id: 'settings', label: 'Settings', icon: 'settings-outline', route: '/(app)/settings' },
         ],
       },
     ];
-  }, [isFemale, lastActiveScreeningRoute]);
+  }, [isFemale]);
 
   const userName = user?.fullName || (user?.email ? user.email.split('@')[0] : 'BioPulse Member');
 
@@ -261,7 +261,10 @@ export default function MoreMenuScreen() {
       >
         <View style={[styles.container, isTablet && styles.tabletContainer]}>
           {/* User Profile Card */}
-          <Pressable style={({ pressed }) => [styles.profileCard, pressed && styles.cardPressed]}>
+          <Pressable
+            onPress={() => router.push('/(app)/profile')}
+            style={({ pressed }) => [styles.profileCard, pressed && styles.cardPressed]}
+          >
             <View style={styles.profileLeft}>
               <View style={[styles.avatarWrap, { borderColor: pathwayAccent }]}>
                 <Ionicons name="person" size={26} color={pathwayAccent} />
@@ -279,7 +282,10 @@ export default function MoreMenuScreen() {
           </Pressable>
 
           {/* Health Journey Progress Card */}
-          <View style={styles.journeyCard}>
+          <Pressable
+            onPress={() => router.push('/(app)/profile')}
+            style={({ pressed }) => [styles.journeyCard, pressed && styles.cardPressed]}
+          >
             <View style={styles.journeyLeft}>
               <View style={[styles.progressRing, { borderColor: pathwayAccent }]}>
                 <Text style={[styles.progressPercent, { color: pathwayAccent }]}>{profileCompleteness}%</Text>
@@ -290,7 +296,7 @@ export default function MoreMenuScreen() {
               </View>
             </View>
             <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
-          </View>
+          </Pressable>
 
           {/* Menu Sections */}
           {sections.map((section) => (

@@ -32,6 +32,7 @@ import { ClinicianReviewBanner } from '../../components/lifestyle/ClinicianRevie
 import { MissingDataBanner } from '../../components/lifestyle/MissingDataBanner';
 import { RecommendationDetailModal } from '../../components/lifestyle/RecommendationDetailModal';
 import { LifestyleEmptyState } from '../../components/lifestyle/LifestyleEmptyState';
+import { AILifestylePlanSection } from '../../components/lifestyle/AILifestylePlanSection';
 
 type PillarTab = 'nutrition' | 'fitness' | 'lifestyle';
 type ErrorClassification = 'NETWORK' | 'SESSION' | 'NO_ASSESSMENT' | 'SERVER';
@@ -94,8 +95,16 @@ export const LifestyleRecommendationsPage: React.FC = () => {
         setErrorType('NO_ASSESSMENT');
         setError('Complete your screening to unlock personalized recommendations.');
       } else if (
-        err?.name === 'TypeError' ||
-        msg.includes('Failed to fetch') ||
+        statusCode >= 500 ||
+        msg.includes('500') ||
+        msg.includes('502') ||
+        msg.includes('503') ||
+        msg.includes('Internal Server Error')
+      ) {
+        setErrorType('SERVER');
+        setError("We couldn't prepare your recommendations right now. Please try again.");
+      } else if (
+        (err?.name === 'TypeError' && msg.includes('Failed to fetch')) ||
         msg.includes('NetworkError') ||
         (typeof navigator !== 'undefined' && !navigator.onLine)
       ) {
@@ -409,6 +418,14 @@ export const LifestyleRecommendationsPage: React.FC = () => {
       {data.missing_data && data.missing_data.length > 0 && (
         <MissingDataBanner missingData={data.missing_data} />
       )}
+
+      {/* 7-Day Personalized AI Lifestyle Plan (Hybrid Rule-Based + Generative AI Engine) */}
+      <AILifestylePlanSection
+        pathway={data.pathway || defaultPathway}
+        isMale={isMale}
+        dietaryPreference={dietaryPref}
+        activityLevel={activityLevel}
+      />
 
       {/* B. Today's Priority Featured Card */}
       {topPriorityRecommendation && (

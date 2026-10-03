@@ -1161,6 +1161,7 @@ class LongitudinalHealthView(APIView):
         return None
 
     def get(self, request):
+        start_time = time.time()
         if not request.user or not getattr(request.user, "id", None):
             return Response(
                 {"error": "Authentication required."},
@@ -1168,6 +1169,7 @@ class LongitudinalHealthView(APIView):
             )
 
         patient_uuid = str(request.user.id)
+        short_id = patient_uuid[:8] if patient_uuid else "unknown"
         auth_token = getattr(request.user, "raw_token", None)
 
         period = request.query_params.get("period", "90d").strip().lower()
@@ -1185,9 +1187,12 @@ class LongitudinalHealthView(APIView):
         )
 
         if not authoritative_module:
+            duration_ms = round((time.time() - start_time) * 1000, 1)
             logger.warning(
-                "Longitudinal health pathway resolution failed closed for patient %s (no valid gender/pathway configured)",
-                patient_uuid[:8] + "***",
+                "[P0_RUNTIME_TRACE] endpoint=longitudinal-health user=%s module=%s status=422 duration_ms=%s error_type=PATHWAY_NOT_CONFIGURED error=Health pathway unconfigured",
+                short_id,
+                requested_module or "none",
+                duration_ms,
             )
             return Response(
                 {
@@ -1213,7 +1218,7 @@ class LongitudinalHealthView(APIView):
             if clean_requested != authoritative_module:
                 logger.warning(
                     "Patient %s attempted to request mismatched module '%s'; enforcing authoritative pathway '%s'",
-                    patient_uuid[:8] + "***",
+                    short_id + "***",
                     requested_module,
                     authoritative_module,
                 )
@@ -1231,10 +1236,26 @@ class LongitudinalHealthView(APIView):
                 period=period,
                 auth_token=auth_token,
             )
+            duration_ms = round((time.time() - start_time) * 1000, 1)
+            logger.info(
+                "[P0_RUNTIME_TRACE] endpoint=longitudinal-health user=%s module=%s status=200 duration_ms=%s error_type=none error=none total_assessments=%s",
+                short_id,
+                module,
+                duration_ms,
+                summary.get("total_assessments_recorded", 0),
+            )
             return Response(summary, status=status.HTTP_200_OK)
         except Exception as exc:
+            duration_ms = round((time.time() - start_time) * 1000, 1)
+            err_type = type(exc).__name__
             logger.error(
-                "Failed to generate longitudinal health summary: %s", exc, exc_info=True
+                "[P0_RUNTIME_TRACE] endpoint=longitudinal-health user=%s module=%s status=500 duration_ms=%s error_type=%s error=%s",
+                short_id,
+                module,
+                duration_ms,
+                err_type,
+                str(exc),
+                exc_info=True,
             )
             return Response(
                 {"error": "Failed to assemble longitudinal health data."},

@@ -1,19 +1,21 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { InfoCircle } from '@untitledui/icons';
 import { ROUTES } from '../../constants/routes';
 import { useUserHealth } from '../../context/UserHealthContext';
-import {
-  MaleCard,
-  APPLE_SPRINGS,
-} from './MaleDesignPrimitives';
-import { MaleScreeningCard } from './MaleScreeningCard';
-import { MaleTopFactors } from './MaleTopFactors';
-import { MaleNextBestAction } from './MaleNextBestAction';
-import { MaleRecentActivity } from './MaleRecentActivity';
+import { APPLE_SPRINGS } from './MaleDesignPrimitives';
+
+import { DashboardGreetingRow } from '../dashboard/overview/DashboardGreetingRow';
+import { ScreeningModuleCard } from '../dashboard/overview/modules/ScreeningModuleCard';
+import { MaleTrackingModuleCard } from '../dashboard/overview/modules/MaleTrackingModuleCard';
+import { NutritionModuleCard } from '../dashboard/overview/modules/NutritionModuleCard';
+import { ExerciseModuleCard } from '../dashboard/overview/modules/ExerciseModuleCard';
+import { WaterModuleCard } from '../dashboard/overview/modules/WaterModuleCard';
+import { MedicationModuleCard } from '../dashboard/overview/modules/MedicationModuleCard';
+import { CareCircleModuleCard } from '../dashboard/overview/modules/CareCircleModuleCard';
+import { SymptomsModuleCard } from '../dashboard/overview/modules/SymptomsModuleCard';
+import { NextBestActionModuleCard } from '../dashboard/overview/modules/NextBestActionModuleCard';
 import { MaleClinicalLabsModal } from '../adaptive/MaleClinicalLabsModal';
-import { RecommendedCareCard } from '../dashboard/RecommendedCareCard';
 
 import { getAuthoritativeAssessmentForPathway } from '../../utils/authoritativeAssessmentSelector';
 import { logDashboardRenderTrace } from '../../utils/probabilityTrace';
@@ -25,14 +27,30 @@ export const MaleDashboardOverview: React.FC = () => {
     activeAssessment,
     assessmentLoading,
     reports,
-    upcomingAppointment,
+    foodLogs,
+    dailyNutritionTargets,
+    dietLoading,
+    todayFitnessActivities,
+    todayFitnessMinutes,
+    fitnessLoading,
+    waterLog,
+    incrementWater,
+    decrementWater,
+    medications,
+    todayMedicationProgress,
+    medicationsLoading,
+    careCircleMembers,
+    careCircleLoading,
+    symptomRecords,
+    symptomStats,
+    symptomsLoading,
+    openAiChatWithPrompt,
     refreshActiveAssessment,
-    submitMaleTier1,
   } = useUserHealth();
 
   const [isLabsModalOpen, setIsLabsModalOpen] = useState(false);
 
-  // 2. Authoritative Assessment State strictly bound to male_hypogonadism
+  // 1. Authoritative Assessment State strictly bound to male_hypogonadism
   const authoritative = useMemo(() => {
     return getAuthoritativeAssessmentForPathway({
       activeAssessment,
@@ -48,10 +66,8 @@ export const MaleDashboardOverview: React.FC = () => {
     riskCategory,
     riskLabel,
     assessmentLevel,
-    threshold,
     inputHash,
     source: displaySource,
-    hormonePatternInterpretation,
   } = authoritative;
 
   // Diagnostic DEV trace
@@ -84,135 +100,164 @@ export const MaleDashboardOverview: React.FC = () => {
       .reduce((sum, r) => sum + (r.results?.filter((res) => !res.userVerified)?.length || 0), 0);
   }, [reports]);
 
-  // Next upcoming scheduled appointment
-  const nextAppointment = upcomingAppointment;
-
-  // Latest lab report
-  const latestReport = useMemo(() => {
-    if (!reports || reports.length === 0) return null;
-    return reports[0];
+  // Check if hormone panel is logged in reports
+  const hasHormoneLabs = useMemo(() => {
+    return (reports || []).some(
+      (r) =>
+        r.reportType === 'hormone_test' ||
+        r.reportType === 'blood_test' ||
+        r.results?.some((res) =>
+          res.testName?.toLowerCase().includes('testosterone')
+        )
+    );
   }, [reports]);
 
-  const loading = assessmentLoading;
-  const isOnboarded = Boolean(userProfile?.isOnboarded);
+  // 2. Real Sync Timestamp (updates when data loads or mounts)
+  const [syncTimestamp, setSyncTimestamp] = useState<Date>(() => new Date());
 
-  const screeningState: 'not_started' | 'processing' | 'ready' | 'error' = useMemo(() => {
-    if (hasAssessment && probabilityPercent !== null) {
-      return 'ready';
-    }
-    if (loading) {
-      return 'processing';
-    }
-    if (isOnboarded) {
-      return 'error';
-    }
-    return 'not_started';
-  }, [hasAssessment, probabilityPercent, loading, isOnboarded]);
+  useEffect(() => {
+    setSyncTimestamp(new Date());
+  }, [activeAssessment, foodLogs, waterLog, todayFitnessActivities]);
 
-  const handleRetryScreening = async () => {
-    await submitMaleTier1();
-  };
+  const lastSyncedFormatted = useMemo(() => {
+    const now = new Date();
+    const diffMs = now.getTime() - syncTimestamp.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    if (diffMins <= 1) return 'just now';
+    if (diffMins < 60) return `${diffMins} mins ago`;
+    return `${Math.floor(diffMins / 60)} hr ago`;
+  }, [syncTimestamp]);
 
-  // Primary action handler
-  const handlePrimaryAction = async () => {
-    if (!hasAssessment) {
-      navigate(ROUTES.APP.ASSESSMENT);
-    } else if (unverifiedReportsCount > 0) {
-      navigate(ROUTES.APP.REPORTS);
-    } else if (assessmentLevel === 'tier_1') {
-      setIsLabsModalOpen(true);
-    } else {
-      navigate(ROUTES.APP.ASSESSMENT);
-    }
-  };
+  // Quick action navigation handlers
+  const handleAction = useCallback(
+    (targetRoute: string) => {
+      if (targetRoute === '/app/assessment' && assessmentLevel === 'tier_1' && hasAssessment) {
+        setIsLabsModalOpen(true);
+      } else {
+        navigate(targetRoute);
+      }
+    },
+    [navigate, assessmentLevel, hasAssessment]
+  );
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={APPLE_SPRINGS.instant}
-      className="max-w-6xl mx-auto space-y-6 sm:space-y-7 pb-16 text-left select-none"
+      className="max-w-7xl mx-auto space-y-6 sm:space-y-7 pb-16 text-left select-none"
     >
-      {/* ── Primary 2-Column Clinical Grid ───────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 lg:gap-6 items-stretch">
-        {/* Left Column (7 cols): Primary Screening Card */}
-        <div className="lg:col-span-7 flex flex-col">
-          <MaleScreeningCard
-            hasAssessment={hasAssessment}
-            probabilityPercent={probabilityPercent}
-            riskCategory={riskCategory}
-            riskLabel={riskLabel}
-            assessmentLevel={assessmentLevel}
-            updatedAt={lastAssessmentDateFormatted}
-            threshold={threshold}
-            adamResponses={
-              userProfile.mensHealth?.adamResponses ||
-              (authoritativeAssessment as any)?.input_features?.adamResponses ||
-              (authoritativeAssessment as any)?.tier_1_inputs?.adamResponses ||
-              null
-            }
-            adamScore={userProfile.mensHealth?.adamScore ?? null}
-            onStartScreening={() => navigate(ROUTES.APP.ASSESSMENT)}
-            onViewAssessment={() => navigate(ROUTES.APP.ASSESSMENT)}
-            onAddLabs={() => setIsLabsModalOpen(true)}
-            onRetry={handleRetryScreening}
-            loading={loading}
-            isOnboarded={isOnboarded}
-            screeningState={screeningState}
-            hormonePatternInterpretation={hormonePatternInterpretation}
-          />
-        </div>
+      {/* ── 1. Greeting, Pathway Badge, Live Sync & Date Context Row ───────── */}
+      <DashboardGreetingRow
+        fullName={userProfile?.fullName}
+        pathway="male"
+        cycleDay={null}
+        hasCycleData={false}
+        lastSyncedFormatted={lastSyncedFormatted}
+      />
 
-        {/* Right Column (5 cols): Single Next Best Action + Top Factors */}
-        <div className="lg:col-span-5 flex flex-col justify-between gap-4 sm:gap-5 lg:gap-6">
-          <MaleNextBestAction
-            hasAssessment={hasAssessment}
-            assessmentLevel={assessmentLevel}
-            unverifiedReportsCount={unverifiedReportsCount}
-            onAction={handlePrimaryAction}
-          />
+      {/* ── 2. The 3x3 Modular Dashboard Grid ─────────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-6 items-stretch">
+        {/* ROW 1 */}
+        {/* Card 1: Hypogonadism Screening */}
+        <ScreeningModuleCard
+          pathway="male"
+          hasAssessment={hasAssessment}
+          probabilityPercent={probabilityPercent}
+          riskCategory={riskCategory}
+          riskLabel={riskLabel}
+          assessmentLevel={assessmentLevel}
+          lastAssessmentDate={lastAssessmentDateFormatted}
+          loading={assessmentLoading}
+          onStartScreening={() => navigate(ROUTES.APP.ASSESSMENT)}
+          onViewAssessment={() => navigate(ROUTES.APP.ASSESSMENT)}
+        />
 
-          <MaleTopFactors
-            explanations={authoritativeAssessment?.explanations}
-            onViewExplanation={() => navigate(ROUTES.APP.ASSESSMENT)}
-          />
-        </div>
-      </div>
+        {/* Card 2: Male Health Tracking / Diurnal Rhythm */}
+        <MaleTrackingModuleCard
+          sleepHours={userProfile?.lifestyle?.sleepHours}
+          energyLevel={
+            symptomRecords.find((s) => s.symptomType.includes('energy') || s.symptomType.includes('fatigue'))?.severity
+          }
+          adamScore={userProfile?.mensHealth?.adamScore ?? null}
+          hasHormoneLabs={hasHormoneLabs}
+          loading={assessmentLoading}
+          onOpenVitality={() => navigate(ROUTES.APP.SYMPTOMS)}
+          onAddLabs={() => setIsLabsModalOpen(true)}
+        />
 
-      {/* ── 3. Contextual Recommended Specialists ────────────────────────── */}
-      <RecommendedCareCard pathway="male" />
+        {/* Card 3: Nutrition & Meals */}
+        <NutritionModuleCard
+          foodLogs={foodLogs}
+          dailyTargets={dailyNutritionTargets}
+          pathway="male"
+          loading={dietLoading}
+          onViewMealPlan={() => navigate(ROUTES.APP.DIET)}
+          onLogMeal={() => navigate(ROUTES.APP.DIET)}
+        />
 
-      {/* ── 4. Recent Clinical Activity (Latest Report & Appointment) ───────── */}
-      <div className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-[#667085] px-1">
-          Recent Health Records
-        </h3>
-        <MaleRecentActivity
-          latestReport={latestReport}
-          upcomingAppointment={nextAppointment}
+        {/* ROW 2 */}
+        {/* Card 4: Exercise & Movement */}
+        <ExerciseModuleCard
+          todayActivities={todayFitnessActivities}
+          todayMinutes={todayFitnessMinutes}
+          pathway="male"
+          loading={fitnessLoading}
+          onOpenFitness={() => navigate(ROUTES.APP.FITNESS)}
+          onLogActivity={() => navigate(ROUTES.APP.FITNESS)}
+        />
+
+        {/* Card 5: Water Log */}
+        <WaterModuleCard
+          waterLog={waterLog}
+          loading={dietLoading}
+          onIncrement={incrementWater}
+          onDecrement={decrementWater}
+          onOpenWaterLog={() => navigate(ROUTES.APP.DIET)}
+        />
+
+        {/* Card 6: Medication Reminders */}
+        <MedicationModuleCard
+          medications={medications}
+          todayProgress={todayMedicationProgress}
+          pathway="male"
+          loading={medicationsLoading}
+          onOpenMedications={() => navigate(ROUTES.APP.MEDICATIONS)}
+          onAddMedication={() => navigate(ROUTES.APP.MEDICATIONS)}
+        />
+
+        {/* ROW 3 */}
+        {/* Card 7: Care Circle */}
+        <CareCircleModuleCard
+          members={careCircleMembers}
+          pathway="male"
+          loading={careCircleLoading}
+          onOpenCareCircle={() => navigate(ROUTES.APP.CARE_CIRCLE)}
+          onAddMember={() => navigate(ROUTES.APP.CARE_CIRCLE)}
+        />
+
+        {/* Card 8: Symptom Check-in */}
+        <SymptomsModuleCard
+          symptomRecords={symptomRecords}
+          symptomStats={symptomStats}
+          pathway="male"
+          loading={symptomsLoading}
+          onOpenSymptoms={() => navigate(ROUTES.APP.SYMPTOMS)}
+          onLogSymptom={() => navigate(ROUTES.APP.SYMPTOMS)}
+        />
+
+        {/* Card 9: Next Best Action */}
+        <NextBestActionModuleCard
+          hasAssessment={hasAssessment}
+          assessmentLevel={assessmentLevel}
+          unverifiedReportsCount={unverifiedReportsCount}
+          hasLoggedFoodToday={foodLogs.length > 0}
+          hasLoggedWaterToday={waterLog.glasses > 0}
+          pathway="male"
+          onAction={handleAction}
+          onOpenAiTwin={() => openAiChatWithPrompt('What is my recommended next clinical step for male health?')}
         />
       </div>
-
-      {/* ── 4. Subtle Contextual Guidance (Apple Deference) ────────────────── */}
-      {hasAssessment && assessmentLevel === 'tier_1' && (
-        <MaleCard className="p-4 sm:p-4.5 bg-[#DDEFFD]/30 border-[#DDEFFD] flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-white border border-[#DDEFFD] flex items-center justify-center text-[#0868B9] shrink-0">
-              <InfoCircle className="w-4 h-4" aria-hidden="true" />
-            </div>
-            <p className="text-xs text-[#667085] leading-relaxed">
-              <strong className="font-semibold text-[#0868B9]">Clinical Tip:</strong> Adding morning total testosterone (fasting draw between 7:00 AM – 10:00 AM) and hormone lab values can refine your statistical estimate.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setIsLabsModalOpen(true)}
-            className="text-xs font-semibold text-[#0868B9] hover:text-[#07589D] cursor-pointer shrink-0"
-          >
-            Add Hormone Labs →
-          </button>
-        </MaleCard>
-      )}
 
       {/* Male Clinical Labs Modal */}
       <MaleClinicalLabsModal

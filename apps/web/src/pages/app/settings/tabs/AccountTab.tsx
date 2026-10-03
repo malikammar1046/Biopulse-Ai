@@ -26,7 +26,6 @@ export const AccountTab: React.FC<AccountTabProps> = ({
   onRestartOnboarding,
   onOpenDeleteModal,
 }) => {
-  const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [downloadPdfLoading, setDownloadPdfLoading] = useState(false);
   const [downloadPdfSuccess, setDownloadPdfSuccess] = useState(false);
   const [downloadPdfError, setDownloadPdfError] = useState<string | null>(null);
@@ -42,22 +41,6 @@ export const AccountTab: React.FC<AccountTabProps> = ({
     const list = [...(draft.emergencyContacts || [])];
     list[0] = { ...primaryContact, [field]: val, isPrimary: true };
     setDraft((p) => ({ ...p, emergencyContacts: list }));
-  };
-
-  const handleExportData = () => {
-    try {
-      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(draft, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute('href', dataStr);
-      downloadAnchor.setAttribute('download', `biopulse_health_profile_${Date.now()}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-      setDownloadSuccess(true);
-      setTimeout(() => setDownloadSuccess(false), 3000);
-    } catch {
-      // ignore
-    }
   };
 
   const handleDownloadPdf = async () => {
@@ -192,7 +175,7 @@ export const AccountTab: React.FC<AccountTabProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* 1. Download PDF Health Summary */}
           <div className="p-4 rounded-2xl bg-gradient-to-b from-[#F5FBFD] to-white border border-[#D7EAF2] flex flex-col justify-between shadow-xs">
             <div>
@@ -246,37 +229,7 @@ export const AccountTab: React.FC<AccountTabProps> = ({
             </button>
           </div>
 
-          {/* 2. Export JSON (Retained as optional alternative) */}
-          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
-            <div>
-              <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5 mb-1">
-                <Download01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
-                Export Health Profile (JSON)
-              </span>
-              <p className="text-[11px] text-slate-500 leading-relaxed mb-3">
-                Download an unencrypted portable archive of your biometrics, cycle history, and goals.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={handleExportData}
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 transition-colors shadow-xs cursor-pointer"
-            >
-              {downloadSuccess ? (
-                <>
-                  <CheckCircle className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
-                  <span className="text-emerald-700">Exported Successfully</span>
-                </>
-              ) : (
-                <>
-                  <File01 className="w-3.5 h-3.5 text-slate-600" aria-hidden="true" />
-                  <span>Download Health JSON</span>
-                </>
-              )}
-            </button>
-          </div>
-
-          {/* 3. Re-run Onboarding (Retained) */}
+          {/* 2. Re-run Onboarding */}
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
             <div>
               <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5 mb-1">
