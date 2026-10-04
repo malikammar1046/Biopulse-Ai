@@ -18,6 +18,8 @@ export const ROUTES = {
   DOCTORS: '/doctors',
   CARE_CIRCLE: '/care-circle',
   CARE_PROVIDER_PORTAL: '/care-provider/:token',
+  APP_DOWNLOAD: '/mobile-app',
+  DOWNLOAD: '/download',
   CONTACT: '/contact',
 
   // Authentication & Onboarding Routes

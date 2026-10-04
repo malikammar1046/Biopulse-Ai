@@ -60,7 +60,7 @@ export const RecentActivitiesList: React.FC<RecentActivitiesListProps> = ({
           }`}
         >
           <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-          <span>+ Add Activity</span>
+          <span>Add Activity</span>
         </button>
       </div>
 

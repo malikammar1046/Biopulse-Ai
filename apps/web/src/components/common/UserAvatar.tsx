@@ -77,10 +77,12 @@ export function getInitials(name?: string | null, email?: string | null): string
   return 'U';
 }
 
+export const DEFAULT_AVATAR_URL = '/avatars/avatar-default.svg';
+
 /**
  * Canonical unified UserAvatar component across BioPulse AI.
  * Handles images with object-cover, responsive size presets, pathway styling,
- * graceful fallback to initials on load failure, and cache-busting reactivity.
+ * neutral default avatar when none is provided, and graceful fallback to initials.
  */
 export const UserAvatar: React.FC<UserAvatarProps> = ({
   avatarUrl,
@@ -110,7 +112,10 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
   const initials = getInitials(name, email);
   const resolvedAlt = alt || name || email || 'User Avatar';
 
-  const hasValidImage = Boolean(avatarUrl && avatarUrl.trim() && !imageFailed);
+  // Determine active avatar source: user's custom photo/avatar or neutral default avatar
+  const hasUserCustomAvatar = Boolean(avatarUrl && avatarUrl.trim());
+  const activeImageSrc = hasUserCustomAvatar ? avatarUrl! : DEFAULT_AVATAR_URL;
+  const showImage = !imageFailed;
 
   // Background styling for initials fallback
   const fallbackBgClass = isMale
@@ -127,12 +132,12 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
     <div
       className={`relative rounded-full overflow-hidden shrink-0 flex items-center justify-center select-none ${
         sizeCfg.container
-      } ${hasValidImage ? 'bg-slate-100' : fallbackBgClass} ${borderClass} ${className}`}
+      } ${showImage ? 'bg-slate-100' : fallbackBgClass} ${borderClass} ${className}`}
       data-testid="user-avatar"
     >
-      {hasValidImage ? (
+      {showImage ? (
         <img
-          src={avatarUrl!}
+          src={activeImageSrc}
           alt={resolvedAlt}
           onError={() => setImageFailed(true)}
           className="w-full h-full object-cover rounded-full"

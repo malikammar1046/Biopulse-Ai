@@ -254,6 +254,16 @@ class LifestyleContextBuilder:
             waist_cm = getattr(profile_obj, "waist_cm", None)
             waist_inch = getattr(profile_obj, "waist_inch", None)
             hip_inch = getattr(profile_obj, "hip_inch", None)
+            if waist_inch is None and getattr(profile_obj, "waist_cm", None) is not None:
+                try:
+                    waist_inch = round(float(profile_obj.waist_cm) / 2.54, 1)
+                except (ValueError, TypeError):
+                    pass
+            if hip_inch is None and getattr(profile_obj, "hip_cm", None) is not None:
+                try:
+                    hip_inch = round(float(profile_obj.hip_cm) / 2.54, 1)
+                except (ValueError, TypeError):
+                    pass
             regular_exercise = getattr(profile_obj, "regular_exercise", None)
             fast_food_intake = getattr(profile_obj, "fast_food_intake", None)
             period_regularity = getattr(profile_obj, "period_regularity", None)

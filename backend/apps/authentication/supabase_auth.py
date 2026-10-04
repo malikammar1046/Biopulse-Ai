@@ -131,9 +131,13 @@ class SupabaseAuthentication(BaseAuthentication):
                     signing_key.key,
                     algorithms=[alg],
                     options={"verify_signature": True, "verify_exp": True, "verify_aud": False},
+                    leeway=60,
                 )
             except jwt.ExpiredSignatureError:
                 raise AuthenticationFailed("Session has expired. Please sign in again.")
+            except jwt.ImmatureSignatureError:
+                logger.warning("Token iat is in the future beyond acceptable leeway.")
+                raise AuthenticationFailed("Token is not yet valid. Please check system clock.")
             except jwt.InvalidSignatureError:
                 raise AuthenticationFailed("Token signature is invalid.")
             except jwt.DecodeError as exc:
@@ -158,9 +162,13 @@ class SupabaseAuthentication(BaseAuthentication):
                     jwt_secret,
                     algorithms=["HS256"],
                     options={"verify_signature": True, "verify_exp": True, "verify_aud": False},
+                    leeway=60,
                 )
             except jwt.ExpiredSignatureError:
                 raise AuthenticationFailed("Session has expired. Please sign in again.")
+            except jwt.ImmatureSignatureError:
+                logger.warning("Token iat is in the future beyond acceptable leeway.")
+                raise AuthenticationFailed("Token is not yet valid. Please check system clock.")
             except jwt.InvalidSignatureError:
                 raise AuthenticationFailed("Token signature is invalid.")
             except jwt.DecodeError as exc:

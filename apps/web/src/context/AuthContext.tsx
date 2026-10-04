@@ -162,22 +162,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    // 1. Initial Session Check
-    supabase.auth
-      .getSession()
-      .then(async ({ data: { session: initialSession } }) => {
-        if (!isMounted) return;
-        setSession(initialSession);
-        setUser(initialSession?.user ?? null);
+    // 1. Initial Session Check with safety timeout to prevent hanging splash screen
+    const sessionPromise = supabase.auth.getSession().catch((err) => {
+      console.warn('Error fetching initial session:', err);
+      return { data: { session: null }, error: err };
+    });
 
-        if (initialSession?.user) {
-          await loadProfile(initialSession.user);
+    const timeoutPromise = new Promise<{ data: { session: null }; timeout: boolean }>((resolve) =>
+      setTimeout(() => resolve({ data: { session: null }, timeout: true }), 750)
+    );
+
+    Promise.race([sessionPromise, timeoutPromise])
+      .then(async (result) => {
+        if (!isMounted) return;
+        const currentSession = (result as any)?.data?.session ?? null;
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+
+        // Immediately unblock loading as soon as session status is determined
+        setLoading(false);
+
+        if (currentSession?.user) {
+          // Sync profile in background without blocking initial UI render
+          loadProfile(currentSession.user).catch((err) => {
+            console.warn('Background profile sync warning:', err);
+          });
         }
       })
       .catch((err) => {
-        console.error('Error fetching initial session:', err);
-      })
-      .finally(() => {
+        console.error('Error during auth initialization:', err);
         if (isMounted) setLoading(false);
       });
 

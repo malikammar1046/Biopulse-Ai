@@ -18,12 +18,14 @@ from apps.intelligence.views import (
     PatientClinicalStateView,
     UltrasoundAssessmentView,
     IntelligenceChatView,
+    PublicIntelligenceChatView,
     CompanionHealthView,
     LongitudinalHealthView,
 )
 from apps.intelligence.views_lifestyle import (
     LifestyleRecommendationsView,
     LifestyleRecommendationStatusView,
+    LifestyleAIPlanView,
 )
 
 urlpatterns = [
@@ -42,7 +44,10 @@ urlpatterns = [
     path("assessment/ultrasound/", UltrasoundAssessmentView.as_view(), name="intelligence-assessment-ultrasound"),
     path("chat/", IntelligenceChatView.as_view(), name="intelligence-chat"),
     path("companion/chat/", IntelligenceChatView.as_view(), name="intelligence-companion-chat"),
+    path("public/chat/", PublicIntelligenceChatView.as_view(), name="intelligence-public-chat"),
     path("companion/health/", CompanionHealthView.as_view(), name="intelligence-companion-health"),
     path("lifestyle-recommendations/", LifestyleRecommendationsView.as_view(), name="intelligence-lifestyle-recommendations"),
     path("lifestyle-recommendations/status/", LifestyleRecommendationStatusView.as_view(), name="intelligence-lifestyle-recommendations-status"),
+    path("lifestyle-ai-plan/", LifestyleAIPlanView.as_view(), name="intelligence-lifestyle-ai-plan"),
 ]
+

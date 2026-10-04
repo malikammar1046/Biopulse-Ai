@@ -10,6 +10,7 @@ import type {
   LongitudinalHealthResponse,
   MonitoringPeriodFilter,
 } from '../../types/longitudinalHealth';
+import { supabase } from '../../lib/supabase';
 import { getLongitudinalHealth } from '../../services/intelligenceService';
 
 import { LongitudinalHeader } from './LongitudinalHeader';
@@ -76,12 +77,23 @@ export const HealthProgressSection: React.FC<HealthProgressSectionProps> = ({
           setData(res);
           setError(null);
         } else if (!controller.signal.aborted) {
-          setError('Unable to load longitudinal health records. Please try again.');
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (!sessionData?.session) {
+            setError('Your session has expired. Please sign in again.');
+          } else if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            setError('Unable to connect to BioPulse. Please check your internet connection.');
+          } else {
+            setError('Unable to load longitudinal health records. Please try again.');
+          }
         }
       } catch (err: any) {
         if (!isCurrent || controller.signal.aborted) return;
         console.error('[HealthProgressSection] Fetch error:', err);
-        setError('A network or server error occurred while retrieving historical data.');
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+          setError('Unable to connect to BioPulse. Please check your internet connection.');
+        } else {
+          setError('A network or server error occurred while retrieving historical data.');
+        }
       } finally {
         if (isCurrent && !controller.signal.aborted) {
           setIsLoading(false);

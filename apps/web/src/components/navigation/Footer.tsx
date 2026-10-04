@@ -232,6 +232,14 @@ export const Footer: React.FC = () => {
                   </Link>
                 </li>
                 <li>
+                  <Link to={ROUTES.APP_DOWNLOAD} className="hover:text-[#0891B2] transition-colors flex items-center gap-1.5 font-semibold text-[#0891B2]">
+                    <span>Download Mobile App (APK)</span>
+                    <span className="px-1.5 py-0.2 rounded-full bg-cyan-100 text-[#0891B2] text-[9px] font-bold">
+                      v1.0.0
+                    </span>
+                  </Link>
+                </li>
+                <li>
                   <Link to={ROUTES.CONTACT} className="hover:text-[#0891B2] transition-colors">
                     Contact Support
                   </Link>

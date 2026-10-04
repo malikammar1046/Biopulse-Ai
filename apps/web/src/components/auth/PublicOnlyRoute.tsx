@@ -2,13 +2,13 @@ import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getPathwayDashboardRoute, getPathwayOnboardingRoute } from '../../constants/routes';
-import { BioPulseLoadingScreen } from '../brand/BioPulseLoadingScreen';
+import { RouteLoadingFallback } from '../common/RouteLoadingFallback';
 
 export const PublicOnlyRoute: React.FC = () => {
   const { userProfile, isAuthenticated, isOnboarded, loading } = useAuth();
 
   if (loading) {
-    return <BioPulseLoadingScreen message="Preparing your health experience" fullScreen={true} />;
+    return <RouteLoadingFallback message="Verifying session..." />;
   }
 
   if (isAuthenticated) {

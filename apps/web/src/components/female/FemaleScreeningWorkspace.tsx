@@ -256,10 +256,15 @@ export const FemaleScreeningWorkspace: React.FC = () => {
     ? Math.min(Math.max(probabilityPercent, 4), 96)
     : null;
 
-  // Dynamic Risk Category
+  // Dynamic Risk Category - Authoritative based on calibrated cutoffs
   const categoryRaw = String(activeAssessment?.risk_category || '').toLowerCase();
-  const isLowerRisk = categoryRaw.includes('low') || (probabilityPercent !== null && probabilityPercent < riskRanges.lowCutoffPercent);
-  const isHigherRisk = categoryRaw.includes('high') || (probabilityPercent !== null && probabilityPercent >= riskRanges.highCutoffPercent);
+  const isHigherRisk = probabilityPercent !== null
+    ? probabilityPercent >= riskRanges.highCutoffPercent
+    : categoryRaw.includes('high') || categoryRaw.includes('elevated');
+
+  const isLowerRisk = probabilityPercent !== null
+    ? probabilityPercent < riskRanges.lowCutoffPercent
+    : categoryRaw.includes('low');
 
   // Dynamic Tier Label
   const getTierLabel = () => {

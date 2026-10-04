@@ -16,6 +16,7 @@ import {
   LineChartUp01,
   ChevronDown,
   Calendar,
+  Users01,
 } from '../icons';
 import { ROUTES, getPathwayDashboardRoute } from '../../constants/routes';
 import { resolvePathway } from '../../types/onboarding';
@@ -89,6 +90,7 @@ export const AppSidebar: React.FC = () => {
   const maleHealthItems: NavItem[] = [
     { label: 'Reports', path: ROUTES.APP.REPORTS, icon: File06 },
     { label: 'Appointments', path: ROUTES.APP.APPOINTMENTS, icon: CalendarCheck01 },
+    { label: 'Care Circle', path: ROUTES.APP.CARE_CIRCLE, icon: Users01 },
   ];
 
   const femaleHealthItems: NavItem[] = [
@@ -96,6 +98,7 @@ export const AppSidebar: React.FC = () => {
     { label: 'Fitness / Movement', path: ROUTES.APP.FITNESS, icon: Activity },
     { label: 'Reports', path: ROUTES.APP.REPORTS, icon: File06 },
     { label: 'Appointments', path: ROUTES.APP.APPOINTMENTS, icon: CalendarCheck01 },
+    { label: 'Care Circle', path: ROUTES.APP.CARE_CIRCLE, icon: Users01 },
   ];
 
   const healthItems = pathway === 'female' ? femaleHealthItems : maleHealthItems;

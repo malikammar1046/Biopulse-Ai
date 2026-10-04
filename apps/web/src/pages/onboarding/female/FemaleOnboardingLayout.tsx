@@ -38,7 +38,7 @@ export const FemaleOnboardingLayout: React.FC<FemaleOnboardingLayoutProps> = ({
       </div>
 
       {/* ── Desktop Two-Column Workspace (Wide Card Dominant, max-w-[1520px]) ── */}
-      <div className="max-w-[1520px] 2xl:max-w-[1640px] w-full mx-auto flex-1 flex flex-col lg:flex-row gap-6 lg:gap-8 items-stretch justify-center lg:justify-start px-3 sm:px-6 lg:px-8 xl:px-10">
+      <div className="max-w-[1520px] 2xl:max-w-[1640px] w-full mx-auto flex-1 flex flex-col lg:flex-row gap-6 lg:gap-10 xl:gap-14 items-stretch justify-center px-3 sm:px-6 lg:px-8 xl:px-10">
         {/* ════════════════════════════════════════════════════════════
             LEFT COLUMN: FEMALE IDENTITY & PATHWAY PANEL
            ════════════════════════════════════════════════════════════ */}
@@ -133,7 +133,7 @@ export const FemaleOnboardingLayout: React.FC<FemaleOnboardingLayoutProps> = ({
         {/* ════════════════════════════════════════════════════════════
             RIGHT COLUMN: MAIN ONBOARDING WORKSPACE (Expanded Dominant Card)
            ════════════════════════════════════════════════════════════ */}
-        <main className="w-full flex-1 lg:max-w-[1040px] xl:max-w-[1180px] 2xl:max-w-[1260px] flex flex-col justify-between">
+        <main className="w-full flex-1 md:w-[calc(100%-1.25rem)] md:ml-auto lg:w-auto lg:ml-2 xl:ml-4 lg:max-w-[1040px] xl:max-w-[1180px] 2xl:max-w-[1260px] flex flex-col justify-between">
           {/* Main White Card with Generous Desktop Space */}
           <div className="w-full bg-white rounded-[24px] xl:rounded-[28px] border border-[#D7EAF2] shadow-[0_8px_30px_rgba(7,59,114,0.05)] p-5 sm:p-7 lg:p-8 xl:p-9 flex flex-col justify-between">
             {/* Top Fixed Area: PCOS Onboarding Bar & Stepper */}

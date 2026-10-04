@@ -8,6 +8,7 @@ from apps.health.views import (
     DigitalTwinView,
     ProfileValidationView,
     OnboardingValidationView,
+    HealthSummaryPdfExportView,
 )
 from apps.health.views_nutrition import (
     CurrentNutritionPlanView,
@@ -25,6 +26,7 @@ urlpatterns = [
     path("digital-twin/", DigitalTwinView.as_view(), name="health-digital-twin"),
     path("profile/validate/", ProfileValidationView.as_view(), name="health-profile-validate"),
     path("onboarding/validate/", OnboardingValidationView.as_view(), name="health-onboarding-validate"),
+    path("summary/pdf/", HealthSummaryPdfExportView.as_view(), name="health-summary-pdf"),
     # BioPulse Nutrition & Meal Planning Endpoints
     path("nutrition/preferences/", NutritionPreferencesView.as_view(), name="nutrition-preferences"),
     path("nutrition/readiness/", NutritionReadinessView.as_view(), name="nutrition-readiness"),

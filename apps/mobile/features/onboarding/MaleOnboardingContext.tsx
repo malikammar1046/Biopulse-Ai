@@ -1,0 +1,191 @@
+import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import type { ProgressiveAssessment } from '../../services/assessmentService';
+
+export interface MaleBasicInfoState {
+  age: number;
+  heightCm: number;
+  weightKg: number;
+  bmi: number;
+  waistCm: number;
+}
+
+export interface AdamQuestionnaireState {
+  answers: Record<number, boolean>; // Question 1 to 10 (true = Yes, false = No)
+  currentQuestion: number; // 1-indexed (1 to 10)
+}
+
+export interface MaleLifestyleState {
+  exerciseFrequency: 'none' | '1-2_days' | '3+_days';
+  fastFoodIntake: 'never' | 'occasionally' | 'frequently';
+  sleepHours: number;
+  stressLevel: 'low' | 'moderate' | 'high';
+  notes: string;
+}
+
+export interface MaleOnboardingState {
+  basicInfo: MaleBasicInfoState;
+  adam: AdamQuestionnaireState;
+  lifestyle: MaleLifestyleState;
+  activeAssessment: ProgressiveAssessment | null;
+}
+
+export const ADAM_QUESTIONS: { id: number; question: string; description: string }[] = [
+  { id: 1, question: 'Do you have a decrease in libido (sex drive)?', description: 'Primary clinical indicator of androgen deficiency' },
+  { id: 2, question: 'Do you have a lack of energy?', description: 'Persistent fatigue or reduced stamina throughout the day' },
+  { id: 3, question: 'Do you have a decrease in strength and/or endurance?', description: 'Noticeable reduction in physical performance or muscle capacity' },
+  { id: 4, question: 'Have you lost height?', description: 'May indicate osteoporotic changes related to hormone decline' },
+  { id: 5, question: 'Have you noticed a decreased enjoyment of life?', description: 'General diminished vitality or enthusiasm' },
+  { id: 6, question: 'Are you sad and/or grumpy?', description: 'Mood fluctuations or irritable disposition' },
+  { id: 7, question: 'Are your erections less strong?', description: 'Primary indicator of erectile quality and vascular/hormonal balance' },
+  { id: 8, question: 'Have you noticed a deterioration in your ability to play sports?', description: 'Reduced athletic capacity or slower recovery times' },
+  { id: 9, question: 'Are you falling asleep after dinner?', description: 'Post-prandial somnolence or circadian energy drops' },
+  { id: 10, question: 'Has there been a recent deterioration in your work performance?', description: 'Cognitive focus or occupational stamina reduction' },
+];
+
+const DEFAULT_BASIC_INFO: MaleBasicInfoState = {
+  age: 36,
+  heightCm: 178,
+  weightKg: 82,
+  bmi: 25.9,
+  waistCm: 92,
+};
+
+const DEFAULT_ADAM: AdamQuestionnaireState = {
+  answers: {},
+  currentQuestion: 1,
+};
+
+const DEFAULT_LIFESTYLE: MaleLifestyleState = {
+  exerciseFrequency: '1-2_days',
+  fastFoodIntake: 'occasionally',
+  sleepHours: 7,
+  stressLevel: 'moderate',
+  notes: '',
+};
+
+interface MaleOnboardingContextValue {
+  basicInfo: MaleBasicInfoState;
+  adam: AdamQuestionnaireState;
+  lifestyle: MaleLifestyleState;
+  activeAssessment: ProgressiveAssessment | null;
+  isLoadingAssessment: boolean;
+  assessmentError: string | null;
+  lastActiveScreeningRoute: string | null;
+
+  updateBasicInfo: (info: Partial<MaleBasicInfoState>) => void;
+  setAdamAnswer: (questionId: number, answer: boolean) => void;
+  setAdamCurrentQuestion: (q: number) => void;
+  updateLifestyle: (lifestyle: Partial<MaleLifestyleState>) => void;
+  setActiveAssessment: (assessment: ProgressiveAssessment | null) => void;
+  setIsLoadingAssessment: (loading: boolean) => void;
+  setAssessmentError: (error: string | null) => void;
+  setLastActiveScreeningRoute: (route: string | null) => void;
+  resetOnboarding: () => void;
+  calculateAdamScore: () => { score: number; isPositive: boolean };
+}
+
+const MaleOnboardingContext = createContext<MaleOnboardingContextValue | undefined>(undefined);
+
+export const MaleOnboardingProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [basicInfo, setBasicInfo] = useState<MaleBasicInfoState>(DEFAULT_BASIC_INFO);
+  const [adam, setAdam] = useState<AdamQuestionnaireState>(DEFAULT_ADAM);
+  const [lifestyle, setLifestyle] = useState<MaleLifestyleState>(DEFAULT_LIFESTYLE);
+  const [activeAssessment, setActiveAssessment] = useState<ProgressiveAssessment | null>(null);
+  const [isLoadingAssessment, setIsLoadingAssessment] = useState(false);
+  const [assessmentError, setAssessmentError] = useState<string | null>(null);
+  const [lastActiveScreeningRoute, setLastActiveScreeningRoute] = useState<string | null>(null);
+
+  const updateBasicInfo = useCallback((info: Partial<MaleBasicInfoState>) => {
+    setBasicInfo((prev) => {
+      const next = { ...prev, ...info };
+      if (info.heightCm !== undefined || info.weightKg !== undefined) {
+        const heightM = next.heightCm / 100;
+        if (heightM > 0) {
+          next.bmi = parseFloat((next.weightKg / (heightM * heightM)).toFixed(1));
+        }
+      }
+      return next;
+    });
+  }, []);
+
+  const setAdamAnswer = useCallback((questionId: number, answer: boolean) => {
+    setAdam((prev) => ({
+      ...prev,
+      answers: {
+        ...prev.answers,
+        [questionId]: answer,
+      },
+    }));
+  }, []);
+
+  const setAdamCurrentQuestion = useCallback((q: number) => {
+    setAdam((prev) => ({
+      ...prev,
+      currentQuestion: Math.max(1, Math.min(10, q)),
+    }));
+  }, []);
+
+  const updateLifestyle = useCallback((patch: Partial<MaleLifestyleState>) => {
+    setLifestyle((prev) => ({ ...prev, ...patch }));
+  }, []);
+
+  const calculateAdamScore = useCallback(() => {
+    const answers = adam.answers;
+    let yesCount = 0;
+    for (let i = 1; i <= 10; i++) {
+      if (answers[i] === true) yesCount++;
+    }
+
+    // Standard Saint Louis University ADAM rule:
+    // Positive if Q1 is Yes OR Q7 is Yes OR any 3 other questions are Yes
+    const q1 = answers[1] === true;
+    const q7 = answers[7] === true;
+    const otherYes = yesCount - (q1 ? 1 : 0) - (q7 ? 1 : 0);
+    const isPositive = q1 || q7 || otherYes >= 3;
+
+    return { score: yesCount, isPositive };
+  }, [adam.answers]);
+
+  const resetOnboarding = useCallback(() => {
+    setBasicInfo(DEFAULT_BASIC_INFO);
+    setAdam(DEFAULT_ADAM);
+    setLifestyle(DEFAULT_LIFESTYLE);
+    setActiveAssessment(null);
+    setAssessmentError(null);
+    setLastActiveScreeningRoute(null);
+  }, []);
+
+  return (
+    <MaleOnboardingContext.Provider
+      value={{
+        basicInfo,
+        adam,
+        lifestyle,
+        activeAssessment,
+        isLoadingAssessment,
+        assessmentError,
+        lastActiveScreeningRoute,
+        updateBasicInfo,
+        setAdamAnswer,
+        setAdamCurrentQuestion,
+        updateLifestyle,
+        setActiveAssessment,
+        setIsLoadingAssessment,
+        setAssessmentError,
+        setLastActiveScreeningRoute,
+        resetOnboarding,
+        calculateAdamScore,
+      }}
+    >
+      {children}
+    </MaleOnboardingContext.Provider>
+  );
+};
+
+export const useMaleOnboarding = (): MaleOnboardingContextValue => {
+  const context = useContext(MaleOnboardingContext);
+  if (!context) {
+    throw new Error('useMaleOnboarding must be used within a MaleOnboardingProvider');
+  }
+  return context;
+};
