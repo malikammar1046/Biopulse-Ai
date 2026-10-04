@@ -117,8 +117,87 @@ def extract_canonical_tier1_inputs(raw: Dict[str, Any], module: str = "female_pc
     return canonical
 
 
-def compute_canonical_input_hash(raw: Dict[str, Any], module: str = "female_pcos") -> str:
+
+FEMALE_TIER2_CANONICAL_KEYS = [
+    "fsh",
+    "lh",
+    "amh",
+    "tsh",
+    "prolactin",
+    "vitamin_d3",
+    "progesterone",
+    "rbs",
+    "hemoglobin",
+    "beta_hcg_i",
+    "beta_hcg_ii",
+    "pulse_rate_bpm",
+    "respiratory_rate",
+    "bp_systolic",
+    "bp_diastolic",
+    "fsh_lh_ratio",
+]
+
+MALE_TIER2_CANONICAL_KEYS = [
+    "shbg_nmol_l",
+    "estradiol_pg_ml",
+    "albumin_g_dl",
+    "hba1c_pct",
+    "glucose_mg_dl",
+    "hemoglobin_g_dl",
+    "hematocrit_pct",
+    "rbc_count",
+    "alt_u_l",
+    "ast_u_l",
+    "total_bilirubin_mg_dl",
+    "creatinine_mg_dl",
+    "bun_mg_dl",
+    "uric_acid_mg_dl",
+    "hdl_mg_dl",
+    "total_testosterone",
+    "lh",
+    "fsh",
+    "prolactin",
+]
+
+
+def extract_canonical_tier2_inputs(raw: Dict[str, Any], module: str = "female_pcos") -> Dict[str, Any]:
+    """Extracts and normalizes canonical Tier 2 inputs deterministically."""
+    if not isinstance(raw, dict):
+        return {}
+    canonical: Dict[str, Any] = {}
+    keys = MALE_TIER2_CANONICAL_KEYS if module == "male_hypogonadism" else FEMALE_TIER2_CANONICAL_KEYS
+    for k in keys:
+        val = raw.get(k)
+        if val is not None and str(val).strip() != "" and str(val).strip().lower() not in ("none", "null", "nan"):
+            try:
+                canonical[k] = round(float(val), 2)
+            except (ValueError, TypeError):
+                pass
+    return canonical
+
+
+def compute_canonical_input_hash(
+    raw: Dict[str, Any] | None = None,
+    module: str = "female_pcos",
+    tier2_inputs: Dict[str, Any] | None = None,
+    model_version: str | None = None,
+    raw_inputs: Dict[str, Any] | None = None,
+) -> str:
     """Computes a deterministic SHA-256 fingerprint for canonical screening inputs."""
-    canonical = extract_canonical_tier1_inputs(raw, module=module)
-    serialized = json.dumps(canonical, sort_keys=True, separators=(",", ":"))
+    source_raw = raw if raw is not None else (raw_inputs or {})
+    canonical_t1 = extract_canonical_tier1_inputs(source_raw, module=module)
+    canonical_t2 = extract_canonical_tier2_inputs(tier2_inputs if tier2_inputs is not None else raw, module=module)
+
+    if canonical_t2:
+        payload = {
+            "model_version": str(model_version or ""),
+            "module": str(module),
+            "tier_1": canonical_t1,
+            "tier_2": canonical_t2,
+        }
+    else:
+        payload = canonical_t1
+
+    serialized = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+

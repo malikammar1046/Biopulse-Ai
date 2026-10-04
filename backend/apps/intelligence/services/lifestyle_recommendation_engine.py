@@ -30,9 +30,11 @@ from apps.intelligence.services.lifestyle_context_builder import (
     ShapFactor,
 )
 from apps.intelligence.services.lifestyle_safety_rules import (
+    ALLERGEN_INGREDIENT_MAP,
     CLINICAL_DISCLAIMER,
     LifestyleSafetyEngine,
     SafetyEvaluationResult,
+    is_food_forbidden,
 )
 
 logger = logging.getLogger(__name__)
@@ -176,6 +178,8 @@ class LifestyleRecommendationsResult:
     evidence_rationale: EvidenceRationale
     evidence_registry: Dict[str, Any] = field(default_factory=dict)
     context_version: str = ""
+    personalization_level: str = "LEVEL_1_PROFILE"
+    has_assessment: bool = True
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -274,7 +278,7 @@ class LifestyleRecommendationEngine:
             elif is_lean_pcos:
                 # Do NOT prescribe deficit to lean PCOS
                 target_cals = max(safety.min_safe_calories_kcal, round(tdee))
-                note = "Maintaining energy balance is prioritized to support consistent vitality and overall hormonal wellness without caloric deficit."
+                note = "Maintaining energy balance is prioritized to support consistent energy and general hormonal wellbeing without caloric deficit."
             elif demo.bmi and demo.bmi >= 25.0:
                 deficit = min(safety.max_safe_deficit_kcal, 350.0)
                 raw_cals = round(tdee - deficit)
@@ -363,117 +367,22 @@ class LifestyleRecommendationEngine:
                     "Emphasizes fiber-rich whole foods, quality protein, and minimally processed ingredients to "
                     "support steady blood sugar levels and sustained daily energy."
                 )
-
-            key_guidelines = [
-                "Include a quality source of protein and fiber-rich vegetables or legumes with your main meals.",
-                "Enjoy a diverse variety of whole foods—such as lentils, chickpeas, walnuts, and citrus fruits—to support balanced dietary quality.",
-                "Choose unsweetened beverages such as water, spearmint tea, or herbal infusions in place of sugary drinks.",
-                "Pair carbohydrates with protein or healthy fats (like nuts or plain yogurt) for steadier energy.",
-                "Establish a regular, consistent meal schedule and allow an unforced 10-to-12-hour overnight window between dinner and breakfast.",
-            ]
         else:
             strat_title = "Nutrient-Dense Balanced Nutrition for Men"
             strat_summary = (
                 "Focuses on wholesome proteins, colorful vegetables, and essential minerals to support "
                 "body composition, metabolic health, and physical vitality."
             )
-            key_guidelines = [
-                "Include nutrient-dense protein sources (such as eggs, poultry, fish, beans, and pumpkin seeds) with each meal.",
-                "Eat a colorful variety of vegetables, including cruciferous vegetables like broccoli and cabbage, for micronutrient support.",
-                "Choose healthy cooking fats like extra virgin olive oil or mustard oil while limiting deep-fried and highly processed foods.",
-                "Limit evening alcohol and sugary snacks to promote restorative overnight sleep.",
-                "Maintain consistent, adequate daily nutrition rather than extreme restrictive diets.",
-            ]
 
-        # Targeted Food Swaps (driven by SHAP & Patient Factors)
-        targeted_swaps: List[TargetedFoodSwap] = []
-        shap_feat_names = {f.feature_name.lower(): f for f in shap_drivers}
-
-        # Swap 1: Glycemic / Carbohydrates
-        if "fast_food" in shap_feat_names or demo.fast_food_intake in ("frequent", "occasional") or (labs.fasting_glucose_mg_dl and labs.fasting_glucose_mg_dl > 100):
-            targeted_swaps.append(
-                TargetedFoodSwap(
-                    trigger_factor="Fast Food / Glycemic Load",
-                    swap_title="Slower-Release Complex Grains Swap",
-                    replace_food="White paratha, naan, or deep-fried samosas",
-                    recommended_alternative="Whole grain barley roti, multigrain paratha with minimal oil, or roasted chickpeas",
-                    clinical_mechanism="Complex whole grains digest more gradually, supporting steadier blood sugar levels after eating.",
-                    impact_level="high",
-                )
-            )
-
-        # Swap 2: Healthy Fats & Heart Health
-        if "weight_gain" in shap_feat_names or (demo.bmi and demo.bmi >= 25.0):
-            targeted_swaps.append(
-                TargetedFoodSwap(
-                    trigger_factor="Visceral Adiposity / Lipid Quality",
-                    swap_title="Heart-Healthy Monounsaturated Oil Swap",
-                    replace_food="Commercial banaspati ghee or reused vegetable cooking oils",
-                    recommended_alternative="Cold-pressed mustard oil or extra virgin olive oil in measured portions",
-                    clinical_mechanism="Replaces reused cooking oils with heart-healthy monounsaturated fats that support cardiovascular and metabolic wellness.",
-                    impact_level="high",
-                )
-            )
-
-        # Swap 3: Sweetened Beverages
-        targeted_swaps.append(
-            TargetedFoodSwap(
-                trigger_factor="Refined Sugar Intake",
-                swap_title="Unsweetened Herbal Tea Swap",
-                replace_food="Sweetened doodh patti chai (with 2-3 tsp sugar)",
-                recommended_alternative="Unsweetened spearmint, green, or cinnamon herbal tea with a splash of milk",
-                clinical_mechanism="Replacing sugar-sweetened beverages with unsweetened herbal tea reduces added sugar intake and prevents rapid blood sugar spikes.",
-                impact_level="moderate",
-            )
+        key_guidelines = cls._build_key_guidelines(is_female_pcos, safety, demo)
+        targeted_swaps = cls._build_targeted_swaps(context, safety)
+        meal_concepts = cls._build_personalized_meal_concepts(
+            context=context,
+            safety=safety,
+            has_biometrics=has_biometrics,
+            is_female_pcos=is_female_pcos,
+            target_cals=daily_targets.daily_calories_kcal,
         )
-
-        # Swap 4: Protein Satiety
-        targeted_swaps.append(
-            TargetedFoodSwap(
-                trigger_factor="Protein-to-Carb Ratio",
-                swap_title="Protein-First Satiety Swap",
-                replace_food="Plain white rice with oily potato curry",
-                recommended_alternative="Brown basmati or daal-rich khichdi topped with grilled chicken, eggs, or paneer",
-                clinical_mechanism="Balancing carbohydrates with quality protein and fiber helps you stay full longer and supports smoother digestion.",
-                impact_level="moderate",
-            )
-        )
-
-        # Meal Concepts
-        meal_concepts = [
-            MealConcept(
-                meal_type="Breakfast",
-                title="Protein-Anchored Omelet with Spiced Veggies",
-                description="2-egg omelet (or spiced tofu scramble) prepared with spinach, tomatoes, and mushrooms, served with 1 small whole-wheat or barley roti.",
-                key_ingredients=["Eggs / Tofu", "Spinach", "Tomatoes", "Barley / Whole Wheat"],
-                hormonal_benefit="Quality protein and vegetables provide steady morning energy without a mid-morning crash.",
-                est_calories=380 if has_biometrics else None,
-            ),
-            MealConcept(
-                meal_type="Lunch",
-                title="Lentil Daal Bowl with Lean Protein & Cucumber Salad",
-                description="Bowl of yellow moong or masoor daal topped with grilled chicken or paneer, a side of crisp cucumber-radish salad dressed with lemon and cold-pressed mustard oil.",
-                key_ingredients=["Moong Daal", "Grilled Chicken / Paneer", "Cucumber Salad", "Olive / Mustard Oil"],
-                hormonal_benefit="Dietary fiber and lean protein support digestive health, steady fullness, and balanced energy.",
-                est_calories=490 if has_biometrics else None,
-            ),
-            MealConcept(
-                meal_type="Dinner",
-                title="Baked Herb Fish or Spiced Chickpea Stir-Fry",
-                description="Baked white fish, salmon, or chickpea-vegetable medley sauteed in cumin and coriander, paired with steamed cauliflower rice or small portion of brown rice.",
-                key_ingredients=["Fish / Chickpeas", "Cauliflower", "Coriander & Cumin", "Zucchini"],
-                hormonal_benefit="Wholesome protein and vegetables provide essential minerals and support restful overnight recovery.",
-                est_calories=440 if has_biometrics else None,
-            ),
-            MealConcept(
-                meal_type="Snack",
-                title="Roasted Chana & Raw Walnuts with Green Tea",
-                description="Handful of dry-roasted chickpeas (chana) paired with 3-4 raw walnut halves and freshly steeped green tea.",
-                key_ingredients=["Roasted Chana", "Walnuts", "Green Tea"],
-                hormonal_benefit="Crunchy fiber and healthy fats provide a satisfying afternoon bridge without a blood sugar spike.",
-                est_calories=170 if has_biometrics else None,
-            ),
-        ]
 
         nutrition_pillar = NutritionPillar(
             strategy_title=strat_title,
@@ -485,158 +394,17 @@ class LifestyleRecommendationEngine:
         )
 
         # -------------------------------------------------------------
-        # 3. Fitness Pillar (Non-Dogmatic, Supportive Guidance)
+        # 3. Fitness Pillar (Persona-Driven, Supportive Movement)
         # -------------------------------------------------------------
-        if safety.joint_protection_active:
-            protocol_name = "Joint-Friendly Moderate Aerobic & Supported Strength"
-            aerobic_target = "120–150 minutes weekly of low-impact movement"
-            resistance_target = "2 sessions weekly with supported form"
-            overview = (
-                "Lower-impact activity (such as brisk walking, cycling, water exercise, or supported resistance) "
-                "may be a more comfortable starting option depending on your current fitness level and joint comfort."
-            )
-            recovery_text = "Prioritize joint comfort and recovery days. Supported machine-based exercises or seated bands provide excellent metabolic stimulus without joint strain."
-        else:
-            protocol_name = "Progressive Aerobic Conditioning & Resistance Protocol"
-            aerobic_target = "120–150 minutes weekly of moderate-intensity movement"
-            resistance_target = "2 to 3 sessions weekly targeting major muscle groups"
-            overview = (
-                "Build a consistent routine of moderate aerobic movement across the week, combined with 2 to 3 "
-                "strength sessions to support muscle tone, metabolic health, and physical stamina."
-            )
-            recovery_text = "Allow 48 hours of recovery between challenging strength sessions for the same muscle group to give your muscles time to rest and rebuild."
-
-        if is_female_pcos:
-            pathway_benefit = (
-                "Regular physical activity helps your muscles use glucose efficiently, supports cardiovascular fitness, "
-                "and promotes steady daily energy."
-            )
-        else:
-            pathway_benefit = (
-                "Regular resistance and aerobic training supports physical strength, body composition, metabolic health, "
-                "and everyday vitality."
-            )
-
-        weekly_schedule = [
-            WorkoutSession(
-                day_name="Monday",
-                focus="Full Body Strength (Compound Movements)",
-                duration_mins=35,
-                intensity="moderate",
-                modality="Resistance",
-                key_movements=["Goblet Squats or Seated Leg Press", "Push-ups (incline)", "Dumbbell Rows", "Glute Bridges"],
-                coaching_cue="Focus on controlled 3-second lowering (eccentric phase); avoid holding your breath.",
-            ),
-            WorkoutSession(
-                day_name="Tuesday",
-                focus="Moderate Aerobic Conditioning",
-                duration_mins=30,
-                intensity="moderate",
-                modality="Cardio",
-                key_movements=["Brisk Outdoor Walking", "Stationary Cycling", "Elliptical"],
-                coaching_cue="Keep intensity conversational—you should be able to speak in short sentences without gasping.",
-            ),
-            WorkoutSession(
-                day_name="Wednesday",
-                focus="Active Recovery & Gentle Mobility",
-                duration_mins=20,
-                intensity="low",
-                modality="Mobility / Rest",
-                key_movements=["Cat-Cow Stretches", "Hip Flexor Openers", "Light Walking"],
-                coaching_cue="Nourish joint circulation and promote relaxation through gentle pacing and calm breathing.",
-            ),
-            WorkoutSession(
-                day_name="Thursday",
-                focus="Upper Body & Core Stability",
-                duration_mins=35,
-                intensity="moderate",
-                modality="Resistance",
-                key_movements=["Dumbbell Overhead Press", "Lat Pulldowns or Band Rows", "Bird-Dogs", "Plank Holds"],
-                coaching_cue="Engage deep abdominal wall; stop each set 1-2 repetitions before total muscular failure.",
-            ),
-            WorkoutSession(
-                day_name="Friday",
-                focus="Moderate Aerobic Conditioning",
-                duration_mins=30,
-                intensity="moderate",
-                modality="Cardio",
-                key_movements=["Incline Treadmill Walk", "Swimming", "Outdoor Cycling"],
-                coaching_cue="Maintain a steady, comfortable pace to build aerobic endurance and support cardiovascular health.",
-            ),
-            WorkoutSession(
-                day_name="Saturday",
-                focus="Posterior Chain & Functional Strength",
-                duration_mins=30,
-                intensity="moderate",
-                modality="Resistance",
-                key_movements=["Romanian Deadlifts (light dumbbells)", "Step-ups", "Face Pulls", "Side Planks"],
-                coaching_cue="Maintain neutral spine throughout all hip-hinge patterns.",
-            ),
-            WorkoutSession(
-                day_name="Sunday",
-                focus="Restorative Rest & Parasympathetic Walk",
-                duration_mins=25,
-                intensity="low",
-                modality="Active Rest",
-                key_movements=["Leisurely Nature Walk", "Gentle Stretching"],
-                coaching_cue="Unplug from digital screens; allow your body time to rest and recover from weekly activities.",
-            ),
-        ]
-
-        fitness_pillar = FitnessPillar(
-            protocol_name=protocol_name,
-            weekly_frequency="3-4 movement days per week",
-            overview=overview,
-            aerobic_target_minutes=aerobic_target,
-            resistance_target_sessions=resistance_target,
-            pathway_clinical_benefit=pathway_benefit,
-            weekly_schedule=weekly_schedule,
-            recovery_guidance=recovery_text,
-        )
+        fitness_pillar = cls._build_fitness_pillar(context, safety, is_female_pcos)
 
         # -------------------------------------------------------------
-        # 4. Lifestyle Pillar (Circadian, Sleep, Stress)
+        # 4. Lifestyle Pillar (Personalized Sleep, Stress & Circadian)
         # -------------------------------------------------------------
-        lifestyle_habits = [
-            HabitRecommendation(
-                category="Circadian",
-                title="Morning Natural Light Exposure",
-                action_item="Spend 10 to 15 minutes outdoors in natural sunlight within 60 minutes of waking.",
-                timing="Morning (within 1 hr of waking)",
-                rationale="Natural morning light helps set your internal body clock, promoting daytime alertness and easier sleep at night.",
-            ),
-            HabitRecommendation(
-                category="Sleep",
-                title="Consistent 7 to 9 Hours of Sleep",
-                action_item="Maintain a regular bedtime and wake time within a 30-minute window, keeping bedroom cool (18-20°C) and quiet.",
-                timing="Nightly",
-                rationale="Adequate uninterrupted sleep gives your body time for essential physical recovery, cognitive focus, and balanced hormones.",
-            ),
-            HabitRecommendation(
-                category="Stress",
-                title="Breath-Paced Relaxation Pause",
-                action_item="Take 3 to 5 slow, deep breaths (two quick inhales through your nose followed by a long, slow exhale through your mouth) when feeling tense.",
-                timing="As needed / Midday pause",
-                rationale="Slow, intentional breathing signals your nervous system to ease tension and encourages a calmer state.",
-            ),
-            HabitRecommendation(
-                category="Environmental",
-                title="Mindful Food Storage & Containers",
-                action_item="Use glass, ceramic, or stainless steel containers when warming food or storing hot beverages.",
-                timing="Daily lifestyle",
-                rationale="Using glass or stainless steel for hot foods and drinks reduces exposure to plastic chemicals and supports overall environmental wellness.",
-            ),
-        ]
-
-        lifestyle_pillar = LifestylePillar(
-            circadian_headline="Consistent Sleep & Daily Rest Patterns",
-            sleep_target_hours="7 to 9 hours nightly",
-            stress_management_protocol="Brief relaxation breathing pauses during the day and a 30-to-60-minute screen-free wind-down before bed.",
-            recommended_habits=lifestyle_habits,
-        )
+        lifestyle_pillar = cls._build_lifestyle_pillar(context)
 
         # -------------------------------------------------------------
-        # 5. Evidence Rationale
+        # 5. Evidence Rationale (Answering No-Assessment vs Screened)
         # -------------------------------------------------------------
         attr_shap: List[str] = []
         for factor in shap_drivers[:4]:
@@ -656,12 +424,23 @@ class LifestyleRecommendationEngine:
 
         attr_symptoms: List[str] = [s.title() for s in symptoms.active_symptoms[:4]]
 
-        clinical_synthesis = (
-            f"Recommendations are dynamically derived from your active {screening.module.replace('_', ' ').title()} "
-            f"screening profile (Category: {screening.risk_category.title()}, Probability: {screening.probability_percent:.1f}%). "
-            f"The rule-based engine incorporates {len(attr_shap)} model-attributed risk factors, {len(attr_labs)} verified laboratory markers, "
-            f"and {len(attr_symptoms)} reported symptoms to calibrate nutritional distribution, physical movement, and circadian recovery."
-        )
+        if screening.has_assessment:
+            clinical_synthesis = (
+                f"Recommendations are dynamically derived from your active {screening.module.replace('_', ' ').title()} "
+                f"screening profile (Category: {screening.risk_category.title()}, Probability: {screening.probability_percent:.1f}%). "
+                f"The rule-based engine incorporates {len(attr_shap)} model-attributed risk factors, {len(attr_labs)} verified laboratory markers, "
+                f"and {len(attr_symptoms)} reported symptoms to calibrate nutritional distribution, physical movement, and circadian recovery."
+            )
+            final_risk_category = screening.risk_category
+            final_prob_pct = screening.probability_percent
+        else:
+            clinical_synthesis = (
+                "Recommendations are established from your foundational profile and lifestyle baseline "
+                "(Personalization: Level 1 - Profile Baseline). Complete a health screening assessment "
+                "to incorporate clinical risk modeling, probability scoring, and SHAP feature attribution."
+            )
+            final_risk_category = "unscreened"
+            final_prob_pct = 0.0
 
         evidence_rationale = EvidenceRationale(
             attributed_shap_drivers=attr_shap,
@@ -671,11 +450,9 @@ class LifestyleRecommendationEngine:
         )
 
         # -------------------------------------------------------------
-        # 6. Structured Recommendation Items (Answering all 5 Audit Questions)
+        # 6. Structured Recommendation Items & Priority Ordering
         # -------------------------------------------------------------
         recommendations: List[RecommendationItem] = []
-
-        # Determine Longitudinal Status helper
         has_prior_history = longitudinal.has_history and longitudinal.assessment_count > 1
 
         # Recommendation 1: Nutrition Strategy
@@ -692,7 +469,6 @@ class LifestyleRecommendationEngine:
                 nutr_status = "ACTIVE"
                 nutr_long_basis = "Ongoing nutritional pacing based on current biometrics and metabolic check-ins."
 
-        # SHAP priority check for Nutrition
         nutr_priority = "moderate"
         nutr_shap_basis = None
         for d in shap_drivers:
@@ -708,6 +484,8 @@ class LifestyleRecommendationEngine:
             nutr_data_used.append(f"Diet: {demo.dietary_preference.title()}")
         if demo.fast_food_intake:
             nutr_data_used.append(f"Fast Food: {demo.fast_food_intake.title()}")
+        if demo.allergens:
+            nutr_data_used.append(f"Allergens: {', '.join(demo.allergens)}")
 
         nutr_action = key_guidelines[0]
         if nutr_status == "IMPROVING":
@@ -744,7 +522,6 @@ class LifestyleRecommendationEngine:
                 fitness_status = "ACTIVE"
                 fitness_long_basis = "Active progressive exercise guideline based on current fitness level."
 
-        # SHAP priority check for Exercise / Activity
         fit_priority = "moderate"
         fit_shap_basis = None
         for d in shap_drivers:
@@ -764,7 +541,7 @@ class LifestyleRecommendationEngine:
         if demo.regular_exercise or fitness_status == "MAINTAIN":
             fit_action_summary = "Continue regular moderate-intensity aerobic activity across most days, paired with progressive resistance training to sustain metabolic health."
         else:
-            fit_action_summary = overview
+            fit_action_summary = fitness_pillar.overview
 
         fit_evidence_id = "joint_friendly_movement" if safety.joint_protection_active else "who_aerobic_activity"
 
@@ -772,11 +549,11 @@ class LifestyleRecommendationEngine:
             RecommendationItem(
                 id="fit-protocol-primary",
                 category="fitness",
-                title=protocol_name,
+                title=fitness_pillar.protocol_name,
                 action_summary=fit_action_summary,
                 priority=fit_priority,
                 status=fitness_status,
-                why_this_is_recommended=pathway_benefit,
+                why_this_is_recommended=fitness_pillar.pathway_clinical_benefit,
                 based_on_patient_data=fit_data_used,
                 longitudinal_basis=fitness_long_basis,
                 shap_priority_basis=fit_shap_basis,
@@ -799,17 +576,37 @@ class LifestyleRecommendationEngine:
         if demo.stress_level:
             sleep_data_used.append(f"Stress Level: {demo.stress_level.title()}")
 
-        sleep_priority = "high" if (demo.sleep_hours and demo.sleep_hours < 6.5) or demo.stress_level in ("high", "severe") else "moderate"
+        is_short_sleep = bool(demo.sleep_hours and demo.sleep_hours < 6.5)
+        is_high_stress = bool(demo.stress_level in ("high", "severe"))
+
+        if is_short_sleep:
+            sleep_priority = "high"
+            sleep_title = "Sleep Window Expansion & Evening Recovery"
+            sleep_action = (
+                f"Your logged sleep ({demo.sleep_hours} hrs/night) makes expanding your nightly sleep window Priority #1 "
+                "to support restorative sleep, healthy body composition, and consistent daytime energy."
+            )
+            sleep_why = "Short sleep duration can challenge daily energy, metabolic balance, and restorative recovery."
+        elif is_high_stress:
+            sleep_priority = "high"
+            sleep_title = "Parasympathetic Nervous System Recovery Protocol"
+            sleep_action = "Incorporate cyclic physiological sigh breathing pauses and establish a screen-free wind-down buffer before bed."
+            sleep_why = "Elevated stress benefits from targeted calming pauses to support metabolic health and restorative sleep."
+        else:
+            sleep_priority = "routine"
+            sleep_title = "Natural Morning Light & Consistent Sleep Rhythm"
+            sleep_action = "Spend 10-15 minutes in natural morning sunlight and sustain your consistent 7-9 hour nightly sleep window."
+            sleep_why = "Healthy sleep and circadian consistency support daytime alertness and metabolic equilibrium."
 
         recommendations.append(
             RecommendationItem(
                 id="life-circadian-sleep",
                 category="lifestyle",
-                title="Natural Morning Light & Consistent Sleep",
-                action_summary="Spend 10-15 minutes in natural morning sunlight and establish a consistent 7-9 hour nightly sleep window.",
+                title=sleep_title,
+                action_summary=sleep_action,
                 priority=sleep_priority,
                 status=sleep_status,
-                why_this_is_recommended="Consistent sleep and morning daylight support daytime alertness, metabolic health, and restorative rest.",
+                why_this_is_recommended=sleep_why,
                 based_on_patient_data=sleep_data_used,
                 longitudinal_basis=sleep_long_basis,
                 shap_priority_basis=None,
@@ -819,7 +616,7 @@ class LifestyleRecommendationEngine:
             )
         )
 
-        # Recommendation 4: Clinical Review Item if flagged by Safety Engine
+        # Recommendation 4: Clinical Review Escalation
         if safety.clinician_review_needed:
             clin_ev_id = None
             reason_lower = (safety.clinician_review_reason or "").lower()
@@ -849,6 +646,10 @@ class LifestyleRecommendationEngine:
                 )
             )
 
+        # Sort recommendations by clinical priority: high -> moderate -> routine
+        priority_rank = {"high": 0, "moderate": 1, "routine": 2}
+        recommendations.sort(key=lambda x: priority_rank.get(x.priority, 1))
+
         clinician_review_dict = {
             "recommended": safety.clinician_review_needed,
             "reason": safety.clinician_review_reason,
@@ -865,8 +666,8 @@ class LifestyleRecommendationEngine:
         return LifestyleRecommendationsResult(
             user_id=context.user_id,
             pathway=demo.pathway,
-            risk_category=screening.risk_category,
-            risk_probability_percent=screening.probability_percent,
+            risk_category=final_risk_category,
+            risk_probability_percent=final_prob_pct,
             generated_at=context.generated_at,
             safety_status=safety.safety_status,
             missing_data=missing_data,
@@ -880,4 +681,616 @@ class LifestyleRecommendationEngine:
             evidence_rationale=evidence_rationale,
             evidence_registry=evidence_registry,
             context_version=getattr(context, "context_version", ""),
+            personalization_level=getattr(context, "personalization_level", "LEVEL_1_PROFILE"),
+            has_assessment=screening.has_assessment,
+        )
+
+    # -------------------------------------------------------------------------
+    # Helper Methods for Allergen Safety, Swaps, Fitness, and Lifestyle
+    # -------------------------------------------------------------------------
+
+    @classmethod
+    def _sanitize_food_text(cls, text: str, excluded_cats: List[str]) -> str:
+        """
+        Substitutes allergenic or forbidden food terms with verified-safe, nutrient-dense alternatives.
+        """
+        if not text or not excluded_cats:
+            return text
+        import re
+        res = text
+        seeds_excluded = any(c in excluded_cats for c in ("seed", "seeds", "sesame"))
+        # 1. Tree nuts & Peanuts
+        if any(c in excluded_cats for c in ("tree_nut", "tree_nuts", "peanut", "peanuts", "nuts")):
+            nut_sub = "roasted chickpeas" if seeds_excluded else "pumpkin seeds"
+            butter_sub = "an allergy-compatible spread" if seeds_excluded else "sunflower seed butter"
+            res = re.sub(r"\b(?:walnuts?|raw walnuts?|almonds?|badam|akhrot|cashews?|kaju|pistachios?|pista|peanuts?|groundnuts?|mixed nuts)\b", nut_sub, res, flags=re.IGNORECASE)
+            res = re.sub(r"\b(?:nut butter|peanut butter|almond butter)\b", butter_sub, res, flags=re.IGNORECASE)
+
+        # Seeds & Spreads sanitization if seeds are excluded
+        if seeds_excluded:
+            res = re.sub(r"\b(?:seed butter alternative|sunflower seed butter|pumpkin seed butter|seed butter|seed-based spread|tahini)\b", "an allergy-compatible spread", res, flags=re.IGNORECASE)
+            res = re.sub(r"\b(?:sunflower seeds?|pumpkin seeds?|chia seeds?|flaxseeds?|sesame seeds?|sesame|til|seeds?)\b", "roasted chickpeas", res, flags=re.IGNORECASE)
+        # 2. Eggs
+        if any(c in excluded_cats for c in ("egg", "eggs")):
+            res = re.sub(r"\b(?:2-egg omelet|omelet|omelette)\b", "spiced savory moong daal pancake", res, flags=re.IGNORECASE)
+            res = re.sub(r"\b(?:eggs?|egg white|egg whites|boiled eggs?)\b", "spiced organic tofu (or chickpeas)", res, flags=re.IGNORECASE)
+        # 3. Dairy / Milk / Lactose
+        if any(c in excluded_cats for c in ("dairy", "milk", "lactose")):
+            res = re.sub(r"\bpaneer\b", "spiced organic tofu", res, flags=re.IGNORECASE)
+            res = re.sub(r"\b(?:greek yogurt|yogurt|hung curd|dahi)\b", "coconut yogurt", res, flags=re.IGNORECASE)
+            res = re.sub(r"\b(?:splash of milk|milk)\b", "unsweetened oat milk", res, flags=re.IGNORECASE)
+            res = re.sub(r"\b(?:cheese|butter|ghee|cream|malai)\b", "cold-pressed olive oil", res, flags=re.IGNORECASE)
+        # 4. Wheat / Gluten
+        if any(c in excluded_cats for c in ("gluten", "wheat")):
+            res = re.sub(r"\b(?:whole-wheat or barley roti|barley roti|whole-wheat roti|roti|paratha|naan|bread)\b", "sorghum/jowar millet flatbread", res, flags=re.IGNORECASE)
+            res = re.sub(r"\b(?:wheat|barley|semolina|sooji|atta|maida)\b", "foxtail millet or brown rice", res, flags=re.IGNORECASE)
+        # 5. Poultry / Red Meat
+        if any(c in excluded_cats for c in ("poultry", "chicken", "red_meat", "meat")):
+            res = re.sub(r"\b(?:grilled chicken breast|grilled chicken|chicken|poultry)\b", "pan-seared spiced tofu or daal", res, flags=re.IGNORECASE)
+            res = re.sub(r"\b(?:beef|mutton|lamb|veal|pork|steak|keema)\b", "spiced chickpeas", res, flags=re.IGNORECASE)
+        # 6. Fish / Seafood / Shellfish
+        if any(c in excluded_cats for c in ("fish", "shellfish", "seafood")):
+            res = re.sub(r"\b(?:baked herb wild fish|baked herb fish|baked white fish|salmon|tuna|fish|prawn|shrimp|machli|seafood)\b", "spiced chickpea sauté", res, flags=re.IGNORECASE)
+        # 7. Soy
+        if any(c in excluded_cats for c in ("soy",)):
+            res = re.sub(r"\b(?:organic tofu|tofu scramble|tofu|edamame|tempeh|soya)\b", "sprouted moong daal or chickpeas", res, flags=re.IGNORECASE)
+        return res
+
+    @classmethod
+    def _validate_and_finalize_concept(
+        cls,
+        concept: MealConcept,
+        excluded: List[str],
+        fallback: MealConcept,
+    ) -> MealConcept:
+        clean_title = cls._sanitize_food_text(concept.title, excluded)
+        clean_desc = cls._sanitize_food_text(concept.description, excluded)
+        clean_ingredients = [cls._sanitize_food_text(i, excluded) for i in concept.key_ingredients]
+
+        for text in [clean_title, clean_desc] + clean_ingredients:
+            is_forbidden, matched = is_food_forbidden(text, excluded)
+            if is_forbidden:
+                logger.debug(
+                    "Meal concept '%s' contains forbidden element '%s' after sanitization. Falling back to universal hypoallergenic concept '%s'.",
+                    clean_title, matched, fallback.title
+                )
+                return fallback
+
+        return MealConcept(
+            meal_type=concept.meal_type,
+            title=clean_title,
+            description=clean_desc,
+            key_ingredients=clean_ingredients,
+            hormonal_benefit=concept.hormonal_benefit,
+            est_calories=concept.est_calories,
+        )
+
+    @classmethod
+    def _build_key_guidelines(
+        cls,
+        is_female_pcos: bool,
+        safety: SafetyEvaluationResult,
+        demo: PatientDemographics,
+    ) -> List[str]:
+        excluded = safety.excluded_food_categories
+        guidelines: List[str] = []
+        seeds_excluded = any(c in excluded for c in ("seed", "seeds", "sesame"))
+        if is_female_pcos:
+            if any(c in excluded for c in ("tree_nut", "tree_nuts", "peanut", "peanuts", "nuts")):
+                nut_word = "roasted chickpeas" if seeds_excluded else "pumpkin seeds"
+            else:
+                nut_word = "walnuts"
+            dairy_word = ("avocado puree" if seeds_excluded else "avocado or seed dip") if any(c in excluded for c in ("dairy", "milk", "lactose")) else "plain yogurt"
+            guidelines = [
+                "Include a quality source of protein and fiber-rich vegetables or legumes with your main meals.",
+                f"Enjoy a diverse variety of whole foods—such as lentils, chickpeas, {nut_word}, and citrus fruits—to support balanced dietary quality.",
+                "Choose unsweetened beverages such as water, spearmint tea, or herbal infusions in place of sugary drinks.",
+                f"Pair carbohydrates with protein or healthy fats (like {nut_word} or {dairy_word}) for steadier energy.",
+                "Establish a regular, consistent meal schedule and allow an unforced 10-to-12-hour overnight window between dinner and breakfast.",
+            ]
+        else:
+            prot_seed = "roasted chickpeas" if seeds_excluded else "pumpkin seeds"
+            if demo.dietary_preference == "vegan":
+                prot_sources = f"organic tofu, lentils, beans, and {prot_seed}"
+            elif demo.dietary_preference in ("vegetarian", "pescatarian"):
+                prot_sources = f"wild fish, eggs, paneer, and {prot_seed}" if demo.dietary_preference == "pescatarian" else f"eggs, paneer, lentils, and {prot_seed}"
+            else:
+                prot_sources = f"eggs, poultry, fish, beans, and {prot_seed}"
+            prot_clean = cls._sanitize_food_text(prot_sources, excluded)
+            guidelines = [
+                f"Include nutrient-dense protein sources (such as {prot_clean}) with each meal.",
+                "Eat a colorful variety of vegetables, including cruciferous vegetables like broccoli and cabbage, for micronutrient support.",
+                "Choose healthy cooking fats like extra virgin olive oil or mustard oil while limiting deep-fried and highly processed foods.",
+                "Limit evening alcohol and sugary snacks to promote restorative overnight sleep.",
+                "Maintain consistent, adequate daily nutrition rather than extreme restrictive diets.",
+            ]
+
+        if demo.allergens or demo.allergy_status == "active_allergens":
+            guidelines.append("Check packaged-food labels and cross-contact warnings for your declared allergens.")
+
+        return guidelines
+
+    @classmethod
+    def _build_targeted_swaps(
+        cls,
+        context: ComprehensiveLifestyleContext,
+        safety: SafetyEvaluationResult,
+    ) -> List[TargetedFoodSwap]:
+        demo = context.demographics
+        excluded = safety.excluded_food_categories
+        diet = demo.dietary_preference or "omnivore"
+        is_vegan = diet == "vegan"
+        is_vegetarian = diet in ("vegetarian", "vegan")
+        is_pescatarian = diet == "pescatarian"
+
+        swaps: List[TargetedFoodSwap] = []
+        shap_feat_names = {f.feature_name.lower(): f for f in context.shap_drivers}
+
+        # Swap 1: Glycemic / Carbohydrates
+        if "fast_food" in shap_feat_names or demo.fast_food_intake in ("frequent", "occasional") or (context.labs.fasting_glucose_mg_dl and context.labs.fasting_glucose_mg_dl > 100):
+            if any(c in excluded for c in ("gluten", "wheat")):
+                rec_alt = "Sorghum (jowar) or foxtail millet flatbread, or roasted chickpeas"
+            else:
+                rec_alt = "Whole grain barley roti, multigrain paratha with minimal oil, or roasted chickpeas"
+            swaps.append(
+                TargetedFoodSwap(
+                    trigger_factor="Fast Food / Glycemic Load",
+                    swap_title="Slower-Release Complex Grains Swap",
+                    replace_food="White paratha, naan, or deep-fried samosas",
+                    recommended_alternative=rec_alt,
+                    clinical_mechanism="Complex whole grains digest more gradually, supporting steadier blood sugar levels after eating.",
+                    impact_level="high",
+                )
+            )
+
+        # Swap 2: Healthy Fats & Heart Health
+        if "weight_gain" in shap_feat_names or (demo.bmi and demo.bmi >= 25.0):
+            swaps.append(
+                TargetedFoodSwap(
+                    trigger_factor="Visceral Adiposity / Lipid Quality",
+                    swap_title="Heart-Healthy Monounsaturated Oil Swap",
+                    replace_food="Commercial banaspati ghee or reused vegetable cooking oils",
+                    recommended_alternative="Cold-pressed mustard oil or extra virgin olive oil in measured portions",
+                    clinical_mechanism="Replaces reused cooking oils with heart-healthy monounsaturated fats that support cardiovascular and metabolic wellness.",
+                    impact_level="high",
+                )
+            )
+
+        # Swap 3: Sweetened Beverages
+        if any(c in excluded for c in ("dairy", "milk", "lactose")):
+            tea_alt = "Unsweetened spearmint, green, or cinnamon herbal infusion"
+        else:
+            tea_alt = "Unsweetened spearmint, green, or cinnamon herbal tea with a splash of milk"
+        swaps.append(
+            TargetedFoodSwap(
+                trigger_factor="Refined Sugar Intake",
+                swap_title="Unsweetened Herbal Tea Swap",
+                replace_food="Sweetened doodh patti chai (with 2-3 tsp sugar)",
+                recommended_alternative=tea_alt,
+                clinical_mechanism="Replacing sugar-sweetened beverages with unsweetened herbal tea reduces added sugar intake and prevents rapid blood sugar spikes.",
+                impact_level="moderate",
+            )
+        )
+
+        # Swap 4: Protein Satiety
+        if is_vegan:
+            prot_alt = "Brown basmati or daal-rich khichdi topped with spiced organic tofu or roasted chickpeas"
+        elif is_vegetarian:
+            if any(c in excluded for c in ("dairy", "milk", "lactose")):
+                prot_alt = "Brown basmati or daal-rich khichdi topped with spiced organic tofu and moong daal"
+            else:
+                prot_alt = "Brown basmati or daal-rich khichdi topped with grilled paneer and moong daal"
+        elif is_pescatarian:
+            prot_alt = "Brown basmati or daal-rich khichdi topped with grilled wild fish or boiled eggs"
+        else:
+            prot_alt = "Brown basmati or daal-rich khichdi topped with grilled chicken, eggs, or paneer"
+
+        clean_prot_alt = cls._sanitize_food_text(prot_alt, excluded)
+        swaps.append(
+            TargetedFoodSwap(
+                trigger_factor="Protein-to-Carb Ratio",
+                swap_title="Protein-First Satiety Swap",
+                replace_food="Plain white rice with oily potato curry",
+                recommended_alternative=clean_prot_alt,
+                clinical_mechanism="Balancing carbohydrates with quality protein and fiber helps you stay full longer and supports smoother digestion.",
+                impact_level="moderate",
+            )
+        )
+
+        return swaps
+
+    @classmethod
+    def _build_personalized_meal_concepts(
+        cls,
+        context: ComprehensiveLifestyleContext,
+        safety: SafetyEvaluationResult,
+        has_biometrics: bool,
+        is_female_pcos: bool,
+        target_cals: Optional[int],
+    ) -> List[MealConcept]:
+        demo = context.demographics
+        excluded = safety.excluded_food_categories
+        diet = demo.dietary_preference or "omnivore"
+        is_vegan = diet == "vegan"
+        is_vegetarian = diet in ("vegetarian", "vegan")
+        is_pescatarian = diet == "pescatarian"
+
+        # Hypoallergenic Universal Fallbacks
+        fb_breakfast = MealConcept(
+            meal_type="Breakfast",
+            title="Savory Moong Daal Chilla with Wilted Spinach",
+            description="Slow-cooked savory lentil pancake griddled with fresh baby spinach, cumin, and cold-pressed oil, served with fresh mint chutney.",
+            key_ingredients=["Moong Daal", "Spinach", "Cumin", "Fresh Mint Chutney"],
+            hormonal_benefit="Clean plant protein supports consistent morning energy and steady fullness.",
+            est_calories=380 if has_biometrics else None,
+        )
+        fb_lunch = MealConcept(
+            meal_type="Lunch",
+            title="High-Fiber Daal Bowl with Steamed Brown Basmati & Cucumber Salad",
+            description="Slow-simmered yellow moong daal served with a small portion of brown basmati rice, crisp radish-cucumber salad, and cold-pressed mustard oil.",
+            key_ingredients=["Yellow Moong Daal", "Brown Basmati Rice", "Cucumber Salad", "Cold-Pressed Mustard Oil"],
+            hormonal_benefit="Complex carbohydrates and fiber nourish the gut microbiome and promote steady satiety.",
+            est_calories=490 if has_biometrics else None,
+        )
+        fb_dinner = MealConcept(
+            meal_type="Dinner",
+            title="Spiced Vegetable & Chickpea Stew with Cauliflower",
+            description="Chickpeas braised with zucchini, cauliflower florets, ginger, coriander, and turmeric, served with steamed brown rice.",
+            key_ingredients=["Chickpeas", "Cauliflower", "Zucchini", "Ginger & Turmeric"],
+            hormonal_benefit="Light, nourishing dinner supports restorative sleep and calm overnight digestion.",
+            est_calories=440 if has_biometrics else None,
+        )
+        seeds_excluded = any(c in excluded for c in ("seed", "seeds", "sesame"))
+        if seeds_excluded:
+            fb_snack = MealConcept(
+                meal_type="Snack",
+                title="Crispy Roasted Chickpeas (Chana) & Fresh Cucumber Slices",
+                description="Dry-roasted seasoned chickpeas tossed with Himalayan pink salt, cumin, and lemon, served with fresh cucumber slices and green tea.",
+                key_ingredients=["Roasted Chickpeas (Chana)", "Cucumber Slices", "Himalayan Pink Salt", "Green Tea"],
+                hormonal_benefit="Crunchy fiber and clean plant nourishment provide steady afternoon satiety.",
+                est_calories=170 if has_biometrics else None,
+            )
+        else:
+            fb_snack = MealConcept(
+                meal_type="Snack",
+                title="Crispy Roasted Foxnuts (Makhana) & Pumpkin Seeds",
+                description="Dry-roasted lotus seed pops (makhana) and raw pumpkin seeds tossed with Himalayan pink salt and turmeric, served with green tea.",
+                key_ingredients=["Foxnuts (Makhana)", "Pumpkin Seeds", "Himalayan Pink Salt", "Green Tea"],
+                hormonal_benefit="Naturally crunchy snack rich in wholesome food nutrients and antioxidants.",
+                est_calories=170 if has_biometrics else None,
+            )
+
+        # 1. Breakfast Candidate
+        if is_vegan or any(c in excluded for c in ("egg", "eggs")):
+            b_title = "Golden Spiced Tofu Scramble with Sautéed Greens"
+            b_desc = "Spiced organic tofu scramble (or savory lentil chilla) prepared with spinach, tomatoes, and mushrooms, served with warm jowar millet flatbread."
+            b_ings = ["Organic Tofu", "Spinach", "Tomatoes", "Millet Flatbread"]
+        else:
+            b_title = "Protein-Anchored Omelet with Spiced Veggies"
+            b_desc = "2-egg omelet prepared with baby spinach, tomatoes, and mushrooms, served with 1 small whole-wheat or barley roti."
+            b_ings = ["Eggs", "Spinach", "Tomatoes", "Barley / Whole Wheat"]
+
+        raw_b = MealConcept(
+            meal_type="Breakfast",
+            title=b_title,
+            description=b_desc,
+            key_ingredients=b_ings,
+            hormonal_benefit="Quality protein and vegetables provide steady morning energy without a mid-morning crash.",
+            est_calories=380 if has_biometrics else None,
+        )
+        final_breakfast = cls._validate_and_finalize_concept(raw_b, excluded, fb_breakfast)
+
+        # 2. Lunch Candidate
+        if not is_vegetarian and not is_pescatarian and not any(c in excluded for c in ("poultry", "chicken")):
+            l_title = "Lentil Daal Bowl with Herb-Grilled Chicken & Cucumber Salad"
+            l_desc = "Bowl of yellow moong or masoor daal topped with grilled chicken breast, paired with a crisp cucumber-radish salad dressed with lemon and cold-pressed mustard oil."
+            l_ings = ["Moong Daal", "Grilled Chicken", "Cucumber Salad", "Olive / Mustard Oil"]
+        elif is_pescatarian and not any(c in excluded for c in ("fish", "seafood")):
+            l_title = "Lentil Daal Bowl with Herb-Seared Wild Fish & Cucumber Salad"
+            l_desc = "Bowl of yellow moong or masoor daal topped with pan-seared wild fish, accompanied by crisp cucumber-radish salad dressed with lemon and cold-pressed oil."
+            l_ings = ["Moong Daal", "Wild Fish", "Cucumber Salad", "Cold-Pressed Oil"]
+        elif is_vegetarian and not any(c in excluded for c in ("dairy", "milk", "lactose")):
+            l_title = "Lentil Daal Bowl with Pan-Seared Paneer & Cucumber Salad"
+            l_desc = "Bowl of yellow moong daal topped with lightly griddled paneer and a crisp cucumber-radish salad dressed with lemon and cold-pressed mustard oil."
+            l_ings = ["Moong Daal", "Paneer", "Cucumber Salad", "Mustard Oil"]
+        else:
+            l_title = "High-Fiber Daal Bowl with Spiced Tofu & Cucumber Salad"
+            l_desc = "Bowl of yellow moong or masoor daal topped with sautéed spiced organic tofu and a crisp cucumber-radish salad dressed with lemon and cold-pressed mustard oil."
+            l_ings = ["Moong Daal", "Organic Tofu", "Cucumber Salad", "Mustard Oil"]
+
+        raw_l = MealConcept(
+            meal_type="Lunch",
+            title=l_title,
+            description=l_desc,
+            key_ingredients=l_ings,
+            hormonal_benefit="Dietary fiber and lean protein support digestive health, steady fullness, and balanced energy.",
+            est_calories=490 if has_biometrics else None,
+        )
+        final_lunch = cls._validate_and_finalize_concept(raw_l, excluded, fb_lunch)
+
+        # 3. Dinner Candidate
+        if (is_pescatarian or not is_vegetarian) and not any(c in excluded for c in ("fish", "seafood")):
+            d_title = "Baked Herb Wild Fish with Low-Starch Roasted Vegetables"
+            d_desc = "Baked white fish or wild salmon sautéed with cumin and coriander, paired with steamed cauliflower rice or a small portion of brown rice."
+            d_ings = ["Wild Fish", "Cauliflower", "Coriander & Cumin", "Zucchini"]
+        elif not is_vegetarian and not any(c in excluded for c in ("poultry", "chicken")):
+            d_title = "Herb-Roasted Lean Chicken Breast with Steamed Cruciferous Medley"
+            d_desc = "Herb-marinated chicken breast braised with broccoli, cauliflower, and zucchini in cold-pressed mustard or olive oil, served with a small brown basmati portion."
+            d_ings = ["Chicken Breast", "Broccoli & Cauliflower", "Cumin & Garlic", "Olive Oil"]
+        elif is_vegetarian and not any(c in excluded for c in ("dairy", "milk", "lactose")):
+            d_title = "Fragrant Palak Paneer with Spiced Low-Starch Medley"
+            d_desc = "Fresh spinach puree with pan-seared paneer cubes, seasoned with ginger, cumin, and garlic, served with steamed brown rice."
+            d_ings = ["Spinach", "Paneer", "Ginger & Garlic", "Brown Rice"]
+        else:
+            d_title = "Spiced Chickpea & Roasted Vegetable Stir-Fry"
+            d_desc = "Chickpeas and seasonal vegetables sautéed in cumin and coriander, paired with steamed cauliflower rice or a small portion of brown rice."
+            d_ings = ["Chickpeas", "Cauliflower", "Coriander & Cumin", "Zucchini"]
+
+        raw_d = MealConcept(
+            meal_type="Dinner",
+            title=d_title,
+            description=d_desc,
+            key_ingredients=d_ings,
+            hormonal_benefit="Wholesome protein and vegetables provide essential minerals and support restful overnight recovery.",
+            est_calories=440 if has_biometrics else None,
+        )
+        final_dinner = cls._validate_and_finalize_concept(raw_d, excluded, fb_dinner)
+
+        # 4. Snack Candidate
+        if any(c in excluded for c in ("tree_nut", "tree_nuts", "peanut", "peanuts", "nuts")):
+            if seeds_excluded:
+                s_title = "Roasted Chana & Fresh Cucumber Slices with Green Tea"
+                s_desc = "Handful of dry-roasted chickpeas (chana) paired with fresh cucumber slices and freshly steeped green tea."
+                s_ings = ["Roasted Chana", "Cucumber Slices", "Green Tea"]
+            else:
+                s_title = "Roasted Chana & Pumpkin Seeds with Green Tea"
+                s_desc = "Handful of dry-roasted chickpeas (chana) paired with raw pumpkin seeds and freshly steeped green tea."
+                s_ings = ["Roasted Chana", "Pumpkin Seeds", "Green Tea"]
+        else:
+            s_title = "Roasted Chana & Raw Walnuts with Green Tea"
+            s_desc = "Handful of dry-roasted chickpeas (chana) paired with 3-4 raw walnut halves and freshly steeped green tea."
+            s_ings = ["Roasted Chana", "Walnuts", "Green Tea"]
+
+        raw_s = MealConcept(
+            meal_type="Snack",
+            title=s_title,
+            description=s_desc,
+            key_ingredients=s_ings,
+            hormonal_benefit="Crunchy fiber and healthy fats provide a satisfying afternoon bridge that supports consistent energy.",
+            est_calories=170 if has_biometrics else None,
+        )
+        final_snack = cls._validate_and_finalize_concept(raw_s, excluded, fb_snack)
+
+        return [final_breakfast, final_lunch, final_dinner, final_snack]
+
+    @classmethod
+    def _build_fitness_pillar(
+        cls,
+        context: ComprehensiveLifestyleContext,
+        safety: SafetyEvaluationResult,
+        is_female_pcos: bool,
+    ) -> FitnessPillar:
+        demo = context.demographics
+        is_sedentary_beginner = (demo.activity_level in ("sedentary", "light") and not demo.regular_exercise)
+        is_high_bmi_joint = bool(safety.joint_protection_active or (demo.bmi and demo.bmi >= 32.0))
+        is_high_stress_fatigue = bool(safety.recovery_first_active or demo.stress_level == "severe" or (demo.activity_level == "sedentary" and "fatigue" in context.symptoms.high_severity_symptoms and not demo.regular_exercise))
+        is_active_advanced = bool(demo.activity_level in ("active", "very_active") and demo.regular_exercise)
+
+        if is_female_pcos:
+            pathway_benefit = (
+                "Regular physical activity supports cardiometabolic health, healthy body composition, "
+                "and steady daily energy."
+            )
+        else:
+            pathway_benefit = (
+                "Regular resistance and aerobic training supports strength and metabolic health, healthy body composition, "
+                "and consistent energy."
+            )
+
+        # 1. High BMI / Joint Protection Persona
+        if is_high_bmi_joint:
+            protocol_name = "Joint-Friendly Low-Impact Cardio & Supported Strength"
+            weekly_freq = "3-4 movement days per week"
+            aerobic_target = "120–150 minutes weekly of low-impact movement"
+            resistance_target = "2 sessions weekly with supported machine or seated resistance"
+            overview = (
+                "Prioritize low-impact aerobic movement (such as stationary cycling, incline walking, or swimming) "
+                "and supported strength training to support strength and metabolic health while protecting knee and lumbar joints."
+            )
+            recovery_text = "Prioritize joint comfort and recovery days. Supported machine-based exercises or seated bands provide excellent metabolic stimulus without joint strain."
+            schedule = [
+                WorkoutSession("Monday", "Supported Machine Strength", 30, "moderate", "Resistance", ["Seated Leg Press", "Seated Chest Press with Bands", "Lat Pulldown", "Supported Glute Bridges"], "Focus on smooth control; avoid breath-holding and knee lockouts."),
+                WorkoutSession("Tuesday", "Low-Impact Cardio (Stationary Cycling)", 30, "moderate", "Cardio", ["Stationary Cycling", "Incline Treadmill Walk"], "Zero pounding impact; maintain steady conversational breathing."),
+                WorkoutSession("Wednesday", "Joint Decompression & Gentle Mobility", 20, "low", "Mobility", ["Cat-Cow Stretches", "Seated Spinal Twists", "Ankle Circles"], "Promote joint circulation without spinal axial load."),
+                WorkoutSession("Thursday", "Upper Body & Core Stabilization", 30, "moderate", "Resistance", ["Seated Dumbbell Overhead Press", "Band Rows", "Bird-Dogs from Knees", "Deadbug Holds"], "Engage abdominal brace; stop sets 2 reps before fatigue."),
+                WorkoutSession("Friday", "Low-Impact Cardio (Incline Walking)", 30, "moderate", "Cardio", ["Incline Treadmill Walk", "Elliptical (low resistance)"], "Continuous fluid movement with zero shock to knees."),
+                WorkoutSession("Saturday", "Functional Glute & Posterior Chain", 25, "moderate", "Resistance", ["Dumbbell Romanian Deadlifts (light)", "Seated Leg Curls", "Band Pull-Throughs"], "Hinge smoothly at the hips; maintain neutral spine."),
+                WorkoutSession("Sunday", "Restorative Nature Walk & Active Rest", 25, "low", "Active Rest", ["Flat-ground nature stroll", "Deep Diaphragm Breathing"], "Allow tendons and connective tissue full rest and rejuvenation."),
+            ]
+
+        # 2. Sedentary Beginner Persona
+        elif is_sedentary_beginner:
+            protocol_name = "Foundational Movement & Gentle Aerobic Conditioning"
+            weekly_freq = "3 movement days, 4 recovery-focused days"
+            aerobic_target = "60–90 minutes weekly of gentle walking"
+            resistance_target = "1 to 2 short foundational mobility and bodyweight sessions"
+            overview = (
+                "Build a consistent routine and establish an achievable movement habit without exhaustion. Gentle walking, foundational mobility, "
+                "and supported bodyweight exercises build stamina safely."
+            )
+            recovery_text = "Adequate recovery is foundational. Take restorative rest days between movement sessions to prevent muscular soreness and burnout."
+            schedule = [
+                WorkoutSession("Monday", "Gentle Brisk Walking & Posture", 20, "low", "Walking", ["Flat-ground walking", "Arm swings", "Shoulder rolls"], "Comfortable conversational pace; breathe through your nose."),
+                WorkoutSession("Tuesday", "Full Rest & Recovery", 0, "low", "Rest", ["Full Rest", "Hydration Pacing"], "Allow your muscles time to adapt to your new routine."),
+                WorkoutSession("Wednesday", "Foundational Mobility & Core Awakening", 20, "low", "Mobility", ["Cat-Cow Stretches", "Chair Squats", "Wall Push-ups", "Seated Torso Twists"], "Move within your comfortable, pain-free range of motion."),
+                WorkoutSession("Thursday", "Gentle Brisk Walking", 20, "low", "Walking", ["Outdoor walking", "Gentle calf raises"], "Aim for a steady, relaxed cadence."),
+                WorkoutSession("Friday", "Active Recovery & Gentle Stretch", 15, "low", "Mobility", ["Seated Hamstring Stretch", "Chest Openers", "Deep Breathing"], "Release shoulder and neck tension with long exhales."),
+                WorkoutSession("Saturday", "Supported Strength & Balance", 20, "low", "Resistance", ["Supported Chair Squats", "Incline Countertop Push-ups", "Bird-Dog Holds", "Glute Bridges"], "Control every movement; 3 seconds down, 1 second pause."),
+                WorkoutSession("Sunday", "Restorative Leisure Walk & Family Rest", 20, "low", "Active Rest", ["Leisurely stroll", "Mindful breathing"], "Enjoy fresh air and unplug from digital devices."),
+            ]
+
+        # 3. High Fatigue / Severe Stress Persona
+        elif is_high_stress_fatigue:
+            protocol_name = "Restorative Aerobic Conditioning & Parasympathetic Pacing"
+            weekly_freq = "3 gentle movement days, 4 restorative days"
+            aerobic_target = "80–110 minutes weekly of restorative pacing"
+            resistance_target = "2 to 3 gentle restorative mobility and light strength sessions"
+            overview = (
+                "When systemic fatigue or nervous system stress is elevated, prioritizing restorative movement and gentle pacing supports recovery without overtaxing your energy reserves. "
+                "We emphasize calm pacing, restorative walks, and gentle mobility."
+            )
+            recovery_text = "Deep recovery is training. Avoid high-intensity straining; prioritize parasympathetic rest and restful sleep."
+            schedule = [
+                WorkoutSession("Monday", "Parasympathetic Nature Walk & Breath Pacing", 25, "low", "Walking", ["Outdoor walk in green space", "Physiological sigh breathing"], "Do not push pace; let your nervous system downshift."),
+                WorkoutSession("Tuesday", "Restorative Yoga & Joint Mobility", 25, "low", "Mobility", ["Child's Pose", "Supported Bridge with Cushion", "Cat-Cow", "Legs-Up-the-Wall"], "Breathe deeply into your lower abdomen; release muscle tension."),
+                WorkoutSession("Wednesday", "Rest & Sleep Priority", 0, "low", "Rest", ["Full recovery", "Midday 15-minute rest"], "Honor your body's energy budget with restorative downtime."),
+                WorkoutSession("Thursday", "Gentle Low-Volume Resistance", 25, "low", "Resistance", ["Light Dumbbell Goblet Squats", "Incline Push-ups", "Resistance Band Face Pulls"], "Stop every set 3-4 repetitions before fatigue; zero straining."),
+                WorkoutSession("Friday", "Restorative Aerobic Stroll", 25, "low", "Walking", ["Conversational walking", "Shoulder & neck release"], "Keep heart rate low and steady."),
+                WorkoutSession("Saturday", "Mindful Mobility & Core Relaxation", 20, "low", "Mobility", ["Pelvic clocks", "Gentle spinal twists", "Diaphragmatic breathing"], "Release chronic tension in hip flexors and jaw."),
+                WorkoutSession("Sunday", "Restorative Sunshine Walk & Epsom Soak", 25, "low", "Active Rest", ["Morning sunlight walk", "Warm bath / muscle relaxation"], "Restore circadian rhythm and prepare for the week ahead."),
+            ]
+
+        # 4. Active / Advanced Persona
+        elif is_active_advanced:
+            protocol_name = "Progressive Overload Strength & Aerobic Conditioning"
+            weekly_freq = "4 to 5 training days per week"
+            aerobic_target = "150+ minutes weekly of combined moderate and interval movement"
+            resistance_target = "3 progressive strength sessions targeting all major muscle groups"
+            overview = (
+                "Comprehensive conditioning featuring structured progressive resistance training to support strength and metabolic health, "
+                "healthy body composition, and consistent energy."
+            )
+            recovery_text = "Allow 48 hours of recovery between challenging strength sessions for the same muscle group to give your muscles time to rest and rebuild."
+            schedule = [
+                WorkoutSession("Monday", "Lower Body Compound Strength", 40, "moderate", "Resistance", ["Goblet or Barbell Squats", "Romanian Deadlifts", "Walking Lunges", "Calf Raises"], "Control eccentric descent for 3 seconds; drive through mid-foot."),
+                WorkoutSession("Tuesday", "Moderate Aerobic Conditioning", 35, "moderate", "Cardio", ["Outdoor running / brisk incline walk", "Rowing machine", "Stationary cycling"], "Sustain steady Zone 2 aerobic pace (conversational breath)."),
+                WorkoutSession("Wednesday", "Active Mobility & Core Stability", 25, "low", "Mobility", ["Cat-Cow", "World's Greatest Stretch", "Bird-Dogs", "Side Planks"], "Decompress spine and restore hip range of motion."),
+                WorkoutSession("Thursday", "Upper Body Hypertrophy & Power", 40, "moderate", "Resistance", ["Overhead Dumbbell Press", "Dumbbell Chest Press", "Chest-Supported Rows", "Lat Pulldowns"], "Keep shoulder blades retracted and depressed; avoid shrugging."),
+                WorkoutSession("Friday", "High-Intensity Interval or Aerobic Pacing", 30, "vigorous", "Cardio", ["Incline intervals (30s on / 60s off)", "Tempo cycling", "Lap swimming"], "Push power on work intervals; actively recover during rest windows."),
+                WorkoutSession("Saturday", "Full Body Functional & Posterior Chain", 35, "moderate", "Resistance", ["Kettlebell Swings", "Step-ups with Dumbbells", "Face Pulls", "Hanging Knee Raises"], "Explosive hip extension with neutral lumbar spine."),
+                WorkoutSession("Sunday", "Restorative Nature Walk & Parasympathetic Recovery", 30, "low", "Active Rest", ["Trail walk", "Gentle foam rolling"], "Complete relaxation to facilitate neuromuscular recovery."),
+            ]
+
+        # 5. Moderately Active Baseline Persona
+        else:
+            protocol_name = "Progressive Aerobic Conditioning & Resistance Protocol"
+            weekly_freq = "3-4 movement days per week"
+            aerobic_target = "120–150 minutes weekly of moderate-intensity movement"
+            resistance_target = "2 to 3 sessions weekly targeting major muscle groups"
+            overview = (
+                "Build a consistent routine of moderate aerobic movement across the week, combined with 2 to 3 "
+                "strength sessions to support muscle tone, metabolic health, and physical stamina."
+            )
+            recovery_text = "Allow 48 hours of recovery between challenging strength sessions for the same muscle group to give your muscles time to rest and rebuild."
+            schedule = [
+                WorkoutSession("Monday", "Full Body Strength (Compound Movements)", 35, "moderate", "Resistance", ["Goblet Squats or Seated Leg Press", "Push-ups (incline)", "Dumbbell Rows", "Glute Bridges"], "Focus on controlled 3-second lowering; avoid holding your breath."),
+                WorkoutSession("Tuesday", "Moderate Aerobic Conditioning", 30, "moderate", "Cardio", ["Brisk Outdoor Walking", "Stationary Cycling", "Elliptical"], "Keep intensity conversational—you should be able to speak in short sentences."),
+                WorkoutSession("Wednesday", "Active Recovery & Gentle Mobility", 20, "low", "Mobility", ["Cat-Cow Stretches", "Hip Flexor Openers", "Light Walking"], "Nourish joint circulation through gentle pacing and calm breathing."),
+                WorkoutSession("Thursday", "Upper Body & Core Stability", 35, "moderate", "Resistance", ["Dumbbell Overhead Press", "Lat Pulldowns or Band Rows", "Bird-Dogs", "Plank Holds"], "Engage deep abdominal wall; stop each set 1-2 reps before failure."),
+                WorkoutSession("Friday", "Moderate Aerobic Conditioning", 30, "moderate", "Cardio", ["Incline Treadmill Walk", "Swimming", "Outdoor Cycling"], "Maintain steady, comfortable pace to build aerobic endurance."),
+                WorkoutSession("Saturday", "Posterior Chain & Functional Strength", 30, "moderate", "Resistance", ["Romanian Deadlifts (light dumbbells)", "Step-ups", "Face Pulls", "Side Planks"], "Maintain neutral spine throughout all hip-hinge patterns."),
+                WorkoutSession("Sunday", "Restorative Rest & Parasympathetic Walk", 25, "low", "Active Rest", ["Leisurely Nature Walk", "Gentle Stretching"], "Unplug from digital screens; allow your body time to rest."),
+            ]
+
+        return FitnessPillar(
+            protocol_name=protocol_name,
+            weekly_frequency=weekly_freq,
+            overview=overview,
+            aerobic_target_minutes=aerobic_target,
+            resistance_target_sessions=resistance_target,
+            pathway_clinical_benefit=pathway_benefit,
+            weekly_schedule=schedule,
+            recovery_guidance=recovery_text,
+        )
+
+    @classmethod
+    def _build_lifestyle_pillar(
+        cls,
+        context: ComprehensiveLifestyleContext,
+    ) -> LifestylePillar:
+        demo = context.demographics
+        is_short_sleep = bool(demo.sleep_hours and demo.sleep_hours < 6.5)
+        is_high_stress = bool(demo.stress_level in ("high", "severe"))
+        is_healthy_sleep = bool(demo.sleep_hours and demo.sleep_hours >= 7.5 and demo.stress_level in ("low", "minimal"))
+
+        habits: List[HabitRecommendation] = []
+
+        # Habit 1: Sleep or Circadian Anchor
+        if is_short_sleep:
+            headline = "Prioritize Sleep Extension & Circadian Recovery"
+            sleep_target = f"Expand sleep from recorded {demo.sleep_hours}h towards 7.5–8.5 hours nightly"
+            habits.append(
+                HabitRecommendation(
+                    category="Sleep",
+                    title="Sleep Opportunity Window Extension",
+                    action_item="Advance your bedtime by 30 to 45 minutes and enforce a strict screen curfew 60 minutes before lights out.",
+                    timing="Nightly (starting 60 mins before sleep)",
+                    rationale=f"Your logged {demo.sleep_hours} hours is below restorative baseline. Expanding your sleep window supports restorative sleep, healthy body composition, and consistent daytime energy.",
+                )
+            )
+        else:
+            headline = "Consistent Sleep & Daily Rest Patterns"
+            sleep_target = "7 to 9 hours nightly" if not is_healthy_sleep else "Maintain healthy 7.5 to 8.5 hours nightly"
+            habits.append(
+                HabitRecommendation(
+                    category="Circadian",
+                    title="Morning Natural Light Exposure",
+                    action_item="Spend 10 to 15 minutes outdoors in natural sunlight within 60 minutes of waking.",
+                    timing="Morning (within 1 hr of waking)",
+                    rationale="Natural morning light helps set your internal body clock, promoting daytime alertness and easier sleep at night.",
+                )
+            )
+
+        # Habit 2: Sleep Hygiene or Stress
+        if is_high_stress:
+            stress_protocol = "Structured cyclic sighing pauses (2x daily) and a dedicated 45-minute evening parasympathetic buffer zone."
+            habits.append(
+                HabitRecommendation(
+                    category="Stress",
+                    title="Physiological Sigh & Parasympathetic Downregulation",
+                    action_item="Practice 3 minutes of cyclic physiological sighing (two quick inhales through your nose followed by a long, slow exhale through your mouth) at midday and 6 PM.",
+                    timing="Midday & Late Afternoon",
+                    rationale="Cyclic sighing encourages parasympathetic relaxation, helping ease acute tension and support calm focus.",
+                )
+            )
+        else:
+            stress_protocol = "Brief relaxation breathing pauses during the day and a 30-to-60-minute screen-free wind-down before bed."
+            habits.append(
+                HabitRecommendation(
+                    category="Sleep",
+                    title="Consistent Sleep & Dark Cool Environment",
+                    action_item="Maintain a regular bedtime and wake time within a 30-minute window, keeping bedroom cool (18-20°C) and dark.",
+                    timing="Nightly",
+                    rationale="Adequate uninterrupted sleep gives your body time for essential physical recovery, cognitive focus, and general hormonal wellbeing.",
+                )
+            )
+
+        # Habit 3: Mindful Pause / Breathing
+        if not is_high_stress:
+            habits.append(
+                HabitRecommendation(
+                    category="Stress",
+                    title="Breath-Paced Relaxation Pause",
+                    action_item="Take 3 to 5 slow, deep breaths when feeling tense or transitioning between tasks.",
+                    timing="As needed / Midday pause",
+                    rationale="Slow, intentional breathing signals your nervous system to ease tension and encourages a calmer state.",
+                )
+            )
+
+        # Habit 4: Environmental Wellness
+        habits.append(
+            HabitRecommendation(
+                category="Environmental",
+                title="Mindful Food Storage & Containers",
+                action_item="Use glass, ceramic, or stainless steel containers when warming food or storing hot beverages.",
+                timing="Daily lifestyle",
+                rationale="Using glass or stainless steel for hot foods and drinks reduces exposure to plastic chemicals and supports overall environmental wellness.",
+            )
+        )
+
+        return LifestylePillar(
+            circadian_headline=headline,
+            sleep_target_hours=sleep_target,
+            stress_management_protocol=stress_protocol,
+            recommended_habits=habits,
         )

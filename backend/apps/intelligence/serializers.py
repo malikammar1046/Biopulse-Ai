@@ -74,6 +74,7 @@ class ProgressiveAssessmentSerializer(serializers.Serializer):
     tier_2_inputs = serializers.DictField(required=False, default=dict)
     authoritative_tier_2_inputs = serializers.DictField(required=False, default=dict)
     input_features = serializers.DictField(required=False, default=dict)
+    tier_1_inputs = serializers.DictField(required=False, default=dict)
     authoritative_tier_1_inputs = serializers.DictField(required=False, default=dict)
     hormone_pattern_interpretation = serializers.DictField(required=False, allow_null=True)
     direct_laboratory_values = serializers.ListField(child=serializers.DictField(), required=False, default=list)

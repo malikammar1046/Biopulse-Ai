@@ -317,6 +317,15 @@ class MaleTier2AssessmentView(APIView):
         auth_token = getattr(request.user, "raw_token", None)
         clinical_payload = request.data if isinstance(request.data, dict) else {}
 
+        active_before = assessment_repository.get_active_assessment(patient_uuid, module="male_hypogonadism", auth_token=auth_token)
+        logger.info(
+            "[TIER2_TRACE] event=submit_start user=%s module=male_hypogonadism active_before_id=%s active_before_level=%s tier2_field_count=%d",
+            patient_uuid[:8] if len(patient_uuid) >= 8 else patient_uuid,
+            (active_before.get("id") or active_before.get("assessment_id")) if active_before else "none",
+            active_before.get("assessment_level") if active_before else "none",
+            len([k for k, v in clinical_payload.items() if v is not None and str(v).strip() != ""]),
+        )
+
         try:
             result = run_male_tier2_assessment(
                 patient_uuid,
@@ -405,6 +414,15 @@ class Tier2AssessmentView(APIView):
         patient_uuid = str(request.user.id)
         auth_token = getattr(request.user, "raw_token", None)
         clinical_payload = request.data if isinstance(request.data, dict) else {}
+
+        active_before = assessment_repository.get_active_assessment(patient_uuid, module="female_pcos", auth_token=auth_token)
+        logger.info(
+            "[TIER2_TRACE] event=submit_start user=%s module=female_pcos active_before_id=%s active_before_level=%s tier2_field_count=%d",
+            patient_uuid[:8] if len(patient_uuid) >= 8 else patient_uuid,
+            (active_before.get("id") or active_before.get("assessment_id")) if active_before else "none",
+            active_before.get("assessment_level") if active_before else "none",
+            len([k for k, v in clinical_payload.items() if v is not None and str(v).strip() != ""]),
+        )
 
         try:
             result = run_tier2_assessment(
@@ -720,6 +738,12 @@ class IntelligenceChatView(APIView):
                 patient_email=patient_email,
             )
             sanitized_answer, safety_level = SafetyGuardrails.sanitize_llm_response(llm_res.answer)
+            excluded_cats = used_context.get("excluded_food_categories") or []
+            sanitized_answer = SafetyGuardrails.validate_dietary_safety(
+                sanitized_answer,
+                excluded_categories=excluded_cats,
+                user_message=clean_user_msg,
+            )
             final_safety = "caution" if safety_level == "caution" else llm_res.safety_level
             latency_ms = (time.perf_counter() - start_time) * 1000
 

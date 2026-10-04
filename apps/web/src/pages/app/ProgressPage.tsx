@@ -6,7 +6,7 @@ import { resolvePathway } from '../../types/onboarding';
 
 export const ProgressPage: React.FC = () => {
   const { userProfile } = useUserHealth();
-  const activePathway = resolvePathway(userProfile.gender, userProfile.pathway);
+  const activePathway = resolvePathway(userProfile?.gender, userProfile?.pathway);
 
   return (
     <motion.div

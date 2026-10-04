@@ -8,6 +8,8 @@ import {
   Trash01,
   RefreshCw01,
   Beaker01,
+  Drop,
+  Activity,
 } from '@untitledui/icons';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { ocrService } from '../../services/ocrService';
@@ -27,6 +29,8 @@ interface MaleClinicalLabsModalProps {
   onSuccess?: () => void;
 }
 
+export type MaleCategory = 'hormones' | 'hematology_organ' | 'metabolic';
+
 interface FieldConfig {
   key: string;
   label: string;
@@ -34,7 +38,7 @@ interface FieldConfig {
   min: number;
   max: number;
   step?: string;
-  category: 'hormones' | 'metabolic' | 'hematology_organ';
+  category: MaleCategory;
 }
 
 export const MALE_FIELD_CONFIGS: FieldConfig[] = [
@@ -47,12 +51,6 @@ export const MALE_FIELD_CONFIGS: FieldConfig[] = [
   { key: 'estradiol_pg_ml', label: 'Estradiol (E2)', unit: 'pg/mL', min: 0, max: 200, step: '0.1', category: 'hormones' },
   { key: 'albumin_g_dl', label: 'Serum Albumin', unit: 'g/dL', min: 1, max: 8, step: '0.1', category: 'hormones' },
 
-  // Metabolic & Glycemic
-  { key: 'glucose_mg_dl', label: 'Fasting Glucose', unit: 'mg/dL', min: 20, max: 600, step: '0.1', category: 'metabolic' },
-  { key: 'hba1c_pct', label: 'HbA1c (Glycated Hb)', unit: '%', min: 3, max: 20, step: '0.1', category: 'metabolic' },
-  { key: 'hdl_mg_dl', label: 'HDL Cholesterol', unit: 'mg/dL', min: 5, max: 150, step: '0.1', category: 'metabolic' },
-  { key: 'uric_acid_mg_dl', label: 'Serum Uric Acid', unit: 'mg/dL', min: 0.5, max: 20, step: '0.1', category: 'metabolic' },
-
   // Hematologic & Organ Function
   { key: 'hemoglobin_g_dl', label: 'Hemoglobin (Hb)', unit: 'g/dL', min: 2, max: 25, step: '0.1', category: 'hematology_organ' },
   { key: 'hematocrit_pct', label: 'Hematocrit (HCT)', unit: '%', min: 10, max: 75, step: '0.1', category: 'hematology_organ' },
@@ -62,6 +60,12 @@ export const MALE_FIELD_CONFIGS: FieldConfig[] = [
   { key: 'total_bilirubin_mg_dl', label: 'Total Bilirubin', unit: 'mg/dL', min: 0, max: 30, step: '0.01', category: 'hematology_organ' },
   { key: 'creatinine_mg_dl', label: 'Serum Creatinine', unit: 'mg/dL', min: 0.1, max: 20, step: '0.01', category: 'hematology_organ' },
   { key: 'bun_mg_dl', label: 'Blood Urea Nitrogen', unit: 'mg/dL', min: 1, max: 150, step: '0.1', category: 'hematology_organ' },
+
+  // Metabolic & Glycemic
+  { key: 'glucose_mg_dl', label: 'Fasting Glucose', unit: 'mg/dL', min: 20, max: 600, step: '0.1', category: 'metabolic' },
+  { key: 'hba1c_pct', label: 'HbA1c (Glycated Hb)', unit: '%', min: 3, max: 20, step: '0.1', category: 'metabolic' },
+  { key: 'hdl_mg_dl', label: 'HDL Cholesterol', unit: 'mg/dL', min: 5, max: 150, step: '0.1', category: 'metabolic' },
+  { key: 'uric_acid_mg_dl', label: 'Serum Uric Acid', unit: 'mg/dL', min: 0.5, max: 20, step: '0.1', category: 'metabolic' },
 ];
 
 /**
@@ -221,6 +225,20 @@ export const MaleClinicalLabsModal: React.FC<MaleClinicalLabsModalProps> = ({
   const [removedFields, setRemovedFields] = useState<string[]>([]);
   const [ocrExtractedFields, setOcrExtractedFields] = useState<string[]>([]);
 
+  // Categorized Accordion state (independent of clinical form state)
+  const [expandedSections, setExpandedSections] = useState<Record<MaleCategory, boolean>>({
+    hormones: true,
+    hematology_organ: false,
+    metabolic: false,
+  });
+
+  const toggleSection = (category: MaleCategory) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [category]: !prev[category],
+    }));
+  };
+
   // OCR state
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrBanner, setOcrBanner] = useState<{
@@ -281,6 +299,11 @@ export const MaleClinicalLabsModal: React.FC<MaleClinicalLabsModalProps> = ({
       setFieldErrors({});
       setRemovedFields([]);
       setOcrExtractedFields([]);
+      setExpandedSections({
+        hormones: true,
+        hematology_organ: false,
+        metabolic: false,
+      });
       setOcrBanner(null);
       setEntryMode('manual');
       setSubmitError(null);
@@ -359,6 +382,11 @@ export const MaleClinicalLabsModal: React.FC<MaleClinicalLabsModalProps> = ({
     setFormValues({ ...MALE_SAMPLE_MOCK_DATA });
     setFieldErrors({});
     setRemovedFields([]);
+    setExpandedSections({
+      hormones: true,
+      hematology_organ: true,
+      metabolic: true,
+    });
     setOcrBanner({
       type: 'info',
       message: 'Populated sample male lab measurements for development verification.',
@@ -388,6 +416,18 @@ export const MaleClinicalLabsModal: React.FC<MaleClinicalLabsModalProps> = ({
         const newlyExtractedKeys = Object.keys(mapped);
         setOcrExtractedFields((prev) => Array.from(new Set([...prev, ...newlyExtractedKeys])));
         setRemovedFields((prev) => prev.filter((f) => !newlyExtractedKeys.includes(f)));
+
+        // Automatically expand only categories containing at least one successfully OCR-mapped value
+        const mappedKeysSet = new Set(newlyExtractedKeys);
+        const newlyMappedHormones = MALE_FIELD_CONFIGS.filter((f) => f.category === 'hormones').some((f) => mappedKeysSet.has(f.key));
+        const newlyMappedHematology = MALE_FIELD_CONFIGS.filter((f) => f.category === 'hematology_organ').some((f) => mappedKeysSet.has(f.key));
+        const newlyMappedMetabolic = MALE_FIELD_CONFIGS.filter((f) => f.category === 'metabolic').some((f) => mappedKeysSet.has(f.key));
+
+        setExpandedSections({
+          hormones: newlyMappedHormones,
+          hematology_organ: newlyMappedHematology,
+          metabolic: newlyMappedMetabolic,
+        });
 
         setEntryMode('manual');
         setOcrBanner({
@@ -465,9 +505,26 @@ export const MaleClinicalLabsModal: React.FC<MaleClinicalLabsModalProps> = ({
         payload['remove_fields'] = removedFields;
       }
 
+      if (import.meta.env.DEV) {
+        console.log(
+          `[TIER2_TRACE] event=submit_start user=${activeAssessment?.patient_id || 'unknown'} module=male_hypogonadism active_before_id=${activeAssessment?.id} active_before_level=${activeAssessment?.assessment_level} tier2_field_count=${filledCount}`
+        );
+      }
+
       const res = await submitMaleTier2(payload);
       if (!res) {
-        throw new Error('Failed to compute updated male assessment.');
+        throw new Error(
+          "We couldn't update your screening with these clinical values. Your previous assessment is unchanged. Please try again."
+        );
+      }
+
+      if (
+        res.assessment_level !== 'tier_1_2' &&
+        res.assessment_level !== 'tier_1_2_3'
+      ) {
+        throw new Error(
+          'Clinical data was not incorporated into the active assessment.'
+        );
       }
 
       setSuccessNotice(true);
@@ -655,15 +712,18 @@ export const MaleClinicalLabsModal: React.FC<MaleClinicalLabsModalProps> = ({
         </div>
       )}
 
-      {/* Form Fields: Progressive Disclosure in 2-Column Sections */}
-      <div className="space-y-4">
-        {/* Section 1: Hormonal & Androgen Panel (Always open) */}
+      {/* Form Fields: Categorized Accordion Sections */}
+      <div className="space-y-3.5">
+        {/* Section 1: Hormonal & Androgen Panel */}
         <ClinicalSection
           title="Hormonal & Androgen Panel"
-          description="Core androgen markers and pituitary signaling hormones."
+          description="Core androgen markers, gonadotropins, and binding proteins."
           addedCount={hormoneCount}
-          collapsible={false}
-          defaultExpanded={true}
+          totalCount={7}
+          collapsible={true}
+          isExpanded={expandedSections.hormones}
+          onToggle={() => toggleSection('hormones')}
+          icon={<Beaker01 className="w-4 h-4" />}
           accentColor="blue"
         >
           {MALE_FIELD_CONFIGS.filter((f) => f.category === 'hormones').map((cfg) => (
@@ -685,16 +745,19 @@ export const MaleClinicalLabsModal: React.FC<MaleClinicalLabsModalProps> = ({
           ))}
         </ClinicalSection>
 
-        {/* Section 2: Metabolic & Glycemic Profile (Collapsible) */}
+        {/* Section 2: Hematology & Organ Function */}
         <ClinicalSection
-          title="Metabolic & Glycemic Profile"
-          description="Glucose, HbA1c, and lipid biomarkers assessing metabolic syndrome."
-          addedCount={metabolicCount}
+          title="Hematology & Organ Function"
+          description="Complete blood counts, renal function, and hepatic cellular safety markers."
+          addedCount={organCount}
+          totalCount={8}
           collapsible={true}
-          defaultExpanded={metabolicCount > 0}
+          isExpanded={expandedSections.hematology_organ}
+          onToggle={() => toggleSection('hematology_organ')}
+          icon={<Drop className="w-4 h-4" />}
           accentColor="blue"
         >
-          {MALE_FIELD_CONFIGS.filter((f) => f.category === 'metabolic').map((cfg) => (
+          {MALE_FIELD_CONFIGS.filter((f) => f.category === 'hematology_organ').map((cfg) => (
             <ClinicalField
               key={cfg.key}
               id={cfg.key}
@@ -713,16 +776,19 @@ export const MaleClinicalLabsModal: React.FC<MaleClinicalLabsModalProps> = ({
           ))}
         </ClinicalSection>
 
-        {/* Section 3: Hematology & Organ Function (Collapsible) */}
+        {/* Section 3: Metabolic & Glycemic Profile */}
         <ClinicalSection
-          title="Hematology & Organ Function"
-          description="Blood counts and renal/hepatic safety markers."
-          addedCount={organCount}
+          title="Metabolic & Glycemic Profile"
+          description="Fasting glucose, glycated hemoglobin, and lipid markers assessing metabolic syndrome."
+          addedCount={metabolicCount}
+          totalCount={4}
           collapsible={true}
-          defaultExpanded={organCount > 0}
+          isExpanded={expandedSections.metabolic}
+          onToggle={() => toggleSection('metabolic')}
+          icon={<Activity className="w-4 h-4" />}
           accentColor="blue"
         >
-          {MALE_FIELD_CONFIGS.filter((f) => f.category === 'hematology_organ').map((cfg) => (
+          {MALE_FIELD_CONFIGS.filter((f) => f.category === 'metabolic').map((cfg) => (
             <ClinicalField
               key={cfg.key}
               id={cfg.key}

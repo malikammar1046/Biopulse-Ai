@@ -57,38 +57,59 @@ class LifestyleRecommendationsView(APIView):
         force_refresh = request.query_params.get("refresh", "").lower() in ("true", "1")
 
         try:
-            # 1. Build Comprehensive Context from current patient state
-            context = LifestyleContextBuilder.build_context(
-                user_id=user_id,
-                module=raw_module,
-                auth_token=auth_token,
-            )
-            canonical_module = context.demographics.pathway
-            current_version = context.context_version
+            canonical_module = LifestyleContextBuilder.normalize_module(raw_module)
 
-            # 2. Check persistent repository for active recommendations with matching context_version
+            # 1. Fast path: Check persistent repository for active recommendations + lightweight freshness verification
             if not force_refresh:
                 cached_record = lifestyle_repository.get_active_recommendations(
                     user_id=user_id,
                     module=canonical_module,
                     auth_token=auth_token,
                 )
-                if cached_record and cached_record.get("context_version") == current_version:
-                    payload = cached_record.get("payload")
-                    if payload and isinstance(payload, dict):
+                if cached_record:
+                    is_fresh, freshness_reason = LifestyleContextBuilder.is_cache_fresh(
+                        user_id=user_id,
+                        canonical_module=canonical_module,
+                        cached_record=cached_record,
+                        auth_token=auth_token,
+                    )
+                    if is_fresh:
+                        payload = cached_record.get("payload")
+                        if payload and isinstance(payload, dict):
+                            logger.info(
+                                "Returning verified fresh recommendations for user %s (version %s)",
+                                user_id[:8],
+                                cached_record.get("context_version", ""),
+                            )
+                            return Response(payload, status=status.HTTP_200_OK)
+                    else:
                         logger.info(
-                            "Returning cached persistent recommendations for user %s (version %s)",
+                            "Cache stale for user %s (%s). Rebuilding full context and regenerating...",
                             user_id[:8],
-                            current_version,
+                            freshness_reason,
                         )
-                        return Response(payload, status=status.HTTP_200_OK)
 
-            # 3. Context changed or not yet persisted -> Evaluate Clinical Safety & Boundaries
+            # 2. Context changed, uncached, stale, or force_refresh -> Build Comprehensive Context
+            context = LifestyleContextBuilder.build_context(
+                user_id=user_id,
+                module=canonical_module,
+                auth_token=auth_token,
+            )
+            canonical_module = context.demographics.pathway
+            current_version = context.context_version
+
+            # 3. Evaluate Clinical Safety & Boundaries
             safety = LifestyleSafetyEngine.evaluate_safety(context)
 
             # 4. Generate Synchronized Recommendations
             recommendations_result = LifestyleRecommendationEngine.generate(context, safety)
             payload = recommendations_result.to_dict()
+
+            # Embed lightweight freshness signature for subsequent O(1) checks (<50ms)
+            freshness_inputs = LifestyleContextBuilder.extract_freshness_inputs_from_context(context)
+            freshness_fingerprint = LifestyleContextBuilder.compute_freshness_fingerprint(freshness_inputs)
+            payload["freshness_fingerprint"] = freshness_fingerprint
+            payload["freshness_inputs"] = freshness_inputs
 
             # Preserve previously recorded item adherence statuses if any
             existing_record = lifestyle_repository.get_active_recommendations(

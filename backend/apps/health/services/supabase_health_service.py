@@ -47,6 +47,7 @@ class PatientProfile:
     pathway: str | None = None
     height_cm: float | None = None
     weight_kg: float | None = None
+    waist_cm: float | None = None
     date_of_birth: str | None = None
     cycle_length: str | None = None        # e.g. "28" or "irregular"
     period_duration: int | None = None
@@ -57,6 +58,9 @@ class PatientProfile:
     sleep_hours: float | None = None
     daily_water_glasses: int | None = None
     dietary_preference: str | None = None
+    allergies: list[str] = field(default_factory=list)
+    food_allergies: list[str] = field(default_factory=list)
+    food_intolerances: list[str] = field(default_factory=list)
     conditions: list[str] = field(default_factory=list)
     medications_profile: list[str] = field(default_factory=list)
     # ML Model Specific Clinical & Reproductive Fields
@@ -66,6 +70,8 @@ class PatientProfile:
     abortions_count: int | None = None     # 0, 1, 2...
     fast_food_intake: str | None = None    # "frequent" | "occasional" | "rare_never"
     regular_exercise: bool | None = None   # True | False
+    stress_level: str | None = None        # "low" | "moderate" | "high" | "severe"
+    lifestyle: dict[str, Any] = field(default_factory=dict)
     updated_at: str | None = None
     created_at: str | None = None
 
@@ -238,22 +244,28 @@ class SupabaseHealthService:
     # ------------------------------------------------------------------
 
     def fetch_profile(self, patient_uuid: str, auth_token: str | None = None) -> PatientProfile:
+        row: dict[str, Any] = {}
         try:
             client = self._client_or_raise(auth_token)
-            res = (
-                client.table("profiles")
-                .select(
-                    "id,gender,pathway,height_cm,weight_kg,date_of_birth,cycle_length,"
-                    "period_duration,last_period_date,period_regularity,"
-                    "common_symptoms,activity_level,sleep_hours,"
-                    "daily_water_glasses,dietary_preference,conditions,medications,"
-                    "updated_at,created_at"
+            try:
+                res = client.table("profiles").select("*").eq("id", patient_uuid).maybe_single().execute()
+                row = getattr(res, "data", None) or {}
+            except Exception:
+                res = (
+                    client.table("profiles")
+                    .select(
+                        "id,gender,pathway,height_cm,weight_kg,waist_cm,date_of_birth,cycle_length,"
+                        "period_duration,last_period_date,period_regularity,"
+                        "common_symptoms,activity_level,sleep_hours,"
+                        "daily_water_glasses,dietary_preference,allergies,food_allergies,food_intolerances,conditions,medications,"
+                        "fast_food_intake,regular_exercise,marital_status,marriage_years,is_pregnant,abortions_count,"
+                        "updated_at,created_at"
+                    )
+                    .eq("id", patient_uuid)
+                    .maybe_single()
+                    .execute()
                 )
-                .eq("id", patient_uuid)
-                .maybe_single()
-                .execute()
-            )
-            row: dict[str, Any] = getattr(res, "data", None) or {}
+                row = getattr(res, "data", None) or {}
         except Exception as exc:
             logger.warning("profile fetch failed for %s: %s", patient_uuid, exc)
             row = {}
@@ -280,6 +292,7 @@ class SupabaseHealthService:
             pathway=row.get("pathway"),
             height_cm=row.get("height_cm"),
             weight_kg=row.get("weight_kg"),
+            waist_cm=row.get("waist_cm"),
             date_of_birth=row.get("date_of_birth"),
             cycle_length=row.get("cycle_length"),
             period_duration=row.get("period_duration"),
@@ -290,8 +303,19 @@ class SupabaseHealthService:
             sleep_hours=row.get("sleep_hours"),
             daily_water_glasses=row.get("daily_water_glasses"),
             dietary_preference=row.get("dietary_preference"),
+            allergies=_safe_list(row.get("allergies")),
+            food_allergies=_safe_list(row.get("food_allergies")),
+            food_intolerances=_safe_list(row.get("food_intolerances")),
             conditions=_safe_list(row.get("conditions")),
             medications_profile=_extract_med_names(row.get("medications")),
+            marital_status=row.get("marital_status"),
+            marriage_years=row.get("marriage_years"),
+            is_pregnant=row.get("is_pregnant"),
+            abortions_count=row.get("abortions_count"),
+            fast_food_intake=row.get("fast_food_intake"),
+            regular_exercise=row.get("regular_exercise"),
+            stress_level=row.get("stress_level") or (row.get("lifestyle", {}).get("stressLevel") if isinstance(row.get("lifestyle"), dict) else None),
+            lifestyle=row.get("lifestyle") if isinstance(row.get("lifestyle"), dict) else {},
             updated_at=row.get("updated_at"),
             created_at=row.get("created_at"),
         )
