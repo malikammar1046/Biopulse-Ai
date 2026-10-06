@@ -6,6 +6,7 @@ import {
   Text,
   TouchableOpacity,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../hooks/useThemeColor';
 import { Spacing, BorderRadius, Shadows } from '../constants/Layout';
@@ -29,6 +30,7 @@ import {
 } from '../components/ui';
 
 export default function DesignSystemScreen() {
+  const router = useRouter();
   const { theme, colorScheme } = useTheme();
 
   // Interactive component states for demonstration
@@ -75,6 +77,54 @@ export default function DesignSystemScreen() {
             health-information semantics.
           </Typography>
         </View>
+
+        {/* BioPulse Launch Screen Showcase Card */}
+        <Card variant="standard" style={styles.launchCard}>
+          <View style={styles.launchCardHeader}>
+            <Badge label="Active • Startup Route" variant="primary" badgeStyle="soft" />
+            <Text style={styles.launchCardSubtext}>BioPulse AI</Text>
+          </View>
+          <Typography variant="h3" style={styles.launchCardTitle}>
+            BioPulse AI Launch Experience
+          </Typography>
+          <Typography variant="bodySmall" color={theme.textSecondary} style={styles.launchCardBody}>
+            Dual-pathway personalized healthcare launch screen for PCOS and Endocrine monitoring.
+          </Typography>
+          <View style={{ gap: 8, marginTop: 4 }}>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <Button
+                label="Launch"
+                variant="outline"
+                size="sm"
+                onPress={() => router.push({ pathname: '/', params: { preview: 'true' } })}
+                style={{ flex: 1 }}
+              />
+              <Button
+                label="Onboarding"
+                variant="outline"
+                size="sm"
+                onPress={() => router.push('/onboarding')}
+                style={{ flex: 1 }}
+              />
+            </View>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <Button
+                label="Login (Screen 3)"
+                variant="outline"
+                size="sm"
+                onPress={() => router.push('/(auth)/login')}
+                style={{ flex: 1 }}
+              />
+              <Button
+                label="Sign Up (Screen 4)"
+                variant="primary"
+                size="sm"
+                onPress={() => router.push('/(auth)/register')}
+                style={{ flex: 1 }}
+              />
+            </View>
+          </View>
+        </Card>
 
         <Divider spacing="lg" />
 
@@ -629,5 +679,33 @@ const styles = StyleSheet.create({
   footer: {
     marginTop: Spacing['2xl'],
     alignItems: 'center',
+  },
+  launchCard: {
+    padding: Spacing.lg,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#D7EAF2',
+    borderRadius: BorderRadius.xl,
+    marginTop: Spacing.sm,
+  },
+  launchCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.sm,
+  },
+  launchCardSubtext: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#073B72',
+    letterSpacing: 0.5,
+  },
+  launchCardTitle: {
+    color: '#073B72',
+    marginBottom: Spacing['2xs'],
+  },
+  launchCardBody: {
+    marginBottom: Spacing.md,
+    lineHeight: 18,
   },
 });
