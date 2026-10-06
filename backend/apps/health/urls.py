@@ -12,20 +12,19 @@ from apps.health.views import (
 )
 from apps.health.views_nutrition import (
     CurrentNutritionPlanView,
-    MealLockView,
-    MealLogView,
-    MealSwapView,
-    NutritionAdherenceView,
+    FoodLogDetailView,
+    FoodLogsView,
+    MealRemindersView,
     NutritionPlanDetailView,
     NutritionPlanHistoryView,
     NutritionPlanRegenerateView,
     NutritionPreferencesView,
     NutritionReadinessView,
-    NutritionReminderView,
     NutritionTargetsView,
-    PlanActivateView,
-    PlanModifyByAIView,
-    RegenerateDayView,
+    PlanLockMealView,
+    PlanRegenerateDayView,
+    PlanStatusUpdateView,
+    PlanSwapMealView,
     WeeklyPlanGenerateView,
 )
 
@@ -44,16 +43,14 @@ urlpatterns = [
     path("nutrition/plan/current/", CurrentNutritionPlanView.as_view(), name="nutrition-plan-current"),
     path("nutrition/plan/history/", NutritionPlanHistoryView.as_view(), name="nutrition-plan-history"),
     path("nutrition/plan/<uuid:plan_id>/", NutritionPlanDetailView.as_view(), name="nutrition-plan-detail"),
-    path("nutrition/plan/<uuid:plan_id>/activate/", PlanActivateView.as_view(), name="nutrition-plan-activate"),
-    path("nutrition/plan/<uuid:plan_id>/lock/", MealLockView.as_view(), name="nutrition-plan-lock"),
-    path("nutrition/plan/<uuid:plan_id>/swap/", MealSwapView.as_view(), name="nutrition-plan-swap"),
-    path("nutrition/plan/<uuid:plan_id>/regenerate-day/", RegenerateDayView.as_view(), name="nutrition-plan-regenerate-day"),
-    path("nutrition/plan/<uuid:plan_id>/modify/", PlanModifyByAIView.as_view(), name="nutrition-plan-modify-ai"),
+    path("nutrition/plan/<uuid:plan_id>/status/", PlanStatusUpdateView.as_view(), name="nutrition-plan-status-update"),
+    path("nutrition/plan/lock-meal/", PlanLockMealView.as_view(), name="nutrition-plan-lock-meal"),
+    path("nutrition/plan/swap-meal/", PlanSwapMealView.as_view(), name="nutrition-plan-swap-meal"),
+    path("nutrition/plan/regenerate-day/", PlanRegenerateDayView.as_view(), name="nutrition-plan-regenerate-day"),
     path("nutrition/plan/regenerate/", NutritionPlanRegenerateView.as_view(), name="nutrition-plan-regenerate"),
-    # Food Logging
-    path("nutrition/log/", MealLogView.as_view(), name="nutrition-meal-log"),
+    # Food Logs & Adherence
+    path("nutrition/food-logs/", FoodLogsView.as_view(), name="nutrition-food-logs"),
+    path("nutrition/food-logs/<uuid:log_id>/", FoodLogDetailView.as_view(), name="nutrition-food-log-detail"),
     # Reminders
-    path("nutrition/reminders/", NutritionReminderView.as_view(), name="nutrition-reminders"),
-    # Adherence
-    path("nutrition/adherence/", NutritionAdherenceView.as_view(), name="nutrition-adherence"),
+    path("nutrition/reminders/", MealRemindersView.as_view(), name="nutrition-meal-reminders"),
 ]

@@ -1,15 +1,39 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Apple,
   CheckCircle2,
-  Info,
   ArrowRight,
+  Sparkles,
+  Utensils,
+  Plus,
+  Lock,
+  Unlock,
+  RefreshCw,
+  Bell,
+  Calendar,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Trash2,
+  History,
 } from 'lucide-react';
 import type {
   NutritionPillar,
   RecommendationItem,
 } from '../../types/lifestyle';
+import type {
+  WeeklyNutritionPlan,
+  NutritionReadiness,
+  FoodLogItem,
+  SingleMeal,
+  NutritionPlanSummary,
+} from '../../types/nutrition';
+import { nutritionService } from '../../services/nutritionService';
 import { RecommendationCard } from './RecommendationCard';
+import { MissingDataBanner } from './MissingDataBanner';
+import { PlanGenerationWizardModal } from './PlanGenerationWizardModal';
+import { LogMealModal } from './LogMealModal';
+import { MealRemindersModal } from './MealRemindersModal';
 
 interface NutritionPillarViewProps {
   nutrition: NutritionPillar;
@@ -29,177 +53,865 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
   onUpdateStatus,
   isMale = false,
 }) => {
-  const nutritionRecs = recommendations.filter((r) => r.category === 'nutrition');
-  const targets = nutrition.daily_targets;
-  const hasTargets = targets && targets.daily_calories_kcal !== null && targets.daily_calories_kcal > 0;
+  // Plan State
+  const [currentPlan, setCurrentPlan] = useState<WeeklyNutritionPlan | null>(null);
+  const [planLoading, setPlanLoading] = useState<boolean>(true);
+  const [selectedDayName, setSelectedDayName] = useState<string>('Monday');
+  const [expandedMealRole, setExpandedMealRole] = useState<string | null>(null);
+
+  // Readiness State
+  const [readiness, setReadiness] = useState<NutritionReadiness | null>(null);
+
+  // Food Logs State
+  const [foodLogs, setFoodLogs] = useState<FoodLogItem[]>([]);
+  const [logFilter, setLogFilter] = useState<'today' | 'yesterday' | 'week'>('today');
+
+  // Plan History State
+  const [planHistory, setPlanHistory] = useState<NutritionPlanSummary[]>([]);
+  const [showHistory, setShowHistory] = useState<boolean>(false);
+
+  // Modals State
+  const [isWizardOpen, setIsWizardOpen] = useState<boolean>(false);
+  const [isLogModalOpen, setIsLogModalOpen] = useState<boolean>(false);
+  const [selectedMealForLog, setSelectedMealForLog] = useState<SingleMeal | null>(null);
+  const [isRemindersOpen, setIsRemindersOpen] = useState<boolean>(false);
+  const [isSavingPlan, setIsSavingPlan] = useState<boolean>(false);
+  const [actionInProgress, setActionInProgress] = useState<string | null>(null);
+
+  // Determine today's day name (e.g. 'Monday', 'Tuesday')
+  const todayDayName = React.useMemo(() => {
+    return new Date().toLocaleDateString('en-US', { weekday: 'long' });
+  }, []);
+
+  // Fetch initial data
+  const loadData = async () => {
+    setPlanLoading(true);
+    try {
+      // 1. Current Plan
+      const plan = await nutritionService.getCurrentPlan();
+      setCurrentPlan(plan);
+      if (plan && plan.days && plan.days.length > 0) {
+        const hasToday = plan.days.some((d) => d.day_name.toLowerCase() === todayDayName.toLowerCase());
+        setSelectedDayName(hasToday ? todayDayName : plan.days[0].day_name);
+      }
+    } catch (err: any) {
+      console.warn('Error loading current nutrition plan:', err);
+    }
+
+    try {
+      // 2. Readiness
+      const r = await nutritionService.getReadiness();
+      setReadiness(r);
+    } catch (err: any) {
+      console.warn('Error checking readiness:', err);
+    }
+
+    try {
+      // 3. Food Logs
+      const logs = await nutritionService.fetchFoodLogs();
+      setFoodLogs(logs);
+    } catch (err: any) {
+      console.warn('Error fetching food logs:', err);
+    }
+
+    try {
+      // 4. Plan History
+      const hist = await nutritionService.getPlanHistory(5);
+      setPlanHistory(hist);
+    } catch (err: any) {
+      console.warn('Error fetching plan history:', err);
+    }
+
+    setPlanLoading(false);
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [todayDayName]);
+
+  // Handle Meal Locking
+  const handleToggleLock = async (dayName: string, mealType: string, currentlyLocked: boolean) => {
+    if (!currentPlan) return;
+    const actionKey = `lock-${dayName}-${mealType}`;
+    setActionInProgress(actionKey);
+    try {
+      const updated = await nutritionService.lockMeal(
+        currentPlan.id,
+        dayName,
+        mealType,
+        !currentlyLocked
+      );
+      setCurrentPlan(updated);
+    } catch (err: any) {
+      console.error('Failed to toggle meal lock:', err);
+      alert(err?.message || 'Could not update meal lock.');
+    } finally {
+      setActionInProgress(null);
+    }
+  };
+
+  // Handle Meal Swapping
+  const handleSwapMeal = async (dayName: string, mealType: string) => {
+    if (!currentPlan) return;
+    const actionKey = `swap-${dayName}-${mealType}`;
+    setActionInProgress(actionKey);
+    try {
+      const updated = await nutritionService.swapMeal(
+        currentPlan.id,
+        dayName,
+        mealType
+      );
+      setCurrentPlan(updated);
+    } catch (err: any) {
+      console.error('Failed to swap meal:', err);
+      alert(err?.message || 'Could not swap meal.');
+    } finally {
+      setActionInProgress(null);
+    }
+  };
+
+  // Handle Regenerate Day
+  const handleRegenerateDay = async (dayName: string) => {
+    if (!currentPlan) return;
+    if (!confirm(`Regenerate unlocked meals for ${dayName}? Locked meals will be preserved.`)) return;
+
+    setActionInProgress(`regen-day-${dayName}`);
+    try {
+      const updated = await nutritionService.regenerateDay(currentPlan.id, dayName);
+      setCurrentPlan(updated);
+    } catch (err: any) {
+      console.error('Failed to regenerate day:', err);
+      alert(err?.message || 'Failed to regenerate day.');
+    } finally {
+      setActionInProgress(null);
+    }
+  };
+
+  // Handle Regenerate Full Week
+  const handleRegenerateWeek = async () => {
+    if (!confirm('Regenerate your 7-day meal plan? Locked meals will remain locked.')) return;
+    setActionInProgress('regen-week');
+    try {
+      const updated = await nutritionService.regeneratePlan();
+      setCurrentPlan(updated);
+    } catch (err: any) {
+      console.error('Failed to regenerate week plan:', err);
+      alert(err?.message || 'Failed to regenerate meal plan.');
+    } finally {
+      setActionInProgress(null);
+    }
+  };
+
+  // Handle Save & Start Plan
+  const handleActivatePlan = async (startDateChoice: 'today' | 'next_monday') => {
+    if (!currentPlan) return;
+    setIsSavingPlan(true);
+    try {
+      let startDateStr: string;
+      const now = new Date();
+      if (startDateChoice === 'today') {
+        startDateStr = now.toISOString().slice(0, 10);
+      } else {
+        const dayOfWeek = now.getDay();
+        const daysUntilMonday = (8 - dayOfWeek) % 7 || 7;
+        const nextMonday = new Date(now.getTime() + daysUntilMonday * 24 * 60 * 60 * 1000);
+        startDateStr = nextMonday.toISOString().slice(0, 10);
+      }
+
+      const updated = await nutritionService.updatePlanStatus(
+        currentPlan.id,
+        'active',
+        startDateStr
+      );
+      setCurrentPlan(updated);
+      alert('Your 7-day meal plan is now active! Log your meals daily to track adherence.');
+    } catch (err: any) {
+      console.error('Failed to activate plan:', err);
+      alert(err?.message || 'Failed to activate meal plan.');
+    } finally {
+      setIsSavingPlan(false);
+    }
+  };
+
+  // Handle Food Log Deletion
+  const handleDeleteFoodLog = async (logId?: string) => {
+    if (!logId) return;
+    if (!confirm('Delete this food log entry?')) return;
+    try {
+      await nutritionService.deleteFoodLog(logId);
+      setFoodLogs(foodLogs.filter((l) => l.id !== logId));
+    } catch (err: any) {
+      console.error('Failed to delete food log:', err);
+      alert('Could not delete log.');
+    }
+  };
+
+  // Selected Day Data
+  const selectedDay = currentPlan?.days.find(
+    (d) => d.day_name.toLowerCase() === selectedDayName.toLowerCase()
+  ) || currentPlan?.days[0];
+
+  // Filtered Food Logs
+  const filteredLogs = foodLogs.filter((l) => {
+    if (!l.logged_at) return true;
+    const logDate = new Date(l.logged_at);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (logFilter === 'today') {
+      return logDate >= today;
+    }
+    if (logFilter === 'yesterday') {
+      const yest = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+      return logDate >= yest && logDate < today;
+    }
+    // week
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    return logDate >= weekAgo;
+  });
+
+  // Calculate Today's Logged Macros
+  const todayLogs = foodLogs.filter((l) => {
+    if (!l.logged_at) return false;
+    const logDate = new Date(l.logged_at);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return logDate >= today;
+  });
+
+  const loggedTotals = todayLogs.reduce(
+    (acc, item) => ({
+      calories: acc.calories + (item.calories || 0),
+      protein: acc.protein + (item.protein_g || 0),
+      carbs: acc.carbs + (item.carbs_g || 0),
+      fat: acc.fat + (item.fat_g || 0),
+    }),
+    { calories: 0, protein: 0, carbs: 0, fat: 0 }
+  );
+
+  // Targets from plan or lifestyle
+  const planTargets = (currentPlan?.targets || {}) as Record<string, any>;
+  const targetCalories =
+    Number(planTargets.energy_kcal || planTargets.daily_calories_kcal || nutrition.daily_targets?.daily_calories_kcal || 0);
+  const targetProtein =
+    typeof planTargets.protein_g === 'object' && planTargets.protein_g !== null
+      ? Number(planTargets.protein_g.max || planTargets.protein_g.min || 0)
+      : Number(planTargets.protein_g || nutrition.daily_targets?.protein?.grams || 0);
+  const targetCarbs =
+    typeof planTargets.carbohydrate_g === 'object' && planTargets.carbohydrate_g !== null
+      ? Number(planTargets.carbohydrate_g.max || planTargets.carbohydrate_g.min || 0)
+      : Number(planTargets.carbohydrate_g || nutrition.daily_targets?.carbohydrates?.grams || 0);
+  const targetFat =
+    typeof planTargets.fat_g === 'object' && planTargets.fat_g !== null
+      ? Number(planTargets.fat_g.max || planTargets.fat_g.min || 0)
+      : Number(planTargets.fat_g || nutrition.daily_targets?.fats?.grams || 0);
+
+  // Planned meals completed count for today
+  const plannedMealCount = selectedDay?.meals?.length || 4;
+  const plannedLoggedCount = Math.min(todayLogs.length, plannedMealCount);
+
+  const primaryBtnClass = isMale
+    ? 'bg-[#0868B9] hover:bg-[#07599c] text-white'
+    : 'bg-[#0E9EAA] hover:bg-[#0b828c] text-white';
 
   return (
     <div className="space-y-8 animate-fadeIn">
-      {/* 1. Nutrition Strategy Overview */}
-      <section
-        aria-labelledby="nutrition-strategy-title"
-        className="rounded-2xl bg-white border border-[#D7EAF2] p-6 sm:p-8 space-y-4 shadow-xs"
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-              isMale ? 'bg-sky-50 text-[#0868B9]' : 'bg-teal-50 text-[#0E9EAA]'
-            }`}
-          >
-            <Apple className="w-5 h-5" />
+      {/* ── 1. HEADER & PRIMARY ACTIONS (Phase 2) ── */}
+      <section className="rounded-3xl bg-white border border-[#D7EAF2] p-6 sm:p-8 space-y-6 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div
+              className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
+                isMale ? 'bg-sky-50 text-[#0868B9]' : 'bg-teal-50 text-[#0E9EAA]'
+              }`}
+            >
+              <Apple className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#55718F]">
+                  BioPulse Nutrition Intelligence
+                </span>
+                {currentPlan?.is_active && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-teal-50 text-[#0E9EAA] border border-teal-200">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Active Plan
+                  </span>
+                )}
+              </div>
+              <h1 className="text-xl sm:text-2xl font-bold text-[#073B72]">
+                Nutrition & 7-Day Meal Plan
+              </h1>
+            </div>
           </div>
-          <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#55718F] block">
-              Nutrition Strategy
-            </span>
-            <h2 id="nutrition-strategy-title" className="text-xl sm:text-2xl font-bold text-[#073B72]">
-              {nutrition.strategy_title}
-            </h2>
+
+          {/* Primary Action Buttons */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => setIsWizardOpen(true)}
+              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer ${primaryBtnClass}`}
+            >
+              <Sparkles className="w-4 h-4" />
+              {currentPlan ? 'Update / Regenerate Plan' : 'Generate My 7-Day Plan'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedMealForLog(null);
+                setIsLogModalOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition bg-white border border-[#D7EAF2] text-[#073B72] hover:bg-slate-50 cursor-pointer shadow-xs"
+            >
+              <Plus className="w-4 h-4 text-[#20B486]" />
+              Log Meal
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsRemindersOpen(true)}
+              className="p-2.5 rounded-xl text-slate-500 hover:text-[#073B72] bg-white border border-[#D7EAF2] hover:bg-slate-50 cursor-pointer shadow-xs transition"
+              title="Meal Reminders"
+            >
+              <Bell className="w-4 h-4" />
+            </button>
           </div>
         </div>
 
-        <p className="text-sm sm:text-base text-slate-700 leading-relaxed max-w-4xl">
-          {nutrition.strategy_summary}
-        </p>
+        {/* Structured Missing Data Banner (Phase 1 & 19: No false age/SHAP warnings) */}
+        {readiness && (
+          <MissingDataBanner
+            readiness={readiness}
+            isMale={isMale}
+            onOpenWizard={() => setIsWizardOpen(true)}
+          />
+        )}
+      </section>
 
-        {/* Key Guidelines */}
-        {nutrition.key_guidelines && nutrition.key_guidelines.length > 0 && (
-          <div className="pt-2 grid grid-cols-1 md:grid-cols-2 gap-3">
-            {nutrition.key_guidelines.map((guideline, idx) => (
-              <div
-                key={idx}
-                className="flex items-start gap-2.5 p-3.5 rounded-xl bg-[#F5FBFD] border border-[#D7EAF2] text-xs sm:text-sm text-slate-800"
+      {/* ── 2. ACTIVE 7-DAY MEAL PLAN (Phase 6, 10, 11, 12) ── */}
+      {planLoading && !currentPlan ? (
+        <section className="rounded-3xl border border-[#D7EAF2] bg-white p-8 sm:p-12 text-center">
+          <RefreshCw className="w-6 h-6 animate-spin mx-auto text-[#0E9EAA]" />
+          <p className="text-xs text-[#55718F] mt-2">Loading your meal plan...</p>
+        </section>
+      ) : currentPlan ? (
+        <section className="space-y-5">
+          {/* Plan Status Bar & Controls */}
+          <div className="rounded-2xl bg-white border border-[#D7EAF2] p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+            <div>
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-[#0E9EAA]" />
+                <h2 className="text-base font-bold text-[#073B72]">
+                  {currentPlan.is_active ? 'Your Active 7-Day Plan' : 'Plan Preview (Not yet activated)'}
+                </h2>
+                <span className="text-xs text-slate-500 font-mono">
+                  {currentPlan.start_date} to {currentPlan.end_date}
+                </span>
+              </div>
+              <p className="text-xs text-[#55718F] mt-0.5">
+                Ground in authentic Pakistani and cultural foods, calibrated to your clinical targets.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              {!currentPlan.is_active && (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={isSavingPlan}
+                    onClick={() => handleActivatePlan('today')}
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer ${primaryBtnClass}`}
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    Save & Start Today
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isSavingPlan}
+                    onClick={() => handleActivatePlan('next_monday')}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white border border-[#D7EAF2] text-[#073B72] hover:bg-slate-50 cursor-pointer"
+                  >
+                    Start Next Monday
+                  </button>
+                </div>
+              )}
+
+              <button
+                type="button"
+                disabled={actionInProgress === 'regen-week'}
+                onClick={handleRegenerateWeek}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white border border-[#D7EAF2] text-[#073B72] hover:bg-slate-50 cursor-pointer"
+                title="Regenerates unlocked meals for all 7 days"
               >
-                <CheckCircle2 className="w-4 h-4 text-[#20B486] shrink-0 mt-0.5" />
-                <span className="leading-snug">{guideline}</span>
+                <RefreshCw
+                  className={`w-3.5 h-3.5 ${actionInProgress === 'regen-week' ? 'animate-spin' : ''}`}
+                />
+                Regenerate Week
+              </button>
+
+              {planHistory.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setShowHistory(!showHistory)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white border border-[#D7EAF2] text-slate-600 hover:bg-slate-50 cursor-pointer"
+                >
+                  <History className="w-3.5 h-3.5" />
+                  History
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Plan History Drawer */}
+          {showHistory && (
+            <div className="p-4 rounded-2xl bg-[#F5FBFD] border border-[#D7EAF2] space-y-2 animate-fadeIn text-xs">
+              <span className="font-bold text-[#073B72] block uppercase tracking-wider text-[10px]">
+                Historical Plan Snapshots
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                {planHistory.map((h) => (
+                  <div
+                    key={h.id}
+                    className="p-2.5 rounded-xl bg-white border border-[#D7EAF2] flex items-center justify-between"
+                  >
+                    <div>
+                      <div className="font-semibold text-slate-800">
+                        {h.start_date} - {h.end_date}
+                      </div>
+                      <div className="text-[10px] text-slate-500 uppercase">{h.status}</div>
+                    </div>
+                    {h.is_active && (
+                      <span className="text-[10px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">
+                        Current
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Horizontal Day Tabs (Phase 28: Mobile Responsive) */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+            {currentPlan.days.map((day) => {
+              const isSelected = selectedDay?.day_name.toLowerCase() === day.day_name.toLowerCase();
+              const isToday = day.day_name.toLowerCase() === todayDayName.toLowerCase();
+              return (
+                <button
+                  key={day.day_name}
+                  type="button"
+                  onClick={() => setSelectedDayName(day.day_name)}
+                  className={`px-4 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition cursor-pointer flex items-center gap-2 border ${
+                    isSelected
+                      ? isMale
+                        ? 'bg-[#0868B9] text-white border-[#0868B9] shadow-xs'
+                        : 'bg-[#0E9EAA] text-white border-[#0E9EAA] shadow-xs'
+                      : 'bg-white border-[#D7EAF2] text-[#55718F] hover:text-[#073B72] hover:bg-slate-50'
+                  }`}
+                >
+                  <span>{day.day_name}</span>
+                  {isToday && (
+                    <span
+                      className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-md ${
+                        isSelected
+                          ? 'bg-white/20 text-white'
+                          : isMale
+                          ? 'bg-sky-100 text-[#0868B9]'
+                          : 'bg-teal-100 text-[#0E9EAA]'
+                      }`}
+                    >
+                      Today
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Selected Day View Header */}
+          {selectedDay && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-[#073B72]">
+                    {selectedDay.day_name} Planned Meals
+                  </h3>
+                  <p className="text-xs text-[#55718F]">
+                    {selectedDay.energy_kcal ? `~${Math.round(selectedDay.energy_kcal)} kcal` : ''} • Protein:{' '}
+                    {Math.round(selectedDay.protein_g)}g • Carbs: {Math.round(selectedDay.carbohydrate_g)}g •
+                    Fat: {Math.round(selectedDay.fat_g)}g
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={actionInProgress === `regen-day-${selectedDay.day_name}`}
+                  onClick={() => handleRegenerateDay(selectedDay.day_name)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white border border-[#D7EAF2] text-[#073B72] hover:bg-slate-50 cursor-pointer shadow-xs"
+                >
+                  <RefreshCw
+                    className={`w-3.5 h-3.5 ${
+                      actionInProgress === `regen-day-${selectedDay.day_name}` ? 'animate-spin' : ''
+                    }`}
+                  />
+                  Regenerate {selectedDay.day_name}
+                </button>
+              </div>
+
+              {/* Meals Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {selectedDay.meals.map((meal) => {
+                  const isLocked = Boolean(meal.is_locked);
+                  const isExpanded = expandedMealRole === meal.role;
+                  const isActionBusy =
+                    actionInProgress === `lock-${selectedDay.day_name}-${meal.role}` ||
+                    actionInProgress === `swap-${selectedDay.day_name}-${meal.role}`;
+
+                  return (
+                    <div
+                      key={meal.role}
+                      className="rounded-2xl bg-white border border-[#D7EAF2] p-5 space-y-3.5 shadow-xs flex flex-col justify-between hover:border-[#16B8C4]/40 transition"
+                    >
+                      <div className="space-y-2.5">
+                        {/* Meal Role & Badges */}
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold uppercase tracking-wider text-[#55718F]">
+                              {meal.role}
+                            </span>
+                            {isLocked && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200">
+                                <Lock className="w-3 h-3 text-amber-600" />
+                                Locked
+                              </span>
+                            )}
+                          </div>
+                          {meal.energy_kcal && (
+                            <span className="text-xs font-mono font-bold text-[#073B72] bg-slate-100 px-2.5 py-0.5 rounded-full">
+                              ~{Math.round(meal.energy_kcal)} kcal
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Dish Title */}
+                        <h4 className="text-base font-bold text-[#073B72] leading-snug">
+                          {meal.title}
+                        </h4>
+
+                        {/* Macros & Items Preview */}
+                        <div className="flex items-center gap-3 text-xs font-medium text-slate-600">
+                          <span>P: {Math.round(meal.protein_g)}g</span>
+                          <span>•</span>
+                          <span>C: {Math.round(meal.carbohydrate_g)}g</span>
+                          <span>•</span>
+                          <span>F: {Math.round(meal.fat_g)}g</span>
+                        </div>
+
+                        {/* Key Ingredients */}
+                        {meal.items && meal.items.length > 0 && (
+                          <div className="flex flex-wrap gap-1 pt-1">
+                            {meal.items.map((item, iIdx) => (
+                              <span
+                                key={iIdx}
+                                className="text-[11px] px-2 py-0.5 rounded-lg bg-[#F5FBFD] border border-[#D7EAF2] text-slate-700"
+                              >
+                                {item.display_name} ({item.standard_portion || `${item.grams}g`})
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* "Why this meal?" Explainability Accordion (Phase 30) */}
+                        <button
+                          type="button"
+                          onClick={() => setExpandedMealRole(isExpanded ? null : meal.role)}
+                          className="text-[11px] font-semibold text-[#0E9EAA] hover:text-[#0b828c] flex items-center gap-1 pt-1"
+                        >
+                          <span>Why this meal?</span>
+                          {isExpanded ? (
+                            <ChevronUp className="w-3.5 h-3.5" />
+                          ) : (
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+
+                        {isExpanded && (
+                          <div className="p-3 rounded-xl bg-[#F5FBFD] border border-[#D7EAF2] text-xs text-slate-700 space-y-1.5 animate-fadeIn">
+                            <p>
+                              <strong>Clinical & Cultural Grounding:</strong> Formulated to meet your{' '}
+                              {Math.round(meal.energy_kcal)} kcal target and {Math.round(meal.protein_g)}g protein goal
+                              with low glycemic impact.
+                            </p>
+                            {meal.items[0]?.recipe_note && (
+                              <p className="text-[11px] text-slate-500 italic">
+                                Note: {meal.items[0].recipe_note}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Card Action Buttons (Lock, Swap, Log as Eaten) */}
+                      <div className="pt-3 border-t border-[#D7EAF2]/70 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5">
+                          {/* Lock Button */}
+                          <button
+                            type="button"
+                            disabled={isActionBusy}
+                            onClick={() => handleToggleLock(selectedDay.day_name, meal.role, isLocked)}
+                            className={`p-2 rounded-xl border text-xs font-semibold transition cursor-pointer ${
+                              isLocked
+                                ? 'bg-amber-50 border-amber-300 text-amber-800'
+                                : 'bg-white border-[#D7EAF2] text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                            }`}
+                            title={isLocked ? 'Unlock meal' : 'Lock meal (protects against regeneration)'}
+                          >
+                            {isLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
+                          </button>
+
+                          {/* Swap Button */}
+                          <button
+                            type="button"
+                            disabled={isActionBusy}
+                            onClick={() => handleSwapMeal(selectedDay.day_name, meal.role)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-[#D7EAF2] bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer transition"
+                            title="Swap with a validated safe alternative"
+                          >
+                            <RefreshCw className="w-3 h-3 text-[#16B8C4]" />
+                            <span>Swap</span>
+                          </button>
+                        </div>
+
+                        {/* 1-Click Log as Eaten (Phase 3 & 8) */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedMealForLog(meal);
+                            setIsLogModalOpen(true);
+                          }}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer ${primaryBtnClass}`}
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Log as Eaten</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </section>
+      ) : (
+        /* Empty Plan State (Phase 29) */
+        <section className="rounded-3xl bg-white border border-[#D7EAF2] p-8 text-center space-y-4 shadow-xs">
+          <div className="w-14 h-14 mx-auto rounded-3xl bg-teal-50 text-[#0E9EAA] flex items-center justify-center">
+            <Sparkles className="w-7 h-7" />
+          </div>
+          <div className="max-w-md mx-auto space-y-1.5">
+            <h3 className="text-xl font-bold text-[#073B72]">
+              Build your personalized 7-day meal plan
+            </h3>
+            <p className="text-xs sm:text-sm text-[#55718F] leading-relaxed">
+              Personalized around your metabolic data, clinical risk tier, and authentic Pakistani
+              dishes. Fully editable with one-click meal swaps.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsWizardOpen(true)}
+            className={`inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-xs sm:text-sm font-bold transition shadow-xs cursor-pointer ${primaryBtnClass}`}
+          >
+            <Sparkles className="w-4 h-4" />
+            Generate My 7-Day Plan
+          </button>
+        </section>
+      )}
+
+      {/* ── 3. TODAY'S TARGETS VS LOGGED INTAKE & ADHERENCE (Phase 14 & 15) ── */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-[#073B72]">
+              Today's Targets vs Actual Intake
+            </h3>
+            <p className="text-xs text-[#55718F]">
+              Real nutrition comparisons based on authoritative logged entries. No fake precision.
+            </p>
+          </div>
+          <div className="hidden sm:flex items-center gap-2">
+            <span className="text-xs font-semibold px-3 py-1 rounded-full bg-teal-50 border border-teal-200 text-teal-800">
+              {plannedLoggedCount} of {plannedMealCount} planned meals logged today
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          {/* Energy */}
+          <div className="rounded-2xl bg-white border border-[#D7EAF2] p-4 space-y-1 shadow-xs">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#55718F] block">
+              Energy (Calories)
+            </span>
+            <div className="text-lg sm:text-xl font-bold font-mono text-[#073B72]">
+              {Math.round(loggedTotals.calories)}{' '}
+              <span className="text-xs font-normal text-slate-500">
+                / {targetCalories ? `${Math.round(targetCalories)} kcal` : 'target pending'}
+              </span>
+            </div>
+            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-2">
+              <div
+                className="bg-[#0E9EAA] h-full transition-all"
+                style={{
+                  width: `${Math.min(100, targetCalories ? (loggedTotals.calories / targetCalories) * 100 : 0)}%`,
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Protein */}
+          <div className="rounded-2xl bg-white border border-[#D7EAF2] p-4 space-y-1 shadow-xs">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#073B72] block">
+              Protein
+            </span>
+            <div className="text-lg sm:text-xl font-bold font-mono text-[#073B72]">
+              {Math.round(loggedTotals.protein)}g{' '}
+              <span className="text-xs font-normal text-slate-500">
+                / {targetProtein ? `${Math.round(targetProtein)}g` : '--'}
+              </span>
+            </div>
+            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-2">
+              <div
+                className="bg-[#073B72] h-full transition-all"
+                style={{
+                  width: `${Math.min(100, targetProtein ? (loggedTotals.protein / targetProtein) * 100 : 0)}%`,
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Carbs */}
+          <div className="rounded-2xl bg-white border border-[#D7EAF2] p-4 space-y-1 shadow-xs">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-amber-700 block">
+              Carbohydrates
+            </span>
+            <div className="text-lg sm:text-xl font-bold font-mono text-amber-800">
+              {Math.round(loggedTotals.carbs)}g{' '}
+              <span className="text-xs font-normal text-slate-500">
+                / {targetCarbs ? `${Math.round(targetCarbs)}g` : '--'}
+              </span>
+            </div>
+            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-2">
+              <div
+                className="bg-amber-500 h-full transition-all"
+                style={{
+                  width: `${Math.min(100, targetCarbs ? (loggedTotals.carbs / targetCarbs) * 100 : 0)}%`,
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Fats */}
+          <div className="rounded-2xl bg-white border border-[#D7EAF2] p-4 space-y-1 shadow-xs">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-rose-700 block">
+              Healthy Fats
+            </span>
+            <div className="text-lg sm:text-xl font-bold font-mono text-rose-800">
+              {Math.round(loggedTotals.fat)}g{' '}
+              <span className="text-xs font-normal text-slate-500">
+                / {targetFat ? `${Math.round(targetFat)}g` : '--'}
+              </span>
+            </div>
+            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-2">
+              <div
+                className="bg-rose-500 h-full transition-all"
+                style={{
+                  width: `${Math.min(100, targetFat ? (loggedTotals.fat / targetFat) * 100 : 0)}%`,
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 4. MEAL LOG HISTORY (Phase 3 & 25) ── */}
+      <section className="rounded-3xl bg-white border border-[#D7EAF2] p-6 space-y-5 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 className="text-base font-bold text-[#073B72]">
+              Meal Log History
+            </h3>
+            <p className="text-xs text-[#55718F]">
+              Authoritative records saved to your longitudinal health timeline.
+            </p>
+          </div>
+
+          {/* Filter Tabs */}
+          <div className="flex items-center gap-1.5 bg-[#F5FBFD] p-1 rounded-xl border border-[#D7EAF2]">
+            {(['today', 'yesterday', 'week'] as const).map((filter) => (
+              <button
+                key={filter}
+                type="button"
+                onClick={() => setLogFilter(filter)}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition capitalize cursor-pointer ${
+                  logFilter === filter
+                    ? 'bg-white text-[#073B72] shadow-xs'
+                    : 'text-[#55718F] hover:text-[#073B72]'
+                }`}
+              >
+                {filter === 'week' ? 'Past 7 Days' : filter}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {filteredLogs.length === 0 ? (
+          <div className="p-6 rounded-2xl bg-[#F5FBFD] border border-[#D7EAF2] text-center space-y-1.5">
+            <Utensils className="w-6 h-6 mx-auto text-slate-400" />
+            <p className="text-xs font-bold text-slate-700">No meals logged for this period</p>
+            <p className="text-[11px] text-[#55718F]">
+              Click "+ Log Meal" above or "Log as Eaten" on your planned meals.
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {filteredLogs.map((log) => (
+              <div
+                key={log.id}
+                className="py-3 flex items-center justify-between gap-4 text-xs hover:bg-slate-50/60 rounded-xl px-2 transition"
+              >
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-[#073B72] capitalize">{log.meal_type}</span>
+                    <span className="text-slate-400">•</span>
+                    <span className="font-semibold text-slate-800">{log.food_name}</span>
+                    <span className="text-slate-500">({log.serving})</span>
+                  </div>
+                  {log.notes && <p className="text-[11px] text-slate-500">{log.notes}</p>}
+                </div>
+
+                <div className="flex items-center gap-3 shrink-0">
+                  {log.calories && (
+                    <span className="font-mono text-slate-600 font-medium">
+                      ~{Math.round(log.calories)} kcal
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteFoodLog(log.id)}
+                    className="p-1 text-slate-400 hover:text-rose-600 transition rounded-lg"
+                    title="Delete log"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
       </section>
 
-      {/* 2. Daily Targets (ONLY when available, otherwise graceful pending state) */}
-      <section aria-labelledby="daily-targets-title" className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 id="daily-targets-title" className="text-lg font-bold text-[#073B72]">
-              Daily Nutritional Targets
-            </h3>
-            <p className="text-xs text-[#55718F]">
-              Personalized metabolic benchmarks based on your biometrics and daily activity
-            </p>
-          </div>
-          {hasTargets && targets.calorie_range_min && targets.calorie_range_max && (
-            <span className="text-xs font-medium text-slate-500 hidden sm:inline">
-              Target Range: {targets.calorie_range_min}–{targets.calorie_range_max} kcal
-            </span>
-          )}
-        </div>
-
-        {!hasTargets ? (
-          /* Graceful Target Pending State */
-          <div className="rounded-2xl bg-[#F5FBFD] border border-[#D7EAF2] p-6 text-center space-y-2">
-            <div className="w-10 h-10 mx-auto rounded-full bg-amber-50 text-amber-600 flex items-center justify-center">
-              <Info className="w-5 h-5" />
-            </div>
-            <h4 className="text-base font-bold text-[#073B72]">
-              Personalized target pending
-            </h4>
-            <p className="text-xs sm:text-sm text-[#55718F] max-w-md mx-auto">
-              Complete your weight and height information to calculate calibrated daily energy and macronutrient targets.
-            </p>
-          </div>
-        ) : (
-          /* Compact Metric Cards (Avoid giant fitness rings) */
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-            {/* Daily Energy */}
-            <div className="rounded-2xl bg-white border border-[#D7EAF2] p-4 space-y-1 shadow-xs">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#55718F] block">
-                Daily Energy
-              </span>
-              <div className="text-xl sm:text-2xl font-bold font-mono text-[#073B72]">
-                {targets.daily_calories_kcal?.toLocaleString()}
-                <span className="text-xs font-normal text-slate-500 ml-1">kcal</span>
-              </div>
-              <p className="text-[11px] text-slate-500 pt-1 border-t border-slate-100">
-                Personalized estimate
-              </p>
-            </div>
-
-            {/* Protein */}
-            <div className="rounded-2xl bg-white border border-[#D7EAF2] p-4 space-y-1 shadow-xs">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#073B72] block">
-                Protein {targets.protein?.percent_of_energy ? `(${targets.protein.percent_of_energy}%)` : ''}
-              </span>
-              <div className="text-xl sm:text-2xl font-bold font-mono text-[#073B72]">
-                {targets.protein?.grams ?? '--'}
-                <span className="text-xs font-normal text-slate-500 ml-1">g</span>
-              </div>
-              <p className="text-[11px] text-slate-500 pt-1 border-t border-slate-100">
-                Daily target
-              </p>
-            </div>
-
-            {/* Carbohydrates */}
-            <div className="rounded-2xl bg-white border border-[#D7EAF2] p-4 space-y-1 shadow-xs">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-amber-700 block">
-                Carbs {targets.carbohydrates?.percent_of_energy ? `(${targets.carbohydrates.percent_of_energy}%)` : ''}
-              </span>
-              <div className="text-xl sm:text-2xl font-bold font-mono text-amber-800">
-                {targets.carbohydrates?.grams ?? '--'}
-                <span className="text-xs font-normal text-slate-500 ml-1">g</span>
-              </div>
-              <p className="text-[11px] text-slate-500 pt-1 border-t border-slate-100">
-                Complex energy source
-              </p>
-            </div>
-
-            {/* Healthy Fats */}
-            <div className="rounded-2xl bg-white border border-[#D7EAF2] p-4 space-y-1 shadow-xs">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-rose-700 block">
-                Fats {targets.fats?.percent_of_energy ? `(${targets.fats.percent_of_energy}%)` : ''}
-              </span>
-              <div className="text-xl sm:text-2xl font-bold font-mono text-rose-800">
-                {targets.fats?.grams ?? '--'}
-                <span className="text-xs font-normal text-slate-500 ml-1">g</span>
-              </div>
-              <p className="text-[11px] text-slate-500 pt-1 border-t border-slate-100">
-                Hormonal support
-              </p>
-            </div>
-
-            {/* Dietary Fiber */}
-            <div className="rounded-2xl bg-white border border-[#D7EAF2] p-4 space-y-1 shadow-xs">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#20B486] block">
-                Fiber
-              </span>
-              <div className="text-xl sm:text-2xl font-bold font-mono text-[#20B486]">
-                {targets.fiber_grams ?? '--'}
-                <span className="text-xs font-normal text-slate-500 ml-1">g</span>
-              </div>
-              <p className="text-[11px] text-slate-500 pt-1 border-t border-slate-100">
-                Daily reference
-              </p>
-            </div>
-
-            {/* Hydration */}
-            <div className="rounded-2xl bg-white border border-[#D7EAF2] p-4 space-y-1 shadow-xs">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#16B8C4] block">
-                Hydration
-              </span>
-              <div className="text-xl sm:text-2xl font-bold font-mono text-[#16B8C4]">
-                {targets.hydration_liters ?? '--'}
-                <span className="text-xs font-normal text-slate-500 ml-1">L</span>
-              </div>
-              <p className="text-[11px] text-slate-500 pt-1 border-t border-slate-100">
-                General guidance
-              </p>
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* 3. Targeted Food Swaps */}
+      {/* ── 5. TARGETED FOOD SWAPS (Preserved from Lifestyle Architecture) ── */}
       {nutrition.targeted_swaps && nutrition.targeted_swaps.length > 0 && (
         <section aria-labelledby="food-swaps-title" className="space-y-4">
           <div className="flex items-center justify-between">
@@ -208,7 +920,7 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
                 Smart Food Swaps
               </h3>
               <p className="text-xs text-[#55718F]">
-                Practical substitutions to stabilize glucose and support hormone balance
+                Evidence-aligned substitutions to stabilize glucose and support hormone balance
               </p>
             </div>
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-[#F5FBFD] border border-[#D7EAF2] text-[#073B72]">
@@ -242,7 +954,6 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
                     {swap.swap_title}
                   </h4>
 
-                  {/* Side-by-side / Arrow Swap Layout */}
                   <div className="p-3 rounded-xl bg-[#F5FBFD] border border-[#D7EAF2]/80 flex items-center justify-between gap-3 text-xs sm:text-sm">
                     <div className="text-slate-500 line-through">
                       <span className="text-[10px] uppercase font-bold text-slate-400 block">
@@ -270,78 +981,60 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
         </section>
       )}
 
-      {/* 4. Personalized Meal Concepts */}
-      {nutrition.meal_concepts && nutrition.meal_concepts.length > 0 && (
-        <section aria-labelledby="meal-concepts-title" className="space-y-4">
-          <h3 id="meal-concepts-title" className="text-lg font-bold text-[#073B72]">
-            Personalized Meal Concepts
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {nutrition.meal_concepts.map((meal, idx) => (
-              <div
-                key={idx}
-                className="rounded-2xl bg-white border border-[#D7EAF2] p-5 space-y-3 shadow-xs flex flex-col justify-between"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-[#55718F]">
-                      {meal.meal_type}
-                    </span>
-                    {meal.est_calories && (
-                      <span className="text-xs font-mono font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
-                        ~{meal.est_calories} kcal
-                      </span>
-                    )}
-                  </div>
-                  <h4 className="text-sm sm:text-base font-bold text-[#073B72] leading-snug">
-                    {meal.title}
-                  </h4>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    {meal.description}
-                  </p>
-                </div>
-
-                <div className="space-y-2 pt-2 border-t border-[#D7EAF2]/60">
-                  <div className="flex flex-wrap gap-1">
-                    {meal.key_ingredients.map((ing, iIdx) => (
-                      <span
-                        key={iIdx}
-                        className="text-[10px] px-2 py-0.5 rounded-md bg-[#F5FBFD] border border-[#D7EAF2] text-slate-700 font-medium"
-                      >
-                        {ing}
-                      </span>
-                    ))}
-                  </div>
-                  <p className="text-[11px] text-[#20B486] font-medium flex items-start gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                    <span>{meal.hormonal_benefit}</span>
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* 5. Filtered Nutrition Recommendations */}
-      {nutritionRecs.length > 0 && (
+      {/* ── 6. SPECIFIC NUTRITION ACTIONS & RECOMMENDATIONS ── */}
+      {recommendations.filter((r) => r.category === 'nutrition').length > 0 && (
         <section aria-labelledby="nutrition-recs-title" className="space-y-4 pt-4 border-t border-[#D7EAF2]">
           <h3 id="nutrition-recs-title" className="text-lg font-bold text-[#073B72]">
-            Specific Nutrition Actions
+            Evidence-Based Lifestyle Priorities
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {nutritionRecs.map((rec) => (
-              <RecommendationCard
-                key={rec.id}
-                recommendation={rec}
-                onSelect={onSelectRecommendation}
-                onUpdateStatus={onUpdateStatus}
-                isMale={isMale}
-              />
-            ))}
+            {recommendations
+              .filter((r) => r.category === 'nutrition')
+              .map((rec) => (
+                <RecommendationCard
+                  key={rec.id}
+                  recommendation={rec}
+                  onSelect={onSelectRecommendation}
+                  onUpdateStatus={onUpdateStatus}
+                  isMale={isMale}
+                />
+              ))}
           </div>
         </section>
       )}
+
+      {/* ── MODALS ── */}
+      {/* 1. Plan Generation 5-Step Wizard */}
+      <PlanGenerationWizardModal
+        isOpen={isWizardOpen}
+        onClose={() => setIsWizardOpen(false)}
+        onPlanGenerated={(newPlan) => {
+          setCurrentPlan(newPlan);
+          setSelectedDayName('Monday');
+          loadData();
+        }}
+        isMale={isMale}
+      />
+
+      {/* 2. Log Meal Modal (Planned or Custom) */}
+      <LogMealModal
+        isOpen={isLogModalOpen}
+        onClose={() => setIsLogModalOpen(false)}
+        onFoodLogged={(newLog) => {
+          setFoodLogs([newLog, ...foodLogs]);
+          loadData();
+        }}
+        plannedMeal={selectedMealForLog}
+        dayName={selectedDay?.day_name}
+        isMale={isMale}
+      />
+
+      {/* 3. Meal Reminders Modal */}
+      <MealRemindersModal
+        isOpen={isRemindersOpen}
+        onClose={() => setIsRemindersOpen(false)}
+        isMale={isMale}
+      />
     </div>
   );
 };

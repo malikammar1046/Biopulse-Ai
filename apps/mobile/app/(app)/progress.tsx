@@ -454,7 +454,7 @@ export default function ProgressScreen() {
                 </View>
 
                 {/* Middle: Sparkline */}
-                <View style={styles.sparkCol}>
+                <View style={[styles.sparkCol, styles.sparklineArea]}>
                   <MiniSparkline points={item.points} color={item.sparklineColor} />
                 </View>
 
@@ -616,6 +616,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
+  },
+  sparklineArea: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   rightCol: {

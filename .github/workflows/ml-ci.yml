@@ -1,0 +1,52 @@
+name: Machine Learning CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'machine-learning/**'
+      - '.github/workflows/ml-ci.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'machine-learning/**'
+      - '.github/workflows/ml-ci.yml'
+
+concurrency:
+  group: ml-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ml-validate-and-smoke-test:
+    name: Model Artifact & Inference Smoke Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: machine-learning/requirements.txt
+
+      - name: Install System OCR Library
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y tesseract-ocr
+
+      - name: Install ML Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r machine-learning/requirements.txt
+
+      - name: Validate Python Syntax in ML Modules
+        run: |
+          python -m py_compile machine-learning/test_production_models.py
+          python -m py_compile machine-learning/ml/test_imports.py
+
+      - name: Run Production Model Artifact & Inference Smoke Tests
+        run: |
+          python -m pytest machine-learning/ml/test_imports.py machine-learning/test_production_models.py -v

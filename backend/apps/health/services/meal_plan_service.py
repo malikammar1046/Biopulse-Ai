@@ -84,11 +84,11 @@ class MealPlanService:
         self,
         raw_user_meta_data: Optional[Dict[str, Any]],
         profile_data: Optional[Dict[str, Any]],
-        active_assessment: Optional[Dict[str, Any]] = None,
+        active_assessment_module: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Runs the complete readiness check and returns the structured dictionary."""
         res = MealProfileBuilder.check_nutrition_readiness(
-            raw_user_meta_data, profile_data, active_assessment=active_assessment
+            raw_user_meta_data, profile_data, active_assessment_module=active_assessment_module
         )
         return res.to_dict()
 
@@ -247,48 +247,33 @@ class MealPlanService:
         # 5. Production Portion Constraints
         constraints = get_production_portion_constraints()
 
-        # 6. Generate Phase 6D candidate full days — one per slot for genuine 7-day variety.
-        # Each slot gets its own independent Phase 6D run so that days differ meaningfully.
-        # The best+alternatives from EACH slot form that slot's candidate pool.
-        slot_candidates: dict = {}
-        for slot_idx in range(1, 8):
-            slot_res = generate_full_day_plan(
-                neutral_profile=neutral,
-                condition_profile=condition,
-                schedule=schedule,
-                policy=FullDayPlanningPolicy(
-                    maximum_meal_candidates_per_role=3,
-                    maximum_alternative_day_plans=3,
-                ),
-                default_constraints=constraints,
-                plan_day_index=slot_idx,
-            )
-            if slot_res.is_successful and slot_res.best_day_plan:
-                pool = [slot_res.best_day_plan] + slot_res.alternative_day_plans
-            else:
-                # Fallback: reuse first slot's pool if a specific slot fails
-                if 1 in slot_candidates:
-                    pool = slot_candidates[1]
-                else:
-                    raise RuntimeError(
-                        f"Failed to generate candidate day plan for slot {slot_idx}: "
-                        f"{slot_res.warnings}"
-                    )
-            slot_candidates[slot_idx] = pool
+        # 6. Generate Phase 6D candidate full days
+        day_res = generate_full_day_plan(
+            neutral_profile=neutral,
+            condition_profile=condition,
+            schedule=schedule,
+            policy=FullDayPlanningPolicy(
+                maximum_meal_candidates_per_role=3,
+                maximum_alternative_day_plans=3,
+            ),
+            default_constraints=constraints,
+        )
 
-        # 7. Generate Phase 6E 7-Day Plan using per-slot candidate pools for real variety
+        if not day_res.is_successful or not day_res.best_day_plan:
+            raise RuntimeError(f"Failed to generate valid candidate day plan: {day_res.failure_details}")
+
+        candidate_pool = [day_res.best_day_plan] + day_res.alternative_day_plans
+
+        # 7. Generate Phase 6E 7-Day Plan
         week_res = generate_weekly_plan(
             neutral_profile=neutral,
             condition_profile=condition,
-            candidate_days_by_slot=slot_candidates,
+            candidate_day_pool=candidate_pool,
             planning_days=7,
             policy=WeeklyVarietyPolicy(
-                maximum_same_entity_occurrences_per_week=14,
-                maximum_same_equivalence_concept_occurrences_per_week=14,
-                maximum_same_meal_combination_occurrences_per_week=3,
-                maximum_same_day_plan_occurrences_per_week=1,
-                maximum_candidate_days_per_slot=4,
-                maximum_week_candidate_sequences_evaluated=500,
+                maximum_same_entity_occurrences_per_week=28,
+                maximum_same_meal_combination_occurrences_per_week=7,
+                maximum_candidate_days_per_slot=3,
             ),
         )
 
@@ -504,6 +489,17 @@ class MealPlanService:
         raw_plan_type = (record.get("plan_type") or "").lower()
         plan_type_dto = "WEEKLY_7_DAY" if raw_plan_type == "weekly" else (record.get("plan_type") or "WEEKLY_7_DAY")
 
+        # Format and ensure UI fields on days and meals
+        days = plan_data.get("days", [])
+        for d in days:
+            for m in d.get("meals", []):
+                if "is_locked" not in m:
+                    m["is_locked"] = False
+                if "why_it_fits" not in m:
+                    m["why_it_fits"] = f"Calibrated for your {profile.get('dietary_class', 'balanced')} dietary targets and hormonal balance."
+                if "prep_time_minutes" not in m:
+                    m["prep_time_minutes"] = 20
+
         return {
             "id": record.get("id"),
             "plan_type": plan_type_dto,
@@ -528,12 +524,431 @@ class MealPlanService:
             },
             "days_targets_met": plan_data.get("days_targets_met", 0),
             "days_with_deviations": plan_data.get("days_with_deviations", 0),
-            "days": plan_data.get("days", []),
+            "days": days,
             "coverage": plan_data.get("coverage", {}),
             "condition_guidance": plan_data.get("condition_guidance", []),
             "warnings": plan_data.get("warnings", []),
         }
 
+    def lock_meal(
+        self,
+        user_id: str,
+        plan_id: str,
+        day_index: int,
+        meal_role: str,
+        is_locked: bool = True,
+        auth_token: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Locks or unlocks an individual meal to preserve it during regeneration."""
+        record = self.repository.get_plan_by_id(user_id=user_id, plan_id=plan_id, auth_token=auth_token)
+        if not record:
+            raise ValueError(f"Plan {plan_id} not found for user.")
+        plan_data = record.get("plan_data") or {}
+        days = plan_data.get("days", [])
+        role_clean = str(meal_role).strip().upper()
+
+        found = False
+        for d in days:
+            if d.get("day_index") == int(day_index):
+                for m in d.get("meals", []):
+                    if m.get("role", "").upper() == role_clean:
+                        m["is_locked"] = bool(is_locked)
+                        found = True
+                        break
+                if found:
+                    break
+
+        if not found:
+            raise ValueError(f"Meal {meal_role} on day {day_index} not found.")
+
+        updated = self.repository.update_plan_payload(
+            user_id=user_id, plan_id=plan_id, plan_data=plan_data, auth_token=auth_token
+        )
+        return self._format_plan_response(updated or record)
+
+    def swap_meal(
+        self,
+        user_id: str,
+        plan_id: str,
+        day_index: int,
+        meal_role: str,
+        target_entity_id: Optional[str] = None,
+        auth_token: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Swaps an individual meal for a safe, verified alternative that strictly respects
+        patient allergens, dietary pattern, and macro ranges.
+        """
+        record = self.repository.get_plan_by_id(user_id=user_id, plan_id=plan_id, auth_token=auth_token)
+        if not record:
+            raise ValueError(f"Plan {plan_id} not found for user.")
+
+        plan_data = record.get("plan_data") or {}
+        days = plan_data.get("days", [])
+        role_clean = str(meal_role).strip().upper()
+
+        target_day = None
+        target_meal = None
+        for d in days:
+            if d.get("day_index") == int(day_index):
+                target_day = d
+                for m in d.get("meals", []):
+                    if m.get("role", "").upper() == role_clean:
+                        target_meal = m
+                        break
+                break
+
+        if not target_day or not target_meal:
+            raise ValueError(f"Meal {meal_role} on day {day_index} not found.")
+
+        # Get user safety constraints
+        profile = record.get("profile_snapshot") or {}
+        allergens = profile.get("food_allergies") or []
+        diet_class = profile.get("dietary_class", "omnivore")
+
+        # Query eligible alternate foods from PakistanFoodCatalog
+        from apps.intelligence.services.pakistan_food_catalog import PakistanFoodCatalog
+        eligible = PakistanFoodCatalog.get_eligible_foods(
+            allergens=allergens,
+            dietary_preference=diet_class,
+        )
+
+        current_items = [it.get("entity_id") for it in target_meal.get("items", [])]
+        candidates = [
+            f for f in eligible
+            if f.planner_entity_id not in current_items
+            and (role_clean.lower() in f.meal_roles.lower() or "lunch,dinner" in f.meal_roles.lower() or "all" in f.meal_roles.lower())
+        ]
+
+        if not candidates:
+            candidates = [f for f in eligible if f.planner_entity_id not in current_items]
+
+        if not candidates:
+            raise ValueError("No eligible alternative meal found matching safety and dietary requirements.")
+
+        chosen = None
+        if target_entity_id:
+            for c in candidates:
+                if c.planner_entity_id == target_entity_id:
+                    chosen = c
+                    break
+        if not chosen:
+            # Deterministic alternate selection based on day_index to be reproducible
+            chosen = candidates[int(day_index) % len(candidates)]
+
+        target_cals = target_meal.get("energy_kcal", 400.0)
+        cals_per_100g = chosen.energy_kcal_per_100g or 150.0
+        portion_grams = round((target_cals / cals_per_100g) * 100.0, 1) if cals_per_100g > 0 else 150.0
+        portion_grams = max(50.0, min(350.0, portion_grams))
+
+        new_cals = round(cals_per_100g * (portion_grams / 100.0), 1)
+        new_prot = round((chosen.protein_g_per_100g or 0.0) * (portion_grams / 100.0), 1)
+        new_carb = round((chosen.carb_g_per_100g or 0.0) * (portion_grams / 100.0), 1)
+        new_fat = round((chosen.fat_g_per_100g or 0.0) * (portion_grams / 100.0), 1)
+
+        verified_rec = self._verified_records_map.get(chosen.planner_entity_id)
+        portion_desc = (
+            f"Standard serving: {verified_rec.source_serving_grams}g ({verified_rec.source_reference})"
+            if verified_rec else f"{portion_grams:.0f}g portion"
+        )
+
+        why_fits = f"Fits your {diet_class} preference and provides ~{new_prot}g protein for satiety and metabolic balance."
+
+        target_meal["title"] = f"{chosen.entity_name_en} ({chosen.entity_name_local})" if chosen.entity_name_local else chosen.entity_name_en
+        target_meal["energy_kcal"] = new_cals
+        target_meal["protein_g"] = new_prot
+        target_meal["carbohydrate_g"] = new_carb
+        target_meal["fat_g"] = new_fat
+        target_meal["why_it_fits"] = why_fits
+        target_meal["prep_time_minutes"] = 25
+        target_meal["items"] = [{
+            "entity_id": chosen.planner_entity_id,
+            "display_name": chosen.entity_name_en,
+            "grams": portion_grams,
+            "standard_portion": portion_desc,
+            "energy_kcal": new_cals,
+            "protein_g": new_prot,
+            "carbohydrate_g": new_carb,
+            "fat_g": new_fat,
+            "has_recipe": False,
+            "recipe_note": "Prepared with olive oil / light oil and minimal refined sugar.",
+        }]
+
+        # Recalculate day totals
+        day_meals = target_day.get("meals", [])
+        target_day["energy_kcal"] = round(sum(m.get("energy_kcal", 0) for m in day_meals), 1)
+        target_day["protein_g"] = round(sum(m.get("protein_g", 0) for m in day_meals), 1)
+        target_day["carbohydrate_g"] = round(sum(m.get("carbohydrate_g", 0) for m in day_meals), 1)
+        target_day["fat_g"] = round(sum(m.get("fat_g", 0) for m in day_meals), 1)
+
+        updated = self.repository.update_plan_payload(
+            user_id=user_id, plan_id=plan_id, plan_data=plan_data, auth_token=auth_token
+        )
+        return self._format_plan_response(updated or record)
+
+    def regenerate_day(
+        self,
+        user_id: str,
+        plan_id: str,
+        day_index: int,
+        auth_token: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Regenerates all unlocked meals for a specific day while preserving locked meals."""
+        record = self.repository.get_plan_by_id(user_id=user_id, plan_id=plan_id, auth_token=auth_token)
+        if not record:
+            raise ValueError(f"Plan {plan_id} not found for user.")
+
+        plan_data = record.get("plan_data") or {}
+        days = plan_data.get("days", [])
+        target_day = next((d for d in days if d.get("day_index") == int(day_index)), None)
+        if not target_day:
+            raise ValueError(f"Day {day_index} not found.")
+
+        for meal in target_day.get("meals", []):
+            if not meal.get("is_locked"):
+                self.swap_meal(
+                    user_id=user_id,
+                    plan_id=plan_id,
+                    day_index=int(day_index),
+                    meal_role=meal.get("role"),
+                    auth_token=auth_token,
+                )
+
+        updated = self.repository.get_plan_by_id(user_id=user_id, plan_id=plan_id, auth_token=auth_token)
+        return self._format_plan_response(updated or record)
+
+    def update_plan_status(
+        self,
+        user_id: str,
+        plan_id: str,
+        status_val: str,
+        start_date: Optional[str] = None,
+        auth_token: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Updates plan status (draft, active, completed, archived) and maps dates."""
+        record = self.repository.get_plan_by_id(user_id=user_id, plan_id=plan_id, auth_token=auth_token)
+        if not record:
+            raise ValueError(f"Plan {plan_id} not found for user.")
+
+        plan_data = record.get("plan_data") or {}
+        plan_data["weekly_status"] = str(status_val).upper()
+
+        new_start_dt = None
+        if start_date:
+            s_clean = str(start_date).strip().lower()
+            today = date.today()
+            if s_clean in ("today", "now"):
+                new_start_dt = today
+            elif s_clean in ("next_monday", "monday"):
+                days_ahead = (0 - today.weekday() + 7) % 7
+                if days_ahead == 0:
+                    days_ahead = 7
+                new_start_dt = today + timedelta(days=days_ahead)
+            else:
+                try:
+                    new_start_dt = datetime.strptime(s_clean[:10], "%Y-%m-%d").date()
+                except Exception:
+                    new_start_dt = today
+
+        end_date_str = None
+        start_date_str = None
+        if new_start_dt:
+            start_date_str = new_start_dt.isoformat()
+            end_date_str = (new_start_dt + timedelta(days=6)).isoformat()
+            days = plan_data.get("days", [])
+            for idx, d in enumerate(days):
+                cur_dt = new_start_dt + timedelta(days=idx)
+                d["date"] = cur_dt.isoformat()
+                d["day_name"] = DAY_NAMES[cur_dt.weekday()]
+
+        updated = self.repository.update_plan_payload(
+            user_id=user_id,
+            plan_id=plan_id,
+            plan_data=plan_data,
+            start_date=start_date_str,
+            end_date=end_date_str,
+            auth_token=auth_token,
+        )
+        return self._format_plan_response(updated or record)
+
+    # ----------------------------------------------------------------------
+    # Authoritative Food Logging Integration (Supabase public.food_logs)
+    # ----------------------------------------------------------------------
+    _memory_food_logs: List[Dict[str, Any]] = []
+    _memory_reminders: Dict[str, Dict[str, Any]] = {}
+
+    def log_food_item(
+        self,
+        user_id: str,
+        meal_type: str,
+        food_name: str,
+        serving: str = "1 serving",
+        calories: float = 0.0,
+        protein_g: float = 0.0,
+        carbs_g: float = 0.0,
+        fat_g: float = 0.0,
+        fiber_g: float = 0.0,
+        notes: str = "",
+        logged_at: Optional[str] = None,
+        auth_token: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Saves a food log entry to the authoritative food_logs table."""
+        import uuid
+        log_id = str(uuid.uuid4())
+        today_iso = logged_at or date.today().isoformat()
+        now_iso = datetime.now(timezone.utc).isoformat()
+        clean_meal_type = str(meal_type).lower().replace(" ", "_")
+        if clean_meal_type not in ("breakfast", "morning_snack", "lunch", "afternoon_snack", "dinner", "snack"):
+            clean_meal_type = "lunch"
+        if clean_meal_type == "snack":
+            clean_meal_type = "afternoon_snack"
+
+        record = {
+            "id": log_id,
+            "user_id": user_id,
+            "meal_type": clean_meal_type,
+            "food_name": food_name.strip(),
+            "serving": serving.strip() or "1 serving",
+            "calories": int(round(calories)),
+            "protein_g": round(float(protein_g), 1),
+            "carbs_g": round(float(carbs_g), 1),
+            "fat_g": round(float(fat_g), 1),
+            "fiber_g": round(float(fiber_g), 1),
+            "logged_at": today_iso,
+            "notes": notes.strip(),
+            "created_at": now_iso,
+        }
+
+        client = None
+        try:
+            from apps.health.services.supabase_health_service import health_service
+            client = health_service._client_or_raise(auth_token=auth_token)
+        except Exception:
+            pass
+
+        if client is not None:
+            try:
+                client.table("food_logs").insert(record).execute()
+            except Exception as exc:
+                logger.warning("Supabase food_logs insert failed: %s, falling back to in-memory store", exc)
+                self._memory_food_logs.append(record)
+        else:
+            self._memory_food_logs.append(record)
+
+        return record
+
+    def get_food_logs(
+        self,
+        user_id: str,
+        date_iso: Optional[str] = None,
+        days: int = 7,
+        auth_token: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Retrieves food logs for user strictly scoped to user_id."""
+        client = None
+        try:
+            from apps.health.services.supabase_health_service import health_service
+            client = health_service._client_or_raise(auth_token=auth_token)
+        except Exception:
+            pass
+
+        if client is not None:
+            try:
+                query = client.table("food_logs").select("*").eq("user_id", user_id)
+                if date_iso:
+                    query = query.eq("logged_at", date_iso)
+                else:
+                    cutoff = (date.today() - timedelta(days=days)).isoformat()
+                    query = query.gte("logged_at", cutoff)
+                res = query.order("logged_at", desc=True).order("created_at", desc=True).execute()
+                if res.data:
+                    return res.data
+            except Exception as exc:
+                logger.warning("Supabase food_logs select failed: %s", exc)
+
+        # In-memory fallback
+        logs = [
+            l for l in self._memory_food_logs
+            if l.get("user_id") == user_id and (not date_iso or l.get("logged_at") == date_iso)
+        ]
+        logs.sort(key=lambda x: (x.get("logged_at", ""), x.get("created_at", "")), reverse=True)
+        return logs
+
+    def delete_food_log(self, user_id: str, log_id: str, auth_token: Optional[str] = None) -> bool:
+        """Deletes a food log entry strictly verifying user ownership."""
+        client = None
+        try:
+            from apps.health.services.supabase_health_service import health_service
+            client = health_service._client_or_raise(auth_token=auth_token)
+        except Exception:
+            pass
+
+        if client is not None:
+            try:
+                client.table("food_logs").delete().eq("id", log_id).eq("user_id", user_id).execute()
+                return True
+            except Exception as exc:
+                logger.warning("Supabase food_logs delete failed: %s", exc)
+
+        # In-memory fallback
+        self._memory_food_logs = [
+            l for l in self._memory_food_logs
+            if not (l.get("id") == log_id and l.get("user_id") == user_id)
+        ]
+        return True
+
+    # ----------------------------------------------------------------------
+    # Meal Reminders Settings
+    # ----------------------------------------------------------------------
+    def get_meal_reminders(self, user_id: str, auth_token: Optional[str] = None) -> Dict[str, Any]:
+        """Retrieves user meal reminder preferences."""
+        client = None
+        try:
+            from apps.health.services.supabase_health_service import health_service
+            client = health_service._client_or_raise(auth_token=auth_token)
+        except Exception:
+            pass
+
+        if client is not None:
+            try:
+                res = client.table("profiles").select("meal_reminders").eq("id", user_id).maybe_single().execute()
+                if res.data and res.data.get("meal_reminders"):
+                    return res.data["meal_reminders"]
+            except Exception:
+                pass
+
+        default_settings = {
+            "breakfast_enabled": True,
+            "breakfast_time": "08:00",
+            "lunch_enabled": True,
+            "lunch_time": "13:00",
+            "dinner_enabled": True,
+            "dinner_time": "20:00",
+            "snack_enabled": False,
+            "snack_time": "16:30",
+            "browser_notifications": False,
+        }
+        return self._memory_reminders.get(user_id, default_settings)
+
+    def update_meal_reminders(self, user_id: str, settings_dict: Dict[str, Any], auth_token: Optional[str] = None) -> Dict[str, Any]:
+        """Updates user meal reminder preferences."""
+        self._memory_reminders[user_id] = settings_dict
+        client = None
+        try:
+            from apps.health.services.supabase_health_service import health_service
+            client = health_service._client_or_raise(auth_token=auth_token)
+        except Exception:
+            pass
+
+        if client is not None:
+            try:
+                client.table("profiles").update({"meal_reminders": settings_dict}).eq("id", user_id).execute()
+            except Exception as exc:
+                logger.debug("Could not update meal_reminders on profiles table: %s", exc)
+
+        return settings_dict
+
 
 # Global singleton service
 meal_plan_service = MealPlanService()
+

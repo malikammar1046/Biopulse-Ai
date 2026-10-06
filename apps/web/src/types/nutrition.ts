@@ -22,7 +22,7 @@ export interface PlanningInputsReadiness {
 export interface NutritionReadiness {
   ready: boolean;
   overall_status?: 'READY' | 'WARNINGS' | 'NOT_READY' | string;
-  personalization_level?: 'LEVEL_1_PROFILE' | 'LEVEL_2_SCREENING' | 'LEVEL_3_FULL' | string;
+  personalization_level?: 'LEVEL_1_PROFILE' | 'LEVEL_2_SCREENING' | 'LEVEL_3_FULL' | 'LEVEL_3_CLINICAL' | string;
   blocking_issues?: string[];
   warning_issues?: string[];
   optional_issues?: string[];
@@ -117,9 +117,11 @@ export interface SingleMeal {
   items: PlannedMealItem[];
   // Customization / logging state
   is_locked?: boolean;
+  is_logged?: boolean;
   logged_at?: string | null;
   food_log_id?: string | null;
   why_this_meal?: string;
+  why_it_fits?: string;
   prep_time_minutes?: number;
   safe_substitutions?: string[];
   key_ingredients?: string[];
@@ -197,6 +199,7 @@ export interface NutritionPlanSummary {
   created_at: string;
 }
 
+<<<<<<< HEAD
 // ─── Food Logging ─────────────────────────────────────────────────────────────
 
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
@@ -278,3 +281,32 @@ export interface PlanAdherenceSummary {
   days_engaged: number;       // for week
   days_total: number;         // for week
 }
+
+export interface FoodLogItem {
+  id: string;
+  user_id?: string;
+  meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'morning_snack' | 'afternoon_snack' | string;
+  food_name: string;
+  serving: string;
+  calories: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+  fiber_g?: number;
+  notes?: string;
+  logged_at: string;
+  created_at?: string;
+}
+
+export interface MealReminderSettings {
+  breakfast_enabled: boolean;
+  breakfast_time: string;
+  lunch_enabled: boolean;
+  lunch_time: string;
+  dinner_enabled: boolean;
+  dinner_time: string;
+  snack_enabled: boolean;
+  snack_time: string;
+  browser_notifications?: boolean;
+}
+
