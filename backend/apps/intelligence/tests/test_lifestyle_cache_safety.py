@@ -87,7 +87,7 @@ class LifestyleCacheSafetyTests(TestCase):
             risk_category="moderate",
             probability=probability,
             probability_percent=probability * 100.0,
-            threshold=0.38,
+            threshold=0.25,
             is_active=True,
             created_at="2026-10-02T10:00:00Z",
         )

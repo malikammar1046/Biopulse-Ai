@@ -153,8 +153,8 @@ export interface RiskBandDisplay {
 export function resolveRiskBand(
   probability: number,
   category?: string,
-  threshold: number = 0.38,
-  lowCutoff: number = 0.20
+  threshold: number = 0.25,
+  lowCutoff: number = 0.18
 ): RiskBandDisplay {
   const normCategory = (category || '').toLowerCase().trim();
 
@@ -181,13 +181,13 @@ export function resolveRiskBand(
   if (resolvedCat === 'higher') {
     return {
       category: 'higher',
-      label: 'Higher Risk',
+      label: 'Higher Likelihood',
       color: '#E0316A',
       badgeBg: '#FCE8EF',
       badgeBorder: '#F8CAD9',
       badgeTextColor: '#E0316A',
       summaryText:
-        'Your responses indicate a higher likelihood of PCOS. This is a screening result, not a medical diagnosis.',
+        'Several of your current screening factors are associated with PCOS. Consider discussing these findings with a qualified healthcare professional.',
       progressPercent: Math.min(100, Math.max(0, probPercent)),
     };
   }
@@ -195,26 +195,26 @@ export function resolveRiskBand(
   if (resolvedCat === 'intermediate') {
     return {
       category: 'intermediate',
-      label: 'Intermediate Risk',
+      label: 'Intermediate Likelihood',
       color: '#D97706',
       badgeBg: '#FEF3C7',
       badgeBorder: '#FDE68A',
       badgeTextColor: '#B45309',
       summaryText:
-        'Your responses indicate moderate pattern variability. Longitudinal monitoring and clinical review are suggested.',
+        'Some of your current health patterns are associated with PCOS, but the result is not conclusive. Additional information or clinical review may be helpful.',
       progressPercent: Math.min(100, Math.max(0, probPercent)),
     };
   }
 
   return {
     category: 'lower',
-    label: 'Lower Risk',
+    label: 'Lower Likelihood',
     color: '#059669',
     badgeBg: '#D1FAE5',
     badgeBorder: '#A7F3D0',
     badgeTextColor: '#047857',
     summaryText:
-      'Your responses align with standard baseline biological rhythms. Continue regular preventive health tracking.',
+      'Your current screening pattern shows fewer features associated with PCOS. Continue regular preventive health tracking.',
     progressPercent: Math.min(100, Math.max(0, probPercent)),
   };
 }
@@ -338,7 +338,7 @@ export async function fetchActiveScreeningAssessment(userId?: string): Promise<P
             model_version: row.model_version || 'PCOS-ML v1.2-T1',
             probability: Number(row.probability ?? 0),
             probability_percent: Number(row.probability_percent ?? (Number(row.probability ?? 0) * 100)),
-            threshold: Number(row.threshold ?? 0.38),
+            threshold: Number(row.threshold ?? 0.25),
             risk_category: row.risk_category || 'lower',
             risk_label: row.risk_label,
             explanations: row.explanations || [],

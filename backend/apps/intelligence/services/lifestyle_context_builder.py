@@ -78,7 +78,7 @@ class ScreeningContext:
     risk_label: str = "Lower Screening Risk"
     probability: float = 0.0
     probability_percent: float = 0.0
-    threshold: float = 0.38
+    threshold: float = 0.25
     is_active: bool = False
     created_at: Optional[str] = None
 
@@ -361,7 +361,7 @@ class LifestyleContextBuilder:
             risk_label=active_rec.get("risk_label", "Screening Pending") if has_assessment else "Screening Pending",
             probability=float(active_rec.get("probability", 0.0)) if has_assessment else 0.0,
             probability_percent=float(active_rec.get("probability_percent", 0.0)) if has_assessment else 0.0,
-            threshold=float(active_rec.get("threshold", 0.38)) if has_assessment else 0.38,
+            threshold=float(active_rec.get("threshold", 0.25)) if has_assessment else 0.25,
             is_active=bool(active_rec.get("is_active", False)) if has_assessment else False,
             created_at=active_rec.get("created_at") if has_assessment else None,
         )

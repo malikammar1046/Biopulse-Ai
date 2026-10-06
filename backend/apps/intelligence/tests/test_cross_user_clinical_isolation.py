@@ -142,7 +142,7 @@ class CrossUserClinicalIsolationTests(TestCase):
             "tiers_included": [1, 2, 3],
             "probability": 0.546,
             "probability_percent": 54.6,
-            "threshold": 0.38,
+            "threshold": 0.25,
             "risk_category": "higher",
             "risk_label": "Higher Screening Risk",
             "summary_text": "Multimodal analysis indicates elevated PCOS risk pattern.",

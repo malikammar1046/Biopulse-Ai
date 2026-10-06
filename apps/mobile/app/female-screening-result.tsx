@@ -125,10 +125,10 @@ export default function FemaleScreeningResultScreen() {
       }
 
       // 4. If no server response and no cached assessment, initialize baseline Tier 1 assessment
-      // Real canonical Tier 1 model configuration: threshold 0.38, low_cutoff 0.20
-      const baselineProbability = symptoms.length >= 3 ? 0.72 : symptoms.length >= 1 ? 0.28 : 0.14;
+      // Real canonical Tier 1 model configuration: threshold 0.25, low_cutoff 0.18
+      const baselineProbability = symptoms.length >= 3 ? 0.72 : symptoms.length >= 1 ? 0.22 : 0.14;
       const baselineCategory =
-        baselineProbability >= 0.38 ? 'higher' : baselineProbability >= 0.20 ? 'intermediate' : 'lower';
+        baselineProbability >= 0.25 ? 'higher' : baselineProbability >= 0.18 ? 'intermediate' : 'lower';
 
       const fallbackAssessment: ProgressiveAssessment = {
         assessment_id: 'local_eval_' + Date.now(),
@@ -139,7 +139,7 @@ export default function FemaleScreeningResultScreen() {
         model_version: 'PCOS-ML v1.2-T1',
         probability: baselineProbability,
         probability_percent: Math.round(baselineProbability * 100),
-        threshold: 0.38,
+        threshold: 0.25,
         risk_category: baselineCategory,
         explanations: [
           {
@@ -248,7 +248,7 @@ export default function FemaleScreeningResultScreen() {
         tiers_included: [1],
         probability: 0.65,
         probability_percent: 65,
-        threshold: 0.38,
+        threshold: 0.25,
         risk_category: 'higher',
         explanations: [],
         shap_explanation: null,
@@ -265,7 +265,7 @@ export default function FemaleScreeningResultScreen() {
         tiers_included: [1],
         probability: 0.72,
         probability_percent: 72,
-        threshold: 0.38,
+        threshold: 0.25,
         risk_category: 'higher',
         explanations: [
           {
@@ -312,9 +312,9 @@ export default function FemaleScreeningResultScreen() {
         module: 'female_pcos',
         assessment_level: 'tier_1',
         tiers_included: [1],
-        probability: 0.27,
-        probability_percent: 27,
-        threshold: 0.38,
+        probability: 0.22,
+        probability_percent: 22,
+        threshold: 0.25,
         risk_category: 'intermediate',
         explanations: [
           {
@@ -355,7 +355,7 @@ export default function FemaleScreeningResultScreen() {
         tiers_included: [1],
         probability: 0.12,
         probability_percent: 12,
-        threshold: 0.38,
+        threshold: 0.25,
         risk_category: 'lower',
         explanations: [
           {
@@ -498,7 +498,7 @@ export default function FemaleScreeningResultScreen() {
             <PcosRiskProbabilityCard
               probability={activeAssessment.probability}
               riskCategory={activeAssessment.risk_category}
-              threshold={activeAssessment.threshold || 0.38}
+              threshold={activeAssessment.threshold || 0.25}
             />
 
             {/* 2. Top Contributing Factors Card */}

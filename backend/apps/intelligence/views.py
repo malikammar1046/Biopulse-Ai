@@ -51,7 +51,13 @@ from apps.intelligence.services.intelligence_orchestrator import (
     format_assessment_response,
 )
 from apps.intelligence.services.assessment_repository import assessment_repository, PersistenceError
-from apps.intelligence.services.pcos_ml_service import pcos_ml_service
+from apps.intelligence.services.pcos_ml_service import (
+    pcos_ml_service,
+    PCOS_SCREENING_POLICY,
+    TIER1_SCREENING_THRESHOLD,
+    TIER2_SCREENING_THRESHOLD,
+    MULTIMODAL_SCREENING_THRESHOLD,
+)
 from apps.intelligence.services.male_ml_service import male_ml_service
 from apps.intelligence.services.safety_guardrails import SafetyGuardrails
 from apps.intelligence.services.health_context_builder import HealthContextBuilder
@@ -100,21 +106,25 @@ class IntelligenceStatusView(APIView):
                     "name": "Extra Trees + Platt Sigmoid Calibration",
                     "version": "PCOS-ML v1.2-T1",
                     "features_count": 16,
-                    "screening_threshold": 0.38,
+                    "screening_threshold": TIER1_SCREENING_THRESHOLD,
+                    "screening_policy_version": PCOS_SCREENING_POLICY["version"],
                     "explainability": "TreeSHAP",
                 },
                 "tier_1_2": {
                     "name": "Cumulative Extra Trees + Platt Sigmoid Calibration",
                     "version": "PCOS-ML v1.2-T2",
                     "features_count": 32,
-                    "screening_threshold": 0.29,
+                    "screening_threshold": TIER2_SCREENING_THRESHOLD,
+                    "screening_policy_version": PCOS_SCREENING_POLICY["version"],
                     "explainability": "TreeSHAP",
                 },
                 "tier_1_2_3": {
                     "name": "Weighted Multimodal Probability Fusion",
                     "version": "PCOS-ML v1.2-Multimodal",
                     "weights": {"clinical": 0.95, "ultrasound": 0.05},
-                    "screening_threshold": 0.29,
+                    "screening_threshold": MULTIMODAL_SCREENING_THRESHOLD,
+                    "screening_policy_version": "exploratory_v1",
+                    "operating_point_status": "exploratory_pending_clinical_validation",
                 },
                 "tier3_vision": {
                     "name": "EfficientNet-B0 + PCOM Classifier",

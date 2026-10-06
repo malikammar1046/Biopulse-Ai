@@ -38,6 +38,10 @@ export interface AuthoritativeAssessmentResult {
   modelVersion: string;
   createdAt: string | null;
   assessmentId: string | null;
+  screeningPolicyVersion?: string;
+  originalRiskCategory?: string;
+  originalThreshold?: number;
+  originalProbability?: number | null;
   pcomStatus?: string | null;
   pcomProbability?: number | null;
   gradcamB64?: string | null;
@@ -140,49 +144,107 @@ export function computeCanonicalInputHash(
   }
 }
 
+export function selectAuthoritativeAssessment(
+  candidates: (ProgressiveAssessment | null | undefined)[],
+  pathway: Pathway = 'female'
+): ProgressiveAssessment | null {
+  const isMale = pathway === 'male';
+  const expectedModule = isMale ? 'male_hypogonadism' : 'female_pcos';
+
+  const valid = candidates.filter((item): item is ProgressiveAssessment => {
+    if (!item) return false;
+    const isModuleMatch = Boolean(
+      item.module === expectedModule ||
+      (!isMale && (!item.module || item.module === 'female_pcos')) ||
+      (isMale && (item.module === 'male_hypogonadism' || item.model_name?.toLowerCase().includes('male')))
+    );
+    if (!isModuleMatch) return false;
+    const p = item.probability !== undefined && item.probability !== null
+      ? Number(item.probability)
+      : (item.probability_percent !== undefined && item.probability_percent !== null
+        ? Number(item.probability_percent) / 100
+        : NaN);
+    return !Number.isNaN(p) && item.has_assessment !== false;
+  });
+
+  if (valid.length === 0) return null;
+
+  // Tier precedence: highest valid cumulative completed tier wins
+  const getTierRank = (item: ProgressiveAssessment): number => {
+    const lvl = (item.assessment_level || '').toLowerCase();
+    if (lvl === 'tier_1_2_3') return 4;
+    if (lvl === 'tier_1_2') return 3;
+    if (lvl === 'tier_1_3') return 2;
+    if (lvl === 'tier_1') return 1;
+    return 0;
+  };
+
+  return valid.slice().sort((a, b) => {
+    const rankDiff = getTierRank(b) - getTierRank(a);
+    if (rankDiff !== 0) return rankDiff;
+    const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+    return dateB - dateA;
+  })[0];
+}
+
 export function getAuthoritativeAssessmentForPathway({
   activeAssessment,
+  candidateAssessments,
   pathway,
   userId,
 }: {
   activeAssessment: ProgressiveAssessment | null;
+  candidateAssessments?: (ProgressiveAssessment | null | undefined)[];
   pathway: 'female' | 'male';
   userId?: string;
 }): AuthoritativeAssessmentResult {
   const isMale = pathway === 'male';
   const expectedModule = isMale ? 'male_hypogonadism' : 'female_pcos';
-  const defaultThreshold = isMale ? 0.1808 : 0.38;
+  const defaultThreshold = isMale ? 0.1808 : 0.25;
 
-  // Strict module matching: activeAssessment must belong to the user's active pathway
+  // If candidate assessments provided, pick the highest valid completed cumulative tier
+  let targetAssessment = activeAssessment;
+  if (candidateAssessments && candidateAssessments.length > 0) {
+    const selected = selectAuthoritativeAssessment(
+      activeAssessment ? [activeAssessment, ...candidateAssessments] : candidateAssessments,
+      pathway
+    );
+    if (selected) {
+      targetAssessment = selected;
+    }
+  }
+
+  // Strict module matching: targetAssessment must belong to the user's active pathway
   const isModuleMatch = Boolean(
-    activeAssessment &&
-    (activeAssessment.module === expectedModule ||
-      (!isMale && (!activeAssessment.module || activeAssessment.module === 'female_pcos')) ||
-      (isMale && (activeAssessment.module === 'male_hypogonadism' || activeAssessment.model_name?.toLowerCase().includes('male'))))
+    targetAssessment &&
+    (targetAssessment.module === expectedModule ||
+      (!isMale && (!targetAssessment.module || targetAssessment.module === 'female_pcos')) ||
+      (isMale && (targetAssessment.module === 'male_hypogonadism' || targetAssessment.model_name?.toLowerCase().includes('male'))))
   );
 
   // Strict user isolation
   const isUserMatch = Boolean(
     !userId ||
-    !activeAssessment?.patient_id ||
-    activeAssessment.patient_id === userId
+    !targetAssessment?.patient_id ||
+    targetAssessment.patient_id === userId
   );
 
   const isValidAuthoritative = Boolean(
-    activeAssessment &&
-    activeAssessment.has_assessment !== false &&
+    targetAssessment &&
+    targetAssessment.has_assessment !== false &&
     isModuleMatch &&
     isUserMatch
   );
 
-  if (!isValidAuthoritative || !activeAssessment) {
+  if (!isValidAuthoritative || !targetAssessment) {
     return {
       authoritativeAssessment: null,
       hasAssessment: false,
       probability: null,
       probabilityPercent: null,
-      riskCategory: 'lower',
-      riskLabel: isMale ? 'Lower Screening Risk' : 'Lower Screening Risk',
+      riskCategory: 'unavailable',
+      riskLabel: 'Assessment Unavailable',
       assessmentLevel: 'tier_1',
       threshold: defaultThreshold,
       inputHash: 'none',
@@ -202,37 +264,66 @@ export function getAuthoritativeAssessmentForPathway({
   let probability: number | null = null;
   let probabilityPercent: number | null = null;
 
-  if (activeAssessment.probability_percent !== undefined && activeAssessment.probability_percent !== null) {
-    const rawVal = Number(activeAssessment.probability_percent);
-    probabilityPercent = Number.isInteger(rawVal) ? rawVal : Number(rawVal.toFixed(1));
-    probability = Number((rawVal / 100).toFixed(4));
-  } else if (activeAssessment.probability !== undefined && activeAssessment.probability !== null) {
-    const rawP = Number(activeAssessment.probability);
-    probability = Number(rawP.toFixed(4));
-    const scaled = rawP > 1 ? rawP : rawP * 100;
-    probabilityPercent = Number.isInteger(scaled) ? scaled : Number(scaled.toFixed(1));
+  if (targetAssessment.probability !== undefined && targetAssessment.probability !== null) {
+    const rawP = Number(targetAssessment.probability);
+    if (!Number.isNaN(rawP)) {
+      probability = rawP > 1 ? rawP / 100 : rawP;
+      const displayVal = probability * 100;
+      probabilityPercent = Number(displayVal.toFixed(1));
+    }
+  } else if (targetAssessment.probability_percent !== undefined && targetAssessment.probability_percent !== null) {
+    const rawVal = Number(targetAssessment.probability_percent);
+    if (!Number.isNaN(rawVal)) {
+      probabilityPercent = Number(rawVal.toFixed(1));
+      probability = rawVal / 100;
+    }
   }
 
-  const assessmentLevel = activeAssessment.assessment_level || (activeAssessment.pcom_status ? 'tier_1_3' : 'tier_1');
-  const isTier2Or3 = !isMale && (assessmentLevel === 'tier_1_2' || assessmentLevel === 'tier_1_2_3' || assessmentLevel === 'tier_1_3');
-  const defaultHigh = isMale ? 18.08 : (isTier2Or3 ? 29 : 38);
-  const defaultLow = isMale ? 10 : (isTier2Or3 ? 18 : 20);
+  if (probability === null) {
+    return {
+      authoritativeAssessment: targetAssessment,
+      hasAssessment: false,
+      probability: null,
+      probabilityPercent: null,
+      riskCategory: 'unavailable',
+      riskLabel: 'Assessment Unavailable',
+      assessmentLevel: targetAssessment.assessment_level || 'tier_1',
+      threshold: defaultThreshold,
+      inputHash: 'none',
+      source: 'NONE',
+      modelName: targetAssessment.model_name || (isMale ? 'Male-ML Logistic' : 'PCOS-ML Extra Trees'),
+      modelVersion: targetAssessment.model_version || (isMale ? 'Male-ML v1.0-T1' : 'PCOS-ML v1.2-T1'),
+      createdAt: targetAssessment.created_at || null,
+      assessmentId: targetAssessment.assessment_id || targetAssessment.id || null,
+      screeningPolicyVersion: targetAssessment.screening_policy_version || 'legacy_v1',
+      originalRiskCategory: targetAssessment.original_risk_category || targetAssessment.risk_category,
+      originalThreshold: targetAssessment.original_threshold ?? targetAssessment.threshold,
+      originalProbability: targetAssessment.original_probability ?? null,
+      pcomStatus: targetAssessment.pcom_status || null,
+      pcomProbability: targetAssessment.pcom_probability !== undefined ? targetAssessment.pcom_probability : null,
+      gradcamB64: targetAssessment.gradcam_b64 || null,
+      hormonePatternInterpretation: targetAssessment.hormone_pattern_interpretation || null,
+    };
+  }
 
-  const highCutoff = activeAssessment.threshold !== undefined && activeAssessment.threshold !== null
-    ? (isMale ? Number((Number(activeAssessment.threshold) * 100).toFixed(1)) : Math.round(Number(activeAssessment.threshold) * 100))
-    : defaultHigh;
-  const lowCutoff = defaultLow;
-  const threshold = activeAssessment.threshold ?? (isMale ? 0.1808 : (isTier2Or3 ? 0.29 : 0.38));
+  const assessmentLevel = targetAssessment.assessment_level || (targetAssessment.pcom_status ? 'tier_1_3' : 'tier_1');
 
-  // Authoritative clinical risk derivation strictly matching Screening Workspace cutoff ranges
+  // Policy v2 cutoffs:
+  // Male: 0.1808 threshold, 0.10 lower cutoff
+  // Female: 0.25 primary operating threshold, 0.18 lower cutoff
+  const threshold = typeof targetAssessment.threshold === 'number'
+    ? targetAssessment.threshold
+    : defaultThreshold;
+
   let riskCategory: string;
   let riskLabel: string;
 
-  if (probabilityPercent !== null) {
-    if (probabilityPercent >= highCutoff) {
+  if (isMale) {
+    const maleLow = 0.10;
+    if (probability >= threshold) {
       riskCategory = 'higher';
       riskLabel = 'Higher Screening Risk';
-    } else if (probabilityPercent >= lowCutoff) {
+    } else if (probability >= maleLow) {
       riskCategory = 'intermediate';
       riskLabel = 'Intermediate Screening Risk';
     } else {
@@ -240,25 +331,28 @@ export function getAuthoritativeAssessmentForPathway({
       riskLabel = 'Lower Screening Risk';
     }
   } else {
-    const rawCat = (activeAssessment.risk_category || '').toLowerCase();
-    if (rawCat.includes('high') || rawCat.includes('elevated')) {
+    // Female PCOS screening policy v2:
+    // Categorization uses unrounded full precision probability BEFORE display rounding.
+    // e.g. probability = 0.2496 displays as 25% but classifies as intermediate (< 0.25).
+    const femaleLow = 0.18;
+    if (probability >= threshold) {
       riskCategory = 'higher';
-      riskLabel = 'Higher Screening Risk';
-    } else if (rawCat.includes('inter') || rawCat.includes('mod')) {
+      riskLabel = 'Higher Likelihood';
+    } else if (probability >= femaleLow) {
       riskCategory = 'intermediate';
-      riskLabel = 'Intermediate Screening Risk';
+      riskLabel = 'Intermediate Likelihood';
     } else {
       riskCategory = 'lower';
-      riskLabel = 'Lower Screening Risk';
+      riskLabel = 'Lower Likelihood';
     }
   }
 
-  const rawInputs = activeAssessment.authoritative_tier_1_inputs || activeAssessment.input_features || {};
-  const inputHash = activeAssessment.input_hash || computeCanonicalInputHash(rawInputs, pathway);
+  const rawInputs = targetAssessment.authoritative_tier_1_inputs || targetAssessment.input_features || {};
+  const inputHash = targetAssessment.input_hash || computeCanonicalInputHash(rawInputs, pathway);
 
   return {
-    authoritativeAssessment: activeAssessment,
-    hasAssessment: probabilityPercent !== null,
+    authoritativeAssessment: targetAssessment,
+    hasAssessment: true,
     probability,
     probabilityPercent,
     riskCategory,
@@ -267,13 +361,17 @@ export function getAuthoritativeAssessmentForPathway({
     threshold,
     inputHash,
     source: 'ACTIVE',
-    modelName: activeAssessment.model_name || (isMale ? 'Male-ML Logistic' : 'PCOS-ML Extra Trees'),
-    modelVersion: activeAssessment.model_version || (isMale ? 'Male-ML v1.0-T1' : 'PCOS-ML v1.2-T1'),
-    createdAt: activeAssessment.created_at || null,
-    assessmentId: activeAssessment.assessment_id || activeAssessment.id || null,
-    pcomStatus: activeAssessment.pcom_status || null,
-    pcomProbability: activeAssessment.pcom_probability !== undefined ? activeAssessment.pcom_probability : null,
-    gradcamB64: activeAssessment.gradcam_b64 || null,
-    hormonePatternInterpretation: activeAssessment.hormone_pattern_interpretation || null,
+    modelName: targetAssessment.model_name || (isMale ? 'Male-ML Logistic' : 'PCOS-ML Extra Trees'),
+    modelVersion: targetAssessment.model_version || (isMale ? 'Male-ML v1.0-T1' : 'PCOS-ML v1.2-T1'),
+    createdAt: targetAssessment.created_at || null,
+    assessmentId: targetAssessment.assessment_id || targetAssessment.id || null,
+    screeningPolicyVersion: targetAssessment.screening_policy_version || 'legacy_v1',
+    originalRiskCategory: targetAssessment.original_risk_category || targetAssessment.risk_category,
+    originalThreshold: targetAssessment.original_threshold ?? targetAssessment.threshold,
+    originalProbability: targetAssessment.original_probability ?? probability,
+    pcomStatus: targetAssessment.pcom_status || null,
+    pcomProbability: targetAssessment.pcom_probability !== undefined ? targetAssessment.pcom_probability : null,
+    gradcamB64: targetAssessment.gradcam_b64 || null,
+    hormonePatternInterpretation: targetAssessment.hormone_pattern_interpretation || null,
   };
 }

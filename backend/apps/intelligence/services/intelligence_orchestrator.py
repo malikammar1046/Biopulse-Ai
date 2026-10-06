@@ -149,7 +149,7 @@ class AssessmentResult:
     risk_category_description: str = ""
     pcos_probability: float | None = None
     non_pcos_probability: float | None = None
-    screening_threshold: float = 0.38
+    screening_threshold: float = 0.25
     is_higher_risk: bool = False
     confidence: float | None = None
     probabilities: dict[str, float] = field(default_factory=dict)
@@ -1111,10 +1111,13 @@ def format_assessment_response(record: dict[str, Any]) -> dict[str, Any]:
     Ensures the response dictionary strictly adheres to the unified specification
     with explicit tier isolation and evidence provenance.
     """
-    prob = float(record.get('probability', 0.0) or 0.0)
-    threshold = float(record.get('threshold', 0.38) or 0.38)
     level = record.get('assessment_level', 'tier_1')
     module_name = record.get('module', 'female_pcos')
+    is_male = module_name == 'male_hypogonadism'
+
+    prob = float(record.get('probability', 0.0) or 0.0)
+    default_threshold = 0.1808 if is_male else 0.25
+    threshold = float(record.get('threshold', default_threshold) or default_threshold)
 
     # Compute tiers included
     tiers_inc = record.get('tiers_included', [1])
@@ -1125,10 +1128,16 @@ def format_assessment_response(record: dict[str, Any]) -> dict[str, Any]:
             tiers_inc = [1]
 
     risk_cat = record.get('risk_category', 'lower')
-    default_risk_label = "Lower Screening Risk" if prob < threshold else "Higher Screening Risk"
+    if is_male:
+        default_risk_label = "Lower Screening Risk" if prob < threshold else "Higher Screening Risk"
+    else:
+        default_risk_label = (
+            "Higher Likelihood" if risk_cat == "higher"
+            else "Intermediate Likelihood" if risk_cat == "intermediate"
+            else "Lower Likelihood" if risk_cat == "lower"
+            else "Assessment Unavailable"
+        )
     risk_lbl = record.get('risk_label') or default_risk_label
-
-    is_male = module_name == 'male_hypogonadism'
 
     # Determine or normalize evidence_used
     raw_evidence_used = record.get('evidence_used')
@@ -1251,6 +1260,11 @@ def format_assessment_response(record: dict[str, Any]) -> dict[str, Any]:
         'available_historical_evidence': avail_hist,
         'status_code': record.get('status_code'),
         'notice': record.get('notice'),
+        'screening_policy_version': record.get('screening_policy_version') or 'legacy_v1',
+        'original_risk_category': record.get('original_risk_category') or record.get('risk_category'),
+        'original_threshold': record.get('original_threshold') or record.get('threshold'),
+        'original_probability': record.get('original_probability') or record.get('probability'),
+        'is_diagnostic': bool(record.get('is_diagnostic', False)),
         'next_step': record.get('next_step', ''),
         'disclaimer': record.get('disclaimer', MEDICAL_DISCLAIMER),
         'created_at': record.get('created_at'),

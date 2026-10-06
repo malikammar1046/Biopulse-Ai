@@ -171,6 +171,20 @@ def _normalize_assessment_record(item: dict[str, Any]) -> dict[str, Any]:
             item["longitudinal_shap_comparison"] = json.loads(item["longitudinal_shap_comparison"])
         except Exception:
             pass
+
+    # Historical screening policy integrity: records without screening_policy_version
+    # MUST NOT be automatically promoted to v2. They are designated as legacy_v1.
+    policy_ver = item.get("screening_policy_version")
+    if not policy_ver:
+        item["screening_policy_version"] = "legacy_v1"
+
+    # Preserve original stored historical classification, threshold, and probability
+    if "original_risk_category" not in item:
+        item["original_risk_category"] = item.get("risk_category")
+    if "original_threshold" not in item:
+        item["original_threshold"] = item.get("threshold")
+    if "original_probability" not in item:
+        item["original_probability"] = item.get("probability")
     return item
 
 
@@ -654,9 +668,14 @@ class AssessmentRepository:
             "model_version": assessment_data.get("model_version", "1.0.0"),
             "probability": assessment_data.get("probability", 0.0),
             "probability_percent": assessment_data.get("probability_percent", 0.0),
-            "threshold": assessment_data.get("threshold", 0.38),
+            "threshold": assessment_data.get("threshold", 0.1808 if is_male else 0.25),
+            "screening_policy_version": assessment_data.get("screening_policy_version", "v2"),
+            "original_risk_category": assessment_data.get("original_risk_category", assessment_data.get("risk_category", "lower")),
+            "original_threshold": assessment_data.get("original_threshold", assessment_data.get("threshold", 0.1808 if is_male else 0.25)),
+            "original_probability": assessment_data.get("original_probability", assessment_data.get("probability", 0.0)),
+            "is_diagnostic": assessment_data.get("is_diagnostic", False),
             "risk_category": assessment_data.get("risk_category", "lower"),
-            "risk_label": assessment_data.get("risk_label", "Lower Screening Risk"),
+            "risk_label": assessment_data.get("risk_label", "Lower Screening Risk" if is_male else "Lower Likelihood"),
             "summary_text": assessment_data.get("summary_text", ""),
             "is_active": make_active,
             "replaced_assessment_id": replaced_id,
@@ -726,9 +745,9 @@ class AssessmentRepository:
                     "p_model_version": assessment_data.get("model_version", "1.0.0"),
                     "p_probability": float(assessment_data.get("probability", 0.0)),
                     "p_probability_percent": float(assessment_data.get("probability_percent", 0.0)),
-                    "p_threshold": float(assessment_data.get("threshold", 0.38)),
+                    "p_threshold": float(assessment_data.get("threshold", 0.1808 if is_male else 0.25)),
                     "p_risk_category": assessment_data.get("risk_category", "lower"),
-                    "p_risk_label": assessment_data.get("risk_label", "Lower Screening Risk"),
+                    "p_risk_label": assessment_data.get("risk_label", "Lower Screening Risk" if is_male else "Lower Likelihood"),
                     "p_summary_text": assessment_data.get("summary_text", ""),
                     "p_input_availability": assessment_data.get("input_availability", {}),
                     "p_input_features": assessment_data.get("input_features", {}),

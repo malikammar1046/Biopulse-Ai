@@ -57,17 +57,76 @@ TIER3_CLINICAL_PCOS_PATH = MODELS_DIR / "tier3" / "tier3_clinical_pcos_model.job
 TIER3_MULTIMODAL_FINAL_PATH = MODELS_DIR / "tier3" / "tier3_multimodal_final_model.joblib"
 
 # ---------------------------------------------------------------------------
-# Model Thresholds & Constants
+# Authoritative PCOS Screening Policy (v2)
 # ---------------------------------------------------------------------------
+# BioPulse PCOS Screening Policy v2:
+# Validated independently on calibrated 5-fold CV development OOF (N=432)
+# and untouched holdout (N=109) datasets. Priority placed on screening
+# sensitivity (false-negative reduction) while maintaining high specificity.
+# Operating threshold: 0.25 (both Tier 1 and cumulative Tier 2).
+# Likelihood bands: Lower (< 0.18), Intermediate (0.18 - < 0.25), Higher (>= 0.25).
 
-TIER1_SCREENING_THRESHOLD = 0.38
-TIER1_LOW_RISK_THRESHOLD = 0.20
+PCOS_SCREENING_POLICY_VERSION = "v2"
+PCOS_LOWER_LIKELIHOOD_CUTOFF = 0.18
+PCOS_SCREENING_THRESHOLD = 0.25
 
-TIER2_SCREENING_THRESHOLD = 0.29
+PCOS_SCREENING_POLICY = {
+    "version": PCOS_SCREENING_POLICY_VERSION,
+    "lower_cutoff": PCOS_LOWER_LIKELIHOOD_CUTOFF,
+    "higher_cutoff": PCOS_SCREENING_THRESHOLD,
+    "screening_threshold": PCOS_SCREENING_THRESHOLD,
+    "is_diagnostic": False,
+    "operating_point_rationale": "Sensitivity-prioritized screening operating point with validated false-negative reduction.",
+}
+
+
+def classify_pcos_screening_likelihood(
+    prob: float | None,
+    threshold: float = PCOS_SCREENING_THRESHOLD,
+    low_cutoff: float = PCOS_LOWER_LIKELIHOOD_CUTOFF,
+) -> tuple[str, str]:
+    """
+    Authoritative classification of PCOS screening likelihood.
+    Returns (category, label).
+    - Lower: prob < low_cutoff (p < 0.18)
+    - Intermediate: low_cutoff <= prob < threshold (0.18 <= p < 0.25)
+    - Higher: prob >= threshold (p >= 0.25)
+    - Unavailable: prob is None or NaN
+    """
+    if prob is None:
+        return ("unavailable", "Assessment Unavailable")
+    try:
+        fprob = float(prob)
+        if np.isnan(fprob) or np.isneginf(fprob) or np.isposinf(fprob):
+            return ("unavailable", "Assessment Unavailable")
+    except (ValueError, TypeError):
+        return ("unavailable", "Assessment Unavailable")
+
+    if fprob >= threshold:
+        return ("higher", "Higher Likelihood")
+    elif fprob >= low_cutoff:
+        return ("intermediate", "Intermediate Likelihood")
+    return ("lower", "Lower Likelihood")
+
+
+TIER1_SCREENING_THRESHOLD = PCOS_SCREENING_THRESHOLD
+TIER1_LOW_RISK_THRESHOLD = PCOS_LOWER_LIKELIHOOD_CUTOFF
+
+TIER2_SCREENING_THRESHOLD = PCOS_SCREENING_THRESHOLD
 TIER2_OPTIMAL_F1_THRESHOLD = 0.42
 
+# Tier 3 & Multimodal Decision Cutoffs:
+# 1. Morphological PCOM classification (EfficientNet-B0) is independently validated at tau = 0.50
+#    (Dev OOF ROC-AUC: 0.9733, Holdout ROC-AUC: 0.9199, Sensitivity: 98.3%, Specificity: 84.3%).
 TIER3_PCOM_THRESHOLD = 0.50
+
+# 2. Multimodal fusion (95% Tier 2 Clinical + 5% Ultrasound) was historically evaluated at 0.50
+#    in report benchmarks. There is NO independent threshold sweep or clinical validation supporting
+#    0.25 for multimodal fusion or ultrasound. To avoid unjustified assumptions of operating point
+#    equivalence, MULTIMODAL_SCREENING_THRESHOLD preserves the historical 0.29 research baseline
+#    and is marked as requiring prospective clinical calibration.
 MULTIMODAL_SCREENING_THRESHOLD = 0.29
+MULTIMODAL_OPERATING_STATUS = "exploratory_pending_clinical_validation"
 
 MEDICAL_DISCLAIMER = (
     "CRITICAL NOTICE: PMOSense provides an AI-assisted screening risk estimation based on statistical health patterns. "
@@ -734,6 +793,14 @@ class PCOSMLService:
             'probability_percent': round(prob * 100, 1),
             'threshold': threshold,
             'risk_category': risk_category,
+            'risk_label': (
+                'Higher Likelihood' if risk_category == 'higher'
+                else 'Intermediate Likelihood' if risk_category == 'intermediate'
+                else 'Lower Likelihood' if risk_category == 'lower'
+                else 'Assessment Unavailable'
+            ),
+            'screening_policy_version': PCOS_SCREENING_POLICY_VERSION,
+            'is_diagnostic': False,
             'explanations': explanations,
             'shap_explanation': shap_payload,
             'limitations': [
@@ -773,7 +840,7 @@ class PCOSMLService:
         prob = max(0.0, min(1.0, prob))
 
         threshold = TIER2_SCREENING_THRESHOLD
-        risk_category = self._classify_risk(prob, threshold, low_cutoff=0.18)
+        risk_category = self._classify_risk(prob, threshold, low_cutoff=PCOS_LOWER_LIKELIHOOD_CUTOFF)
 
         shap_payload = None
         if self._t2_fold_explainer is not None:
@@ -811,6 +878,14 @@ class PCOSMLService:
             'probability_percent': round(prob * 100, 1),
             'threshold': threshold,
             'risk_category': risk_category,
+            'risk_label': (
+                'Higher Likelihood' if risk_category == 'higher'
+                else 'Intermediate Likelihood' if risk_category == 'intermediate'
+                else 'Lower Likelihood' if risk_category == 'lower'
+                else 'Assessment Unavailable'
+            ),
+            'screening_policy_version': PCOS_SCREENING_POLICY_VERSION,
+            'is_diagnostic': False,
             'explanations': explanations,
             'shap_explanation': shap_payload,
             'tier_2_available_count': available_count,
@@ -941,7 +1016,7 @@ class PCOSMLService:
         p_fused = max(0.0, min(1.0, p_fused))
 
         threshold = MULTIMODAL_SCREENING_THRESHOLD
-        risk_category = self._classify_risk(p_fused, threshold, low_cutoff=0.18)
+        risk_category = self._classify_risk(p_fused, threshold, low_cutoff=PCOS_LOWER_LIKELIHOOD_CUTOFF)
 
         # Explanations from cumulative Tier 2 plus imaging context
         explanations = t2_res['explanations']
@@ -968,6 +1043,15 @@ class PCOSMLService:
             'probability_percent': round(p_fused * 100, 1),
             'threshold': threshold,
             'risk_category': risk_category,
+            'risk_label': (
+                'Higher Likelihood' if risk_category == 'higher'
+                else 'Intermediate Likelihood' if risk_category == 'intermediate'
+                else 'Lower Likelihood' if risk_category == 'lower'
+                else 'Assessment Unavailable'
+            ),
+            'screening_policy_version': 'exploratory_v1',
+            'operating_point_status': MULTIMODAL_OPERATING_STATUS,
+            'is_diagnostic': False,
             'explanations': explanations,
             'shap_explanation': shap_payload,
             'pcom_status': img_res['pcom_status'],
@@ -983,6 +1067,7 @@ class PCOSMLService:
             'limitations': [
                 'Complete multimodal assessment incorporates self-reported profile, serum laboratory biomarkers, and pelvic ultrasound imaging.',
                 'Ultrasound evidence provides morphological correlation (PCOM); systemic risk weighting is anchored in validated clinical biomarkers.',
+                'Multimodal fusion operating cutoff (0.29) is exploratory and requires prospective clinical validation.',
                 'Screening estimate only — does not replace comprehensive medical diagnosis.'
             ],
             'next_available_tier': None,
@@ -993,13 +1078,17 @@ class PCOSMLService:
     # Helpers: Explanations & Risk Classification
     # ---------------------------------------------------------------------------
 
-    def _classify_risk(self, prob: float, threshold: float, low_cutoff: float = 0.20) -> str:
-        """Determines the standard clinical risk tier based on threshold."""
-        if prob >= threshold:
-            return "higher"
-        elif prob >= low_cutoff:
-            return "intermediate"
-        return "lower"
+    def _classify_risk(
+        self,
+        prob: float | None,
+        threshold: float = PCOS_SCREENING_THRESHOLD,
+        low_cutoff: float = PCOS_LOWER_LIKELIHOOD_CUTOFF,
+    ) -> str:
+        """
+        Determines the authoritative clinical likelihood tier based on unrounded probability.
+        """
+        cat, _ = classify_pcos_screening_likelihood(prob, threshold, low_cutoff)
+        return cat
 
     def _extract_preprocessor(self, pipeline_or_model: Any) -> Any:
         """Extracts the fitted ColumnTransformer from Pipeline or CalibratedClassifierCV."""

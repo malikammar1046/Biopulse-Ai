@@ -173,7 +173,6 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
   const currentCategory = assessment.risk_category || 'lower';
   const patternDisplay = getRiskPatternDisplay(currentCategory);
   const probPct = `${assessment.probability_percent?.toFixed(1) ?? (assessment.probability * 100).toFixed(1)}%`;
-  const thresholdPct = `${Math.round(assessment.threshold * 100)}%`;
 
   const badgeClass = isMale
     ? 'bg-sky-50 border-sky-200/80 text-[#0288D1]'
@@ -293,7 +292,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
 
           <div className="pt-2 flex flex-wrap items-center gap-4 text-xs font-mono text-slate-500">
             <span>
-              Calibrated Screening Cutoff: <strong className="text-slate-900">{thresholdPct}</strong>
+              Screening Policy: <strong className="text-slate-900">{assessment.screening_policy_version ? `Policy ${assessment.screening_policy_version.toUpperCase()}` : 'Policy v2'}</strong>
             </span>
             <span>·</span>
             <span>

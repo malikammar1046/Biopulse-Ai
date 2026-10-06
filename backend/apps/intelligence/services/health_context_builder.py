@@ -612,12 +612,12 @@ class HealthContextBuilder:
                 else getattr(assessment, "screening_threshold", getattr(assessment, "threshold", None))
             )
             if raw_thresh is None or "Mock" in type(raw_thresh).__name__:
-                thresh_val = 0.50 if is_male else 0.38
+                thresh_val = 0.50 if is_male else 0.25
             else:
                 try:
                     thresh_val = float(raw_thresh)
                 except Exception:
-                    thresh_val = 0.50 if is_male else 0.38
+                    thresh_val = 0.50 if is_male else 0.25
             cutoff_pct = f"{round(thresh_val * 100 if thresh_val <= 1.0 else thresh_val)}%"
 
             # Extract top SHAP factors
