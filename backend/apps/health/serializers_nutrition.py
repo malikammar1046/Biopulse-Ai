@@ -23,6 +23,7 @@ class PlanningInputsSerializer(serializers.Serializer):
 class NutritionReadinessSerializer(serializers.Serializer):
     ready = serializers.BooleanField()
     overall_status = serializers.CharField(required=False, default="READY")
+    personalization_level = serializers.CharField(required=False, default="LEVEL_1_PROFILE")
     blocking_issues = serializers.ListField(child=serializers.CharField(), required=False, default=list)
     warning_issues = serializers.ListField(child=serializers.CharField(), required=False, default=list)
     optional_issues = serializers.ListField(child=serializers.CharField(), required=False, default=list)
@@ -31,6 +32,10 @@ class NutritionReadinessSerializer(serializers.Serializer):
     planning_inputs = PlanningInputsSerializer()
     optional_personalization = serializers.DictField(required=False, default=dict)
     warnings = serializers.ListField(child=serializers.CharField(), required=False, default=list)
+    available = serializers.ListField(child=serializers.CharField(), required=False, default=list)
+    missing_required = serializers.ListField(child=serializers.CharField(), required=False, default=list)
+    missing_optional = serializers.ListField(child=serializers.CharField(), required=False, default=list)
+    recommendations = serializers.ListField(child=serializers.CharField(), required=False, default=list)
 
 
 class NutritionPreferencesSerializer(serializers.Serializer):

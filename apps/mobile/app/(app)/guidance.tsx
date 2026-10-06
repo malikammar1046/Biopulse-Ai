@@ -9,293 +9,177 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../../constants/Colors';
+import { BioPulseBackground } from '../../components/common/BioPulseBackground';
 import { useAuth } from '../../features/authentication';
-import { useFemaleOnboarding } from '../../features/onboarding';
 import { BioPulseBottomNav, BOTTOM_NAV_HEIGHT } from '../../components/navigation';
 
 /**
- * SCREEN 34 & 35: GUIDANCE HUB & RECOMMENDATIONS
+ * SCREEN 34: GUIDANCE HOME
  *
- * Implements:
- * - Next Best Action featured card at top
- * - Categories: Nutrition, Movement, Lifestyle, Follow-up
- * - Structured recommendation cards with What, Why, How, and Action
- * - Quick jump cards for Meal Plan, Movement, and AI Companion
- * - Pathway-aware evidence-based protocols (Rotterdam PCOS vs Endocrine Society Hypogonadism)
- * - Permanent BioPulse bottom navigation
+ * Strict visual match to Screenshot 34:
+ * - Top Header:
+ *   - Title: "Guidance"
+ *   - Subtitle: "Personalized recommendations and AI support for your health journey."
+ *   - Top-right notification bell icon with pink dot
+ * - Highlighted Next Best Action Card:
+ *   - Amber bulb icon box
+ *   - Red/coral category tag: "Next Best Action" & chevron >
+ *   - Title: "Add clinical hormone labs"
+ *   - Description: "Get a complete hormonal profile to refine your screening result."
+ *   - CTA: Solid pink/rose "View Details" button -> /add-labs
+ * - 4 Categorized Guidance Cards:
+ *   1. Nutrition: Pink fork/knife icon, "Personalized meal plans and dietary guidance." -> /recommendations?category=Nutrition
+ *   2. Fitness: Teal runner icon, "Recommended activities for your goals." -> /recommendations?category=Movement
+ *   3. Health Education: Purple book icon, "Learn about PCOS, symptoms and lifestyle tips." -> /recommendations?category=Lifestyle
+ *   4. AI Companion: Blue chat bubbles icon, "Chat with BioPulse AI for personalized guidance." -> /ai-companion
+ * - Permanent Fixed Bottom Navigation with [ Guidance ] active
  */
-export default function GuidanceHubScreen() {
+export default function GuidanceHomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
 
   const { pathway } = useAuth();
-  const { lifestyle } = useFemaleOnboarding();
-
   const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
-  const themeColor = isFemale ? BioPulseColors.femaleAccent : BioPulseColors.malePrimary;
-  const themeSoftBg = isFemale ? '#FDF0F4' : '#EBF4FC';
 
-  const [selectedCategory, setSelectedCategory] = React.useState<
-    'All' | 'Nutrition' | 'Movement' | 'Lifestyle' | 'Follow-up'
-  >('All');
-
-  const recommendations = React.useMemo(() => {
-    if (isFemale) {
-      return [
-        {
-          id: 'rec-f1',
-          category: 'Nutrition',
-          tag: 'METABOLIC & INSULIN',
-          what: 'Switch to Low-Glycemic Complex Carbohydrates',
-          why: 'Reduces postprandial insulin surges that directly stimulate ovarian theca cells to overproduce androgens.',
-          how: 'Pair carbohydrates with healthy fats and protein (e.g., lentils with olive oil, brown rice with chickpeas).',
-          actionLabel: 'View Meal Plan',
-          actionRoute: '/(app)/meal-plan',
-        },
-        {
-          id: 'rec-f2',
-          category: 'Movement',
-          tag: 'INSULIN SENSITIVITY',
-          what: 'Progressive Resistance Training (3x/week)',
-          why: 'Increases GLUT-4 transporter translocation in skeletal muscle, improving glucose clearance without exhaustive cardio stress.',
-          how: '25-35 minutes of moderate weights or bodyweight squats, lunges, and rows with 48h rest between sessions.',
-          actionLabel: 'View Movement Plan',
-          actionRoute: '/(app)/movement',
-        },
-        {
-          id: 'rec-f3',
-          category: 'Lifestyle',
-          tag: 'CIRCADIAN & STRESS',
-          what: 'Optimize Sleep Consistency & Cortisol Management',
-          why: 'Elevated nocturnal cortisol worsens insulin resistance and alters LH/FSH pulse frequency.',
-          how: 'Aim for 7-8 hours sleep, avoid screens 45 minutes prior to bedtime, and practice 5-minute deep diaphragmatic breathing.',
-          actionLabel: 'Log Daily Health',
-          actionRoute: '/(app)/symptom-log',
-        },
-        {
-          id: 'rec-f4',
-          category: 'Follow-up',
-          tag: 'CLINICAL CONTINUITY',
-          what: 'Schedule Tier 2 Hormonal Lab Workup',
-          why: 'Confirmatory fasting insulin, lipid profile, and free testosterone provide phenotypic precision for your care team.',
-          how: 'Upload existing lab reports via OCR or schedule an appointment with a reproductive endocrinologist.',
-          actionLabel: 'Find a Specialist',
-          actionRoute: '/(app)/specialists',
-        },
-      ];
-    } else {
-      return [
-        {
-          id: 'rec-m1',
-          category: 'Nutrition',
-          tag: 'ENDOCRINE NUTRITION',
-          what: 'Increase Dietary Zinc & Magnesium Density',
-          why: 'Essential cofactors for the steroidogenic enzyme cascade responsible for Leydig cell testosterone synthesis.',
-          how: 'Incorporate pumpkin seeds, lean cuts, oysters, lentils, and dark leafy greens into lunch and dinner.',
-          actionLabel: 'View Meal Plan',
-          actionRoute: '/(app)/meal-plan',
-        },
-        {
-          id: 'rec-m2',
-          category: 'Movement',
-          tag: 'ANDROGEN STIMULUS',
-          what: 'Compound Heavy Resistance Sessions (3x/week)',
-          why: 'Multi-joint compound movements (deadlifts, squats, bench press) induce acute and long-term androgenic signaling.',
-          how: '3 sets of 6-8 reps at 75-80% intensity, allowing 2-3 minutes of recovery between sets.',
-          actionLabel: 'View Movement Plan',
-          actionRoute: '/(app)/movement',
-        },
-        {
-          id: 'rec-m3',
-          category: 'Lifestyle',
-          tag: 'TESTOSTERONE RESTORATION',
-          what: 'Maintain Uninterrupted Stage-3 Slow-Wave Sleep',
-          why: 'The majority of diurnal testosterone secretion occurs during slow-wave and REM sleep cycles.',
-          how: 'Keep room cool (18-20°C), avoid alcohol within 3 hours of sleep, and maintain consistent wake times.',
-          actionLabel: 'Log Symptoms',
-          actionRoute: '/(app)/symptom-log',
-        },
-        {
-          id: 'rec-m4',
-          category: 'Follow-up',
-          tag: 'CLINICAL CONTINUITY',
-          what: 'Repeat Morning Fasting Total & Free Testosterone',
-          why: 'Confirms baseline androgen levels following ADAM symptom screening before considering therapeutic options.',
-          how: 'Blood draw must occur between 08:00 AM and 10:00 AM in a fasted state.',
-          actionLabel: 'Find an Andrologist',
-          actionRoute: '/(app)/specialists',
-        },
-      ];
-    }
-  }, [isFemale]);
-
-  const filteredRecs = recommendations.filter((r) => {
-    if (selectedCategory === 'All') return true;
-    return r.category === selectedCategory;
-  });
+  const guidanceItems = [
+    {
+      id: 'nutrition',
+      title: 'Nutrition',
+      subtitle: 'Personalized meal plans and dietary guidance.',
+      icon: 'restaurant' as const,
+      iconColor: '#E11D48',
+      iconBg: '#FFE4E6',
+      route: '/(app)/recommendations?category=Nutrition',
+    },
+    {
+      id: 'fitness',
+      title: 'Fitness',
+      subtitle: 'Recommended activities for your goals.',
+      icon: 'walk' as const,
+      iconColor: '#0D9488',
+      iconBg: '#CCFBF1',
+      route: '/(app)/recommendations?category=Movement',
+    },
+    {
+      id: 'education',
+      title: 'Health Education',
+      subtitle: isFemale
+        ? 'Learn about PCOS, symptoms and lifestyle tips.'
+        : 'Learn about testosterone, symptoms and lifestyle tips.',
+      icon: 'book' as const,
+      iconColor: '#9333EA',
+      iconBg: '#F3E8FF',
+      route: '/(app)/recommendations?category=Lifestyle',
+    },
+    {
+      id: 'ai-assistant',
+      title: 'AI Companion',
+      subtitle: 'Chat with BioPulse AI for personalized guidance.',
+      icon: 'chatbubble-ellipses' as const,
+      iconColor: '#0284C7',
+      iconBg: '#E0F2FE',
+      route: '/(app)/ai-companion',
+    },
+  ];
 
   return (
     <View style={styles.root}>
+      <StatusBar style="dark" />
+      <BioPulseBackground />
+
       {/* Header */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) }]}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.headerTitle}>Clinical Guidance</Text>
-          <Text style={styles.headerSubtitle}>
-            {isFemale ? 'PCOS Lifestyle & Metabolic Protocols' : 'Endocrine & Vitality Protocols'}
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 14) }]}>
+        <View style={styles.headerTextWrap}>
+          <Text style={styles.headerTitle}>Guidance</Text>
+          <Text style={styles.headerSub}>
+            Personalized recommendations and AI support for your health journey.
           </Text>
         </View>
 
-        <View style={[styles.pathwayBadge, { backgroundColor: themeSoftBg }]}>
-          <Text style={[styles.pathwayBadgeText, { color: themeColor }]}>
-            {isFemale ? 'Rotterdam Guidelines' : 'Endocrine Society'}
-          </Text>
-        </View>
+        <Pressable
+          onPress={() => router.push('/(app)/notifications')}
+          style={styles.bellBtn}
+          accessibilityLabel="Notifications"
+          hitSlop={8}
+        >
+          <Ionicons name="notifications-outline" size={22} color="#E11D48" />
+          <View style={styles.bellBadge} />
+        </Pressable>
       </View>
 
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          isTablet && styles.tabletScrollContent,
-          { paddingBottom: BOTTOM_NAV_HEIGHT + insets.bottom + 24 },
+          isTablet && styles.tabletContent,
+          { paddingBottom: BOTTOM_NAV_HEIGHT + insets.bottom + 20 },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.container, isTablet && styles.tabletContainer]}>
-          {/* Highlighted Next Best Action Card */}
-          <View style={[styles.nbaCard, { borderColor: themeColor + '50' }]}>
-            <View style={styles.nbaTopRow}>
-              <View style={[styles.nbaBadge, { backgroundColor: themeSoftBg }]}>
-                <Ionicons name="sparkles" size={14} color={themeColor} />
-                <Text style={[styles.nbaBadgeText, { color: themeColor }]}>NEXT BEST ACTION</Text>
-              </View>
-              <Text style={styles.nbaPriority}>Priority 1</Text>
-            </View>
-
-            <Text style={styles.nbaTitle}>
-              {isFemale
-                ? 'Integrate Low-GI Breakfast to Balance Morning Cortisol & LH'
-                : 'Prioritize Compound Strength Training & Sleep Recovery'}
-            </Text>
-            <Text style={styles.nbaDesc}>
-              {isFemale
-                ? 'Based on your reported cycle and symptom markers, stable morning glucose is the single highest leverage habit to improve ovarian insulin sensitivity.'
-                : 'Targeted resistance stimulus paired with 7+ hours of uninterrupted sleep directly supports testicular testosterone synthesis and metabolic vigor.'}
-            </Text>
-
-            <View style={styles.nbaActionRow}>
-              <Pressable
-                onPress={() => router.push(isFemale ? '/(app)/meal-plan' : '/(app)/movement')}
-                style={[styles.nbaPrimaryBtn, { backgroundColor: themeColor }]}
-              >
-                <Text style={styles.nbaBtnText}>
-                  {isFemale ? 'Explore PCOS Meal Plan' : 'Explore Strength Protocol'}
-                </Text>
-                <Ionicons name="arrow-forward" size={15} color="#FFFFFF" />
-              </Pressable>
-            </View>
-          </View>
-
-          {/* Quick AI Companion Launcher */}
+        {/* Next Best Action Card */}
+        <View style={styles.nextBestCard}>
           <Pressable
-            onPress={() => router.push('/(app)/ai-companion')}
-            style={styles.aiBannerCard}
+            onPress={() => router.push('/(app)/add-labs')}
+            style={styles.nextBestTop}
           >
-            <View style={[styles.aiIconWrap, { backgroundColor: themeSoftBg }]}>
-              <Ionicons name="chatbubbles" size={22} color={themeColor} />
+            <View style={styles.bulbIconBox}>
+              <Ionicons name="bulb-outline" size={22} color="#EA580C" />
             </View>
-            <View style={styles.aiTextCol}>
-              <Text style={styles.aiTitle}>BioPulse AI Companion</Text>
-              <Text style={styles.aiSub}>Ask questions about your risk factors or meal plans</Text>
+
+            <View style={styles.nextBestMeta}>
+              <Text style={styles.nextBestTag}>Next Best Action</Text>
+              <Text style={styles.nextBestTitle}>
+                {isFemale ? 'Add clinical hormone labs' : 'Add morning hormone labs'}
+              </Text>
+              <Text style={styles.nextBestDesc}>
+                {isFemale
+                  ? 'Get a complete hormonal profile to refine your screening result.'
+                  : 'Get a complete hormonal profile to refine your screening result.'}
+              </Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+
+            <Ionicons name="chevron-forward" size={18} color="#E11D48" style={{ marginTop: 2 }} />
           </Pressable>
 
-          {/* Category Filter Chips */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoryChipsRow}
+          <Pressable
+            onPress={() => router.push('/(app)/add-labs')}
+            style={({ pressed }) => [styles.viewDetailsBtn, pressed && styles.btnPressed]}
           >
-            {(['All', 'Nutrition', 'Movement', 'Lifestyle', 'Follow-up'] as const).map((cat) => {
-              const isSel = selectedCategory === cat;
-              return (
-                <Pressable
-                  key={cat}
-                  onPress={() => setSelectedCategory(cat)}
-                  style={[
-                    styles.catChip,
-                    isSel && {
-                      backgroundColor: themeSoftBg,
-                      borderColor: themeColor,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.catChipText,
-                      isSel && { color: themeColor, fontWeight: '700' },
-                    ]}
-                  >
-                    {cat}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
+            <Text style={styles.viewDetailsText}>View Details</Text>
+          </Pressable>
+        </View>
 
-          {/* Structured Recommendations Cards */}
-          <View style={styles.recsSection}>
-            <Text style={styles.sectionHeader}>
-              Evidence-Based Recommendations ({filteredRecs.length})
-            </Text>
-
-            {filteredRecs.map((rec) => (
-              <View key={rec.id} style={styles.recCard}>
-                <View style={styles.recHeaderRow}>
-                  <View style={[styles.recCatBadge, { backgroundColor: themeSoftBg }]}>
-                    <Text style={[styles.recCatText, { color: themeColor }]}>{rec.tag}</Text>
-                  </View>
-                  <Text style={styles.recCategory}>{rec.category}</Text>
-                </View>
-
-                {/* What */}
-                <Text style={styles.recWhatTitle}>{rec.what}</Text>
-
-                {/* Why */}
-                <View style={styles.recBlock}>
-                  <Text style={styles.recBlockLabel}>WHY IT MATTERS</Text>
-                  <Text style={styles.recBlockText}>{rec.why}</Text>
-                </View>
-
-                {/* How */}
-                <View style={styles.recBlock}>
-                  <Text style={styles.recBlockLabel}>HOW TO IMPLEMENT</Text>
-                  <Text style={styles.recBlockText}>{rec.how}</Text>
-                </View>
-
-                {/* Action CTA */}
-                <View style={styles.recFooter}>
-                  <Pressable
-                    onPress={() => router.push(rec.actionRoute as any)}
-                    style={[styles.recActionBtn, { borderColor: themeColor }]}
-                  >
-                    <Text style={[styles.recActionText, { color: themeColor }]}>
-                      {rec.actionLabel}
-                    </Text>
-                    <Ionicons name="arrow-forward" size={14} color={themeColor} />
-                  </Pressable>
-                </View>
+        {/* 4 Categorized Cards */}
+        <View style={styles.guidanceList}>
+          {guidanceItems.map((item) => (
+            <Pressable
+              key={item.id}
+              onPress={() => router.push(item.route as any)}
+              style={({ pressed }) => [
+                styles.itemCard,
+                pressed && styles.cardPressed,
+              ]}
+            >
+              <View style={[styles.iconBox, { backgroundColor: item.iconBg }]}>
+                <Ionicons name={item.icon} size={22} color={item.iconColor} />
               </View>
-            ))}
-          </View>
+
+              <View style={styles.itemMeta}>
+                <Text style={styles.itemTitle}>{item.title}</Text>
+                <Text style={styles.itemSubtitle}>{item.subtitle}</Text>
+              </View>
+
+              <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+            </Pressable>
+          ))}
         </View>
       </ScrollView>
 
-      {/* Permanent BioPulse Bottom Navigation */}
+      {/* Permanent Fixed Bottom Nav with Guidance Active */}
       <BioPulseBottomNav activeTab="guidance" />
     </View>
   );
@@ -304,240 +188,168 @@ export default function GuidanceHubScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#FAFCFE',
+    backgroundColor: '#FAF5FF',
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingBottom: 14,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    paddingBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    backgroundColor: 'transparent',
   },
-  headerLeft: {
-    gap: 2,
+  headerTextWrap: {
+    flex: 1,
+    paddingRight: 12,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: '800',
-    color: '#0B1E38',
+    color: '#0F172A',
+    letterSpacing: -0.3,
   },
-  headerSubtitle: {
-    fontSize: 12,
+  headerSub: {
+    fontSize: 13,
     color: '#64748B',
+    marginTop: 4,
+    lineHeight: 18,
   },
-  pathwayBadge: {
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 8,
+  bellBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
   },
-  pathwayBadgeText: {
-    fontSize: 10.5,
-    fontWeight: '700',
+  bellBadge: {
+    position: 'absolute',
+    top: 7,
+    right: 8,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#E11D48',
   },
   scrollContent: {
-    flexGrow: 1,
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 4,
   },
-  tabletScrollContent: {
-    alignItems: 'center',
-  },
-  container: {
+  tabletContent: {
+    maxWidth: 600,
+    alignSelf: 'center',
     width: '100%',
-    gap: 14,
   },
-  tabletContainer: {
-    maxWidth: 580,
-  },
-  nbaCard: {
+
+  // Next Best Action Card
+  nextBestCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
-    borderWidth: 1.5,
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
     padding: 16,
+    marginBottom: 14,
     shadowColor: '#000',
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
     elevation: 2,
   },
-  nbaTopRow: {
+  nextBestTop: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  nbaBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  nbaBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  nbaPriority: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#94A3B8',
-  },
-  nbaTitle: {
-    fontSize: 15.5,
-    fontWeight: '700',
-    color: BioPulseColors.navy,
-    marginBottom: 6,
-  },
-  nbaDesc: {
-    fontSize: 12.5,
-    color: '#64748B',
-    lineHeight: 18,
+    alignItems: 'flex-start',
     marginBottom: 14,
   },
-  nbaActionRow: {
-    flexDirection: 'row',
-  },
-  nbaPrimaryBtn: {
-    flexDirection: 'row',
+  bulbIconBox: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: '#FEF3C7',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 10,
+    justifyContent: 'center',
+    marginRight: 12,
   },
-  nbaBtnText: {
-    color: '#FFFFFF',
-    fontSize: 12.5,
+  nextBestMeta: {
+    flex: 1,
+  },
+  nextBestTag: {
+    fontSize: 13,
     fontWeight: '700',
+    color: '#E11D48',
   },
-  aiBannerCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 14,
+  nextBestTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginTop: 2,
   },
-  aiIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+  nextBestDesc: {
+    fontSize: 12,
+    color: '#64748B',
+    lineHeight: 16,
+    marginTop: 3,
+  },
+  viewDetailsBtn: {
+    backgroundColor: '#E11D48',
+    borderRadius: 10,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  aiTextCol: {
-    flex: 1,
-  },
-  aiTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: BioPulseColors.navy,
-  },
-  aiSub: {
-    fontSize: 11.5,
-    color: '#64748B',
-    marginTop: 1,
-  },
-  categoryChipsRow: {
-    gap: 8,
-    paddingVertical: 2,
-  },
-  catChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 10,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-  },
-  catChipText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#475569',
-  },
-  recsSection: {
-    gap: 12,
-    marginTop: 4,
-  },
-  sectionHeader: {
+  viewDetailsText: {
     fontSize: 13,
     fontWeight: '700',
-    color: BioPulseColors.navy,
-    marginLeft: 4,
+    color: '#FFFFFF',
   },
-  recCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 16,
+
+  // Guidance List
+  guidanceList: {
     gap: 10,
   },
-  recHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  recCatBadge: {
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  recCatText: {
-    fontSize: 9.5,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  recCategory: {
-    fontSize: 11.5,
-    color: '#94A3B8',
-    fontWeight: '600',
-  },
-  recWhatTitle: {
-    fontSize: 14.5,
-    fontWeight: '700',
-    color: '#1E293B',
-  },
-  recBlock: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 10,
-    padding: 10,
-    gap: 3,
-  },
-  recBlockLabel: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#64748B',
-    letterSpacing: 0.5,
-  },
-  recBlockText: {
-    fontSize: 12,
-    color: '#334155',
-    lineHeight: 17,
-  },
-  recFooter: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 2,
-  },
-  recActionBtn: {
+  itemCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
+    borderColor: '#F1F5F9',
+    shadowColor: '#000',
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
   },
-  recActionText: {
-    fontSize: 12,
+  iconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  itemMeta: {
+    flex: 1,
+    paddingRight: 8,
+  },
+  itemTitle: {
+    fontSize: 15,
     fontWeight: '700',
+    color: '#0F172A',
+  },
+  itemSubtitle: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2,
+    lineHeight: 16,
+  },
+
+  cardPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.99 }],
+  },
+  btnPressed: {
+    opacity: 0.88,
   },
 });

@@ -11,390 +11,378 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../../constants/Colors';
-import { AuthBackgroundFoliage } from '../../components/auth/AuthBackgroundFoliage';
-import { useAuth } from '../../features/authentication';
+import { BioPulseBackground } from '../../components/common/BioPulseBackground';
+import { BioPulseButton } from '../../components/common/BioPulseButton';
 import { useHealthStore } from '../../store';
-import { BioPulseBottomNav, BOTTOM_NAV_HEIGHT } from '../../components/navigation';
 
+interface SymptomItemDef {
+  id: string;
+  name: string;
+  icon: keyof typeof Ionicons.glyphMap;
+}
+
+/**
+ * SCREEN 25: SYMPTOM LOG
+ *
+ * Strict visual match to Screenshot 25:
+ * - Top Header: Back chevron (<), centered "Symptom Log"
+ * - Title: "How are you feeling today?"
+ * - Subtitle: "Select the symptoms you're experiencing."
+ * - 3x3 Grid of 9 Selectable Symptom Cards:
+ *   - Acne, Hair growth, Hair loss, Bloating, Mood, Cramps, Fatigue, Skin darkening, Irregular periods
+ *   - Selected cards styled in pink border, soft pink background (#FDF2F8), pink icon & text
+ * - Intensity Section:
+ *   - Subtitle: "How severe are these symptoms today?"
+ *   - 3 segmented pill buttons: [ Mild ], [ Moderate ] (selected), [ Severe ]
+ * - Additional Notes (Optional) input
+ * - Bottom CTA: Solid pink "Save Check-in" button
+ */
 export default function SymptomLogScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
 
-  const { pathway } = useAuth();
-  const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
-  const themeAccent = isFemale ? BioPulseColors.femaleAccent : BioPulseColors.malePrimary;
-  const themeSoftBg = isFemale ? '#FFF2F7' : '#EAF5FD';
-
   const { symptoms, toggleSymptom, setSymptomIntensity, saveSymptomCheckIn } = useHealthStore();
 
-  const [intensity, setIntensity] = useState<'Mild' | 'Moderate' | 'Severe'>('Moderate');
-  const [notes, setNotes] = useState('');
-  const [saving, setSaving] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>(() => {
+    const init = symptoms.symptoms.filter((s) => s.selected).map((s) => s.id);
+    return init.length > 0 ? init : ['acne', 'mood', 'fatigue'];
+  });
 
-  const reportedSymptoms = symptoms.symptoms.filter((s) => s.selected);
+  const [intensity, setIntensity] = useState<'Mild' | 'Moderate' | 'Severe'>(
+    (symptoms.intensity as any) || 'Moderate'
+  );
+  const [notes, setNotes] = useState(symptoms.notes || '');
 
-  const handleSaveCheckIn = useCallback(() => {
-    if (reportedSymptoms.length === 0) {
-      Alert.alert('No Symptoms Selected', 'Please tap at least one symptom to record your daily check-in.');
-      return;
-    }
+  const SYMPTOM_DEFS: SymptomItemDef[] = [
+    { id: 'acne', name: 'Acne', icon: 'sparkles-outline' },
+    { id: 'hair_growth', name: 'Hair growth', icon: 'cut-outline' },
+    { id: 'hair_loss', name: 'Hair loss', icon: 'fitness-outline' },
+    { id: 'bloating', name: 'Bloating', icon: 'medical-outline' },
+    { id: 'mood', name: 'Mood', icon: 'happy-outline' },
+    { id: 'cramps', name: 'Cramps', icon: 'pulse-outline' },
+    { id: 'fatigue', name: 'Fatigue', icon: 'battery-dead-outline' },
+    { id: 'skin_darkening', name: 'Skin darkening', icon: 'color-palette-outline' },
+    { id: 'irregular_periods', name: 'Irregular periods', icon: 'calendar-outline' },
+  ];
 
-    setSaving(true);
+  const handleToggle = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+    toggleSymptom(id);
+  };
+
+  const handleSave = useCallback(() => {
     setSymptomIntensity(intensity);
     saveSymptomCheckIn(notes);
+    Alert.alert(
+      'Check-in Saved',
+      `Recorded ${selectedIds.length} symptom(s) with ${intensity} intensity for today.`,
+      [{ text: 'OK', onPress: () => router.back() }]
+    );
+  }, [intensity, notes, selectedIds.length, setSymptomIntensity, saveSymptomCheckIn, router]);
 
-    setTimeout(() => {
-      setSaving(false);
-      Alert.alert(
-        'Check-in Saved',
-        `Successfully logged ${reportedSymptoms.length} symptom(s) with ${intensity} baseline intensity to your longitudinal trend.`,
-        [
-          {
-            text: 'View Trends',
-            onPress: () => router.push('/(app)/progress'),
-          },
-          {
-            text: 'OK',
-            onPress: () => router.back(),
-          },
-        ]
-      );
-    }, 400);
-  }, [reportedSymptoms.length, intensity, notes, setSymptomIntensity, saveSymptomCheckIn, router]);
+  const topPad = Math.max(insets.top, 12);
+  const bottomPad = Math.max(insets.bottom, 20);
 
   return (
-    <View style={styles.root}>
-      <AuthBackgroundFoliage />
+    <BioPulseBackground style={styles.root}>
+      <StatusBar style="dark" backgroundColor="transparent" translucent />
 
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) }]}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn} accessibilityLabel="Back">
-          <Ionicons name="arrow-back" size={20} color={BioPulseColors.navy} />
+      {/* TOP HEADER */}
+      <View style={[styles.topHeader, { paddingTop: topPad }]}>
+        <Pressable
+          onPress={() => router.back()}
+          style={styles.backBtn}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+        >
+          <Ionicons name="chevron-back" size={24} color={BioPulseColors.textPrimary} />
         </Pressable>
-        <View style={styles.headerTitleWrap}>
-          <Text style={styles.headerTitle}>Daily Symptom Check-in</Text>
-          <Text style={styles.headerSub}>
-            {isFemale ? 'PCOS Endocrine Pattern' : 'ADAM Androgen Vitality'}
-          </Text>
-        </View>
-        <View style={{ width: 40 }} />
+
+        <Text style={styles.headerTitle}>Symptom Log</Text>
+
+        <View style={{ width: 38 }} />
       </View>
 
       <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          isTablet && styles.tabletScrollContent,
-          { paddingBottom: BOTTOM_NAV_HEIGHT + insets.bottom + 90 },
-        ]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPad + 30 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Intro Banner */}
-        <View style={[styles.introBanner, { backgroundColor: themeSoftBg }]}>
-          <Ionicons name="pulse" size={20} color={themeAccent} />
-          <Text style={[styles.introText, { color: BioPulseColors.navy }]}>
-            {isFemale
-              ? 'Select today’s symptoms to map cyclical hormonal fluctuations against your menstrual phases.'
-              : 'Select today’s symptoms to assess androgen deficiency progression and response to intervention.'}
-          </Text>
-        </View>
-
-        {/* Symptoms Grid */}
-        <View style={styles.card}>
-          <View style={styles.cardHeaderRow}>
-            <Text style={styles.cardTitle}>Reported Today ({reportedSymptoms.length})</Text>
-            <Text style={styles.cardSub}>Tap to toggle</Text>
+        <View style={[styles.mainWrapper, isTablet && styles.tabletWrapper]}>
+          {/* TITLE & SUBTITLE */}
+          <View style={styles.titleSection}>
+            <Text style={styles.screenTitle}>How are you feeling today?</Text>
+            <Text style={styles.screenSubtitle}>Select the symptoms you're experiencing.</Text>
           </View>
 
-          <View style={styles.symptomsGrid}>
-            {symptoms.symptoms.map((sym) => {
-              const isSelected = sym.selected;
+          {/* 3x3 SYMPTOM CARDS GRID */}
+          <View style={styles.gridContainer}>
+            {SYMPTOM_DEFS.map((item) => {
+              const isSelected = selectedIds.includes(item.id);
               return (
                 <Pressable
-                  key={sym.id}
-                  onPress={() => toggleSymptom(sym.id)}
+                  key={item.id}
+                  onPress={() => handleToggle(item.id)}
                   style={[
-                    styles.symptomChip,
-                    isSelected && {
-                      borderColor: themeAccent,
-                      backgroundColor: themeSoftBg,
-                    },
+                    styles.symptomCard,
+                    isSelected && styles.symptomCardSelected,
                   ]}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: isSelected }}
+                  accessibilityLabel={item.name}
                 >
                   <View
                     style={[
-                      styles.chipCheckbox,
-                      isSelected && { backgroundColor: themeAccent, borderColor: themeAccent },
+                      styles.iconCircle,
+                      isSelected && styles.iconCircleSelected,
                     ]}
                   >
-                    {isSelected && <Ionicons name="checkmark" size={12} color="#FFFFFF" />}
+                    <Ionicons
+                      name={item.icon}
+                      size={22}
+                      color={isSelected ? '#F43F7D' : '#64748B'}
+                    />
                   </View>
                   <Text
                     style={[
-                      styles.chipText,
-                      isSelected && { color: themeAccent, fontWeight: '700' },
+                      styles.symptomName,
+                      isSelected && styles.symptomNameSelected,
                     ]}
+                    numberOfLines={2}
                   >
-                    {sym.name}
+                    {item.name}
                   </Text>
                 </Pressable>
               );
             })}
           </View>
-        </View>
 
-        {/* Intensity Selector */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Overall Symptom Intensity</Text>
-          <View style={styles.intensityRow}>
-            {(['Mild', 'Moderate', 'Severe'] as const).map((lvl) => {
-              const isChosen = intensity === lvl;
-              return (
-                <Pressable
-                  key={lvl}
-                  onPress={() => {
-                    setIntensity(lvl);
-                    setSymptomIntensity(lvl);
-                  }}
-                  style={[
-                    styles.intensityBtn,
-                    isChosen && { borderColor: themeAccent, backgroundColor: themeSoftBg },
-                  ]}
-                >
-                  <Text
+          {/* INTENSITY SECTION */}
+          <View style={styles.sectionBlock}>
+            <Text style={styles.sectionHeading}>Intensity</Text>
+            <Text style={styles.sectionSub}>How severe are these symptoms today?</Text>
+            <View style={styles.intensityRow}>
+              {(['Mild', 'Moderate', 'Severe'] as const).map((lvl) => {
+                const isSelected = intensity === lvl;
+                return (
+                  <Pressable
+                    key={lvl}
+                    onPress={() => setIntensity(lvl)}
                     style={[
-                      styles.intensityText,
-                      isChosen && { color: themeAccent, fontWeight: '800' },
+                      styles.intensityChip,
+                      isSelected && styles.intensityChipSelected,
                     ]}
                   >
-                    {lvl.toUpperCase()}
-                  </Text>
-                </Pressable>
-              );
-            })}
+                    <Text
+                      style={[
+                        styles.intensityChipText,
+                        isSelected && styles.intensityChipTextSelected,
+                      ]}
+                    >
+                      {lvl}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
           </View>
-        </View>
 
-        {/* Optional Notes */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Daily Notes & Triggers (Optional)</Text>
-          <TextInput
-            value={notes}
-            onChangeText={setNotes}
-            placeholder="e.g. Higher stress today, slept 6 hours, post-dinner fatigue..."
-            placeholderTextColor="#94A3B8"
-            multiline
-            numberOfLines={3}
-            style={styles.notesInput}
-          />
+          {/* ADDITIONAL NOTES (OPTIONAL) */}
+          <View style={styles.sectionBlock}>
+            <Text style={styles.sectionHeading}>Additional Notes (Optional)</Text>
+            <View style={styles.notesBox}>
+              <TextInput
+                style={styles.notesInput}
+                placeholder="Add any additional notes about your symptoms today..."
+                placeholderTextColor="#94A3B8"
+                value={notes}
+                onChangeText={setNotes}
+                multiline
+                numberOfLines={3}
+              />
+            </View>
+          </View>
+
+          {/* Primary CTA */}
+          <View style={styles.ctaWrapper}>
+            <BioPulseButton
+              title="Save Check-in"
+              onPress={handleSave}
+              style={styles.saveBtn}
+            />
+          </View>
         </View>
       </ScrollView>
-
-      {/* Floating Save Button */}
-      <View
-        style={[
-          styles.bottomBar,
-          {
-            paddingBottom: Math.max(insets.bottom, 16),
-          },
-        ]}
-      >
-        <Pressable
-          onPress={handleSaveCheckIn}
-          disabled={saving}
-          style={({ pressed }) => [
-            styles.saveBtn,
-            { backgroundColor: themeAccent },
-            pressed && styles.saveBtnPressed,
-            saving && { opacity: 0.7 },
-          ]}
-        >
-          <Ionicons name="checkmark-circle-outline" size={18} color="#FFFFFF" />
-          <Text style={styles.saveBtnText}>
-            {saving ? 'Saving Check-in...' : 'Save Today’s Check-in'}
-          </Text>
-        </Pressable>
-      </View>
-
-      {/* Permanent Fixed Bottom Nav */}
-      <BioPulseBottomNav activeTab="track" />
-    </View>
+    </BioPulseBackground>
   );
 }
 
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
   },
-  header: {
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-    paddingHorizontal: 16,
-    paddingBottom: 12,
+  topHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 8,
   },
   backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F1F5F9',
-  },
-  headerTitleWrap: {
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: BioPulseColors.navy,
-  },
-  headerSub: {
-    fontSize: 12,
-    color: BioPulseColors.secondaryText,
-    marginTop: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-  },
-  tabletScrollContent: {
-    maxWidth: 600,
-    alignSelf: 'center',
-    width: '100%',
-  },
-  introBanner: {
-    borderRadius: 14,
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 16,
-  },
-  introText: {
-    fontSize: 12,
-    flex: 1,
-    lineHeight: 17,
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    padding: 16,
-    marginBottom: 16,
-  },
-  cardHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    justifyContent: 'center',
   },
-  cardTitle: {
-    fontSize: 14,
+  headerTitle: {
+    fontSize: 16,
     fontWeight: '700',
-    color: BioPulseColors.navy,
-    marginBottom: 10,
+    color: '#073B72',
   },
-  cardSub: {
-    fontSize: 11,
-    color: '#94A3B8',
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    alignItems: 'center',
   },
-  symptomsGrid: {
+  mainWrapper: {
+    width: '100%',
+    maxWidth: 460,
+  },
+  tabletWrapper: {
+    maxWidth: 580,
+  },
+  titleSection: {
+    marginBottom: 18,
+  },
+  screenTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#073B72',
+    letterSpacing: -0.3,
+    marginBottom: 4,
+  },
+  screenSubtitle: {
+    fontSize: 14,
+    color: '#64748B',
+    lineHeight: 20,
+  },
+  gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
+    marginBottom: 20,
   },
-  symptomChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    gap: 8,
-    width: '48%',
-  },
-  chipCheckbox: {
-    width: 18,
-    height: 18,
-    borderRadius: 5,
+  symptomCard: {
+    width: '31%',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: '#CBD5E1',
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 6,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    minHeight: 96,
   },
-  chipText: {
+  symptomCardSelected: {
+    borderColor: '#F43F7D',
+    backgroundColor: '#FDF2F8',
+  },
+  iconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  iconCircleSelected: {
+    backgroundColor: '#FCE7F3',
+  },
+  symptomName: {
     fontSize: 12,
-    color: BioPulseColors.navy,
+    color: '#334155',
     fontWeight: '600',
-    flex: 1,
+    textAlign: 'center',
+    lineHeight: 15,
+  },
+  symptomNameSelected: {
+    color: '#F43F7D',
+    fontWeight: '700',
+  },
+  sectionBlock: {
+    marginBottom: 18,
+  },
+  sectionHeading: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#073B72',
+    marginBottom: 2,
+  },
+  sectionSub: {
+    fontSize: 12,
+    color: '#64748B',
+    marginBottom: 10,
   },
   intensityRow: {
     flexDirection: 'row',
     gap: 10,
   },
-  intensityBtn: {
+  intensityChip: {
     flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
     paddingVertical: 12,
-    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  intensityChipSelected: {
+    borderColor: '#F43F7D',
+    backgroundColor: '#FDF2F8',
+  },
+  intensityChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  intensityChipTextSelected: {
+    color: '#F43F7D',
+    fontWeight: '700',
+  },
+  notesBox: {
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  intensityText: {
-    fontSize: 12,
-    color: '#64748B',
-    fontWeight: '700',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
   notesInput: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    padding: 12,
     fontSize: 13,
-    color: BioPulseColors.navy,
+    color: '#0F172A',
+    minHeight: 60,
     textAlignVertical: 'top',
-    minHeight: 70,
   },
-  bottomBar: {
-    position: 'absolute',
-    bottom: BOTTOM_NAV_HEIGHT,
-    left: 0,
-    right: 0,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-    paddingHorizontal: 16,
-    paddingTop: 12,
+  ctaWrapper: {
+    marginTop: 6,
+    marginBottom: 10,
   },
   saveBtn: {
-    height: 48,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  saveBtnPressed: {
-    opacity: 0.85,
-  },
-  saveBtnText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    backgroundColor: '#F43F7D',
+    height: 52,
+    borderRadius: 14,
   },
 });

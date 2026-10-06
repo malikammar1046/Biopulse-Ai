@@ -14,12 +14,23 @@ export interface AdamQuestionnaireState {
   currentQuestion: number; // 1-indexed (1 to 10)
 }
 
+export type MaleActivityLevel = 'sedentary' | 'lightly_active' | 'active' | 'very_active';
+export type MaleWeightContext = 'stable' | 'recent_gain' | 'trying_to_lose';
+export type MaleMetabolicResponse = 'no' | 'yes' | 'not_sure';
+export type MaleSleepRange = 'less_6' | '6_8' | 'more_8';
+
 export interface MaleLifestyleState {
   exerciseFrequency: 'none' | '1-2_days' | '3+_days';
   fastFoodIntake: 'never' | 'occasionally' | 'frequently';
   sleepHours: number;
   stressLevel: 'low' | 'moderate' | 'high';
   notes: string;
+  activityLevel: MaleActivityLevel;
+  weightContext: MaleWeightContext;
+  diabetes: MaleMetabolicResponse;
+  highCholesterol: MaleMetabolicResponse;
+  highBloodPressure: MaleMetabolicResponse;
+  sleepRange: MaleSleepRange;
 }
 
 export interface MaleOnboardingState {
@@ -30,7 +41,7 @@ export interface MaleOnboardingState {
 }
 
 export const ADAM_QUESTIONS: { id: number; question: string; description: string }[] = [
-  { id: 1, question: 'Do you have a decrease in libido (sex drive)?', description: 'Primary clinical indicator of androgen deficiency' },
+  { id: 1, question: 'Do you have a decrease in libido (sex drive)?', description: 'A reduced interest in sexual activity can be a sign of lower testosterone levels in some men.' },
   { id: 2, question: 'Do you have a lack of energy?', description: 'Persistent fatigue or reduced stamina throughout the day' },
   { id: 3, question: 'Do you have a decrease in strength and/or endurance?', description: 'Noticeable reduction in physical performance or muscle capacity' },
   { id: 4, question: 'Have you lost height?', description: 'May indicate osteoporotic changes related to hormone decline' },
@@ -43,11 +54,11 @@ export const ADAM_QUESTIONS: { id: number; question: string; description: string
 ];
 
 const DEFAULT_BASIC_INFO: MaleBasicInfoState = {
-  age: 36,
+  age: 32,
   heightCm: 178,
-  weightKg: 82,
-  bmi: 25.9,
-  waistCm: 92,
+  weightKg: 76,
+  bmi: 24.0,
+  waistCm: 86,
 };
 
 const DEFAULT_ADAM: AdamQuestionnaireState = {
@@ -61,6 +72,12 @@ const DEFAULT_LIFESTYLE: MaleLifestyleState = {
   sleepHours: 7,
   stressLevel: 'moderate',
   notes: '',
+  activityLevel: 'lightly_active',
+  weightContext: 'stable',
+  diabetes: 'no',
+  highCholesterol: 'no',
+  highBloodPressure: 'no',
+  sleepRange: '6_8',
 };
 
 interface MaleOnboardingContextValue {

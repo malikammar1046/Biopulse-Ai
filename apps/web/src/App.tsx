@@ -80,6 +80,7 @@ const LifestyleRecommendationsPage = lazy(() =>
   import('./pages/app/LifestyleRecommendationsPage').then((m) => ({ default: m.LifestyleRecommendationsPage }))
 );
 const FitnessPage = lazy(() => import('./pages/app/FitnessPage').then((m) => ({ default: m.FitnessPage })));
+const NutritionPage = lazy(() => import('./pages/app/NutritionPage').then((m) => ({ default: m.NutritionPage })));
 const ReportsPage = lazy(() => import('./pages/app/ReportsPage').then((m) => ({ default: m.ReportsPage })));
 const MedicationsPage = lazy(() => import('./pages/app/MedicationsPage').then((m) => ({ default: m.MedicationsPage })));
 const CareCirclePage = lazy(() => import('./pages/app/CareCirclePage').then((m) => ({ default: m.CareCirclePage })));
@@ -211,6 +212,7 @@ const AppContent: React.FC = () => {
                   <Route path="lifestyle" element={<LifestyleRecommendationsPage />} />
                   <Route path="diet" element={<LifestyleRecommendationsPage />} />
                   <Route path="diet/week" element={<LifestyleRecommendationsPage />} />
+            <Route path={ROUTES.APP.NUTRITION} element={<NutritionPage />} />
                   <Route path="fitness" element={<FitnessPage />} />
                   <Route path="reports" element={<ReportsPage />} />
                   <Route path="medications" element={<MedicationsPage />} />

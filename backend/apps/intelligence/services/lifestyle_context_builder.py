@@ -19,7 +19,7 @@ import hashlib
 import json
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Any, Dict, List, Optional, Set
 
 from apps.health.services.supabase_health_service import health_service, PatientHealthData
@@ -143,6 +143,19 @@ class ComprehensiveLifestyleContext:
     generated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
+def _get_field(obj: Any, key: str, default: Any = None) -> Any:
+    if obj is None:
+        return default
+    if isinstance(obj, dict):
+        if key in obj and obj[key] is not None:
+            return obj[key]
+        camel = "".join(w.capitalize() if i > 0 else w for i, w in enumerate(key.split("_")))
+        if camel in obj and obj[camel] is not None:
+            return obj[camel]
+        return default
+    return getattr(obj, key, default)
+
+
 class LifestyleContextBuilder:
     """
     Authoritative builder that constructs ComprehensiveLifestyleContext from verified
@@ -183,20 +196,19 @@ class LifestyleContextBuilder:
         gender = None
         pathway = None
         if profile_obj:
-            gender = getattr(profile_obj, "gender", None) or (
-                profile_obj.get("gender") if isinstance(profile_obj, dict) else None
-            )
-            pathway = getattr(profile_obj, "pathway", None) or (
-                profile_obj.get("pathway") if isinstance(profile_obj, dict) else None
-            )
+            gender = _get_field(profile_obj, "gender")
+            pathway = _get_field(profile_obj, "pathway")
 
-        if not gender and not pathway and auth_token:
+        user_meta: Dict[str, Any] = {}
+        if auth_token:
             try:
                 import jwt
                 payload = jwt.decode(auth_token, options={"verify_signature": False})
                 user_meta = payload.get("user_metadata", {}) or {}
-                gender = user_meta.get("gender")
-                pathway = user_meta.get("pathway")
+                if not gender:
+                    gender = user_meta.get("gender")
+                if not pathway:
+                    pathway = user_meta.get("pathway")
             except Exception:
                 pass
 
@@ -234,44 +246,62 @@ class LifestyleContextBuilder:
         acne = None
 
         if profile_obj:
-            age = getattr(profile_obj, "age", None)
-            height_cm = getattr(profile_obj, "height_cm", None)
-            weight_kg = getattr(profile_obj, "weight_kg", None)
-            waist_inch = getattr(profile_obj, "waist_inch", None)
-            hip_inch = getattr(profile_obj, "hip_inch", None)
-            if waist_inch is None and getattr(profile_obj, "waist_cm", None) is not None:
+            # Prefer explicit age attribute if present; otherwise derive canonically from date_of_birth
+            age = _get_field(profile_obj, "age")
+            dob_raw = _get_field(profile_obj, "date_of_birth") or _get_field(profile_obj, "dob")
+            if age is None and dob_raw:
                 try:
-                    waist_inch = round(float(profile_obj.waist_cm) / 2.54, 1)
+                    if isinstance(dob_raw, str):
+                        dob_date = datetime.strptime(dob_raw[:10], "%Y-%m-%d").date()
+                    elif isinstance(dob_raw, date):
+                        dob_date = dob_raw
+                    else:
+                        dob_date = None
+                    if dob_date is not None:
+                        today = date.today()
+                        age = today.year - dob_date.year - (
+                            (today.month, today.day) < (dob_date.month, dob_date.day)
+                        )
+                except Exception:
+                    pass
+
+            height_cm = _get_field(profile_obj, "height_cm")
+            weight_kg = _get_field(profile_obj, "weight_kg")
+            waist_inch = _get_field(profile_obj, "waist_inch")
+            hip_inch = _get_field(profile_obj, "hip_inch")
+            if waist_inch is None and _get_field(profile_obj, "waist_cm") is not None:
+                try:
+                    waist_inch = round(float(_get_field(profile_obj, "waist_cm")) / 2.54, 1)
                 except (ValueError, TypeError):
                     pass
-            if hip_inch is None and getattr(profile_obj, "hip_cm", None) is not None:
+            if hip_inch is None and _get_field(profile_obj, "hip_cm") is not None:
                 try:
-                    hip_inch = round(float(profile_obj.hip_cm) / 2.54, 1)
+                    hip_inch = round(float(_get_field(profile_obj, "hip_cm")) / 2.54, 1)
                 except (ValueError, TypeError):
                     pass
-            regular_exercise = getattr(profile_obj, "regular_exercise", None)
-            fast_food_intake = getattr(profile_obj, "fast_food_intake", None)
-            period_regularity = getattr(profile_obj, "period_regularity", None)
-            activity_level = getattr(profile_obj, "activity_level", None)
-            sleep_hours = getattr(profile_obj, "sleep_hours", None)
+            regular_exercise = _get_field(profile_obj, "regular_exercise")
+            fast_food_intake = _get_field(profile_obj, "fast_food_intake")
+            period_regularity = _get_field(profile_obj, "period_regularity")
+            activity_level = _get_field(profile_obj, "activity_level")
+            sleep_hours = _get_field(profile_obj, "sleep_hours")
 
             # Common symptoms list
-            cs = [str(s).lower() for s in (getattr(profile_obj, "common_symptoms", []) or [])]
+            cs = [str(s).lower() for s in (_get_field(profile_obj, "common_symptoms", []) or [])]
             skin_darkening = any("dark" in s or "acanthosis" in s for s in cs)
             hair_growth = any("hair" in s or "hirsutism" in s for s in cs)
             acne = any("acne" in s or "pimple" in s for s in cs)
 
             # Preferences & lifestyle
-            if getattr(profile_obj, "dietary_preference", None):
-                dietary_pref = str(profile_obj.dietary_preference)
-            prof_allergies = list(getattr(profile_obj, "food_allergies", []) or getattr(profile_obj, "allergies", []) or [])
+            if _get_field(profile_obj, "dietary_preference"):
+                dietary_pref = str(_get_field(profile_obj, "dietary_preference"))
+            prof_allergies = list(_get_field(profile_obj, "food_allergies", []) or _get_field(profile_obj, "allergies", []) or [])
             if prof_allergies:
                 allergens = prof_allergies
-            prof_intolerances = list(getattr(profile_obj, "food_intolerances", []) or [])
+            prof_intolerances = list(_get_field(profile_obj, "food_intolerances", []) or [])
             if prof_intolerances:
                 intolerances = prof_intolerances
 
-            lifestyle_data = getattr(profile_obj, "lifestyle", {})
+            lifestyle_data = _get_field(profile_obj, "lifestyle", {})
             if isinstance(lifestyle_data, dict):
                 dietary_pref = lifestyle_data.get("dietaryPreference") or lifestyle_data.get("dietary_preference") or dietary_pref
                 if not allergens:
@@ -285,6 +315,22 @@ class LifestyleContextBuilder:
                     except (ValueError, TypeError):
                         pass
                 stress_level = lifestyle_data.get("stressLevel") or lifestyle_data.get("stress_level") or stress_level
+
+        # Fallback to user_meta for age/DOB if still unpopulated
+        if age is None and user_meta:
+            meta_dob = user_meta.get("date_of_birth") or user_meta.get("dob")
+            if meta_dob:
+                try:
+                    dob_date = datetime.strptime(str(meta_dob)[:10], "%Y-%m-%d").date()
+                    today = date.today()
+                    age = today.year - dob_date.year - ((today.month, today.day) < (dob_date.month, dob_date.day))
+                except Exception:
+                    pass
+            elif user_meta.get("age"):
+                try:
+                    age = int(user_meta["age"])
+                except (ValueError, TypeError):
+                    pass
 
         # 3. Retrieve Active Screening Assessment
         active_rec = assessment_repository.get_active_assessment(user_id_str, module=module, auth_token=auth_token)
@@ -372,13 +418,20 @@ class LifestyleContextBuilder:
 
         if active_rec and isinstance(active_rec.get("shap_explanation"), dict):
             shap_dict = active_rec["shap_explanation"]
-            features_list = shap_dict.get("features", [])
+            # The shap_explanation payload uses 'factors' as the top-level list key.
+            # Older records may use 'features'; check both for backward compatibility.
+            features_list = shap_dict.get("factors") or shap_dict.get("features") or []
             if isinstance(features_list, list):
                 for f in features_list:
                     if not isinstance(f, dict):
                         continue
-                    feat_name = f.get("feature_name") or f.get("feature") or ""
-                    val = float(f.get("shap_value") or f.get("attribution") or 0.0)
+                    # Accept 'feature_name', 'feature_key', or legacy 'feature'
+                    feat_name = f.get("feature_name") or f.get("feature_key") or f.get("feature") or ""
+                    # 'factors' records use 'shap_value'; also accept 'attribution'
+                    try:
+                        val = float(f.get("shap_value") or f.get("attribution") or 0.0)
+                    except (TypeError, ValueError):
+                        val = 0.0
                     patient_val = f.get("patient_value") or f.get("value")
                     meta = get_feature_metadata(feat_name)
                     disp_name = meta.patient_label if meta else feat_name.replace("_", " ").title()
@@ -630,8 +683,24 @@ class LifestyleContextBuilder:
             missing_data.append("activity_information")
         if not screening.has_assessment:
             missing_data.append("screening_assessment")
-        if not shap_drivers and not shap_mitigators:
-            missing_data.append("shap_factors")
+        else:
+            # Only flag shap_factors missing when the active assessment genuinely has no shap_explanation or factors
+            has_shap_payload = (
+                active_rec is not None
+                and (
+                    (
+                        isinstance(active_rec.get("shap_explanation"), dict)
+                        and bool(
+                            active_rec["shap_explanation"].get("factors")
+                            or active_rec["shap_explanation"].get("features")
+                        )
+                    )
+                    or bool(active_rec.get("top_factors"))
+                )
+            )
+            if not has_shap_payload:
+                missing_data.append("shap_factors")
+
         if not symptoms.active_symptoms:
             missing_data.append("symptom_logs")
         if not lab_markers.raw_markers:
@@ -671,12 +740,14 @@ class LifestyleContextBuilder:
 
         state_digest = {
             "pathway": demo.pathway,
+            "age": demo.age,
             "weight_kg": round(demo.weight_kg, 1) if demo.weight_kg is not None else None,
             "height_cm": round(demo.height_cm, 1) if demo.height_cm is not None else None,
             "bmi": round(demo.bmi, 1) if demo.bmi is not None else None,
             "activity_level": demo.activity_level or "",
             "dietary_preference": demo.dietary_preference or "",
             "allergens": sorted(demo.allergens or []),
+            "intolerances": sorted(demo.intolerances or []),
             "assessment_id": screening.assessment_id or "",
             "assessment_level": screening.assessment_level,
             "risk_category": screening.risk_category,

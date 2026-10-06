@@ -10,17 +10,17 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   useWindowDimensions,
-  ActivityIndicator,
   Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../../constants/Colors';
-import { AuthBackgroundFoliage } from './AuthBackgroundFoliage';
-import { SignupTopBar } from './SignupTopBar';
-import { SignupHeroIllustration } from './SignupHeroIllustration';
-import { AuthInput } from './AuthInput';
-import { AuthTermsCheckbox } from './AuthTermsCheckbox';
-import { SocialAuthButtons } from './SocialAuthButtons';
+import { BioPulseBackground } from '../common/BioPulseBackground';
+import { BioPulseButton } from '../common/BioPulseButton';
+import { BioPulseInput } from '../common/BioPulseInput';
+import { SocialAuthRow } from '../common/SocialAuthRow';
+import { Logo } from '../brand/Logo';
 import {
   validateFullName,
   validateEmail,
@@ -42,17 +42,20 @@ export interface BioPulseSignupScreenProps {
 }
 
 /**
- * BioPulse AI Mobile Create Account / Sign Up Screen (Screen 4)
+ * Screen 4: Sign Up Screen
  *
- * Implements:
- * - Dual-pathway inclusivity: visually represents female (PCOS) & male (hypogonadism) users
- * - Full Name, Email, Password, and Confirm Password fields with active validation
- * - Real interactive Terms of Service & Privacy Policy agreement checkbox
- * - Upper-right dual-character vector illustration (paired female & male health motifs)
- * - Safe keyboard handling and responsive layout across phones and tablets
+ * Rebuilt to match Screenshot 4:
+ * - BioPulse AI logo at top
+ * - "Create your account" / "Start your journey to better understanding your health."
+ * - Full Name, Email, Password, Confirm Password fields
+ * - Interactive Terms of Service & Privacy Policy checkbox
+ * - Primary "Create Account  →" button
+ * - "Or continue with" divider
+ * - Google & Apple social sign-in buttons
+ * - "Already have an account? Log In"
+ * - Preserves all authentication & registration logic
  */
 export const BioPulseSignupScreen: React.FC<BioPulseSignupScreenProps> = ({
-  onBack,
   onSignupSuccess,
   onLoginPress,
   onTermsPress,
@@ -63,10 +66,6 @@ export const BioPulseSignupScreen: React.FC<BioPulseSignupScreenProps> = ({
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
 
-  // Responsive breakpoints
-  const isCompact = height < 720 || width < 360;
-  const isTablet = width >= 768;
-
   // Form Fields State
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -74,86 +73,22 @@ export const BioPulseSignupScreen: React.FC<BioPulseSignupScreenProps> = ({
   const [confirmPassword, setConfirmPassword] = useState('');
   const [termsAgreed, setTermsAgreed] = useState(false);
 
-  // Error States
+  // Errors & Loading
   const [nameError, setNameError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
   const [termsError, setTermsError] = useState<string | null>(null);
   const [generalError, setGeneralError] = useState<string | null>(null);
-
   const [isLoading, setIsLoading] = useState(false);
 
-  // Field change handlers
-  const handleNameChange = useCallback((text: string) => {
-    setFullName(text);
-    if (nameError) setNameError(null);
-    if (generalError) setGeneralError(null);
-  }, [nameError, generalError]);
+  const topPad = Math.max(insets.top, Platform.OS === 'android' ? 16 : 12);
+  const bottomPad = Math.max(insets.bottom, 16);
 
-  const handleEmailChange = useCallback((text: string) => {
-    setEmail(text);
-    if (emailError) setEmailError(null);
-    if (generalError) setGeneralError(null);
-  }, [emailError, generalError]);
-
-  const handlePasswordChange = useCallback((text: string) => {
-    setPassword(text);
-    if (passwordError) setPasswordError(null);
-    if (generalError) setGeneralError(null);
-    if (confirmPassword && text !== confirmPassword) {
-      setConfirmPasswordError('Passwords do not match');
-    } else if (confirmPassword && text === confirmPassword) {
-      setConfirmPasswordError(null);
-    }
-  }, [passwordError, generalError, confirmPassword]);
-
-  const handleConfirmPasswordChange = useCallback((text: string) => {
-    setConfirmPassword(text);
-    if (confirmPasswordError) setConfirmPasswordError(null);
-    if (generalError) setGeneralError(null);
-  }, [confirmPasswordError, generalError]);
-
-  const handleToggleTerms = useCallback(() => {
-    setTermsAgreed((prev) => {
-      const next = !prev;
-      if (next && termsError) setTermsError(null);
-      return next;
-    });
-    if (generalError) setGeneralError(null);
-  }, [termsError, generalError]);
-
-  // Blur validation handlers
-  const handleNameBlur = useCallback(() => {
-    if (fullName.trim().length > 0) {
-      setNameError(validateFullName(fullName));
-    }
-  }, [fullName]);
-
-  const handleEmailBlur = useCallback(() => {
-    if (email.trim().length > 0) {
-      setEmailError(validateEmail(email));
-    }
-  }, [email]);
-
-  const handlePasswordBlur = useCallback(() => {
-    if (password.length > 0) {
-      setPasswordError(validateRegistrationPassword(password));
-    }
-  }, [password]);
-
-  const handleConfirmPasswordBlur = useCallback(() => {
-    if (confirmPassword.length > 0) {
-      setConfirmPasswordError(validateConfirmPassword(password, confirmPassword));
-    }
-  }, [password, confirmPassword]);
-
-  // Submit Handler
-  const handleCreateAccount = async () => {
+  const handleSignup = async () => {
     Keyboard.dismiss();
     setGeneralError(null);
 
-    // Validate all fields
     const nErr = validateFullName(fullName);
     const eErr = validateEmail(email);
     const pErr = validateRegistrationPassword(password);
@@ -174,395 +109,347 @@ export const BioPulseSignupScreen: React.FC<BioPulseSignupScreenProps> = ({
 
     try {
       const result = await registerWithEmailAndPassword({
-        fullName,
-        email,
+        fullName: fullName.trim(),
+        email: email.trim(),
         password,
         confirmPassword,
         termsAgreed,
       });
 
-      if (result.success && result.user) {
-        if (onSignupSuccess) {
-          onSignupSuccess(result.user);
-        } else {
-          Alert.alert(
-            'Account Created',
-            `Welcome to BioPulse AI, ${result.user.fullName || 'Member'}!`,
-            [{ text: 'Continue' }]
-          );
-        }
-      } else {
-        setGeneralError(
-          result.errorMessage || 'Registration could not be completed. Please try again.'
-        );
+      if (!result.success || !result.user) {
+        setGeneralError(result.errorMessage || 'Failed to create account. Please try again.');
+        setIsLoading(false);
+        return;
       }
-    } catch {
-      setGeneralError(
-        'A network connection issue occurred. Please check your network and retry.'
-      );
-    } finally {
+
       setIsLoading(false);
+      if (onSignupSuccess) {
+        onSignupSuccess(result.user);
+      }
+    } catch (err: any) {
+      setIsLoading(false);
+      setGeneralError(err?.message || 'A network error occurred. Please try again.');
     }
   };
 
-  // Terms and Privacy handlers with clean integration boundaries
-  const handlePressTerms = () => {
-    if (onTermsPress) {
-      onTermsPress();
+  const handleGooglePress = useCallback(() => {
+    if (onGoogleSignup) {
+      onGoogleSignup();
     } else {
       Alert.alert(
-        'Terms of Service',
-        'BioPulse AI is a personalized health screening intelligence platform. It provides non-diagnostic risk assessments and longitudinal wellness tracking. By using this service, you acknowledge that assessments do not replace professional medical diagnosis.\n\n(Full Terms of Service route boundary).',
-        [{ text: 'Close' }]
+        'Google Sign-Up',
+        'Google OAuth is available via our Supabase backend. On mobile, please register with your email and password.',
+        [{ text: 'OK' }]
       );
     }
-  };
+  }, [onGoogleSignup]);
 
-  const handlePressPrivacy = () => {
-    if (onPrivacyPress) {
-      onPrivacyPress();
+  const handleApplePress = useCallback(() => {
+    if (onAppleSignup) {
+      onAppleSignup();
     } else {
       Alert.alert(
-        'Privacy Policy',
-        'Your health and biometric data are encrypted at rest and in transit. BioPulse AI adheres to strict data privacy principles and never sells personal health telemetry to third parties.\n\n(Full Privacy Policy route boundary).',
-        [{ text: 'Close' }]
+        'Apple Sign-Up',
+        'Apple Sign-In is configured for iOS production builds. Please register with your email and password.',
+        [{ text: 'OK' }]
       );
     }
-  };
-
-  const handleBack = () => {
-    if (onBack) {
-      onBack();
-    }
-  };
-
-  const handleLogin = () => {
-    if (onLoginPress) {
-      onLoginPress();
-    }
-  };
+  }, [onAppleSignup]);
 
   return (
-    <View style={styles.outerContainer}>
-      {/* Decorative Botanical Foliage & Dual-Pathway Ambient Glows */}
-      <AuthBackgroundFoliage topOffset={insets.top} />
+    <BioPulseBackground style={styles.container}>
+      <StatusBar style="dark" backgroundColor="transparent" translucent />
 
-      <KeyboardAvoidingView
-        style={styles.keyboardAvoider}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <KeyboardAvoidingView
+          style={styles.keyboardView}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
           <ScrollView
-            style={styles.scrollView}
             contentContainerStyle={[
               styles.scrollContent,
               {
-                paddingTop: Math.max(insets.top + 6, 16),
-                paddingBottom: Math.max(insets.bottom + 20, 32),
+                paddingTop: topPad + 8,
+                paddingBottom: bottomPad + 8,
+                minHeight: height,
               },
             ]}
-            keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
           >
-            {/* Constrained Centered Column for Phone/Tablet Responsiveness */}
-            <View
-              style={[
-                styles.contentContainer,
-                isTablet && styles.tabletContainer,
-              ]}
-            >
-              {/* 1. Top Navigation Bar (Back Button + Centered Brand Lockup) */}
-              <SignupTopBar onBack={handleBack} isCompact={isCompact} />
-
-              {/* 2. Header Row with Title, Copy, and Upper-Right Dual-Hero Illustration */}
-              <View style={styles.headerHeroRow}>
-                {/* Text Column */}
-                <View style={styles.titleColumn}>
-                  <Text
-                    style={[
-                      styles.mainHeading,
-                      isCompact && styles.mainHeadingCompact,
-                    ]}
-                  >
-                    Create Your Account
-                  </Text>
-                  <Text
-                    style={[
-                      styles.subHeading,
-                      isCompact && styles.subHeadingCompact,
-                    ]}
-                  >
-                    Join BioPulse AI and take the first step towards a healthier you.
-                  </Text>
-                </View>
-
-                {/* Upper-Right Dual-Pathway Vignette Hero Artwork */}
-                <SignupHeroIllustration isCompact={isCompact} />
+            <View style={[styles.mainWrapper, { maxWidth: Math.min(width, 460) }]}>
+              {/* 1. Header Logo */}
+              <View style={styles.logoSection}>
+                <Logo size="sm" layout="vertical" showTagline={false} />
               </View>
 
-              {/* General Error Banner */}
+              {/* 2. Titles */}
+              <View style={styles.titleSection}>
+                <Text style={styles.title}>Create your account</Text>
+                <Text style={styles.subtitle}>
+                  Start your journey to better understanding your health.
+                </Text>
+              </View>
+
+              {/* 3. General Error Box */}
               {generalError ? (
-                <View
-                  style={styles.generalErrorBanner}
-                  accessible
-                  accessibilityRole="alert"
-                >
+                <View style={styles.generalErrorBox}>
                   <Text style={styles.generalErrorText}>{generalError}</Text>
                 </View>
               ) : null}
 
-              {/* 3. Form Fields */}
-              <View style={styles.formContainer}>
-                {/* Full Name */}
-                <AuthInput
-                  label="Full Name"
-                  iconName="person-outline"
-                  placeholder="Enter your full name"
+              {/* 4. Form Inputs */}
+              <View style={styles.inputsSection}>
+                <BioPulseInput
+                  placeholder="Full Name"
+                  leftIcon="person-outline"
                   value={fullName}
-                  onChangeText={handleNameChange}
-                  onBlur={handleNameBlur}
-                  errorText={nameError}
+                  onChangeText={(t) => {
+                    setFullName(t);
+                    if (nameError) setNameError(null);
+                  }}
                   autoCapitalize="words"
-                  autoCorrect={false}
-                  textContentType="name"
-                  editable={!isLoading}
-                  returnKeyType="next"
+                  error={nameError}
                 />
 
-                {/* Email Address */}
-                <AuthInput
-                  label="Email Address"
-                  iconName="mail-outline"
-                  placeholder="you@example.com"
+                <BioPulseInput
+                  placeholder="Email"
+                  leftIcon="mail-outline"
                   value={email}
-                  onChangeText={handleEmailChange}
-                  onBlur={handleEmailBlur}
-                  errorText={emailError}
+                  onChangeText={(t) => {
+                    setEmail(t);
+                    if (emailError) setEmailError(null);
+                  }}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
-                  autoComplete="email"
-                  textContentType="emailAddress"
-                  editable={!isLoading}
-                  returnKeyType="next"
+                  error={emailError}
                 />
 
-                {/* Password */}
-                <AuthInput
-                  label="Password"
-                  iconName="lock-closed-outline"
-                  placeholder="Create a password"
+                <BioPulseInput
+                  placeholder="Password"
+                  leftIcon="lock-closed-outline"
                   value={password}
-                  onChangeText={handlePasswordChange}
-                  onBlur={handlePasswordBlur}
-                  errorText={passwordError}
-                  helperText="At least 8 characters with a mix of letters, numbers and symbols."
+                  onChangeText={(t) => {
+                    setPassword(t);
+                    if (passwordError) setPasswordError(null);
+                  }}
                   isPassword
                   autoCapitalize="none"
-                  autoCorrect={false}
-                  autoComplete="password-new"
-                  textContentType="newPassword"
-                  editable={!isLoading}
-                  returnKeyType="next"
+                  error={passwordError}
                 />
 
-                {/* Confirm Password */}
-                <AuthInput
-                  label="Confirm Password"
-                  iconName="lock-closed-outline"
-                  placeholder="Confirm your password"
+                <BioPulseInput
+                  placeholder="Confirm Password"
+                  leftIcon="lock-closed-outline"
                   value={confirmPassword}
-                  onChangeText={handleConfirmPasswordChange}
-                  onBlur={handleConfirmPasswordBlur}
-                  errorText={confirmPasswordError}
+                  onChangeText={(t) => {
+                    setConfirmPassword(t);
+                    if (confirmPasswordError) setConfirmPasswordError(null);
+                  }}
                   isPassword
                   autoCapitalize="none"
-                  autoCorrect={false}
-                  autoComplete="password-new"
-                  textContentType="newPassword"
-                  editable={!isLoading}
-                  returnKeyType="done"
-                  onSubmitEditing={handleCreateAccount}
+                  error={confirmPasswordError}
                 />
 
-                {/* Terms of Service & Privacy Policy Checkbox */}
-                <AuthTermsCheckbox
-                  checked={termsAgreed}
-                  onToggle={handleToggleTerms}
-                  onPressTerms={handlePressTerms}
-                  onPressPrivacy={handlePressPrivacy}
-                  errorText={termsError}
-                  disabled={isLoading}
-                />
-
-                {/* Primary Create Account Button */}
+                {/* Terms Checkbox */}
                 <Pressable
-                  onPress={handleCreateAccount}
-                  disabled={isLoading}
-                  style={({ pressed }) => [
-                    styles.submitButton,
-                    pressed && styles.submitButtonPressed,
-                    isLoading && styles.submitButtonDisabled,
-                  ]}
-                  accessibilityRole="button"
-                  accessibilityLabel="Create Account"
-                  accessibilityState={{ busy: isLoading }}
+                  onPress={() => {
+                    setTermsAgreed((prev) => !prev);
+                    if (termsError) setTermsError(null);
+                  }}
+                  style={styles.checkboxRow}
+                  hitSlop={6}
                 >
-                  {isLoading ? (
-                    <ActivityIndicator color="#FFFFFF" size="small" />
-                  ) : (
-                    <Text style={styles.submitButtonText}>Create Account  →</Text>
-                  )}
+                  <View
+                    style={[
+                      styles.checkbox,
+                      termsAgreed && styles.checkboxActive,
+                      termsError ? styles.checkboxError : null,
+                    ]}
+                  >
+                    {termsAgreed && (
+                      <Ionicons name="checkmark" size={14} color="#FFFFFF" />
+                    )}
+                  </View>
+
+                  <Text style={styles.checkboxLabel}>
+                    I agree to the{' '}
+                    <Text
+                      style={styles.legalLink}
+                      onPress={onTermsPress}
+                    >
+                      Terms of Service
+                    </Text>{' '}
+                    and{' '}
+                    <Text
+                      style={styles.legalLink}
+                      onPress={onPrivacyPress}
+                    >
+                      Privacy Policy
+                    </Text>
+                    .
+                  </Text>
                 </Pressable>
 
-                {/* Social Sign Up Section */}
-                <SocialAuthButtons
-                  mode="signup"
-                  onGooglePress={onGoogleSignup}
-                  onApplePress={onAppleSignup}
-                  disabled={isLoading}
-                />
+                {termsError ? (
+                  <Text style={styles.termsErrorText}>{termsError}</Text>
+                ) : null}
+              </View>
 
-                {/* Existing Account Link */}
-                <View style={styles.loginRow}>
-                  <Text style={styles.loginPromptText}>
-                    Already have an account?{' '}
-                  </Text>
-                  <Pressable
-                    onPress={handleLogin}
-                    hitSlop={10}
-                    disabled={isLoading}
-                    accessibilityRole="button"
-                    accessibilityLabel="Log in to existing account"
+              {/* 5. Primary CTA */}
+              <View style={styles.actionSection}>
+                <BioPulseButton
+                  title="Create Account"
+                  variant="primary"
+                  showArrow
+                  loading={isLoading}
+                  onPress={handleSignup}
+                />
+              </View>
+
+              {/* 6. Social Sign Up */}
+              <SocialAuthRow
+                dividerText="Or continue with"
+                onGooglePress={handleGooglePress}
+                onApplePress={handleApplePress}
+              />
+
+              {/* 7. Footer Login Switch */}
+              <View style={styles.switchAuthRow}>
+                <Text style={styles.switchAuthText}>
+                  Already have an account?{' '}
+                  <Text
+                    style={styles.switchAuthLink}
+                    onPress={() => onLoginPress && onLoginPress()}
                   >
-                    <Text style={styles.loginLinkText}>Log In</Text>
-                  </Pressable>
-                </View>
+                    Log In
+                  </Text>
+                </Text>
               </View>
             </View>
           </ScrollView>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
-    </View>
+        </KeyboardAvoidingView>
+      </TouchableWithoutFeedback>
+    </BioPulseBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  outerContainer: {
-    flex: 1,
-    backgroundColor: BioPulseColors.background,
-  },
-  keyboardAvoider: {
+  container: {
     flex: 1,
   },
-  scrollView: {
+  keyboardView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 22,
   },
-  contentContainer: {
+  mainWrapper: {
+    flex: 1,
     width: '100%',
-    maxWidth: 440,
-    alignSelf: 'center',
-  },
-  tabletContainer: {
-    paddingVertical: 18,
-  },
-  headerHeroRow: {
-    position: 'relative',
-    marginTop: 10,
-    marginBottom: 18,
-    minHeight: 105,
-    justifyContent: 'center',
-  },
-  titleColumn: {
-    width: '68%',
-    paddingRight: 8,
-    zIndex: 2,
-  },
-  mainHeading: {
-    fontSize: 27,
-    fontWeight: '800',
-    color: BioPulseColors.navy,
-    letterSpacing: -0.5,
-    marginBottom: 8,
-  },
-  mainHeadingCompact: {
-    fontSize: 23,
-    marginBottom: 5,
-  },
-  subHeading: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: BioPulseColors.secondaryText,
-    fontWeight: '400',
-  },
-  subHeadingCompact: {
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  generalErrorBanner: {
-    backgroundColor: '#FFE4E6',
-    borderColor: '#FDA4AF',
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    marginBottom: 16,
-  },
-  generalErrorText: {
-    color: '#9F1239',
-    fontSize: 13,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  formContainer: {
-    width: '100%',
-  },
-  submitButton: {
-    width: '100%',
-    height: 52,
-    backgroundColor: BioPulseColors.femaleAccent,
-    borderRadius: 14,
     alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: BioPulseColors.femaleAccent,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 3,
+    justifyContent: 'space-between',
+  },
+  logoSection: {
+    alignItems: 'center',
     marginTop: 4,
   },
-  submitButtonPressed: {
-    opacity: 0.88,
-    transform: [{ scale: 0.99 }],
-  },
-  submitButtonDisabled: {
-    opacity: 0.65,
-  },
-  submitButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-  },
-  loginRow: {
-    flexDirection: 'row',
+  titleSection: {
     alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
-    marginBottom: 18,
+    marginTop: 14,
+    marginBottom: 16,
   },
-  loginPromptText: {
-    color: BioPulseColors.secondaryText,
+  title: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: BioPulseColors.textPrimary,
+    letterSpacing: -0.5,
+    textAlign: 'center',
+  },
+  subtitle: {
     fontSize: 14,
+    color: BioPulseColors.textSecondary,
+    marginTop: 6,
+    textAlign: 'center',
+    paddingHorizontal: 12,
+  },
+  generalErrorBox: {
+    width: '100%',
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 14,
+  },
+  generalErrorText: {
+    color: BioPulseColors.error,
+    fontSize: 13,
+    textAlign: 'center',
     fontWeight: '500',
   },
-  loginLinkText: {
-    color: BioPulseColors.femaleAccent,
+  inputsSection: {
+    width: '100%',
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    marginBottom: 14,
+    paddingHorizontal: 2,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: BioPulseColors.border,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  checkboxActive: {
+    backgroundColor: BioPulseColors.teal,
+    borderColor: BioPulseColors.teal,
+  },
+  checkboxError: {
+    borderColor: BioPulseColors.error,
+  },
+  checkboxLabel: {
+    flex: 1,
+    fontSize: 13,
+    color: BioPulseColors.textSecondary,
+    lineHeight: 18,
+  },
+  legalLink: {
+    color: BioPulseColors.teal,
+    fontWeight: '600',
+  },
+  termsErrorText: {
+    color: BioPulseColors.error,
+    fontSize: 12,
+    marginTop: -8,
+    marginBottom: 12,
+    marginLeft: 4,
+  },
+  actionSection: {
+    width: '100%',
+  },
+  switchAuthRow: {
+    marginVertical: 12,
+    alignItems: 'center',
+  },
+  switchAuthText: {
     fontSize: 14,
+    color: BioPulseColors.textSecondary,
+  },
+  switchAuthLink: {
+    color: BioPulseColors.teal,
     fontWeight: '700',
   },
 });

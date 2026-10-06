@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,25 +9,28 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../../constants/Colors';
-import { AuthBackgroundFoliage } from '../../components/auth/AuthBackgroundFoliage';
+import { BioPulseBackground } from '../../components/common/BioPulseBackground';
 import { useHealthStore } from '../../store/healthStore';
-import { BioPulseBottomNav, BOTTOM_NAV_HEIGHT } from '../../components/navigation';
 
 /**
- * SCREEN 19: SCREENING EXPLANATION SCREEN
- * Adheres strictly to visual references:
- * - Female: ChatGPT Image Oct 2, 2026, 12_24_10 AM-1.png
- * - Male: ChatGPT Image Oct 2, 2026, 12_24_14 AM-2.png
+ * SCREEN 18: SCREENING EXPLANATION
  *
- * Implements:
- * - Top Breadcrumbs: < PCOS Pathway > Screening > Explanation
- * - Header: "What influenced your result?" + subtext
- * - Top 3 Factors with icon, direction pill (↑ Increased risk), plain explanation
- * - "See all factors" expandable accordion
- * - Non-diagnostic info callout
- * - Permanent Bottom Navigation
+ * Strict visual match to Screenshot 18:
+ * - Top Header: Back chevron (<), centered "Screening Explanation"
+ * - Title: "What influenced your result?"
+ * - Subtitle: "These are the top factors that contributed to your PCOS screening result."
+ * - Mini Summary Card:
+ *   - Circular ring gauge with "72%"
+ *   - [ Higher Risk ] badge, "PCOS Screening", "Tier 1 • 12 Mar 2025"
+ * - Top 3 Factors (Cards with icon, factor name, ↑ Increased Risk, plain language explanation):
+ *   1. Irregular Cycle
+ *   2. Excess Hair Growth
+ *   3. Higher BMI
+ * - Expandable "See all factors" link
+ * - Non-diagnostic clinical disclaimer banner
  */
 export default function ScreeningExplanationScreen() {
   const router = useRouter();
@@ -38,148 +41,264 @@ export default function ScreeningExplanationScreen() {
   const { isFemale, screening } = useHealthStore();
   const [showAllFactors, setShowAllFactors] = useState(false);
 
-  const themeAccent = isFemale ? BioPulseColors.femaleAccent : BioPulseColors.malePrimary;
-  const themeSoftBg = isFemale ? '#FFF2F7' : '#EAF5FD';
-  const themeCardBorder = isFemale ? '#FFF0F5' : '#EEF6FD';
+  const themeAccent = isFemale ? '#F43F7D' : '#0284C7';
+  const themeBgLight = isFemale ? '#FDF2F8' : '#EFF6FF';
+  const themeBorder = isFemale ? '#FCE7F3' : '#DBEAFE';
 
-  const top3Factors = screening.topFactors.slice(0, 3);
-  const remainingFactors = screening.allFactors.slice(3);
+  const probPercent = screening.probabilityPercent || (isFemale ? 72 : 38);
+  const riskLabel = screening.riskBand || (isFemale ? 'Higher Risk' : 'Intermediate Risk');
+
+  // Female curated factors matching reference screenshot
+  const femaleCuratedTop3 = useMemo(() => [
+    {
+      id: 'cycle',
+      name: 'Irregular Cycle',
+      direction: 'increases_risk',
+      icon: 'pulse-outline' as const,
+      explanation: 'Having irregular or infrequent periods contributed to a higher screening risk.',
+    },
+    {
+      id: 'hair',
+      name: 'Excess Hair Growth',
+      direction: 'increases_risk',
+      icon: 'cut-outline' as const,
+      explanation: 'Higher levels of hair growth are associated with PCOS risk.',
+    },
+    {
+      id: 'bmi',
+      name: 'Higher BMI',
+      direction: 'increases_risk',
+      icon: 'speedometer-outline' as const,
+      explanation: 'A higher BMI is a known contributing factor for PCOS.',
+    },
+  ], []);
+
+  // Male curated factors
+  const maleCuratedTop3 = useMemo(() => [
+    {
+      id: 'libido',
+      name: 'Decreased Libido',
+      direction: 'increases_risk',
+      icon: 'heart-dislike-outline' as const,
+      explanation: 'Reduced sexual interest is a primary indicator of lower testosterone activity.',
+    },
+    {
+      id: 'energy',
+      name: 'Low Daytime Energy',
+      direction: 'increases_risk',
+      icon: 'battery-dead-outline' as const,
+      explanation: 'Chronic persistent fatigue contributes to androgen deficiency screening.',
+    },
+    {
+      id: 'waist',
+      name: 'Elevated Waist Circumference',
+      direction: 'increases_risk',
+      icon: 'body-outline' as const,
+      explanation: 'Visceral abdominal adipose tissue correlates with altered hormonal conversion.',
+    },
+  ], []);
+
+  const defaultTop3 = isFemale ? femaleCuratedTop3 : maleCuratedTop3;
+
+  // Use store factors if available and valid, fallback to curated
+  const top3Factors = useMemo(() => {
+    if (screening.topFactors && screening.topFactors.length >= 3) {
+      return screening.topFactors.slice(0, 3).map((f, i) => ({
+        id: f.id || `factor-${i}`,
+        name: f.name,
+        direction: f.direction || 'increases_risk',
+        icon: (f.iconName as any) || defaultTop3[i]?.icon || 'analytics-outline',
+        explanation: f.explanation || defaultTop3[i]?.explanation || 'Influenced your screening probability score.',
+      }));
+    }
+    return defaultTop3;
+  }, [screening.topFactors, defaultTop3]);
+
+  const additionalFactors = useMemo(() => {
+    if (screening.allFactors && screening.allFactors.length > 3) {
+      return screening.allFactors.slice(3).map((f, i) => ({
+        id: f.id || `add-${i}`,
+        name: f.name,
+        direction: f.direction || 'increases_risk',
+        icon: (f.iconName as any) || 'analytics-outline',
+        explanation: f.explanation || 'Contributed to overall endocrine risk profile.',
+      }));
+    }
+    return [
+      {
+        id: 'sleep',
+        name: isFemale ? 'Healthy Sleep Routine' : 'Consistent Sleep Duration',
+        direction: 'decreases_risk',
+        icon: 'moon-outline' as const,
+        explanation: 'Adequate nocturnal rest supports endocrine homeostasis and reduced risk.',
+      },
+      {
+        id: 'activity',
+        name: 'Regular Physical Activity',
+        direction: 'decreases_risk',
+        icon: 'walk-outline' as const,
+        explanation: 'Weekly movement improves metabolic sensitivity and hormone balance.',
+      },
+    ];
+  }, [screening.allFactors, isFemale]);
+
+  const topPad = Math.max(insets.top, 12);
+  const bottomPad = Math.max(insets.bottom, 20);
 
   return (
-    <View style={[styles.root, { backgroundColor: isFemale ? '#FFF7F9' : '#F4F9FD' }]}>
-      <AuthBackgroundFoliage />
+    <BioPulseBackground style={styles.root}>
+      <StatusBar style="dark" backgroundColor="transparent" translucent />
 
-      {/* Header & Breadcrumb */}
-      <View style={[styles.topHeader, { paddingTop: Math.max(insets.top, 12) }]}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={22} color="#073B72" />
+      {/* TOP HEADER */}
+      <View style={[styles.topHeader, { paddingTop: topPad }]}>
+        <Pressable
+          onPress={() => router.back()}
+          style={styles.backBtn}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+        >
+          <Ionicons name="chevron-back" size={24} color={BioPulseColors.textPrimary} />
         </Pressable>
 
-        <View style={styles.breadcrumbRow}>
-          <Text style={styles.breadcrumbMuted}>
-            {isFemale ? 'PCOS Pathway' : 'Hypogonadism'}
-          </Text>
-          <Ionicons name="chevron-forward" size={12} color="#94A3B8" />
-          <Text style={styles.breadcrumbMuted}>Screening</Text>
-          <Ionicons name="chevron-forward" size={12} color="#94A3B8" />
-          <Text style={[styles.breadcrumbActive, { color: themeAccent }]}>Explanation</Text>
-        </View>
+        <Text style={styles.headerTitle}>Screening Explanation</Text>
 
-        <View style={{ width: 32 }} />
+        <View style={{ width: 38 }} />
       </View>
 
       <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          isTablet && styles.tabletScrollContent,
-          { paddingBottom: BOTTOM_NAV_HEIGHT + insets.bottom + 24 },
-        ]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPad + 30 }]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.container, isTablet && styles.tabletContainer]}>
-          {/* Headline Section */}
-          <View style={styles.headlineSection}>
-            <Text style={styles.titleText}>What influenced your result?</Text>
-            <Text style={styles.subtitleText}>
-              Your screening result is based on multiple factors from your health profile. Below are the top 3 factors that had the biggest influence on your result.
+        <View style={[styles.mainWrapper, isTablet && styles.tabletWrapper]}>
+          {/* TITLE & SUBTITLE */}
+          <View style={styles.titleSection}>
+            <Text style={styles.screenTitle}>What influenced your result?</Text>
+            <Text style={styles.screenSubtitle}>
+              {isFemale
+                ? 'These are the top factors that contributed to your PCOS screening result.'
+                : 'These are the top factors that contributed to your hypogonadism screening result.'}
             </Text>
           </View>
 
-          {/* Top 3 Factor Cards */}
+          {/* MINI RESULT SUMMARY CARD */}
+          <View style={styles.summaryCard}>
+            <View style={styles.gaugeContainer}>
+              <View style={[styles.gaugeRing, { borderColor: themeAccent }]}>
+                <Text style={styles.gaugePercentText}>{probPercent}%</Text>
+              </View>
+            </View>
+
+            <View style={styles.summaryDetailsCol}>
+              <View
+                style={[
+                  styles.riskBadge,
+                  {
+                    backgroundColor: isFemale ? '#FEE2E2' : '#FEF3C7',
+                    borderColor: isFemale ? '#FECACA' : '#FDE68A',
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.riskBadgeText,
+                    { color: isFemale ? '#DC2626' : '#D97706' },
+                  ]}
+                >
+                  {riskLabel}
+                </Text>
+              </View>
+              <Text style={styles.screeningModuleName}>
+                {isFemale ? 'PCOS Screening' : 'Hypogonadism Screening'}
+              </Text>
+              <Text style={styles.screeningDateMeta}>Tier 1 • 12 Mar 2025</Text>
+            </View>
+          </View>
+
+          {/* TOP 3 FACTORS LIST */}
           <View style={styles.factorsList}>
             {top3Factors.map((factor) => {
               const isIncrease = factor.direction === 'increases_risk';
-              const badgeBg = isIncrease ? '#FEE2E2' : '#E6F8F0';
-              const badgeText = isIncrease ? '#DC2626' : '#10B981';
-              const arrow = isIncrease ? '↑' : '↓';
-              const label = isIncrease ? 'Increased risk' : 'Decreased risk';
-
               return (
-                <View
-                  key={factor.id}
-                  style={[styles.factorCard, { borderColor: themeCardBorder }]}
-                >
-                  <View style={styles.factorCardHeader}>
-                    <View style={[styles.factorIconBox, { backgroundColor: themeSoftBg }]}>
-                      <Ionicons
-                        name={factor.iconName as any || 'pulse-outline'}
-                        size={20}
-                        color={themeAccent}
-                      />
-                    </View>
-
-                    <View style={styles.factorTitleWrap}>
-                      <Text style={styles.factorNameText}>{factor.name}</Text>
-                      <View style={[styles.directionBadge, { backgroundColor: badgeBg }]}>
-                        <Text style={[styles.directionBadgeText, { color: badgeText }]}>
-                          {arrow} {label}
-                        </Text>
-                      </View>
-                    </View>
-
-                    <Ionicons name="chevron-forward" size={18} color="#CBD5E1" />
+                <View key={factor.id} style={styles.factorCard}>
+                  <View style={[styles.factorIconBox, { backgroundColor: themeBgLight }]}>
+                    <Ionicons name={factor.icon} size={22} color={themeAccent} />
                   </View>
 
-                  <Text style={styles.factorExplanationText}>{factor.explanation}</Text>
+                  <View style={styles.factorContentCol}>
+                    <Text style={styles.factorTitle}>{factor.name}</Text>
+                    <Text
+                      style={[
+                        styles.factorDirectionText,
+                        { color: isIncrease ? '#DC2626' : '#10B981' },
+                      ]}
+                    >
+                      {isIncrease ? '↑ Increased Risk' : '↓ Decreased Risk'}
+                    </Text>
+                    <Text style={styles.factorExplanation}>{factor.explanation}</Text>
+                  </View>
                 </View>
               );
             })}
           </View>
 
-          {/* Accordion: See All Factors */}
+          {/* EXPANDABLE "SEE ALL FACTORS" */}
           <Pressable
-            onPress={() => setShowAllFactors(!showAllFactors)}
-            style={[styles.accordionBtn, { backgroundColor: '#FFFFFF', borderColor: themeCardBorder }]}
+            onPress={() => setShowAllFactors((prev) => !prev)}
+            style={({ pressed }) => [styles.expandCard, pressed && styles.cardPressed]}
+            accessibilityRole="button"
+            accessibilityLabel="See all factors"
           >
-            <View style={styles.accordionLeft}>
-              <Ionicons name="list-outline" size={20} color="#073B72" />
-              <Text style={styles.accordionBtnText}>See all factors</Text>
-            </View>
+            <Text style={[styles.expandCardText, { color: themeAccent }]}>
+              {showAllFactors ? 'Hide additional factors' : 'See all factors'}
+            </Text>
             <Ionicons
-              name={showAllFactors ? 'chevron-up' : 'chevron-down'}
+              name={showAllFactors ? 'chevron-up' : 'chevron-forward'}
               size={18}
-              color="#073B72"
+              color={themeAccent}
             />
           </Pressable>
 
+          {/* EXPANDED ADDITIONAL FACTORS */}
           {showAllFactors && (
-            <View style={styles.remainingFactorsWrap}>
-              {remainingFactors.map((factor) => (
-                <View
-                  key={factor.id}
-                  style={[styles.factorCard, { borderColor: themeCardBorder }]}
-                >
-                  <View style={styles.factorCardHeader}>
-                    <View style={[styles.factorIconBox, { backgroundColor: themeSoftBg }]}>
-                      <Ionicons
-                        name={factor.iconName as any || 'heart-outline'}
-                        size={18}
-                        color={themeAccent}
-                      />
+            <View style={styles.additionalFactorsList}>
+              {additionalFactors.map((factor) => {
+                const isIncrease = factor.direction === 'increases_risk';
+                return (
+                  <View key={factor.id} style={styles.factorCard}>
+                    <View style={[styles.factorIconBox, { backgroundColor: themeBgLight }]}>
+                      <Ionicons name={factor.icon} size={22} color={themeAccent} />
                     </View>
-                    <View style={styles.factorTitleWrap}>
-                      <Text style={styles.factorNameText}>{factor.name}</Text>
+
+                    <View style={styles.factorContentCol}>
+                      <Text style={styles.factorTitle}>{factor.name}</Text>
+                      <Text
+                        style={[
+                          styles.factorDirectionText,
+                          { color: isIncrease ? '#DC2626' : '#10B981' },
+                        ]}
+                      >
+                        {isIncrease ? '↑ Increased Risk' : '↓ Decreased Risk'}
+                      </Text>
+                      <Text style={styles.factorExplanation}>{factor.explanation}</Text>
                     </View>
                   </View>
-                  <Text style={styles.factorExplanationText}>{factor.explanation}</Text>
-                </View>
-              ))}
+                );
+              })}
             </View>
           )}
 
-          {/* Non-Diagnostic Callout */}
-          <View style={[styles.infoBanner, { backgroundColor: themeSoftBg, borderColor: themeCardBorder }]}>
-            <Ionicons name="information-circle-outline" size={20} color={themeAccent} />
-            <Text style={styles.infoBannerText}>
-              These are the main contributors to your current screening result. Your result is based on a combination of multiple factors from your health profile, not just these three.
+          {/* CLINICAL NON-DIAGNOSTIC DISCLAIMER */}
+          <View style={styles.disclaimerBox}>
+            <Ionicons name="information-circle" size={20} color="#0284C7" style={styles.infoIcon} />
+            <Text style={styles.disclaimerText}>
+              This is a screening result, not a diagnosis. Please consult a healthcare professional
+              for proper evaluation.
             </Text>
           </View>
         </View>
       </ScrollView>
-
-      {/* Permanent Fixed Bottom Navigation */}
-      <BioPulseBottomNav activeTab="screening" />
-    </View>
+    </BioPulseBackground>
   );
 }
 
@@ -195,148 +314,192 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#FFFFFF',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
   },
-  breadcrumbRow: {
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#073B72',
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    alignItems: 'center',
+  },
+  mainWrapper: {
+    width: '100%',
+    maxWidth: 460,
+  },
+  tabletWrapper: {
+    maxWidth: 580,
+  },
+  titleSection: {
+    marginBottom: 20,
+  },
+  screenTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#073B72',
+    letterSpacing: -0.3,
+    marginBottom: 6,
+  },
+  screenSubtitle: {
+    fontSize: 14,
+    color: '#64748B',
+    lineHeight: 20,
+  },
+  summaryCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+    gap: 16,
   },
-  breadcrumbMuted: {
-    fontSize: 12,
-    color: '#64748B',
-    fontWeight: '500',
+  gaugeContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  breadcrumbActive: {
+  gaugeRing: {
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    borderWidth: 6,
+    borderLeftColor: '#FCE7F3',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gaugePercentText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#073B72',
+  },
+  summaryDetailsCol: {
+    flex: 1,
+    gap: 3,
+  },
+  riskBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  riskBadgeText: {
     fontSize: 12,
     fontWeight: '700',
   },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 20,
-    paddingTop: 12,
-  },
-  tabletScrollContent: {
-    alignItems: 'center',
-  },
-  container: {
-    width: '100%',
-    gap: 14,
-  },
-  tabletContainer: {
-    maxWidth: 600,
-  },
-  headlineSection: {
-    gap: 6,
-    marginBottom: 4,
-  },
-  titleText: {
-    fontSize: 24,
-    fontWeight: '800',
+  screeningModuleName: {
+    fontSize: 14,
+    fontWeight: '700',
     color: '#073B72',
-    letterSpacing: -0.5,
+    marginTop: 2,
   },
-  subtitleText: {
-    fontSize: 13,
-    color: '#55718F',
-    lineHeight: 18,
+  screeningDateMeta: {
+    fontSize: 12,
+    color: '#64748B',
   },
   factorsList: {
     gap: 12,
+    marginBottom: 12,
   },
   factorCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
     padding: 16,
-    shadowColor: '#073B72',
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.03,
     shadowRadius: 6,
     elevation: 2,
-    borderWidth: 1,
-  },
-  factorCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 10,
+    gap: 14,
   },
   factorIconBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  factorTitleWrap: {
+  factorContentCol: {
     flex: 1,
-    gap: 4,
+    gap: 3,
   },
-  factorNameText: {
+  factorTitle: {
     fontSize: 15,
     fontWeight: '700',
     color: '#073B72',
   },
-  directionBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-  },
-  directionBadgeText: {
-    fontSize: 10,
+  factorDirectionText: {
+    fontSize: 12,
     fontWeight: '700',
   },
-  factorExplanationText: {
+  factorExplanation: {
     fontSize: 13,
-    color: '#475569',
+    color: '#64748B',
     lineHeight: 18,
+    marginTop: 2,
   },
-  accordionBtn: {
+  expandCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
     borderWidth: 1,
+    borderColor: '#F1F5F9',
+    marginBottom: 16,
   },
-  accordionLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  cardPressed: {
+    opacity: 0.9,
   },
-  accordionBtnText: {
+  expandCardText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#073B72',
   },
-  remainingFactorsWrap: {
-    gap: 10,
+  additionalFactorsList: {
+    gap: 12,
+    marginBottom: 16,
   },
-  infoBanner: {
+  disclaimerBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 10,
-    padding: 14,
+    backgroundColor: '#EFF6FF',
     borderRadius: 14,
+    padding: 14,
     borderWidth: 1,
-    marginTop: 4,
+    borderColor: '#BFDBFE',
+    gap: 10,
+    marginTop: 6,
   },
-  infoBannerText: {
+  infoIcon: {
+    marginTop: 1,
+  },
+  disclaimerText: {
     flex: 1,
     fontSize: 12,
-    color: '#55718F',
-    lineHeight: 17,
+    color: '#1E40AF',
+    lineHeight: 18,
   },
 });

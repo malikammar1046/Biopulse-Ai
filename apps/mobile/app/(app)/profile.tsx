@@ -6,31 +6,34 @@ import {
   ScrollView,
   Pressable,
   Alert,
-  TextInput,
   useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../../constants/Colors';
-import { AuthBackgroundFoliage } from '../../components/auth/AuthBackgroundFoliage';
+import { BioPulseBackground } from '../../components/common/BioPulseBackground';
 import { useAuth } from '../../features/authentication';
-import { useFemaleOnboarding } from '../../features/onboarding';
-import { useMaleOnboarding } from '../../features/onboarding/MaleOnboardingContext';
+import { useHealthStore } from '../../store';
 import { BioPulseBottomNav, BOTTOM_NAV_HEIGHT } from '../../components/navigation';
 
-import { useHealthStore } from '../../store';
-
 /**
- * SCREEN 44: Profile
- * 
- * Provides:
- * - Patient Demographics & Profile Completion meter
- * - Personal Info (Name, Email, DOB/Age, Contact)
- * - Health Metrics (Height, Weight, auto BMI calculation, Blood Group)
- * - Emergency Contact configuration
- * - Pathway & Clinical Preferences
- * - Safe updates with immediate persistence in active session
+ * SCREEN 44: PROFILE
+ *
+ * Strict visual match to Screenshot 44:
+ * - Top Header: Back chevron (<), centered "My Profile", right "Edit" link
+ * - Avatar: Rounded avatar with camera badge
+ * - Identity: "Ayesha Khan", "22 years old", "[ PCOS Pathway ]" pill
+ * - Profile Completion: Progress track, "85%", chevron >
+ * - 4 Stat Boxes: Age (22), Height (165 cm), Weight (68 kg), BMI (25.0)
+ * - Emergency Contact Card: Phone icon, "Ali Khan (Brother)", "+92 300 1234567", "Edit"
+ * - 4 Navigation Rows:
+ *   1. Personal Information (Name, age, contact details)
+ *   2. Health Information (Height, weight, cycle details, medical history)
+ *   3. Privacy (Data and account privacy)
+ *   4. Preferences (App preferences, language, reminders)
+ * - Permanent Fixed Bottom Navigation with [ More ] active
  */
 export default function ProfileScreen() {
   const router = useRouter();
@@ -38,316 +41,223 @@ export default function ProfileScreen() {
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
 
-  const { user, pathway } = useAuth();
-  const { updateProfileMetrics } = useHealthStore();
-  const { basicInfo: femaleBasic } = useFemaleOnboarding();
-  const { basicInfo: maleBasic } = useMaleOnboarding();
-
+  const { pathway, user } = useAuth();
   const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
-  const themeAccent = isFemale ? BioPulseColors.femaleAccent : BioPulseColors.malePrimary;
-  const badgeBg = isFemale ? '#FDF0F4' : '#EBF4FC';
 
-  // Base state with fallback to onboarding or user auth
-  const [fullName, setFullName] = useState(
-    user?.fullName || (isFemale ? 'Ayesha Khan' : 'Hamza Malik')
-  );
-  const [email] = useState(user?.email || 'patient@biopulse.ai');
-  const [phone, setPhone] = useState('+92 300 1234567');
-  
-  const [age, setAge] = useState(
-    isFemale
-      ? String(femaleBasic?.age || 26)
-      : String(maleBasic?.age || 38)
-  );
-  const [heightCm, setHeightCm] = useState(
-    isFemale
-      ? String(femaleBasic?.heightCm || 162)
-      : String(maleBasic?.heightCm || 178)
-  );
-  const [weightKg, setWeightKg] = useState(
-    isFemale
-      ? String(femaleBasic?.weightKg || 68)
-      : String(maleBasic?.weightKg || 86)
-  );
+  const { profile, bmi } = useHealthStore();
 
-  const [bloodGroup, setBloodGroup] = useState('B+');
-  const [emergencyName, setEmergencyName] = useState(isFemale ? 'Hamza Khan' : 'Zainab Ahmed');
-  const [emergencyRelation, setEmergencyRelation] = useState('Spouse');
-  const [emergencyPhone, setEmergencyPhone] = useState('+92 321 9876543');
+  const [emergencyContact, setEmergencyContact] = useState({
+    name: profile.emergencyContactName || (isFemale ? 'Ali Khan (Brother)' : 'Zainab Bibi (Spouse)'),
+    phone: profile.emergencyContactPhone || '+92 300 1234567',
+  });
 
-  const [isEditing, setIsEditing] = useState(false);
+  const userName = user?.fullName || profile.fullName || (isFemale ? 'Ayesha Khan' : 'Hamza Malik');
+  const userAge = profile.age || 22;
+  const userHeight = profile.heightCm || (isFemale ? 165 : 178);
+  const userWeight = profile.weightKg || (isFemale ? 68 : 80);
+  const computedBmi = bmi ? bmi.toFixed(1) : (userWeight / Math.pow(userHeight / 100, 2)).toFixed(1);
 
-  // Compute BMI live
-  const hM = parseFloat(heightCm) / 100;
-  const wK = parseFloat(weightKg);
-  const calculatedBMI =
-    hM > 0 && wK > 0 ? (wK / (hM * hM)).toFixed(1) : '--';
-
-  const completionPercent = 90;
-
-  const handleSave = () => {
-    const h = parseFloat(heightCm);
-    const w = parseFloat(weightKg);
-    if (h > 0 && w > 0) {
-      updateProfileMetrics(w, h);
-    }
-    setIsEditing(false);
-    Alert.alert(
-      'Profile Updated',
-      'Your personal and clinical demographics have been safely synchronized.'
-    );
+  const handleEditContact = () => {
+    Alert.prompt
+      ? Alert.prompt(
+          'Edit Emergency Contact',
+          'Enter contact name and phone number',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Save',
+              onPress: (val) => {
+                if (val) setEmergencyContact((prev) => ({ ...prev, name: val }));
+              },
+            },
+          ],
+          'plain-text',
+          emergencyContact.name
+        )
+      : Alert.alert('Emergency Contact', `Current Contact: ${emergencyContact.name} (${emergencyContact.phone})`);
   };
 
   return (
     <View style={styles.root}>
-      <AuthBackgroundFoliage />
+      <StatusBar style="dark" />
+      <BioPulseBackground />
 
       {/* Header */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) }]}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={20} color={BioPulseColors.navy} />
-        </Pressable>
-        <Text style={styles.headerTitle}>Patient Profile</Text>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 14) }]}>
         <Pressable
-          onPress={() => (isEditing ? handleSave() : setIsEditing(true))}
-          style={[styles.editBtn, { backgroundColor: badgeBg }]}
+          onPress={() => router.back()}
+          style={styles.headerBtn}
+          accessibilityLabel="Back"
+          hitSlop={8}
         >
-          <Text style={[styles.editBtnText, { color: themeAccent }]}>
-            {isEditing ? 'Save' : 'Edit'}
-          </Text>
+          <Ionicons name="chevron-back" size={24} color="#0F172A" />
+        </Pressable>
+
+        <Text style={styles.headerTitle}>My Profile</Text>
+
+        <Pressable
+          onPress={() => router.push('/(app)/settings')}
+          style={styles.editBtn}
+          hitSlop={8}
+        >
+          <Ionicons name="create-outline" size={16} color="#0284C7" />
+          <Text style={styles.editText}>Edit</Text>
         </Pressable>
       </View>
 
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          isTablet && styles.tabletScrollContent,
-          { paddingBottom: BOTTOM_NAV_HEIGHT + insets.bottom + 32 },
+          isTablet && styles.tabletContent,
+          { paddingBottom: BOTTOM_NAV_HEIGHT + insets.bottom + 20 },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Profile Card with Completion Ring */}
-        <View style={styles.profileHeroCard}>
-          <View style={styles.heroRow}>
-            <View style={[styles.avatarBox, { backgroundColor: badgeBg, borderColor: themeAccent }]}>
-              <Ionicons name="person" size={36} color={themeAccent} />
+        {/* Identity & Avatar */}
+        <View style={styles.avatarSection}>
+          <View style={styles.avatarWrapper}>
+            <View style={styles.avatarCircle}>
+              <Ionicons name="person" size={46} color="#073B72" />
             </View>
-
-            <View style={styles.heroInfo}>
-              <Text style={styles.heroName}>{fullName}</Text>
-              <Text style={styles.heroEmail}>{email}</Text>
-              <View style={[styles.pathwayPill, { backgroundColor: badgeBg }]}>
-                <Text style={[styles.pathwayPillText, { color: themeAccent }]}>
-                  {isFemale ? '♀ PCOS Screening Pathway' : '♂ Male Hypogonadism Pathway'}
-                </Text>
-              </View>
+            <View style={styles.cameraBadge}>
+              <Ionicons name="camera" size={12} color="#FFFFFF" />
             </View>
           </View>
 
-          <View style={styles.completionRow}>
-            <View style={styles.meterCol}>
-              <View style={styles.meterHeader}>
-                <Text style={styles.meterLabel}>Profile Completion</Text>
-                <Text style={[styles.meterVal, { color: themeAccent }]}>
-                  {completionPercent}%
-                </Text>
-              </View>
-              <View style={styles.track}>
-                <View
-                  style={[
-                    styles.fill,
-                    { width: `${completionPercent}%`, backgroundColor: themeAccent },
-                  ]}
-                />
-              </View>
-            </View>
+          <Text style={styles.userName}>{userName}</Text>
+          <Text style={styles.userAge}>{userAge} years old</Text>
+
+          <View style={styles.pathwayPill}>
+            <Text style={styles.pathwayText}>
+              {isFemale ? 'PCOS Pathway' : 'Hypogonadism Pathway'}
+            </Text>
           </View>
         </View>
 
-        {/* Section 1: Personal Info */}
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionTitleRow}>
-            <Ionicons name="person-outline" size={18} color={themeAccent} />
-            <Text style={styles.sectionTitle}>Personal Information</Text>
+        {/* Profile Completion */}
+        <Pressable
+          onPress={() => router.push('/(app)/settings')}
+          style={styles.completionCard}
+        >
+          <Text style={styles.completionLabel}>Profile Completion</Text>
+          <View style={styles.completionTrack}>
+            <View style={[styles.completionFill, { width: '85%' }]} />
+          </View>
+          <Text style={styles.completionVal}>85%</Text>
+          <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
+        </Pressable>
+
+        {/* 4 Stat Boxes Row */}
+        <View style={styles.statsCard}>
+          <View style={styles.statCol}>
+            <Text style={styles.statLabel}>Age</Text>
+            <Text style={styles.statVal}>{userAge}</Text>
           </View>
 
-          <View style={styles.fieldsGrid}>
-            <View style={styles.fieldCol}>
-              <Text style={styles.fieldLabel}>Full Name</Text>
-              {isEditing ? (
-                <TextInput
-                  value={fullName}
-                  onChangeText={setFullName}
-                  style={styles.fieldInput}
-                />
-              ) : (
-                <Text style={styles.fieldValue}>{fullName}</Text>
-              )}
-            </View>
+          <View style={styles.statDivider} />
 
-            <View style={styles.fieldCol}>
-              <Text style={styles.fieldLabel}>Phone Number</Text>
-              {isEditing ? (
-                <TextInput
-                  value={phone}
-                  onChangeText={setPhone}
-                  style={styles.fieldInput}
-                />
-              ) : (
-                <Text style={styles.fieldValue}>{phone}</Text>
-              )}
-            </View>
+          <View style={styles.statCol}>
+            <Text style={styles.statLabel}>Height</Text>
+            <Text style={styles.statVal}>{userHeight} cm</Text>
+          </View>
 
-            <View style={styles.fieldCol}>
-              <Text style={styles.fieldLabel}>Age</Text>
-              {isEditing ? (
-                <TextInput
-                  value={age}
-                  onChangeText={setAge}
-                  keyboardType="numeric"
-                  style={styles.fieldInput}
-                />
-              ) : (
-                <Text style={styles.fieldValue}>{age} years</Text>
-              )}
-            </View>
+          <View style={styles.statDivider} />
+
+          <View style={styles.statCol}>
+            <Text style={styles.statLabel}>Weight</Text>
+            <Text style={styles.statVal}>{userWeight} kg</Text>
+          </View>
+
+          <View style={styles.statDivider} />
+
+          <View style={styles.statCol}>
+            <Text style={styles.statLabel}>BMI</Text>
+            <Text style={styles.statVal}>{computedBmi}</Text>
           </View>
         </View>
 
-        {/* Section 2: Health & Biometric Info */}
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionTitleRow}>
-            <Ionicons name="fitness-outline" size={18} color={themeAccent} />
-            <Text style={styles.sectionTitle}>Clinical Biometrics</Text>
+        {/* Emergency Contact */}
+        <View style={styles.contactCard}>
+          <View style={styles.phoneIconBox}>
+            <Ionicons name="call" size={18} color="#FFFFFF" />
           </View>
 
-          <View style={styles.metricsRow}>
-            <View style={styles.metricBox}>
-              <Text style={styles.metricLabel}>Height</Text>
-              {isEditing ? (
-                <TextInput
-                  value={heightCm}
-                  onChangeText={setHeightCm}
-                  keyboardType="numeric"
-                  style={styles.metricInput}
-                />
-              ) : (
-                <Text style={styles.metricVal}>{heightCm} cm</Text>
-              )}
-            </View>
-
-            <View style={styles.metricBox}>
-              <Text style={styles.metricLabel}>Weight</Text>
-              {isEditing ? (
-                <TextInput
-                  value={weightKg}
-                  onChangeText={setWeightKg}
-                  keyboardType="numeric"
-                  style={styles.metricInput}
-                />
-              ) : (
-                <Text style={styles.metricVal}>{weightKg} kg</Text>
-              )}
-            </View>
-
-            <View style={styles.metricBox}>
-              <Text style={styles.metricLabel}>Calculated BMI</Text>
-              <Text style={[styles.metricVal, { color: themeAccent }]}>
-                {calculatedBMI}
-              </Text>
-            </View>
-
-            <View style={styles.metricBox}>
-              <Text style={styles.metricLabel}>Blood Type</Text>
-              {isEditing ? (
-                <TextInput
-                  value={bloodGroup}
-                  onChangeText={setBloodGroup}
-                  style={styles.metricInput}
-                />
-              ) : (
-                <Text style={styles.metricVal}>{bloodGroup}</Text>
-              )}
-            </View>
+          <View style={styles.contactMeta}>
+            <Text style={styles.contactLabel}>Emergency Contact</Text>
+            <Text style={styles.contactName}>{emergencyContact.name}</Text>
+            <Text style={styles.contactPhone}>{emergencyContact.phone}</Text>
           </View>
+
+          <Pressable onPress={handleEditContact} hitSlop={8}>
+            <Text style={styles.editContactText}>Edit</Text>
+          </Pressable>
         </View>
 
-        {/* Section 3: Emergency Contact */}
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionTitleRow}>
-            <Ionicons name="call-outline" size={18} color={themeAccent} />
-            <Text style={styles.sectionTitle}>Emergency Contact</Text>
-          </View>
-
-          <View style={styles.fieldsGrid}>
-            <View style={styles.fieldCol}>
-              <Text style={styles.fieldLabel}>Contact Name</Text>
-              {isEditing ? (
-                <TextInput
-                  value={emergencyName}
-                  onChangeText={setEmergencyName}
-                  style={styles.fieldInput}
-                />
-              ) : (
-                <Text style={styles.fieldValue}>{emergencyName}</Text>
-              )}
-            </View>
-
-            <View style={styles.fieldCol}>
-              <Text style={styles.fieldLabel}>Relationship</Text>
-              {isEditing ? (
-                <TextInput
-                  value={emergencyRelation}
-                  onChangeText={setEmergencyRelation}
-                  style={styles.fieldInput}
-                />
-              ) : (
-                <Text style={styles.fieldValue}>{emergencyRelation}</Text>
-              )}
-            </View>
-
-            <View style={styles.fieldCol}>
-              <Text style={styles.fieldLabel}>Emergency Phone</Text>
-              {isEditing ? (
-                <TextInput
-                  value={emergencyPhone}
-                  onChangeText={setEmergencyPhone}
-                  style={styles.fieldInput}
-                />
-              ) : (
-                <Text style={styles.fieldValue}>{emergencyPhone}</Text>
-              )}
-            </View>
-          </View>
-        </View>
-
-        {/* Quick Links Block */}
-        <View style={styles.quickLinksSection}>
+        {/* 4 Navigation Rows */}
+        <View style={styles.navRowsWrap}>
+          {/* Personal Information */}
           <Pressable
             onPress={() => router.push('/(app)/settings')}
-            style={styles.quickRow}
+            style={({ pressed }) => [styles.navRowItem, pressed && styles.rowPressed]}
           >
-            <View style={styles.quickRowLeft}>
-              <Ionicons name="settings-outline" size={18} color="#64748B" />
-              <Text style={styles.quickRowLabel}>Account Settings & Preferences</Text>
+            <View style={[styles.rowIconBox, { backgroundColor: '#FFE4E6' }]}>
+              <Ionicons name="person" size={16} color="#E11D48" />
             </View>
-            <Ionicons name="chevron-forward" size={16} color="#CBD5E1" />
+            <View style={styles.rowMeta}>
+              <Text style={styles.rowTitle}>Personal Information</Text>
+              <Text style={styles.rowSub}>Name, age, contact details</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
           </Pressable>
 
+          {/* Health Information */}
           <Pressable
-            onPress={() => router.push('/(app)/care-circle')}
-            style={styles.quickRow}
+            onPress={() => router.push('/(app)/screening')}
+            style={({ pressed }) => [styles.navRowItem, pressed && styles.rowPressed]}
           >
-            <View style={styles.quickRowLeft}>
-              <Ionicons name="people-outline" size={18} color="#64748B" />
-              <Text style={styles.quickRowLabel}>Care Circle Access Management</Text>
+            <View style={[styles.rowIconBox, { backgroundColor: '#CCFBF1' }]}>
+              <Ionicons name="medical" size={16} color="#0D9488" />
             </View>
-            <Ionicons name="chevron-forward" size={16} color="#CBD5E1" />
+            <View style={styles.rowMeta}>
+              <Text style={styles.rowTitle}>Health Information</Text>
+              <Text style={styles.rowSub}>Height, weight, cycle details, medical history</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
+          </Pressable>
+
+          {/* Privacy */}
+          <Pressable
+            onPress={() => router.push('/(app)/settings')}
+            style={({ pressed }) => [styles.navRowItem, pressed && styles.rowPressed]}
+          >
+            <View style={[styles.rowIconBox, { backgroundColor: '#E0F2FE' }]}>
+              <Ionicons name="shield-checkmark" size={16} color="#0284C7" />
+            </View>
+            <View style={styles.rowMeta}>
+              <Text style={styles.rowTitle}>Privacy</Text>
+              <Text style={styles.rowSub}>Data and account privacy</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
+          </Pressable>
+
+          {/* Preferences */}
+          <Pressable
+            onPress={() => router.push('/(app)/settings')}
+            style={({ pressed }) => [styles.navRowItem, pressed && styles.rowPressed]}
+          >
+            <View style={[styles.rowIconBox, { backgroundColor: '#FFE4E6' }]}>
+              <Ionicons name="settings" size={16} color="#E11D48" />
+            </View>
+            <View style={styles.rowMeta}>
+              <Text style={styles.rowTitle}>Preferences</Text>
+              <Text style={styles.rowSub}>App preferences, language, reminders</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
           </Pressable>
         </View>
       </ScrollView>
 
-      {/* Bottom Nav */}
+      {/* Permanent Fixed Bottom Nav with More Active */}
       <BioPulseBottomNav activeTab="more" />
     </View>
   );
@@ -356,232 +266,265 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FAF5FF',
   },
   header: {
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingBottom: 6,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    backgroundColor: 'transparent',
   },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  headerBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F1F5F9',
   },
   headerTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: BioPulseColors.navy,
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#0F172A',
   },
   editBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
   },
-  editBtnText: {
+  editText: {
     fontSize: 13,
     fontWeight: '700',
+    color: '#0284C7',
   },
+
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 16,
-    gap: 14,
+    paddingTop: 4,
   },
-  tabletScrollContent: {
+  tabletContent: {
     maxWidth: 600,
     alignSelf: 'center',
     width: '100%',
   },
-  profileHeroCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  heroRow: {
-    flexDirection: 'row',
-    gap: 14,
+
+  // Avatar & Identity
+  avatarSection: {
     alignItems: 'center',
+    marginBottom: 16,
   },
-  avatarBox: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
-    borderWidth: 2,
+  avatarWrapper: {
+    position: 'relative',
+    marginBottom: 10,
+  },
+  avatarCircle: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heroInfo: {
-    flex: 1,
-    gap: 3,
+  cameraBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 2,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#0284C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
-  heroName: {
-    fontSize: 17,
+  userName: {
+    fontSize: 18,
     fontWeight: '800',
-    color: BioPulseColors.navy,
+    color: '#0F172A',
   },
-  heroEmail: {
+  userAge: {
     fontSize: 12,
     color: '#64748B',
+    marginTop: 2,
   },
   pathwayPill: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
+    backgroundColor: '#FDF2F8',
+    borderColor: '#FCE7F3',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 10,
     paddingVertical: 3,
-    borderRadius: 6,
-    marginTop: 4,
+    marginTop: 6,
   },
-  pathwayPillText: {
+  pathwayText: {
     fontSize: 11,
     fontWeight: '700',
+    color: '#E11D48',
   },
-  completionRow: {
-    marginTop: 14,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-  },
-  meterCol: {
-    gap: 6,
-  },
-  meterHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  meterLabel: {
-    fontSize: 11.5,
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  meterVal: {
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  track: {
-    height: 6,
-    backgroundColor: '#F1F5F9',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  fill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  sectionCard: {
+
+  // Completion
+  completionCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 14,
+    padding: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 16,
-    gap: 12,
-  },
-  sectionTitleRow: {
+    borderColor: '#F1F5F9',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    marginBottom: 14,
+  },
+  completionLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#0F172A',
+    marginRight: 10,
+  },
+  completionTrack: {
+    flex: 1,
+    height: 6,
+    backgroundColor: '#E2E8F0',
+    borderRadius: 3,
+    overflow: 'hidden',
+    marginRight: 8,
+  },
+  completionFill: {
+    height: '100%',
+    backgroundColor: '#0284C7',
+    borderRadius: 3,
+  },
+  completionVal: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#0284C7',
+    marginRight: 6,
+  },
+
+  // 4 Stat Boxes
+  statsCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 6,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    flexDirection: 'row',
+    marginBottom: 14,
+    shadowColor: '#000',
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  statCol: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statDivider: {
+    width: 1,
+    backgroundColor: '#F1F5F9',
+    marginVertical: 2,
+  },
+  statLabel: {
+    fontSize: 11,
+    color: '#64748B',
     marginBottom: 2,
   },
-  sectionTitle: {
+  statVal: {
     fontSize: 14,
-    fontWeight: '700',
-    color: BioPulseColors.navy,
+    fontWeight: '800',
+    color: '#0F172A',
   },
-  fieldsGrid: {
-    gap: 10,
+
+  // Emergency Contact
+  contactCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    elevation: 1,
   },
-  fieldCol: {
-    gap: 4,
+  phoneIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: '#0284C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
-  fieldLabel: {
+  contactMeta: {
+    flex: 1,
+  },
+  contactLabel: {
     fontSize: 11,
     color: '#64748B',
-    fontWeight: '500',
   },
-  fieldValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1E293B',
-  },
-  fieldInput: {
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    height: 40,
-    fontSize: 13.5,
-    color: '#1E293B',
-  },
-  metricsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  metricBox: {
-    width: '47%',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    padding: 10,
-    gap: 4,
-  },
-  metricLabel: {
-    fontSize: 10.5,
-    color: '#64748B',
-  },
-  metricVal: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: BioPulseColors.navy,
-  },
-  metricInput: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    height: 34,
-    fontSize: 14,
+  contactName: {
+    fontSize: 13,
     fontWeight: '700',
-    color: '#1E293B',
+    color: '#0F172A',
+    marginTop: 1,
   },
-  quickLinksSection: {
+  contactPhone: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 1,
+  },
+  editContactText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#0284C7',
+  },
+
+  // Nav rows
+  navRowsWrap: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#F1F5F9',
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    elevation: 1,
   },
-  quickRow: {
+  navRowItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    padding: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#F8FAFC',
   },
-  quickRowLeft: {
-    flexDirection: 'row',
+  rowIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     alignItems: 'center',
-    gap: 10,
+    justifyContent: 'center',
+    marginRight: 12,
   },
-  quickRowLabel: {
-    fontSize: 13.5,
-    fontWeight: '600',
-    color: '#334155',
+  rowMeta: {
+    flex: 1,
+  },
+  rowTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  rowSub: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 1,
+  },
+  rowPressed: {
+    backgroundColor: '#F8FAFC',
   },
 });

@@ -84,9 +84,12 @@ class MealPlanService:
         self,
         raw_user_meta_data: Optional[Dict[str, Any]],
         profile_data: Optional[Dict[str, Any]],
+        active_assessment: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Runs the complete readiness check and returns the structured dictionary."""
-        res = MealProfileBuilder.check_nutrition_readiness(raw_user_meta_data, profile_data)
+        res = MealProfileBuilder.check_nutrition_readiness(
+            raw_user_meta_data, profile_data, active_assessment=active_assessment
+        )
         return res.to_dict()
 
     def get_nutrition_targets(
@@ -244,33 +247,48 @@ class MealPlanService:
         # 5. Production Portion Constraints
         constraints = get_production_portion_constraints()
 
-        # 6. Generate Phase 6D candidate full days
-        day_res = generate_full_day_plan(
-            neutral_profile=neutral,
-            condition_profile=condition,
-            schedule=schedule,
-            policy=FullDayPlanningPolicy(
-                maximum_meal_candidates_per_role=3,
-                maximum_alternative_day_plans=3,
-            ),
-            default_constraints=constraints,
-        )
+        # 6. Generate Phase 6D candidate full days — one per slot for genuine 7-day variety.
+        # Each slot gets its own independent Phase 6D run so that days differ meaningfully.
+        # The best+alternatives from EACH slot form that slot's candidate pool.
+        slot_candidates: dict = {}
+        for slot_idx in range(1, 8):
+            slot_res = generate_full_day_plan(
+                neutral_profile=neutral,
+                condition_profile=condition,
+                schedule=schedule,
+                policy=FullDayPlanningPolicy(
+                    maximum_meal_candidates_per_role=3,
+                    maximum_alternative_day_plans=3,
+                ),
+                default_constraints=constraints,
+                plan_day_index=slot_idx,
+            )
+            if slot_res.is_successful and slot_res.best_day_plan:
+                pool = [slot_res.best_day_plan] + slot_res.alternative_day_plans
+            else:
+                # Fallback: reuse first slot's pool if a specific slot fails
+                if 1 in slot_candidates:
+                    pool = slot_candidates[1]
+                else:
+                    raise RuntimeError(
+                        f"Failed to generate candidate day plan for slot {slot_idx}: "
+                        f"{slot_res.warnings}"
+                    )
+            slot_candidates[slot_idx] = pool
 
-        if not day_res.is_successful or not day_res.best_day_plan:
-            raise RuntimeError(f"Failed to generate valid candidate day plan: {day_res.failure_details}")
-
-        candidate_pool = [day_res.best_day_plan] + day_res.alternative_day_plans
-
-        # 7. Generate Phase 6E 7-Day Plan
+        # 7. Generate Phase 6E 7-Day Plan using per-slot candidate pools for real variety
         week_res = generate_weekly_plan(
             neutral_profile=neutral,
             condition_profile=condition,
-            candidate_day_pool=candidate_pool,
+            candidate_days_by_slot=slot_candidates,
             planning_days=7,
             policy=WeeklyVarietyPolicy(
-                maximum_same_entity_occurrences_per_week=28,
-                maximum_same_meal_combination_occurrences_per_week=7,
-                maximum_candidate_days_per_slot=3,
+                maximum_same_entity_occurrences_per_week=14,
+                maximum_same_equivalence_concept_occurrences_per_week=14,
+                maximum_same_meal_combination_occurrences_per_week=3,
+                maximum_same_day_plan_occurrences_per_week=1,
+                maximum_candidate_days_per_slot=4,
+                maximum_week_candidate_sequences_evaluated=500,
             ),
         )
 

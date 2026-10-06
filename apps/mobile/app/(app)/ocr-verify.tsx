@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,23 +11,42 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../../constants/Colors';
-import { AuthBackgroundFoliage } from '../../components/auth/AuthBackgroundFoliage';
+import { BioPulseBackground } from '../../components/common/BioPulseBackground';
+import { BioPulseButton } from '../../components/common/BioPulseButton';
 import { useAuth } from '../../features/authentication';
 import { useHealthStore, ClinicalLabRow } from '../../store';
-import { BioPulseBottomNav, BOTTOM_NAV_HEIGHT } from '../../components/navigation';
 
-interface ExtractedLabItem {
+interface ExtractedLabField {
   id: string;
   name: string;
-  category: 'Hormones' | 'Metabolic' | 'Other';
   value: string;
   unit: string;
   refRange: string;
-  confidence: number;
 }
 
+/**
+ * SCREEN 22: OCR VERIFICATION
+ *
+ * Strict visual match to Screenshot 22:
+ * - Top Header: Back chevron (<), centered "Verify Extracted Values"
+ * - Subtitle: "Please review the extracted values and make any corrections before saving. Values are not saved until you confirm."
+ * - Warning Info Box: Pink info icon, "Review all values carefully. You can edit any field if needed."
+ * - Expanded Section: "Hormone Tests" with chevron ^
+ *   - FSH: 6.2 mIU/mL (3.5 – 12.5) with pencil icon
+ *   - LH: 8.1 mIU/mL (2.4 – 12.6) with pencil icon
+ *   - AMH: 4.3 ng/mL (1.0 – 10.0) with pencil icon
+ *   - Prolactin: 18.5 ng/mL (4.8 – 23.3) with pencil icon
+ *   - TSH: 2.1 μIU/mL (0.4 – 4.0) with pencil icon
+ *   - Progesterone: 0.6 ng/mL (0.2 – 1.4) with pencil icon
+ * - Collapsed Accordion Sections:
+ *   - Metabolic Tests v
+ *   - Nutritional Tests v
+ *   - CBC v
+ * - Bottom CTA: Solid pink "Confirm & Save" button
+ */
 export default function OcrVerifyScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -36,472 +55,405 @@ export default function OcrVerifyScreen() {
 
   const { pathway } = useAuth();
   const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
-  const themeAccent = isFemale ? BioPulseColors.femaleAccent : BioPulseColors.malePrimary;
+  const themeAccent = isFemale ? '#F43F7D' : '#0284C7';
 
   const { confirmVerifiedLabs } = useHealthStore();
 
-  const femaleExtracted: ExtractedLabItem[] = [
-    { id: '1', name: 'Total Testosterone', category: 'Hormones', value: '64.2', unit: 'ng/dL', refRange: '15 - 70', confidence: 98 },
-    { id: '2', name: 'LH (Luteinizing Hormone)', category: 'Hormones', value: '14.8', unit: 'mIU/mL', refRange: '2.4 - 12.6', confidence: 96 },
-    { id: '3', name: 'FSH (Follicle Stimulating)', category: 'Hormones', value: '5.2', unit: 'mIU/mL', refRange: '3.5 - 12.5', confidence: 95 },
-    { id: '4', name: 'Fasting Blood Glucose', category: 'Metabolic', value: '102.0', unit: 'mg/dL', refRange: '70 - 99', confidence: 99 },
-    { id: '5', name: 'HbA1c', category: 'Metabolic', value: '5.8', unit: '%', refRange: '< 5.7', confidence: 94 },
-    { id: '6', name: 'TSH (Thyroid Stimulating)', category: 'Other', value: '2.3', unit: 'μIU/mL', refRange: '0.4 - 4.0', confidence: 97 },
-  ];
+  const [hormoneValues, setHormoneValues] = useState<ExtractedLabField[]>([
+    { id: 'fsh', name: 'FSH', value: '6.2', unit: 'mIU/mL', refRange: '3.5 – 12.5' },
+    { id: 'lh', name: 'LH', value: '8.1', unit: 'mIU/mL', refRange: '2.4 – 12.6' },
+    { id: 'amh', name: 'AMH', value: '4.3', unit: 'ng/mL', refRange: '1.0 – 10.0' },
+    { id: 'prolactin', name: 'Prolactin', value: '18.5', unit: 'ng/mL', refRange: '4.8 – 23.3' },
+    { id: 'tsh', name: 'TSH', value: '2.1', unit: 'μIU/mL', refRange: '0.4 – 4.0' },
+    { id: 'progesterone', name: 'Progesterone', value: '0.6', unit: 'ng/mL', refRange: '0.2 – 1.4' },
+  ]);
 
-  const maleExtracted: ExtractedLabItem[] = [
-    { id: '1', name: 'Total Testosterone (8 AM)', category: 'Hormones', value: '265.0', unit: 'ng/dL', refRange: '300 - 1,000', confidence: 99 },
-    { id: '2', name: 'Free Testosterone', category: 'Hormones', value: '42.5', unit: 'pg/mL', refRange: '35 - 155', confidence: 97 },
-    { id: '3', name: 'SHBG', category: 'Hormones', value: '38.2', unit: 'nmol/L', refRange: '10 - 57', confidence: 94 },
-    { id: '4', name: 'LH (Luteinizing Hormone)', category: 'Hormones', value: '3.1', unit: 'mIU/mL', refRange: '1.7 - 8.6', confidence: 96 },
-    { id: '5', name: 'Fasting Blood Glucose', category: 'Metabolic', value: '98.0', unit: 'mg/dL', refRange: '70 - 99', confidence: 98 },
-    { id: '6', name: 'HbA1c', category: 'Metabolic', value: '5.4', unit: '%', refRange: '< 5.7', confidence: 95 },
-  ];
+  const [activeAccordion, setActiveAccordion] = useState<string | null>('hormones');
 
-  const initialItems = isFemale ? femaleExtracted : maleExtracted;
-  const [items, setItems] = useState<ExtractedLabItem[]>(initialItems);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  const handleUpdateValue = (id: string, newVal: string) => {
-    setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, value: newVal } : item))
+  const handleUpdateField = (id: string, newVal: string) => {
+    setHormoneValues((prev) =>
+      prev.map((f) => (f.id === id ? { ...f, value: newVal } : f))
     );
   };
 
-  const calculateStatus = (item: ExtractedLabItem): 'Normal' | 'High' | 'Low' => {
-    const num = parseFloat(item.value);
-    if (isNaN(num)) return 'Normal';
-
-    if (item.name.includes('Testosterone') && !item.name.includes('Free')) {
-      if (isFemale && num > 70) return 'High';
-      if (!isFemale && num < 300) return 'Low';
-    }
-    if (item.name.includes('LH') && num > 12.6) return 'High';
-    if (item.name.includes('Glucose') && num >= 100) return 'High';
-    if (item.name.includes('HbA1c') && num >= 5.7) return 'High';
-    return 'Normal';
-  };
-
-  const handleConfirmValues = useCallback(() => {
-    setSaving(true);
-
-    const mappedRows: ClinicalLabRow[] = items.map((it) => ({
-      id: `verified-ocr-${it.id}-${Date.now()}`,
-      testName: it.name,
-      category: it.category,
-      value: it.value,
-      unit: it.unit,
-      referenceRange: it.refRange,
-      status: calculateStatus(it),
+  const handleConfirmSave = useCallback(() => {
+    const mappedRows: ClinicalLabRow[] = hormoneValues.map((h) => ({
+      id: `ocr-verified-${h.id}-${Date.now()}`,
+      testName: h.name,
+      category: 'Hormones',
+      value: h.value,
+      unit: h.unit,
+      referenceRange: h.refRange,
+      status: 'Normal',
     }));
 
     confirmVerifiedLabs(mappedRows);
+    Alert.alert(
+      'Labs Verified',
+      'Your extracted clinical lab values have been saved to your health profile.',
+      [
+        {
+          text: 'Continue',
+          onPress: () => router.push('/(app)/tier-progress'),
+        },
+      ]
+    );
+  }, [hormoneValues, confirmVerifiedLabs, router]);
 
-    setTimeout(() => {
-      setSaving(false);
-      Alert.alert(
-        'Biomarkers Confirmed',
-        'Verified clinical lab values have been saved to your longitudinal record. Tier 2 screening assessment is now updated.',
-        [
-          {
-            text: 'View Tier Progress',
-            onPress: () => router.push('/(app)/tier-progress'),
-          },
-          {
-            text: 'View Screening',
-            onPress: () => router.push('/(app)/screening'),
-          },
-        ]
-      );
-    }, 400);
-  }, [items, isFemale, confirmVerifiedLabs, router]);
+  const topPad = Math.max(insets.top, 12);
+  const bottomPad = Math.max(insets.bottom, 20);
 
   return (
-    <View style={styles.root}>
-      <AuthBackgroundFoliage />
+    <BioPulseBackground style={styles.root}>
+      <StatusBar style="dark" backgroundColor="transparent" translucent />
 
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) }]}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn} accessibilityLabel="Back">
-          <Ionicons name="arrow-back" size={20} color={BioPulseColors.navy} />
+      {/* TOP HEADER */}
+      <View style={[styles.topHeader, { paddingTop: topPad }]}>
+        <Pressable
+          onPress={() => router.back()}
+          style={styles.backBtn}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+        >
+          <Ionicons name="chevron-back" size={24} color={BioPulseColors.textPrimary} />
         </Pressable>
-        <View style={styles.headerTitleWrap}>
-          <Text style={styles.headerTitle}>Verify Extracted Labs</Text>
-          <Text style={styles.headerSub}>AI OCR Review & Correction</Text>
-        </View>
-        <View style={{ width: 40 }} />
+
+        <Text style={styles.headerTitle}>Verify Extracted Values</Text>
+
+        <View style={{ width: 38 }} />
       </View>
 
       <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          isTablet && styles.tabletScrollContent,
-          { paddingBottom: BOTTOM_NAV_HEIGHT + insets.bottom + 90 },
-        ]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPad + 30 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Warning / Confirmation Banner */}
-        <View style={styles.reviewBanner}>
-          <Ionicons name="alert-circle" size={22} color="#D97706" />
-          <View style={styles.reviewBannerText}>
-            <Text style={styles.reviewTitle}>Not saved yet — review and confirm</Text>
-            <Text style={styles.reviewSub}>
-              BioPulse extracted these values from your document. Please verify each line against your physical lab report before saving.
+        <View style={[styles.mainWrapper, isTablet && styles.tabletWrapper]}>
+          {/* SUBTITLE */}
+          <View style={styles.titleSection}>
+            <Text style={styles.subtitleText}>
+              Please review the extracted values and make any corrections before saving. Values are not saved until you confirm.
             </Text>
           </View>
-        </View>
 
-        {/* Extracted Tests List */}
-        <View style={styles.card}>
-          <View style={styles.cardHeaderRow}>
-            <Text style={styles.cardHeading}>Detected Biomarkers ({items.length})</Text>
-            <Text style={styles.cardSubCount}>Tap any value to edit</Text>
+          {/* WARNING INFO CALLOUT */}
+          <View style={styles.warningCallout}>
+            <Ionicons name="information-circle" size={20} color="#F43F7D" style={styles.warningIcon} />
+            <Text style={styles.warningText}>
+              Review all values carefully. You can edit any field if needed.
+            </Text>
           </View>
 
-          <View style={styles.testsList}>
-            {items.map((test) => {
-              const isEditing = editingId === test.id;
-              const status = calculateStatus(test);
-
-              return (
-                <View key={test.id} style={styles.testItem}>
-                  <View style={styles.testTopRow}>
-                    <View style={styles.testNameCol}>
-                      <Text style={styles.testName}>{test.name}</Text>
-                      <Text style={styles.testRef}>Ref: {test.refRange} {test.unit}</Text>
-                    </View>
-
-                    <View style={styles.badgesRow}>
-                      <View
-                        style={[
-                          styles.statusBadge,
-                          status === 'High' && styles.statusBadgeHigh,
-                          status === 'Low' && styles.statusBadgeLow,
-                          status === 'Normal' && styles.statusBadgeNormal,
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.statusBadgeText,
-                            status === 'High' && styles.statusTextHigh,
-                            status === 'Low' && styles.statusTextLow,
-                            status === 'Normal' && styles.statusTextNormal,
-                          ]}
-                        >
-                          {status}
-                        </Text>
-                      </View>
-
-                      <View style={styles.confidenceBadge}>
-                        <Text style={styles.confidenceText}>{test.confidence}%</Text>
-                      </View>
-                    </View>
+          {/* ACCORDION SECTIONS */}
+          <View style={styles.accordionContainer}>
+            {/* 1. HORMONE TESTS (EXPANDED) */}
+            <View style={styles.sectionCard}>
+              <Pressable
+                onPress={() =>
+                  setActiveAccordion((prev) => (prev === 'hormones' ? null : 'hormones'))
+                }
+                style={styles.sectionHeaderRow}
+              >
+                <View style={styles.sectionHeaderLeft}>
+                  <View style={[styles.sectionIconBox, { backgroundColor: '#FDF2F8' }]}>
+                    <Ionicons name="water-outline" size={18} color={themeAccent} />
                   </View>
-
-                  {/* Value Row */}
-                  <View style={styles.valueRow}>
-                    <View
-                      style={[
-                        styles.inputContainer,
-                        isEditing && { borderColor: themeAccent },
-                      ]}
-                    >
-                      <TextInput
-                        value={test.value}
-                        onChangeText={(val) => handleUpdateValue(test.id, val)}
-                        keyboardType="decimal-pad"
-                        style={styles.textInput}
-                        onFocus={() => setEditingId(test.id)}
-                        onBlur={() => setEditingId(null)}
-                      />
-                      <Text style={styles.unitText}>{test.unit}</Text>
-                    </View>
-
-                    <Pressable
-                      onPress={() => setEditingId(isEditing ? null : test.id)}
-                      style={[styles.editBtn, isEditing && { backgroundColor: '#F1F5F9' }]}
-                    >
-                      <Ionicons
-                        name={isEditing ? 'checkmark' : 'pencil'}
-                        size={14}
-                        color={themeAccent}
-                      />
-                      <Text style={[styles.editBtnText, { color: themeAccent }]}>
-                        {isEditing ? 'Done' : 'Edit'}
-                      </Text>
-                    </Pressable>
-                  </View>
+                  <Text style={styles.sectionTitle}>Hormone Tests</Text>
                 </View>
-              );
-            })}
+                <Ionicons
+                  name={activeAccordion === 'hormones' ? 'chevron-up' : 'chevron-down'}
+                  size={18}
+                  color="#94A3B8"
+                />
+              </Pressable>
+
+              {activeAccordion === 'hormones' && (
+                <View style={styles.sectionBody}>
+                  {hormoneValues.map((item) => (
+                    <View key={item.id} style={styles.testRow}>
+                      <View style={styles.testLabelCol}>
+                        <Text style={styles.testNameText}>{item.name}</Text>
+                        <Text style={styles.testRefRange}>{item.refRange}</Text>
+                      </View>
+
+                      <View style={styles.testInputRow}>
+                        <View style={styles.testInputWrapper}>
+                          <TextInput
+                            style={styles.textInput}
+                            keyboardType="numeric"
+                            value={item.value}
+                            onChangeText={(val) => handleUpdateField(item.id, val)}
+                          />
+                        </View>
+                        <Text style={styles.testUnitText}>{item.unit}</Text>
+                        <Pressable hitSlop={6} style={styles.editPencilBtn}>
+                          <Ionicons name="pencil-outline" size={16} color="#94A3B8" />
+                        </Pressable>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+
+            {/* 2. METABOLIC TESTS (COLLAPSED) */}
+            <View style={styles.sectionCard}>
+              <Pressable
+                onPress={() =>
+                  setActiveAccordion((prev) => (prev === 'metabolic' ? null : 'metabolic'))
+                }
+                style={styles.sectionHeaderRow}
+              >
+                <View style={styles.sectionHeaderLeft}>
+                  <View style={[styles.sectionIconBox, { backgroundColor: '#FFF7ED' }]}>
+                    <Ionicons name="bar-chart-outline" size={18} color="#EA580C" />
+                  </View>
+                  <Text style={styles.sectionTitle}>Metabolic Tests</Text>
+                </View>
+                <Ionicons
+                  name={activeAccordion === 'metabolic' ? 'chevron-up' : 'chevron-down'}
+                  size={18}
+                  color="#94A3B8"
+                />
+              </Pressable>
+            </View>
+
+            {/* 3. NUTRITIONAL TESTS (COLLAPSED) */}
+            <View style={styles.sectionCard}>
+              <Pressable
+                onPress={() =>
+                  setActiveAccordion((prev) => (prev === 'nutritional' ? null : 'nutritional'))
+                }
+                style={styles.sectionHeaderRow}
+              >
+                <View style={styles.sectionHeaderLeft}>
+                  <View style={[styles.sectionIconBox, { backgroundColor: '#F0FDF4' }]}>
+                    <Ionicons name="leaf-outline" size={18} color="#16A34A" />
+                  </View>
+                  <Text style={styles.sectionTitle}>Nutritional Tests</Text>
+                </View>
+                <Ionicons
+                  name={activeAccordion === 'nutritional' ? 'chevron-up' : 'chevron-down'}
+                  size={18}
+                  color="#94A3B8"
+                />
+              </Pressable>
+            </View>
+
+            {/* 4. CBC (COLLAPSED) */}
+            <View style={styles.sectionCard}>
+              <Pressable
+                onPress={() =>
+                  setActiveAccordion((prev) => (prev === 'cbc' ? null : 'cbc'))
+                }
+                style={styles.sectionHeaderRow}
+              >
+                <View style={styles.sectionHeaderLeft}>
+                  <View style={[styles.sectionIconBox, { backgroundColor: '#EFF6FF' }]}>
+                    <Ionicons name="fitness-outline" size={18} color="#0284C7" />
+                  </View>
+                  <Text style={styles.sectionTitle}>CBC</Text>
+                </View>
+                <Ionicons
+                  name={activeAccordion === 'cbc' ? 'chevron-up' : 'chevron-down'}
+                  size={18}
+                  color="#94A3B8"
+                />
+              </Pressable>
+            </View>
+          </View>
+
+          {/* CONFIRM & SAVE CTA */}
+          <View style={styles.ctaWrapper}>
+            <BioPulseButton
+              title="Confirm & Save"
+              onPress={handleConfirmSave}
+              style={[styles.confirmBtn, { backgroundColor: themeAccent }]}
+            />
           </View>
         </View>
       </ScrollView>
-
-      {/* Floating Confirm Button */}
-      <View
-        style={[
-          styles.bottomBar,
-          {
-            paddingBottom: Math.max(insets.bottom, 16),
-          },
-        ]}
-      >
-        <Pressable
-          onPress={handleConfirmValues}
-          disabled={saving}
-          style={({ pressed }) => [
-            styles.confirmBtn,
-            { backgroundColor: themeAccent },
-            pressed && styles.confirmBtnPressed,
-            saving && { opacity: 0.7 },
-          ]}
-        >
-          <Ionicons name="shield-checkmark" size={18} color="#FFFFFF" />
-          <Text style={styles.confirmBtnText}>
-            {saving ? 'Saving...' : 'Confirm & Commit to Health Record'}
-          </Text>
-        </Pressable>
-      </View>
-
-      {/* Permanent Fixed Bottom Nav */}
-      <BioPulseBottomNav activeTab="screening" />
-    </View>
+    </BioPulseBackground>
   );
 }
 
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
   },
-  header: {
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-    paddingHorizontal: 16,
-    paddingBottom: 12,
+  topHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 8,
   },
   backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F1F5F9',
-  },
-  headerTitleWrap: {
-    alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '700',
-    color: BioPulseColors.navy,
-  },
-  headerSub: {
-    fontSize: 12,
-    color: BioPulseColors.secondaryText,
-    marginTop: 1,
+    color: '#073B72',
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 14,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    alignItems: 'center',
   },
-  tabletScrollContent: {
-    maxWidth: 600,
-    alignSelf: 'center',
+  mainWrapper: {
     width: '100%',
+    maxWidth: 460,
   },
-  reviewBanner: {
-    backgroundColor: '#FFFBEB',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-    padding: 14,
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
+  tabletWrapper: {
+    maxWidth: 580,
   },
-  reviewBannerText: {
-    flex: 1,
+  titleSection: {
+    marginBottom: 14,
   },
-  reviewTitle: {
+  subtitleText: {
     fontSize: 13,
-    fontWeight: '700',
-    color: '#B45309',
-    marginBottom: 3,
+    color: '#64748B',
+    lineHeight: 19,
   },
-  reviewSub: {
+  warningCallout: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FDF2F8',
+    borderWidth: 1,
+    borderColor: '#FCE7F3',
+    borderRadius: 14,
+    padding: 12,
+    gap: 10,
+    marginBottom: 18,
+  },
+  warningIcon: {
+    marginTop: 1,
+  },
+  warningText: {
+    flex: 1,
     fontSize: 12,
-    color: '#78350F',
+    color: '#9F1239',
     lineHeight: 16,
+    fontWeight: '500',
   },
-  card: {
+  accordionContainer: {
+    gap: 10,
+    marginBottom: 20,
+  },
+  sectionCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 16,
-    marginBottom: 16,
+    borderColor: '#F1F5F9',
+    overflow: 'hidden',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
-  cardHeaderRow: {
+  sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    padding: 14,
   },
-  cardHeading: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: BioPulseColors.navy,
-  },
-  cardSubCount: {
-    fontSize: 12,
-    color: '#64748B',
-  },
-  testsList: {
+  sectionHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
   },
-  testItem: {
-    backgroundColor: '#F8FAFC',
+  sectionIconBox: {
+    width: 36,
+    height: 36,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 12,
-  },
-  testTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 8,
-  },
-  testNameCol: {
-    flex: 1,
-    paddingRight: 8,
-  },
-  testName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: BioPulseColors.navy,
-    marginBottom: 2,
-  },
-  testRef: {
-    fontSize: 11,
-    color: '#64748B',
-  },
-  badgesRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  statusBadgeNormal: {
-    backgroundColor: '#DCFCE7',
-  },
-  statusBadgeHigh: {
-    backgroundColor: '#FEE2E2',
-  },
-  statusBadgeLow: {
-    backgroundColor: '#FEF3C7',
-  },
-  statusBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  statusTextNormal: {
-    color: '#15803D',
-  },
-  statusTextHigh: {
-    color: '#B91C1C',
-  },
-  statusTextLow: {
-    color: '#B45309',
-  },
-  confidenceBadge: {
-    backgroundColor: '#EFF6FF',
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  confidenceText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#1D4ED8',
-  },
-  valueRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  inputContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    paddingHorizontal: 10,
-    height: 38,
-  },
-  textInput: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: '700',
-    color: BioPulseColors.navy,
-    paddingVertical: 0,
-  },
-  unitText: {
-    fontSize: 12,
-    color: '#64748B',
-    fontWeight: '600',
-    marginLeft: 6,
-  },
-  editBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  editBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  bottomBar: {
-    position: 'absolute',
-    bottom: BOTTOM_NAV_HEIGHT,
-    left: 0,
-    right: 0,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-    paddingHorizontal: 16,
-    paddingTop: 12,
-  },
-  confirmBtn: {
-    height: 48,
-    borderRadius: 12,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#073B72',
+  },
+  sectionBody: {
+    paddingHorizontal: 16,
+    paddingBottom: 14,
+    borderTopWidth: 1,
+    borderTopColor: '#F8FAFC',
+    gap: 10,
+  },
+  testRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F8FAFC',
+  },
+  testLabelCol: {
+    flex: 1,
+    marginRight: 8,
+  },
+  testNameText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#0F172A',
+  },
+  testRefRange: {
+    fontSize: 11,
+    color: '#94A3B8',
+    marginTop: 1,
+  },
+  testInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
   },
-  confirmBtnPressed: {
-    opacity: 0.85,
+  testInputWrapper: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    height: 34,
+    minWidth: 50,
+    justifyContent: 'center',
   },
-  confirmBtnText: {
-    fontSize: 15,
+  textInput: {
+    fontSize: 13,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#073B72',
+    textAlign: 'center',
+    padding: 0,
+  },
+  testUnitText: {
+    fontSize: 11,
+    color: '#64748B',
+    fontWeight: '500',
+    minWidth: 42,
+  },
+  editPencilBtn: {
+    padding: 4,
+  },
+  ctaWrapper: {
+    marginTop: 8,
+    marginBottom: 10,
+  },
+  confirmBtn: {
+    height: 52,
+    borderRadius: 14,
+    shadowColor: '#F43F7D',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
 });

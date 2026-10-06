@@ -249,6 +249,11 @@ class NutritionReadinessResult:
     planning_inputs: Dict[str, Any] = field(default_factory=dict)
     optional_personalization: Dict[str, Any] = field(default_factory=dict)
     warnings: List[str] = field(default_factory=list)
+    personalization_level: str = "LEVEL_1_PROFILE"
+    available: List[str] = field(default_factory=list)
+    missing_required: List[str] = field(default_factory=list)
+    missing_optional: List[str] = field(default_factory=list)
+    recommendations: List[str] = field(default_factory=list)
 
     @property
     def overall_status(self) -> str:
@@ -260,6 +265,7 @@ class NutritionReadinessResult:
         return {
             "ready": self.ready,
             "overall_status": self.overall_status,
+            "personalization_level": self.personalization_level,
             "blocking_issues": self.blocking_issues,
             "warning_issues": self.warning_issues,
             "optional_issues": self.optional_issues,
@@ -268,6 +274,10 @@ class NutritionReadinessResult:
             "planning_inputs": self.planning_inputs,
             "optional_personalization": self.optional_personalization,
             "warnings": self.warnings,
+            "available": self.available,
+            "missing_required": self.missing_required,
+            "missing_optional": self.missing_optional,
+            "recommendations": self.recommendations,
         }
 
 
@@ -293,6 +303,7 @@ class MealProfileBuilder:
     def check_nutrition_readiness(
         raw_user_meta_data: Optional[Dict[str, Any]],
         profile_data: Optional[Dict[str, Any]],
+        active_assessment: Optional[Dict[str, Any]] = None,
     ) -> NutritionReadinessResult:
         """
         Evaluates readiness classifying issues into BLOCKING, WARNING, and OPTIONAL.
@@ -412,6 +423,7 @@ class MealProfileBuilder:
             or profile.get("dietary_preference")
             or raw_meta.get("dietary_preference")
         )
+        norm_diet = None
         if not dietary_raw or not str(dietary_raw).strip():
             missing_safety.append("dietary_preference_confirmation")
             blocking_issues.append("Dietary pattern is required (cannot default to unrestricted).")
@@ -477,6 +489,72 @@ class MealProfileBuilder:
         if len(blocking_issues) > 0:
             all_warnings.extend(blocking_issues)
 
+        # ----------------------------------------------------------------------
+        # 7. STRUCTURED PERSONALIZATION & READINESS METADATA
+        # ----------------------------------------------------------------------
+        available_fields: List[str] = []
+        if int_age is not None:
+            available_fields.append(f"Age ({int_age})")
+        if height_cm is not None and weight_kg is not None:
+            try:
+                h = float(height_cm)
+                w = float(weight_kg)
+                if h > 0 and w > 0:
+                    bmi_val = round(w / ((h / 100.0) ** 2), 1)
+                    available_fields.append(f"Height & Weight (BMI: {bmi_val})")
+            except Exception:
+                pass
+        if norm_diet:
+            available_fields.append(f"Dietary Pattern ({norm_diet.value.replace('_', ' ').title()})")
+        elif dietary_raw:
+            available_fields.append(f"Dietary Pattern ({str(dietary_raw).replace('_', ' ').title()})")
+        if allergy_input_present:
+            available_fields.append("Confirmed Allergies")
+        if active_assessment:
+            mod_label = str(active_assessment.get("module") or "Screening").replace("_", " ").title()
+            available_fields.append(f"Screening Assessment ({mod_label})")
+            has_shap = (
+                isinstance(active_assessment.get("shap_explanation"), dict)
+                and bool(
+                    active_assessment["shap_explanation"].get("factors")
+                    or active_assessment["shap_explanation"].get("features")
+                )
+            ) or bool(active_assessment.get("top_factors"))
+            if has_shap:
+                available_fields.append("SHAP Clinical Factors")
+
+        personalization_level = "LEVEL_1_PROFILE"
+        if active_assessment:
+            has_t2_or_shap = (
+                active_assessment.get("assessment_level") == "tier_2"
+                or active_assessment.get("tier") == "tier_2"
+                or (
+                    isinstance(active_assessment.get("shap_explanation"), dict)
+                    and bool(active_assessment["shap_explanation"].get("factors"))
+                )
+            )
+            personalization_level = "LEVEL_3_FULL" if has_t2_or_shap else "LEVEL_2_SCREENING"
+
+        missing_req = list(blocking_issues)
+        missing_opt = []
+        if not preferred_cuisines:
+            missing_opt.append("preferred_cuisines")
+        if not cooking_time:
+            missing_opt.append("cooking_time_preference")
+        if not favorite_ingredients:
+            missing_opt.append("favorite_ingredients")
+
+        recommendations_list: List[str] = []
+        if not active_assessment:
+            recommendations_list.append(
+                "Complete screening to make hormonal and metabolic recommendations even more personalized."
+            )
+        if missing_opt:
+            missing_names = [o.replace("_", " ") for o in missing_opt]
+            recommendations_list.append(
+                f"Add {', '.join(missing_names)} to make your meal plan more practical."
+            )
+
         return NutritionReadinessResult(
             ready=ready,
             blocking_issues=blocking_issues,
@@ -502,7 +580,13 @@ class MealProfileBuilder:
                 "meals_per_day": profile.get("meals_per_day", 4),
             },
             warnings=all_warnings,
+            personalization_level=personalization_level,
+            available=available_fields,
+            missing_required=missing_req,
+            missing_optional=missing_opt,
+            recommendations=recommendations_list,
         )
+
 
     @staticmethod
     def build_canonical_nutrition_profile(

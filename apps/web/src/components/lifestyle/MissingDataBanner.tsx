@@ -3,18 +3,54 @@ import { Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface MissingDataBannerProps {
-  missingData: string[];
+  missingData?: string[];
+  available?: string[];
 }
 
-export const MissingDataBanner: React.FC<MissingDataBannerProps> = ({ missingData }) => {
-  if (!missingData || missingData.length === 0) {
+const FIELD_LABELS: Record<string, string> = {
+  age: 'date of birth',
+  weight_kg: 'weight',
+  height_cm: 'height',
+  bmi: 'height & weight',
+  activity_information: 'activity level',
+  screening_assessment: 'screening assessment',
+  shap_factors: 'screening details',
+  preferred_cuisines: 'preferred cuisines',
+  cooking_time_preference: 'cooking time preference',
+  favorite_ingredients: 'favorite foods',
+  dietary_pattern: 'dietary preferences',
+};
+
+export const MissingDataBanner: React.FC<MissingDataBannerProps> = ({ missingData, available }) => {
+  // Filter out non-blocking items from alarming banner
+  const actionableMissing = (missingData || []).filter(
+    (item) => !['symptom_logs', 'longitudinal_history', 'laboratory_biomarkers', 'shap_factors'].includes(item)
+  );
+
+  if (actionableMissing.length === 0) {
+    if (available && available.length > 0) {
+      return (
+        <aside
+          aria-label="Personalization status"
+          className="rounded-2xl bg-[#F0FDF4] border border-[#BBF7D0] p-4 flex items-center gap-3 text-xs sm:text-sm text-slate-700 shadow-xs"
+        >
+          <Info className="w-4 h-4 text-[#16A34A] shrink-0" />
+          <div className="flex-1 min-w-0">
+            <strong className="font-semibold text-[#166534] mr-1">
+              Your plan is personalized using:
+            </strong>
+            <span className="text-slate-700">
+              {available.join(' • ')}
+            </span>
+          </div>
+        </aside>
+      );
+    }
     return null;
   }
 
   // Format field names cleanly
-  const formattedItems = missingData.map((item) =>
-    item.replace(/_/g, ' ').toLowerCase()
-  );
+  const formattedItems = actionableMissing.map((item) => FIELD_LABELS[item] || item.replace(/_/g, ' ').toLowerCase());
 
   return (
     <aside
@@ -32,7 +68,7 @@ export const MissingDataBanner: React.FC<MissingDataBannerProps> = ({ missingDat
             <span className="font-medium text-slate-900">
               {formattedItems.join(', ')}
             </span>{' '}
-            to unlock calibrated calorie and macronutrient targets.
+            to make your meal recommendations even more tailored.
           </span>
         </div>
       </div>

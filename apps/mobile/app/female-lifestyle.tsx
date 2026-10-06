@@ -1,372 +1,439 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
+  Pressable,
   StyleSheet,
   ScrollView,
-  Pressable,
+  TextInput,
+  useWindowDimensions,
 } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../constants/Colors';
-import { AuthBackgroundFoliage } from '../components/auth/AuthBackgroundFoliage';
-import { OnboardingStepper, PathwayHeader } from '../components/onboarding';
-import { useFemaleOnboarding, FemaleLifestyleState } from '../features/onboarding/FemaleOnboardingContext';
-import { BioPulseBottomNav, BOTTOM_NAV_HEIGHT } from '../components/navigation';
-
-const FEMALE_ONBOARDING_STEPS = [
-  { id: 1, label: 'Basic Info' },
-  { id: 2, label: 'Cycle Health' },
-  { id: 3, label: 'Symptoms' },
-  { id: 4, label: 'Lifestyle' },
-  { id: 5, label: 'Review' },
-];
+import { BioPulseBackground } from '../components/common/BioPulseBackground';
+import { BioPulseButton } from '../components/common/BioPulseButton';
+import { FemaleOnboardingHeader } from '../components/onboarding/FemaleOnboardingHeader';
+import { useFemaleOnboarding, FemaleLifestyleState } from '../features/onboarding';
 
 /**
- * SCREEN 8/12: FEMALE LIFESTYLE & DAILY HABITS (Step 4 of 5)
+ * SCREEN 9: FEMALE LIFESTYLE (Step 4 of 5)
+ *
+ * Matches Screenshot 9:
+ * - Header: Step 4 of 5 with 4 segments filled
+ * - Title: "Lifestyle" with running wellness icon
+ * - Fast food / processed food frequency (Rarely | 1–2 times | 3+ times)
+ * - Exercise frequency (None | 1–2 times | 3+ times)
+ * - Sleep (average per night): < 6 hrs | 6–8 hrs | > 8 hrs
+ * - Stress level: Low | Moderate | High
+ * - Compact dropdown-style row for Water (1.6 L), Smoking (No), Alcohol (Rarely)
+ * - Additional notes (optional) with 0/200 limit
+ * - Primary "Continue →" pink CTA
  */
 export default function FemaleLifestyleScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ returnTo?: string }>();
-  const isFromReview = params.returnTo === 'review';
+  const { width } = useWindowDimensions();
+  const { lifestyle, updateLifestyle } = useFemaleOnboarding();
 
-  const { lifestyle, updateLifestyle, setLastActiveScreeningRoute } = useFemaleOnboarding();
-
-  // Track that user is on Lifestyle step
-  useEffect(() => {
-    setLastActiveScreeningRoute('/female-lifestyle');
-  }, [setLastActiveScreeningRoute]);
-
-  const [fastFoodIntake, setFastFoodIntake] = useState<FemaleLifestyleState['fastFoodIntake']>(
+  // Local state
+  const [fastFood, setFastFood] = useState<FemaleLifestyleState['fastFoodIntake']>(
     lifestyle.fastFoodIntake || 'occasionally'
   );
-  const [exerciseFrequency, setExerciseFrequency] = useState<FemaleLifestyleState['exerciseFrequency']>(
+  const [exercise, setExercise] = useState<FemaleLifestyleState['exerciseFrequency']>(
     lifestyle.exerciseFrequency || '1-2_days'
   );
-  const [sleepHours, setSleepHours] = useState<number>(lifestyle.sleepHours || 7);
-  const [stressLevel, setStressLevel] = useState<FemaleLifestyleState['stressLevel']>(
+  const [sleep, setSleep] = useState<number>(lifestyle.sleepHours || 7);
+  const [stress, setStress] = useState<FemaleLifestyleState['stressLevel']>(
     lifestyle.stressLevel || 'moderate'
   );
+  const [water, setWater] = useState<string>('1.6 L');
+  const [smoking, setSmoking] = useState<string>('No');
+  const [alcohol, setAlcohol] = useState<string>('Rarely');
+  const [notes, setNotes] = useState<string>('');
 
-  // Persist draft before switching tabs
-  const handleBeforeTabNavigate = useCallback(() => {
-    updateLifestyle({
-      fastFoodIntake,
-      exerciseFrequency,
-      sleepHours,
-      stressLevel,
-    });
-    setLastActiveScreeningRoute('/female-lifestyle');
-  }, [fastFoodIntake, exerciseFrequency, sleepHours, stressLevel, updateLifestyle, setLastActiveScreeningRoute]);
+  const bottomPad = Math.max(insets.bottom, 20);
 
-  const handleSaveAndContinue = useCallback(() => {
+  const handleContinue = useCallback(() => {
     updateLifestyle({
-      fastFoodIntake,
-      exerciseFrequency,
-      sleepHours,
-      stressLevel,
+      fastFoodIntake: fastFood,
+      exerciseFrequency: exercise,
+      sleepHours: sleep,
+      stressLevel: stress,
     });
     router.push('/female-review');
-  }, [fastFoodIntake, exerciseFrequency, sleepHours, stressLevel, updateLifestyle, router]);
-
-  const handleBack = useCallback(() => {
-    updateLifestyle({
-      fastFoodIntake,
-      exerciseFrequency,
-      sleepHours,
-      stressLevel,
-    });
-    if (isFromReview) {
-      router.push('/female-review');
-    } else if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.push('/female-symptoms');
-    }
-  }, [fastFoodIntake, exerciseFrequency, sleepHours, stressLevel, updateLifestyle, isFromReview, router]);
+  }, [fastFood, exercise, sleep, stress, updateLifestyle, router]);
 
   return (
-    <View
-      style={[
-        styles.root,
-        {
-          paddingTop: Math.max(insets.top, 8),
-          paddingBottom: 0,
-        },
-      ]}
-    >
-      <AuthBackgroundFoliage />
+    <BioPulseBackground style={styles.container}>
+      <StatusBar style="dark" backgroundColor="transparent" translucent />
+
+      {/* Top Navigation Bar with Step 4 of 5 */}
+      <FemaleOnboardingHeader
+        step={4}
+        totalSteps={5}
+        onBack={() => router.back()}
+        accentColor="#F43F7D"
+      />
 
       <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: BOTTOM_NAV_HEIGHT + Math.max(insets.bottom, 16) + 24 },
-        ]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPad + 24 }]}
         showsVerticalScrollIndicator={false}
       >
-        <PathwayHeader
-          onBack={handleBack}
-          subtitle="WOMEN'S HEALTH INTELLIGENCE"
-          showHelp={false}
-        />
+        <View style={[styles.mainWrapper, { maxWidth: Math.min(width, 460) }]}>
+          {/* Header Title with Running Icon */}
+          <View style={styles.headerTitleRow}>
+            <View style={styles.headerIconBox}>
+              <Ionicons name="walk" size={24} color="#0284C7" />
+            </View>
+            <View style={styles.headerTitleTextCol}>
+              <Text style={styles.screenTitle}>Lifestyle</Text>
+              <Text style={styles.screenSubtitle}>
+                Your daily habits can impact PCOS symptoms. Share a few details to get a clearer picture.
+              </Text>
+            </View>
+          </View>
 
-        <OnboardingStepper
-          currentStep={4}
-          steps={FEMALE_ONBOARDING_STEPS}
-          accentColor={BioPulseColors.femaleAccent}
-        />
+          {/* 1. Fast food / processed food */}
+          <View style={styles.sectionBox}>
+            <View style={styles.labelRow}>
+              <Ionicons name="fast-food-outline" size={17} color={BioPulseColors.textPrimary} style={{ marginRight: 6 }} />
+              <Text style={styles.sectionLabel}>Fast food / processed food</Text>
+              <Ionicons name="information-circle-outline" size={15} color={BioPulseColors.textSecondary} style={{ marginLeft: 4 }} />
+            </View>
 
-        <View style={styles.titleSection}>
-          <Text style={styles.screenTitle}>Lifestyle & Daily Habits</Text>
-          <Text style={styles.screenSubtitle}>
-            Your daily routines influence metabolic equilibrium and endocrine regulation.
-          </Text>
+            <View style={styles.pillRow}>
+              {[
+                { key: 'never', label: 'Rarely' },
+                { key: 'occasionally', label: '1–2 times\nper week' },
+                { key: 'frequently', label: '3+ times\nper week' },
+              ].map((item) => {
+                const isSelected = fastFood === item.key;
+                return (
+                  <Pressable
+                    key={item.key}
+                    onPress={() => setFastFood(item.key as FemaleLifestyleState['fastFoodIntake'])}
+                    style={[styles.optionPill, isSelected && styles.optionPillSelected]}
+                  >
+                    <Text style={[styles.optionPillText, isSelected && styles.optionPillTextSelected]}>
+                      {item.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* 2. Exercise frequency */}
+          <View style={styles.sectionBox}>
+            <View style={styles.labelRow}>
+              <Ionicons name="barbell-outline" size={17} color={BioPulseColors.textPrimary} style={{ marginRight: 6 }} />
+              <Text style={styles.sectionLabel}>Exercise frequency</Text>
+              <Ionicons name="information-circle-outline" size={15} color={BioPulseColors.textSecondary} style={{ marginLeft: 4 }} />
+            </View>
+
+            <View style={styles.pillRow}>
+              {[
+                { key: 'none', label: 'None' },
+                { key: '1-2_days', label: '1–2 times\nper week' },
+                { key: '3+_days', label: '3+ times\nper week' },
+              ].map((item) => {
+                const isSelected = exercise === item.key;
+                return (
+                  <Pressable
+                    key={item.key}
+                    onPress={() => setExercise(item.key as FemaleLifestyleState['exerciseFrequency'])}
+                    style={[styles.optionPill, isSelected && styles.optionPillSelected]}
+                  >
+                    <Text style={[styles.optionPillText, isSelected && styles.optionPillTextSelected]}>
+                      {item.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* 3. Sleep (average per night) */}
+          <View style={styles.sectionBox}>
+            <View style={styles.labelRow}>
+              <Ionicons name="moon-outline" size={17} color={BioPulseColors.textPrimary} style={{ marginRight: 6 }} />
+              <Text style={styles.sectionLabel}>Sleep (average per night)</Text>
+            </View>
+
+            <View style={styles.pillRow}>
+              {[
+                { val: 5, label: '< 6 hrs' },
+                { val: 7, label: '6–8 hrs' },
+                { val: 9, label: '> 8 hrs' },
+              ].map((item) => {
+                const isSelected =
+                  (item.val === 5 && sleep < 6) ||
+                  (item.val === 7 && sleep >= 6 && sleep <= 8) ||
+                  (item.val === 9 && sleep > 8);
+                return (
+                  <Pressable
+                    key={item.label}
+                    onPress={() => setSleep(item.val)}
+                    style={[styles.optionPill, isSelected && styles.optionPillSelected]}
+                  >
+                    <Text style={[styles.optionPillText, isSelected && styles.optionPillTextSelected]}>
+                      {item.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* 4. Stress level */}
+          <View style={styles.sectionBox}>
+            <View style={styles.labelRow}>
+              <Ionicons name="pulse-outline" size={17} color={BioPulseColors.textPrimary} style={{ marginRight: 6 }} />
+              <Text style={styles.sectionLabel}>Stress level</Text>
+            </View>
+
+            <View style={styles.pillRow}>
+              {(['low', 'moderate', 'high'] as FemaleLifestyleState['stressLevel'][]).map((lvl) => {
+                const label = lvl.charAt(0).toUpperCase() + lvl.slice(1);
+                const isSelected = stress === lvl;
+                return (
+                  <Pressable
+                    key={lvl}
+                    onPress={() => setStress(lvl)}
+                    style={[styles.optionPill, isSelected && styles.optionPillSelected]}
+                  >
+                    <Text style={[styles.optionPillText, isSelected && styles.optionPillTextSelected]}>
+                      {label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* 5. Compact Selectors Row (Water, Smoking, Alcohol) */}
+          <View style={styles.compactRow}>
+            {/* Water */}
+            <View style={styles.compactCol}>
+              <View style={styles.compactLabelRow}>
+                <Ionicons name="water" size={13} color="#0EA5E9" style={{ marginRight: 3 }} />
+                <Text style={styles.compactLabel}>Water</Text>
+              </View>
+              <Pressable
+                onPress={() => setWater((w) => (w === '1.6 L' ? '2.5 L' : w === '2.5 L' ? '1.0 L' : '1.6 L'))}
+                style={styles.dropdownPill}
+              >
+                <Text style={styles.dropdownText}>{water}</Text>
+                <Ionicons name="chevron-down" size={13} color={BioPulseColors.textMuted} />
+              </Pressable>
+            </View>
+
+            {/* Smoking */}
+            <View style={styles.compactCol}>
+              <View style={styles.compactLabelRow}>
+                <Ionicons name="ban-outline" size={13} color="#EF4444" style={{ marginRight: 3 }} />
+                <Text style={styles.compactLabel}>Smoking</Text>
+              </View>
+              <Pressable
+                onPress={() => setSmoking((s) => (s === 'No' ? 'Yes' : 'No'))}
+                style={styles.dropdownPill}
+              >
+                <Text style={styles.dropdownText}>{smoking}</Text>
+                <Ionicons name="chevron-down" size={13} color={BioPulseColors.textMuted} />
+              </Pressable>
+            </View>
+
+            {/* Alcohol */}
+            <View style={styles.compactCol}>
+              <View style={styles.compactLabelRow}>
+                <Ionicons name="wine-outline" size={13} color="#8B5CF6" style={{ marginRight: 3 }} />
+                <Text style={styles.compactLabel}>Alcohol</Text>
+              </View>
+              <Pressable
+                onPress={() => setAlcohol((a) => (a === 'Rarely' ? 'Never' : a === 'Never' ? 'Weekly' : 'Rarely'))}
+                style={styles.dropdownPill}
+              >
+                <Text style={styles.dropdownText}>{alcohol}</Text>
+                <Ionicons name="chevron-down" size={13} color={BioPulseColors.textMuted} />
+              </Pressable>
+            </View>
+          </View>
+
+          {/* 6. Additional notes (optional) */}
+          <View style={[styles.sectionBox, { marginTop: 12 }]}>
+            <Text style={styles.sectionLabel}>Additional notes (optional)</Text>
+            <View style={styles.notesContainer}>
+              <TextInput
+                style={styles.notesInput}
+                placeholder="E.g. diet details, work routine, etc."
+                placeholderTextColor={BioPulseColors.textMuted}
+                value={notes}
+                onChangeText={(t) => setNotes(t.slice(0, 200))}
+                multiline
+                maxLength={200}
+              />
+              <Text style={styles.charCount}>{notes.length}/200</Text>
+            </View>
+          </View>
+
+          {/* Continue CTA */}
+          <View style={styles.ctaWrapper}>
+            <BioPulseButton
+              title="Continue"
+              variant="female"
+              showArrow
+              onPress={handleContinue}
+              style={{ backgroundColor: '#F43F7D', borderColor: '#E11D48' }}
+            />
+          </View>
         </View>
-
-        {/* Fast Food / Diet */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Ionicons name="restaurant-outline" size={20} color={BioPulseColors.femaleAccent} style={styles.cardIcon} />
-            <Text style={styles.cardTitle}>Fast Food / Processed Meals</Text>
-          </View>
-          <View style={styles.optionsRow}>
-            {[
-              { id: 'never', label: 'Rarely / Never' },
-              { id: 'occasionally', label: 'Sometimes' },
-              { id: 'frequently', label: 'Frequently' },
-            ].map((opt) => {
-              const selected = fastFoodIntake === opt.id;
-              return (
-                <Pressable
-                  key={opt.id}
-                  onPress={() => setFastFoodIntake(opt.id as any)}
-                  style={[styles.pillOption, selected && styles.pillOptionSelected]}
-                >
-                  <Text style={[styles.pillText, selected && styles.pillTextSelected]}>
-                    {opt.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* Exercise Frequency */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Ionicons name="barbell-outline" size={20} color={BioPulseColors.femaleAccent} style={styles.cardIcon} />
-            <Text style={styles.cardTitle}>Physical Activity Frequency</Text>
-          </View>
-          <View style={styles.optionsRow}>
-            {[
-              { id: 'none', label: 'Sedentary' },
-              { id: '1-2_days', label: '1–2 times/week' },
-              { id: '3+_days', label: '3+ times/week' },
-            ].map((opt) => {
-              const selected = exerciseFrequency === opt.id;
-              return (
-                <Pressable
-                  key={opt.id}
-                  onPress={() => setExerciseFrequency(opt.id as any)}
-                  style={[styles.pillOption, selected && styles.pillOptionSelected]}
-                >
-                  <Text style={[styles.pillText, selected && styles.pillTextSelected]}>
-                    {opt.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* Sleep Hours */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Ionicons name="moon-outline" size={20} color={BioPulseColors.femaleAccent} style={styles.cardIcon} />
-            <Text style={styles.cardTitle}>Average Nightly Sleep</Text>
-          </View>
-          <View style={styles.stepperRow}>
-            <Pressable
-              onPress={() => setSleepHours((h) => Math.max(4, h - 1))}
-              style={styles.stepperBtn}
-            >
-              <Ionicons name="remove" size={18} color={BioPulseColors.femaleAccent} />
-            </Pressable>
-            <Text style={styles.stepperValue}>{sleepHours} hours</Text>
-            <Pressable
-              onPress={() => setSleepHours((h) => Math.min(12, h + 1))}
-              style={styles.stepperBtn}
-            >
-              <Ionicons name="add" size={18} color={BioPulseColors.femaleAccent} />
-            </Pressable>
-          </View>
-        </View>
-
-        {/* Stress Level */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Ionicons name="flash-outline" size={20} color={BioPulseColors.femaleAccent} style={styles.cardIcon} />
-            <Text style={styles.cardTitle}>Perceived Stress Level</Text>
-          </View>
-          <View style={styles.optionsRow}>
-            {[
-              { id: 'low', label: 'Low' },
-              { id: 'moderate', label: 'Moderate' },
-              { id: 'high', label: 'High' },
-            ].map((opt) => {
-              const selected = stressLevel === opt.id;
-              return (
-                <Pressable
-                  key={opt.id}
-                  onPress={() => setStressLevel(opt.id as any)}
-                  style={[styles.pillOption, selected && styles.pillOptionSelected]}
-                >
-                  <Text style={[styles.pillText, selected && styles.pillTextSelected]}>
-                    {opt.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* Continue Button */}
-        <Pressable
-          onPress={handleSaveAndContinue}
-          style={({ pressed }) => [styles.submitBtn, pressed && styles.btnPressed]}
-        >
-          <Text style={styles.submitBtnText}>
-            {isFromReview ? 'Save & Return to Review →' : 'Continue to Review →'}
-          </Text>
-        </Pressable>
       </ScrollView>
-
-      {/* Permanent BioPulse Bottom Navigation */}
-      <BioPulseBottomNav activeTab="screening" beforeNavigate={handleBeforeTabNavigate} />
-    </View>
+    </BioPulseBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
+  container: {
     flex: 1,
-    backgroundColor: '#FEF8FA',
   },
   scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 16,
-    paddingBottom: 28,
+    paddingHorizontal: 18,
+    paddingTop: 8,
   },
-  titleSection: {
-    marginVertical: 12,
+  mainWrapper: {
+    width: '100%',
+  },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    marginTop: 4,
+  },
+  headerIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: '#E0F2FE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  headerTitleTextCol: {
+    flex: 1,
   },
   screenTitle: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#1E3A5F',
-    marginBottom: 6,
+    color: BioPulseColors.textPrimary,
+    letterSpacing: -0.4,
   },
   screenSubtitle: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: '#64748B',
+    fontSize: 13,
+    color: BioPulseColors.textSecondary,
+    marginTop: 2,
+    lineHeight: 18,
   },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: '#FCE7F0',
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 6,
-    elevation: 1,
+  sectionBox: {
+    marginBottom: 16,
   },
-  cardHeader: {
+  labelRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
-  cardIcon: {
-    marginRight: 8,
-  },
-  cardTitle: {
-    fontSize: 15,
+  sectionLabel: {
+    fontSize: 14,
     fontWeight: '700',
-    color: '#1E3A5F',
+    color: BioPulseColors.textPrimary,
   },
-  optionsRow: {
+  pillRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+    gap: 10,
   },
-  pillOption: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 20,
+  optionPill: {
+    flex: 1,
+    minHeight: 46,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
+    borderColor: BioPulseColors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    paddingVertical: 6,
   },
-  pillOptionSelected: {
-    borderColor: BioPulseColors.femaleAccent,
-    backgroundColor: '#FDF0F4',
+  optionPillSelected: {
+    backgroundColor: '#F43F7D',
+    borderColor: '#F43F7D',
   },
-  pillText: {
+  optionPillText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#64748B',
+    color: BioPulseColors.textPrimary,
+    textAlign: 'center',
+    lineHeight: 16,
   },
-  pillTextSelected: {
-    color: BioPulseColors.femaleAccent,
+  optionPillTextSelected: {
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
-  stepperRow: {
+  compactRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginVertical: 4,
+  },
+  compactCol: {
+    flex: 1,
+  },
+  compactLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  compactLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: BioPulseColors.textSecondary,
+  },
+  dropdownPill: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 6,
-  },
-  stepperBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#FDF0F4',
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#F8CAD9',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderColor: BioPulseColors.border,
+    paddingHorizontal: 10,
   },
-  stepperValue: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1E3A5F',
+  dropdownText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: BioPulseColors.textPrimary,
   },
-  submitBtn: {
-    width: '100%',
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: BioPulseColors.femaleAccent,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 12,
-    shadowColor: BioPulseColors.femaleAccent,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 3,
+  notesContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: BioPulseColors.border,
+    padding: 12,
   },
-  btnPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.985 }],
+  notesInput: {
+    minHeight: 54,
+    fontSize: 14,
+    color: BioPulseColors.textPrimary,
+    textAlignVertical: 'top',
   },
-  submitBtnText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700',
+  charCount: {
+    alignSelf: 'flex-end',
+    fontSize: 11,
+    color: BioPulseColors.textMuted,
+    marginTop: 4,
+  },
+  ctaWrapper: {
+    marginTop: 8,
   },
 });

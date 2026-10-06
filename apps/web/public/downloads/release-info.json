@@ -5,12 +5,12 @@
   "filename": "biopulse-ai-v1.0.0.apk",
   "downloadUrl": "/downloads/biopulse-ai-v1.0.0.apk",
   "latestUrl": "/downloads/biopulse-ai-latest.apk",
-  "fileSizeBytes": 72014983,
-  "fileSizeFormatted": "68.7 MB",
-  "sha256": "9fe3521da73347f37a2dd7ae319d03a06bbbc22eed2e4a8f27812b3b76f498a9",
+  "fileSizeBytes": 78365522,
+  "fileSizeFormatted": "74.7 MB",
+  "sha256": "8b54aa5b002f77a54be5d0685552bfd0881b63915e5f2afed12264597bf19c8a",
   "minAndroidVersion": "8.0 (Oreo, API 26)",
   "targetAndroidVersion": "14.0 (API 34)",
   "architecture": "Universal (ARM64, ARMv7, x86_64)",
-  "releaseDate": "October 04, 2026",
+  "releaseDate": "October 07, 2026",
   "releaseType": "Production Release (Signed APK)"
 }
