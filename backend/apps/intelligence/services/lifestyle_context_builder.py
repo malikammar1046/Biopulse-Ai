@@ -248,12 +248,46 @@ class LifestyleContextBuilder:
         acne = None
 
         if profile_obj:
-            age = getattr(profile_obj, "age", None)
-            height_cm = getattr(profile_obj, "height_cm", None)
-            weight_kg = getattr(profile_obj, "weight_kg", None)
-            waist_cm = getattr(profile_obj, "waist_cm", None)
-            waist_inch = getattr(profile_obj, "waist_inch", None)
-            hip_inch = getattr(profile_obj, "hip_inch", None)
+            age = getattr(profile_obj, "age", None) or (
+                profile_obj.get("age") if isinstance(profile_obj, dict) else None
+            )
+            # Canonical derivation from date_of_birth if age is not stored directly
+            dob_val = (
+                getattr(profile_obj, "date_of_birth", None)
+                or (profile_obj.get("date_of_birth") if isinstance(profile_obj, dict) else None)
+                or getattr(profile_obj, "dateOfBirth", None)
+                or (profile_obj.get("dateOfBirth") if isinstance(profile_obj, dict) else None)
+            )
+            if age is None and dob_val:
+                try:
+                    from apps.health.services.meal_profile_builder import calculate_age_and_decimal
+                    derived_age, _ = calculate_age_and_decimal(dob_val)
+                    age = derived_age
+                except Exception:
+                    try:
+                        from datetime import date, datetime
+                        dob_str = str(dob_val)[:10]
+                        dob_dt = datetime.strptime(dob_str, "%Y-%m-%d").date()
+                        today = date.today()
+                        age = today.year - dob_dt.year - ((today.month, today.day) < (dob_dt.month, dob_dt.day))
+                    except Exception:
+                        pass
+
+            height_cm = getattr(profile_obj, "height_cm", None) or (
+                profile_obj.get("height_cm") if isinstance(profile_obj, dict) else None
+            )
+            weight_kg = getattr(profile_obj, "weight_kg", None) or (
+                profile_obj.get("weight_kg") if isinstance(profile_obj, dict) else None
+            )
+            waist_cm = getattr(profile_obj, "waist_cm", None) or (
+                profile_obj.get("waist_cm") if isinstance(profile_obj, dict) else None
+            )
+            waist_inch = getattr(profile_obj, "waist_inch", None) or (
+                profile_obj.get("waist_inch") if isinstance(profile_obj, dict) else None
+            )
+            hip_inch = getattr(profile_obj, "hip_inch", None) or (
+                profile_obj.get("hip_inch") if isinstance(profile_obj, dict) else None
+            )
             if waist_inch is None and getattr(profile_obj, "waist_cm", None) is not None:
                 try:
                     waist_inch = round(float(profile_obj.waist_cm) / 2.54, 1)
@@ -438,18 +472,32 @@ class LifestyleContextBuilder:
         shap_drivers: List[ShapFactor] = []
         shap_mitigators: List[ShapFactor] = []
 
-        if active_rec and isinstance(active_rec.get("shap_explanation"), dict):
-            shap_dict = active_rec["shap_explanation"]
-            features_list = shap_dict.get("features", [])
+        if active_rec:
+            features_list: List[Any] = []
+            shap_dict = active_rec.get("shap_explanation")
+            if isinstance(shap_dict, dict):
+                features_list = shap_dict.get("factors") or shap_dict.get("features") or []
+            if not features_list and isinstance(active_rec.get("explanations"), list):
+                features_list = active_rec.get("explanations") or []
+
             if isinstance(features_list, list):
                 for f in features_list:
                     if not isinstance(f, dict):
                         continue
-                    feat_name = f.get("feature_name") or f.get("feature") or ""
-                    val = float(f.get("shap_value") or f.get("attribution") or 0.0)
+                    feat_name = f.get("feature_name") or f.get("feature") or f.get("name") or ""
+                    raw_val = (
+                        f.get("shap_value")
+                        if f.get("shap_value") is not None
+                        else (f.get("attribution") if f.get("attribution") is not None else f.get("value"))
+                    )
+                    try:
+                        val = float(raw_val or 0.0)
+                    except (ValueError, TypeError):
+                        val = 0.0
+
                     patient_val = f.get("patient_value") or f.get("value")
                     meta = get_feature_metadata(feat_name)
-                    disp_name = meta.patient_label if meta else feat_name.replace("_", " ").title()
+                    disp_name = meta.patient_label if meta else (f.get("factor_label") or feat_name.replace("_", " ").title())
                     category = meta.category if meta else "clinical"
                     unit = getattr(meta, "unit", "") or ""
 
@@ -698,7 +746,7 @@ class LifestyleContextBuilder:
             missing_data.append("activity_information")
         if not screening.has_assessment:
             missing_data.append("screening_assessment")
-        if not shap_drivers and not shap_mitigators:
+        elif not shap_drivers and not shap_mitigators:
             missing_data.append("shap_factors")
         if not symptoms.active_symptoms:
             missing_data.append("symptom_logs")
@@ -756,6 +804,7 @@ class LifestyleContextBuilder:
 
         state_digest = {
             "pathway": demo.pathway,
+            "age": demo.age,
             "weight_kg": round(demo.weight_kg, 1) if demo.weight_kg is not None else None,
             "height_cm": round(demo.height_cm, 1) if demo.height_cm is not None else None,
             "waist_cm": round(demo.waist_cm, 1) if demo.waist_cm is not None else None,

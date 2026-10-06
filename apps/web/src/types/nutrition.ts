@@ -18,6 +18,11 @@ export interface PlanningInputsReadiness {
 export interface NutritionReadiness {
   ready: boolean;
   overall_status?: 'READY' | 'WARNINGS' | 'NOT_READY' | string;
+  personalization_level?: 'LEVEL_1_PROFILE' | 'LEVEL_2_SCREENING' | 'LEVEL_3_CLINICAL' | string;
+  available?: string[];
+  missing_required?: string[];
+  missing_optional?: string[];
+  recommendations?: string[];
   blocking_issues?: string[];
   warning_issues?: string[];
   optional_issues?: string[];
@@ -81,6 +86,11 @@ export interface SingleMeal {
   carbohydrate_g: number;
   fat_g: number;
   items: PlannedMealItem[];
+  is_locked?: boolean;
+  is_logged?: boolean;
+  why_it_fits?: string;
+  prep_time_minutes?: number;
+  safe_substitutions?: string[];
 }
 
 export interface TargetAdherence {
@@ -152,3 +162,32 @@ export interface NutritionPlanSummary {
   status: string;
   created_at: string;
 }
+
+export interface FoodLogItem {
+  id: string;
+  user_id?: string;
+  meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'morning_snack' | 'afternoon_snack' | string;
+  food_name: string;
+  serving: string;
+  calories: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+  fiber_g?: number;
+  notes?: string;
+  logged_at: string;
+  created_at?: string;
+}
+
+export interface MealReminderSettings {
+  breakfast_enabled: boolean;
+  breakfast_time: string;
+  lunch_enabled: boolean;
+  lunch_time: string;
+  dinner_enabled: boolean;
+  dinner_time: string;
+  snack_enabled: boolean;
+  snack_time: string;
+  browser_notifications?: boolean;
+}
+
