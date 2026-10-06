@@ -37,7 +37,7 @@ from apps.intelligence.services.intelligence_orchestrator import (
 )
 
 
-@override_settings(BIOPULSE_ASSESSMENT_MAINTENANCE=False)
+@override_settings(BIOPULSE_ASSESSMENT_MAINTENANCE=False, ALLOW_LOCAL_SQLITE_FALLBACK=True)
 class Stage12SmokeGateTests(TestCase):
     """
     Stage 12 Controlled Smoke Gate application-level tests.

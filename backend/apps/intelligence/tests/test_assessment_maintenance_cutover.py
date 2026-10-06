@@ -136,7 +136,7 @@ class AssessmentMaintenanceModeTests(TestCase):
     @override_settings(BIOPULSE_ASSESSMENT_MAINTENANCE=True)
     def test_active_and_history_reads_remain_available_for_existing_records(self):
         # Create an assessment while maintenance is false
-        with override_settings(BIOPULSE_ASSESSMENT_MAINTENANCE=False):
+        with override_settings(BIOPULSE_ASSESSMENT_MAINTENANCE=False, ALLOW_LOCAL_SQLITE_FALLBACK=True):
             saved = assessment_repository.save_assessment(
                 str(self.test_user.id),
                 {

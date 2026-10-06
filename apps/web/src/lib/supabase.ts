@@ -1,26 +1,24 @@
 import { createClient } from '@supabase/supabase-js';
 
-const envObj = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : (typeof globalThis !== 'undefined' && (globalThis as any).process?.env ? (globalThis as any).process.env : {});
-const supabaseUrl = (envObj as any).VITE_SUPABASE_URL || '';
-const supabaseAnonKey = (envObj as any).VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
-export const isSupabaseConfigured = (): boolean => {
-  return (
-    Boolean(supabaseUrl) &&
-    Boolean(supabaseAnonKey) &&
-    supabaseUrl !== 'https://your-project-id.supabase.co' &&
-    !supabaseAnonKey.includes('placeholder')
-  );
-};
+const configured = Boolean(supabaseUrl && supabaseAnonKey);
 
-// Fallback dummy values to prevent runtime crash during initialization if env vars are missing
-const validUrl = isSupabaseConfigured() ? supabaseUrl : 'https://placeholder.supabase.co';
-const validKey = isSupabaseConfigured() ? supabaseAnonKey : 'placeholder-anon-key';
+// A valid fallback keeps the module importable in local/demo mode.
+// Supabase calls are guarded by isSupabaseConfigured().
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder-anon-key',
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  }
+);
 
-export const supabase = createClient(validUrl, validKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-  },
-});
+export function isSupabaseConfigured(): boolean {
+  return configured;
+}

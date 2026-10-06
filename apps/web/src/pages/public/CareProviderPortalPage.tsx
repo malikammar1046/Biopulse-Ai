@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  Stethoscope,
   ShieldCheck,
   ShieldAlert,
   Activity,
@@ -19,6 +18,7 @@ import { careCircleService } from '../../services/careCircleService';
 import type { CareProviderViewData } from '../../types/careCircle';
 import { WeeklyTimelineView } from '../../components/care-circle/WeeklyTimelineView';
 import { Logo } from '../../components/brand/Logo';
+import { BioPulseLoadingScreen } from '../../components/brand/BioPulseLoadingScreen';
 
 export const CareProviderPortalPage: React.FC = () => {
   const { token } = useParams<{ token: string }>();
@@ -73,18 +73,7 @@ export const CareProviderPortalPage: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#10071A] text-white flex items-center justify-center p-4">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#6E2D8B] via-[#8E3EAF] to-[#E87084] flex items-center justify-center shadow-lg shadow-purple-950/50 animate-pulse">
-            <Stethoscope className="w-6 h-6 text-white" />
-          </div>
-          <span className="text-xs font-mono font-bold tracking-widest text-[#B4A6C7] uppercase">
-            Verifying Care Provider Authorization...
-          </span>
-        </div>
-      </div>
-    );
+    return <BioPulseLoadingScreen message="Verifying Care Provider Authorization..." />;
   }
 
   // If invitation is valid but not yet claimed by authenticated member

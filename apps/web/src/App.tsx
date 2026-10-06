@@ -12,6 +12,7 @@ import { PathwayRouteGuard } from './components/auth/PathwayRouteGuard';
 import { useUserHealth } from './context/UserHealthContext';
 import { getPathwayDashboardRoute } from './constants/routes';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
+import { BioPulseLoadingScreen } from './components/brand/BioPulseLoadingScreen';
 
 // Dynamic redirection to user's authorized pathway dashboard
 const DashboardRedirect: React.FC = () => {
@@ -20,11 +21,9 @@ const DashboardRedirect: React.FC = () => {
   return <Navigate to={destination} replace />;
 };
 
-import { BioPulseLoadingScreen } from './components/brand/BioPulseLoadingScreen';
-
-// Lightweight Page Loading Fallback (BioPulse Splash Screen)
+// Clinical Page Loading Fallback (BioPulse Splash Screen)
 const PageLoadingFallback: React.FC = () => (
-  <BioPulseLoadingScreen message="Preparing your health experience" />
+  <BioPulseLoadingScreen message="Preparing your health experience" fullScreen={true} />
 );
 
 // Route-Level Lazy Loading (Code Splitting)
@@ -54,7 +53,12 @@ const UnderstandMaleHypogonadism = lazy(() =>
 const TrustAndPrivacy = lazy(() =>
   import('./pages/public/TrustAndPrivacy').then((m) => ({ default: m.TrustAndPrivacy }))
 );
-const Doctors = lazy(() => import('./pages/public/Doctors'));
+const Doctors = lazy(() =>
+  import('./pages/public/Doctors').then((m) => ({ default: m.Doctors }))
+);
+const CareCircle = lazy(() =>
+  import('./pages/public/CareCircle').then((m) => ({ default: m.CareCircle }))
+);
 
 // Auth & Onboarding Pages (Lazy-Loaded)
 const Login = lazy(() => import('./pages/auth/Login').then((m) => ({ default: m.Login })));
@@ -108,8 +112,9 @@ export function App() {
                 <Route path={ROUTES.UNDERSTAND_MALE_FERTILITY} element={<Navigate to={ROUTES.UNDERSTAND_MALE_HYPOGONADISM} replace />} />
                 <Route path={ROUTES.WOMENS_HEALTH} element={<Navigate to={ROUTES.UNDERSTAND_PCOS_CANONICAL} replace />} />
                 <Route path={ROUTES.MENS_HEALTH} element={<Navigate to={ROUTES.UNDERSTAND_MALE_HYPOGONADISM} replace />} />
-                <Route path={ROUTES.CARE_CIRCLE} element={<Navigate to={ROUTES.ABOUT} replace />} />
-                <Route path={ROUTES.FOR_DOCTORS} element={<Navigate to={ROUTES.ABOUT} replace />} />
+                <Route path={ROUTES.CARE_CIRCLE} element={<CareCircle />} />
+                <Route path="/carecircle" element={<Navigate to={ROUTES.CARE_CIRCLE} replace />} />
+                <Route path={ROUTES.FOR_DOCTORS} element={<Navigate to={ROUTES.DOCTORS} replace />} />
                 <Route path="/ai-that-explains" element={<Navigate to={ROUTES.HOW_IT_WORKS} replace />} />
                 
                 <Route path={ROUTES.TRUST_PRIVACY} element={<TrustAndPrivacy />} />
@@ -195,6 +200,7 @@ export function App() {
                   <Route path="reports" element={<ReportsPage />} />
                   <Route path="medications" element={<MedicationsPage />} />
                   <Route path="care-circle" element={<CareCirclePage />} />
+                  <Route path="carecircle" element={<Navigate to={ROUTES.APP.CARE_CIRCLE} replace />} />
                   <Route path="appointments" element={<AppointmentsPage />} />
                   <Route path="timeline" element={<TimelinePage />} />
                   <Route path="progress" element={<ProgressPage />} />
