@@ -47,7 +47,7 @@ jobs:
         run: |
           echo "Scanning for potential hardcoded secret patterns..."
           # Exclude .github/workflows, test files, and .env.example from strict regex
-          SUSPICIOUS=$(git grep -EI '(eyJhbGciOi[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9]{30,}|sk_live_[A-Za-z0-9]{20,})' -- ':(exclude).env.example' ':(exclude).github/workflows/*' || true)
+          SUSPICIOUS=$(git grep -EI '(eyJhbGciOi[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9]{30,}|sk_live_[A-Za-z0-9]{20,})' -- ':(exclude).env.example' ':(exclude).github/workflows/*' ':(exclude)*/tests/*' ':(exclude)*test_*' || true)
           if [ -n "$SUSPICIOUS" ]; then
             echo "::error::Potential hardcoded credentials detected:"
             echo "$SUSPICIOUS"

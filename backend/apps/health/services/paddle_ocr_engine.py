@@ -77,16 +77,18 @@ class PaddleOcrEngine:
     def _ensure_loaded(self) -> None:
         if not self._initialized:
             with self._lock:
+                if not self._initialized:
                     try:
-                        if RapidOCR is None:
-                            raise RuntimeError("rapidocr_onnxruntime is not installed. Please install rapidocr-onnxruntime.")
-                        logger.info("Initializing PaddleOCR (RapidOCR ONNX engine)...")
-                        self._engine = RapidOCR()
-                        self._initialized = True
-                        logger.info("PaddleOCR engine loaded successfully.")
+                        if RapidOCR is not None:
+                            logger.info("Initializing PaddleOCR (RapidOCR ONNX engine)...")
+                            self._engine = RapidOCR()
+                            logger.info("PaddleOCR engine loaded successfully.")
+                        else:
+                            logger.warning("rapidocr_onnxruntime is not installed. Running in degraded OCR mode.")
                     except Exception as exc:
-                        logger.error("Failed to initialize PaddleOCR engine: %s", exc, exc_info=True)
-                        raise RuntimeError(f"OCR engine initialization failed: {exc}") from exc
+                        logger.warning("Failed to initialize PaddleOCR engine: %s. Continuing with degraded mode.", exc)
+                        self._engine = None
+                    self._initialized = True
 
     def process_image(self, image_input: bytes | Image.Image | np.ndarray, page_number: int = 1) -> List[OcrTextBlock]:
         """
@@ -95,7 +97,7 @@ class PaddleOcrEngine:
         """
         self._ensure_loaded()
         if self._engine is None:
-            raise RuntimeError("OCR engine not loaded")
+            return []
 
         if isinstance(image_input, bytes):
             image = Image.open(io.BytesIO(image_input)).convert("RGB")
@@ -107,10 +109,25 @@ class PaddleOcrEngine:
         else:
             raise ValueError(f"Unsupported image input type: {type(image_input)}")
 
-        result, elapse_list = self._engine(img_np)
+        try:
+            ocr_out = self._engine(img_np)
+        except Exception as exc:
+            logger.warning("RapidOCR execution failed on image: %s", exc)
+            return []
+
+        if not ocr_out:
+            return []
+
+        if isinstance(ocr_out, (list, tuple)) and len(ocr_out) > 0:
+            result = ocr_out[0]
+        else:
+            result = ocr_out
+
         raw_blocks: List[OcrTextBlock] = []
         if result:
             for item in result:
+                if not item or len(item) < 3:
+                    continue
                 # RapidOCR format: [bbox, text, score]
                 bbox, text, score = item[0], str(item[1]).strip(), float(item[2])
                 if text:

@@ -23,6 +23,11 @@ class PlanningInputsSerializer(serializers.Serializer):
 class NutritionReadinessSerializer(serializers.Serializer):
     ready = serializers.BooleanField()
     overall_status = serializers.CharField(required=False, default="READY")
+    personalization_level = serializers.CharField(required=False, default="LEVEL_1_PROFILE")
+    available = serializers.ListField(child=serializers.CharField(), required=False, default=list)
+    missing_required = serializers.ListField(child=serializers.CharField(), required=False, default=list)
+    missing_optional = serializers.ListField(child=serializers.CharField(), required=False, default=list)
+    recommendations = serializers.ListField(child=serializers.CharField(), required=False, default=list)
     blocking_issues = serializers.ListField(child=serializers.CharField(), required=False, default=list)
     warning_issues = serializers.ListField(child=serializers.CharField(), required=False, default=list)
     optional_issues = serializers.ListField(child=serializers.CharField(), required=False, default=list)
@@ -118,6 +123,7 @@ class SingleMealSerializer(serializers.Serializer):
     carbohydrate_g = serializers.FloatField()
     fat_g = serializers.FloatField()
     items = MealItemSerializer(many=True)
+    is_locked = serializers.BooleanField(required=False, default=False)
 
 
 class TargetAdherenceSerializer(serializers.Serializer):
@@ -185,3 +191,28 @@ class PlanHistoryItemSerializer(serializers.Serializer):
     condition_pathway = serializers.CharField()
     status = serializers.CharField()
     created_at = serializers.CharField()
+
+
+class FoodLogSerializer(serializers.Serializer):
+    id = serializers.CharField(required=False)
+    meal_type = serializers.CharField()
+    food_name = serializers.CharField()
+    serving = serializers.CharField(required=False, default="1 serving", allow_blank=True)
+    calories = serializers.FloatField(required=False, allow_null=True)
+    protein_g = serializers.FloatField(required=False, allow_null=True)
+    carbs_g = serializers.FloatField(required=False, allow_null=True)
+    fat_g = serializers.FloatField(required=False, allow_null=True)
+    fiber_g = serializers.FloatField(required=False, allow_null=True)
+    notes = serializers.CharField(required=False, allow_blank=True, default="")
+    logged_at = serializers.CharField(required=False)
+
+
+class MealReminderSettingsSerializer(serializers.Serializer):
+    breakfast_enabled = serializers.BooleanField(required=False, default=True)
+    breakfast_time = serializers.CharField(required=False, default="08:00")
+    lunch_enabled = serializers.BooleanField(required=False, default=True)
+    lunch_time = serializers.CharField(required=False, default="13:00")
+    dinner_enabled = serializers.BooleanField(required=False, default=True)
+    dinner_time = serializers.CharField(required=False, default="20:00")
+    snack_enabled = serializers.BooleanField(required=False, default=False)
+    snack_time = serializers.CharField(required=False, default="16:30")

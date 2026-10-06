@@ -45,6 +45,7 @@ export const ROUTES = {
     SYMPTOMS: '/app/symptoms',
     DIET: '/app/diet',
     DIET_WEEK: '/app/diet/week',
+    NUTRITION: '/app/nutrition',
     FITNESS: '/app/fitness',
     REPORTS: '/app/reports',
     MEDICATIONS: '/app/medications',
