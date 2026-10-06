@@ -107,7 +107,13 @@ export const BioPulseBottomNav: React.FC<BioPulseBottomNavProps> = ({
           router.push('/(app)');
           break;
         case 'screening':
-          router.push('/(app)/screening');
+          // Pathway-aware screening routing: restores exact unfinished step or start
+          if (isFemale) {
+            const target = (lastActiveScreeningRoute || '/female-symptoms') as any;
+            router.push(target);
+          } else {
+            router.push('/(app)/screening');
+          }
           break;
         case 'track':
           router.push('/(app)/track');
