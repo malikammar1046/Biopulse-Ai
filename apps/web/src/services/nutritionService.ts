@@ -182,6 +182,179 @@ class NutritionService {
     }
     return res.json();
   }
+
+  /**
+   * Lock or unlock a specific meal in a plan.
+   */
+  async lockMeal(planId: string, dayName: string, mealType: string, isLocked: boolean): Promise<WeeklyNutritionPlan> {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${NUTRITION_BASE_URL}/plan/lock-meal/`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        plan_id: planId,
+        day_name: dayName,
+        meal_type: mealType,
+        is_locked: isLocked,
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to lock/unlock meal (${res.status})`);
+    }
+    return res.json();
+  }
+
+  /**
+   * Swap a meal with a deterministic, safe alternative.
+   */
+  async swapMeal(planId: string, dayName: string, mealType: string): Promise<WeeklyNutritionPlan> {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${NUTRITION_BASE_URL}/plan/swap-meal/`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        plan_id: planId,
+        day_name: dayName,
+        meal_type: mealType,
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to swap meal (${res.status})`);
+    }
+    return res.json();
+  }
+
+  /**
+   * Regenerate unlocked meals for a single day.
+   */
+  async regenerateDay(planId: string, dayName: string): Promise<WeeklyNutritionPlan> {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${NUTRITION_BASE_URL}/plan/regenerate-day/`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        plan_id: planId,
+        day_name: dayName,
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to regenerate day (${res.status})`);
+    }
+    return res.json();
+  }
+
+  /**
+   * Update plan status (e.g. Save & Start Plan -> 'active', with custom start_date).
+   */
+  async updatePlanStatus(planId: string, status: string, startDate?: string): Promise<WeeklyNutritionPlan> {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${NUTRITION_BASE_URL}/plan/${planId}/status/`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        status,
+        start_date: startDate,
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to update plan status (${res.status})`);
+    }
+    return res.json();
+  }
+
+  /**
+   * Fetch historical or today's food logs.
+   */
+  async fetchFoodLogs(startDate?: string, endDate?: string): Promise<import('../types/nutrition').FoodLogItem[]> {
+    const headers = await getAuthHeaders();
+    let url = `${NUTRITION_BASE_URL}/food-logs/`;
+    const params = new URLSearchParams();
+    if (startDate) params.set('start_date', startDate);
+    if (endDate) params.set('end_date', endDate);
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+    const res = await fetch(url, {
+      method: 'GET',
+      headers,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to fetch food logs (${res.status})`);
+    }
+    return res.json();
+  }
+
+  /**
+   * Log a meal (either from planned meal or custom entry).
+   */
+  async logFood(foodData: Partial<import('../types/nutrition').FoodLogItem>): Promise<import('../types/nutrition').FoodLogItem> {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${NUTRITION_BASE_URL}/food-logs/`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(foodData),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to log meal (${res.status})`);
+    }
+    return res.json();
+  }
+
+  /**
+   * Delete a food log item.
+   */
+  async deleteFoodLog(logId: string): Promise<boolean> {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${NUTRITION_BASE_URL}/food-logs/${logId}/`, {
+      method: 'DELETE',
+      headers,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to delete food log (${res.status})`);
+    }
+    return true;
+  }
+
+  /**
+   * Get user's meal reminder preferences.
+   */
+  async getReminders(): Promise<import('../types/nutrition').MealReminderSettings> {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${NUTRITION_BASE_URL}/reminders/`, {
+      method: 'GET',
+      headers,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to fetch reminders (${res.status})`);
+    }
+    return res.json();
+  }
+
+  /**
+   * Update user's meal reminder preferences.
+   */
+  async updateReminders(settings: import('../types/nutrition').MealReminderSettings): Promise<import('../types/nutrition').MealReminderSettings> {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${NUTRITION_BASE_URL}/reminders/`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(settings),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to update reminders (${res.status})`);
+    }
+    return res.json();
+  }
 }
 
 export const nutritionService = new NutritionService();
+

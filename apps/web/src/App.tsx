@@ -211,6 +211,7 @@ const AppContent: React.FC = () => {
                   <Route path="lifestyle" element={<LifestyleRecommendationsPage />} />
                   <Route path="diet" element={<LifestyleRecommendationsPage />} />
                   <Route path="diet/week" element={<LifestyleRecommendationsPage />} />
+                  <Route path="nutrition" element={<LifestyleRecommendationsPage />} />
                   <Route path="fitness" element={<FitnessPage />} />
                   <Route path="reports" element={<ReportsPage />} />
                   <Route path="medications" element={<MedicationsPage />} />

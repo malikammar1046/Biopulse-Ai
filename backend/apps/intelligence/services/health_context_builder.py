@@ -616,6 +616,57 @@ class HealthContextBuilder:
                 )
                 context_used["lifestyle"] = True
 
+        # --- ACTIVE 7-DAY MEAL PLAN (Deterministic) ---
+        active_meal_plan = None
+        try:
+            from apps.health.services.meal_plan_repository import meal_plan_repository
+            active_meal_plan = meal_plan_repository.get_active_plan(
+                user_id=patient_uuid,
+                auth_token=auth_token,
+            )
+        except Exception as e:
+            logger.debug("Failed fetching active meal plan for companion context: %s", e)
+
+        if active_meal_plan and isinstance(active_meal_plan.get("plan_data"), dict):
+            pdata = active_meal_plan["plan_data"]
+            plan_lines = []
+            targets = pdata.get("targets", {})
+            if targets:
+                cals = targets.get("daily_calories_kcal")
+                prot = targets.get("protein_g")
+                carbs = targets.get("carbohydrate_g")
+                fat = targets.get("fat_g")
+                plan_lines.append(f"Daily Targets: ~{cals} kcal (Protein: {prot}g, Carbs: {carbs}g, Fat: {fat}g)")
+
+            today_day_name = datetime.date.today().strftime("%A")
+            days = pdata.get("days", [])
+            today_day = next((d for d in days if d.get("day_name", "").lower() == today_day_name.lower()), None)
+            if not today_day and days:
+                today_day = days[0]
+
+            if today_day:
+                day_name = today_day.get("day_name", today_day_name)
+                meals_summary = []
+                for m in today_day.get("meals", []):
+                    m_role = m.get("role", "Meal")
+                    m_title = m.get("title", "Planned Dish")
+                    m_cals = m.get("energy_kcal")
+                    meals_summary.append(f"{m_role}: {m_title} (~{m_cals:.0f} kcal)")
+                plan_lines.append(f"Today ({day_name}) Planned Meals: {'; '.join(meals_summary)}")
+
+            other_days = [d.get("day_name") for d in days if today_day and d.get("day_name") != today_day.get("day_name")]
+            if other_days:
+                plan_lines.append(f"Full 7-Day Plan Active for: {', '.join(other_days)}")
+
+            if plan_lines:
+                context_lines.append(
+                    "[TIER 4] [ACTIVE 7-DAY MEAL PLAN - BioPulse Personalized Plan]:\n"
+                    + "\n".join(f"- {line}" for line in plan_lines)
+                    + "\n(When the patient asks what to eat for breakfast, lunch, or dinner, refer to today's active plan. "
+                    "If they ask for safe substitutions, propose culturally aligned options that strictly respect their allergens and targets.)"
+                )
+                context_used["diet"] = True
+
         # Unverified OCR data (Explicitly flagged as unconfirmed)
         unverified_results = [r for r in health_data.report_results if not r.user_verified]
         if unverified_results:

@@ -30,6 +30,8 @@ from rest_framework.views import APIView
 
 from apps.authentication.supabase_auth import SupabaseAuthentication
 from apps.health.serializers_nutrition import (
+    FoodLogSerializer,
+    MealReminderSettingsSerializer,
     NutritionPreferencesSerializer,
     NutritionReadinessSerializer,
     NutritionTargetsSerializer,
@@ -118,8 +120,10 @@ class NutritionReadinessView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        raw_meta, profile_data, _ = _extract_user_context(request)
-        readiness = meal_plan_service.check_user_readiness(raw_meta, profile_data)
+        raw_meta, profile_data, active_module = _extract_user_context(request)
+        readiness = meal_plan_service.check_user_readiness(
+            raw_meta, profile_data, active_assessment_module=active_module
+        )
         serializer = NutritionReadinessSerializer(data=readiness)
         serializer.is_valid()
         return Response(readiness, status=status.HTTP_200_OK)
@@ -404,3 +408,240 @@ class NutritionPreferencesView(APIView):
                 )
 
         return Response(validated, status=status.HTTP_200_OK)
+
+
+class PlanLockMealView(APIView):
+    """
+    POST /api/v1/health/nutrition/plan/lock-meal/
+    Locks or unlocks a specific meal in a plan.
+    Body: { "plan_id": str, "day_name": str, "meal_type": str, "is_locked": bool }
+    """
+    authentication_classes = [SupabaseAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user_id = str(request.user.id)
+        raw_token = getattr(request.user, "raw_token", None) or getattr(request, "auth", None)
+        plan_id = request.data.get("plan_id")
+        day_name = request.data.get("day_name")
+        meal_type = request.data.get("meal_type")
+        is_locked = request.data.get("is_locked", True)
+
+        if not plan_id or not day_name or not meal_type:
+            return Response(
+                {"error": "plan_id, day_name, and meal_type are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            updated_plan = meal_plan_service.lock_meal(
+                user_id=user_id,
+                plan_id=str(plan_id),
+                day_name=str(day_name),
+                meal_type=str(meal_type),
+                is_locked=bool(is_locked),
+                auth_token=raw_token,
+            )
+            return Response(updated_plan, status=status.HTTP_200_OK)
+        except Exception as exc:
+            logger.error("Error locking meal for %s: %s", user_id[:8] + "***", exc)
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PlanSwapMealView(APIView):
+    """
+    POST /api/v1/health/nutrition/plan/swap-meal/
+    Deterministically swaps a single meal with a validated safe alternative.
+    Body: { "plan_id": str, "day_name": str, "meal_type": str }
+    """
+    authentication_classes = [SupabaseAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user_id = str(request.user.id)
+        raw_token = getattr(request.user, "raw_token", None) or getattr(request, "auth", None)
+        plan_id = request.data.get("plan_id")
+        day_name = request.data.get("day_name")
+        meal_type = request.data.get("meal_type")
+
+        if not plan_id or not day_name or not meal_type:
+            return Response(
+                {"error": "plan_id, day_name, and meal_type are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            updated_plan = meal_plan_service.swap_meal(
+                user_id=user_id,
+                plan_id=str(plan_id),
+                day_name=str(day_name),
+                meal_type=str(meal_type),
+                auth_token=raw_token,
+            )
+            return Response(updated_plan, status=status.HTTP_200_OK)
+        except Exception as exc:
+            logger.error("Error swapping meal for %s: %s", user_id[:8] + "***", exc)
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PlanRegenerateDayView(APIView):
+    """
+    POST /api/v1/health/nutrition/plan/regenerate-day/
+    Regenerates unlocked meals for a specific day while preserving locked meals.
+    Body: { "plan_id": str, "day_name": str }
+    """
+    authentication_classes = [SupabaseAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user_id = str(request.user.id)
+        raw_token = getattr(request.user, "raw_token", None) or getattr(request, "auth", None)
+        plan_id = request.data.get("plan_id")
+        day_name = request.data.get("day_name")
+
+        if not plan_id or not day_name:
+            return Response(
+                {"error": "plan_id and day_name are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            updated_plan = meal_plan_service.regenerate_day(
+                user_id=user_id,
+                plan_id=str(plan_id),
+                day_name=str(day_name),
+                auth_token=raw_token,
+            )
+            return Response(updated_plan, status=status.HTTP_200_OK)
+        except Exception as exc:
+            logger.error("Error regenerating day for %s: %s", user_id[:8] + "***", exc)
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PlanStatusUpdateView(APIView):
+    """
+    POST /api/v1/health/nutrition/plan/<uuid:plan_id>/status/
+    Activates or updates status of a plan (e.g. Save & Start Plan).
+    Body: { "status": "active" | "draft" | "archived" | "completed", "start_date": "YYYY-MM-DD" }
+    """
+    authentication_classes = [SupabaseAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, plan_id):
+        user_id = str(request.user.id)
+        raw_token = getattr(request.user, "raw_token", None) or getattr(request, "auth", None)
+        new_status = request.data.get("status", "active")
+        start_date = request.data.get("start_date")
+
+        try:
+            updated_plan = meal_plan_service.update_plan_status(
+                user_id=user_id,
+                plan_id=str(plan_id),
+                new_status=str(new_status),
+                start_date=start_date,
+                auth_token=raw_token,
+            )
+            return Response(updated_plan, status=status.HTTP_200_OK)
+        except Exception as exc:
+            logger.error("Error updating plan status for %s: %s", user_id[:8] + "***", exc)
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class FoodLogsView(APIView):
+    """
+    GET  /api/v1/health/nutrition/food-logs/
+    POST /api/v1/health/nutrition/food-logs/
+    """
+    authentication_classes = [SupabaseAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user_id = str(request.user.id)
+        raw_token = getattr(request.user, "raw_token", None) or getattr(request, "auth", None)
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+
+        logs = meal_plan_service.get_food_logs(
+            user_id=user_id,
+            start_date=start_date,
+            end_date=end_date,
+            auth_token=raw_token,
+        )
+        return Response(logs, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        user_id = str(request.user.id)
+        raw_token = getattr(request.user, "raw_token", None) or getattr(request, "auth", None)
+        serializer = FoodLogSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        data = serializer.validated_data
+        try:
+            log_entry = meal_plan_service.log_food_item(
+                user_id=user_id,
+                meal_type=data["meal_type"],
+                food_name=data["food_name"],
+                serving=data.get("serving", "1 serving"),
+                calories=data.get("calories"),
+                protein_g=data.get("protein_g"),
+                carbs_g=data.get("carbs_g"),
+                fat_g=data.get("fat_g"),
+                fiber_g=data.get("fiber_g"),
+                notes=data.get("notes", ""),
+                logged_at=data.get("logged_at"),
+                auth_token=raw_token,
+            )
+            return Response(log_entry, status=status.HTTP_201_CREATED)
+        except Exception as exc:
+            logger.error("Error creating food log for %s: %s", user_id[:8] + "***", exc)
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class FoodLogDetailView(APIView):
+    """
+    DELETE /api/v1/health/nutrition/food-logs/<uuid:log_id>/
+    """
+    authentication_classes = [SupabaseAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, log_id):
+        user_id = str(request.user.id)
+        raw_token = getattr(request.user, "raw_token", None) or getattr(request, "auth", None)
+        success = meal_plan_service.delete_food_log(
+            user_id=user_id,
+            log_id=str(log_id),
+            auth_token=raw_token,
+        )
+        if success:
+            return Response({"status": "deleted"}, status=status.HTTP_200_OK)
+        return Response({"error": "Failed to delete log or not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+class MealRemindersView(APIView):
+    """
+    GET /api/v1/health/nutrition/reminders/
+    PUT /api/v1/health/nutrition/reminders/
+    """
+    authentication_classes = [SupabaseAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user_id = str(request.user.id)
+        raw_token = getattr(request.user, "raw_token", None) or getattr(request, "auth", None)
+        settings = meal_plan_service.get_meal_reminders(user_id=user_id, auth_token=raw_token)
+        return Response(settings, status=status.HTTP_200_OK)
+
+    def put(self, request):
+        user_id = str(request.user.id)
+        raw_token = getattr(request.user, "raw_token", None) or getattr(request, "auth", None)
+        serializer = MealReminderSettingsSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        updated = meal_plan_service.update_meal_reminders(
+            user_id=user_id,
+            reminder_data=serializer.validated_data,
+            auth_token=raw_token,
+        )
+        return Response(updated, status=status.HTTP_200_OK)

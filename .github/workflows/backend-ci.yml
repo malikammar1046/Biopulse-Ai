@@ -41,6 +41,11 @@ jobs:
           cache: 'pip'
           cache-dependency-path: backend/requirements.txt
 
+      - name: Install System Libraries
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y libgl1 tesseract-ocr
+
       - name: Install Dependencies
         run: |
           cd backend
@@ -58,6 +63,9 @@ jobs:
           python manage.py makemigrations --check --dry-run
 
       - name: Run Backend Test Suite
+        env:
+          PYTHONUNBUFFERED: "1"
+          DJANGO_SETTINGS_MODULE: "settings.test"
         run: |
           cd backend
           python manage.py test
