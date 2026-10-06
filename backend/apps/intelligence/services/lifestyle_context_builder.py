@@ -179,14 +179,42 @@ class LifestyleContextBuilder:
 
         profile_obj = getattr(health_data, "profile", None) if health_data else None
 
-        # 2. Extract demographics
-        gender = "female"
+        # 2. Extract demographics with robust pathway resolution
+        gender = None
+        pathway = None
         if profile_obj:
-            gender = str(getattr(profile_obj, "gender", "female") or "female").lower()
+            gender = getattr(profile_obj, "gender", None) or (
+                profile_obj.get("gender") if isinstance(profile_obj, dict) else None
+            )
+            pathway = getattr(profile_obj, "pathway", None) or (
+                profile_obj.get("pathway") if isinstance(profile_obj, dict) else None
+            )
 
-        canonical_module = cls.normalize_module(module, gender=gender)
+        if not gender and not pathway and auth_token:
+            try:
+                import jwt
+                payload = jwt.decode(auth_token, options={"verify_signature": False})
+                user_meta = payload.get("user_metadata", {}) or {}
+                gender = user_meta.get("gender")
+                pathway = user_meta.get("pathway")
+            except Exception:
+                pass
+
+        if not gender and not pathway and not module:
+            try:
+                act_m = assessment_repository.get_active_assessment(
+                    user_id_str, module="male_hypogonadism", auth_token=auth_token
+                )
+                if act_m and act_m.get("has_assessment") is not False:
+                    gender = "male"
+                    pathway = "male_hypogonadism"
+            except Exception:
+                pass
+
+        canonical_module = cls.normalize_module(module or pathway, gender=gender)
         module = canonical_module
         pathway = canonical_module
+        gender = "male" if canonical_module == "male_hypogonadism" else "female"
         age = None
         height_cm = None
         weight_kg = None
@@ -211,6 +239,16 @@ class LifestyleContextBuilder:
             weight_kg = getattr(profile_obj, "weight_kg", None)
             waist_inch = getattr(profile_obj, "waist_inch", None)
             hip_inch = getattr(profile_obj, "hip_inch", None)
+            if waist_inch is None and getattr(profile_obj, "waist_cm", None) is not None:
+                try:
+                    waist_inch = round(float(profile_obj.waist_cm) / 2.54, 1)
+                except (ValueError, TypeError):
+                    pass
+            if hip_inch is None and getattr(profile_obj, "hip_cm", None) is not None:
+                try:
+                    hip_inch = round(float(profile_obj.hip_cm) / 2.54, 1)
+                except (ValueError, TypeError):
+                    pass
             regular_exercise = getattr(profile_obj, "regular_exercise", None)
             fast_food_intake = getattr(profile_obj, "fast_food_intake", None)
             period_regularity = getattr(profile_obj, "period_regularity", None)
@@ -224,11 +262,22 @@ class LifestyleContextBuilder:
             acne = any("acne" in s or "pimple" in s for s in cs)
 
             # Preferences & lifestyle
+            if getattr(profile_obj, "dietary_preference", None):
+                dietary_pref = str(profile_obj.dietary_preference)
+            prof_allergies = list(getattr(profile_obj, "food_allergies", []) or getattr(profile_obj, "allergies", []) or [])
+            if prof_allergies:
+                allergens = prof_allergies
+            prof_intolerances = list(getattr(profile_obj, "food_intolerances", []) or [])
+            if prof_intolerances:
+                intolerances = prof_intolerances
+
             lifestyle_data = getattr(profile_obj, "lifestyle", {})
             if isinstance(lifestyle_data, dict):
                 dietary_pref = lifestyle_data.get("dietaryPreference") or lifestyle_data.get("dietary_preference") or dietary_pref
-                allergens = lifestyle_data.get("allergens") or []
-                intolerances = lifestyle_data.get("intolerances") or []
+                if not allergens:
+                    allergens = lifestyle_data.get("allergens") or []
+                if not intolerances:
+                    intolerances = lifestyle_data.get("intolerances") or []
                 activity_level = lifestyle_data.get("activityLevel") or lifestyle_data.get("activity_level") or activity_level
                 if sleep_hours is None and (lifestyle_data.get("sleepHours") or lifestyle_data.get("sleep_hours")):
                     try:

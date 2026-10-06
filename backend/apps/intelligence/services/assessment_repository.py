@@ -18,7 +18,8 @@ import sqlite3
 import sys
 import threading
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
@@ -34,16 +35,12 @@ class PersistenceError(Exception):
 
 def _is_local_sqlite_fallback_allowed() -> bool:
     """Checks whether local SQLite fallback is explicitly permitted."""
+    if getattr(settings, "ALLOW_LOCAL_SQLITE_FALLBACK", False):
+        return True
     env_val = os.environ.get("ALLOW_LOCAL_SQLITE_FALLBACK", "").strip().lower()
-    if env_val in ("false", "0", "no"):
-        return False
-    return (
-        getattr(settings, "ALLOW_LOCAL_SQLITE_FALLBACK", False)
-        or env_val in ("true", "1", "yes")
-    )
+    return env_val in ("true", "1", "yes")
 
 
-# In-memory store for unit testing
 # In-memory store for unit testing
 _in_memory_assessments: dict[str, list[dict[str, Any]]] = {}
 _in_memory_clinical_state: dict[str, dict[str, Any]] = {}
@@ -71,56 +68,33 @@ def _get_sqlite_path() -> str:
     return str(default_path)
 
 
-class _DjangoSQLiteWrapper:
-    def __init__(self, django_conn: Any):
-        self._django_conn = django_conn
-        self._raw_conn = django_conn.connection
-
-    @property
-    def row_factory(self):
-        return getattr(self._raw_conn, "row_factory", None)
-
-    @row_factory.setter
-    def row_factory(self, val):
-        self._raw_conn.row_factory = val
-
-    def cursor(self):
-        return self._raw_conn.cursor()
-
-    def execute(self, sql: str, params: Any = ()):
-        return self._raw_conn.execute(sql, params)
-
-    def executemany(self, sql: str, seq_of_params: Any):
-        return self._raw_conn.executemany(sql, seq_of_params)
-
-    def close(self) -> None:
-        pass
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        return False
+def _json_serial_default(obj: Any) -> Any:
+    """Safely serializes legitimate production data types like datetime, date, UUID, and Decimal."""
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    if isinstance(obj, uuid.UUID):
+        return str(obj)
+    if isinstance(obj, Decimal):
+        return float(obj)
+    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
 
-def _connect_sqlite(db_path: str | None = None, timeout: float = 15.0) -> Any:
+def _connect_sqlite(db_path: str | None = None, timeout: float = 30.0) -> sqlite3.Connection:
+    """
+    Centralized SQLite connection helper for fallback data operations.
+    Configures 30s timeout, busy_timeout=30000, foreign_keys=ON, and autocommit isolation_level=None
+    to enforce short explicit transaction boundaries (BEGIN IMMEDIATE / COMMIT / ROLLBACK).
+    Never hijacks Django's persistent connection.
+    """
     if db_path is None:
         db_path = _get_sqlite_path()
-    try:
-        from django.db import connection
-        default_name = settings.DATABASES.get("default", {}).get("NAME")
-        if default_name and str(default_name) == str(db_path):
-            connection.ensure_connection()
-            if connection.connection:
-                return _DjangoSQLiteWrapper(connection)
-    except Exception:
-        pass
     is_uri = str(db_path).startswith("file:")
-    conn = sqlite3.connect(db_path, timeout=timeout, uri=is_uri)
+    conn = sqlite3.connect(db_path, timeout=timeout, uri=is_uri, isolation_level=None)
     try:
-        conn.execute("PRAGMA busy_timeout = 15000;")
-    except Exception:
-        pass
+        conn.execute("PRAGMA busy_timeout = 30000;")
+        conn.execute("PRAGMA foreign_keys = ON;")
+    except Exception as e:
+        logger.debug("Failed configuring SQLite connection pragmas: %s", e)
     return conn
 
 
@@ -183,56 +157,76 @@ def init_sqlite_store() -> None:
     with _sqlite_init_lock:
         if db_path in _initialized_assessment_db_paths:
             return
-        conn = _connect_sqlite(db_path, timeout=10.0)
+        conn = _connect_sqlite(db_path, timeout=30.0)
         try:
-            with conn:
-                conn.execute(
-                    """
-                    CREATE TABLE IF NOT EXISTS intelligence_assessments (
-                        id TEXT PRIMARY KEY,
-                        user_id TEXT NOT NULL,
-                        module TEXT NOT NULL,
-                        assessment_level TEXT NOT NULL,
-                        is_active INTEGER NOT NULL DEFAULT 1,
-                        created_at TEXT NOT NULL,
-                        payload_json TEXT NOT NULL
-                    )
-                    """
+            # WAL mode and NORMAL synchronous enabled once during initialization (Section 4)
+            try:
+                cursor = conn.cursor()
+                cursor.execute("PRAGMA journal_mode = WAL;")
+                row = cursor.fetchone()
+                actual_mode = row[0].lower() if row and row[0] else ""
+                cursor.execute("PRAGMA synchronous = NORMAL;")
+                cursor.close()
+                logger.info("SQLite store journal_mode set to %s for %s", actual_mode, db_path)
+            except Exception as jm_err:
+                logger.debug("SQLite WAL pragma notice: %s", jm_err)
+
+            conn.execute("BEGIN IMMEDIATE;")
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS intelligence_assessments (
+                    id TEXT PRIMARY KEY,
+                    user_id TEXT NOT NULL,
+                    module TEXT NOT NULL,
+                    assessment_level TEXT NOT NULL,
+                    is_active INTEGER NOT NULL DEFAULT 1,
+                    created_at TEXT NOT NULL,
+                    payload_json TEXT NOT NULL
                 )
-                conn.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_intel_user_active ON intelligence_assessments(user_id, is_active, module)"
+                """
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_intel_user_active ON intelligence_assessments(user_id, is_active, module)"
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_intel_user_created ON intelligence_assessments(user_id, created_at DESC)"
+            )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS patient_clinical_state (
+                    user_id TEXT NOT NULL,
+                    module TEXT NOT NULL,
+                    tier_1_inputs TEXT NOT NULL DEFAULT '{}',
+                    tier_2_inputs TEXT NOT NULL DEFAULT '{}',
+                    ultrasound_inputs TEXT NOT NULL DEFAULT '{}',
+                    created_at TEXT NOT NULL DEFAULT '',
+                    updated_at TEXT NOT NULL DEFAULT '',
+                    PRIMARY KEY (user_id, module)
                 )
-                conn.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_intel_user_created ON intelligence_assessments(user_id, created_at DESC)"
-                )
-                conn.execute(
-                    """
-                    CREATE TABLE IF NOT EXISTS patient_clinical_state (
-                        user_id TEXT NOT NULL,
-                        module TEXT NOT NULL,
-                        tier_1_inputs TEXT NOT NULL DEFAULT '{}',
-                        tier_2_inputs TEXT NOT NULL DEFAULT '{}',
-                        ultrasound_inputs TEXT NOT NULL DEFAULT '{}',
-                        created_at TEXT NOT NULL DEFAULT '',
-                        updated_at TEXT NOT NULL DEFAULT '',
-                        PRIMARY KEY (user_id, module)
-                    )
-                    """
-                )
-                try:
-                    conn.execute("ALTER TABLE patient_clinical_state ADD COLUMN created_at TEXT NOT NULL DEFAULT ''")
-                except Exception:
-                    pass
-                conn.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_pcs_user_module ON patient_clinical_state(user_id, module)"
-                )
+                """
+            )
+            try:
+                conn.execute("ALTER TABLE patient_clinical_state ADD COLUMN created_at TEXT NOT NULL DEFAULT ''")
+            except Exception:
+                pass
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_pcs_user_module ON patient_clinical_state(user_id, module)"
+            )
+            conn.execute("COMMIT;")
             # Mark initialized ONLY after successful DDL completion
             _initialized_assessment_db_paths.add(db_path)
             logger.info("AssessmentRepository persistent SQLite store initialized at %s", db_path)
         except Exception as e:
+            try:
+                conn.execute("ROLLBACK;")
+            except Exception:
+                pass
             logger.warning("Failed to initialize SQLite assessment store: %s", e)
         finally:
-            conn.close()
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 
 
@@ -308,6 +302,7 @@ class AssessmentRepository:
         user_id: str,
         module: str = "female_pcos",
         auth_token: str | None = None,
+        perform_backfill: bool = True,
     ) -> dict[str, Any]:
         """
         Retrieves the authoritative patient clinical state (Tier 1 & Tier 2 inputs).
@@ -318,6 +313,7 @@ class AssessmentRepository:
             user_id=user_id,
             module=module,
             auth_token=auth_token,
+            perform_backfill=perform_backfill,
         )
 
     @classmethod
@@ -379,7 +375,9 @@ class AssessmentRepository:
 
         def _attach_authoritative(res_dict: dict[str, Any]) -> dict[str, Any]:
             try:
-                st = cls.get_patient_clinical_state(user_id_str, module=module_name, auth_token=auth_token)
+                st = cls.get_patient_clinical_state(
+                    user_id_str, module=module_name, auth_token=auth_token, perform_backfill=False
+                )
                 t2 = st.get("tier_2_inputs") or {}
                 t1 = st.get("tier_1_inputs") or {}
                 res_dict["authoritative_tier_2_inputs"] = t2
@@ -429,7 +427,7 @@ class AssessmentRepository:
                     .eq("is_active", True)
                 )
                 res = query.order("created_at", desc=True).limit(1).execute()
-                if res.data:
+                if res.data and isinstance(res.data, list) and len(res.data) > 0 and isinstance(res.data[0], dict):
                     item = _normalize_assessment_record(res.data[0])
                     return _attach_authoritative(item)
             except Exception as e:
@@ -442,9 +440,9 @@ class AssessmentRepository:
         conn = None
         try:
             db_path = _get_sqlite_path()
-            conn = _connect_sqlite(db_path, timeout=5.0)
-            with conn:
-                cursor = conn.cursor()
+            conn = _connect_sqlite(db_path, timeout=30.0)
+            cursor = conn.cursor()
+            try:
                 cursor.execute(
                     """
                     SELECT payload_json, is_active FROM intelligence_assessments
@@ -455,9 +453,12 @@ class AssessmentRepository:
                 )
                 row = cursor.fetchone()
                 if row and row[0]:
-                    rec = json.loads(row[0])
-                    rec["is_active"] = bool(row[1])
-                    return _attach_authoritative(rec)
+                    rec = json.loads(row[0]) if isinstance(row[0], str) else row[0]
+                    if isinstance(rec, dict):
+                        rec["is_active"] = bool(row[1])
+                        return _attach_authoritative(rec)
+            finally:
+                cursor.close()
         except Exception as e:
             logger.debug("SQLite active assessment query error: %s", e)
         finally:
@@ -472,12 +473,9 @@ class AssessmentRepository:
             user_records = _in_memory_assessments.get(user_id_str, [])
             for rec in reversed(user_records):
                 if rec.get("is_active", False):
-                    if rec.get("module", "female_pcos") == module_name:
+                    rec_mod = rec.get("module") or "female_pcos"
+                    if rec_mod == module_name:
                         return _attach_authoritative(rec)
-            # Fallback if module was not explicitly matched
-            for rec in reversed(user_records):
-                if rec.get("is_active", False):
-                    return _attach_authoritative(rec)
         return None
 
     @classmethod
@@ -516,9 +514,9 @@ class AssessmentRepository:
         conn = None
         try:
             db_path = _get_sqlite_path()
-            conn = _connect_sqlite(db_path, timeout=5.0)
-            with conn:
-                cursor = conn.cursor()
+            conn = _connect_sqlite(db_path, timeout=30.0)
+            cursor = conn.cursor()
+            try:
                 if module_name:
                     cursor.execute(
                         """
@@ -542,10 +540,13 @@ class AssessmentRepository:
                     results = []
                     for r in rows:
                         if r[0]:
-                            rec = json.loads(r[0])
-                            rec["is_active"] = bool(r[1])
-                            results.append(_normalize_assessment_record(rec))
+                            rec = json.loads(r[0]) if isinstance(r[0], str) else r[0]
+                            if isinstance(rec, dict):
+                                rec["is_active"] = bool(r[1])
+                                results.append(_normalize_assessment_record(rec))
                     return results
+            finally:
+                cursor.close()
         except Exception as e:
             logger.debug("SQLite history query error: %s", e)
         finally:
@@ -595,7 +596,11 @@ class AssessmentRepository:
         }
 
         previous_active = cls.get_active_assessment(user_id_str, module=module_name, auth_token=auth_token) if make_active else None
-        replaced_id = previous_active["id"] if previous_active else None
+        replaced_id = None
+        if previous_active and isinstance(previous_active, dict):
+            raw_pid = previous_active.get("id")
+            if raw_pid is not None and isinstance(raw_pid, (str, int)):
+                replaced_id = str(raw_pid)
 
         record = {
             "id": new_id,
@@ -639,6 +644,12 @@ class AssessmentRepository:
             "next_step": assessment_data.get("next_step", ""),
             "disclaimer": assessment_data.get("disclaimer", ""),
             "evidence_used": evidence_used,
+            "input_hash": assessment_data.get("input_hash") or (
+                __import__("apps.intelligence.services.screening_hash", fromlist=["compute_canonical_input_hash"]).compute_canonical_input_hash(
+                    assessment_data.get("authoritative_tier_1_inputs") or assessment_data.get("input_features") or assessment_data.get("tier_1_inputs") or {},
+                    module=module_name
+                )
+            ),
             "created_at": now_iso,
             "updated_at": now_iso,
         }
@@ -725,35 +736,41 @@ class AssessmentRepository:
         conn = None
         try:
             db_path = _get_sqlite_path()
-            conn = _connect_sqlite(db_path, timeout=10.0)
-            with conn:
-                if make_active:
-                    conn.execute(
-                        """
-                        UPDATE intelligence_assessments
-                        SET is_active = 0
-                        WHERE user_id = ? AND module = ? AND is_active = 1
-                        """,
-                        (user_id_str, module_name),
-                    )
+            conn = _connect_sqlite(db_path, timeout=30.0)
+            conn.execute("BEGIN IMMEDIATE;")
+            if make_active:
                 conn.execute(
                     """
-                    INSERT INTO intelligence_assessments
-                    (id, user_id, module, assessment_level, is_active, created_at, payload_json)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    UPDATE intelligence_assessments
+                    SET is_active = 0
+                    WHERE user_id = ? AND module = ? AND is_active = 1
                     """,
-                    (
-                        new_id,
-                        user_id_str,
-                        module_name,
-                        level,
-                        1 if make_active else 0,
-                        record["created_at"],
-                        json.dumps(record),
-                    ),
+                    (user_id_str, module_name),
                 )
+            conn.execute(
+                """
+                INSERT INTO intelligence_assessments
+                (id, user_id, module, assessment_level, is_active, created_at, payload_json)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    new_id,
+                    user_id_str,
+                    module_name,
+                    level,
+                    1 if make_active else 0,
+                    record["created_at"],
+                    json.dumps(record, default=_json_serial_default),
+                ),
+            )
+            conn.execute("COMMIT;")
             logger.info("Assessment %s (level: %s, module: %s) persisted to SQLite store.", new_id, level, module_name)
         except Exception as e:
+            if conn:
+                try:
+                    conn.execute("ROLLBACK;")
+                except Exception:
+                    pass
             logger.error("Failed to write assessment to SQLite: %s", e)
         finally:
             if conn:

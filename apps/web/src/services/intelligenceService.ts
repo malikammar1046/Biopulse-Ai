@@ -65,6 +65,9 @@ export function getLocalActiveAssessment(userId?: string, module = 'female_pcos'
     if (parsed && parsed.patient_id && parsed.patient_id !== userId) {
       return null;
     }
+    if (parsed && parsed.module && parsed.module !== module) {
+      return null;
+    }
     return parsed;
   } catch {
     return null;
@@ -170,13 +173,15 @@ export async function checkBackendStatus(): Promise<IntelligenceServiceStatus | 
 // ---------------------------------------------------------------------------
 
 interface CachedAssessmentRecord {
+  userId: string;
+  module: string;
   dataHash: string;
   assessment: IntelligenceAssessment;
   timestamp: number;
 }
 
-let memoryAssessmentCache: CachedAssessmentRecord | null = null;
-let inFlightAssessmentPromise: Promise<IntelligenceAssessment | null> | null = null;
+const memoryAssessmentCacheMap = new Map<string, CachedAssessmentRecord>();
+const inFlightAssessmentPromiseMap = new Map<string, Promise<IntelligenceAssessment | null>>();
 
 function computeHealthDataHash(payload?: {
   userProfile?: any;
@@ -223,9 +228,22 @@ function computeHealthDataHash(payload?: {
   }
 }
 
-export function clearAssessmentCache(): void {
-  memoryAssessmentCache = null;
-  inFlightAssessmentPromise = null;
+export function clearAssessmentCache(userId?: string): void {
+  if (userId) {
+    for (const key of Array.from(memoryAssessmentCacheMap.keys())) {
+      if (key.startsWith(`${userId}_`)) {
+        memoryAssessmentCacheMap.delete(key);
+      }
+    }
+    for (const key of Array.from(inFlightAssessmentPromiseMap.keys())) {
+      if (key.startsWith(`${userId}_`)) {
+        inFlightAssessmentPromiseMap.delete(key);
+      }
+    }
+  } else {
+    memoryAssessmentCacheMap.clear();
+    inFlightAssessmentPromiseMap.clear();
+  }
 }
 
 /**
@@ -243,25 +261,32 @@ export async function fetchBackendAssessment(
     symptomRecords?: any[];
     foodLogs?: any[];
     fitnessLogs?: any[];
-  }
+  },
+  targetModule?: string
 ): Promise<IntelligenceAssessment | null> {
   const currentHash = computeHealthDataHash(clientHealthData);
+  const up = clientHealthData?.userProfile;
+  const userId = up?.id || up?.user_id || 'anonymous';
+  const mod = targetModule || (up?.gender === 'male' || up?.pathway === 'male' ? 'male_hypogonadism' : 'female_pcos');
+  const cacheKey = `${userId}_${mod}`;
 
   // Return cached result immediately if data has not changed
-  if (!forceRefresh && memoryAssessmentCache && memoryAssessmentCache.dataHash === currentHash) {
-    console.log('[OvaSense ML] Returning cached assessment (health data unchanged)');
-    return memoryAssessmentCache.assessment;
+  const cached = memoryAssessmentCacheMap.get(cacheKey);
+  if (!forceRefresh && cached && cached.dataHash === currentHash) {
+    console.log(`[OvaSense ML] Returning cached assessment for ${cacheKey} (health data unchanged)`);
+    return cached.assessment;
   }
 
-  if (!forceRefresh && inFlightAssessmentPromise) {
-    console.debug('[OvaSense ML] Returning existing in-flight assessment promise');
-    return inFlightAssessmentPromise;
+  const existingInFlight = inFlightAssessmentPromiseMap.get(cacheKey);
+  if (!forceRefresh && existingInFlight) {
+    console.debug(`[OvaSense ML] Returning existing in-flight assessment promise for ${cacheKey}`);
+    return existingInFlight;
   }
 
-  inFlightAssessmentPromise = (async () => {
+  const promise = (async () => {
     try {
       const token = await getAccessToken();
-      console.log('[OvaSense ML] Assessment request started (data changed or initial load)');
+      console.log(`[OvaSense ML] Assessment request started for ${cacheKey}`);
       console.log('[OvaSense ML] API URL:', ASSESSMENT_ENDPOINT);
       console.log('[OvaSense ML] Auth token present:', Boolean(token));
 
@@ -318,11 +343,13 @@ export async function fetchBackendAssessment(
 
       // Store in memory cache with the current data fingerprint
       const parsedAssessment = data as IntelligenceAssessment;
-      memoryAssessmentCache = {
+      memoryAssessmentCacheMap.set(cacheKey, {
+        userId,
+        module: mod,
         dataHash: currentHash,
         assessment: parsedAssessment,
         timestamp: Date.now(),
-      };
+      });
 
       return parsedAssessment;
     } catch (err: unknown) {
@@ -333,11 +360,12 @@ export async function fetchBackendAssessment(
       }
       return null;
     } finally {
-      inFlightAssessmentPromise = null;
+      inFlightAssessmentPromiseMap.delete(cacheKey);
     }
   })();
 
-  return inFlightAssessmentPromise;
+  inFlightAssessmentPromiseMap.set(cacheKey, promise);
+  return promise;
 }
 
 // ---------------------------------------------------------------------------
@@ -983,38 +1011,85 @@ export async function checkCompanionHealth(): Promise<{
 /**
  * Fetches authoritative longitudinal health summary and historical trends.
  * Supports period filtering ('30d' | '90d' | '180d' | '1y' | 'all') and pathway scoping.
+ * Implements bounded retries (0ms, 250ms, 500ms) with rich diagnostics.
  */
 export async function getLongitudinalHealth(
   period: MonitoringPeriodFilter = '90d',
   module?: string,
   signal?: AbortSignal
 ): Promise<LongitudinalHealthResponse | null> {
-  try {
-    const token = await getAccessToken();
-    if (!token) return null;
-    const headers: Record<string, string> = {
-      'Authorization': `Bearer ${token}`,
-    };
+  const retryDelays = [0, 250, 500];
 
-    const params = new URLSearchParams();
-    if (period) params.set('period', period);
-    if (module) params.set('module', module);
+  for (let attempt = 0; attempt < retryDelays.length; attempt++) {
+    if (attempt > 0) {
+      if (signal?.aborted) return null;
+      await new Promise((resolve) => setTimeout(resolve, retryDelays[attempt]));
+    }
 
-    const url = `${LONGITUDINAL_HEALTH_ENDPOINT}?${params.toString()}`;
-    const response = await fetchWithTimeout(url, { method: 'GET', headers, signal }, 15000);
-    if (!response.ok) {
-      console.warn(`[Intelligence API] getLongitudinalHealth failed with status ${response.status}`);
-      return null;
+    try {
+      let token = await getAccessToken();
+      if (!token) {
+        // Attempt a quick session refresh if token is initially missing
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          token = session?.access_token ?? null;
+        } catch {
+          // ignore
+        }
+      }
+
+      if (!token) {
+        console.warn('[Intelligence API] getLongitudinalHealth: No active auth token available.');
+        return null;
+      }
+
+      const headers: Record<string, string> = {
+        Authorization: `Bearer ${token}`,
+      };
+
+      const params = new URLSearchParams();
+      if (period) params.set('period', period);
+      if (module) params.set('module', module);
+
+      const url = `${LONGITUDINAL_HEALTH_ENDPOINT}?${params.toString()}`;
+      const response = await fetchWithTimeout(url, { method: 'GET', headers, signal }, 15000);
+
+      if (!response.ok) {
+        let errorBody = '';
+        try {
+          errorBody = await response.text();
+        } catch {
+          errorBody = '(could not parse response body)';
+        }
+        console.warn(
+          `[Intelligence API] getLongitudinalHealth attempt ${attempt + 1}/${retryDelays.length} failed: HTTP ${response.status} | body: ${errorBody}`
+        );
+
+        // Do not retry 401 Unauthorized or 403 Forbidden; session problem must be handled by auth
+        if (response.status === 401 || response.status === 403) {
+          return null;
+        }
+
+        // Retry on 422 (transient hydration race) or 500/503
+        if (attempt < retryDelays.length - 1) {
+          continue;
+        }
+        return null;
+      }
+
+      return (await response.json()) as LongitudinalHealthResponse;
+    } catch (err: any) {
+      if (err?.name === 'AbortError' || signal?.aborted) {
+        return null;
+      }
+      console.error(`[Intelligence API] getLongitudinalHealth network error attempt ${attempt + 1}:`, err);
+      if (attempt === retryDelays.length - 1) {
+        return null;
+      }
     }
-    return (await response.json()) as LongitudinalHealthResponse;
-  } catch (err: any) {
-    if (err?.name === 'AbortError' || signal?.aborted) {
-      // Aborted cleanly due to unmount or newer request; do not log as error
-      return null;
-    }
-    console.error('[Intelligence API] getLongitudinalHealth error:', err);
-    return null;
   }
+
+  return null;
 }
 
 

@@ -64,56 +64,20 @@ def _get_sqlite_path() -> str:
     return str(default_path)
 
 
-class _DjangoSQLiteWrapper:
-    def __init__(self, django_conn: Any):
-        self._django_conn = django_conn
-        self._raw_conn = django_conn.connection
-
-    @property
-    def row_factory(self):
-        return getattr(self._raw_conn, "row_factory", None)
-
-    @row_factory.setter
-    def row_factory(self, val):
-        self._raw_conn.row_factory = val
-
-    def cursor(self):
-        return self._raw_conn.cursor()
-
-    def execute(self, sql: str, params: Any = ()):
-        return self._raw_conn.execute(sql, params)
-
-    def executemany(self, sql: str, seq_of_params: Any):
-        return self._raw_conn.executemany(sql, seq_of_params)
-
-    def close(self) -> None:
-        pass
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        return False
-
-
-def _connect_sqlite(db_path: str | None = None, timeout: float = 15.0) -> Any:
+def _connect_sqlite(db_path: str | None = None, timeout: float = 30.0) -> sqlite3.Connection:
+    """
+    Centralized SQLite connection helper for clinical state operations.
+    Configures 30s timeout, busy_timeout=30000, foreign_keys=ON, and autocommit isolation_level=None.
+    """
     if db_path is None:
         db_path = _get_sqlite_path()
-    try:
-        from django.db import connection
-        default_name = settings.DATABASES.get("default", {}).get("NAME")
-        if default_name and str(default_name) == str(db_path):
-            connection.ensure_connection()
-            if connection.connection:
-                return _DjangoSQLiteWrapper(connection)
-    except Exception:
-        pass
     is_uri = str(db_path).startswith("file:")
-    conn = sqlite3.connect(db_path, timeout=timeout, uri=is_uri)
+    conn = sqlite3.connect(db_path, timeout=timeout, uri=is_uri, isolation_level=None)
     try:
-        conn.execute("PRAGMA busy_timeout = 15000;")
-    except Exception:
-        pass
+        conn.execute("PRAGMA busy_timeout = 30000;")
+        conn.execute("PRAGMA foreign_keys = ON;")
+    except Exception as e:
+        logger.debug("Failed configuring SQLite connection pragmas: %s", e)
     return conn
 
 
@@ -126,37 +90,53 @@ def init_sqlite_clinical_store() -> None:
     with _clinical_init_lock:
         if db_path in _initialized_clinical_db_paths:
             return
-        conn = _connect_sqlite(db_path, timeout=10.0)
+        conn = _connect_sqlite(db_path, timeout=30.0)
         try:
-            with conn:
-                conn.execute(
-                    """
-                    CREATE TABLE IF NOT EXISTS patient_clinical_state (
-                        user_id TEXT NOT NULL,
-                        module TEXT NOT NULL,
-                        tier_1_inputs TEXT NOT NULL DEFAULT '{}',
-                        tier_2_inputs TEXT NOT NULL DEFAULT '{}',
-                        ultrasound_inputs TEXT NOT NULL DEFAULT '{}',
-                        created_at TEXT NOT NULL,
-                        updated_at TEXT NOT NULL,
-                        PRIMARY KEY (user_id, module)
-                    )
-                    """
+            try:
+                cursor = conn.cursor()
+                cursor.execute("PRAGMA journal_mode = WAL;")
+                cursor.execute("PRAGMA synchronous = NORMAL;")
+                cursor.close()
+            except Exception as jm_err:
+                logger.debug("SQLite WAL pragma notice: %s", jm_err)
+
+            conn.execute("BEGIN IMMEDIATE;")
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS patient_clinical_state (
+                    user_id TEXT NOT NULL,
+                    module TEXT NOT NULL,
+                    tier_1_inputs TEXT NOT NULL DEFAULT '{}',
+                    tier_2_inputs TEXT NOT NULL DEFAULT '{}',
+                    ultrasound_inputs TEXT NOT NULL DEFAULT '{}',
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    PRIMARY KEY (user_id, module)
                 )
-                conn.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_clinical_state_user_module ON patient_clinical_state(user_id, module)"
-                )
-                try:
-                    conn.execute("ALTER TABLE patient_clinical_state ADD COLUMN created_at TEXT NOT NULL DEFAULT ''")
-                except Exception:
-                    pass
+                """
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_clinical_state_user_module ON patient_clinical_state(user_id, module)"
+            )
+            try:
+                conn.execute("ALTER TABLE patient_clinical_state ADD COLUMN created_at TEXT NOT NULL DEFAULT ''")
+            except Exception:
+                pass
+            conn.execute("COMMIT;")
             # Mark initialized ONLY after successful DDL completion
             _initialized_clinical_db_paths.add(db_path)
             logger.info("ClinicalStateRepository persistent SQLite store initialized at %s", db_path)
         except Exception as e:
+            try:
+                conn.execute("ROLLBACK;")
+            except Exception:
+                pass
             logger.warning("Failed to initialize SQLite clinical state store: %s", e)
         finally:
-            conn.close()
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 
 
@@ -281,9 +261,9 @@ class ClinicalStateRepository:
             conn = None
             try:
                 db_path = _get_sqlite_path()
-                conn = _connect_sqlite(db_path, timeout=5.0)
-                with conn:
-                    cursor = conn.cursor()
+                conn = _connect_sqlite(db_path, timeout=30.0)
+                cursor = conn.cursor()
+                try:
                     cursor.execute(
                         """
                         SELECT tier_1_inputs, tier_2_inputs, ultrasound_inputs, created_at, updated_at
@@ -306,6 +286,8 @@ class ClinicalStateRepository:
                             "created_at": row[3],
                             "updated_at": row[4],
                         }
+                finally:
+                    cursor.close()
             except Exception as e:
                 logger.debug("SQLite clinical state lookup error: %s", e)
             finally:
@@ -437,30 +419,36 @@ class ClinicalStateRepository:
         conn = None
         try:
             db_path = _get_sqlite_path()
-            conn = _connect_sqlite(db_path, timeout=5.0)
-            with conn:
-                conn.execute(
-                    """
-                    INSERT INTO patient_clinical_state
-                    (user_id, module, tier_1_inputs, tier_2_inputs, ultrasound_inputs, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                    ON CONFLICT(user_id, module) DO UPDATE SET
-                        tier_1_inputs = excluded.tier_1_inputs,
-                        tier_2_inputs = excluded.tier_2_inputs,
-                        ultrasound_inputs = excluded.ultrasound_inputs,
-                        updated_at = excluded.updated_at
-                    """,
-                    (
-                        user_id_str,
-                        module_name,
-                        json.dumps(new_t1),
-                        json.dumps(new_t2),
-                        json.dumps(new_us),
-                        now_iso,
-                        now_iso,
-                    ),
-                )
+            conn = _connect_sqlite(db_path, timeout=30.0)
+            conn.execute("BEGIN IMMEDIATE;")
+            conn.execute(
+                """
+                INSERT INTO patient_clinical_state
+                (user_id, module, tier_1_inputs, tier_2_inputs, ultrasound_inputs, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(user_id, module) DO UPDATE SET
+                    tier_1_inputs = excluded.tier_1_inputs,
+                    tier_2_inputs = excluded.tier_2_inputs,
+                    ultrasound_inputs = excluded.ultrasound_inputs,
+                    updated_at = excluded.updated_at
+                """,
+                (
+                    user_id_str,
+                    module_name,
+                    json.dumps(new_t1),
+                    json.dumps(new_t2),
+                    json.dumps(new_us),
+                    now_iso,
+                    now_iso,
+                ),
+            )
+            conn.execute("COMMIT;")
         except Exception as e:
+            if conn:
+                try:
+                    conn.execute("ROLLBACK;")
+                except Exception:
+                    pass
             logger.debug("SQLite clinical state save error: %s", e)
         finally:
             if conn:

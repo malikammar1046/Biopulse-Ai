@@ -31,6 +31,9 @@ from apps.intelligence.services.lifestyle_context_builder import LifestyleContex
 from apps.intelligence.services.lifestyle_repository import lifestyle_repository
 from apps.intelligence.services.lifestyle_safety_rules import LifestyleSafetyEngine
 from apps.intelligence.services.lifestyle_recommendation_engine import LifestyleRecommendationEngine
+from apps.intelligence.services.ai_lifestyle_planner import AILifestylePlanner
+
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -51,10 +54,12 @@ class LifestyleRecommendationsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request) -> Response:
+        start_time = time.time()
         user_id = str(request.user.id)
         raw_module = request.query_params.get("module")
         auth_token = _extract_auth_token(request)
         force_refresh = request.query_params.get("refresh", "").lower() in ("true", "1")
+        short_id = user_id[:8] if user_id else "unknown"
 
         try:
             # 1. Build Comprehensive Context from current patient state
@@ -76,10 +81,12 @@ class LifestyleRecommendationsView(APIView):
                 if cached_record and cached_record.get("context_version") == current_version:
                     payload = cached_record.get("payload")
                     if payload and isinstance(payload, dict):
+                        duration_ms = round((time.time() - start_time) * 1000, 1)
                         logger.info(
-                            "Returning cached persistent recommendations for user %s (version %s)",
-                            user_id[:8],
-                            current_version,
+                            "[P0_RUNTIME_TRACE] endpoint=lifestyle-recommendations user=%s module=%s status=200 duration_ms=%s error_type=none error=none cached=true",
+                            short_id,
+                            canonical_module,
+                            duration_ms,
                         )
                         return Response(payload, status=status.HTTP_200_OK)
 
@@ -108,10 +115,27 @@ class LifestyleRecommendationsView(APIView):
                 auth_token=auth_token,
             )
 
+            duration_ms = round((time.time() - start_time) * 1000, 1)
+            logger.info(
+                "[P0_RUNTIME_TRACE] endpoint=lifestyle-recommendations user=%s module=%s status=200 duration_ms=%s error_type=none error=none cached=false",
+                short_id,
+                canonical_module,
+                duration_ms,
+            )
             return Response(payload, status=status.HTTP_200_OK)
 
         except Exception as e:
-            logger.error("Error generating lifestyle recommendations for user %s: %s", user_id[:8], e, exc_info=True)
+            duration_ms = round((time.time() - start_time) * 1000, 1)
+            err_type = type(e).__name__
+            logger.error(
+                "[P0_RUNTIME_TRACE] endpoint=lifestyle-recommendations user=%s module=%s status=500 duration_ms=%s error_type=%s error=%s",
+                short_id,
+                raw_module or "unknown",
+                duration_ms,
+                err_type,
+                str(e),
+                exc_info=True,
+            )
             return Response(
                 {
                     "error": "Failed to generate personalized lifestyle recommendations.",
@@ -212,3 +236,89 @@ class LifestyleRecommendationStatusView(APIView):
                 {"error": "Failed to update recommendation status.", "detail": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class LifestyleAIPlanView(APIView):
+    """
+    Authoritative API endpoint delivering a 7-day personalized lifestyle and nutrition plan
+    synthesized via the Hybrid Rule-Based + Generative AI Recommendation Engine.
+    Endpoints:
+    - GET  /api/v1/intelligence/lifestyle-ai-plan/
+    - POST /api/v1/intelligence/lifestyle-ai-plan/
+    """
+    authentication_classes = [SupabaseAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request) -> Response:
+        return self._generate_or_get_plan(request, default_refresh=False)
+
+    def post(self, request) -> Response:
+        return self._generate_or_get_plan(request, default_refresh=True)
+
+    def _generate_or_get_plan(self, request, default_refresh: bool) -> Response:
+        start_time = time.time()
+        user_id = str(request.user.id)
+        raw_module = request.query_params.get("module") or (request.data.get("module") if request.method == "POST" else None)
+        auth_token = _extract_auth_token(request)
+        
+        # Check refresh flag
+        param_refresh = request.query_params.get("refresh", "").lower() in ("true", "1")
+        if request.method == "POST" and "refresh" in request.data:
+            param_refresh = str(request.data.get("refresh")).lower() in ("true", "1")
+        force_refresh = param_refresh or default_refresh
+        short_id = user_id[:8] if user_id else "unknown"
+
+        try:
+            # 1. Build context strictly from authenticated user's records
+            context = LifestyleContextBuilder.build_context(
+                user_id=user_id,
+                module=raw_module,
+                auth_token=auth_token,
+            )
+
+            # Apply preference overrides if provided in POST body
+            if request.method == "POST" and isinstance(request.data, dict):
+                if "dietary_preference" in request.data and request.data["dietary_preference"]:
+                    context.demographics.dietary_preference = str(request.data["dietary_preference"]).lower().strip()
+                if "activity_level" in request.data and request.data["activity_level"]:
+                    context.demographics.activity_level = str(request.data["activity_level"]).lower().strip()
+                if "allergens" in request.data and isinstance(request.data["allergens"], list):
+                    context.demographics.allergens = [str(a).lower().strip() for a in request.data["allergens"] if a]
+
+            # 2. Invoke AILifestylePlanner
+            plan = AILifestylePlanner.generate_plan(
+                context=context,
+                force_refresh=force_refresh,
+                auth_token=auth_token,
+            )
+
+            duration_ms = round((time.time() - start_time) * 1000, 1)
+            logger.info(
+                "[P0_RUNTIME_TRACE] endpoint=lifestyle-ai-plan user=%s module=%s status=200 duration_ms=%s error_type=none error=none force_refresh=%s",
+                short_id,
+                context.demographics.pathway,
+                duration_ms,
+                force_refresh,
+            )
+            return Response(plan, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            duration_ms = round((time.time() - start_time) * 1000, 1)
+            err_type = type(e).__name__
+            logger.error(
+                "[P0_RUNTIME_TRACE] endpoint=lifestyle-ai-plan user=%s module=%s status=500 duration_ms=%s error_type=%s error=%s",
+                short_id,
+                raw_module or "unknown",
+                duration_ms,
+                err_type,
+                str(e),
+                exc_info=True,
+            )
+            return Response(
+                {
+                    "error": "Failed to generate personalized AI lifestyle plan.",
+                    "detail": str(e),
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+

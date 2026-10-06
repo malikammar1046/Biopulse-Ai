@@ -3,6 +3,7 @@ import { Calendar, Plus, Clock, MedicalCircle, MessageChatCircle } from '@untitl
 import type { AppointmentItem } from '../../types/appointment';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { resolvePathway } from '../../types/onboarding';
+import { getAppointmentDaysRemaining } from '../../utils/appointmentUtils';
 
 interface PersonalizedAppointmentsHeaderProps {
   upcomingAppointment: AppointmentItem | null;
@@ -44,7 +45,7 @@ export const PersonalizedAppointmentsHeader: React.FC<PersonalizedAppointmentsHe
             <MedicalCircle className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
             <span>
               {upcomingAppointment
-                ? `Next: ${upcomingAppointment.scheduledDate}`
+                ? `Next: ${upcomingAppointment.scheduledDate} (${getAppointmentDaysRemaining(upcomingAppointment.scheduledDate).label})`
                 : 'No upcoming visits'}
             </span>
           </div>

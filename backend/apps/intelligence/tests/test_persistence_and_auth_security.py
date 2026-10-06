@@ -65,6 +65,7 @@ class PersistenceAndAuthSecurityTests(TestCase):
     def test_supabase_persistence_success(self):
         """When Supabase RPC succeeds, record is returned with remote ID."""
         mock_client = MagicMock()
+        mock_client.table.return_value.select.return_value.eq.return_value.eq.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value.data = []
         mock_client.rpc.return_value.execute.return_value.data = {
             "id": "remote-supabase-uuid-1234",
             "created_at": "2026-09-18T12:00:00Z",
@@ -87,6 +88,7 @@ class PersistenceAndAuthSecurityTests(TestCase):
     def test_supabase_failure_raises_persistence_error_when_fallback_disabled(self):
         """When Supabase fails and fallback is disallowed, PersistenceError is raised."""
         mock_client = MagicMock()
+        mock_client.table.return_value.select.return_value.eq.return_value.eq.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value.data = []
         mock_client.rpc.side_effect = Exception("Permission denied 42501")
 
         with patch("apps.intelligence.services.assessment_repository.get_supabase_client", return_value=mock_client), \
@@ -106,6 +108,7 @@ class PersistenceAndAuthSecurityTests(TestCase):
     def test_supabase_failure_falls_back_to_sqlite_when_fallback_enabled(self):
         """When Supabase fails and fallback is enabled, local SQLite is used gracefully."""
         mock_client = MagicMock()
+        mock_client.table.return_value.select.return_value.eq.return_value.eq.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value.data = []
         mock_client.rpc.side_effect = Exception("Permission denied 42501")
 
         with patch("apps.intelligence.services.assessment_repository.get_supabase_client", return_value=mock_client), \

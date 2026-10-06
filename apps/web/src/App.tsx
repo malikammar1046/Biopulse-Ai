@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ROUTES } from './constants/routes';
 import { PublicLayout } from './layouts/PublicLayout';
 import { AppLayout } from './layouts/AppLayout';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { UserHealthProvider } from './context/UserHealthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { OnboardingRoute } from './components/auth/OnboardingRoute';
@@ -13,6 +13,7 @@ import { useUserHealth } from './context/UserHealthContext';
 import { getPathwayDashboardRoute } from './constants/routes';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { BioPulseLoadingScreen } from './components/brand/BioPulseLoadingScreen';
+import { RouteLoadingFallback } from './components/common/RouteLoadingFallback';
 
 // Dynamic redirection to user's authorized pathway dashboard
 const DashboardRedirect: React.FC = () => {
@@ -21,10 +22,8 @@ const DashboardRedirect: React.FC = () => {
   return <Navigate to={destination} replace />;
 };
 
-// Clinical Page Loading Fallback (BioPulse Splash Screen)
-const PageLoadingFallback: React.FC = () => (
-  <BioPulseLoadingScreen message="Preparing your health experience" fullScreen={true} />
-);
+// Sleek, non-intrusive fallback for lazy-loaded route transitions (React Suspense)
+const PageLoadingFallback: React.FC = () => <RouteLoadingFallback message="Loading page..." />;
 
 // Route-Level Lazy Loading (Code Splitting)
 const Home = lazy(() => import('./pages/public/Home').then((m) => ({ default: m.Home })));
@@ -59,6 +58,9 @@ const Doctors = lazy(() =>
 const CareCircle = lazy(() =>
   import('./pages/public/CareCircle').then((m) => ({ default: m.CareCircle }))
 );
+const AppDownloadPage = lazy(() =>
+  import('./pages/public/AppDownloadPage').then((m) => ({ default: m.AppDownloadPage }))
+);
 
 // Auth & Onboarding Pages (Lazy-Loaded)
 const Login = lazy(() => import('./pages/auth/Login').then((m) => ({ default: m.Login })));
@@ -90,15 +92,24 @@ const ProgressPage = lazy(() => import('./pages/app/ProgressPage').then((m) => (
 
 import { AIChatProvider } from './context/AIChatContext';
 
-export function App() {
+const AppContent: React.FC = () => {
+  const { loading: authLoading } = useAuth();
+  const [initialSplashDismissed, setInitialSplashDismissed] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!authLoading) {
+      setInitialSplashDismissed(true);
+    }
+  }, [authLoading]);
+
+  // Show full-screen brand splash screen ONLY ONCE on initial cold load if auth is still pending
+  if (authLoading && !initialSplashDismissed) {
+    return <BioPulseLoadingScreen message="Preparing your health experience" fullScreen={true} />;
+  }
+
   return (
-    <AuthProvider>
-      <ErrorBoundary>
-        <UserHealthProvider>
-          <BrowserRouter>
-            <AIChatProvider>
-              <Suspense fallback={<PageLoadingFallback />}>
-                <Routes>
+    <Suspense fallback={<PageLoadingFallback />}>
+      <Routes>
               {/* Public Marketing Website */}
               <Route element={<PublicLayout />}>
                 <Route path={ROUTES.HOME} element={<Home />} />
@@ -123,6 +134,10 @@ export function App() {
                 <Route path={ROUTES.FEATURES} element={<Features />} />
                 <Route path={ROUTES.DOCTORS} element={<Doctors />} />
                 <Route path={ROUTES.CONTACT} element={<Contact />} />
+                <Route path={ROUTES.APP_DOWNLOAD} element={<AppDownloadPage />} />
+                <Route path={ROUTES.DOWNLOAD} element={<AppDownloadPage />} />
+                <Route path="/download-app" element={<Navigate to={ROUTES.APP_DOWNLOAD} replace />} />
+                <Route path="/apk" element={<Navigate to={ROUTES.APP_DOWNLOAD} replace />} />
 
                 {/* Public Only Auth Pages */}
                 <Route element={<PublicOnlyRoute />}>
@@ -216,7 +231,18 @@ export function App() {
               <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
             </Routes>
           </Suspense>
-          </AIChatProvider>
+  );
+};
+
+export function App() {
+  return (
+    <AuthProvider>
+      <ErrorBoundary>
+        <UserHealthProvider>
+          <BrowserRouter>
+            <AIChatProvider>
+              <AppContent />
+            </AIChatProvider>
           </BrowserRouter>
         </UserHealthProvider>
       </ErrorBoundary>

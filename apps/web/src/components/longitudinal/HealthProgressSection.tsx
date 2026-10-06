@@ -10,6 +10,7 @@ import type {
   LongitudinalHealthResponse,
   MonitoringPeriodFilter,
 } from '../../types/longitudinalHealth';
+import { supabase } from '../../lib/supabase';
 import { getLongitudinalHealth } from '../../services/intelligenceService';
 
 import { LongitudinalHeader } from './LongitudinalHeader';
@@ -31,7 +32,7 @@ interface HealthProgressSectionProps {
 export const HealthProgressSection: React.FC<HealthProgressSectionProps> = ({
   pathway: pathwayProp,
 }) => {
-  const { userProfile } = useUserHealth();
+  const { userProfile, postOnboardingReadiness } = useUserHealth();
   const activePathway = pathwayProp || resolvePathway(userProfile?.gender, userProfile?.pathway);
 
   const [selectedPeriod, setSelectedPeriod] = useState<MonitoringPeriodFilter>('90d');
@@ -53,6 +54,13 @@ export const HealthProgressSection: React.FC<HealthProgressSectionProps> = ({
     };
   }, []);
 
+  // When post-onboarding initialization finishes and reaches 'ready', re-fetch data
+  useEffect(() => {
+    if (postOnboardingReadiness === 'ready') {
+      setRetryTrigger((prev) => prev + 1);
+    }
+  }, [postOnboardingReadiness]);
+
   useEffect(() => {
     let isCurrent = true;
     const controller = new AbortController();
@@ -69,12 +77,23 @@ export const HealthProgressSection: React.FC<HealthProgressSectionProps> = ({
           setData(res);
           setError(null);
         } else if (!controller.signal.aborted) {
-          setError('Unable to load longitudinal health records. Please try again.');
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (!sessionData?.session) {
+            setError('Your session has expired. Please sign in again.');
+          } else if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            setError('Unable to connect to BioPulse. Please check your internet connection.');
+          } else {
+            setError('Unable to load longitudinal health records. Please try again.');
+          }
         }
       } catch (err: any) {
         if (!isCurrent || controller.signal.aborted) return;
         console.error('[HealthProgressSection] Fetch error:', err);
-        setError('A network or server error occurred while retrieving historical data.');
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+          setError('Unable to connect to BioPulse. Please check your internet connection.');
+        } else {
+          setError('A network or server error occurred while retrieving historical data.');
+        }
       } finally {
         if (isCurrent && !controller.signal.aborted) {
           setIsLoading(false);
@@ -91,9 +110,10 @@ export const HealthProgressSection: React.FC<HealthProgressSectionProps> = ({
   }, [selectedPeriod, moduleName, retryTrigger, userProfile?.weightKg, userProfile?.heightCm]);
 
   // ---------------------------------------------------------------------------
-  // 1. Loading Skeleton
+  // 1. Loading Skeleton (also displayed during post-onboarding initialization)
   // ---------------------------------------------------------------------------
-  if (isLoading && !data) {
+  const isInitializing = postOnboardingReadiness === 'initializing';
+  if ((isLoading && !data) || isInitializing) {
     return (
       <div className="space-y-6 text-left select-none max-w-7xl mx-auto animate-pulse">
         {/* Header Skeleton */}
@@ -102,7 +122,12 @@ export const HealthProgressSection: React.FC<HealthProgressSectionProps> = ({
             <div className="w-40 h-5 bg-[#F2F4F7] rounded-full" />
             <div className="w-64 h-8 bg-[#F2F4F7] rounded-lg" />
           </div>
-          <div className="w-80 h-4 bg-[#F2F4F7] rounded" />
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 rounded-full bg-[#12B76A]/20" />
+            <p className="text-xs font-medium text-[#475467]">
+              {isInitializing ? 'Preparing your health data...' : 'Loading longitudinal health records...'}
+            </p>
+          </div>
         </div>
 
         {/* 4 Summary Cards Skeleton */}
@@ -128,7 +153,7 @@ export const HealthProgressSection: React.FC<HealthProgressSectionProps> = ({
   // ---------------------------------------------------------------------------
   // 2. Error State
   // ---------------------------------------------------------------------------
-  if (error && !data) {
+  if (error && !data && !isInitializing) {
     return (
       <div className="bg-white border border-[#EAECF0] rounded-[24px] p-8 text-center shadow-xs select-none max-w-lg mx-auto space-y-4 my-8">
         <div className="w-12 h-12 rounded-full mx-auto bg-[#FEF3F2] border border-[#FECDCA] flex items-center justify-center">

@@ -54,6 +54,7 @@ class ProgressiveAssessmentSerializer(serializers.Serializer):
     created_at = serializers.CharField(required=False, allow_blank=True)
     notice = serializers.CharField(required=False, allow_blank=True)
     status_code = serializers.CharField(required=False, allow_blank=True)
+    input_hash = serializers.CharField(required=False, allow_blank=True)
 
     # Module & Categorization
     module = serializers.CharField(required=False, default="female_pcos")
@@ -123,6 +124,31 @@ class ChatMessageResponseSerializer(serializers.Serializer):
     conversation_id = serializers.CharField()
     context_used = serializers.DictField(child=serializers.BooleanField())
     safety_level = serializers.CharField()
+    needs_clinician = serializers.BooleanField(default=False)
+    model = serializers.CharField(required=False, default="")
+
+
+class PublicChatMessageRequestSerializer(serializers.Serializer):
+    """
+    Validates anonymous public chat queries from the BioPulse homepage.
+    Explicitly prohibits user IDs, patient UUIDs, and credentials to enforce privacy boundaries.
+    """
+    message = serializers.CharField(max_length=1500, required=True, trim_whitespace=True, allow_blank=False)
+    conversation_history = serializers.ListField(
+        child=serializers.DictField(),
+        required=False,
+        default=list,
+        allow_empty=True,
+    )
+    stream = serializers.BooleanField(required=False, default=False)
+
+
+class PublicChatMessageResponseSerializer(serializers.Serializer):
+    """Formats the public conversational response."""
+    success = serializers.BooleanField(default=True)
+    reply = serializers.CharField(required=True)
+    message = serializers.CharField(required=True)
+    safety_level = serializers.CharField(default="normal")
     needs_clinician = serializers.BooleanField(default=False)
     model = serializers.CharField(required=False, default="")
 

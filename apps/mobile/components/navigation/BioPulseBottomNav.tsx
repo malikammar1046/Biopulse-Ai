@@ -112,7 +112,7 @@ export const BioPulseBottomNav: React.FC<BioPulseBottomNavProps> = ({
             const target = (lastActiveScreeningRoute || '/female-symptoms') as any;
             router.push(target);
           } else {
-            router.push('/(app)');
+            router.push('/(app)/screening');
           }
           break;
         case 'track':

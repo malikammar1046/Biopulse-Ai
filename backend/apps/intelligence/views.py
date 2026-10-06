@@ -22,6 +22,7 @@ import time
 from typing import Any, Dict, List, Optional
 from PIL import Image
 
+from django.http import StreamingHttpResponse
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -34,6 +35,8 @@ from apps.intelligence.serializers import (
     ProgressiveAssessmentSerializer,
     ChatMessageRequestSerializer,
     ChatMessageResponseSerializer,
+    PublicChatMessageRequestSerializer,
+    PublicChatMessageResponseSerializer,
 )
 from apps.intelligence.services.intelligence_orchestrator import (
     get_health_snapshot,
@@ -783,6 +786,182 @@ class IntelligenceChatView(APIView):
             )
 
 
+class PublicIntelligenceChatView(APIView):
+    """
+    POST /api/v1/intelligence/public/chat/
+
+    Public, unauthenticated conversational endpoint for the BioPulse homepage AI Assistant.
+    Provides general health literacy and BioPulse product guidance.
+    Has STRICT zero access to personal health records, screening calculations, or user databases.
+    Supports both Server-Sent Events (SSE) streaming and standard JSON responses.
+    """
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    PUBLIC_SYSTEM_INSTRUCTION = (
+        "You are BioPulse Assistant, the official public AI guide and health literacy assistant for BioPulse AI. "
+        "BioPulse AI is a clinical-grade reproductive-endocrine screening platform specializing in Polycystic Ovary Syndrome (PCOS) "
+        "for females and Male Hypogonadism (testosterone and endocrine balance) for males.\n\n"
+        "YOUR CORE OBJECTIVES:\n"
+        "1. Guide visitors through BioPulse features (dual clinical pathways, multi-tier screening combining symptoms, lab biomarkers, "
+        "and pelvic ultrasound vision AI, explainable AI factor insights, and digital twin health monitoring).\n"
+        "2. Answer general health, wellness, nutrition, and lifestyle questions in simple, empathetic, accessible language.\n"
+        "3. Explain common medical terminology (e.g. LH, FSH, Testosterone, SHBG, AMH, insulin resistance, follicle count) clearly.\n"
+        "4. Help visitors understand how to get started (creating an account at /register, choosing a pathway, and taking the free Tier 1 baseline screening).\n\n"
+        "STRICT SAFETY & PRIVACY RULES:\n"
+        "• You do NOT have access to personal health records, screening calculations, cycle logs, or patient IDs. If a visitor asks for their personal screening results or records, politely remind them: 'To protect your privacy, personalized health information is only available after you sign in to your BioPulse account.'\n"
+        "• You provide educational health literacy and clinical discussion preparation, NEVER formal medical diagnoses or prescriptions.\n"
+        "• Always recommend consulting a qualified healthcare professional for personal medical concerns.\n"
+        "• Keep responses clear, concise, well-structured, and helpful (use bullet points and bold headers when helpful)."
+    )
+
+    def post(self, request):
+        serializer = PublicChatMessageRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        user_msg = serializer.validated_data["message"]
+        history = serializer.validated_data.get("conversation_history") or []
+        wants_stream = serializer.validated_data.get("stream", False) or "text/event-stream" in request.headers.get("Accept", "")
+
+        # 1. Check clinical emergency escalation
+        emergency_advisory = SafetyGuardrails.check_emergency(user_msg)
+        if emergency_advisory:
+            if wants_stream:
+                def emergency_stream():
+                    yield f"data: {json.dumps({'token': emergency_advisory, 'done': False})}\n\n"
+                    yield f"data: {json.dumps({'token': '', 'done': True, 'safety_level': 'urgent'})}\n\n"
+                return StreamingHttpResponse(emergency_stream(), content_type="text/event-stream")
+
+            return Response({
+                "success": True,
+                "reply": emergency_advisory,
+                "message": emergency_advisory,
+                "safety_level": "urgent",
+                "needs_clinician": True,
+                "model": "safety_guardrail",
+            }, status=status.HTTP_200_OK)
+
+        # 2. Check prompt injection
+        injection_advisory = SafetyGuardrails.check_prompt_injection(user_msg)
+        if injection_advisory:
+            if wants_stream:
+                def injection_stream():
+                    yield f"data: {json.dumps({'token': injection_advisory, 'done': False})}\n\n"
+                    yield f"data: {json.dumps({'token': '', 'done': True, 'safety_level': 'caution'})}\n\n"
+                return StreamingHttpResponse(injection_stream(), content_type="text/event-stream")
+
+            return Response({
+                "success": True,
+                "reply": injection_advisory,
+                "message": injection_advisory,
+                "safety_level": "caution",
+                "needs_clinician": False,
+                "model": "safety_guardrail",
+            }, status=status.HTTP_200_OK)
+
+        # 3. Privacy boundary check: refuse queries for private personal health records / individual screening results
+        privacy_advisory = SafetyGuardrails.check_privacy_request(user_msg)
+        if privacy_advisory:
+            if wants_stream:
+                def privacy_stream():
+                    yield f"data: {json.dumps({'token': privacy_advisory, 'done': False})}\n\n"
+                    yield f"data: {json.dumps({'token': '', 'done': True, 'safety_level': 'normal'})}\n\n"
+                return StreamingHttpResponse(privacy_stream(), content_type="text/event-stream")
+
+            return Response({
+                "success": True,
+                "reply": privacy_advisory,
+                "message": privacy_advisory,
+                "safety_level": "normal",
+                "needs_clinician": False,
+                "model": "privacy_guardrail",
+            }, status=status.HTTP_200_OK)
+
+        # 4. Invoke LLM Provider without any private user data, tokens, or DB context
+        provider = get_llm_provider()
+        model_name = getattr(provider, "model_name", "biopulse-assistant")
+        start_time = time.perf_counter()
+
+        # Sanitize input message
+        clean_user_msg = LLMContextSanitizer.sanitize_user_message(user_msg)
+        clean_history = LLMContextSanitizer.sanitize_conversation_history(history)
+
+        if wants_stream:
+            def event_stream():
+                accumulated = []
+                try:
+                    for token in provider.stream_chat_response(
+                        system_instruction=self.PUBLIC_SYSTEM_INSTRUCTION,
+                        user_message=clean_user_msg,
+                        conversation_history=clean_history,
+                        max_output_tokens=500,
+                    ):
+                        accumulated.append(token)
+                        yield f"data: {json.dumps({'token': token, 'done': False})}\n\n"
+
+                    full_answer = "".join(accumulated)
+                    sanitized_ans, safety_level = SafetyGuardrails.sanitize_llm_response(full_answer)
+                    yield f"data: {json.dumps({'token': '', 'done': True, 'safety_level': safety_level})}\n\n"
+                except Exception as stream_err:
+                    logger.warning("Public chat stream error: %s", stream_err)
+                    fallback_text = (
+                        "BioPulse Assistant is momentarily busy. Please try asking again in a few moments, "
+                        "or explore our platform features via the navigation menu above."
+                    )
+                    yield f"data: {json.dumps({'error': fallback_text, 'done': True})}\n\n"
+
+            resp = StreamingHttpResponse(event_stream(), content_type="text/event-stream")
+            resp["Cache-Control"] = "no-cache"
+            resp["X-Accel-Buffering"] = "no"
+            return resp
+
+        # Non-streaming JSON flow
+        try:
+            llm_res = provider.generate_chat_response(
+                system_instruction=self.PUBLIC_SYSTEM_INSTRUCTION,
+                user_message=clean_user_msg,
+                health_context="",
+                conversation_history=clean_history,
+                max_output_tokens=500,
+            )
+            sanitized_answer, safety_level = SafetyGuardrails.sanitize_llm_response(llm_res.answer)
+            final_safety = "caution" if safety_level == "caution" else llm_res.safety_level
+            latency_ms = (time.perf_counter() - start_time) * 1000
+
+            logger.info(
+                "BioPulse Public Chat completed: model=%s safety_level=%s latency_ms=%.1f",
+                llm_res.model_name,
+                final_safety,
+                latency_ms,
+            )
+
+            return Response({
+                "success": True,
+                "reply": sanitized_answer,
+                "message": sanitized_answer,
+                "safety_level": final_safety,
+                "needs_clinician": llm_res.needs_clinician,
+                "model": llm_res.model_name,
+            }, status=status.HTTP_200_OK)
+        except Exception as exc:
+            latency_ms = (time.perf_counter() - start_time) * 1000
+            logger.warning("Public chat generation failed (%s) latency_ms=%.1f", exc, latency_ms)
+            fallback_text = (
+                "BioPulse Assistant is momentarily busy. Please try asking again in a few moments, "
+                "or check our Features and About pages to learn more."
+            )
+            return Response({
+                "success": False,
+                "error": fallback_text,
+                "reply": fallback_text,
+                "message": fallback_text,
+                "safety_level": "normal",
+                "needs_clinician": False,
+                "model": model_name,
+            }, status=status.HTTP_200_OK)
+
+
 class CompanionHealthView(APIView):
     """
     GET /api/v1/intelligence/companion/health/
@@ -874,38 +1053,73 @@ class LongitudinalHealthView(APIView):
 
     FEMALE_GENDERS = {"female", "f", "woman"}
     MALE_GENDERS = {"male", "m", "man"}
-    FEMALE_PATHWAYS = {"female", "female_pcos"}
-    MALE_PATHWAYS = {"male", "male_hypogonadism"}
+    FEMALE_PATHWAYS = {"female", "female_pcos", "ovasense", "pcos"}
+    MALE_PATHWAYS = {"male", "male_hypogonadism", "androsense", "hypogonadism"}
 
     def _resolve_authoritative_pathway(
-        self, patient_uuid: str, auth_token: str | None = None, user_obj: Any = None
+        self,
+        patient_uuid: str,
+        auth_token: str | None = None,
+        user_obj: Any = None,
+        requested_module: str | None = None,
     ) -> str | None:
         """
-        Derives the clinical pathway strictly from authoritative persisted profile/onboarding data.
-        Returns None if gender/pathway cannot be determined (fails closed).
+        Derives the clinical pathway strictly from authoritative persisted profile/onboarding data,
+        active screening assessments, clinical state, or verified JWT claims.
+        Falls back to requested_module if valid and no conflicting authoritative profile exists.
         """
-        profile = None
-        try:
-            health_data = health_service.fetch_all(patient_uuid, auth_token=auth_token, include_logs=False)
-            profile = getattr(health_data, "profile", None)
-        except Exception as e:
-            logger.warning(
-                "Could not fetch patient health profile for pathway resolution: %s", e
-            )
-            profile = None
-
         gender_val = None
         pathway_val = None
 
-        if profile is not None:
-            gender_val = getattr(profile, "gender", None) or (
-                profile.get("gender") if isinstance(profile, dict) else None
-            )
-            pathway_val = getattr(profile, "pathway", None) or (
-                profile.get("pathway") if isinstance(profile, dict) else None
-            )
+        # 1. Check patient profile directly (single table read instead of heavy fetch_all)
+        try:
+            profile = health_service.fetch_profile(patient_uuid, auth_token=auth_token)
+            if profile:
+                gender_val = getattr(profile, "gender", None) or (
+                    profile.get("gender") if isinstance(profile, dict) else None
+                )
+                pathway_val = getattr(profile, "pathway", None) or (
+                    profile.get("pathway") if isinstance(profile, dict) else None
+                )
+        except Exception as e:
+            logger.debug("Could not fetch patient profile for pathway resolution: %s", e)
 
-        # Fallback to verified JWT claims or user metadata if profile did not contain explicit gender/pathway
+        # Determine candidate module order (prioritize requested_module if specified)
+        candidate_modules = ["female_pcos", "male_hypogonadism"]
+        if requested_module:
+            req_str = str(requested_module).strip().lower()
+            if req_str in self.MALE_PATHWAYS or req_str in self.MALE_GENDERS:
+                candidate_modules = ["male_hypogonadism", "female_pcos"]
+            elif req_str in self.FEMALE_PATHWAYS or req_str in self.FEMALE_GENDERS:
+                candidate_modules = ["female_pcos", "male_hypogonadism"]
+
+        # 2. Check active screening assessments (persisted during onboarding Tier 1)
+        if not gender_val and not pathway_val:
+            try:
+                from apps.intelligence.services.assessment_repository import assessment_repository
+                for cand_mod in candidate_modules:
+                    act = assessment_repository.get_active_assessment(
+                        patient_uuid, module=cand_mod, auth_token=auth_token
+                    )
+                    if act and (act.get("module") == cand_mod or not act.get("module")) and act.get("has_assessment") is not False:
+                        return cand_mod
+            except Exception as e:
+                logger.debug("Could not check active assessments for pathway resolution: %s", e)
+
+        # 3. Check persistent clinical state
+        if not gender_val and not pathway_val:
+            try:
+                from apps.intelligence.services.clinical_state_repository import clinical_state_repository
+                for cand_mod in candidate_modules:
+                    cs = clinical_state_repository.get_patient_clinical_state(
+                        patient_uuid, module=cand_mod, auth_token=auth_token, perform_backfill=False
+                    )
+                    if cs and cs.get("tier_1_inputs"):
+                        return cand_mod
+            except Exception as e:
+                logger.debug("Could not check clinical state for pathway resolution: %s", e)
+
+        # 4. Fallback to verified JWT claims or user metadata
         if not gender_val and not pathway_val and auth_token:
             try:
                 import jwt
@@ -936,9 +1150,18 @@ class LongitudinalHealthView(APIView):
         if norm_pathway in self.MALE_PATHWAYS or norm_gender in self.MALE_GENDERS:
             return "male_hypogonadism"
 
+        # 5. Final fallback to client-supplied module if valid (guarantees post-onboarding readiness)
+        if requested_module:
+            norm_req = str(requested_module).strip().lower()
+            if norm_req in self.FEMALE_PATHWAYS:
+                return "female_pcos"
+            if norm_req in self.MALE_PATHWAYS:
+                return "male_hypogonadism"
+
         return None
 
     def get(self, request):
+        start_time = time.time()
         if not request.user or not getattr(request.user, "id", None):
             return Response(
                 {"error": "Authentication required."},
@@ -946,21 +1169,30 @@ class LongitudinalHealthView(APIView):
             )
 
         patient_uuid = str(request.user.id)
+        short_id = patient_uuid[:8] if patient_uuid else "unknown"
         auth_token = getattr(request.user, "raw_token", None)
 
         period = request.query_params.get("period", "90d").strip().lower()
         if period not in ("30d", "90d", "180d", "1y", "all"):
             period = "90d"
 
-        # Authoritatively derive clinical pathway from patient profile (fails closed)
+        requested_module = request.query_params.get("module")
+
+        # Authoritatively derive clinical pathway from patient profile, assessment, clinical state, or JWT
         authoritative_module = self._resolve_authoritative_pathway(
-            patient_uuid, auth_token=auth_token, user_obj=request.user
+            patient_uuid,
+            auth_token=auth_token,
+            user_obj=request.user,
+            requested_module=requested_module,
         )
 
         if not authoritative_module:
+            duration_ms = round((time.time() - start_time) * 1000, 1)
             logger.warning(
-                "Longitudinal health pathway resolution failed closed for patient %s (no valid gender/pathway configured)",
-                patient_uuid[:8] + "***",
+                "[P0_RUNTIME_TRACE] endpoint=longitudinal-health user=%s module=%s status=422 duration_ms=%s error_type=PATHWAY_NOT_CONFIGURED error=Health pathway unconfigured",
+                short_id,
+                requested_module or "none",
+                duration_ms,
             )
             return Response(
                 {
@@ -974,7 +1206,6 @@ class LongitudinalHealthView(APIView):
             )
 
         # Enforce server-side pathway isolation: client-supplied ?module= cannot determine pathway
-        requested_module = request.query_params.get("module")
         if requested_module:
             norm_requested = str(requested_module).strip().lower()
             clean_requested = (
@@ -987,7 +1218,7 @@ class LongitudinalHealthView(APIView):
             if clean_requested != authoritative_module:
                 logger.warning(
                     "Patient %s attempted to request mismatched module '%s'; enforcing authoritative pathway '%s'",
-                    patient_uuid[:8] + "***",
+                    short_id + "***",
                     requested_module,
                     authoritative_module,
                 )
@@ -1005,10 +1236,26 @@ class LongitudinalHealthView(APIView):
                 period=period,
                 auth_token=auth_token,
             )
+            duration_ms = round((time.time() - start_time) * 1000, 1)
+            logger.info(
+                "[P0_RUNTIME_TRACE] endpoint=longitudinal-health user=%s module=%s status=200 duration_ms=%s error_type=none error=none total_assessments=%s",
+                short_id,
+                module,
+                duration_ms,
+                summary.get("total_assessments_recorded", 0),
+            )
             return Response(summary, status=status.HTTP_200_OK)
         except Exception as exc:
+            duration_ms = round((time.time() - start_time) * 1000, 1)
+            err_type = type(exc).__name__
             logger.error(
-                "Failed to generate longitudinal health summary: %s", exc, exc_info=True
+                "[P0_RUNTIME_TRACE] endpoint=longitudinal-health user=%s module=%s status=500 duration_ms=%s error_type=%s error=%s",
+                short_id,
+                module,
+                duration_ms,
+                err_type,
+                str(exc),
+                exc_info=True,
             )
             return Response(
                 {"error": "Failed to assemble longitudinal health data."},

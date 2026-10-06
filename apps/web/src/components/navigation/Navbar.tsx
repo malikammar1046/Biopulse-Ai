@@ -105,6 +105,9 @@ export const Navbar: React.FC = () => {
   const isCareCircleActive = location.pathname === ROUTES.CARE_CIRCLE;
   const isDoctorsActive = location.pathname === ROUTES.DOCTORS;
   const isContactActive = location.pathname === ROUTES.CONTACT;
+  const isAppActive =
+    location.pathname === ROUTES.APP_DOWNLOAD ||
+    location.pathname === ROUTES.DOWNLOAD;
   const isEducationActive =
     location.pathname === ROUTES.UNDERSTAND_PCOS ||
     location.pathname === ROUTES.UNDERSTAND_PCOS_CANONICAL ||
@@ -332,6 +335,26 @@ export const Navbar: React.FC = () => {
                   />
                 )}
               </Link>
+
+              {/* Mobile App */}
+              <Link
+                to={ROUTES.APP_DOWNLOAD}
+                className={`relative py-1 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
+                  isAppActive ? 'text-[#0891B2] font-bold' : 'text-slate-600 hover:text-[#0891B2]'
+                }`}
+              >
+                <span>Mobile App</span>
+                <span className="px-1.5 py-0.5 rounded-full bg-cyan-100 text-[#0891B2] text-[9px] font-bold tracking-tight">
+                  APK
+                </span>
+                {isAppActive && (
+                  <motion.div
+                    layoutId="navbar-active-indicator"
+                    className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-[#0891B2] rounded-full"
+                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                  />
+                )}
+              </Link>
             </nav>
 
             {/* ── Right: Search + Action Buttons + Cursive Flourish ── */}
@@ -496,6 +519,17 @@ export const Navbar: React.FC = () => {
                     }`}
                   >
                     Contact &amp; Support
+                  </Link>
+                  <Link
+                    to={ROUTES.APP_DOWNLOAD}
+                    className={`p-2.5 rounded-xl transition-colors flex items-center justify-between ${
+                      isAppActive ? 'bg-sky-50 text-[#0891B2] font-bold' : 'hover:bg-slate-50'
+                    }`}
+                  >
+                    <span>Download Mobile App</span>
+                    <span className="px-2 py-0.5 rounded-full bg-cyan-100 text-[#0891B2] text-[10px] font-bold">
+                      APK v1.0.0
+                    </span>
                   </Link>
                 </div>
 

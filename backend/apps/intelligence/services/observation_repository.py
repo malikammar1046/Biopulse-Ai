@@ -75,54 +75,14 @@ _initialized_observation_db_paths: set[str] = set()
 _observation_init_lock = threading.Lock()
 
 
-class _DjangoSQLiteWrapper:
-    def __init__(self, django_conn: Any):
-        self._django_conn = django_conn
-        self._raw_conn = django_conn.connection
-
-    @property
-    def row_factory(self):
-        return getattr(self._raw_conn, "row_factory", None)
-
-    @row_factory.setter
-    def row_factory(self, val):
-        self._raw_conn.row_factory = val
-
-    def cursor(self):
-        return self._raw_conn.cursor()
-
-    def execute(self, sql: str, params: Any = ()):
-        return self._raw_conn.execute(sql, params)
-
-    def executemany(self, sql: str, seq_of_params: Any):
-        return self._raw_conn.executemany(sql, seq_of_params)
-
-    def close(self) -> None:
-        pass
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        return False
-
-
-def _connect_sqlite(db_path: str | None = None, timeout: float = 15.0) -> Any:
+def _connect_sqlite(db_path: str | None = None, timeout: float = 30.0) -> Any:
     if db_path is None:
         db_path = _get_sqlite_path()
-    try:
-        from django.db import connection
-        default_name = settings.DATABASES.get("default", {}).get("NAME")
-        if default_name and str(default_name) == str(db_path):
-            connection.ensure_connection()
-            if connection.connection:
-                return _DjangoSQLiteWrapper(connection)
-    except Exception:
-        pass
     is_uri = str(db_path).startswith("file:")
-    conn = sqlite3.connect(db_path, timeout=timeout, uri=is_uri)
+    conn = sqlite3.connect(db_path, timeout=timeout, uri=is_uri, isolation_level=None)
     try:
-        conn.execute("PRAGMA busy_timeout = 15000;")
+        conn.execute("PRAGMA busy_timeout = 30000;")
+        conn.execute("PRAGMA foreign_keys = ON;")
     except Exception:
         pass
     return conn
@@ -137,38 +97,59 @@ def init_sqlite_observation_store() -> None:
     with _observation_init_lock:
         if db_path in _initialized_observation_db_paths:
             return
-        conn = _connect_sqlite(db_path, timeout=10.0)
+        is_uri = str(db_path).startswith("file:")
+        if not is_uri and not str(db_path).startswith(":memory:"):
+            try:
+                raw_init_conn = sqlite3.connect(db_path, timeout=30.0, isolation_level=None)
+                try:
+                    raw_init_conn.execute("PRAGMA busy_timeout = 30000;")
+                    raw_init_conn.execute("PRAGMA journal_mode = WAL;")
+                    raw_init_conn.execute("PRAGMA synchronous = NORMAL;")
+                finally:
+                    raw_init_conn.close()
+            except Exception as e:
+                logger.debug("Could not set SQLite WAL pragma on observation store: %s", e)
+
+        conn = _connect_sqlite(db_path, timeout=30.0)
         try:
-            with conn:
-                conn.execute(
-                    """
-                    CREATE TABLE IF NOT EXISTS patient_metric_observations (
-                        id TEXT PRIMARY KEY,
-                        user_id TEXT NOT NULL,
-                        module TEXT NOT NULL,
-                        metric_key TEXT NOT NULL,
-                        value REAL NOT NULL,
-                        unit TEXT NOT NULL DEFAULT '',
-                        observed_at TEXT NOT NULL,
-                        source TEXT NOT NULL,
-                        source_record_id TEXT,
-                        created_at TEXT NOT NULL
-                    )
-                    """
+            conn.execute("BEGIN IMMEDIATE;")
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS patient_metric_observations (
+                    id TEXT PRIMARY KEY,
+                    user_id TEXT NOT NULL,
+                    module TEXT NOT NULL,
+                    metric_key TEXT NOT NULL,
+                    value REAL NOT NULL,
+                    unit TEXT NOT NULL DEFAULT '',
+                    observed_at TEXT NOT NULL,
+                    source TEXT NOT NULL,
+                    source_record_id TEXT,
+                    created_at TEXT NOT NULL
                 )
-                conn.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_obs_user_metric_time ON patient_metric_observations(user_id, metric_key, observed_at)"
-                )
-                conn.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_obs_user_module ON patient_metric_observations(user_id, module)"
-                )
+                """
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_obs_user_metric_time ON patient_metric_observations(user_id, metric_key, observed_at)"
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_obs_user_module ON patient_metric_observations(user_id, module)"
+            )
+            conn.execute("COMMIT;")
             # Mark initialized ONLY after successful DDL completion
             _initialized_observation_db_paths.add(db_path)
             logger.info("ObservationRepository persistent SQLite store initialized at %s", db_path)
         except Exception as e:
+            try:
+                conn.execute("ROLLBACK;")
+            except Exception:
+                pass
             logger.warning("Failed to initialize SQLite observation store: %s", e)
         finally:
-            conn.close()
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 
 
@@ -304,9 +285,12 @@ class ObservationRepository:
                     logger.warning("Supabase observation insert error: %s; falling back to SQLite", e)
 
         # 3. Persistent SQLite fallback
+        # 3. Persistent SQLite fallback
+        conn = None
         try:
-            conn = _connect_sqlite()
-            with conn:
+            conn = _connect_sqlite(timeout=30.0)
+            try:
+                conn.execute("BEGIN IMMEDIATE;")
                 conn.execute(
                     """
                     INSERT INTO patient_metric_observations 
@@ -326,9 +310,21 @@ class ObservationRepository:
                         obs_record["created_at"],
                     ),
                 )
-            conn.close()
+                conn.execute("COMMIT;")
+            except Exception:
+                try:
+                    conn.execute("ROLLBACK;")
+                except Exception:
+                    pass
+                raise
         except Exception as e:
             logger.warning("SQLite observation insert error: %s", e)
+        finally:
+            if conn:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
 
         return obs_record
 
@@ -365,34 +361,43 @@ class ObservationRepository:
                     logger.debug("Supabase get_latest_observation error: %s", e)
 
         # 2. Persistent SQLite lookup (offline / local development fallback)
+        conn = None
         try:
-            conn = _connect_sqlite()
+            conn = _connect_sqlite(timeout=30.0)
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
-            if module:
-                cursor.execute(
-                    """
-                    SELECT * FROM patient_metric_observations 
-                    WHERE user_id = ? AND metric_key = ? AND module IN (?, 'shared')
-                    ORDER BY observed_at DESC LIMIT 1
-                    """,
-                    (user_id_str, metric_key, module),
-                )
-            else:
-                cursor.execute(
-                    """
-                    SELECT * FROM patient_metric_observations 
-                    WHERE user_id = ? AND metric_key = ?
-                    ORDER BY observed_at DESC LIMIT 1
-                    """,
-                    (user_id_str, metric_key),
-                )
-            row = cursor.fetchone()
-            conn.close()
-            if row:
-                return dict(row)
+            try:
+                if module:
+                    cursor.execute(
+                        """
+                        SELECT * FROM patient_metric_observations 
+                        WHERE user_id = ? AND metric_key = ? AND module IN (?, 'shared')
+                        ORDER BY observed_at DESC LIMIT 1
+                        """,
+                        (user_id_str, metric_key, module),
+                    )
+                else:
+                    cursor.execute(
+                        """
+                        SELECT * FROM patient_metric_observations 
+                        WHERE user_id = ? AND metric_key = ?
+                        ORDER BY observed_at DESC LIMIT 1
+                        """,
+                        (user_id_str, metric_key),
+                    )
+                row = cursor.fetchone()
+                if row:
+                    return dict(row)
+            finally:
+                cursor.close()
         except Exception as e:
             logger.debug("SQLite get_latest_observation error: %s", e)
+        finally:
+            if conn:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
 
         # 3. In-memory cache fallback (used in unit tests & mock environments)
         with _observation_lock:
@@ -440,28 +445,37 @@ class ObservationRepository:
 
         # 2. Fallback to SQLite if empty
         if not results:
+            conn = None
             try:
-                conn = _connect_sqlite()
+                conn = _connect_sqlite(timeout=30.0)
                 conn.row_factory = sqlite3.Row
                 cursor = conn.cursor()
-                query = "SELECT * FROM patient_metric_observations WHERE user_id = ?"
-                params: list[Any] = [user_id_str]
-                if module:
-                    query += " AND module IN (?, 'shared')"
-                    params.append(module)
-                if metric_key:
-                    query += " AND metric_key = ?"
-                    params.append(metric_key)
-                if cutoff_dt:
-                    query += " AND observed_at >= ?"
-                    params.append(cutoff_dt.isoformat())
-                query += " ORDER BY observed_at ASC"
-                cursor.execute(query, tuple(params))
-                rows = cursor.fetchall()
-                conn.close()
-                results = [dict(r) for r in rows]
+                try:
+                    query = "SELECT * FROM patient_metric_observations WHERE user_id = ?"
+                    params: list[Any] = [user_id_str]
+                    if module:
+                        query += " AND module IN (?, 'shared')"
+                        params.append(module)
+                    if metric_key:
+                        query += " AND metric_key = ?"
+                        params.append(metric_key)
+                    if cutoff_dt:
+                        query += " AND observed_at >= ?"
+                        params.append(cutoff_dt.isoformat())
+                    query += " ORDER BY observed_at ASC"
+                    cursor.execute(query, tuple(params))
+                    rows = cursor.fetchall()
+                    results = [dict(r) for r in rows]
+                finally:
+                    cursor.close()
             except Exception as e:
                 logger.debug("SQLite get_observations error: %s", e)
+            finally:
+                if conn:
+                    try:
+                        conn.close()
+                    except Exception:
+                        pass
 
         # 3. Merge in-memory records (ensures local updates during request/tests are visible)
         with _observation_lock:
@@ -632,19 +646,21 @@ class ObservationRepository:
             mh = _get_p_val("mens_health", "mensHealth") or {}
             conds = str(_get_p_val("conditions", "diagnosedConditions") or "").lower()
 
-            low_energy_val = 1.0 if (mh.get("energyLevel") in ["low", "very_low"] or "fatigue" in conds) else _parse_num(t1_inputs.get("low_energy"))
+            adam = mh.get("adamResponses") or mh.get("adam_responses") or {}
+            low_energy_val = 1.0 if (adam.get("adam_q2") is True or mh.get("energyLevel") in ["low", "very_low"] or "fatigue" in conds) else _parse_num(t1_inputs.get("low_energy"))
             if low_energy_val is not None:
                 candidates["low_energy"] = (1.0 if low_energy_val > 0 else 0.0, "")
 
-            sleep_trouble_val = 1.0 if (mh.get("sleepQuality") in ["poor", "fair"]) else _parse_num(t1_inputs.get("sleep_trouble"))
+            sleep_trouble_val = 1.0 if (adam.get("adam_q9") is True or mh.get("sleepQuality") in ["poor", "fair", "frequently_waking"]) else _parse_num(t1_inputs.get("sleep_trouble"))
             if sleep_trouble_val is not None:
                 candidates["sleep_trouble"] = (1.0 if sleep_trouble_val > 0 else 0.0, "")
 
-            low_mood_val = 1.0 if ("mood" in str(mh.get("moodFactors", "")).lower() or "depression" in conds) else _parse_num(t1_inputs.get("low_mood"))
+            mood_list = mh.get("moodChanges") or []
+            low_mood_val = 1.0 if (adam.get("adam_q6") is True or adam.get("adam_q5") is True or (isinstance(mood_list, list) and len(mood_list) > 0) or "mood" in str(mh.get("moodFactors", "")).lower() or "depression" in conds) else _parse_num(t1_inputs.get("low_mood"))
             if low_mood_val is not None:
                 candidates["low_mood"] = (1.0 if low_mood_val > 0 else 0.0, "")
 
-            low_interest_val = 1.0 if (mh.get("sexDrive") in ["low", "very_low"]) else _parse_num(t1_inputs.get("low_interest"))
+            low_interest_val = 1.0 if (adam.get("adam_q1") is True or mh.get("sexDrive") in ["low", "very_low", "reduced", "significantly_reduced"]) else _parse_num(t1_inputs.get("low_interest"))
             if low_interest_val is not None:
                 candidates["low_interest"] = (1.0 if low_interest_val > 0 else 0.0, "")
 

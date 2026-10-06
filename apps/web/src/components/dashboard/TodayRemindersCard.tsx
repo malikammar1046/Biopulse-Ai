@@ -71,7 +71,7 @@ export const TodayRemindersCard: React.FC<RemindersCardProps> = ({
               onClick={onAddReminder}
               className="text-xs text-[#0288D1] font-bold hover:underline cursor-pointer"
             >
-              + Add first reminder
+              Add first reminder
             </button>
           </div>
         ) : (
@@ -138,7 +138,7 @@ export const TodayRemindersCard: React.FC<RemindersCardProps> = ({
           className="inline-flex items-center gap-1 text-xs font-bold text-[#64748B] hover:text-[#0F172A] transition-colors cursor-pointer"
         >
           <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-          <span>+ Custom</span>
+          <span>Custom</span>
         </button>
       </div>
     </div>

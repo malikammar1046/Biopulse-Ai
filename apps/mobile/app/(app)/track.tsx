@@ -12,19 +12,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../../constants/Colors';
 import { useAuth } from '../../features/authentication';
-import { useFemaleOnboarding } from '../../features/onboarding';
+import { useHealthStore } from '../../store';
 import { BioPulseBottomNav, BOTTOM_NAV_HEIGHT } from '../../components/navigation';
 
-/**
- * SCREEN: TRACK HUB (Primary Navigation Destination 3)
- *
- * Implements:
- * - Pathway-aware longitudinal tracking center
- * - Female: Cycle Tracking, Symptoms Log, Rotterdam Progress
- * - Male: Hormonal Health, ADAM Symptoms, Endocrine Progress
- * - Direct deep links to existing screening modules
- * - Permanent BioPulse bottom navigation
- */
 export default function TrackHubScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -32,11 +22,26 @@ export default function TrackHubScreen() {
   const isTablet = width >= 768;
 
   const { pathway } = useAuth();
-  const { cycleHealth, symptoms } = useFemaleOnboarding();
-
   const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
+
   const themeColor = isFemale ? BioPulseColors.femaleAccent : BioPulseColors.malePrimary;
-  const themeSoftBg = isFemale ? '#FDF0F4' : '#EBF4FC';
+  const themeSoftBg = isFemale ? '#FFF2F7' : '#EAF5FD';
+
+  const {
+    water,
+    addWaterMl,
+    nutrition,
+    cycle,
+    movement,
+    medications,
+    markMedicationStatus,
+    symptoms,
+  } = useHealthStore();
+
+  const takenMedsCount = medications.filter((m) => m.status === 'taken').length;
+  const waterLiters = water.consumedLiters.toFixed(1);
+  const waterTargetLiters = water.targetLiters.toFixed(1);
+  const reportedSymptomsCount = symptoms.symptoms.filter((s) => s.selected).length;
 
   return (
     <View style={styles.root}>
@@ -45,13 +50,13 @@ export default function TrackHubScreen() {
         <View style={styles.headerLeft}>
           <Text style={styles.headerTitle}>Tracking Hub</Text>
           <Text style={styles.headerSubtitle}>
-            {isFemale ? 'Longitudinal Cycle & Endocrine Monitor' : 'Hormonal Health & Vitality Monitor'}
+            {isFemale ? 'Endocrine, Cycle & Metabolic Rhythm' : 'Hormonal Health & Vitality Monitor'}
           </Text>
         </View>
 
         <View style={[styles.pathwayBadge, { backgroundColor: themeSoftBg }]}>
           <Text style={[styles.pathwayBadgeText, { color: themeColor }]}>
-            {isFemale ? '♀ PCOS' : '♂ LOH'}
+            {isFemale ? '♀ PCOS Path' : '♂ Andro Path'}
           </Text>
         </View>
       </View>
@@ -65,84 +70,245 @@ export default function TrackHubScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={[styles.container, isTablet && styles.tabletContainer]}>
-          {/* Female Only: Cycle Tracking Card */}
+          {/* Daily Quick Summary Strip */}
+          <View style={styles.summaryBar}>
+            <View style={styles.summaryCol}>
+              <Ionicons name="water" size={16} color="#0284C7" />
+              <Text style={styles.summaryVal}>{waterLiters}L</Text>
+              <Text style={styles.summaryLabel}>Water</Text>
+            </View>
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryCol}>
+              <Ionicons name="flame" size={16} color="#EA580C" />
+              <Text style={styles.summaryVal}>{nutrition.caloriesConsumed}</Text>
+              <Text style={styles.summaryLabel}>Calories</Text>
+            </View>
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryCol}>
+              <Ionicons name="walk" size={16} color="#16A34A" />
+              <Text style={styles.summaryVal}>{movement.todayActivityMinutes}m</Text>
+              <Text style={styles.summaryLabel}>Active</Text>
+            </View>
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryCol}>
+              <Ionicons name="medkit" size={16} color={themeColor} />
+              <Text style={styles.summaryVal}>{takenMedsCount}/{medications.length}</Text>
+              <Text style={styles.summaryLabel}>Meds</Text>
+            </View>
+          </View>
+
+          {/* 1. Female Only: Cycle Tracking Card */}
           {isFemale && (
             <Pressable
-              onPress={() => router.push('/female-cycle-health')}
+              onPress={() => router.push('/(app)/cycle-tracking')}
               style={({ pressed }) => [styles.trackCard, pressed && styles.cardPressed]}
             >
               <View style={styles.cardHeaderRow}>
-                <View style={[styles.cardIconWrap, { backgroundColor: '#FDF0F4' }]}>
+                <View style={[styles.cardIconWrap, { backgroundColor: '#FFF2F7' }]}>
                   <Ionicons name="calendar" size={22} color={BioPulseColors.femaleAccent} />
                 </View>
-                <View style={styles.activePill}>
-                  <Text style={styles.activePillText}>Cycle Day 14</Text>
+                <View style={[styles.activePill, { backgroundColor: '#FCE7F3' }]}>
+                  <Text style={[styles.activePillText, { color: '#BE185D' }]}>
+                    Cycle Day {cycle.currentCycleDay} of {cycle.cycleLength}
+                  </Text>
                 </View>
               </View>
 
-              <Text style={styles.cardTitle}>Menstrual Cycle Rhythm</Text>
+              <Text style={styles.cardTitle}>Menstrual Cycle & Ovulation</Text>
               <Text style={styles.cardSub}>
-                Regularity: {cycleHealth.regularity} • Length: {cycleHealth.cycleLength} days • Recorded {cycleHealth.lastPeriodDate}
+                Current Phase: {cycle.phase} • Next period predicted in {cycle.nextPeriodDaysRemaining} days • Rhythm is {cycle.regularity}.
               </Text>
 
               <View style={styles.cardFooter}>
-                <Text style={[styles.footerLink, { color: themeColor }]}>View Cycle Calendar →</Text>
+                <Text style={[styles.footerLink, { color: themeColor }]}>Open Cycle Calendar →</Text>
               </View>
             </Pressable>
           )}
 
-          {/* Symptoms Log Card */}
+          {/* 2. Symptoms Log Card */}
           <Pressable
-            onPress={() => router.push(isFemale ? '/female-symptoms' : '/(app)')}
+            onPress={() => router.push('/(app)/symptom-log')}
             style={({ pressed }) => [styles.trackCard, pressed && styles.cardPressed]}
           >
             <View style={styles.cardHeaderRow}>
               <View style={[styles.cardIconWrap, { backgroundColor: themeSoftBg }]}>
                 <Ionicons name="heart" size={22} color={themeColor} />
               </View>
-              <View style={styles.activePill}>
-                <Text style={styles.activePillText}>{symptoms?.length || 0} Reported</Text>
+              <View style={[styles.activePill, { backgroundColor: themeSoftBg }]}>
+                <Text style={[styles.activePillText, { color: themeColor }]}>
+                  {reportedSymptomsCount > 0 ? `${reportedSymptomsCount} Active Today` : 'Check-in Pending'}
+                </Text>
               </View>
             </View>
 
             <Text style={styles.cardTitle}>
-              {isFemale ? 'PCOS Symptom Pattern' : 'Androgen Symptom Scoring'}
+              {isFemale ? 'PCOS Symptom Pattern' : 'ADAM Symptom Tracker'}
             </Text>
             <Text style={styles.cardSub}>
               {isFemale
-                ? 'Tracks hyperandrogenism, acanthosis nigricans, acne, and weight trends over 6–12 months.'
-                : 'Tracks morning energy levels, libido, muscle mass maintenance, and mood stability.'}
+                ? 'Monitors acne, hirsutism, hair density, pelvic cramping, and daytime fatigue fluctuations.'
+                : 'Tracks morning energy levels, libido, strength maintenance, and post-meal fatigue.'}
             </Text>
 
             <View style={styles.cardFooter}>
-              <Text style={[styles.footerLink, { color: themeColor }]}>Update Symptoms Log →</Text>
+              <Text style={[styles.footerLink, { color: themeColor }]}>Log Daily Symptoms →</Text>
             </View>
           </Pressable>
 
-          {/* Longitudinal Progress Card */}
-          <View style={styles.trackCard}>
+          {/* 3. Nutrition & Meal Tracking Card */}
+          <Pressable
+            onPress={() => router.push('/(app)/nutrition')}
+            style={({ pressed }) => [styles.trackCard, pressed && styles.cardPressed]}
+          >
             <View style={styles.cardHeaderRow}>
-              <View style={[styles.cardIconWrap, { backgroundColor: '#F8FAFC' }]}>
-                <Ionicons name="analytics" size={22} color="#0B1E38" />
+              <View style={[styles.cardIconWrap, { backgroundColor: '#FFF7ED' }]}>
+                <Ionicons name="restaurant" size={22} color="#EA580C" />
               </View>
-              <View style={styles.neutralPill}>
-                <Text style={styles.neutralPillText}>Multi-Tier</Text>
+              <View style={[styles.activePill, { backgroundColor: '#FFEDD5' }]}>
+                <Text style={[styles.activePillText, { color: '#C2410C' }]}>
+                  {nutrition.caloriesConsumed} / {nutrition.calorieTarget} kcal
+                </Text>
               </View>
             </View>
 
-            <Text style={styles.cardTitle}>Progress & Biomarkers</Text>
+            <Text style={styles.cardTitle}>Nutrition & Macros</Text>
             <Text style={styles.cardSub}>
-              Longitudinal AI model synthesis correlates clinical lab markers (Tier 2) and ultrasound features (Tier 3) with your baseline profile.
+              {isFemale
+                ? `Protein: ${nutrition.proteinConsumed}g • Carbs: ${nutrition.carbsConsumed}g • Fat: ${nutrition.fatsConsumed}g. Low-glycemic meals prevent postprandial insulin surges.`
+                : `Protein: ${nutrition.proteinConsumed}g • Carbs: ${nutrition.carbsConsumed}g • Fat: ${nutrition.fatsConsumed}g. Micronutrient-rich support for testosterone synthesis.`}
             </Text>
 
             <View style={styles.cardFooter}>
-              <Text style={styles.footerMutedText}>Requires active screening completion</Text>
+              <Text style={[styles.footerLink, { color: '#EA580C' }]}>Log Meal & View Plans →</Text>
+            </View>
+          </Pressable>
+
+          {/* 4. Hydration Water Log Card */}
+          <View style={styles.trackCard}>
+            <Pressable onPress={() => router.push('/(app)/water-log')}>
+              <View style={styles.cardHeaderRow}>
+                <View style={[styles.cardIconWrap, { backgroundColor: '#E0F2FE' }]}>
+                  <Ionicons name="water" size={22} color="#0284C7" />
+                </View>
+                <View style={[styles.activePill, { backgroundColor: '#E0F2FE' }]}>
+                  <Text style={[styles.activePillText, { color: '#0369A1' }]}>
+                    {waterLiters} / {waterTargetLiters} L
+                  </Text>
+                </View>
+              </View>
+
+              <Text style={styles.cardTitle}>Hydration Tracker</Text>
+              <Text style={styles.cardSub}>
+                Maintains cellular hydration, supports hepatic clearance, and reduces fluid retention.
+              </Text>
+            </Pressable>
+
+            {/* In-Card Quick Hydration Add */}
+            <View style={styles.quickAddRow}>
+              <Pressable
+                onPress={() => addWaterMl(250)}
+                style={({ pressed }) => [styles.quickAddBtn, pressed && styles.quickAddBtnPressed]}
+              >
+                <Ionicons name="add" size={14} color="#0284C7" />
+                <Text style={styles.quickAddBtnText}>+250 ml</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => addWaterMl(500)}
+                style={({ pressed }) => [styles.quickAddBtn, pressed && styles.quickAddBtnPressed]}
+              >
+                <Ionicons name="add" size={14} color="#0284C7" />
+                <Text style={styles.quickAddBtnText}>+500 ml</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => router.push('/(app)/water-log')}
+                style={styles.moreLinkWrap}
+              >
+                <Text style={styles.moreLinkText}>History →</Text>
+              </Pressable>
+            </View>
+          </View>
+
+          {/* 5. Physical Movement & Activity Card */}
+          <Pressable
+            onPress={() => router.push('/(app)/movement')}
+            style={({ pressed }) => [styles.trackCard, pressed && styles.cardPressed]}
+          >
+            <View style={styles.cardHeaderRow}>
+              <View style={[styles.cardIconWrap, { backgroundColor: '#F0FDF4' }]}>
+                <Ionicons name="barbell" size={22} color="#16A34A" />
+              </View>
+              <View style={[styles.activePill, { backgroundColor: '#DCFCE7' }]}>
+                <Text style={[styles.activePillText, { color: '#15803D' }]}>
+                  {movement.todayActivityMinutes} min • {movement.todaySteps.toLocaleString()} steps
+                </Text>
+              </View>
+            </View>
+
+            <Text style={styles.cardTitle}>Physical Movement</Text>
+            <Text style={styles.cardSub}>
+              {isFemale
+                ? 'Targeted post-meal walks and low-stress resistance exercise for GLUT4 glucose disposal.'
+                : 'Compound resistance training and brisk walking to preserve lean mass and enhance testosterone.'}
+            </Text>
+
+            <View style={styles.cardFooter}>
+              <Text style={[styles.footerLink, { color: '#16A34A' }]}>View Activity Trends →</Text>
+            </View>
+          </Pressable>
+
+          {/* 6. Medications & Supplements Card */}
+          <View style={styles.trackCard}>
+            <Pressable onPress={() => router.push('/(app)/medications')}>
+              <View style={styles.cardHeaderRow}>
+                <View style={[styles.cardIconWrap, { backgroundColor: '#F5F3FF' }]}>
+                  <Ionicons name="medical" size={22} color="#7C3AED" />
+                </View>
+                <View style={[styles.activePill, { backgroundColor: '#EDE9FE' }]}>
+                  <Text style={[styles.activePillText, { color: '#6D28D9' }]}>
+                    {takenMedsCount} of {medications.length} Taken
+                  </Text>
+                </View>
+              </View>
+
+              <Text style={styles.cardTitle}>Medications & Supplements</Text>
+              <Text style={styles.cardSub}>
+                Daily scheduled doses tailored to your metabolic and hormonal protocol.
+              </Text>
+            </Pressable>
+
+            {/* Quick med items list with inline check toggle */}
+            <View style={styles.medsQuickList}>
+              {medications.slice(0, 2).map((med) => (
+                <View key={med.id} style={styles.medQuickItem}>
+                  <Pressable
+                    onPress={() => markMedicationStatus(med.id, med.status === 'taken' ? 'pending' : 'taken')}
+                    style={[
+                      styles.medCheckCircle,
+                      med.status === 'taken' && { backgroundColor: '#10B981', borderColor: '#10B981' },
+                    ]}
+                  >
+                    {med.status === 'taken' && <Ionicons name="checkmark" size={12} color="#FFFFFF" />}
+                  </Pressable>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.medQuickName, med.status === 'taken' && styles.medQuickNameDone]}>
+                      {med.name} ({med.dosage})
+                    </Text>
+                    <Text style={styles.medQuickTime}>{med.scheduledTime} • {med.instructions}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+
+            <View style={styles.cardFooter}>
+              <Pressable onPress={() => router.push('/(app)/medications')}>
+                <Text style={[styles.footerLink, { color: '#7C3AED' }]}>View All Prescriptions →</Text>
+              </Pressable>
             </View>
           </View>
         </View>
       </ScrollView>
 
-      {/* Permanent BioPulse Bottom Navigation */}
+      {/* Permanent Fixed Bottom Nav */}
       <BioPulseBottomNav activeTab="track" />
     </View>
   );
@@ -151,69 +317,96 @@ export default function TrackHubScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#FAFCFE',
+    backgroundColor: '#F8FAFC',
   },
   header: {
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    paddingHorizontal: 16,
+    paddingBottom: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 14,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
   },
   headerLeft: {
-    gap: 2,
+    flex: 1,
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#0B1E38',
+    color: BioPulseColors.navy,
   },
   headerSubtitle: {
     fontSize: 12,
-    color: '#64748B',
+    color: BioPulseColors.secondaryText,
+    marginTop: 2,
   },
   pathwayBadge: {
-    paddingHorizontal: 9,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 8,
+    marginLeft: 8,
   },
   pathwayBadgeText: {
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   scrollContent: {
-    flexGrow: 1,
     paddingHorizontal: 16,
     paddingTop: 16,
   },
   tabletScrollContent: {
-    alignItems: 'center',
+    maxWidth: 600,
+    alignSelf: 'center',
+    width: '100%',
   },
   container: {
-    width: '100%',
     gap: 14,
   },
   tabletContainer: {
-    maxWidth: 580,
+    width: '100%',
+  },
+  summaryBar: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    marginBottom: 4,
+  },
+  summaryCol: {
+    alignItems: 'center',
+    gap: 3,
+  },
+  summaryVal: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: BioPulseColors.navy,
+  },
+  summaryLabel: {
+    fontSize: 10,
+    color: '#64748B',
+  },
+  summaryDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: '#E2E8F0',
   },
   trackCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 16,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#F1F5F9',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
+    borderColor: '#E2E8F0',
+    padding: 16,
   },
   cardPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.99 }],
+    borderColor: '#CBD5E1',
+    backgroundColor: '#F8FAFC',
   },
   cardHeaderRow: {
     flexDirection: 'row',
@@ -222,58 +415,110 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   cardIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   activePill: {
-    backgroundColor: '#DCFCE7',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
   activePillText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#15803D',
-  },
-  neutralPill: {
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  neutralPillText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#64748B',
   },
   cardTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#0B1E38',
+    color: BioPulseColors.navy,
     marginBottom: 4,
   },
   cardSub: {
-    fontSize: 12.5,
+    fontSize: 12,
+    color: BioPulseColors.secondaryText,
     lineHeight: 18,
-    color: '#64748B',
     marginBottom: 12,
   },
   cardFooter: {
     borderTopWidth: 1,
-    borderTopColor: '#F8FAFC',
+    borderTopColor: '#F1F5F9',
     paddingTop: 10,
   },
   footerLink: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
   },
-  footerMutedText: {
-    fontSize: 11.5,
+  quickAddRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    paddingTop: 10,
+  },
+  quickAddBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0F9FF',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+  },
+  quickAddBtnPressed: {
+    backgroundColor: '#E0F2FE',
+  },
+  quickAddBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#0284C7',
+  },
+  moreLinkWrap: {
+    marginLeft: 'auto',
+  },
+  moreLinkText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#0284C7',
+  },
+  medsQuickList: {
+    gap: 8,
+    marginBottom: 10,
+  },
+  medQuickItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 8,
+    padding: 8,
+  },
+  medCheckCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#94A3B8',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  medQuickName: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: BioPulseColors.navy,
+  },
+  medQuickNameDone: {
+    textDecorationLine: 'line-through',
     color: '#94A3B8',
-    fontStyle: 'italic',
+  },
+  medQuickTime: {
+    fontSize: 10,
+    color: '#64748B',
   },
 });

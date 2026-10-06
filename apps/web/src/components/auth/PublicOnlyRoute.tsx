@@ -1,14 +1,14 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { ROUTES, getPathwayDashboardRoute } from '../../constants/routes';
-import { BioPulseLoadingScreen } from '../brand/BioPulseLoadingScreen';
+import { getPathwayDashboardRoute, getPathwayOnboardingRoute } from '../../constants/routes';
+import { RouteLoadingFallback } from '../common/RouteLoadingFallback';
 
 export const PublicOnlyRoute: React.FC = () => {
   const { userProfile, isAuthenticated, isOnboarded, loading } = useAuth();
 
   if (loading) {
-    return <BioPulseLoadingScreen message="Checking authorization..." />;
+    return <RouteLoadingFallback message="Verifying session..." />;
   }
 
   if (isAuthenticated) {
@@ -16,7 +16,8 @@ export const PublicOnlyRoute: React.FC = () => {
       const targetRoute = getPathwayDashboardRoute(userProfile);
       return <Navigate to={targetRoute} replace />;
     }
-    return <Navigate to={ROUTES.ONBOARDING} replace />;
+    const targetOnboarding = getPathwayOnboardingRoute(userProfile);
+    return <Navigate to={targetOnboarding} replace />;
   }
 
   return <Outlet />;

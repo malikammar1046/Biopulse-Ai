@@ -319,17 +319,48 @@ def extract_male_patient_raw_inputs(health_data: Any, passed_data: dict | None =
 
     h_cm = _get_val(p, "height_cm") or _get_val(p, "heightCm")
     w_kg = _get_val(p, "weight_kg") or _get_val(p, "weightKg")
-    waist = _get_val(p, "waist_cm") or _get_val(p, "waistCm") or _get_val(p, "waist_inch")
+    waist_raw = _get_val(p, "waist_cm") if _get_val(p, "waist_cm") is not None else _get_val(p, "waistCm")
+    if waist_raw is not None and str(waist_raw).strip() != "" and str(waist_raw).strip().lower() not in ("none", "null", "nan"):
+        try:
+            waist = float(waist_raw)
+        except (ValueError, TypeError):
+            waist = None
+    else:
+        waist = None
+
     mh = _get_val(p, "mensHealth") or _get_val(p, "mens_health") or {}
     lifestyle = _get_val(p, "lifestyle") or {}
     conds = _get_val(p, "conditions") or _get_val(p, "diagnosedConditions") or []
+    adam = _get_val(mh, "adamResponses") or _get_val(mh, "adam_responses") or {}
 
-    low_energy = 1 if (_get_val(mh, "energyLevel") in ["low", "very_low"] or "fatigue" in str(conds).lower()) else 0
-    sleep_trouble = 1 if (_get_val(mh, "sleepQuality") in ["poor", "fair"] or float(_get_val(lifestyle, "sleepHours", _get_val(p, "sleep_hours", 7.5)) or 7.5) < 6.0) else 0
-    low_mood = 1 if ("mood" in str(_get_val(mh, "moodFactors", "")).lower() or "depression" in str(conds).lower()) else 0
-    low_interest = 1 if (_get_val(mh, "sexDrive") in ["low", "very_low"]) else 0
+    low_energy = 1 if (
+        _get_val(adam, "adam_q2") is True
+        or _get_val(mh, "energyLevel") in ["low", "very_low"]
+        or "fatigue" in str(conds).lower()
+    ) else 0
+
+    sleep_trouble = 1 if (
+        _get_val(adam, "adam_q9") is True
+        or _get_val(mh, "sleepQuality") in ["poor", "fair", "frequently_waking"]
+        or float(_get_val(lifestyle, "sleepHours", _get_val(p, "sleep_hours", 7.5)) or 7.5) < 6.0
+    ) else 0
+
+    mood_changes = _get_val(mh, "moodChanges") or []
+    low_mood = 1 if (
+        _get_val(adam, "adam_q6") is True
+        or _get_val(adam, "adam_q5") is True
+        or (isinstance(mood_changes, list) and len(mood_changes) > 0)
+        or "mood" in str(_get_val(mh, "moodFactors", "")).lower()
+        or "depression" in str(conds).lower()
+    ) else 0
+
+    sex_drive = str(_get_val(mh, "sexDrive", "")).strip().lower()
+    low_interest_enums = {"low", "very_low", "reduced", "significantly_reduced"}
+    adam_q1 = _get_val(adam, "adam_q1")
+    low_interest = 1 if (adam_q1 is True or sex_drive in low_interest_enums) else 0
+
     hbp = 1 if ("hypertension" in str(conds).lower() or "blood pressure" in str(conds).lower()) else 0
-    dm = 1 if ("diabetes" in str(conds).lower() or "prediabetes" in str(conds).lower()) else 0
+    dm = 1 if ("diabetes" in str(conds).lower() or "prediabetes" in str(conds).lower() or "insulin resistance" in str(conds).lower()) else 0
 
     raw_inputs = {
         "age": age,
@@ -345,11 +376,12 @@ def extract_male_patient_raw_inputs(health_data: Any, passed_data: dict | None =
     }
 
     for k in direct_keys:
-        if k in passed and passed[k] is not None and passed[k] != '':
-            try:
-                raw_inputs[k] = float(passed[k])
-            except (ValueError, TypeError):
-                raw_inputs[k] = passed[k]
+        if k in passed:
+            val = passed[k]
+            if val is None or str(val).strip() == "" or str(val).strip().lower() in ("none", "null", "nan"):
+                raw_inputs[k] = None
+            else:
+                raw_inputs[k] = val
 
     return raw_inputs
 
@@ -398,6 +430,12 @@ def reassess_from_current_patient_state(
 
     # 2. Extract baseline Tier 1 inputs & PATCH merge incoming
     # Stored inputs are the baseline; fresh profile inputs (e.g. Weight changed in Settings) take precedence!
+    NON_TIER1_CLIENT_COLLECTIONS = {
+        'userProfile', 'cycleRecords', 'symptomRecords', 'foodLogs', 'fitnessLogs',
+        'medicationLogs', 'appointments', 'reminders', 'lifestyle', 'mensHealth',
+        'waterLog', 'profile', 'healthData'
+    }
+
     if module == "male_hypogonadism":
         baseline_t1 = extract_male_patient_raw_inputs(health_data, client_health_data or incoming_tier1)
         merged_tier1 = dict(stored_tier1)
@@ -406,6 +444,8 @@ def reassess_from_current_patient_state(
                 merged_tier1[k] = v
         if incoming_tier1 and isinstance(incoming_tier1, dict):
             for k, v in incoming_tier1.items():
+                if k in NON_TIER1_CLIENT_COLLECTIONS:
+                    continue
                 if v is not None and str(v).strip() != "":
                     try:
                         merged_tier1[k] = float(v)
@@ -419,6 +459,8 @@ def reassess_from_current_patient_state(
                 merged_tier1[k] = v
         if incoming_tier1 and isinstance(incoming_tier1, dict):
             for k, v in incoming_tier1.items():
+                if k in NON_TIER1_CLIENT_COLLECTIONS:
+                    continue
                 if v is not None and str(v).strip() != "":
                     try:
                         merged_tier1[k] = float(v)
@@ -1082,10 +1124,20 @@ def format_assessment_response(record: dict[str, Any]) -> dict[str, Any]:
             'tier_3_ultrasound': False if is_male else bool(pcom_status or record.get('pcom_status')),
         }
 
+    input_hash = record.get('input_hash')
+    if not input_hash:
+        try:
+            from apps.intelligence.services.screening_hash import compute_canonical_input_hash
+            raw_hash_source = authoritative_tier_1 or input_features or record.get('tier_1_inputs') or {}
+            input_hash = compute_canonical_input_hash(raw_hash_source, module=module_name)
+        except Exception:
+            input_hash = ''
+
     return {
         'assessment_id': str(record.get('assessment_id') or record.get('id', '')),
         'id': str(record.get('id') or record.get('assessment_id', '')),
         'module': module_name,
+        'input_hash': input_hash,
         'assessment_level': level,
         'tiers_included': tiers_inc,
         'model_version': record.get('model_version', '1.0.0'),

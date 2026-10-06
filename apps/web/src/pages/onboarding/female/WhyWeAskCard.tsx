@@ -22,9 +22,9 @@ export const WhyWeAskCard: React.FC<WhyWeAskCardProps> = ({
         <div className="w-6 h-6 rounded-full bg-[#E0F2FE] flex items-center justify-center shrink-0">
           <Icon className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
         </div>
-        <span className="text-xs font-bold tracking-tight text-[#01579B]">{title}</span>
+        <span className="text-[13px] sm:text-sm font-semibold tracking-tight text-[#01579B]">{title}</span>
       </div>
-      <p className="text-[11px] sm:text-xs text-[#55718F] font-sans leading-relaxed">
+      <p className="text-[13px] sm:text-sm text-[#55718F] font-sans leading-relaxed">
         {description}
       </p>
     </div>

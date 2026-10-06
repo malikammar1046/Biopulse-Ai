@@ -29,7 +29,7 @@ export const MaleOnboardingLayout: React.FC<MaleOnboardingLayoutProps> = ({
   children,
 }) => {
   return (
-    <div className="min-h-screen lg:h-screen lg:max-h-screen lg:overflow-hidden bg-[#F5FBFD] text-[#073B72] flex flex-col justify-between p-3 sm:p-4 lg:p-4 xl:p-5 select-none relative font-sans">
+    <div className="min-h-screen bg-[#F5FBFD] text-[#073B72] flex flex-col justify-between p-3 sm:p-4 lg:p-5 xl:p-6 select-none relative font-sans">
       {/* ── Background Luminous Ambient Glows (Teal & Navy) ── */}
       <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
         <div className="absolute top-10 left-10 w-[450px] h-[450px] bg-[#DDF7F7]/60 rounded-full blur-[140px]" />
@@ -37,42 +37,42 @@ export const MaleOnboardingLayout: React.FC<MaleOnboardingLayoutProps> = ({
         <div className="absolute top-1/2 left-1/3 w-[400px] h-[400px] bg-[#F0FDFE]/70 rounded-full blur-[120px]" />
       </div>
 
-      {/* ── Desktop Two-Column Viewport-Contained Workspace ── */}
-      <div className="max-w-[1536px] w-full mx-auto flex-1 flex flex-col lg:flex-row gap-5 xl:gap-7 items-stretch justify-center min-h-0">
+      {/* ── Desktop Two-Column Workspace (Wide Card Dominant, max-w-[1520px]) ── */}
+      <div className="max-w-[1520px] 2xl:max-w-[1640px] w-full mx-auto flex-1 flex flex-col lg:flex-row gap-6 lg:gap-10 xl:gap-14 items-stretch justify-center px-3 sm:px-6 lg:px-8 xl:px-10">
         {/* ════════════════════════════════════════════════════════════
-            LEFT COLUMN: MALE IDENTITY & PATHWAY PANEL (~26% width)
+            LEFT COLUMN: MALE IDENTITY & PATHWAY PANEL
            ════════════════════════════════════════════════════════════ */}
-        <aside className="w-full lg:w-[26%] xl:w-[25%] flex flex-col justify-between py-1 px-2 select-none shrink-0 min-h-0">
+        <aside className="w-full lg:w-[260px] xl:w-[290px] 2xl:w-[310px] flex flex-col justify-between py-2 sm:py-3 select-none shrink-0">
           {/* Top Back Action & Identity Header */}
           <div className="space-y-3.5">
             <Link
               to={ROUTES.HOME}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#55718F] hover:text-[#073B72] transition-colors group cursor-pointer"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-[#55718F] hover:text-[#073B72] transition-colors group cursor-pointer"
             >
-              <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5 text-[#55718F] group-hover:text-[#073B72]" aria-hidden="true" />
+              <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1 text-[#55718F] group-hover:text-[#073B72]" aria-hidden="true" />
               <span>Back to Home</span>
             </Link>
 
-            <div className="space-y-2 pt-1">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#EAFBFC] border border-[#B2EBF2] text-[10px] font-bold text-[#0E9EAA] tracking-wider uppercase shadow-2xs">
+            <div className="space-y-2 pt-0.5">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAFBFC] border border-[#B2EBF2] text-[12px] font-bold text-[#0E9EAA] tracking-wider uppercase shadow-2xs font-sans">
                 <span>FOR MEN</span>
               </div>
 
-              <h1 className="text-2xl sm:text-3xl xl:text-[2.2rem] font-extrabold font-display leading-[1.12] tracking-tight">
+              <h1 className="text-2xl sm:text-3xl xl:text-[2.1rem] font-bold font-display leading-[1.14] tracking-tight">
                 <span className="text-[#073B72] block">Your Health</span>
                 <span className="text-[#0E9EAA] block">Your Strength</span>
               </h1>
 
-              <p className="text-xs text-[#55718F] font-sans leading-relaxed max-w-xs">
+              <p className="text-[14px] sm:text-[15px] text-[#55718F] font-sans leading-relaxed">
                 A few simple steps help us understand your health and personalize your Male Hypogonadism screening and guidance.
               </p>
             </div>
           </div>
 
-          {/* Lower Pathway Visual & Handwritten Decorative Script */}
-          <div className="relative pt-3 pb-1 mt-auto">
+          {/* Lower Pathway Visual & Decorative Accents */}
+          <div className="relative pt-4 pb-2 mt-auto hidden lg:block">
             {/* Soft teal circular shape background */}
-            <div className="relative w-44 h-44 sm:w-48 sm:h-48 xl:w-52 xl:h-52 mx-auto flex items-center justify-center">
+            <div className="relative w-40 h-40 xl:w-44 xl:h-44 mx-auto flex items-center justify-center">
               {/* Circular Halo */}
               <div
                 className="absolute inset-0 rounded-full bg-gradient-to-br from-[#EAFBFC] via-[#DDF7F7] to-[#EAFBFC] -z-0 shadow-inner"
@@ -81,7 +81,7 @@ export const MaleOnboardingLayout: React.FC<MaleOnboardingLayoutProps> = ({
 
               {/* Foliage / Geometric botanical SVG decoration in teal */}
               <svg
-                className="absolute -top-2 -right-1 w-16 h-16 text-[#0E9EAA]/30 pointer-events-none"
+                className="absolute -top-1.5 -right-1 w-14 h-14 text-[#0E9EAA]/30 pointer-events-none"
                 viewBox="0 0 100 100"
                 fill="currentColor"
                 aria-hidden="true"
@@ -91,7 +91,7 @@ export const MaleOnboardingLayout: React.FC<MaleOnboardingLayoutProps> = ({
               </svg>
 
               {/* Male Model Portrait Image */}
-              <div className="relative z-10 w-36 sm:w-40 xl:w-44 h-36 sm:h-40 xl:h-44 rounded-full overflow-hidden border-3 border-white shadow-md">
+              <div className="relative z-10 w-32 xl:w-36 h-32 xl:h-36 rounded-full overflow-hidden border-2.5 border-white shadow-md">
                 <img
                   src="/assets/images/male-pathway.jpg"
                   alt="BioPulse AI - For Men"
@@ -101,9 +101,9 @@ export const MaleOnboardingLayout: React.FC<MaleOnboardingLayoutProps> = ({
               </div>
 
               {/* Cursive Handwritten Script Accent */}
-              <div className="absolute -top-2.5 -right-1 sm:-right-3 rotate-[-8deg] select-none pointer-events-none z-20">
+              <div className="absolute -top-2 -right-2 rotate-[-8deg] select-none pointer-events-none z-20">
                 <span
-                  className="text-xl sm:text-2xl font-bold text-[#0E9EAA] block leading-tight text-right drop-shadow-2xs"
+                  className="text-lg sm:text-xl font-bold text-[#0E9EAA] block leading-tight text-right drop-shadow-2xs"
                   style={{ fontFamily: "'Caveat', cursive" }}
                 >
                   Peak Vitality
@@ -113,21 +113,17 @@ export const MaleOnboardingLayout: React.FC<MaleOnboardingLayoutProps> = ({
               </div>
 
               {/* Floating Badge Card Over Lower Left */}
-              <div className="absolute -bottom-2 -left-2 sm:-left-3 z-20 bg-white/95 backdrop-blur-md rounded-xl p-2.5 border border-[#D7EAF2] shadow-md flex items-center gap-2.5">
+              <div className="absolute -bottom-1 -left-2 z-20 bg-white/95 backdrop-blur-md rounded-xl p-2.5 border border-[#D7EAF2] shadow-sm flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-[#DDF7F7] flex items-center justify-center text-[#0E9EAA] shrink-0">
                   <ActivityHeart className="w-3.5 h-3.5 text-[#0E9EAA]" aria-hidden="true" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-[#073B72] block leading-tight">
+                  <span className="text-[11px] font-bold text-[#073B72] block leading-tight">
                     Knowledge today
                   </span>
-                  <span className="text-[9px] text-[#55718F] block leading-tight">
+                  <span className="text-[10px] text-[#55718F] block leading-tight">
                     Stronger tomorrow
                   </span>
-                  <div className="flex items-center gap-1 mt-1">
-                    <div className="w-5 h-1 rounded-full bg-[#0E9EAA]" />
-                    <div className="w-6 h-1 rounded-full bg-[#E2EEF4]" />
-                  </div>
                 </div>
               </div>
             </div>
@@ -135,18 +131,18 @@ export const MaleOnboardingLayout: React.FC<MaleOnboardingLayoutProps> = ({
         </aside>
 
         {/* ════════════════════════════════════════════════════════════
-            RIGHT COLUMN: MAIN ONBOARDING WORKSPACE (~74% width)
+            RIGHT COLUMN: MAIN ONBOARDING WORKSPACE (Expanded Dominant Card)
            ════════════════════════════════════════════════════════════ */}
-        <main className="w-full lg:w-[74%] xl:w-[75%] flex flex-col justify-between lg:h-full min-h-0">
-          {/* Main White Card with Viewport Constraints */}
-          <div className="w-full bg-white rounded-[24px] xl:rounded-[28px] border border-[#D7EAF2] shadow-[0_8px_30px_rgba(7,59,114,0.05)] p-4 sm:p-5 xl:p-6 flex flex-col justify-between lg:h-full min-h-0">
+        <main className="w-full flex-1 md:w-[calc(100%-1.25rem)] md:ml-auto lg:w-auto lg:ml-2 xl:ml-4 lg:max-w-[1040px] xl:max-w-[1180px] 2xl:max-w-[1260px] flex flex-col justify-between">
+          {/* Main White Card with Generous Desktop Space */}
+          <div className="w-full bg-white rounded-[24px] xl:rounded-[28px] border border-[#D7EAF2] shadow-[0_8px_30px_rgba(7,59,114,0.05)] p-5 sm:p-7 lg:p-8 xl:p-9 flex flex-col justify-between">
             {/* Top Fixed Area: Male Hypogonadism Onboarding Bar & Stepper */}
-            <div className="shrink-0">
-              <div className="flex items-center justify-between pb-2 border-b border-[#E8F1F5] mb-1.5">
-                <span className="text-[11px] font-bold font-mono text-[#0E9EAA] uppercase tracking-widest">
+            <div className="shrink-0 mb-2">
+              <div className="flex items-center justify-between pb-2.5 border-b border-[#E8F1F5] mb-2">
+                <span className="text-[13px] sm:text-sm font-bold font-sans text-[#0E9EAA] uppercase tracking-wider">
                   MALE HYPOGONADISM ONBOARDING
                 </span>
-                <span className="text-xs font-semibold text-[#55718F] font-mono">
+                <span className="text-[13px] sm:text-sm font-semibold font-sans text-[#55718F]">
                   Step {currentStep} of {totalSteps}
                 </span>
               </div>
@@ -159,25 +155,25 @@ export const MaleOnboardingLayout: React.FC<MaleOnboardingLayoutProps> = ({
               />
             </div>
 
-            {/* Flexible / Scroll-contained Form Content Area */}
-            <div className="flex-1 min-h-0 overflow-y-auto pr-1 py-1">
+            {/* Form Content Area with Natural Flow */}
+            <div className="flex-1 py-3 sm:py-4">
               {children}
             </div>
 
-            {/* Sticky/Stable Bottom Navigation Row inside Main Card */}
-            <div className="mt-3 pt-3 border-t border-[#E8F1F5] flex items-center justify-between gap-4 shrink-0">
+            {/* Bottom Navigation Row with 50px Touch-Friendly Buttons */}
+            <div className="mt-6 pt-5 border-t border-[#E8F1F5] flex items-center justify-between gap-4 shrink-0">
               {/* Back Button */}
               <button
                 type="button"
                 onClick={onBack}
                 disabled={!canGoBack || currentStep === 1 || isSubmitting}
-                className={`px-5 py-2 rounded-full text-xs font-bold font-mono uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer ${
+                className={`min-h-[50px] px-7 py-3 rounded-full text-[15px] font-semibold font-sans uppercase tracking-wider flex items-center gap-2.5 transition-all cursor-pointer ${
                   currentStep === 1
                     ? 'opacity-0 pointer-events-none'
                     : 'bg-[#F5FBFD] hover:bg-[#E8F4F8] border border-[#D7EAF2] text-[#55718F] hover:text-[#073B72]'
                 }`}
               >
-                <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
+                <ArrowLeft className="w-4.5 h-4.5" aria-hidden="true" />
                 <span>Back</span>
               </button>
 
@@ -186,11 +182,11 @@ export const MaleOnboardingLayout: React.FC<MaleOnboardingLayoutProps> = ({
                 type="button"
                 onClick={onNext}
                 disabled={isSubmitting}
-                className="px-7 py-2.5 rounded-full font-sans font-bold text-xs sm:text-sm uppercase tracking-wider text-white bg-[#0E9EAA] hover:bg-[#0B8590] shadow-md shadow-teal-500/20 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed transform hover:scale-[1.01] active:scale-[0.99]"
+                className="min-h-[50px] px-8 sm:px-10 py-3 rounded-full font-sans font-semibold text-[15px] sm:text-base uppercase tracking-wider text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-md shadow-sky-500/20 transition-all flex items-center gap-2.5 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed transform hover:scale-[1.01] active:scale-[0.99]"
               >
                 {isSubmitting ? (
                   <>
-                    <div className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                    <div className="w-4.5 h-4.5 rounded-full border-2 border-white border-t-transparent animate-spin" />
                     <span>Saving...</span>
                   </>
                 ) : (
@@ -202,7 +198,7 @@ export const MaleOnboardingLayout: React.FC<MaleOnboardingLayoutProps> = ({
                         ? 'Review Profile'
                         : 'Continue'}
                     </span>
-                    <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                    <ArrowRight className="w-4.5 h-4.5" aria-hidden="true" />
                   </>
                 )}
               </button>
@@ -210,12 +206,12 @@ export const MaleOnboardingLayout: React.FC<MaleOnboardingLayoutProps> = ({
           </div>
 
           {/* Privacy Note & Footer Step Counter below Main Card */}
-          <div className="w-full py-1.5 flex items-center justify-between text-[11px] text-[#55718F] px-3 shrink-0">
-            <div className="flex items-center gap-1.5 mx-auto">
-              <Lock01 className="w-3 h-3 text-[#0E9EAA]" aria-hidden="true" />
+          <div className="w-full py-2.5 flex items-center justify-between text-[13px] sm:text-sm text-[#55718F] font-sans px-3 shrink-0">
+            <div className="flex items-center gap-2 mx-auto">
+              <Lock01 className="w-4 h-4 text-[#0E9EAA]" aria-hidden="true" />
               <span>Your information is secure and private.</span>
             </div>
-            <span className="hidden sm:block text-[10px] font-mono text-[#8FA3B8]">
+            <span className="hidden sm:block text-[13px] font-sans text-[#8FA3B8]">
               Step {currentStep} of {totalSteps}
             </span>
           </div>

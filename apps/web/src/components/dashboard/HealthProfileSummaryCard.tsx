@@ -110,7 +110,7 @@ export const HealthProfileSummaryCard: React.FC = () => {
                 onClick={handleCompleteOrEdit}
                 className="text-[10px] text-[#0288D1] font-bold hover:underline cursor-pointer"
               >
-                + Add DOB
+                Add DOB
               </button>
             </div>
           )}
@@ -136,7 +136,7 @@ export const HealthProfileSummaryCard: React.FC = () => {
                 onClick={handleCompleteOrEdit}
                 className="text-[10px] text-[#0288D1] font-bold hover:underline cursor-pointer"
               >
-                + Add Blood Type
+                Add Blood Type
               </button>
             </div>
           )}
@@ -162,7 +162,7 @@ export const HealthProfileSummaryCard: React.FC = () => {
                 onClick={handleCompleteOrEdit}
                 className="text-[10px] text-[#0288D1] font-bold hover:underline cursor-pointer"
               >
-                + Add Measurements
+                Add Measurements
               </button>
             </div>
           )}
@@ -190,7 +190,7 @@ export const HealthProfileSummaryCard: React.FC = () => {
                 onClick={handleCompleteOrEdit}
                 className="text-[10px] text-[#0288D1] font-bold hover:underline cursor-pointer"
               >
-                + Add Emergency Contact
+                Add Emergency Contact
               </button>
             </div>
           )}
@@ -230,7 +230,7 @@ export const HealthProfileSummaryCard: React.FC = () => {
                 onClick={handleCompleteOrEdit}
                 className="text-[11px] text-[#0288D1] font-bold hover:underline cursor-pointer"
               >
-                + Add
+                Add
               </button>
             </div>
           )}
@@ -267,7 +267,7 @@ export const HealthProfileSummaryCard: React.FC = () => {
                 onClick={handleCompleteOrEdit}
                 className="text-[11px] text-emerald-700 font-bold hover:underline cursor-pointer"
               >
-                + Add
+                Add
               </button>
             </div>
           )}
@@ -304,7 +304,7 @@ export const HealthProfileSummaryCard: React.FC = () => {
                 onClick={handleCompleteOrEdit}
                 className="text-[11px] text-[#0288D1] font-bold hover:underline cursor-pointer"
               >
-                + Add
+                Add
               </button>
             </div>
           )}

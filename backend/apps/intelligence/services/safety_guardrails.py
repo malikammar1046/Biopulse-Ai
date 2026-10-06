@@ -77,6 +77,32 @@ class SafetyGuardrails:
         return None
 
     @staticmethod
+    def check_privacy_request(user_message: str) -> Optional[str]:
+        """
+        Detects when an unauthenticated public visitor requests personal health records,
+        screening results, personalized risk assessments, or private clinical data.
+        Returns the mandatory privacy boundary notice.
+        """
+        msg_lower = user_message.lower().strip()
+        privacy_triggers = [
+            r"\bmy\s+(?:screening|risk\s+score|risk\s+assessment|diagnosis|results?|lab\s+results?|blood\s+tests?|reports?|ultrasound|records?|cycle\s+history|medical\s+history|medications?|data)\b",
+            r"\b(?:what\s+is|show\s+me|tell\s+me|get|view|check)\s+my\s+(?:risk|score|results?|records?|data|health|pcos|hypogonadism)\b",
+            r"\bam\s+i\s+at\s+risk\b",
+            r"\bdo\s+i\s+have\s+pcos\b",
+            r"\bdo\s+i\s+have\s+(?:hypogonadism|low\s+t|low\s+testosterone)\b",
+            r"\b(?:my\s+patient\s+id|my\s+user\s+id|patient_uuid)\b",
+            r"\b(?:diagnose\s+me|calculate\s+my\s+risk|my\s+personal\s+risk)\b",
+        ]
+        for pattern in privacy_triggers:
+            if re.search(pattern, msg_lower, re.IGNORECASE):
+                return (
+                    "To protect your privacy, personalized health information is only available after you sign in to your BioPulse account.\n\n"
+                    "As the public BioPulse Assistant, I can answer general health questions, explain common medical terms, and guide you through how BioPulse works. "
+                    "To calculate your personal screening risk score, track your cycle, or upload lab reports, please [Sign In](/login) or [Get Started](/register)."
+                )
+        return None
+
+    @staticmethod
     def sanitize_llm_response(text: str) -> Tuple[str, str]:
         """
         Sanitizes the generated response to eliminate any inadvertent diagnostic pronouncements,

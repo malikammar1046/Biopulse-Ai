@@ -1,66 +1,95 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { InfoCircle } from '@untitledui/icons';
 import { ROUTES } from '../../constants/routes';
 import { useUserHealth } from '../../context/UserHealthContext';
-import {
-  FemaleCard,
-  APPLE_SPRINGS,
-} from './FemaleDesignPrimitives';
-import { FemaleScreeningCard } from './FemaleScreeningCard';
-import { FemaleTopFactors } from './FemaleTopFactors';
-import { FemaleNextBestAction } from './FemaleNextBestAction';
-import { FemaleRecentActivity } from './FemaleRecentActivity';
-import { RecommendedCareCard } from '../dashboard/RecommendedCareCard';
+import { APPLE_SPRINGS } from './FemaleDesignPrimitives';
+
+import { DashboardGreetingRow } from '../dashboard/overview/DashboardGreetingRow';
+import { ScreeningModuleCard } from '../dashboard/overview/modules/ScreeningModuleCard';
+import { PeriodCycleModuleCard } from '../dashboard/overview/modules/PeriodCycleModuleCard';
+import { NutritionModuleCard } from '../dashboard/overview/modules/NutritionModuleCard';
+import { ExerciseModuleCard } from '../dashboard/overview/modules/ExerciseModuleCard';
+import { WaterModuleCard } from '../dashboard/overview/modules/WaterModuleCard';
+import { MedicationModuleCard } from '../dashboard/overview/modules/MedicationModuleCard';
+import { CareCircleModuleCard } from '../dashboard/overview/modules/CareCircleModuleCard';
+import { SymptomsModuleCard } from '../dashboard/overview/modules/SymptomsModuleCard';
+import { NextBestActionModuleCard } from '../dashboard/overview/modules/NextBestActionModuleCard';
+
+import { getAuthoritativeAssessmentForPathway } from '../../utils/authoritativeAssessmentSelector';
+import { logDashboardRenderTrace } from '../../utils/probabilityTrace';
 
 export const FemaleDashboardOverview: React.FC = () => {
   const navigate = useNavigate();
   const {
+    userProfile,
     activeAssessment,
-    mlAssessment,
     assessmentLoading,
-    mlAssessmentLoading,
     reports,
-    appointments,
+    cycleStats,
+    cycleLoading,
+    foodLogs,
+    dailyNutritionTargets,
+    dietLoading,
+    todayFitnessActivities,
+    todayFitnessMinutes,
+    fitnessLoading,
+    waterLog,
+    incrementWater,
+    decrementWater,
+    medications,
+    todayMedicationProgress,
+    medicationsLoading,
+    careCircleMembers,
+    careCircleLoading,
+    symptomRecords,
+    symptomStats,
+    symptomsLoading,
+    openAiChatWithPrompt,
   } = useUserHealth();
 
+  // 1. Authoritative Assessment State strictly bound to female_pcos
+  const authoritative = useMemo(() => {
+    return getAuthoritativeAssessmentForPathway({
+      activeAssessment,
+      pathway: 'female',
+      userId: userProfile?.id,
+    });
+  }, [activeAssessment, userProfile?.id]);
 
-  // 2. Authoritative Assessment State
-  const hasAssessment = Boolean(
-    (activeAssessment && activeAssessment.has_assessment !== false) ||
-    (mlAssessment && mlAssessment.risk_category && mlAssessment.risk_category !== 'insufficient_data')
-  );
+  const {
+    authoritativeAssessment,
+    hasAssessment,
+    probabilityPercent,
+    riskCategory,
+    riskLabel,
+    assessmentLevel,
+    inputHash,
+    source: displaySource,
+  } = authoritative;
 
-  const probabilityPercent = useMemo(() => {
-    if (!hasAssessment) return null;
-    if (activeAssessment?.probability_percent !== undefined && activeAssessment.probability_percent !== null) {
-      return Math.round(activeAssessment.probability_percent);
-    }
-    if (activeAssessment?.probability !== undefined && activeAssessment.probability !== null) {
-      return Math.round(activeAssessment.probability * 100);
-    }
-    if (mlAssessment?.pcos_probability !== undefined && mlAssessment.pcos_probability !== null) {
-      return Math.round(mlAssessment.pcos_probability * 100);
-    }
-    return null;
-  }, [hasAssessment, activeAssessment, mlAssessment]);
-
-  const riskCategory = activeAssessment?.risk_category || mlAssessment?.risk_category || 'lower';
-  const riskLabel = activeAssessment?.risk_label || mlAssessment?.risk_pattern_description;
-  const assessmentLevel = activeAssessment?.assessment_level || (activeAssessment?.pcom_status ? 'tier_1_3' : 'tier_1');
+  // Diagnostic DEV trace
+  useEffect(() => {
+    logDashboardRenderTrace({
+      pathway: 'female',
+      userId: userProfile?.id,
+      dashboardSource: displaySource,
+      displayedProbability: probabilityPercent,
+      assessmentId: authoritativeAssessment?.assessment_id || authoritativeAssessment?.id,
+      module: authoritativeAssessment?.module,
+      inputHash,
+    });
+  }, [displaySource, probabilityPercent, authoritativeAssessment, userProfile?.id, inputHash]);
 
   const lastAssessmentDateFormatted = useMemo(() => {
-    const rawDate = activeAssessment?.created_at;
+    const rawDate = authoritativeAssessment?.created_at;
     if (!rawDate) return null;
     return new Date(rawDate).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
     });
-  }, [activeAssessment?.created_at]);
-
-  const threshold = activeAssessment?.threshold ?? mlAssessment?.screening_threshold ?? 0.38;
+  }, [authoritativeAssessment?.created_at]);
 
   // Unverified reports count
   const unverifiedReportsCount = useMemo(() => {
@@ -69,115 +98,145 @@ export const FemaleDashboardOverview: React.FC = () => {
       .reduce((sum, r) => sum + (r.results?.filter((res) => !res.userVerified)?.length || 0), 0);
   }, [reports]);
 
-  // Next upcoming scheduled appointment
-  const nextAppointment = useMemo(() => {
-    const scheduled = (appointments || []).filter((a) => a.status === 'scheduled');
-    if (scheduled.length === 0) return null;
-    return scheduled.sort(
-      (a, b) => new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime()
-    )[0];
-  }, [appointments]);
+  // 2. Real Sync Timestamp (updates when data loads or mounts)
+  const [syncTimestamp, setSyncTimestamp] = useState<Date>(() => new Date());
 
-  // Latest lab report
-  const latestReport = useMemo(() => {
-    if (!reports || reports.length === 0) return null;
-    return reports[0];
-  }, [reports]);
+  useEffect(() => {
+    setSyncTimestamp(new Date());
+  }, [activeAssessment, foodLogs, waterLog, todayFitnessActivities, cycleStats]);
 
-  const loading = assessmentLoading || mlAssessmentLoading;
+  const lastSyncedFormatted = useMemo(() => {
+    const now = new Date();
+    const diffMs = now.getTime() - syncTimestamp.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    if (diffMins <= 1) return 'just now';
+    if (diffMins < 60) return `${diffMins} mins ago`;
+    return `${Math.floor(diffMins / 60)} hr ago`;
+  }, [syncTimestamp]);
 
-
-  // Primary action handler
-  const handlePrimaryAction = async () => {
-    if (!hasAssessment) {
-      navigate(ROUTES.APP.ASSESSMENT);
-    } else if (unverifiedReportsCount > 0) {
-      navigate(ROUTES.APP.REPORTS);
-    } else if (assessmentLevel === 'tier_1') {
-      navigate(ROUTES.APP.ASSESSMENT);
-    } else {
-      navigate(ROUTES.APP.ASSESSMENT);
-    }
-  };
+  // Quick action navigation handlers
+  const handleAction = useCallback(
+    (targetRoute: string) => {
+      navigate(targetRoute);
+    },
+    [navigate]
+  );
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={APPLE_SPRINGS.instant}
-      className="max-w-6xl mx-auto space-y-6 sm:space-y-7 pb-16 text-left select-none"
+      className="max-w-7xl mx-auto space-y-6 sm:space-y-7 pb-16 text-left select-none"
     >
-      {/* ── Primary 2-Column Clinical Grid ───────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-stretch">
-        {/* Left Column (7 cols): Primary Screening Card */}
-        <div className="lg:col-span-7 flex flex-col">
-          <FemaleScreeningCard
-            hasAssessment={hasAssessment}
-            probabilityPercent={probabilityPercent}
-            riskCategory={riskCategory}
-            riskLabel={riskLabel}
-            assessmentLevel={assessmentLevel}
-            updatedAt={lastAssessmentDateFormatted}
-            threshold={threshold}
-            onStartScreening={() => navigate(ROUTES.APP.ASSESSMENT)}
-            onViewAssessment={() => navigate(ROUTES.APP.ASSESSMENT)}
-            onAddLabs={() => navigate(ROUTES.APP.ASSESSMENT)}
-            loading={loading}
-            gradcamB64={activeAssessment?.gradcam_b64}
-            pcomStatus={activeAssessment?.pcom_status}
-          />
-        </div>
+      {/* ── 1. Greeting, Pathway Badge, Live Sync & Date Context Row ───────── */}
+      <DashboardGreetingRow
+        fullName={userProfile?.fullName}
+        pathway="female"
+        cycleDay={cycleStats.currentCycleDay}
+        hasCycleData={cycleStats.hasData}
+        lastSyncedFormatted={lastSyncedFormatted}
+      />
 
-        {/* Right Column (5 cols): Single Next Best Action + Top Factors */}
-        <div className="lg:col-span-5 flex flex-col justify-between space-y-5 sm:space-y-6">
-          <FemaleNextBestAction
-            hasAssessment={hasAssessment}
-            assessmentLevel={assessmentLevel}
-            unverifiedReportsCount={unverifiedReportsCount}
-            onAction={handlePrimaryAction}
-          />
+      {/* ── 2. The 3x3 Modular Dashboard Grid ─────────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-6 items-stretch">
+        {/* ROW 1 */}
+        {/* Card 1: PCOS Screening */}
+        <ScreeningModuleCard
+          pathway="female"
+          hasAssessment={hasAssessment}
+          probabilityPercent={probabilityPercent}
+          riskCategory={riskCategory}
+          riskLabel={riskLabel}
+          assessmentLevel={assessmentLevel}
+          lastAssessmentDate={lastAssessmentDateFormatted}
+          loading={assessmentLoading}
+          onStartScreening={() => navigate(ROUTES.APP.ASSESSMENT)}
+          onViewAssessment={() => navigate(ROUTES.APP.ASSESSMENT)}
+        />
 
-          <FemaleTopFactors
-            explanations={activeAssessment?.explanations || mlAssessment?.explanations}
-            onViewExplanation={() => navigate(ROUTES.APP.ASSESSMENT)}
-          />
-        </div>
-      </div>
+        {/* Card 2: Period Cycle */}
+        <PeriodCycleModuleCard
+          cycleStats={cycleStats}
+          loading={cycleLoading}
+          onOpenCycle={() => navigate(ROUTES.APP.CYCLE)}
+          onLogPeriod={() => navigate(ROUTES.APP.CYCLE)}
+        />
 
-      {/* ── 3. Contextual Recommended Specialists ────────────────────────── */}
-      <RecommendedCareCard pathway="female" />
+        {/* Card 3: Nutrition & Meals */}
+        <NutritionModuleCard
+          foodLogs={foodLogs}
+          dailyTargets={dailyNutritionTargets}
+          pathway="female"
+          loading={dietLoading}
+          onViewMealPlan={() => navigate(ROUTES.APP.DIET)}
+          onLogMeal={() => navigate(ROUTES.APP.DIET)}
+        />
 
-      {/* ── 4. Recent Clinical Activity (Latest Report & Appointment) ───────── */}
-      <div className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-[#667085] px-1">
-          Recent Health Records
-        </h3>
-        <FemaleRecentActivity
-          latestReport={latestReport}
-          upcomingAppointment={nextAppointment}
+        {/* ROW 2 */}
+        {/* Card 4: Exercise & Movement */}
+        <ExerciseModuleCard
+          todayActivities={todayFitnessActivities}
+          todayMinutes={todayFitnessMinutes}
+          pathway="female"
+          loading={fitnessLoading}
+          onOpenFitness={() => navigate(ROUTES.APP.FITNESS)}
+          onLogActivity={() => navigate(ROUTES.APP.FITNESS)}
+        />
+
+        {/* Card 5: Water Log */}
+        <WaterModuleCard
+          waterLog={waterLog}
+          loading={dietLoading}
+          onIncrement={incrementWater}
+          onDecrement={decrementWater}
+          onOpenWaterLog={() => navigate(ROUTES.APP.DIET)}
+        />
+
+        {/* Card 6: Medication Reminders */}
+        <MedicationModuleCard
+          medications={medications}
+          todayProgress={todayMedicationProgress}
+          pathway="female"
+          loading={medicationsLoading}
+          onOpenMedications={() => navigate(ROUTES.APP.MEDICATIONS)}
+          onAddMedication={() => navigate(ROUTES.APP.MEDICATIONS)}
+        />
+
+        {/* ROW 3 */}
+        {/* Card 7: Care Circle */}
+        <CareCircleModuleCard
+          members={careCircleMembers}
+          pathway="female"
+          loading={careCircleLoading}
+          onOpenCareCircle={() => navigate(ROUTES.APP.CARE_CIRCLE)}
+          onAddMember={() => navigate(ROUTES.APP.CARE_CIRCLE)}
+        />
+
+        {/* Card 8: Symptom Check-in */}
+        <SymptomsModuleCard
+          symptomRecords={symptomRecords}
+          symptomStats={symptomStats}
+          pathway="female"
+          loading={symptomsLoading}
+          onOpenSymptoms={() => navigate(ROUTES.APP.SYMPTOMS)}
+          onLogSymptom={() => navigate(ROUTES.APP.SYMPTOMS)}
+        />
+
+        {/* Card 9: Next Best Action */}
+        <NextBestActionModuleCard
+          hasAssessment={hasAssessment}
+          assessmentLevel={assessmentLevel}
+          unverifiedReportsCount={unverifiedReportsCount}
+          hasLoggedFoodToday={foodLogs.length > 0}
+          hasLoggedWaterToday={waterLog.glasses > 0}
+          pathway="female"
+          onAction={handleAction}
+          onOpenAiTwin={() => openAiChatWithPrompt('What is my recommended next clinical step?')}
         />
       </div>
-
-      {/* ── 4. Subtle Contextual Guidance (Apple Deference) ────────────────── */}
-      {hasAssessment && assessmentLevel === 'tier_1' && (
-        <FemaleCard className="p-4 sm:p-4.5 bg-[#FDE6EF]/30 border-[#FDE6EF] flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-white border border-[#FDE6EF] flex items-center justify-center text-[#F43F7D] shrink-0">
-              <InfoCircle className="w-4 h-4" aria-hidden="true" />
-            </div>
-            <p className="text-xs text-[#667085] leading-relaxed">
-              <strong className="font-semibold text-[#DC326C]">Clinical Tip:</strong> Adding fasting blood sugar and hormone lab values can refine your statistical estimate.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => navigate(ROUTES.APP.ASSESSMENT)}
-            className="text-xs font-semibold text-[#F43F7D] hover:text-[#DC326C] cursor-pointer shrink-0"
-          >
-            Learn More →
-          </button>
-        </FemaleCard>
-      )}
     </motion.div>
   );
 };
+
+export default FemaleDashboardOverview;

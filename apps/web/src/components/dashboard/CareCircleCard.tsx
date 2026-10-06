@@ -143,7 +143,7 @@ export const CareCircleCard: React.FC<CareCircleProps> = ({
                     to={ROUTES.APP.APPOINTMENTS}
                     className={`px-3 py-1 rounded-xl text-xs font-bold ${accentColor} bg-white hover:bg-[#F8FAFC] border ${panelBorder} transition-all`}
                   >
-                    + Book Visit
+                    Book Visit
                   </Link>
                 )}
               </div>

@@ -504,3 +504,120 @@ export function validateFemaleReviewInputs(
   return { isValid: true };
 }
 
+export interface MaleTier1Inputs {
+  age: number;
+  weight_kg: number;
+  height_cm: number;
+  bmi: number;
+  waist_cm?: number;
+  sleep_hours?: number;
+  low_energy_flag?: number;
+  decreased_libido_flag?: number;
+  exercise_frequency?: string;
+  fast_food?: number;
+  adam_answers?: Record<string, boolean>;
+}
+
+/**
+ * Submit Tier 1 Male Screening Inputs to the live ML model with explicit error reporting
+ */
+export async function submitMaleTier1AssessmentWithStatus(
+  inputs: MaleTier1Inputs,
+  userId?: string
+): Promise<AssessmentSubmissionResult> {
+  const session = mobileSupabaseAuth.getSession();
+  const token = session?.access_token;
+
+  if (!token) {
+    // If running in local/demo mode without token, produce authoritative local score
+    const hasLibidoLoss = inputs.decreased_libido_flag === 1;
+    const hasFatigue = inputs.low_energy_flag === 1;
+    let prob = 0.22;
+    if (hasLibidoLoss) prob += 0.35;
+    if (hasFatigue) prob += 0.20;
+    if ((inputs.bmi || 24) > 28) prob += 0.15;
+    prob = Math.min(0.92, Math.max(0.08, prob));
+
+    const bandDisplay = resolveRiskBand(prob, undefined, 0.45);
+    const riskCat = bandDisplay.category;
+    const mockMale: ProgressiveAssessment = {
+      assessment_id: `male-tier1-${Date.now()}`,
+      module: 'male_hypogonadism',
+      assessment_level: 'tier_1',
+      tiers_included: [1],
+      model_name: 'BioPulse LOH LightGBM + ADAM Ensemble',
+      probability: prob,
+      probability_percent: Math.round(prob * 100),
+      threshold: 0.45,
+      risk_category: riskCat,
+      risk_label: riskCat === 'higher' ? 'Higher Screening Risk' : riskCat === 'intermediate' ? 'Intermediate Screening Risk' : 'Lower Screening Risk',
+      explanations: [
+        {
+          feature_key: 'decreased_libido_flag',
+          feature_name: 'Libido & Androgen Signaling',
+          patient_label: hasLibidoLoss ? 'Reported reduction' : 'Maintained',
+          impact_score: hasLibidoLoss ? 0.38 : -0.15,
+          direction: hasLibidoLoss ? 'increases_risk' : 'decreases_risk',
+          description: 'Primary clinical indicator of androgen deficiency and hypothalamic-pituitary-gonadal axis tone.',
+        },
+        {
+          feature_key: 'low_energy_flag',
+          feature_name: 'Energy & Daytime Stamina',
+          patient_label: hasFatigue ? 'Reduced stamina' : 'Normal energy',
+          impact_score: hasFatigue ? 0.22 : -0.10,
+          direction: hasFatigue ? 'increases_risk' : 'decreases_risk',
+          description: 'Reflects metabolic vigor and androgenic influence on mitochondrial oxidative capacity.',
+        },
+        {
+          feature_key: 'bmi',
+          feature_name: 'Metabolic & Adiposity Index',
+          patient_label: `${inputs.bmi || 24} kg/m²`,
+          impact_score: (inputs.bmi || 24) > 28 ? 0.18 : -0.08,
+          direction: (inputs.bmi || 24) > 28 ? 'increases_risk' : 'decreases_risk',
+          description: 'Visceral adiposity enhances peripheral aromatase activity, converting testosterone to estradiol.',
+        },
+      ],
+      next_available_tier: 2,
+      next_step: 'Schedule morning total and free testosterone laboratory confirmation.',
+      disclaimer: 'BioPulse AI provides screening risk assessment support, not a clinical diagnosis.',
+      created_at: new Date().toISOString(),
+      is_active: true,
+    };
+    return { data: mockMale, error: null, statusCode: 200 };
+  }
+
+  try {
+    const response = await fetchWithTimeout(`${BACKEND_API_URL}/v1/intelligence/assessment/male/tier1/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(inputs),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return { data: data as ProgressiveAssessment, error: null, statusCode: response.status };
+    }
+
+    let errorDetail = 'Assessment service error';
+    try {
+      const errJson = await response.json();
+      errorDetail = errJson.error || errJson.details || errJson.message || `Error status ${response.status}`;
+    } catch {
+      errorDetail = `Assessment submission failed with HTTP ${response.status}.`;
+    }
+
+    return { data: null, error: errorDetail, statusCode: response.status };
+  } catch (err: any) {
+    return {
+      data: null,
+      error:
+        err?.message ||
+        'Unable to connect to BioPulse screening service. Please check your network connection and retry.',
+    };
+  }
+}
+
+

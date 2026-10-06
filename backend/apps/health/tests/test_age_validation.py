@@ -3,7 +3,7 @@ Tests for Date of Birth and Dynamic Age (>= 13) Backend Validation.
 """
 
 import datetime
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 from rest_framework import serializers
 from rest_framework.test import APIClient
 
@@ -98,7 +98,7 @@ class AgeValidationSerializerTest(SimpleTestCase):
         self.assertIn("Date of birth cannot be in the future.", str(serializer.errors["date_of_birth"]))
 
 
-class AgeValidationEndpointApiTest(SimpleTestCase):
+class AgeValidationEndpointApiTest(TestCase):
     """API endpoint tests for onboarding and profile validation endpoints."""
 
     def setUp(self):

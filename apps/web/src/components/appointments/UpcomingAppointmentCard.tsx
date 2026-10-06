@@ -1,10 +1,11 @@
 import React from 'react';
-import { Calendar, Clock, MarkerPin01, VideoRecorder, MedicalCircle, File01, HelpCircle, ArrowRight } from '@untitledui/icons';
+import { Calendar, MedicalCircle } from '@untitledui/icons';
 import type { AppointmentItem } from '../../types/appointment';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { resolvePathway } from '../../types/onboarding';
-
 import { useNavigate } from 'react-router-dom';
+import { useDoctors } from '../../services/doctorService';
+import { BookedAppointmentCard } from './BookedAppointmentCard';
 
 interface UpcomingAppointmentCardProps {
   appointment: AppointmentItem | null;
@@ -23,6 +24,8 @@ export const UpcomingAppointmentCard: React.FC<UpcomingAppointmentCardProps> = (
   const { userProfile } = useUserHealth();
   const pathway = resolvePathway(userProfile.gender, userProfile.pathway);
   const isMale = pathway === 'male';
+
+  const { doctors } = useDoctors();
 
   if (!appointment) {
     return (
@@ -60,129 +63,16 @@ export const UpcomingAppointmentCard: React.FC<UpcomingAppointmentCardProps> = (
     );
   }
 
-  const formattedDate = new Date(appointment.scheduledDate).toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
-
-  const questionCount = appointment.doctorQuestions?.length || 0;
-  const answeredCount = appointment.doctorQuestions?.filter((q) => q.isDiscussed).length || 0;
-
   return (
-    <div className="relative overflow-hidden p-6 sm:p-7 rounded-[28px] bg-white border border-[#BAE6FD] shadow-xs select-none text-left space-y-5">
-      {/* Top Banner Tag */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <span className="px-3 py-1 rounded-full bg-[#0288D1] text-white text-[11px] font-mono font-bold uppercase tracking-wider shadow-xs">
-            Upcoming Visit
-          </span>
-          <span className="text-xs font-mono font-bold text-[#0288D1] capitalize">
-            {appointment.appointmentType.replace('_', ' ')}
-          </span>
-        </div>
-
-        <span className="text-xs font-mono text-[#64748B]">
-          {appointment.durationMinutes} minutes
-        </span>
-      </div>
-
-      {/* Main Info Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-        {/* Doctor & Specialty */}
-        <div className="md:col-span-6 space-y-2">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD] flex items-center justify-center shrink-0 shadow-xs">
-              <MedicalCircle className="w-6 h-6" aria-hidden="true" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold font-display text-[#0F172A]">
-                {appointment.providerName}
-              </h3>
-              <p className="text-xs text-[#0288D1] font-medium">
-                {appointment.providerSpecialty || (isMale ? 'Endocrinology & Men’s Health Specialist' : 'Specialist Gynecologist & Endocrinologist')}
-              </p>
-            </div>
-          </div>
-
-          <div className="pt-1">
-            <h4 className="text-sm font-semibold text-[#0F172A]">{appointment.title}</h4>
-            {appointment.reason && (
-              <p className="text-xs text-[#64748B] line-clamp-2 mt-0.5">
-                {appointment.reason}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Date, Time & Location Pill Box */}
-        <div className="md:col-span-6 bg-[#F8FAFC] p-4 rounded-2xl border border-[#E2E8F0] space-y-2.5">
-          <div className="flex items-center gap-2 text-xs font-bold text-[#0F172A]">
-            <Calendar className="w-4 h-4 text-[#0288D1] shrink-0" aria-hidden="true" />
-            <span>{formattedDate}</span>
-          </div>
-
-          <div className="flex items-center gap-2 text-xs font-semibold text-[#64748B]">
-            <Clock className="w-4 h-4 text-[#0288D1] shrink-0" aria-hidden="true" />
-            <span>{appointment.scheduledTime} ({appointment.durationMinutes} mins)</span>
-          </div>
-
-          <div className="flex items-center justify-between gap-2 text-xs text-[#64748B] pt-1 border-t border-[#E2E8F0]">
-            <div className="flex items-center gap-1.5 truncate">
-              {appointment.meetingUrl ? (
-                <VideoRecorder className="w-3.5 h-3.5 text-[#059669] shrink-0" aria-hidden="true" />
-              ) : (
-                <MarkerPin01 className="w-3.5 h-3.5 text-[#0288D1] shrink-0" aria-hidden="true" />
-              )}
-              <span className="truncate">{appointment.location}</span>
-            </div>
-
-            {appointment.meetingUrl && (
-              <a
-                href={appointment.meetingUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-[11px] font-bold text-[#059669] hover:underline shrink-0"
-              >
-                Join Video →
-              </a>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Pre-Consultation Questions & Preparation Bar */}
-      <div className="p-3.5 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2 text-[#01579B]">
-          <HelpCircle className="w-4 h-4 text-[#0288D1] shrink-0" aria-hidden="true" />
-          <span className="font-semibold">
-            {questionCount > 0
-              ? `${questionCount} questions prepared (${answeredCount} discussed)`
-              : 'No doctor questions added yet'}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => onPrepare(appointment)}
-            className="px-4 py-2 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.98]"
-          >
-            <File01 className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Prepare for Visit</span>
-            <ArrowRight className="w-3 h-3 ml-0.5" aria-hidden="true" />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onViewDetails(appointment)}
-            className="px-3 py-2 rounded-xl bg-white border border-[#BAE6FD] text-[#0288D1] font-bold text-xs hover:bg-[#E0F2FE] transition-all cursor-pointer active:scale-[0.98]"
-          >
-            Details
-          </button>
-        </div>
-      </div>
-    </div>
+    <BookedAppointmentCard
+      appointment={appointment}
+      allDoctors={doctors}
+      isMale={isMale}
+      onPrepare={onPrepare}
+      onViewDetails={onViewDetails}
+      isFeatured={true}
+    />
   );
 };
+
+export default UpcomingAppointmentCard;

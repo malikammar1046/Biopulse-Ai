@@ -616,7 +616,7 @@ class GeminiProviderUnitTests(TestCase):
     def test_gemini_3_8_flash_retains_thinking_config(self, mock_urlopen):
         config = self.provider._build_generation_config("gemini-3.8-flash")
         self.assertEqual(config.get("temperature"), 0.2)
-        self.assertEqual(config.get("maxOutputTokens"), 1000)
+        self.assertEqual(config.get("maxOutputTokens"), 2500)
         self.assertIn("thinkingConfig", config)
         self.assertEqual(config["thinkingConfig"].get("thinkingBudget"), 0)
 
@@ -641,7 +641,7 @@ class GeminiProviderUnitTests(TestCase):
     def test_gemini_3_5_flash_lite_omits_thinking_config(self, mock_urlopen):
         config = self.provider._build_generation_config("gemini-3.5-flash-lite")
         self.assertEqual(config.get("temperature"), 0.2)
-        self.assertEqual(config.get("maxOutputTokens"), 1000)
+        self.assertEqual(config.get("maxOutputTokens"), 2500)
         self.assertNotIn("thinkingConfig", config)
 
         # Verify sent payload over wire when gemini-3.5-flash-lite is the called model
@@ -663,7 +663,7 @@ class GeminiProviderUnitTests(TestCase):
         sent_body = json.loads(mock_urlopen.call_args[0][0].data.decode("utf-8"))
         self.assertNotIn("thinkingConfig", sent_body["generationConfig"])
         self.assertEqual(sent_body["generationConfig"].get("temperature"), 0.2)
-        self.assertEqual(sent_body["generationConfig"].get("maxOutputTokens"), 1000)
+        self.assertEqual(sent_body["generationConfig"].get("maxOutputTokens"), 2500)
 
     # 29. Primary transient exhaustion -> fallback constructed without thinkingConfig & reports model_name
     @patch("time.sleep")
@@ -706,7 +706,7 @@ class GeminiProviderUnitTests(TestCase):
         self.assertNotIn("thinkingConfig", fallback_body["generationConfig"])
         self.assertIn("gemini-3.5-flash-lite", fallback_req.full_url)
         self.assertEqual(fallback_body["generationConfig"].get("temperature"), 0.2)
-        self.assertEqual(fallback_body["generationConfig"].get("maxOutputTokens"), 1000)
+        self.assertEqual(fallback_body["generationConfig"].get("maxOutputTokens"), 2500)
 
     # 30. Generic HTTP 400 remains strictly non-retryable and does not strip arbitrary parameters
     @patch("urllib.request.urlopen")
@@ -761,4 +761,56 @@ class GeminiProviderUnitTests(TestCase):
         err_msg = str(ctx.exception)
         self.assertNotIn(secret_key, err_msg)
         self.assertIn("[REDACTED]", err_msg)
+
+    # 32. Generation config includes configurable maxOutputTokens
+    def test_gemini_max_output_tokens_in_generation_config(self):
+        provider = GeminiProvider(
+            api_key=self.dummy_api_key,
+            model_name="gemini-3.8-flash",
+            max_output_tokens=3000,
+        )
+        config = provider._build_generation_config("gemini-3.8-flash")
+        self.assertEqual(config["maxOutputTokens"], 3000)
+        self.assertEqual(config["thinkingConfig"]["thinkingBudget"], 0)
+
+    # 33. FinishReason MAX_TOKENS logs warning and balances unclosed formatting
+    @patch("urllib.request.urlopen")
+    def test_gemini_max_tokens_finish_reason_handled_and_logged(self, mock_urlopen):
+        mock_response_data = {
+            "candidates": [
+                {
+                    "finishReason": "MAX_TOKENS",
+                    "content": {
+                        "parts": [
+                            {"text": "Here are 4 structured topics:\n1. **Cycle Regularity"}
+                        ]
+                    },
+                }
+            ]
+        }
+        mock_resp = MagicMock()
+        mock_resp.read.return_value = json.dumps(mock_response_data).encode("utf-8")
+        mock_urlopen.return_value.__enter__.return_value = mock_resp
+
+        with self.assertLogs("apps.intelligence.services.llm_provider", level="WARNING") as cm:
+            resp = self.provider.generate_chat_response("sys", "Hello", "ctx")
+
+        self.assertEqual(resp.answer, "Here are 4 structured topics:\n1. **Cycle Regularity**")
+        self.assertTrue(any("MAX_TOKENS" in log for log in cm.output))
+
+    # 34. get_llm_provider reads GEMINI_MAX_OUTPUT_TOKENS and GEMINI_TIMEOUT_SECONDS
+    def test_get_llm_provider_respects_token_and_timeout_env(self):
+        env = {
+            "LLM_PROVIDER": "gemini",
+            "GEMINI_API_KEY": self.dummy_api_key,
+            "GEMINI_MODEL": "gemini-3.8-flash",
+            "GEMINI_TIMEOUT_SECONDS": "45",
+            "GEMINI_MAX_OUTPUT_TOKENS": "3500",
+        }
+        with patch.dict(os.environ, env, clear=False):
+            provider = get_llm_provider()
+            self.assertIsInstance(provider, GeminiProvider)
+            self.assertEqual(provider.timeout, 45)
+            self.assertEqual(provider.max_output_tokens, 3500)
+
 

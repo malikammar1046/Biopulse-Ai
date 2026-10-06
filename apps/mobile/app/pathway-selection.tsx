@@ -91,7 +91,7 @@ export default function PathwaySelectionScreen() {
     if (selectedPathway === 'female_pcos' || selectedPathway === 'female') {
       router.push('/female-basic-info');
     } else {
-      router.replace('/(app)');
+      router.push('/male-basic-info');
     }
   }, [selectedPathway, selectPathway, router]);
 
