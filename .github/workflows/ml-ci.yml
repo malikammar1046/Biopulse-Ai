@@ -2,15 +2,16 @@ name: Machine Learning CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, hamza ]
     paths:
       - 'machine-learning/**'
       - '.github/workflows/ml-ci.yml'
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, develop, hamza ]
     paths:
       - 'machine-learning/**'
       - '.github/workflows/ml-ci.yml'
+  workflow_dispatch:
 
 concurrency:
   group: ml-${{ github.workflow }}-${{ github.ref }}
