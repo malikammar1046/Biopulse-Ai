@@ -1,94 +1,110 @@
 import React from 'react';
-import { View, StyleSheet, Text } from 'react-native';
-import { useThemeColor } from '../../hooks/useThemeColor';
-import { Spacing } from '../../constants/Layout';
+import { View, StyleSheet, Text, Image, ImageSourcePropType } from 'react-native';
+import { BioPulseColors } from '../../constants/Colors';
+
+const EMBLEM_ASSET = require('../../assets/biopulse_ai_emblem.jpg');
 
 export interface LogoProps {
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   showText?: boolean;
   showTagline?: boolean;
   tagline?: string;
+  layout?: 'horizontal' | 'vertical';
+  customEmblem?: ImageSourcePropType;
 }
 
+/**
+ * BioPulse AI Brand Logo
+ * 
+ * Recreates the exact brand lockup from the new visual design system:
+ * - 3D organic heart & vitality emblem (cyan leaf + translucent pink petal + ECG pulse)
+ * - "BioPulse" in deep navy (#0A3445)
+ * - "AI" in vibrant teal (#16B8C4)
+ * - Optional tagline ("Understand Today. A Healthier Tomorrow.")
+ */
 export const Logo: React.FC<LogoProps> = ({
   size = 'md',
   showText = true,
-  showTagline = true,
-  tagline = 'AI Health Monitor',
+  showTagline = false,
+  tagline = 'Understand Today. A Healthier Tomorrow.',
+  layout = 'horizontal',
+  customEmblem,
 }) => {
-  const theme = useThemeColor();
+  const emblemSize =
+    size === 'sm' ? 36 : size === 'md' ? 52 : size === 'lg' ? 76 : 100;
+  const titleFontSize =
+    size === 'sm' ? 18 : size === 'md' ? 24 : size === 'lg' ? 32 : 38;
+  const taglineFontSize =
+    size === 'sm' ? 10 : size === 'md' ? 12 : size === 'lg' ? 14 : 15;
 
-  const boxSize = size === 'sm' ? 36 : size === 'lg' ? 56 : 44;
-  const borderRadius = size === 'sm' ? 12 : size === 'lg' ? 18 : 14;
-  const titleSize = size === 'sm' ? 18 : size === 'lg' ? 26 : 22;
-  const taglineSize = size === 'sm' ? 9 : size === 'lg' ? 11 : 10;
+  const isVertical = layout === 'vertical';
 
   return (
-    <View style={styles.container}>
-      {/* Emblem Container */}
+    <View
+      style={[
+        styles.container,
+        isVertical ? styles.containerVertical : styles.containerHorizontal,
+      ]}
+      accessibilityRole="header"
+      accessibilityLabel="BioPulse AI Logo"
+    >
+      {/* Emblem Artwork with soft rounded container */}
       <View
         style={[
-          styles.emblemBox,
+          styles.emblemWrapper,
           {
-            width: boxSize,
-            height: boxSize,
-            borderRadius,
-            backgroundColor: '#2D0C4E',
-            borderColor: 'rgba(216, 180, 254, 0.25)',
+            width: emblemSize,
+            height: emblemSize,
+            borderRadius: emblemSize * 0.28,
           },
         ]}
       >
-        {/* Outer Organic Ring */}
-        <View
-          style={[
-            styles.outerRing,
-            {
-              width: boxSize * 0.72,
-              height: boxSize * 0.72,
-              borderRadius: (boxSize * 0.72) / 2,
-              borderColor: '#A21CAF',
-            },
-          ]}
-        >
-          {/* Inner Intersecting Loop */}
-          <View
-            style={[
-              styles.innerRing,
-              {
-                width: boxSize * 0.44,
-                height: boxSize * 0.44,
-                borderRadius: (boxSize * 0.44) / 2,
-                borderColor: '#FB7185',
-              },
-            ]}
-          >
-            {/* Luminous Nucleus Spark */}
-            <View
-              style={[
-                styles.nucleus,
-                {
-                  width: boxSize * 0.18,
-                  height: boxSize * 0.18,
-                  borderRadius: (boxSize * 0.18) / 2,
-                },
-              ]}
-            />
-          </View>
-        </View>
-
-        {/* Vitality Dot Accent */}
-        <View style={styles.vitalityDot} />
+        <Image
+          source={customEmblem || EMBLEM_ASSET}
+          style={styles.emblemImage}
+          resizeMode="contain"
+        />
       </View>
 
-      {/* Typography */}
+      {/* Typography Lockup */}
       {showText && (
-        <View style={styles.textContainer}>
-          <Text style={[styles.title, { fontSize: titleSize, color: theme.textPrimary }]}>
-            OVASense
-          </Text>
+        <View
+          style={[
+            styles.textContainer,
+            isVertical ? styles.textContainerVertical : styles.textContainerHorizontal,
+          ]}
+        >
+          <View style={styles.titleRow}>
+            <Text
+              style={[
+                styles.titleBioPulse,
+                { fontSize: titleFontSize, color: BioPulseColors.textPrimary },
+              ]}
+            >
+              BioPulse
+            </Text>
+            <Text
+              style={[
+                styles.titleAI,
+                { fontSize: titleFontSize, color: BioPulseColors.teal },
+              ]}
+            >
+              {' '}AI
+            </Text>
+          </View>
+
           {showTagline && (
-            <Text style={[styles.tagline, { fontSize: taglineSize, color: theme.textSecondary }]}>
-              {tagline.toUpperCase()}
+            <Text
+              style={[
+                styles.tagline,
+                {
+                  fontSize: taglineFontSize,
+                  color: BioPulseColors.textSecondary,
+                  textAlign: isVertical ? 'center' : 'left',
+                },
+              ]}
+            >
+              {tagline}
             </Text>
           )}
         </View>
@@ -99,60 +115,56 @@ export const Logo: React.FC<LogoProps> = ({
 
 const styles = StyleSheet.create({
   container: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  containerHorizontal: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
+    gap: 12,
   },
-  emblemBox: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    position: 'relative',
-    shadowColor: '#6E2D8B',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 6,
+  containerVertical: {
+    flexDirection: 'column',
+    gap: 12,
   },
-  outerRing: {
-    borderWidth: 2,
+  emblemWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  innerRing: {
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  nucleus: {
+    overflow: 'hidden',
     backgroundColor: '#FFFFFF',
-    shadowColor: '#FB7185',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.9,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowColor: '#16B8C4',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    elevation: 4,
   },
-  vitalityDot: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#FB7185',
-    borderWidth: 1.5,
-    borderColor: '#10071A',
+  emblemImage: {
+    width: '100%',
+    height: '100%',
   },
   textContainer: {
     justifyContent: 'center',
   },
-  title: {
+  textContainerHorizontal: {
+    alignItems: 'flex-start',
+  },
+  textContainerVertical: {
+    alignItems: 'center',
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  titleBioPulse: {
     fontWeight: '800',
     letterSpacing: -0.5,
   },
+  titleAI: {
+    fontWeight: '800',
+    letterSpacing: -0.2,
+  },
   tagline: {
-    fontWeight: '700',
-    letterSpacing: 1.2,
-    marginTop: -2,
+    fontWeight: '500',
+    marginTop: 4,
+    letterSpacing: 0.1,
   },
 });

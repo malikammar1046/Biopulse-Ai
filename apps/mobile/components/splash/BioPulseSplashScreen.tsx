@@ -1,212 +1,195 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
+  Text,
   StyleSheet,
   useWindowDimensions,
+  Animated,
+  Easing,
   Platform,
+  Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-
 import { BioPulseColors } from '../../constants/Colors';
-import { SplashBrandHeader } from './SplashBrandHeader';
-import { SplashHeadline } from './SplashHeadline';
-import { SplashHero } from './SplashHero';
-import { SplashTrustIndicators } from './SplashTrustIndicators';
-import { SplashProgressBar } from './SplashProgressBar';
-import { SplashBackgroundFoliage } from './SplashBackgroundFoliage';
+import { BioPulseBackground } from '../common/BioPulseBackground';
+import { Logo } from '../brand/Logo';
 
 export interface BioPulseSplashScreenProps {
   /** Optional callback fired when initialization has completed */
   onInitializationComplete?: () => void;
-  /** Minimum duration in milliseconds the splash screen is displayed (default: 1800ms) */
+  /** Minimum duration in milliseconds the splash screen is displayed (default: 2000ms) */
   minDisplayTimeMs?: number;
-  /** Custom progress between 0 and 1, or undefined for indeterminate smooth pulsing */
-  progress?: number;
-  /** Custom message below progress bar */
-  loadingMessage?: string;
   /** If true, fires onInitializationComplete automatically after initialization */
   autoNavigate?: boolean;
 }
 
+/**
+ * Screen 1: Splash Screen
+ * 
+ * Rebuild matching Screenshot 1:
+ * - BioPulse AI logo (3D heart & vitality emblem)
+ * - Tagline: "Understand Today. A Healthier Tomorrow."
+ * - Soft pathway-neutral teal background with very subtle pink + blue ambient accents
+ * - Rotating minimalist circular loading spinner
+ * - Auto-navigates cleanly to Welcome / Intro Screen
+ * - Fallback continue button only if loading takes unexpectedly long
+ */
 export const BioPulseSplashScreen: React.FC<BioPulseSplashScreenProps> = ({
   onInitializationComplete,
-  minDisplayTimeMs = 1800,
-  progress,
-  loadingMessage = 'Loading your personalized experience...',
+  minDisplayTimeMs = 2000,
   autoNavigate = true,
 }) => {
   const insets = useSafeAreaInsets();
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const [isInitialized, setIsInitialized] = useState(false);
+  const { width, height } = useWindowDimensions();
+  const [showManualContinue, setShowManualContinue] = useState(false);
 
-  // Responsive breakpoints
-  const isShortScreen = windowHeight < 720;
-  const isVeryShortScreen = windowHeight < 620;
-  const isNarrowScreen = windowWidth < 360;
-  const isCompact = isShortScreen || isNarrowScreen;
-
-  // Dynamic spacing based on available height
-  const topSafePad = Math.max(insets.top, Platform.OS === 'android' ? 12 : 8);
-  const bottomSafePad = Math.max(insets.bottom, 16);
-
-  // Vertical gaps
-  const brandToHeadlineGap = isVeryShortScreen ? 6 : isShortScreen ? 10 : 16;
-  const headlineToHeroGap = isVeryShortScreen ? 4 : isShortScreen ? 8 : 12;
-  const heroToTrustGap = isVeryShortScreen ? 8 : isShortScreen ? 12 : 18;
-  const trustToLoadingGap = isVeryShortScreen ? 12 : isShortScreen ? 16 : 24;
-
-  // Calculate max allowed hero height so the layout never overflows
-  const availableContentHeight =
-    windowHeight - topSafePad - bottomSafePad - (isCompact ? 320 : 380);
-  const maxHeroHeight = Math.max(
-    Math.min(availableContentHeight, isCompact ? 240 : 330),
-    160
-  );
+  // Rotation animation for the subtle loading spinner
+  const spinAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    let isMounted = true;
+    // Fade in brand lockup smoothly
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 700,
+      useNativeDriver: true,
+    }).start();
+
+    // Continuous spin for the circular loader
+    const spinLoop = Animated.loop(
+      Animated.timing(spinAnim, {
+        toValue: 1,
+        duration: 1400,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    );
+    spinLoop.start();
+
+    // Timer for initialization transition
     const startTime = Date.now();
+    let isMounted = true;
 
-    const runStartupInitialization = async () => {
-      try {
-        // App startup initialization tasks (e.g. font verification, state hydration)
-        const elapsed = Date.now() - startTime;
-        const remainingDelay = Math.max(0, minDisplayTimeMs - elapsed);
-
-        if (remainingDelay > 0) {
-          await new Promise((resolve) => setTimeout(resolve, remainingDelay));
-        }
-
-        if (isMounted) {
-          setIsInitialized(true);
-          if (autoNavigate && onInitializationComplete) {
-            onInitializationComplete();
-          }
-        }
-      } catch (error) {
-        console.warn('BioPulse startup initialization error:', error);
-        if (isMounted) {
-          setIsInitialized(true);
-          if (autoNavigate && onInitializationComplete) {
-            onInitializationComplete();
-          }
-        }
+    const timer = setTimeout(() => {
+      if (isMounted && autoNavigate && onInitializationComplete) {
+        onInitializationComplete();
       }
-    };
+    }, minDisplayTimeMs);
 
-    runStartupInitialization();
+    // Fallback if loading takes longer than 6 seconds
+    const fallbackTimer = setTimeout(() => {
+      if (isMounted) {
+        setShowManualContinue(true);
+      }
+    }, 6000);
 
     return () => {
       isMounted = false;
+      spinLoop.stop();
+      clearTimeout(timer);
+      clearTimeout(fallbackTimer);
     };
   }, [minDisplayTimeMs, autoNavigate, onInitializationComplete]);
 
+  const spinInterpolation = spinAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
   return (
-    <View
-      style={[
-        styles.screen,
-        {
-          paddingTop: topSafePad,
-          paddingBottom: bottomSafePad,
-        },
-      ]}
-      accessibilityRole="none"
-      accessibilityLabel="BioPulse AI Launch Screen"
-    >
-      <StatusBar style="dark" backgroundColor={BioPulseColors.background} />
+    <BioPulseBackground style={styles.container}>
+      <StatusBar style="dark" backgroundColor="transparent" translucent />
 
-      {/* Decorative botanical leaf accents in upper margins */}
-      <SplashBackgroundFoliage topOffset={topSafePad} />
-
-      {/* Central responsive content column */}
-      <View
+      {/* Main Centered Content */}
+      <Animated.View
         style={[
-          styles.mainContainer,
+          styles.centerContent,
           {
-            maxWidth: Math.min(windowWidth, 480),
+            opacity: fadeAnim,
+            paddingTop: Math.max(insets.top, 24),
+            paddingBottom: Math.max(insets.bottom, 24),
           },
         ]}
       >
-        {/* 1. Branding Section (Heart Logo + Wordmark + Subtitle) */}
-        <View style={styles.sectionBranding}>
-          <SplashBrandHeader isCompact={isCompact} />
-        </View>
-
-        {/* 2. Main Headline Section */}
-        <View
-          style={[
-            styles.sectionHeadline,
-            { marginTop: brandToHeadlineGap, marginBottom: headlineToHeroGap },
-          ]}
-        >
-          <SplashHeadline isCompact={isCompact} />
-        </View>
-
-        {/* 3. Hero Artwork Section (Female & Male Wellness Characters + Wave) */}
-        <View style={styles.sectionHero}>
-          <SplashHero maxAllowedHeight={maxHeroHeight} />
-        </View>
-
-        {/* 4. Trust & Value Indicators Section */}
-        <View
-          style={[
-            styles.sectionTrust,
-            { marginTop: heroToTrustGap, marginBottom: trustToLoadingGap },
-          ]}
-        >
-          <SplashTrustIndicators isCompact={isCompact} />
-        </View>
-
-        {/* 5. Progress Indicator & Loading Message Section */}
-        <View style={styles.sectionLoading}>
-          <SplashProgressBar
-            progress={progress}
-            message={loadingMessage}
-            isCompact={isCompact}
+        <View style={styles.logoWrapper}>
+          <Logo
+            size={height < 700 ? 'lg' : 'xl'}
+            layout="vertical"
+            showText={true}
+            showTagline={true}
+            tagline="Understand Today. A Healthier Tomorrow."
           />
         </View>
-      </View>
-    </View>
+
+        {/* Minimalist Circular Loader at Bottom */}
+        <View style={styles.bottomLoaderContainer}>
+          <Animated.View
+            style={[
+              styles.spinnerRing,
+              { transform: [{ rotate: spinInterpolation }] },
+            ]}
+          />
+
+          {showManualContinue && (
+            <Pressable
+              onPress={() => onInitializationComplete && onInitializationComplete()}
+              style={styles.continueButton}
+              hitSlop={12}
+            >
+              <Text style={styles.continueButtonText}>Tap to continue</Text>
+            </Pressable>
+          )}
+        </View>
+      </Animated.View>
+    </BioPulseBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  screen: {
+  container: {
     flex: 1,
-    backgroundColor: BioPulseColors.background,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    overflow: 'hidden',
+    justifyContent: 'center',
   },
-  mainContainer: {
-    flex: 1,
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-  },
-  sectionBranding: {
-    width: '100%',
-    alignItems: 'center',
-  },
-  sectionHeadline: {
-    width: '100%',
-    alignItems: 'center',
-  },
-  sectionHero: {
+  centerContent: {
     flex: 1,
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 24,
   },
-  sectionTrust: {
-    width: '100%',
+  logoWrapper: {
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 40,
   },
-  sectionLoading: {
-    width: '100%',
+  bottomLoaderContainer: {
+    height: 90,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  spinnerRing: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2.5,
+    borderColor: 'rgba(22, 184, 196, 0.25)',
+    borderTopColor: BioPulseColors.teal,
+  },
+  continueButton: {
+    marginTop: 14,
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderWidth: 1,
+    borderColor: BioPulseColors.border,
+  },
+  continueButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: BioPulseColors.teal,
   },
 });

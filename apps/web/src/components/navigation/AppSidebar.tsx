@@ -74,12 +74,14 @@ export const AppSidebar: React.FC = () => {
   const maleMainItems: NavItem[] = [
     { label: 'Overview', path: overviewPath, icon: LayoutGrid01 },
     { label: 'Lifestyle & Nutrition', path: ROUTES.APP.LIFESTYLE, icon: Scales01 },
+    { label: 'Nutrition', path: ROUTES.APP.NUTRITION, icon: Scales01 },
     { label: 'Screening', path: ROUTES.APP.ASSESSMENT, icon: ClipboardCheck },
     { label: 'Progress', path: ROUTES.APP.PROGRESS, icon: LineChartUp01 },
   ];
 
   const femaleMainItems: NavItem[] = [
     { label: 'Overview', path: overviewPath, icon: LayoutGrid01 },
+    { label: 'Nutrition', path: ROUTES.APP.NUTRITION, icon: Scales01 },
     { label: 'Screening', path: ROUTES.APP.ASSESSMENT, icon: ClipboardCheck },
     { label: 'Progress', path: ROUTES.APP.PROGRESS, icon: LineChartUp01 },
   ];

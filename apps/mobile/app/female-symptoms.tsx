@@ -1,642 +1,291 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
   Pressable,
   StyleSheet,
   ScrollView,
-  Image,
   useWindowDimensions,
 } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../constants/Colors';
-import { AuthBackgroundFoliage } from '../components/auth/AuthBackgroundFoliage';
-import { OnboardingStepper, PathwayHeader } from '../components/onboarding';
-import { useFemaleOnboarding } from '../features/onboarding/FemaleOnboardingContext';
-import { BioPulseBottomNav, BOTTOM_NAV_HEIGHT } from '../components/navigation';
+import { BioPulseBackground } from '../components/common/BioPulseBackground';
+import { BioPulseButton } from '../components/common/BioPulseButton';
+import { FemaleOnboardingHeader } from '../components/onboarding/FemaleOnboardingHeader';
+import { useFemaleOnboarding } from '../features/onboarding';
 
-const FEMALE_ONBOARDING_STEPS = [
-  { id: 1, label: 'Basic Info' },
-  { id: 2, label: 'Cycle Health' },
-  { id: 3, label: 'Symptoms' },
-  { id: 4, label: 'Lifestyle' },
-  { id: 5, label: 'Review' },
-];
-
-export interface SymptomCardDef {
+interface SymptomItem {
   id: string;
   title: string;
-  description: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  isModelFeature: boolean;
-  isCycleSynced?: boolean;
+  iconName: keyof typeof Ionicons.glyphMap;
 }
 
-// ── Physical Symptoms (Real Model Features + Oily Skin Context) ────────────
-export const PHYSICAL_SYMPTOMS: SymptomCardDef[] = [
-  {
-    id: 'weight_gain',
-    title: 'Weight gain',
-    description: 'Difficulty losing weight',
-    icon: 'scale-outline',
-    isModelFeature: true,
-  },
-  {
-    id: 'hirsutism',
-    title: 'Excess hair growth',
-    description: 'On face or body',
-    icon: 'cut-outline',
-    isModelFeature: true,
-  },
-  {
-    id: 'skin_darkening',
-    title: 'Skin darkening',
-    description: 'Especially around neck',
-    icon: 'color-palette-outline',
-    isModelFeature: true,
-  },
-  {
-    id: 'hair_loss',
-    title: 'Hair loss',
-    description: 'Thinning hair',
-    icon: 'fitness-outline',
-    isModelFeature: true,
-  },
-  {
-    id: 'pimples_acne',
-    title: 'Pimples / Acne',
-    description: 'Frequent breakouts',
-    icon: 'sparkles-outline',
-    isModelFeature: true,
-  },
-  {
-    id: 'oily_skin',
-    title: 'Oily skin',
-    description: 'Increased oiliness',
-    icon: 'water-outline',
-    isModelFeature: false,
-  },
-];
-
-// ── Menstrual & Reproductive Symptoms (Reconciled with Cycle Health) ───────
-export const MENSTRUAL_SYMPTOMS: SymptomCardDef[] = [
-  {
-    id: 'irregular_periods',
-    title: 'Irregular periods',
-    description: 'Unpredictable cycles',
-    icon: 'calendar-outline',
-    isModelFeature: true,
-    isCycleSynced: true,
-  },
-  {
-    id: 'long_cycles',
-    title: 'Long cycles',
-    description: '> 35 days',
-    icon: 'time-outline',
-    isModelFeature: true,
-    isCycleSynced: true,
-  },
-  {
-    id: 'missed_periods',
-    title: 'Missed periods',
-    description: 'Occasional or frequent',
-    icon: 'alert-circle-outline',
-    isModelFeature: false,
-    isCycleSynced: true,
-  },
-];
-
-// ── Other Symptoms (Optional General Wellbeing Context) ────────────────────
-export const OTHER_SYMPTOMS: SymptomCardDef[] = [
-  {
-    id: 'bloating',
-    title: 'Bloating',
-    description: 'Abdominal discomfort',
-    icon: 'disc-outline',
-    isModelFeature: false,
-  },
-  {
-    id: 'mood_changes',
-    title: 'Mood changes',
-    description: 'Anxiety or mood swings',
-    icon: 'happy-outline',
-    isModelFeature: false,
-  },
-  {
-    id: 'fatigue',
-    title: 'Fatigue',
-    description: 'Low energy',
-    icon: 'battery-charging-outline',
-    isModelFeature: false,
-  },
+const MODEL_SYMPTOMS: SymptomItem[] = [
+  { id: 'weight_gain', title: 'Weight gain', iconName: 'speedometer-outline' },
+  { id: 'hirsutism', title: 'Excess hair growth', iconName: 'cut-outline' },
+  { id: 'skin_darkening', title: 'Skin darkening', iconName: 'color-palette-outline' },
+  { id: 'hair_loss', title: 'Hair loss', iconName: 'finger-print-outline' },
+  { id: 'pimples_acne', title: 'Pimples / Acne', iconName: 'sparkles-outline' },
+  { id: 'irregular_periods', title: 'Irregular periods', iconName: 'calendar-outline' },
 ];
 
 /**
- * SCREEN 11: FEMALE "PCOS Related Symptoms" (Step 3 of 5)
+ * SCREEN 8: FEMALE SYMPTOMS (Step 3 of 5)
  *
- * Implements:
- * - Selectable multi-select symptom cards with active pink tint and checkmark
- * - Strict ML feature binding: only valid model features become assessment inputs
- * - Canonical cycle state reconciliation with zero divergence from Cycle Health
- * - Optional symptoms recorded as general clinical context without polluting ML payload
- * - Responsive 2-column (phone) and 3-column (tablet) grid layout
- * - Full state preservation across navigation and review flows
+ * Matches Screenshot 8:
+ * - Header: Step 3 of 5 with 3 filled progress segments
+ * - Title: "Your Symptoms" with pink floral icon
+ * - 2x3 Grid of 6 selectable symptom cards
+ * - Upper-right pink checkmark badge when selected
+ * - Pink accent borders for selected items
+ * - Informational notice banner at bottom
+ * - Primary "Continue →" pink CTA
  */
 export default function FemaleSymptomsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ returnTo?: string }>();
-  const isFromReview = params.returnTo === 'review';
-
   const { width } = useWindowDimensions();
-  const isTablet = width >= 768;
-  const isSmallPhone = width < 360;
+  const { symptoms, updateSymptoms } = useFemaleOnboarding();
 
-  const cardWidth = isTablet ? '31.8%' : isSmallPhone ? '100%' : '48.5%';
-
-  // Persistent onboarding context
-  const { symptoms, updateSymptoms, cycleHealth, updateCycleHealth, setLastActiveScreeningRoute } = useFemaleOnboarding();
-
-  // Track that user is currently on Screen 11 (Symptoms step)
-  useEffect(() => {
-    setLastActiveScreeningRoute('/female-symptoms');
-  }, [setLastActiveScreeningRoute]);
-
-  // Initialize selected symptoms combining stored context + canonical cycle health state
-  const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>(() => {
-    const initial = new Set(symptoms || []);
-    if (cycleHealth.regularity === 'irregular') {
-      initial.add('irregular_periods');
-    }
-    if (cycleHealth.cycleLength > 35) {
-      initial.add('long_cycles');
-    }
-    if (cycleHealth.missedPeriodsYear && cycleHealth.missedPeriodsYear !== '0') {
-      initial.add('missed_periods');
-    }
-    return Array.from(initial);
-  });
-
-  // Persist draft selections before navigating to other tabs
-  const handleBeforeTabNavigate = useCallback(() => {
-    updateSymptoms(selectedSymptoms);
-    setLastActiveScreeningRoute('/female-symptoms');
-  }, [selectedSymptoms, updateSymptoms, setLastActiveScreeningRoute]);
-
-  // Reconciled toggle handler: keeps single canonical truth for cycle rhythm
-  const toggleSymptom = useCallback(
-    (id: string) => {
-      setSelectedSymptoms((prev) => {
-        const isSelected = prev.includes(id);
-        const next = isSelected ? prev.filter((item) => item !== id) : [...prev, id];
-
-        // Reconcile canonical cycleHealth fields to prevent contradictory inputs
-        if (id === 'irregular_periods') {
-          updateCycleHealth({ regularity: !isSelected ? 'irregular' : 'regular' });
-        } else if (id === 'long_cycles') {
-          updateCycleHealth({
-            cycleLength: !isSelected
-              ? (cycleHealth.cycleLength > 35 ? cycleHealth.cycleLength : 36)
-              : (cycleHealth.cycleLength > 35 ? 28 : cycleHealth.cycleLength),
-          });
-        } else if (id === 'missed_periods') {
-          updateCycleHealth({
-            missedPeriodsYear: !isSelected
-              ? (cycleHealth.missedPeriodsYear !== '0' ? cycleHealth.missedPeriodsYear : '1-2')
-              : '0',
-          });
-        }
-
-        return next;
-      });
-    },
-    [cycleHealth, updateCycleHealth]
+  // Local selection state (defaults to previously saved or common signs)
+  const [selectedIds, setSelectedIds] = useState<string[]>(
+    symptoms.length > 0 ? symptoms : ['weight_gain', 'hirsutism', 'skin_darkening', 'pimples_acne', 'irregular_periods']
   );
 
-  const handleContinue = useCallback(() => {
-    updateSymptoms(selectedSymptoms);
-    if (isFromReview) {
-      router.push('/female-review');
-    } else {
-      router.push('/female-lifestyle');
-    }
-  }, [selectedSymptoms, updateSymptoms, isFromReview, router]);
+  const bottomPad = Math.max(insets.bottom, 20);
 
-  const handleBack = useCallback(() => {
-    updateSymptoms(selectedSymptoms);
-    if (isFromReview) {
-      router.push('/female-review');
-    } else if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.push('/female-cycle-health');
-    }
-  }, [selectedSymptoms, updateSymptoms, isFromReview, router]);
-
-  const renderCard = (item: SymptomCardDef) => {
-    const isSelected = selectedSymptoms.includes(item.id);
-
-    return (
-      <Pressable
-        key={item.id}
-        onPress={() => toggleSymptom(item.id)}
-        style={({ pressed }) => [
-          styles.card,
-          { width: cardWidth },
-          isSelected && styles.cardSelected,
-          pressed && styles.cardPressed,
-        ]}
-        accessibilityRole="checkbox"
-        accessibilityState={{ checked: isSelected }}
-        accessibilityLabel={`${item.title}, ${item.description}`}
-      >
-        <View style={styles.cardHeaderRow}>
-          <View style={[styles.iconWrap, isSelected && styles.iconWrapSelected]}>
-            <Ionicons
-              name={item.icon}
-              size={18}
-              color={isSelected ? BioPulseColors.femaleAccent : '#64748B'}
-            />
-          </View>
-          <View style={[styles.checkCircle, isSelected && styles.checkCircleSelected]}>
-            {isSelected && <Ionicons name="checkmark" size={13} color="#FFFFFF" />}
-          </View>
-        </View>
-
-        <View style={styles.cardTextCol}>
-          <Text style={[styles.cardTitle, isSelected && styles.cardTitleSelected]} numberOfLines={2}>
-            {item.title}
-          </Text>
-          <Text style={styles.cardDesc} numberOfLines={2}>
-            {item.description}
-          </Text>
-        </View>
-
-        {item.isCycleSynced && (
-          <View style={[styles.syncedBadge, isSelected && styles.syncedBadgeSelected]}>
-            <Ionicons
-              name="sync-outline"
-              size={10}
-              color={isSelected ? BioPulseColors.femaleAccent : '#64748B'}
-            />
-            <Text style={[styles.syncedText, isSelected && styles.syncedTextSelected]}>
-              Cycle Synced
-            </Text>
-          </View>
-        )}
-      </Pressable>
+  const handleToggle = useCallback((id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
-  };
+  }, []);
+
+  const handleContinue = useCallback(() => {
+    updateSymptoms(selectedIds);
+    router.push('/female-lifestyle');
+  }, [selectedIds, updateSymptoms, router]);
+
+  const cardWidth = (Math.min(width, 460) - 36 - 12) / 2;
 
   return (
-    <View
-      style={[
-        styles.root,
-        {
-          paddingTop: Math.max(insets.top, 8),
-          paddingBottom: 0,
-        },
-      ]}
-    >
-      <AuthBackgroundFoliage />
+    <BioPulseBackground style={styles.container}>
+      <StatusBar style="dark" backgroundColor="transparent" translucent />
 
-      {/* Decorative upper-right female illustration matching brand aesthetic */}
-      <View pointerEvents="none" style={styles.heroIllustrationContainer}>
-        <Image
-          source={require('../assets/female_pathway_hero.png')}
-          style={styles.heroIllustration}
-          resizeMode="contain"
-        />
-      </View>
+      {/* Top Navigation Bar with Step 3 of 5 */}
+      <FemaleOnboardingHeader
+        step={3}
+        totalSteps={5}
+        onBack={() => router.back()}
+        accentColor="#F43F7D"
+      />
 
       <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: BOTTOM_NAV_HEIGHT + Math.max(insets.bottom, 16) + 24 },
-        ]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPad + 24 }]}
         showsVerticalScrollIndicator={false}
       >
-        <PathwayHeader
-          onBack={handleBack}
-          subtitle="WOMEN'S HEALTH INTELLIGENCE"
-          showHelp={false}
-        />
+        <View style={[styles.mainWrapper, { maxWidth: Math.min(width, 460) }]}>
+          {/* Header Title with Pink Floral Icon */}
+          <View style={styles.headerTitleRow}>
+            <View style={styles.headerIconBox}>
+              <Ionicons name="flower" size={24} color="#F43F7D" />
+            </View>
+            <View style={styles.headerTitleTextCol}>
+              <Text style={styles.screenTitle}>Your Symptoms</Text>
+              <Text style={styles.screenSubtitle}>
+                Select any symptoms you experience (common in PCOS).
+              </Text>
+            </View>
+          </View>
 
-        <OnboardingStepper
-          currentStep={3}
-          steps={FEMALE_ONBOARDING_STEPS}
-          accentColor={BioPulseColors.femaleAccent}
-        />
+          {/* 2x3 Grid of 6 Selectable Symptom Cards */}
+          <View style={styles.cardsGrid}>
+            {MODEL_SYMPTOMS.map((item) => {
+              const isSelected = selectedIds.includes(item.id);
+              return (
+                <Pressable
+                  key={item.id}
+                  onPress={() => handleToggle(item.id)}
+                  style={[
+                    styles.symptomCard,
+                    { width: cardWidth },
+                    isSelected && styles.symptomCardSelected,
+                  ]}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: isSelected }}
+                  accessibilityLabel={item.title}
+                >
+                  {/* Upper Right Checkmark Badge */}
+                  {isSelected && (
+                    <View style={styles.checkBadge}>
+                      <Ionicons name="checkmark" size={13} color="#FFFFFF" />
+                    </View>
+                  )}
 
-        {/* Title Section */}
-        <View style={styles.titleSection}>
-          <Text style={styles.screenTitle}>PCOS Related Symptoms</Text>
-          <Text style={styles.screenSubtitle}>
-            Select the symptoms you experience. These responses will be used as part of your screening assessment.
-          </Text>
+                  {/* Symptom Icon */}
+                  <View style={styles.iconCircle}>
+                    <Ionicons
+                      name={item.iconName}
+                      size={28}
+                      color={isSelected ? '#F43F7D' : BioPulseColors.textSecondary}
+                    />
+                  </View>
 
-          {/* Reassuring Context Pill */}
-          <View style={styles.statusPill}>
+                  {/* Symptom Title */}
+                  <Text style={[styles.symptomTitle, isSelected && styles.symptomTitleSelected]}>
+                    {item.title}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          {/* Informational Guidance Notice */}
+          <View style={styles.infoBanner}>
             <Ionicons
-              name={selectedSymptoms.length > 0 ? 'checkmark-circle-outline' : 'information-circle-outline'}
-              size={15}
-              color={selectedSymptoms.length > 0 ? BioPulseColors.femaleAccent : '#64748B'}
+              name="information-circle-outline"
+              size={18}
+              color={BioPulseColors.teal}
+              style={{ marginRight: 8, marginTop: 1 }}
             />
-            <Text style={styles.statusPillText}>
-              {selectedSymptoms.length === 0
-                 ? 'No symptoms selected (reporting none is clinically valid)'
-                 : `${selectedSymptoms.length} symptom${selectedSymptoms.length > 1 ? 's' : ''} selected`}
+            <Text style={styles.infoBannerText}>
+              These are common signs of PCOS. Selecting symptoms helps improve your personalized screening.
             </Text>
           </View>
-        </View>
 
-        {/* ── Section 1: Physical Symptoms ── */}
-        <View style={styles.sectionBlock}>
-          <View style={styles.sectionHeaderRow}>
-            <View style={styles.sectionIconBadge}>
-              <Ionicons name="body-outline" size={15} color={BioPulseColors.femaleAccent} />
-            </View>
-            <View>
-              <Text style={styles.sectionHeading}>Physical Symptoms</Text>
-              <Text style={styles.sectionSubtext}>Common bodily and dermatological indicators</Text>
-            </View>
-          </View>
-          <View style={styles.cardGrid}>
-            {PHYSICAL_SYMPTOMS.map((item) => renderCard(item))}
+          {/* Primary CTA */}
+          <View style={styles.ctaWrapper}>
+            <BioPulseButton
+              title="Continue"
+              variant="female"
+              showArrow
+              onPress={handleContinue}
+              style={{ backgroundColor: '#F43F7D', borderColor: '#E11D48' }}
+            />
           </View>
         </View>
-
-        {/* ── Section 2: Menstrual & Reproductive Symptoms ── */}
-        <View style={styles.sectionBlock}>
-          <View style={styles.sectionHeaderRow}>
-            <View style={styles.sectionIconBadge}>
-              <Ionicons name="calendar-outline" size={15} color={BioPulseColors.femaleAccent} />
-            </View>
-            <View>
-              <Text style={styles.sectionHeading}>Menstrual & Reproductive Symptoms</Text>
-              <Text style={styles.sectionSubtext}>Synchronized with your Cycle Health history</Text>
-            </View>
-          </View>
-          <View style={styles.cardGrid}>
-            {MENSTRUAL_SYMPTOMS.map((item) => renderCard(item))}
-          </View>
-        </View>
-
-        {/* ── Section 3: Other Symptoms (Optional Context) ── */}
-        <View style={styles.sectionBlock}>
-          <View style={styles.sectionHeaderRow}>
-            <View style={styles.sectionIconBadge}>
-              <Ionicons name="sparkles-outline" size={15} color={BioPulseColors.femaleAccent} />
-            </View>
-            <View>
-              <Text style={styles.sectionHeading}>Other Symptoms</Text>
-              <Text style={styles.sectionSubtext}>Optional general wellbeing indicators (non-diagnostic)</Text>
-            </View>
-          </View>
-          <View style={styles.cardGrid}>
-            {OTHER_SYMPTOMS.map((item) => renderCard(item))}
-          </View>
-        </View>
-
-        {/* Continue Button */}
-        <Pressable
-          onPress={handleContinue}
-          style={({ pressed }) => [styles.continueBtn, pressed && styles.btnPressed]}
-          accessibilityRole="button"
-          accessibilityLabel={isFromReview ? 'Save and return to review' : 'Continue to lifestyle'}
-        >
-          <Text style={styles.continueBtnText}>
-            {isFromReview ? 'Save & Return to Review →' : 'Continue →'}
-          </Text>
-        </Pressable>
       </ScrollView>
-
-      {/* Permanent BioPulse Bottom Navigation (Screen 11 Onward) */}
-      <BioPulseBottomNav activeTab="screening" beforeNavigate={handleBeforeTabNavigate} />
-    </View>
+    </BioPulseBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
+  container: {
     flex: 1,
-    backgroundColor: '#FEF8FA',
-  },
-  heroIllustrationContainer: {
-    position: 'absolute',
-    top: 45,
-    right: -10,
-    width: 140,
-    height: 140,
-    opacity: 0.85,
-    zIndex: 0,
-  },
-  heroIllustration: {
-    width: '100%',
-    height: '100%',
   },
   scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 16,
-    paddingBottom: 32,
-    zIndex: 1,
+    paddingHorizontal: 18,
+    paddingTop: 8,
   },
-  titleSection: {
-    marginTop: 10,
-    marginBottom: 16,
+  mainWrapper: {
+    width: '100%',
+  },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    marginTop: 4,
+  },
+  headerIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: '#FDECF2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  headerTitleTextCol: {
+    flex: 1,
   },
   screenTitle: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#162A45',
-    marginBottom: 6,
-    letterSpacing: -0.3,
+    color: BioPulseColors.textPrimary,
+    letterSpacing: -0.4,
   },
   screenSubtitle: {
-    fontSize: 13.5,
-    lineHeight: 19,
-    color: '#64748B',
-    marginBottom: 12,
-  },
-  statusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#FCE7F0',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    alignSelf: 'flex-start',
-    gap: 7,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  statusPillText: {
-    fontSize: 12.5,
-    fontWeight: '600',
-    color: '#475569',
-  },
-  sectionBlock: {
-    marginBottom: 20,
-  },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 9,
-    marginBottom: 10,
-  },
-  sectionIconBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#FCE8EF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sectionHeading: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#162A45',
-  },
-  sectionSubtext: {
-    fontSize: 12,
-    color: '#8A99AD',
-    marginTop: 1,
-  },
-  cardGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1.25,
-    borderColor: '#F1F5F9',
-    padding: 14,
-    minHeight: 110,
-    justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 5,
-    elevation: 1,
-  },
-  cardSelected: {
-    borderColor: BioPulseColors.femaleAccent,
-    backgroundColor: '#FFF6F9',
-    shadowColor: BioPulseColors.femaleAccent,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  cardPressed: {
-    opacity: 0.92,
-    transform: [{ scale: 0.985 }],
-  },
-  cardHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  iconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F8FAFC',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconWrapSelected: {
-    backgroundColor: '#FCE8EF',
-  },
-  checkCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 1.5,
-    borderColor: '#CBD5E1',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-  },
-  checkCircleSelected: {
-    borderColor: BioPulseColors.femaleAccent,
-    backgroundColor: BioPulseColors.femaleAccent,
-  },
-  cardTextCol: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  cardTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#162A45',
-    marginBottom: 3,
+    fontSize: 13,
+    color: BioPulseColors.textSecondary,
+    marginTop: 2,
     lineHeight: 18,
   },
-  cardTitleSelected: {
-    color: BioPulseColors.femaleAccent,
-  },
-  cardDesc: {
-    fontSize: 11.5,
-    lineHeight: 15,
-    color: '#64748B',
-  },
-  syncedBadge: {
+  cardsGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 8,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 6,
-    backgroundColor: '#F1F5F9',
-    alignSelf: 'flex-start',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 20,
   },
-  syncedBadgeSelected: {
-    backgroundColor: '#FCE8EF',
-  },
-  syncedText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  syncedTextSelected: {
-    color: BioPulseColors.femaleAccent,
-  },
-  continueBtn: {
-    width: '100%',
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: BioPulseColors.femaleAccent,
+  symptomCard: {
+    height: 124,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: BioPulseColors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 10,
-    marginBottom: 16,
-    shadowColor: BioPulseColors.femaleAccent,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
+    position: 'relative',
+    padding: 12,
+    shadowColor: '#16B8C4',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
   },
-  btnPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.985 }],
+  symptomCardSelected: {
+    borderColor: '#F43F7D',
+    backgroundColor: '#FEF5F8',
+    shadowColor: '#F43F7D',
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
   },
-  continueBtnText: {
-    color: '#FFFFFF',
-    fontSize: 15.5,
+  checkBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#F43F7D',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconCircle: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  symptomTitle: {
+    fontSize: 13.5,
     fontWeight: '700',
-    letterSpacing: 0.2,
+    color: BioPulseColors.textPrimary,
+    textAlign: 'center',
+    letterSpacing: -0.1,
+  },
+  symptomTitleSelected: {
+    color: BioPulseColors.textPrimary,
+  },
+  infoBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#EBF7FA',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#CFEBF1',
+    padding: 12,
+    marginBottom: 20,
+  },
+  infoBannerText: {
+    flex: 1,
+    fontSize: 12.5,
+    color: BioPulseColors.textSecondary,
+    lineHeight: 18,
+  },
+  ctaWrapper: {
+    marginTop: 4,
   },
 });

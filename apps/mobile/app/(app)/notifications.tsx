@@ -1,44 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   Pressable,
-  Alert,
   useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../../constants/Colors';
-import { AuthBackgroundFoliage } from '../../components/auth/AuthBackgroundFoliage';
 import { useAuth } from '../../features/authentication';
 import { BioPulseBottomNav, BOTTOM_NAV_HEIGHT } from '../../components/navigation';
 
-export interface NotificationItem {
+export interface BioPulseNotificationItem {
   id: string;
   title: string;
-  message: string;
+  subtitle: string;
   time: string;
-  category: 'Medication' | 'Screening' | 'Appointment' | 'Labs' | 'Guidance';
+  section: 'Today' | 'Yesterday';
+  category: 'Reminders' | 'System';
   isRead: boolean;
-  actionRoute?: string;
-  actionLabel?: string;
+  iconName: keyof typeof Ionicons.glyphMap;
+  iconColor: string;
+  iconBg: string;
+  route?: string;
 }
 
 /**
  * SCREEN 46: Notifications
- * 
- * Provides:
- * - Timely clinical & daily management updates:
- *   - Medication schedule alerts
- *   - Cycle prediction / vitality check-in prompts
- *   - Lab OCR verification confirmations
- *   - Upcoming doctor appointments
- *   - New AI personalized recommendations
- * - Filter tabs: All, Clinical, Reminders
- * - Mark all read & quick jump to actions
+ *
+ * Strict visual match to Screenshot 46 (Top Left):
+ * - Header: Back button (<), centered "Notifications", right Settings gear icon
+ * - Filter Pills: [ All ] (active pink pill), [ Unread (3) ], [ Reminders ], [ System ]
+ * - Section: "Today"
+ *   - Medication due (8:00 PM, unread pink dot, Metformin 500 mg / Take 1 tablet with food)
+ *   - Period predicted (10:30 AM, unread pink dot, next period expected in 2 days)
+ *   - Lab upload processed (09:15 AM, read, hormone lab report processed)
+ *   - Appointment tomorrow (08:00 AM, read, Dr. Ayesha Malik / HealthCare Hospital)
+ * - Section: "Yesterday"
+ *   - Screening follow-up (5:20 PM, unread pink dot, consider adding clinical labs)
+ *   - New recommendation (3:10 PM, read, personalized nutrition plan)
+ * - Bottom Card: [ 🔔 Notification Preferences > ]
  */
 export default function NotificationsScreen() {
   const router = useRouter();
@@ -48,263 +53,334 @@ export default function NotificationsScreen() {
 
   const { pathway } = useAuth();
   const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
-  const themeAccent = isFemale ? BioPulseColors.femaleAccent : BioPulseColors.malePrimary;
-  const badgeBg = isFemale ? '#FDF0F4' : '#EBF4FC';
 
-  const [activeTab, setActiveTab] = useState<'All' | 'Clinical' | 'Reminders'>('All');
+  const [activeTab, setActiveTab] = useState<'All' | 'Unread' | 'Reminders' | 'System'>('All');
 
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
+  const [items, setItems] = useState<BioPulseNotificationItem[]>([
     {
-      id: 'n1',
-      title: 'Medication Due in 30 Mins',
-      message: isFemale
-        ? 'Metformin 500mg • Take with evening dinner.'
-        : 'Zinc & Vitamin D3 Complex • Take with evening meal.',
-      time: '15m ago',
-      category: 'Medication',
+      id: 'notif-1',
+      title: 'Medication due',
+      subtitle: 'Metformin 500 mg\nTake 1 tablet with food.',
+      time: '8:00 PM',
+      section: 'Today',
+      category: 'Reminders',
       isRead: false,
-      actionRoute: '/(app)/medications',
-      actionLabel: 'Log Dose',
+      iconName: 'medkit',
+      iconColor: '#E11D48',
+      iconBg: '#FCE7F3',
+      route: '/(app)/medications',
     },
     {
-      id: 'n2',
-      title: isFemale ? 'Predicted Period in 4 Days' : 'Daily Stamina Check-in',
-      message: isFemale
-        ? 'Based on your 34-day cycle trend, your next cycle is expected on Tuesday.'
-        : 'Log today’s energy and symptom intensity to refine your ADAM vitality curve.',
-      time: '2h ago',
-      category: 'Screening',
+      id: 'notif-2',
+      title: isFemale ? 'Period predicted' : 'Vitality check-in due',
+      subtitle: isFemale
+        ? 'Your next period is expected\nin 2 days (16 Sep 2026).'
+        : 'Update today’s energy and stamina score\nfor refined hormone tracking.',
+      time: '10:30 AM',
+      section: 'Today',
+      category: 'Reminders',
       isRead: false,
-      actionRoute: isFemale ? '/(app)/cycle-tracking' : '/(app)/symptom-log',
-      actionLabel: 'View Details',
+      iconName: 'calendar',
+      iconColor: '#E11D48',
+      iconBg: '#FCE7F3',
+      route: isFemale ? '/(app)/cycle-tracking' : '/(app)/symptom-log',
     },
     {
-      id: 'n3',
-      title: 'Lab Report Verified',
-      message: 'Hormonal panel OCR extraction verified and added to Tier 2 assessment.',
-      time: '1d ago',
-      category: 'Labs',
+      id: 'notif-3',
+      title: 'Lab upload processed',
+      subtitle: 'Your hormone lab report\nhas been successfully processed.',
+      time: '09:15 AM',
+      section: 'Today',
+      category: 'System',
       isRead: true,
-      actionRoute: '/(app)/add-labs',
-      actionLabel: 'View Labs',
+      iconName: 'document-text',
+      iconColor: '#0284C7',
+      iconBg: '#E0F2FE',
+      route: '/(app)/add-labs',
     },
     {
-      id: 'n4',
-      title: 'Upcoming Video Consultation',
-      message: isFemale
-        ? 'Appointment with Dr. Fatima Noor scheduled for Thursday at 10:30 AM.'
-        : 'Appointment with Dr. Tariq Mahmood scheduled for Wednesday at 09:30 AM.',
-      time: '2d ago',
-      category: 'Appointment',
+      id: 'notif-4',
+      title: 'Appointment tomorrow',
+      subtitle: 'Dr. Ayesha Malik\n10:00 AM at HealthCare Hospital',
+      time: '08:00 AM',
+      section: 'Today',
+      category: 'Reminders',
       isRead: true,
-      actionRoute: '/(app)/appointments',
-      actionLabel: 'View Appointment',
+      iconName: 'calendar-outline',
+      iconColor: '#E11D48',
+      iconBg: '#FCE7F3',
+      route: '/(app)/appointments',
     },
     {
-      id: 'n5',
-      title: 'New Personalized Recommendation',
-      message: isFemale
-        ? 'Spearmint infusion protocol added to your evening routine.'
-        : 'High-protein breakfast recommendation added to optimize insulin response.',
-      time: '3d ago',
-      category: 'Guidance',
+      id: 'notif-5',
+      title: 'Screening follow-up',
+      subtitle: 'Consider adding clinical labs\nfor a more accurate assessment.',
+      time: '5:20 PM',
+      section: 'Yesterday',
+      category: 'System',
+      isRead: false,
+      iconName: 'bar-chart',
+      iconColor: '#E11D48',
+      iconBg: '#FCE7F3',
+      route: '/(app)/screening',
+    },
+    {
+      id: 'notif-6',
+      title: 'New recommendation',
+      subtitle: 'A personalized nutrition plan\nis available for you.',
+      time: '3:10 PM',
+      section: 'Yesterday',
+      category: 'System',
       isRead: true,
-      actionRoute: '/(app)/guidance',
-      actionLabel: 'Open Guidance',
+      iconName: 'bulb-outline',
+      iconColor: '#D97706',
+      iconBg: '#FEF3C7',
+      route: '/(app)/guidance',
     },
   ]);
 
-  const handleMarkAllRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    Alert.alert('All Caught Up', 'All notifications marked as read.');
-  };
+  const unreadCount = useMemo(() => items.filter((item) => !item.isRead).length, [items]);
 
-  const handleAction = (item: NotificationItem) => {
-    // mark read
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === item.id ? { ...n, isRead: true } : n))
-    );
-    if (item.actionRoute) {
-      router.push(item.actionRoute as any);
-    }
-  };
+  const filteredItems = useMemo(() => {
+    return items.filter((item) => {
+      if (activeTab === 'All') return true;
+      if (activeTab === 'Unread') return !item.isRead;
+      if (activeTab === 'Reminders') return item.category === 'Reminders';
+      if (activeTab === 'System') return item.category === 'System';
+      return true;
+    });
+  }, [items, activeTab]);
 
-  const filtered = notifications.filter((item) => {
-    if (activeTab === 'All') return true;
-    if (activeTab === 'Clinical') {
-      return (
-        item.category === 'Screening' ||
-        item.category === 'Labs' ||
-        item.category === 'Appointment'
+  const todayItems = useMemo(
+    () => filteredItems.filter((item) => item.section === 'Today'),
+    [filteredItems]
+  );
+
+  const yesterdayItems = useMemo(
+    () => filteredItems.filter((item) => item.section === 'Yesterday'),
+    [filteredItems]
+  );
+
+  const handleItemPress = useCallback(
+    (item: BioPulseNotificationItem) => {
+      setItems((prev) =>
+        prev.map((i) => (i.id === item.id ? { ...i, isRead: true } : i))
       );
-    }
-    if (activeTab === 'Reminders') {
-      return item.category === 'Medication' || item.category === 'Guidance';
-    }
-    return true;
-  });
+      if (item.route) {
+        router.push(item.route as any);
+      }
+    },
+    [router]
+  );
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const topPad = Math.max(insets.top, 12);
+  const bottomPad = Math.max(insets.bottom, 16);
 
   return (
     <View style={styles.root}>
-      <AuthBackgroundFoliage />
+      <StatusBar style="dark" backgroundColor="transparent" translucent />
 
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) }]}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={20} color={BioPulseColors.navy} />
-        </Pressable>
-        <Text style={styles.headerTitle}>Notifications</Text>
+      {/* TOP HEADER */}
+      <View style={[styles.header, { paddingTop: topPad }]}>
         <Pressable
-          onPress={() => router.push('/(app)/settings')}
-          style={styles.settingsIconBtn}
+          onPress={() => router.back()}
+          style={styles.backBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+          hitSlop={8}
         >
-          <Ionicons name="settings-outline" size={20} color="#64748B" />
+          <Ionicons name="chevron-back" size={24} color={BioPulseColors.navy} />
+        </Pressable>
+
+        <Text style={styles.headerTitle}>Notifications</Text>
+
+        <Pressable
+          onPress={() => router.push('/(app)/notification-preferences')}
+          style={styles.settingsBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Notification Preferences"
+          hitSlop={8}
+        >
+          <Ionicons name="settings-outline" size={20} color={BioPulseColors.navy} />
         </Pressable>
       </View>
 
-      {/* Tabs Row & Mark All Read */}
-      <View style={styles.tabRowContainer}>
-        <View style={styles.filterPills}>
-          {(['All', 'Clinical', 'Reminders'] as const).map((tab) => {
-            const isSel = activeTab === tab;
-            return (
-              <Pressable
-                key={tab}
-                onPress={() => setActiveTab(tab)}
-                style={[
-                  styles.tabPill,
-                  isSel && {
-                    backgroundColor: badgeBg,
-                    borderColor: themeAccent,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.tabPillText,
-                    isSel && { color: themeAccent, fontWeight: '700' },
-                  ]}
-                >
-                  {tab}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        {unreadCount > 0 && (
-          <Pressable onPress={handleMarkAllRead}>
-            <Text style={[styles.markReadText, { color: themeAccent }]}>
-              Mark all read
+      {/* FILTER PILLS */}
+      <View style={styles.filterBar}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterPillsScroll}
+        >
+          {/* All */}
+          <Pressable
+            onPress={() => setActiveTab('All')}
+            style={[styles.filterPill, activeTab === 'All' && styles.filterPillActive]}
+          >
+            <Text
+              style={[
+                styles.filterPillText,
+                activeTab === 'All' && styles.filterPillTextActive,
+              ]}
+            >
+              All
             </Text>
           </Pressable>
-        )}
+
+          {/* Unread */}
+          <Pressable
+            onPress={() => setActiveTab('Unread')}
+            style={[styles.filterPill, activeTab === 'Unread' && styles.filterPillActive]}
+          >
+            <Text
+              style={[
+                styles.filterPillText,
+                activeTab === 'Unread' && styles.filterPillTextActive,
+              ]}
+            >
+              Unread ({unreadCount})
+            </Text>
+          </Pressable>
+
+          {/* Reminders */}
+          <Pressable
+            onPress={() => setActiveTab('Reminders')}
+            style={[styles.filterPill, activeTab === 'Reminders' && styles.filterPillActive]}
+          >
+            <Text
+              style={[
+                styles.filterPillText,
+                activeTab === 'Reminders' && styles.filterPillTextActive,
+              ]}
+            >
+              Reminders
+            </Text>
+          </Pressable>
+
+          {/* System */}
+          <Pressable
+            onPress={() => setActiveTab('System')}
+            style={[styles.filterPill, activeTab === 'System' && styles.filterPillActive]}
+          >
+            <Text
+              style={[
+                styles.filterPillText,
+                activeTab === 'System' && styles.filterPillTextActive,
+              ]}
+            >
+              System
+            </Text>
+          </Pressable>
+        </ScrollView>
       </View>
 
+      {/* NOTIFICATIONS CONTENT */}
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
           isTablet && styles.tabletScrollContent,
-          { paddingBottom: BOTTOM_NAV_HEIGHT + insets.bottom + 24 },
+          { paddingBottom: BOTTOM_NAV_HEIGHT + bottomPad + 24 },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.listCol}>
-          {filtered.map((item) => {
-            const getIcon = () => {
-              switch (item.category) {
-                case 'Medication':
-                  return 'medkit';
-                case 'Screening':
-                  return 'shield-checkmark';
-                case 'Appointment':
-                  return 'calendar';
-                case 'Labs':
-                  return 'flask';
-                case 'Guidance':
-                  return 'sparkles';
-                default:
-                  return 'notifications';
-              }
-            };
-
-            return (
-              <Pressable
-                key={item.id}
-                onPress={() => handleAction(item)}
-                style={[
-                  styles.notifCard,
-                  !item.isRead && styles.unreadCard,
-                  !item.isRead && { borderLeftColor: themeAccent },
-                ]}
-              >
-                <View style={styles.notifTopRow}>
-                  <View
-                    style={[
-                      styles.iconCircle,
-                      {
-                        backgroundColor: !item.isRead ? badgeBg : '#F1F5F9',
-                      },
-                    ]}
-                  >
-                    <Ionicons
-                      name={getIcon()}
-                      size={20}
-                      color={!item.isRead ? themeAccent : '#64748B'}
-                    />
+        {/* TODAY SECTION */}
+        {todayItems.length > 0 && (
+          <View style={styles.sectionBlock}>
+            <Text style={styles.sectionHeading}>Today</Text>
+            <View style={styles.cardContainer}>
+              {todayItems.map((item, idx) => (
+                <Pressable
+                  key={item.id}
+                  onPress={() => handleItemPress(item)}
+                  style={[
+                    styles.notifRow,
+                    idx < todayItems.length - 1 && styles.rowDivider,
+                  ]}
+                  accessibilityRole="button"
+                >
+                  {/* Category Icon */}
+                  <View style={[styles.iconBox, { backgroundColor: item.iconBg }]}>
+                    <Ionicons name={item.iconName} size={18} color={item.iconColor} />
                   </View>
 
-                  <View style={styles.notifBodyCol}>
-                    <View style={styles.titleLine}>
-                      <Text
-                        style={[
-                          styles.notifTitle,
-                          !item.isRead && { fontWeight: '800' },
-                        ]}
-                      >
-                        {item.title}
-                      </Text>
-                      <Text style={styles.timeText}>{item.time}</Text>
+                  {/* Body Col */}
+                  <View style={styles.textCol}>
+                    <Text style={styles.notifTitle}>{item.title}</Text>
+                    <Text style={styles.notifSubtitle}>{item.subtitle}</Text>
+                  </View>
+
+                  {/* Right Col: Time, Unread Dot, Chevron */}
+                  <View style={styles.rightCol}>
+                    <Text style={styles.timeLabel}>{item.time}</Text>
+                    <View style={styles.statusRow}>
+                      {!item.isRead && <View style={styles.unreadDot} />}
+                      <Ionicons name="chevron-forward" size={16} color="#CBD5E1" />
                     </View>
-
-                    <Text style={styles.notifMessage}>{item.message}</Text>
-
-                    {item.actionLabel && (
-                      <View style={styles.actionRow}>
-                        <Pressable
-                          onPress={() => handleAction(item)}
-                          style={[
-                            styles.actionBtn,
-                            { backgroundColor: badgeBg },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.actionBtnText,
-                              { color: themeAccent },
-                            ]}
-                          >
-                            {item.actionLabel}
-                          </Text>
-                          <Ionicons
-                            name="arrow-forward"
-                            size={12}
-                            color={themeAccent}
-                          />
-                        </Pressable>
-                      </View>
-                    )}
                   </View>
-                </View>
-              </Pressable>
-            );
-          })}
-        </View>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* YESTERDAY SECTION */}
+        {yesterdayItems.length > 0 && (
+          <View style={styles.sectionBlock}>
+            <Text style={styles.sectionHeading}>Yesterday</Text>
+            <View style={styles.cardContainer}>
+              {yesterdayItems.map((item, idx) => (
+                <Pressable
+                  key={item.id}
+                  onPress={() => handleItemPress(item)}
+                  style={[
+                    styles.notifRow,
+                    idx < yesterdayItems.length - 1 && styles.rowDivider,
+                  ]}
+                  accessibilityRole="button"
+                >
+                  {/* Category Icon */}
+                  <View style={[styles.iconBox, { backgroundColor: item.iconBg }]}>
+                    <Ionicons name={item.iconName} size={18} color={item.iconColor} />
+                  </View>
+
+                  {/* Body Col */}
+                  <View style={styles.textCol}>
+                    <Text style={styles.notifTitle}>{item.title}</Text>
+                    <Text style={styles.notifSubtitle}>{item.subtitle}</Text>
+                  </View>
+
+                  {/* Right Col: Time, Unread Dot, Chevron */}
+                  <View style={styles.rightCol}>
+                    <Text style={styles.timeLabel}>{item.time}</Text>
+                    <View style={styles.statusRow}>
+                      {!item.isRead && <View style={styles.unreadDot} />}
+                      <Ionicons name="chevron-forward" size={16} color="#CBD5E1" />
+                    </View>
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* NOTIFICATION PREFERENCES LINK CARD */}
+        <Pressable
+          onPress={() => router.push('/(app)/notification-preferences')}
+          style={styles.prefLinkCard}
+          accessibilityRole="button"
+          accessibilityLabel="Notification Preferences"
+        >
+          <View style={styles.prefLinkLeft}>
+            <View style={styles.prefBellBox}>
+              <Ionicons name="notifications-outline" size={18} color="#E11D48" />
+            </View>
+            <Text style={styles.prefLinkText}>Notification Preferences</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="#E11D48" />
+        </Pressable>
       </ScrollView>
 
-      {/* Bottom Nav */}
+      {/* BOTTOM NAV */}
       <BioPulseBottomNav activeTab="more" />
     </View>
   );
@@ -318,7 +394,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: '#F1F5F9',
     paddingHorizontal: 16,
     paddingBottom: 12,
     flexDirection: 'row',
@@ -326,134 +402,170 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F1F5F9',
   },
   headerTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
     color: BioPulseColors.navy,
   },
-  settingsIconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  settingsBtn: {
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tabRowContainer: {
+  filterBar: {
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-    paddingHorizontal: 16,
+    borderBottomColor: '#F1F5F9',
     paddingVertical: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
   },
-  filterPills: {
+  filterPillsScroll: {
+    paddingHorizontal: 16,
     flexDirection: 'row',
     gap: 8,
   },
-  tabPill: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+  filterPill: {
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
   },
-  tabPillText: {
-    fontSize: 12,
+  filterPillActive: {
+    backgroundColor: '#E11D48',
+  },
+  filterPillText: {
+    fontSize: 12.5,
     fontWeight: '600',
     color: '#475569',
   },
-  markReadText: {
-    fontSize: 12,
+  filterPillTextActive: {
+    color: '#FFFFFF',
     fontWeight: '700',
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 14,
+    paddingTop: 12,
   },
   tabletScrollContent: {
     maxWidth: 600,
     alignSelf: 'center',
     width: '100%',
   },
-  listCol: {
-    gap: 10,
+  sectionBlock: {
+    marginBottom: 16,
   },
-  notifCard: {
+  sectionHeading: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 8,
+    marginLeft: 2,
+  },
+  cardContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 14,
+    borderColor: '#F1F5F9',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.02,
-    shadowRadius: 2,
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
     elevation: 1,
+    overflow: 'hidden',
   },
-  unreadCard: {
-    borderLeftWidth: 4,
-    backgroundColor: '#FFFFFF',
-  },
-  notifTopRow: {
+  notifRow: {
     flexDirection: 'row',
-    gap: 12,
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
-  iconCircle: {
-    width: 40,
-    height: 40,
+  rowDivider: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#F8FAFC',
+  },
+  iconBox: {
+    width: 38,
+    height: 38,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 12,
   },
-  notifBodyCol: {
+  textCol: {
     flex: 1,
-  },
-  titleLine: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
+    paddingRight: 8,
   },
   notifTitle: {
     fontSize: 13.5,
     fontWeight: '700',
-    color: BioPulseColors.navy,
-    flex: 1,
-    paddingRight: 8,
+    color: '#0F172A',
+    marginBottom: 2,
   },
-  timeText: {
+  notifSubtitle: {
+    fontSize: 12,
+    color: '#475569',
+    lineHeight: 16,
+  },
+  rightCol: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    minWidth: 68,
+  },
+  timeLabel: {
     fontSize: 11,
     color: '#94A3B8',
+    marginBottom: 4,
   },
-  notifMessage: {
-    fontSize: 12.5,
-    color: '#475569',
-    lineHeight: 17,
-  },
-  actionRow: {
-    marginTop: 8,
-    flexDirection: 'row',
-  },
-  actionBtn: {
+  statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 6,
+    gap: 6,
   },
-  actionBtnText: {
-    fontSize: 11.5,
+  unreadDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: '#E11D48',
+  },
+  prefLinkCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#FFE4E6',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 4,
+    marginBottom: 20,
+    shadowColor: '#E11D48',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  prefLinkLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  prefBellBox: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: '#FFE4E6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  prefLinkText: {
+    fontSize: 13.5,
     fontWeight: '700',
+    color: '#0F172A',
   },
 });

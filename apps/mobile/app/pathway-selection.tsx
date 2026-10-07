@@ -1,370 +1,341 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   Text,
   Pressable,
   StyleSheet,
   ScrollView,
+  Image,
   useWindowDimensions,
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../constants/Colors';
-import { AuthBackgroundFoliage } from '../components/auth/AuthBackgroundFoliage';
-import {
-  PathwayHeader,
-  OnboardingStepper,
-  PathwayCard,
-  PathwayFeatureItem,
-} from '../components/onboarding';
+import { BioPulseBackground } from '../components/common/BioPulseBackground';
+import { Logo } from '../components/brand/Logo';
 import { useAuth } from '../features/authentication';
 import { HealthPathway } from '../features/authentication/types';
 
-const FEMALE_HERO = require('../assets/female_pathway_hero.png');
-const MALE_HERO = require('../assets/male_pathway_hero.png');
-
-const FEMALE_FEATURES: PathwayFeatureItem[] = [
-  { icon: 'flower-outline', text: 'Hormonal & reproductive health' },
-  { icon: 'git-network-outline', text: 'Metabolic wellness' },
-  { icon: 'sparkles-outline', text: 'Personalized guidance & support' },
-];
-
-const MALE_FEATURES: PathwayFeatureItem[] = [
-  { icon: 'male-outline', text: 'Testosterone & hormonal health' },
-  { icon: 'barbell-outline', text: 'Metabolic & reproductive wellness' },
-  { icon: 'shield-checkmark-outline', text: 'Personalized guidance & support' },
-];
+const FEMALE_CARD_IMAGE = require('../assets/female_card_hero.jpg');
+const MALE_CARD_IMAGE = require('../assets/male_card_hero.jpg');
 
 /**
- * Screen 5: "Choose Your Health Pathway"
+ * Screen 5: Choose Your Path
  *
- * Implements:
- * - Dual-pathway branching point (Female PCOS vs Male Hypogonadism)
- * - Header with back navigation, BioPulse AI brand lockup, and Help guidance
- * - 4-step progress stepper (Step 1 active: "Choose Path")
- * - Female Health Card & Male Health Card with equal visual hierarchy
- * - Mutual exclusivity & dynamic continue CTA
- * - Responsive 2-column or stacked layout with tablet width centering
- * - Full state persistence via AuthContext / profile architecture
+ * Rebuilt to match Screenshot 5:
+ * - BioPulse AI logo at the top
+ * - "Choose your health path" ("health path" in teal)
+ * - "Personalized insights for a healthier you."
+ * - Two large interactive cards:
+ *   1. Female Health: PCOS Screening (soft pink & teal glow, female silhouette, "Continue →" CTA)
+ *   2. Male Health: Hypogonadism Screening (blue & cyan glow, male silhouette, "Continue →" CTA)
+ * - Persists chosen pathway via useAuth().selectPathway()
+ * - Female routes to Screen 6 (/female-basic-info)
+ * - Male routes to (/male-basic-info)
  */
 export default function PathwaySelectionScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
-  const { pathway, selectPathway } = useAuth();
+  const { width, height } = useWindowDimensions();
+  const { selectPathway } = useAuth();
 
-  // Initialize with existing pathway if present in state, otherwise null
-  const [selectedPathway, setSelectedPathway] = useState<HealthPathway | null>(
-    pathway || null
+  const isShortScreen = height < 740;
+  const isTablet = width >= 768;
+
+  const topPad = Math.max(insets.top, Platform.OS === 'android' ? 16 : 12);
+  const bottomPad = Math.max(insets.bottom, 20);
+
+  const handleSelectPathway = useCallback(
+    (chosenPathway: HealthPathway) => {
+      // 1. Persist choice in AuthContext and Supabase session
+      selectPathway(chosenPathway);
+
+      // 2. Navigate to first onboarding screen
+      if (chosenPathway === 'female_pcos' || chosenPathway === 'female') {
+        router.push('/female-basic-info');
+      } else {
+        router.push('/male-basic-info');
+      }
+    },
+    [selectPathway, router]
   );
 
-  // Responsive breakpoint calculations
-  const isTablet = width >= 768;
-  const isVeryNarrow = width < 350;
-  const isTwoColumn = !isVeryNarrow;
-
-  // Handle back navigation cleanly
-  const handleBack = useCallback(() => {
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace('/onboarding');
-    }
-  }, [router]);
-
-  // Handle pathway selection
-  const handleSelectPathway = useCallback((type: 'female' | 'male') => {
-    const nextValue: HealthPathway = type === 'female' ? 'female_pcos' : 'male_hypogonadism';
-    setSelectedPathway(nextValue);
-  }, []);
-
-  // Handle continue CTA action
-  const handleContinue = useCallback(() => {
-    if (!selectedPathway) return;
-
-    // Persist choice into existing state architecture
-    selectPathway(selectedPathway);
-
-    // Route to pathway-specific onboarding flow (Step 1: Basic Info)
-    if (selectedPathway === 'female_pcos' || selectedPathway === 'female') {
-      router.push('/female-basic-info');
-    } else {
-      router.push('/male-basic-info');
-    }
-  }, [selectedPathway, selectPathway, router]);
-
-  const isFemaleSelected =
-    selectedPathway === 'female_pcos' || selectedPathway === 'female';
-  const isMaleSelected =
-    selectedPathway === 'male_hypogonadism' || selectedPathway === 'male';
-
-  // Dynamic button properties
-  const isButtonEnabled = Boolean(selectedPathway);
-  const buttonColor = isFemaleSelected
-    ? BioPulseColors.femaleAccent
-    : isMaleSelected
-    ? '#0284C7'
-    : '#CBD5E1';
-
-  const buttonText = isFemaleSelected
-    ? 'Continue with Female Health'
-    : isMaleSelected
-    ? 'Continue with Male Health'
-    : 'Select a Health Pathway';
-
   return (
-    <View
-      style={[
-        styles.root,
-        {
-          paddingTop: Math.max(insets.top, 10),
-          paddingBottom: Math.max(insets.bottom, 16),
-        },
-      ]}
-    >
-      <AuthBackgroundFoliage />
+    <BioPulseBackground style={styles.container}>
+      <StatusBar style="dark" backgroundColor="transparent" translucent />
 
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          isTablet && styles.tabletScrollContent,
+          {
+            paddingTop: topPad + 8,
+            paddingBottom: bottomPad + 8,
+            minHeight: height,
+          },
         ]}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+        bounces={false}
       >
-        <View style={[styles.container, isTablet && styles.tabletContainer]}>
-          {/* 1. Header (Back button, BioPulse AI logo, Help) */}
-          <PathwayHeader onBack={handleBack} />
+        <View style={[styles.mainWrapper, { maxWidth: Math.min(width, 460) }]}>
+          {/* 1. Header Brand Logo */}
+          <View style={styles.logoSection}>
+            <Logo size="sm" layout="vertical" showTagline={false} />
+          </View>
 
-          {/* 2. Progress Stepper (Step 1: Choose Path) */}
-          <OnboardingStepper
-            currentStep={1}
-            accentColor={
-              isMaleSelected ? '#0284C7' : BioPulseColors.femaleAccent
-            }
-          />
-
-          {/* 3. Main Content Title & Description */}
-          <View style={styles.titleBlock}>
-            <Text style={styles.screenTitle}>
-              Choose Your Health Pathway
+          {/* 2. Titles */}
+          <View style={styles.titleSection}>
+            <Text style={styles.title}>
+              Choose your{'\n'}
+              <Text style={styles.titleAccent}>health path</Text>
             </Text>
-            <Text style={styles.screenDescription}>
-              Select the pathway that best fits your health goals.{'\n'}
-              You can always change this later in settings.
+            <Text style={styles.subtitle}>
+              Personalized insights for a healthier you.
             </Text>
           </View>
 
-          {/* 4. Pathway Cards (Female & Male) */}
-          <View
-            style={[
-              styles.cardsWrapper,
-              isTwoColumn ? styles.cardsRow : styles.cardsColumn,
-            ]}
-          >
-            {/* Female Health Card */}
-            <PathwayCard
-              type="female"
-              title="Female Health"
-              subtitle="PCOS Screening"
-              illustrationSource={FEMALE_HERO}
-              features={FEMALE_FEATURES}
-              footerText="Designed for women with PCOS and related concerns"
-              isSelected={isFemaleSelected}
-              onSelect={() => handleSelectPathway('female')}
-              isTwoColumn={isTwoColumn}
-            />
-
-            {/* Male Health Card */}
-            <PathwayCard
-              type="male"
-              title="Male Health"
-              subtitle="Hypogonadism Screening"
-              illustrationSource={MALE_HERO}
-              features={MALE_FEATURES}
-              footerText="Designed for men with hypogonadism and related concerns"
-              isSelected={isMaleSelected}
-              onSelect={() => handleSelectPathway('male')}
-              isTwoColumn={isTwoColumn}
-            />
-          </View>
-
-          {/* 5. Information Banner */}
-          <View style={styles.infoBanner}>
-            <Ionicons
-              name="information-circle"
-              size={20}
-              color="#64748B"
-              style={styles.infoIcon}
-            />
-            <Text style={styles.infoText}>
-              BioPulse AI provides screening support and personalized guidance, not a medical diagnosis.
-            </Text>
-          </View>
-
-          {/* 6. Continue CTA Button */}
-          <Pressable
-            onPress={handleContinue}
-            disabled={!isButtonEnabled}
-            style={({ pressed }) => [
-              styles.continueButton,
-              { backgroundColor: buttonColor },
-              isFemaleSelected && styles.continueButtonFemaleShadow,
-              isMaleSelected && styles.continueButtonMaleShadow,
-              !isButtonEnabled && styles.continueButtonDisabled,
-              pressed && isButtonEnabled && styles.continueButtonPressed,
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel={buttonText}
-            accessibilityState={{ disabled: !isButtonEnabled }}
-          >
-            <View style={styles.buttonInnerRow}>
-              <Text
-                style={[
-                  styles.continueButtonText,
-                  !isButtonEnabled && styles.continueButtonTextDisabled,
-                ]}
-              >
-                {buttonText}
-              </Text>
-              {isButtonEnabled && (
-                <Ionicons
-                  name="arrow-forward"
-                  size={18}
-                  color="#FFFFFF"
-                  style={styles.arrowIcon}
+          {/* 3. Pathway Cards */}
+          <View style={styles.cardsContainer}>
+            {/* CARD 1: FEMALE HEALTH (PCOS SCREENING) */}
+            <Pressable
+              onPress={() => handleSelectPathway('female_pcos')}
+              style={({ pressed }) => [
+                styles.pathwayCard,
+                styles.femaleCardBorder,
+                pressed && styles.cardPressed,
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Female Health PCOS Screening"
+            >
+              {/* Silhouette Illustration */}
+              <View style={styles.cardImageContainer}>
+                <Image
+                  source={FEMALE_CARD_IMAGE}
+                  style={styles.cardSilhouetteImage}
+                  resizeMode="contain"
                 />
-              )}
-            </View>
-          </Pressable>
+              </View>
+
+              {/* Card Text & CTA */}
+              <View style={styles.cardContent}>
+                <Text style={styles.cardTitle}>Female Health</Text>
+                <Text style={styles.femaleSubtitle}>PCOS Screening</Text>
+                <Text style={styles.cardDescription}>
+                  Understand your hormonal health with AI-powered screening.
+                </Text>
+
+                <Pressable
+                  onPress={() => handleSelectPathway('female_pcos')}
+                  style={styles.femaleButton}
+                  accessibilityRole="button"
+                  accessibilityLabel="Continue to Female Health"
+                >
+                  <Text style={styles.buttonText}>Continue</Text>
+                  <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+                </Pressable>
+              </View>
+            </Pressable>
+
+            {/* CARD 2: MALE HEALTH (HYPOGONADISM SCREENING) */}
+            <Pressable
+              onPress={() => handleSelectPathway('male_hypogonadism')}
+              style={({ pressed }) => [
+                styles.pathwayCard,
+                styles.maleCardBorder,
+                pressed && styles.cardPressed,
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Male Health Hypogonadism Screening"
+            >
+              {/* Silhouette Illustration */}
+              <View style={styles.cardImageContainer}>
+                <Image
+                  source={MALE_CARD_IMAGE}
+                  style={styles.cardSilhouetteImage}
+                  resizeMode="contain"
+                />
+              </View>
+
+              {/* Card Text & CTA */}
+              <View style={styles.cardContent}>
+                <Text style={styles.cardTitle}>Male Health</Text>
+                <Text style={styles.maleSubtitle}>Hypogonadism Screening</Text>
+                <Text style={styles.cardDescription}>
+                  Assess your hormonal health and overall vitality with AI-powered screening.
+                </Text>
+
+                <Pressable
+                  onPress={() => handleSelectPathway('male_hypogonadism')}
+                  style={styles.maleButton}
+                  accessibilityRole="button"
+                  accessibilityLabel="Continue to Male Health"
+                >
+                  <Text style={styles.buttonText}>Continue</Text>
+                  <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+                </Pressable>
+              </View>
+            </Pressable>
+          </View>
         </View>
       </ScrollView>
-    </View>
+    </BioPulseBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
+  container: {
     flex: 1,
-    backgroundColor: '#FEF8FA',
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 16,
-    paddingBottom: 24,
-  },
-  tabletScrollContent: {
     alignItems: 'center',
-    paddingHorizontal: 24,
+    justifyContent: 'space-between',
+    paddingHorizontal: 18,
   },
-  container: {
-    width: '100%',
-  },
-  tabletContainer: {
-    maxWidth: 680,
-  },
-  titleBlock: {
-    alignItems: 'center',
-    textAlign: 'center',
-    marginTop: 4,
-    marginBottom: 16,
-    paddingHorizontal: 12,
-  },
-  screenTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: BioPulseColors.navy,
-    textAlign: 'center',
-    letterSpacing: -0.3,
-    marginBottom: 6,
-  },
-  screenDescription: {
-    fontSize: 13.5,
-    lineHeight: 19,
-    color: '#64748B',
-    textAlign: 'center',
-    fontWeight: '400',
-  },
-  cardsWrapper: {
-    width: '100%',
-    marginBottom: 14,
-  },
-  cardsRow: {
-    flexDirection: 'row',
-    gap: 12,
-    alignItems: 'stretch',
-  },
-  cardsColumn: {
-    flexDirection: 'column',
-    gap: 12,
-  },
-  infoBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F1F5F9',
-    borderRadius: 14,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    marginBottom: 14,
-    gap: 10,
-  },
-  infoIcon: {
-    flexShrink: 0,
-  },
-  infoText: {
+  mainWrapper: {
     flex: 1,
-    fontSize: 12,
-    lineHeight: 16,
-    color: '#475569',
-    fontWeight: '500',
-  },
-  continueButton: {
     width: '100%',
-    height: 54,
-    borderRadius: 27,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
   },
-  continueButtonFemaleShadow: {
-    shadowColor: BioPulseColors.femaleAccent,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.28,
-    shadowRadius: 10,
-    elevation: 4,
+  logoSection: {
+    alignItems: 'center',
+    marginTop: 4,
   },
-  continueButtonMaleShadow: {
-    shadowColor: '#0284C7',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.28,
-    shadowRadius: 10,
-    elevation: 4,
+  titleSection: {
+    alignItems: 'center',
+    marginTop: 12,
+    marginBottom: 20,
   },
-  continueButtonDisabled: {
-    opacity: 0.8,
+  title: {
+    fontSize: 29,
+    fontWeight: '800',
+    color: BioPulseColors.textPrimary,
+    textAlign: 'center',
+    lineHeight: 36,
+    letterSpacing: -0.5,
   },
-  continueButtonPressed: {
-    transform: [{ scale: 0.985 }],
+  titleAccent: {
+    color: BioPulseColors.teal,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: BioPulseColors.textSecondary,
+    textAlign: 'center',
+    marginTop: 6,
+  },
+  cardsContainer: {
+    width: '100%',
+    gap: 16,
+    marginBottom: 16,
+  },
+  pathwayCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 24,
+    borderWidth: 1.5,
+    padding: 16,
+    shadowColor: '#16B8C4',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
+    minHeight: 180,
+  },
+  femaleCardBorder: {
+    borderColor: 'rgba(244, 63, 125, 0.22)',
+  },
+  maleCardBorder: {
+    borderColor: 'rgba(33, 150, 243, 0.22)',
+  },
+  cardPressed: {
+    transform: [{ scale: 0.99 }],
     opacity: 0.92,
   },
-  buttonInnerRow: {
+  cardImageContainer: {
+    width: 100,
+    height: 145,
+    borderRadius: 18,
+    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: BioPulseColors.borderSubtle,
+    marginRight: 14,
+  },
+  cardSilhouetteImage: {
+    width: '100%',
+    height: '100%',
+  },
+  cardContent: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  cardTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: BioPulseColors.textPrimary,
+    letterSpacing: -0.3,
+  },
+  femaleSubtitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: BioPulseColors.teal,
+    marginTop: 2,
+    marginBottom: 6,
+  },
+  maleSubtitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1988D4',
+    marginTop: 2,
+    marginBottom: 6,
+  },
+  cardDescription: {
+    fontSize: 12.5,
+    color: BioPulseColors.textSecondary,
+    lineHeight: 17,
+    marginBottom: 14,
+  },
+  femaleButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: BioPulseColors.teal,
+    height: 40,
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    alignSelf: 'flex-start',
+    gap: 6,
+    shadowColor: '#16B8C4',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.28,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  continueButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
+  maleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1E88E5',
+    height: 40,
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    alignSelf: 'flex-start',
+    gap: 6,
+    shadowColor: '#1E88E5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.28,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  buttonText: {
     color: '#FFFFFF',
-    letterSpacing: -0.2,
-  },
-  continueButtonTextDisabled: {
-    color: '#64748B',
-  },
-  arrowIcon: {
-    marginLeft: 8,
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

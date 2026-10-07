@@ -3,19 +3,39 @@ import {
   View,
   Text,
   StyleSheet,
+  ScrollView,
   Pressable,
   ActivityIndicator,
   useWindowDimensions,
-  Animated,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../../constants/Colors';
-import { AuthBackgroundFoliage } from '../../components/auth/AuthBackgroundFoliage';
+import { BioPulseBackground } from '../../components/common/BioPulseBackground';
 import { useAuth } from '../../features/authentication';
-import { BioPulseBottomNav, BOTTOM_NAV_HEIGHT } from '../../components/navigation';
 
+/**
+ * SCREEN 21: OCR UPLOAD
+ *
+ * Strict visual match to Screenshot 21:
+ * - Top Header: Back chevron (<)
+ * - Title: "Upload Lab Report"
+ * - Subtitle: "Upload a clear photo or PDF of your lab report and we'll automatically extract your test results."
+ * - Center Illustration: Medical lab document report artwork with sparkle accents
+ * - Primary Action Buttons:
+ *   - [ Take a Photo ] (solid pink/magenta button with camera icon)
+ *   - [ Upload File ] (white button with pink outline and upload icon)
+ * - Format information: "Supported formats: PDF, JPG, PNG\nMax file size: 10 MB"
+ * - Privacy Notice: Blue shield icon, "Your data is private and secure..."
+ * - Processing Stepper State:
+ *   - "Processing your report..."
+ *   - [✓] Uploading document
+ *   - [○] Reading and extracting text
+ *   - [○] Identifying lab results
+ *   - [○] Preparing summary
+ */
 export default function OcrUploadScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -24,399 +44,428 @@ export default function OcrUploadScreen() {
 
   const { pathway } = useAuth();
   const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
-  const themeAccent = isFemale ? BioPulseColors.femaleAccent : BioPulseColors.malePrimary;
-  const themeSoftBg = isFemale ? '#FFF2F7' : '#EAF5FD';
+  const themeAccent = isFemale ? '#F43F7D' : '#0284C7';
 
   const [processing, setProcessing] = useState(false);
-  const [stage, setStage] = useState<number>(0);
+  const [currentStage, setCurrentStage] = useState<number>(0);
 
   const stages = [
-    'Document uploaded successfully',
-    'Binarizing & preprocessing image...',
-    'Running vision OCR test extraction...',
-    'Validating normal reference intervals...',
+    'Uploading document',
+    'Reading and extracting text',
+    'Identifying lab results',
+    'Preparing summary',
   ];
 
-  const handleSimulateScan = useCallback((_source: 'camera' | 'file') => {
+  const handleStartProcessing = useCallback(() => {
     setProcessing(true);
-    setStage(0);
+    setCurrentStage(0);
 
-    const timer1 = setTimeout(() => setStage(1), 400);
-    const timer2 = setTimeout(() => setStage(2), 900);
-    const timer3 = setTimeout(() => setStage(3), 1400);
-    const timer4 = setTimeout(() => {
+    const t1 = setTimeout(() => setCurrentStage(1), 500);
+    const t2 = setTimeout(() => setCurrentStage(2), 1100);
+    const t3 = setTimeout(() => setCurrentStage(3), 1700);
+    const t4 = setTimeout(() => {
       setProcessing(false);
       router.push('/(app)/ocr-verify');
-    }, 1900);
+    }, 2300);
 
     return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
-      clearTimeout(timer4);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      clearTimeout(t4);
     };
   }, [router]);
 
-  return (
-    <View style={styles.root}>
-      <AuthBackgroundFoliage />
+  const topPad = Math.max(insets.top, 12);
+  const bottomPad = Math.max(insets.bottom, 20);
 
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) }]}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn} accessibilityLabel="Back">
-          <Ionicons name="arrow-back" size={20} color={BioPulseColors.navy} />
+  return (
+    <BioPulseBackground style={styles.root}>
+      <StatusBar style="dark" backgroundColor="transparent" translucent />
+
+      {/* TOP HEADER */}
+      <View style={[styles.topHeader, { paddingTop: topPad }]}>
+        <Pressable
+          onPress={() => router.back()}
+          style={styles.backBtn}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
+        >
+          <Ionicons name="chevron-back" size={24} color={BioPulseColors.textPrimary} />
         </Pressable>
-        <View style={styles.headerTitleWrap}>
-          <Text style={styles.headerTitle}>Smart Report OCR</Text>
-          <Text style={styles.headerSub}>AI Vision Document Extraction</Text>
-        </View>
-        <View style={{ width: 40 }} />
       </View>
 
-      <View
-        style={[
-          styles.container,
-          isTablet && styles.tabletContainer,
-          { paddingBottom: BOTTOM_NAV_HEIGHT + insets.bottom + 20 },
-        ]}
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPad + 30 }]}
+        showsVerticalScrollIndicator={false}
       >
-        {processing ? (
-          <View style={styles.processingCard}>
-            <View style={[styles.scanIconBox, { backgroundColor: themeSoftBg }]}>
-              <ActivityIndicator size="large" color={themeAccent} />
-            </View>
-            <Text style={styles.processingTitle}>Extracting Biomarkers with OCR</Text>
-            <Text style={styles.processingDesc}>
-              Analyzing laboratory document layout, endocrine markers, and quantitative test units.
+        <View style={[styles.mainWrapper, isTablet && styles.tabletWrapper]}>
+          {/* TITLE & SUBTITLE */}
+          <View style={styles.titleSection}>
+            <Text style={styles.screenTitle}>Upload Lab Report</Text>
+            <Text style={styles.screenSubtitle}>
+              Upload a clear photo or PDF of your lab report and we'll automatically extract your test results.
             </Text>
+          </View>
 
-            {/* Stepped progress indicators */}
-            <View style={styles.stagesList}>
-              {stages.map((stg, idx) => {
-                const isCompleted = idx < stage;
-                const isCurrent = idx === stage;
+          {/* REPORT DOCUMENT ARTWORK */}
+          <View style={styles.illustrationContainer}>
+            <View style={styles.documentCard}>
+              <View style={styles.documentHeaderBar}>
+                <Ionicons name="medkit" size={20} color={themeAccent} />
+              </View>
+              <View style={styles.documentLine1} />
+              <View style={styles.documentLine2} />
+              <View style={styles.documentLine3} />
+              <View style={styles.documentLine4} />
+            </View>
+
+            {/* Sparkles */}
+            <Ionicons
+              name="sparkles"
+              size={18}
+              color={themeAccent}
+              style={styles.sparkleTopRight}
+            />
+            <Ionicons
+              name="sparkles"
+              size={14}
+              color="#F59E0B"
+              style={styles.sparkleBottomLeft}
+            />
+          </View>
+
+          {/* ACTION BUTTONS */}
+          <View style={styles.actionButtonsContainer}>
+            {/* Take a Photo */}
+            <Pressable
+              onPress={handleStartProcessing}
+              disabled={processing}
+              style={({ pressed }) => [
+                styles.takePhotoBtn,
+                { backgroundColor: themeAccent },
+                pressed && styles.btnPressed,
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Take a Photo"
+            >
+              <Ionicons name="camera" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+              <Text style={styles.takePhotoBtnText}>Take a Photo</Text>
+            </Pressable>
+
+            {/* Upload File */}
+            <Pressable
+              onPress={handleStartProcessing}
+              disabled={processing}
+              style={({ pressed }) => [
+                styles.uploadFileBtn,
+                { borderColor: themeAccent },
+                pressed && styles.btnPressed,
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Upload File"
+            >
+              <Ionicons
+                name="cloud-upload-outline"
+                size={20}
+                color={themeAccent}
+                style={{ marginRight: 8 }}
+              />
+              <Text style={[styles.uploadFileBtnText, { color: themeAccent }]}>Upload File</Text>
+            </Pressable>
+          </View>
+
+          {/* FORMATS SUBTEXT */}
+          <Text style={styles.formatsText}>
+            Supported formats: PDF, JPG, PNG{'\n'}Max file size: 10 MB
+          </Text>
+
+          {/* PRIVACY BOX */}
+          <View style={styles.privacyBox}>
+            <View style={styles.privacyIconBox}>
+              <Ionicons name="shield-checkmark" size={18} color="#0284C7" />
+            </View>
+            <View style={styles.privacyContentCol}>
+              <Text style={styles.privacyTitle}>Your data is private and secure.</Text>
+              <Text style={styles.privacySub}>
+                We use encrypted processing to extract your lab results. Your files are not shared with third parties.
+              </Text>
+            </View>
+          </View>
+
+          {/* PROCESSING STATUS STEPPER */}
+          <View style={styles.processingSection}>
+            <Text style={styles.processingHeading}>Processing your report...</Text>
+            <View style={styles.processingList}>
+              {stages.map((label, idx) => {
+                const isPassed = processing ? idx < currentStage : idx === 0;
+                const isCurrent = processing && idx === currentStage;
+
                 return (
-                  <View key={idx} style={styles.stageItem}>
+                  <View key={idx} style={styles.processStepRow}>
                     <View
                       style={[
-                        styles.stageDot,
-                        isCompleted && { backgroundColor: '#10B981', borderColor: '#10B981' },
-                        isCurrent && { backgroundColor: themeAccent, borderColor: themeAccent },
+                        styles.processStepCircle,
+                        isPassed && { backgroundColor: themeAccent, borderColor: themeAccent },
+                        isCurrent && { borderColor: themeAccent, backgroundColor: '#FFFFFF' },
                       ]}
                     >
-                      {isCompleted ? (
+                      {isPassed ? (
                         <Ionicons name="checkmark" size={12} color="#FFFFFF" />
+                      ) : isCurrent ? (
+                        <ActivityIndicator size="small" color={themeAccent} />
                       ) : (
-                        <Text style={styles.stageDotNum}>{idx + 1}</Text>
+                        <View style={styles.processStepInnerDot} />
                       )}
                     </View>
                     <Text
                       style={[
-                        styles.stageLabel,
-                        (isCompleted || isCurrent) && styles.stageLabelActive,
+                        styles.processStepLabel,
+                        (isPassed || isCurrent) && styles.processStepLabelActive,
                       ]}
                     >
-                      {stg}
+                      {label}
                     </Text>
                   </View>
                 );
               })}
             </View>
           </View>
-        ) : (
-          <>
-            <View style={styles.introCard}>
-              <View style={[styles.introBadge, { backgroundColor: themeSoftBg }]}>
-                <Ionicons name="sparkles" size={18} color={themeAccent} />
-              </View>
-              <Text style={styles.introTitle}>Scan or Upload Lab Report</Text>
-              <Text style={styles.introSub}>
-                BioPulse AI reads hormone and metabolic blood test reports directly from printed pages or digital PDF documents.
-              </Text>
-            </View>
-
-            {/* Upload Options */}
-            <View style={styles.optionsWrap}>
-              <Pressable
-                onPress={() => handleSimulateScan('camera')}
-                style={({ pressed }) => [styles.uploadOption, pressed && styles.uploadOptionPressed]}
-              >
-                <View style={[styles.iconBox, { backgroundColor: '#EFF6FF' }]}>
-                  <Ionicons name="camera-outline" size={26} color={BioPulseColors.malePrimary} />
-                </View>
-                <View style={styles.optionTextContent}>
-                  <Text style={styles.optionTitle}>Take Photo of Physical Report</Text>
-                  <Text style={styles.optionDesc}>Capture printed page in bright, even lighting</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
-              </Pressable>
-
-              <Pressable
-                onPress={() => handleSimulateScan('file')}
-                style={({ pressed }) => [styles.uploadOption, pressed && styles.uploadOptionPressed]}
-              >
-                <View style={[styles.iconBox, { backgroundColor: '#F0FDF4' }]}>
-                  <Ionicons name="document-text-outline" size={26} color="#16A34A" />
-                </View>
-                <View style={styles.optionTextContent}>
-                  <Text style={styles.optionTitle}>Upload Digital PDF or Image</Text>
-                  <Text style={styles.optionDesc}>Select test results from file storage or gallery</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
-              </Pressable>
-            </View>
-
-            {/* Formats Card */}
-            <View style={styles.formatCard}>
-              <Text style={styles.formatTitle}>ACCEPTED DOCUMENT FORMATS</Text>
-              <View style={styles.formatRow}>
-                <Ionicons name="checkmark-circle" size={16} color="#10B981" />
-                <Text style={styles.formatText}>PDF, PNG, JPG, or HEIC formats up to 15 MB</Text>
-              </View>
-              <View style={styles.formatRow}>
-                <Ionicons name="checkmark-circle" size={16} color="#10B981" />
-                <Text style={styles.formatText}>Ensure reference range intervals and test units are visible</Text>
-              </View>
-              <View style={styles.formatRow}>
-                <Ionicons name="checkmark-circle" size={16} color="#10B981" />
-                <Text style={styles.formatText}>Supports Chughtai Lab, Essa, IDC, and international lab formats</Text>
-              </View>
-            </View>
-
-            {/* Privacy Note */}
-            <View style={styles.privacyBanner}>
-              <Ionicons name="lock-closed" size={16} color="#0E9EAA" />
-              <Text style={styles.privacyText}>
-                Reports are encrypted in transit and analyzed on private secure HIPAA-compliant infrastructure.
-              </Text>
-            </View>
-          </>
-        )}
-      </View>
-
-      {/* Permanent Fixed Bottom Nav */}
-      <BioPulseBottomNav activeTab="screening" />
-    </View>
+        </View>
+      </ScrollView>
+    </BioPulseBackground>
   );
 }
 
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
   },
-  header: {
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+  topHeader: {
     paddingHorizontal: 16,
-    paddingBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    paddingBottom: 8,
   },
   backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F1F5F9',
-  },
-  headerTitleWrap: {
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: BioPulseColors.navy,
-  },
-  headerSub: {
-    fontSize: 12,
-    color: BioPulseColors.secondaryText,
-    marginTop: 1,
-  },
-  container: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-  },
-  tabletContainer: {
-    maxWidth: 600,
-    alignSelf: 'center',
-    width: '100%',
-  },
-  introCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    padding: 18,
-    marginBottom: 16,
     alignItems: 'center',
-    textAlign: 'center',
+    justifyContent: 'center',
   },
-  introBadge: {
-    width: 44,
-    height: 44,
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    alignItems: 'center',
+  },
+  mainWrapper: {
+    width: '100%',
+    maxWidth: 460,
+  },
+  tabletWrapper: {
+    maxWidth: 580,
+  },
+  titleSection: {
+    marginBottom: 18,
+  },
+  screenTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#073B72',
+    letterSpacing: -0.3,
+    marginBottom: 6,
+  },
+  screenSubtitle: {
+    fontSize: 14,
+    color: '#64748B',
+    lineHeight: 20,
+  },
+  illustrationContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 14,
+    position: 'relative',
+    height: 140,
+  },
+  documentCard: {
+    width: 110,
+    height: 130,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FCE7F3',
+    shadowColor: '#F43F7D',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 3,
+  },
+  documentHeaderBar: {
+    width: 38,
+    height: 38,
     borderRadius: 12,
+    backgroundColor: '#FDF2F8',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
   },
-  introTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: BioPulseColors.navy,
+  documentLine1: {
+    width: '80%',
+    height: 6,
+    backgroundColor: '#E2E8F0',
+    borderRadius: 3,
     marginBottom: 6,
-    textAlign: 'center',
   },
-  introSub: {
-    fontSize: 13,
-    color: BioPulseColors.secondaryText,
-    lineHeight: 18,
-    textAlign: 'center',
+  documentLine2: {
+    width: '65%',
+    height: 6,
+    backgroundColor: '#E2E8F0',
+    borderRadius: 3,
+    marginBottom: 6,
   },
-  optionsWrap: {
-    gap: 12,
-    marginBottom: 16,
+  documentLine3: {
+    width: '75%',
+    height: 6,
+    backgroundColor: '#E2E8F0',
+    borderRadius: 3,
+    marginBottom: 6,
   },
-  uploadOption: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
+  documentLine4: {
+    width: '50%',
+    height: 6,
+    backgroundColor: '#E2E8F0',
+    borderRadius: 3,
   },
-  uploadOptionPressed: {
-    borderColor: BioPulseColors.malePrimary,
-    backgroundColor: '#F8FAFC',
+  sparkleTopRight: {
+    position: 'absolute',
+    top: 10,
+    right: 80,
   },
-  iconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+  sparkleBottomLeft: {
+    position: 'absolute',
+    bottom: 20,
+    left: 80,
   },
-  optionTextContent: {
-    flex: 1,
-  },
-  optionTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: BioPulseColors.navy,
-    marginBottom: 3,
-  },
-  optionDesc: {
-    fontSize: 12,
-    color: BioPulseColors.secondaryText,
-  },
-  formatCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 14,
-    marginBottom: 14,
-    gap: 8,
-  },
-  formatTitle: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#64748B',
-    letterSpacing: 0.5,
-    marginBottom: 2,
-  },
-  formatRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  formatText: {
-    fontSize: 12,
-    color: '#334155',
-    flex: 1,
-  },
-  privacyBanner: {
-    backgroundColor: '#F0FDFA',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#CCFBF1',
-    padding: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
+  actionButtonsContainer: {
     gap: 10,
+    marginBottom: 14,
   },
-  privacyText: {
-    fontSize: 12,
-    color: '#0F766E',
-    flex: 1,
-    lineHeight: 16,
-  },
-  processingCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 24,
-    alignItems: 'center',
-  },
-  scanIconBox: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
+  takePhotoBtn: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    height: 52,
+    borderRadius: 14,
+    shadowColor: '#F43F7D',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  processingTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: BioPulseColors.navy,
-    marginBottom: 6,
-    textAlign: 'center',
+  takePhotoBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
-  processingDesc: {
-    fontSize: 13,
-    color: BioPulseColors.secondaryText,
+  uploadFileBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+  },
+  uploadFileBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  formatsText: {
+    fontSize: 12,
+    color: '#64748B',
     textAlign: 'center',
-    lineHeight: 18,
+    lineHeight: 16,
+    marginBottom: 18,
+  },
+  privacyBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#F0F9FF',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+    gap: 10,
     marginBottom: 20,
   },
-  stagesList: {
-    width: '100%',
+  privacyIconBox: {
+    marginTop: 2,
+  },
+  privacyContentCol: {
+    flex: 1,
+    gap: 2,
+  },
+  privacyTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0369A1',
+  },
+  privacySub: {
+    fontSize: 12,
+    color: '#0C4A6E',
+    lineHeight: 16,
+  },
+  processingSection: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  processingHeading: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#073B72',
+    marginBottom: 12,
+  },
+  processingList: {
     gap: 12,
   },
-  stageItem: {
+  processStepRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  stageDot: {
+  processStepCircle: {
     width: 22,
     height: 22,
     borderRadius: 11,
     borderWidth: 1.5,
     borderColor: '#CBD5E1',
-    backgroundColor: '#F8FAFC',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  stageDotNum: {
-    fontSize: 11,
-    fontWeight: '700',
+  processStepInnerDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#E2E8F0',
+  },
+  processStepLabel: {
+    fontSize: 13,
     color: '#94A3B8',
   },
-  stageLabel: {
-    fontSize: 13,
-    color: '#64748B',
-  },
-  stageLabelActive: {
+  processStepLabelActive: {
+    color: '#0F172A',
     fontWeight: '600',
-    color: BioPulseColors.navy,
+  },
+  btnPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.99 }],
   },
 });

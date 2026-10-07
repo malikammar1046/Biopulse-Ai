@@ -1,39 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   Pressable,
-  Alert,
   useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../../constants/Colors';
-import { AuthBackgroundFoliage } from '../../components/auth/AuthBackgroundFoliage';
+import { BioPulseBackground } from '../../components/common/BioPulseBackground';
 import { useAuth } from '../../features/authentication';
-import { BioPulseBottomNav, BOTTOM_NAV_HEIGHT } from '../../components/navigation';
+import { useHealthStore } from '../../store';
 
-export interface ReportItem {
+interface ReportCardItem {
   id: string;
+  category: 'Screening' | 'Lab Reports' | 'Summaries';
   title: string;
-  category: 'Screening' | 'Clinical Summary' | 'Lab Report';
+  subtitle: string;
   date: string;
-  status: 'Ready' | 'Verified' | 'Processing';
-  size: string;
+  status: 'Completed' | 'Uploaded';
+  icon: keyof typeof Ionicons.glyphMap;
+  iconBg: string;
+  iconColor: string;
   route?: string;
 }
 
 /**
- * SCREEN 42: Reports
- * 
- * Provides:
- * - Central archive of AI screening assessments, verified clinical summaries, and uploaded labs
- * - Category filter chips: All, Screening, Clinical Summary, Lab Reports
- * - Direct View & Download actions
- * - Pathway-aware branding (PCOS vs Male Hypogonadism)
+ * SCREEN 42: REPORTS
+ *
+ * Strict visual match to Screenshot 42:
+ * - Top Header: Back chevron (<), "Reports", "View and manage all your health reports."
+ * - Category filter pills: [ All ] (active solid pink), [ Screening ], [ Lab Reports ], [ Summaries ]
+ * - 6 Report cards:
+ *   1. PCOS Screening Report (Tier 1 Assessment, 12 Mar 2026, Completed, View, >)
+ *   2. Hormone Lab Report (Blood Tests, 10 Mar 2026, Completed, View, >)
+ *   3. Clinical Summary (AI Generated Summary, 10 Mar 2026, Completed, View, >)
+ *   4. Ultrasound Report (Ovarian Ultrasound, 2 Mar 2026, Uploaded, View, >)
+ *   5. Lifestyle Progress Report (1 Feb 2026, Completed, View, >)
+ *   6. Monthly Summary (Jan 2026, Completed, View, >)
  */
 export default function ReportsScreen() {
   const router = useRouter();
@@ -43,246 +51,190 @@ export default function ReportsScreen() {
 
   const { pathway } = useAuth();
   const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
-  const themeAccent = isFemale ? BioPulseColors.femaleAccent : BioPulseColors.malePrimary;
-  const badgeBg = isFemale ? '#FDF0F4' : '#EBF4FC';
 
-  const [selectedFilter, setSelectedFilter] = useState<'All' | 'Screening' | 'Clinical Summary' | 'Lab Report'>('All');
+  const [activeTab, setActiveTab] = useState<'All' | 'Screening' | 'Lab Reports' | 'Summaries'>('All');
 
-  const reports: ReportItem[] = [
+  const allReports: ReportCardItem[] = useMemo(() => [
     {
-      id: 'rep-1',
-      title: isFemale ? 'PCOS Longitudinal Clinical Summary' : 'Hypogonadism Clinical Summary',
-      category: 'Clinical Summary',
-      date: 'Oct 01, 2026',
-      status: 'Ready',
-      size: '1.4 MB',
-      route: '/(app)/clinical-summary',
-    },
-    {
-      id: 'rep-2',
-      title: isFemale ? 'Tier 1 Phenotype Risk Assessment' : 'Male ADAM Tier 1 Screening',
+      id: 'rep-screening',
       category: 'Screening',
-      date: 'Sep 28, 2026',
-      status: 'Verified',
-      size: '840 KB',
+      title: isFemale ? 'PCOS Screening Report' : 'Hypogonadism Screening Report',
+      subtitle: 'Tier 1 Assessment',
+      date: '12 Mar 2026',
+      status: 'Completed',
+      icon: 'document-text',
+      iconBg: '#FFE4E6',
+      iconColor: '#E11D48',
       route: '/(app)/screening-explanation',
     },
     {
-      id: 'rep-3',
-      title: isFemale ? 'Hormonal Endocrine Lab Panel' : 'Serum Testosterone & Metabolic Panel',
-      category: 'Lab Report',
-      date: 'Sep 15, 2026',
-      status: 'Verified',
-      size: '2.1 MB',
+      id: 'rep-hormone',
+      category: 'Lab Reports',
+      title: 'Hormone Lab Report',
+      subtitle: 'Blood Tests',
+      date: '10 Mar 2026',
+      status: 'Completed',
+      icon: 'flask',
+      iconBg: '#E0F2FE',
+      iconColor: '#0284C7',
       route: '/(app)/add-labs',
     },
     {
-      id: 'rep-4',
-      title: isFemale ? 'Initial Intake Screening Report' : 'Baseline Andrological Assessment',
-      category: 'Screening',
-      date: 'Aug 20, 2026',
-      status: 'Verified',
-      size: '720 KB',
-      route: '/(app)/screening',
+      id: 'rep-summary',
+      category: 'Summaries',
+      title: 'Clinical Summary',
+      subtitle: 'AI Generated Summary',
+      date: '10 Mar 2026',
+      status: 'Completed',
+      icon: 'clipboard',
+      iconBg: '#F3E8FF',
+      iconColor: '#8B5CF6',
+      route: '/(app)/clinical-summary',
     },
-  ];
+    {
+      id: 'rep-ultrasound',
+      category: 'Lab Reports',
+      title: isFemale ? 'Ultrasound Report' : 'Endocrine Ultrasound Report',
+      subtitle: isFemale ? 'Ovarian Ultrasound' : 'Scrotal Ultrasound',
+      date: '2 Mar 2026',
+      status: 'Uploaded',
+      icon: 'water',
+      iconBg: '#E0F2FE',
+      iconColor: '#0284C7',
+      route: '/(app)/reports',
+    },
+    {
+      id: 'rep-lifestyle',
+      category: 'Summaries',
+      title: 'Lifestyle Progress Report',
+      subtitle: '1 Feb 2026',
+      date: '1 Feb 2026',
+      status: 'Completed',
+      icon: 'document-text',
+      iconBg: '#F3E8FF',
+      iconColor: '#8B5CF6',
+      route: '/(app)/progress',
+    },
+    {
+      id: 'rep-monthly',
+      category: 'Summaries',
+      title: 'Monthly Summary',
+      subtitle: 'Jan 2026',
+      date: 'Jan 2026',
+      status: 'Completed',
+      icon: 'document-text',
+      iconBg: '#F3E8FF',
+      iconColor: '#8B5CF6',
+      route: '/(app)/progress',
+    },
+  ], [isFemale]);
 
-  const filteredReports = reports.filter((item) => {
-    if (selectedFilter === 'All') return true;
-    return item.category === selectedFilter;
-  });
-
-  const handleAction = (report: ReportItem) => {
-    if (report.route) {
-      router.push(report.route as any);
-    } else {
-      Alert.alert(
-        report.title,
-        `Document generated on ${report.date} (${report.size}). Encrypted under patient ID.`,
-        [
-          { text: 'Close', style: 'cancel' },
-          {
-            text: 'Export PDF',
-            onPress: () => router.push('/(app)/clinical-summary'),
-          },
-        ]
-      );
-    }
-  };
+  const displayedReports = useMemo(() => {
+    if (activeTab === 'All') return allReports;
+    return allReports.filter((r) => r.category === activeTab);
+  }, [allReports, activeTab]);
 
   return (
     <View style={styles.root}>
-      <AuthBackgroundFoliage />
+      <StatusBar style="dark" />
+      <BioPulseBackground />
 
       {/* Header */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) }]}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={20} color={BioPulseColors.navy} />
-        </Pressable>
-        <Text style={styles.headerTitle}>Health Reports & Records</Text>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 14) }]}>
         <Pressable
-          onPress={() => router.push('/(app)/clinical-summary')}
-          style={[styles.exportTopBtn, { backgroundColor: badgeBg }]}
+          onPress={() => router.back()}
+          style={styles.backBtn}
+          accessibilityLabel="Back"
+          hitSlop={8}
         >
-          <Ionicons name="document-text" size={18} color={themeAccent} />
+          <Ionicons name="chevron-back" size={24} color="#0F172A" />
         </Pressable>
-      </View>
 
-      {/* Filter Tabs */}
-      <View style={styles.filtersBar}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterChipsRow}>
-          {(['All', 'Clinical Summary', 'Screening', 'Lab Report'] as const).map((cat) => {
-            const isSel = selectedFilter === cat;
-            return (
-              <Pressable
-                key={cat}
-                onPress={() => setSelectedFilter(cat)}
-                style={[
-                  styles.filterChip,
-                  isSel && {
-                    backgroundColor: badgeBg,
-                    borderColor: themeAccent,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.filterChipText,
-                    isSel && { color: themeAccent, fontWeight: '700' },
-                  ]}
-                >
-                  {cat}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
+        <View style={styles.headerTitleWrap}>
+          <Text style={styles.headerTitle}>Reports</Text>
+          <Text style={styles.headerSub}>View and manage all your health reports.</Text>
+        </View>
       </View>
 
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          isTablet && styles.tabletScrollContent,
-          { paddingBottom: BOTTOM_NAV_HEIGHT + insets.bottom + 24 },
+          isTablet && styles.tabletContent,
+          { paddingBottom: insets.bottom + 40 },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Clinician Summary Feature Card */}
-        <Pressable
-          onPress={() => router.push('/(app)/clinical-summary')}
-          style={[styles.featureCard, { borderColor: themeAccent + '40' }]}
-        >
-          <View style={[styles.featureIconBox, { backgroundColor: badgeBg }]}>
-            <Ionicons name="medkit" size={26} color={themeAccent} />
-          </View>
-          <View style={styles.featureCol}>
-            <View style={styles.featureTagRow}>
-              <Text style={[styles.featureTag, { color: themeAccent, backgroundColor: badgeBg }]}>
-                RECOMMENDED FOR CLINICIAN
-              </Text>
-            </View>
-            <Text style={styles.featureTitle}>Export Complete Clinical Summary</Text>
-            <Text style={styles.featureDesc}>
-              A comprehensive single-page summary formatted for endocrinologists and gynecologists.
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
-        </Pressable>
+        {/* Category Filter Pills */}
+        <View style={styles.pillsRow}>
+          {(['All', 'Screening', 'Lab Reports', 'Summaries'] as const).map((tab) => {
+            const isSelected = activeTab === tab;
+            return (
+              <Pressable
+                key={tab}
+                onPress={() => setActiveTab(tab)}
+                style={[styles.catPill, isSelected && styles.catPillActive]}
+              >
+                <Text style={[styles.catText, isSelected && styles.catTextActive]}>
+                  {tab}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
 
-        {/* Reports Archive */}
-        <View style={styles.listSection}>
-          <Text style={styles.sectionHeader}>Archived Documents ({filteredReports.length})</Text>
-
-          {filteredReports.map((report) => (
+        {/* Reports List */}
+        <View style={styles.reportsList}>
+          {displayedReports.map((item) => (
             <Pressable
-              key={report.id}
-              onPress={() => handleAction(report)}
-              style={styles.reportCard}
+              key={item.id}
+              onPress={() => item.route && router.push(item.route as any)}
+              style={({ pressed }) => [styles.reportCard, pressed && styles.cardPressed]}
             >
-              <View style={styles.reportRowTop}>
-                <View
-                  style={[
-                    styles.reportIconBox,
-                    {
-                      backgroundColor:
-                        report.category === 'Clinical Summary'
-                          ? badgeBg
-                          : report.category === 'Screening'
-                          ? '#EFF6FF'
-                          : '#F3F4F6',
-                    },
-                  ]}
-                >
-                  <Ionicons
-                    name={
-                      report.category === 'Clinical Summary'
-                        ? 'document-text'
-                        : report.category === 'Screening'
-                        ? 'shield-checkmark'
-                        : 'flask'
-                    }
-                    size={22}
-                    color={
-                      report.category === 'Clinical Summary'
-                        ? themeAccent
-                        : report.category === 'Screening'
-                        ? '#2563EB'
-                        : '#4B5563'
-                    }
-                  />
-                </View>
-
-                <View style={styles.reportInfoCol}>
-                  <Text style={styles.reportTitle}>{report.title}</Text>
-                  <View style={styles.reportSubRow}>
-                    <Text style={styles.reportDate}>{report.date}</Text>
-                    <Text style={styles.reportDot}>•</Text>
-                    <Text style={styles.reportSize}>{report.size}</Text>
-                  </View>
-                </View>
-
-                <View style={styles.statusPill}>
-                  <Ionicons name="checkmark-circle" size={12} color="#10B981" />
-                  <Text style={styles.statusText}>{report.status}</Text>
-                </View>
+              {/* Icon Box */}
+              <View style={[styles.iconBox, { backgroundColor: item.iconBg }]}>
+                <Ionicons name={item.icon} size={20} color={item.iconColor} />
               </View>
 
-              <View style={styles.cardDivider} />
+              {/* Meta */}
+              <View style={styles.reportMeta}>
+                <Text style={styles.reportTitle}>{item.title}</Text>
+                <Text style={styles.reportSub}>{item.subtitle}</Text>
+                <Text style={styles.reportDate}>{item.date}</Text>
+              </View>
 
-              <View style={styles.reportRowBottom}>
-                <View style={styles.categoryBadge}>
-                  <Text style={styles.categoryBadgeText}>{report.category}</Text>
+              {/* Status and Action */}
+              <View style={styles.rightActionCol}>
+                <View
+                  style={[
+                    styles.statusBadge,
+                    item.status === 'Completed'
+                      ? styles.badgeCompleted
+                      : styles.badgeUploaded,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.statusText,
+                      item.status === 'Completed'
+                        ? styles.textCompleted
+                        : styles.textUploaded,
+                    ]}
+                  >
+                    {item.status}
+                  </Text>
                 </View>
 
-                <View style={styles.actionBtnRow}>
-                  <Pressable
-                    onPress={() => handleAction(report)}
-                    style={[styles.viewBtn, { backgroundColor: badgeBg }]}
-                  >
-                    <Ionicons name="eye-outline" size={14} color={themeAccent} />
-                    <Text style={[styles.viewBtnText, { color: themeAccent }]}>View</Text>
-                  </Pressable>
-
-                  <Pressable
-                    onPress={() => {
-                      Alert.alert(
-                        'Download PDF',
-                        `Preparing encrypted download for ${report.title}...`
-                      );
-                    }}
-                    style={styles.downloadIconBtn}
-                  >
-                    <Ionicons name="download-outline" size={16} color="#64748B" />
-                  </Pressable>
+                <View style={styles.viewRow}>
+                  <View style={styles.viewBtn}>
+                    <Text style={styles.viewBtnText}>View</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
                 </View>
               </View>
             </Pressable>
           ))}
         </View>
       </ScrollView>
-
-      {/* Bottom Nav */}
-      <BioPulseBottomNav activeTab="more" />
     </View>
   );
 }
@@ -290,238 +242,166 @@ export default function ReportsScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FAF5FF',
   },
   header: {
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingBottom: 8,
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    backgroundColor: 'transparent',
   },
   backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F1F5F9',
+    marginRight: 6,
+  },
+  headerTitleWrap: {
+    flex: 1,
+    paddingTop: 4,
   },
   headerTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: BioPulseColors.navy,
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
   },
-  exportTopBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  filtersBar: {
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-    paddingVertical: 8,
-  },
-  filterChipsRow: {
-    paddingHorizontal: 16,
-    gap: 8,
-  },
-  filterChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 10,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-  },
-  filterChipText: {
+  headerSub: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#475569',
+    color: '#64748B',
+    marginTop: 2,
   },
+
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 16,
-    gap: 14,
+    paddingTop: 6,
   },
-  tabletScrollContent: {
+  tabletContent: {
     maxWidth: 600,
     alignSelf: 'center',
     width: '100%',
   },
-  featureCard: {
+
+  // Pills
+  pillsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    backgroundColor: '#FFFFFF',
+    gap: 8,
+    marginBottom: 16,
+  },
+  catPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     borderRadius: 18,
-    borderWidth: 1.5,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
-  featureIconBox: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+  catPillActive: {
+    backgroundColor: '#E11D48',
+    borderColor: '#E11D48',
   },
-  featureCol: {
-    flex: 1,
-  },
-  featureTagRow: {
-    flexDirection: 'row',
-    marginBottom: 4,
-  },
-  featureTag: {
-    fontSize: 9.5,
-    fontWeight: '800',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    letterSpacing: 0.5,
-  },
-  featureTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: BioPulseColors.navy,
-  },
-  featureDesc: {
-    fontSize: 11.5,
+  catText: {
+    fontSize: 12,
+    fontWeight: '600',
     color: '#64748B',
-    marginTop: 2,
-    lineHeight: 16,
   },
-  listSection: {
-    gap: 10,
-  },
-  sectionHeader: {
-    fontSize: 13,
+  catTextActive: {
+    color: '#FFFFFF',
     fontWeight: '700',
-    color: BioPulseColors.navy,
-    marginLeft: 4,
-    marginBottom: 4,
+  },
+
+  // Cards
+  reportsList: {
+    gap: 12,
   },
   reportCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
     padding: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.02,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  reportRowTop: {
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    elevation: 1,
   },
-  reportIconBox: {
-    width: 44,
-    height: 44,
+  iconBox: {
+    width: 42,
+    height: 42,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 12,
   },
-  reportInfoCol: {
+  reportMeta: {
     flex: 1,
   },
   reportTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#1E293B',
+    color: '#0F172A',
   },
-  reportSubRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+  reportSub: {
+    fontSize: 11,
+    color: '#64748B',
     marginTop: 2,
   },
   reportDate: {
-    fontSize: 11.5,
-    color: '#64748B',
-  },
-  reportDot: {
-    fontSize: 11.5,
-    color: '#CBD5E1',
-  },
-  reportSize: {
-    fontSize: 11.5,
+    fontSize: 10,
     color: '#94A3B8',
+    marginTop: 1,
   },
-  statusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    backgroundColor: '#ECFDF5',
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 6,
+
+  rightActionCol: {
+    alignItems: 'flex-end',
+    gap: 6,
   },
-  statusText: {
-    fontSize: 10.5,
-    fontWeight: '700',
-    color: '#065F46',
-  },
-  cardDivider: {
-    height: 1,
-    backgroundColor: '#F1F5F9',
-    marginVertical: 10,
-  },
-  reportRowBottom: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  categoryBadge: {
-    backgroundColor: '#F1F5F9',
+  statusBadge: {
+    borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 6,
   },
-  categoryBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#475569',
+  badgeCompleted: {
+    backgroundColor: '#ECFDF5',
   },
-  actionBtnRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  badgeUploaded: {
+    backgroundColor: '#EFF6FF',
   },
-  viewBtn: {
+  statusText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  textCompleted: {
+    color: '#10B981',
+  },
+  textUploaded: {
+    color: '#0284C7',
+  },
+
+  viewRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
   },
-  viewBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  downloadIconBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: '#F8FAFC',
+  viewBtn: {
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    backgroundColor: '#FFFFFF',
+  },
+  viewBtnText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#0284C7',
+  },
+
+  cardPressed: {
+    opacity: 0.88,
   },
 });

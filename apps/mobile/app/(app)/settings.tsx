@@ -5,28 +5,33 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
-  Switch,
   Alert,
   useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../../constants/Colors';
-import { AuthBackgroundFoliage } from '../../components/auth/AuthBackgroundFoliage';
+import { BioPulseBackground } from '../../components/common/BioPulseBackground';
 import { useAuth } from '../../features/authentication';
 import { BioPulseBottomNav, BOTTOM_NAV_HEIGHT } from '../../components/navigation';
 
 /**
- * SCREEN 45: Settings
- * 
- * Provides:
- * - App units & localized standards (Metric vs Imperial)
- * - Notification preferences & clinical alert toggles
- * - Privacy & security safeguards (Biometric lock, End-to-end encryption)
- * - Clinical non-diagnostic disclaimer & compliance notes
- * - Session sign-out
- * - Strictly separates app system settings from health profile data
+ * SCREEN 45: SETTINGS
+ *
+ * Strict visual match to Screenshot 45:
+ * - Top Header: Back chevron (<), centered "Settings"
+ * - Settings Items List:
+ *   1. Notifications (Blue bell icon, "Appointment reminders, medication alerts", chevron >)
+ *   2. Units (Blue icon, "Metric (kg, cm)", chevron >)
+ *   3. Privacy (Teal shield icon, "Control your data and visibility", chevron >)
+ *   4. Data Sharing (Blue nodes icon, "Manage how your data is shared", chevron >)
+ *   5. Security (Blue lock icon, "Change password, login methods", chevron >)
+ *   6. Help & Support (Blue question icon, "FAQs, contact support", chevron >)
+ *   7. About BioPulse AI (Pink icon, "App version 1.0.0", chevron >)
+ *   8. Logout (Red exit icon, "Logout")
+ * - Permanent Fixed Bottom Navigation with [ More ] active
  */
 export default function SettingsScreen() {
   const router = useRouter();
@@ -34,26 +39,22 @@ export default function SettingsScreen() {
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
 
-  const { pathway, logout } = useAuth();
-  const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
-  const themeAccent = isFemale ? BioPulseColors.femaleAccent : BioPulseColors.malePrimary;
+  const { logout } = useAuth();
+  const [unitsMetric, setUnitsMetric] = useState(true);
 
-  // Settings State
-  const [metricUnits, setMetricUnits] = useState(true);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [medicationReminders, setMedicationReminders] = useState(true);
-  const [screeningReminders, setScreeningReminders] = useState(true);
-  const [biometricsEnabled, setBiometricsEnabled] = useState(false);
-  const [deidentifiedResearch, setDeidentifiedResearch] = useState(false);
+  const handleToggleUnits = () => {
+    setUnitsMetric(!unitsMetric);
+    Alert.alert('Units Updated', `Switched display units to ${!unitsMetric ? 'Metric (kg, cm)' : 'Imperial (lb, in)'}.`);
+  };
 
   const handleLogout = () => {
     Alert.alert(
       'Sign Out',
-      'Are you sure you want to end your current session?',
+      'Are you sure you want to end your active session on this device?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Sign Out',
+          text: 'Logout',
           style: 'destructive',
           onPress: async () => {
             await logout();
@@ -64,203 +65,159 @@ export default function SettingsScreen() {
     );
   };
 
-  const handleClearCache = () => {
-    Alert.alert(
-      'Offline Storage Cleared',
-      'Local cached reports and temporary images were safely removed. Cloud synchronization remains intact.'
-    );
-  };
-
   return (
     <View style={styles.root}>
-      <AuthBackgroundFoliage />
+      <StatusBar style="dark" />
+      <BioPulseBackground />
 
       {/* Header */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) }]}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={20} color={BioPulseColors.navy} />
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 14) }]}>
+        <Pressable
+          onPress={() => router.back()}
+          style={styles.headerBtn}
+          accessibilityLabel="Back"
+          hitSlop={8}
+        >
+          <Ionicons name="chevron-back" size={24} color="#0F172A" />
         </Pressable>
-        <Text style={styles.headerTitle}>Settings & Privacy</Text>
-        <View style={{ width: 40 }} />
+
+        <Text style={styles.headerTitle}>Settings</Text>
+
+        <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          isTablet && styles.tabletScrollContent,
-          { paddingBottom: BOTTOM_NAV_HEIGHT + insets.bottom + 32 },
+          isTablet && styles.tabletContent,
+          { paddingBottom: BOTTOM_NAV_HEIGHT + insets.bottom + 20 },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Section 1: Units & Preferences */}
-        <View style={styles.sectionBlock}>
-          <Text style={styles.sectionTitle}>UNITS & DISPLAY</Text>
-          <View style={styles.card}>
-            <View style={styles.row}>
-              <View style={styles.rowLeft}>
-                <Ionicons name="scale-outline" size={20} color={themeAccent} />
-                <View>
-                  <Text style={styles.rowLabel}>Metric System</Text>
-                  <Text style={styles.rowSub}>Kilograms (kg) and Centimeters (cm)</Text>
-                </View>
-              </View>
-              <Switch
-                value={metricUnits}
-                onValueChange={setMetricUnits}
-                trackColor={{ false: '#CBD5E1', true: themeAccent }}
-                thumbColor="#FFFFFF"
-              />
+        <View style={styles.settingsList}>
+          {/* 1. Notifications */}
+          <Pressable
+            onPress={() => router.push('/(app)/notifications')}
+            style={({ pressed }) => [styles.itemRow, pressed && styles.rowPressed]}
+          >
+            <View style={[styles.iconBox, { backgroundColor: '#E0F2FE' }]}>
+              <Ionicons name="notifications" size={18} color="#0284C7" />
             </View>
-          </View>
+            <View style={styles.itemMeta}>
+              <Text style={styles.itemTitle}>Notifications</Text>
+              <Text style={styles.itemSub}>Appointment reminders, medication alerts</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
+          </Pressable>
+
+          {/* 2. Units */}
+          <Pressable
+            onPress={handleToggleUnits}
+            style={({ pressed }) => [styles.itemRow, pressed && styles.rowPressed]}
+          >
+            <View style={[styles.iconBox, { backgroundColor: '#E0F2FE' }]}>
+              <Ionicons name="speedometer-outline" size={18} color="#0284C7" />
+            </View>
+            <View style={styles.itemMeta}>
+              <Text style={styles.itemTitle}>Units</Text>
+            </View>
+            <Text style={styles.unitsValueText}>
+              {unitsMetric ? 'Metric (kg, cm)' : 'Imperial (lb, in)'}
+            </Text>
+            <Ionicons name="chevron-forward" size={16} color="#94A3B8" style={{ marginLeft: 6 }} />
+          </Pressable>
+
+          {/* 3. Privacy */}
+          <Pressable
+            onPress={() => router.push('/(auth)/privacy')}
+            style={({ pressed }) => [styles.itemRow, pressed && styles.rowPressed]}
+          >
+            <View style={[styles.iconBox, { backgroundColor: '#CCFBF1' }]}>
+              <Ionicons name="shield-checkmark" size={18} color="#0D9488" />
+            </View>
+            <View style={styles.itemMeta}>
+              <Text style={styles.itemTitle}>Privacy</Text>
+              <Text style={styles.itemSub}>Control your data and visibility</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
+          </Pressable>
+
+          {/* 4. Data Sharing */}
+          <Pressable
+            onPress={() => router.push('/(app)/care-circle')}
+            style={({ pressed }) => [styles.itemRow, pressed && styles.rowPressed]}
+          >
+            <View style={[styles.iconBox, { backgroundColor: '#E0F2FE' }]}>
+              <Ionicons name="share-social" size={18} color="#0284C7" />
+            </View>
+            <View style={styles.itemMeta}>
+              <Text style={styles.itemTitle}>Data Sharing</Text>
+              <Text style={styles.itemSub}>Manage how your data is shared</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
+          </Pressable>
+
+          {/* 5. Security */}
+          <Pressable
+            onPress={() => router.push('/(auth)/forgot-password')}
+            style={({ pressed }) => [styles.itemRow, pressed && styles.rowPressed]}
+          >
+            <View style={[styles.iconBox, { backgroundColor: '#E0F2FE' }]}>
+              <Ionicons name="lock-closed" size={18} color="#0284C7" />
+            </View>
+            <View style={styles.itemMeta}>
+              <Text style={styles.itemTitle}>Security</Text>
+              <Text style={styles.itemSub}>Change password, login methods</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
+          </Pressable>
+
+          {/* 6. Help & Support */}
+          <Pressable
+            onPress={() => Alert.alert('Help & Support', 'Reach our clinical team at support@biopulse.health or chat with BioPulse AI.')}
+            style={({ pressed }) => [styles.itemRow, pressed && styles.rowPressed]}
+          >
+            <View style={[styles.iconBox, { backgroundColor: '#E0F2FE' }]}>
+              <Ionicons name="help-circle" size={18} color="#0284C7" />
+            </View>
+            <View style={styles.itemMeta}>
+              <Text style={styles.itemTitle}>Help & Support</Text>
+              <Text style={styles.itemSub}>FAQs, contact support</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
+          </Pressable>
+
+          {/* 7. About BioPulse AI */}
+          <Pressable
+            onPress={() => Alert.alert('BioPulse AI', 'BioPulse AI Health Platform v1.0.0.\nDual-pathway diagnostic intelligence for endocrine health.')}
+            style={({ pressed }) => [styles.itemRow, pressed && styles.rowPressed]}
+          >
+            <View style={[styles.iconBox, { backgroundColor: '#FFE4E6' }]}>
+              <Ionicons name="heart" size={18} color="#E11D48" />
+            </View>
+            <View style={styles.itemMeta}>
+              <Text style={styles.itemTitle}>About BioPulse AI</Text>
+              <Text style={styles.itemSub}>App version 1.0.0</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
+          </Pressable>
+
+          {/* 8. Logout */}
+          <Pressable
+            onPress={handleLogout}
+            style={({ pressed }) => [styles.itemRow, pressed && styles.rowPressed, { borderBottomWidth: 0 }]}
+          >
+            <View style={[styles.iconBox, { backgroundColor: '#FEE2E2' }]}>
+              <Ionicons name="log-out-outline" size={18} color="#EF4444" />
+            </View>
+            <View style={styles.itemMeta}>
+              <Text style={styles.logoutText}>Logout</Text>
+            </View>
+          </Pressable>
         </View>
-
-        {/* Section 2: Notifications */}
-        <View style={styles.sectionBlock}>
-          <Text style={styles.sectionTitle}>NOTIFICATIONS & REMINDERS</Text>
-          <View style={styles.card}>
-            <View style={[styles.row, styles.borderBottom]}>
-              <View style={styles.rowLeft}>
-                <Ionicons name="notifications-outline" size={20} color={themeAccent} />
-                <View>
-                  <Text style={styles.rowLabel}>Push Notifications</Text>
-                  <Text style={styles.rowSub}>Critical health & appointment alerts</Text>
-                </View>
-              </View>
-              <Switch
-                value={notificationsEnabled}
-                onValueChange={setNotificationsEnabled}
-                trackColor={{ false: '#CBD5E1', true: themeAccent }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
-
-            <View style={[styles.row, styles.borderBottom]}>
-              <View style={styles.rowLeft}>
-                <Ionicons name="medkit-outline" size={20} color={themeAccent} />
-                <View>
-                  <Text style={styles.rowLabel}>Medication Schedules</Text>
-                  <Text style={styles.rowSub}>Daily dose reminders and alerts</Text>
-                </View>
-              </View>
-              <Switch
-                value={medicationReminders}
-                onValueChange={setMedicationReminders}
-                trackColor={{ false: '#CBD5E1', true: themeAccent }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
-
-            <View style={styles.row}>
-              <View style={styles.rowLeft}>
-                <Ionicons name="calendar-outline" size={20} color={themeAccent} />
-                <View>
-                  <Text style={styles.rowLabel}>Screening Check-in Prompts</Text>
-                  <Text style={styles.rowSub}>Periodic risk reassessment check-ins</Text>
-                </View>
-              </View>
-              <Switch
-                value={screeningReminders}
-                onValueChange={setScreeningReminders}
-                trackColor={{ false: '#CBD5E1', true: themeAccent }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
-          </View>
-        </View>
-
-        {/* Section 3: Privacy & Security */}
-        <View style={styles.sectionBlock}>
-          <Text style={styles.sectionTitle}>PRIVACY & DATA PROTECTION</Text>
-          <View style={styles.card}>
-            <View style={[styles.row, styles.borderBottom]}>
-              <View style={styles.rowLeft}>
-                <Ionicons name="finger-print-outline" size={20} color={themeAccent} />
-                <View>
-                  <Text style={styles.rowLabel}>Biometric Unlock</Text>
-                  <Text style={styles.rowSub}>Require FaceID or Fingerprint on launch</Text>
-                </View>
-              </View>
-              <Switch
-                value={biometricsEnabled}
-                onValueChange={setBiometricsEnabled}
-                trackColor={{ false: '#CBD5E1', true: themeAccent }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
-
-            <View style={[styles.row, styles.borderBottom]}>
-              <View style={styles.rowLeft}>
-                <Ionicons name="flask-outline" size={20} color={themeAccent} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.rowLabel}>De-identified Research</Text>
-                  <Text style={styles.rowSub}>
-                    Anonymized data contribution to PCOS and male endocrine research
-                  </Text>
-                </View>
-              </View>
-              <Switch
-                value={deidentifiedResearch}
-                onValueChange={setDeidentifiedResearch}
-                trackColor={{ false: '#CBD5E1', true: themeAccent }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
-
-            <Pressable
-              onPress={() => router.push('/(app)/care-circle')}
-              style={[styles.row, styles.borderBottom]}
-            >
-              <View style={styles.rowLeft}>
-                <Ionicons name="people-outline" size={20} color={themeAccent} />
-                <View>
-                  <Text style={styles.rowLabel}>Care Circle Access</Text>
-                  <Text style={styles.rowSub}>Manage doctors and family permissions</Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color="#CBD5E1" />
-            </Pressable>
-
-            <Pressable onPress={handleClearCache} style={styles.row}>
-              <View style={styles.rowLeft}>
-                <Ionicons name="trash-outline" size={20} color="#64748B" />
-                <View>
-                  <Text style={styles.rowLabel}>Clear Local Cache</Text>
-                  <Text style={styles.rowSub}>Re-sync offline database with server</Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color="#CBD5E1" />
-            </Pressable>
-          </View>
-        </View>
-
-        {/* Section 4: Clinical Governance & Legal */}
-        <View style={styles.sectionBlock}>
-          <Text style={styles.sectionTitle}>CLINICAL GOVERNANCE</Text>
-          <View style={styles.card}>
-            <View style={styles.infoBox}>
-              <Ionicons name="shield-checkmark" size={18} color="#10B981" />
-              <Text style={styles.disclaimerText}>
-                BioPulse AI is an evidence-based clinical decision-support and risk-screening engine. It does not provide medical diagnoses or replace physician consultations.
-              </Text>
-            </View>
-            <View style={styles.versionRow}>
-              <Text style={styles.versionLabel}>Engine Version</Text>
-              <Text style={styles.versionVal}>v2.4.0 (Clinical Release)</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Sign Out Action */}
-        <Pressable
-          onPress={handleLogout}
-          style={styles.logoutBtn}
-        >
-          <Ionicons name="log-out-outline" size={20} color="#EF4444" />
-          <Text style={styles.logoutText}>Sign Out of BioPulse</Text>
-        </Pressable>
       </ScrollView>
 
-      {/* Bottom Nav */}
+      {/* Permanent Fixed Bottom Navigation with More Active */}
       <BioPulseBottomNav activeTab="more" />
     </View>
   );
@@ -269,131 +226,94 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FAF5FF',
   },
   header: {
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    backgroundColor: 'transparent',
   },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  headerBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F1F5F9',
   },
   headerTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: BioPulseColors.navy,
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#0F172A',
   },
+  headerSpacer: {
+    width: 38,
+  },
+
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 16,
-    gap: 16,
+    paddingTop: 4,
   },
-  tabletScrollContent: {
+  tabletContent: {
     maxWidth: 600,
     alignSelf: 'center',
     width: '100%',
   },
-  sectionBlock: {
-    gap: 6,
-  },
-  sectionTitle: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#64748B',
-    letterSpacing: 0.6,
-    marginLeft: 4,
-  },
-  card: {
+
+  settingsList: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#F1F5F9',
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    elevation: 1,
   },
-  row: {
+  itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 13,
     paddingHorizontal: 16,
-  },
-  borderBottom: {
+    paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#F8FAFC',
   },
-  rowLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    flex: 1,
-    paddingRight: 12,
-  },
-  rowLabel: {
-    fontSize: 13.5,
-    fontWeight: '600',
-    color: '#1E293B',
-  },
-  rowSub: {
-    fontSize: 11.5,
-    color: '#64748B',
-    marginTop: 1,
-  },
-  infoBox: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    padding: 14,
-    backgroundColor: '#F8FAFC',
-  },
-  disclaimerText: {
-    flex: 1,
-    fontSize: 11.5,
-    color: '#64748B',
-    lineHeight: 16,
-  },
-  versionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-  },
-  versionLabel: {
-    fontSize: 12,
-    color: '#94A3B8',
-  },
-  versionVal: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#475569',
-  },
-  logoutBtn: {
-    flexDirection: 'row',
+  iconBox: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#FECACA',
-    height: 48,
-    borderRadius: 14,
-    marginTop: 4,
+    marginRight: 14,
+  },
+  itemMeta: {
+    flex: 1,
+  },
+  itemTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  itemSub: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  unitsValueText: {
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '500',
   },
   logoutText: {
     fontSize: 14,
     fontWeight: '700',
     color: '#EF4444',
+  },
+
+  rowPressed: {
+    backgroundColor: '#F8FAFC',
   },
 });

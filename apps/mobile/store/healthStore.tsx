@@ -197,6 +197,7 @@ export interface NotificationSettingsState {
   screeningFollowUp: boolean;
   newRecommendation: boolean;
   appUpdates: boolean;
+  marketingUpdates: boolean;
 }
 
 // ============================================================================
@@ -664,6 +665,7 @@ const INITIAL_NOTIFICATIONS: NotificationSettingsState = {
   screeningFollowUp: true,
   newRecommendation: true,
   appUpdates: false,
+  marketingUpdates: false,
 };
 
 // ============================================================================

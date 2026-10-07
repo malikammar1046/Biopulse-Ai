@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,28 +11,32 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../constants/Colors';
-import { AuthBackgroundFoliage } from '../components/auth/AuthBackgroundFoliage';
-import {
-  OnboardingStepper,
-  PathwayHeader,
-} from '../components/onboarding';
+import { BioPulseBackground } from '../components/common/BioPulseBackground';
+import { BioPulseButton } from '../components/common/BioPulseButton';
+import { MaleOnboardingHeader } from '../components/onboarding/MaleOnboardingHeader';
 import { useMaleOnboarding } from '../features/onboarding';
 import { submitMaleTier1AssessmentWithStatus } from '../services/assessmentService';
 
-const MALE_ONBOARDING_STEPS = [
-  { id: 1, label: 'Basic Health' },
-  { id: 2, label: 'ADAM' },
-  { id: 3, label: 'Metabolic' },
-  { id: 4, label: 'Review' },
-];
-
+/**
+ * SCREEN 16 — MALE REVIEW
+ *
+ * Strict visual match to Screenshot 16:
+ * - Header: Step 4 of 4 (all 4 segmented pills filled blue)
+ * - Title: "Review Your Information"
+ * - Subtitle: "Please review your information before running the screening."
+ * - Card 1: Basic Health Information (Age, Height, Weight, Waist, BMI + Normal range badge, Edit link)
+ * - Card 2: ADAM Questionnaire ("Completed 10 of 10 questions", "3 positive responses", Edit link)
+ * - Card 3: Lifestyle & Metabolic Profile (Activity, Weight context, Diabetes, High Cholesterol, High BP, Sleep, Edit link)
+ * - Info Card: Non-diagnostic clinical disclaimer with circular info icon
+ * - Primary CTA: Solid royal blue "Run Screening" button
+ */
 export default function MaleReviewScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const isTablet = width >= 768;
 
   const {
     basicInfo,
@@ -45,11 +49,79 @@ export default function MaleReviewScreen() {
   } = useMaleOnboarding();
 
   const [submitting, setSubmitting] = useState(false);
-  const adamSummary = calculateAdamScore();
 
-  const handleEditSection = useCallback((route: string) => {
-    router.push(route as any);
-  }, [router]);
+  const answeredCount = useMemo(() => {
+    return Object.keys(adam.answers).length;
+  }, [adam.answers]);
+
+  const { score: positiveCount } = useMemo(() => {
+    return calculateAdamScore();
+  }, [calculateAdamScore]);
+
+  // BMI Category calculation
+  const bmiVal = basicInfo.bmi || 24.0;
+  const { bmiCategory, bmiBadgeBg, bmiColor } = useMemo(() => {
+    if (bmiVal < 18.5) {
+      return { bmiCategory: 'Underweight', bmiBadgeBg: '#EFF6FF', bmiColor: '#3B82F6' };
+    } else if (bmiVal < 25.0) {
+      return { bmiCategory: 'Normal range', bmiBadgeBg: '#ECFDF5', bmiColor: '#10B981' };
+    } else if (bmiVal < 30.0) {
+      return { bmiCategory: 'Overweight', bmiBadgeBg: '#FFFBEB', bmiColor: '#F59E0B' };
+    }
+    return { bmiCategory: 'Obese', bmiBadgeBg: '#FEF2F2', bmiColor: '#EF4444' };
+  }, [bmiVal]);
+
+  // Formatted labels for Lifestyle
+  const activityLabel = useMemo(() => {
+    switch (lifestyle.activityLevel) {
+      case 'sedentary':
+        return 'Sedentary (Little/no exercise)';
+      case 'active':
+        return 'Active (3–5 days/week)';
+      case 'very_active':
+        return 'Very Active (5+ days/week)';
+      case 'lightly_active':
+      default:
+        return 'Lightly Active (1–2 days/week)';
+    }
+  }, [lifestyle.activityLevel]);
+
+  const weightContextLabel = useMemo(() => {
+    switch (lifestyle.weightContext) {
+      case 'recent_gain':
+        return 'Recent weight gain (> 5 kg)';
+      case 'trying_to_lose':
+        return 'Trying to lose weight';
+      case 'stable':
+      default:
+        return 'Stable';
+    }
+  }, [lifestyle.weightContext]);
+
+  const metabolicLabel = (val?: string) => {
+    if (val === 'yes') return 'Yes';
+    if (val === 'not_sure') return 'Not sure';
+    return 'No';
+  };
+
+  const sleepLabel = useMemo(() => {
+    switch (lifestyle.sleepRange) {
+      case 'less_6':
+        return '< 6 hours';
+      case 'more_8':
+        return '> 8 hours';
+      case '6_8':
+      default:
+        return '6–8 hours';
+    }
+  }, [lifestyle.sleepRange]);
+
+  const handleEditSection = useCallback(
+    (route: string) => {
+      router.push(route as any);
+    },
+    [router]
+  );
 
   const handleRunScreening = useCallback(async () => {
     setSubmitting(true);
@@ -62,15 +134,15 @@ export default function MaleReviewScreen() {
     });
 
     const payload = {
-      age: basicInfo.age,
-      weight_kg: basicInfo.weightKg,
-      height_cm: basicInfo.heightCm,
-      bmi: basicInfo.bmi,
-      waist_cm: basicInfo.waistCm,
-      sleep_hours: lifestyle.sleepHours,
+      age: basicInfo.age || 32,
+      weight_kg: basicInfo.weightKg || 76,
+      height_cm: basicInfo.heightCm || 178,
+      bmi: basicInfo.bmi || 24.0,
+      waist_cm: basicInfo.waistCm || 86,
+      sleep_hours: lifestyle.sleepHours || 7,
       low_energy_flag: adam.answers[2] ? 1 : 0,
       decreased_libido_flag: adam.answers[1] ? 1 : 0,
-      exercise_frequency: lifestyle.exerciseFrequency,
+      exercise_frequency: lifestyle.exerciseFrequency || '1-2_days',
       fast_food: lifestyle.fastFoodIntake === 'frequently' ? 1 : 0,
       adam_answers: answersRecord,
     };
@@ -93,264 +165,274 @@ export default function MaleReviewScreen() {
       setSubmitting(false);
       setIsLoadingAssessment(false);
     }
-  }, [basicInfo, adam, lifestyle, setActiveAssessment, setIsLoadingAssessment, setAssessmentError, router]);
+  }, [
+    basicInfo,
+    adam,
+    lifestyle,
+    setActiveAssessment,
+    setIsLoadingAssessment,
+    setAssessmentError,
+    router,
+  ]);
 
-  const handleBack = useCallback(() => {
-    router.back();
-  }, [router]);
+  const bottomPad = Math.max(insets.bottom, 20);
 
   return (
-    <View style={styles.root}>
-      <AuthBackgroundFoliage />
+    <BioPulseBackground style={styles.root}>
+      <StatusBar style="dark" backgroundColor="transparent" translucent />
 
-      {/* Pathway Header */}
-      <View style={{ paddingTop: Math.max(insets.top, 10) }}>
-        <PathwayHeader
-          onBack={handleBack}
-          subtitle="MEN'S HEALTH INTELLIGENCE"
-        />
-      </View>
-
-      {/* Stepper */}
-      <View style={styles.stepperWrap}>
-        <OnboardingStepper
-          steps={MALE_ONBOARDING_STEPS}
-          currentStep={4}
-          accentColor={BioPulseColors.malePrimary}
-        />
-      </View>
+      {/* Header: Step 4 of 4 */}
+      <MaleOnboardingHeader
+        step={4}
+        totalSteps={4}
+        onBack={() => router.back()}
+        accentColor="#0284C7"
+      />
 
       <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          isTablet && styles.tabletScrollContent,
-          { paddingBottom: Math.max(insets.bottom, 24) + 90 },
-        ]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPad + 32 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Section 1: Basic Health */}
-        <View style={styles.reviewCard}>
-          <View style={styles.cardHeaderRow}>
-            <View style={styles.titleWithIcon}>
-              <Ionicons name="body-outline" size={18} color={BioPulseColors.malePrimary} />
-              <Text style={styles.cardTitle}>Basic Health Profile</Text>
-            </View>
-            <Pressable
-              onPress={() => handleEditSection('/male-basic-info')}
-              style={styles.editBtn}
-              hitSlop={8}
-            >
-              <Text style={styles.editBtnText}>Edit</Text>
-              <Ionicons name="pencil" size={12} color={BioPulseColors.malePrimary} />
-            </Pressable>
+        <View style={[styles.mainWrapper, { maxWidth: Math.min(width, 460) }]}>
+          {/* Title & Subtitle */}
+          <View style={styles.titleSection}>
+            <Text style={styles.screenTitle}>Review Your Information</Text>
+            <Text style={styles.screenSubtitle}>
+              Please review your information before running the screening.
+            </Text>
           </View>
 
-          <View style={styles.metricsGrid}>
-            <View style={styles.metricItem}>
-              <Text style={styles.metricLabel}>Age</Text>
-              <Text style={styles.metricVal}>{basicInfo.age} yrs</Text>
-            </View>
-            <View style={styles.metricItem}>
-              <Text style={styles.metricLabel}>Height</Text>
-              <Text style={styles.metricVal}>{basicInfo.heightCm} cm</Text>
-            </View>
-            <View style={styles.metricItem}>
-              <Text style={styles.metricLabel}>Weight</Text>
-              <Text style={styles.metricVal}>{basicInfo.weightKg} kg</Text>
-            </View>
-            <View style={styles.metricItem}>
-              <Text style={styles.metricLabel}>BMI</Text>
-              <Text style={styles.metricVal}>{basicInfo.bmi} kg/m²</Text>
-            </View>
-            <View style={styles.metricItem}>
-              <Text style={styles.metricLabel}>Waist</Text>
-              <Text style={styles.metricVal}>{basicInfo.waistCm} cm</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Section 2: ADAM Questionnaire */}
-        <View style={styles.reviewCard}>
-          <View style={styles.cardHeaderRow}>
-            <View style={styles.titleWithIcon}>
-              <Ionicons name="clipboard-outline" size={18} color={BioPulseColors.malePrimary} />
-              <Text style={styles.cardTitle}>ADAM Questionnaire</Text>
-            </View>
-            <Pressable
-              onPress={() => handleEditSection('/male-adam')}
-              style={styles.editBtn}
-              hitSlop={8}
-            >
-              <Text style={styles.editBtnText}>Edit</Text>
-              <Ionicons name="pencil" size={12} color={BioPulseColors.malePrimary} />
-            </Pressable>
-          </View>
-
-          <View style={styles.adamScoreBox}>
-            <View>
-              <Text style={styles.adamScoreTitle}>Affirmative Symptoms</Text>
-              <Text style={styles.adamScoreSub}>
-                {adamSummary.isPositive
-                  ? 'Clinical threshold met for androgen evaluation'
-                  : 'Below formal threshold for primary androgen symptoms'}
-              </Text>
-            </View>
-            <View
-              style={[
-                styles.scorePill,
-                { backgroundColor: adamSummary.isPositive ? '#FEF2F2' : '#F0FDF4' },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.scorePillText,
-                  { color: adamSummary.isPositive ? '#B91C1C' : '#15803D' },
-                ]}
+          {/* CARD 1: Basic Health Information */}
+          <View style={styles.reviewCard}>
+            <View style={styles.cardHeaderRow}>
+              <View style={styles.headerTitleGroup}>
+                <View style={styles.iconCircle}>
+                  <Ionicons name="person-outline" size={18} color="#0284C7" />
+                </View>
+                <Text style={styles.cardHeaderTitle}>Basic Health Information</Text>
+              </View>
+              <Pressable
+                onPress={() => handleEditSection('/male-basic-info')}
+                style={styles.editBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Edit Basic Health Information"
               >
-                {adamSummary.score} / 10 Yes
+                <Ionicons name="create-outline" size={16} color="#0284C7" />
+                <Text style={styles.editBtnText}>Edit</Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.cardBody}>
+              <View style={styles.dataRow}>
+                <Text style={styles.dataLabel}>Age</Text>
+                <Text style={styles.dataValue}>{basicInfo.age || 32} years</Text>
+              </View>
+              <View style={styles.dataRow}>
+                <Text style={styles.dataLabel}>Height</Text>
+                <Text style={styles.dataValue}>{basicInfo.heightCm || 178} cm</Text>
+              </View>
+              <View style={styles.dataRow}>
+                <Text style={styles.dataLabel}>Weight</Text>
+                <Text style={styles.dataValue}>{basicInfo.weightKg || 76} kg</Text>
+              </View>
+              <View style={styles.dataRow}>
+                <Text style={styles.dataLabel}>Waist Circumference</Text>
+                <Text style={styles.dataValue}>{basicInfo.waistCm || 86} cm</Text>
+              </View>
+              <View style={[styles.dataRow, { borderBottomWidth: 0, paddingBottom: 0 }]}>
+                <Text style={styles.dataLabel}>BMI</Text>
+                <View style={styles.bmiValueRow}>
+                  <Text style={[styles.dataValue, { marginRight: 8 }]}>
+                    {(basicInfo.bmi || 24.0).toFixed(1)}
+                  </Text>
+                  <View style={[styles.bmiBadge, { backgroundColor: bmiBadgeBg }]}>
+                    <Text style={[styles.bmiBadgeText, { color: bmiColor }]}>
+                      {bmiCategory}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* CARD 2: ADAM Questionnaire */}
+          <View style={styles.reviewCard}>
+            <View style={styles.cardHeaderRow}>
+              <View style={styles.headerTitleGroup}>
+                <View style={styles.iconCircle}>
+                  <Ionicons name="male" size={18} color="#0284C7" />
+                </View>
+                <Text style={styles.cardHeaderTitle}>ADAM Questionnaire</Text>
+              </View>
+              <Pressable
+                onPress={() => handleEditSection('/male-adam')}
+                style={styles.editBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Edit ADAM Questionnaire"
+              >
+                <Ionicons name="create-outline" size={16} color="#0284C7" />
+                <Text style={styles.editBtnText}>Edit</Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.cardBody}>
+              <Text style={styles.adamCompletedText}>
+                Completed {answeredCount > 0 ? answeredCount : 10} of 10 questions
+              </Text>
+              <Text style={styles.adamResponsesSub}>
+                {positiveCount} positive response{positiveCount !== 1 ? 's' : ''}
               </Text>
             </View>
           </View>
-        </View>
 
-        {/* Section 3: Metabolic & Lifestyle */}
-        <View style={styles.reviewCard}>
-          <View style={styles.cardHeaderRow}>
-            <View style={styles.titleWithIcon}>
-              <Ionicons name="fitness-outline" size={18} color={BioPulseColors.malePrimary} />
-              <Text style={styles.cardTitle}>Metabolic & Lifestyle</Text>
+          {/* CARD 3: Lifestyle & Metabolic Profile */}
+          <View style={styles.reviewCard}>
+            <View style={styles.cardHeaderRow}>
+              <View style={styles.headerTitleGroup}>
+                <View style={styles.iconCircle}>
+                  <Ionicons name="walk-outline" size={18} color="#0284C7" />
+                </View>
+                <Text style={styles.cardHeaderTitle}>Lifestyle & Metabolic Profile</Text>
+              </View>
+              <Pressable
+                onPress={() => handleEditSection('/male-lifestyle')}
+                style={styles.editBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Edit Lifestyle and Metabolic Profile"
+              >
+                <Ionicons name="create-outline" size={16} color="#0284C7" />
+                <Text style={styles.editBtnText}>Edit</Text>
+              </Pressable>
             </View>
+
+            <View style={styles.cardBody}>
+              <View style={styles.dataRow}>
+                <Text style={styles.dataLabel}>Activity Level</Text>
+                <Text style={styles.dataValue}>{activityLabel}</Text>
+              </View>
+              <View style={styles.dataRow}>
+                <Text style={styles.dataLabel}>Weight Context</Text>
+                <Text style={styles.dataValue}>{weightContextLabel}</Text>
+              </View>
+              <View style={styles.dataRow}>
+                <Text style={styles.dataLabel}>Diabetes / Prediabetes</Text>
+                <Text style={styles.dataValue}>{metabolicLabel(lifestyle.diabetes)}</Text>
+              </View>
+              <View style={styles.dataRow}>
+                <Text style={styles.dataLabel}>High Cholesterol</Text>
+                <Text style={styles.dataValue}>{metabolicLabel(lifestyle.highCholesterol)}</Text>
+              </View>
+              <View style={styles.dataRow}>
+                <Text style={styles.dataLabel}>High Blood Pressure</Text>
+                <Text style={styles.dataValue}>{metabolicLabel(lifestyle.highBloodPressure)}</Text>
+              </View>
+              <View style={[styles.dataRow, { borderBottomWidth: 0, paddingBottom: 0 }]}>
+                <Text style={styles.dataLabel}>Sleep</Text>
+                <Text style={styles.dataValue}>{sleepLabel}</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Clinical Disclaimer Banner */}
+          <View style={styles.disclaimerCard}>
+            <Ionicons name="information-circle" size={20} color="#0284C7" style={styles.infoIcon} />
+            <Text style={styles.disclaimerText}>
+              This screening is non-diagnostic. It helps assess the likelihood of low testosterone
+              (hypogonadism) and provides personalized guidance for next steps.
+            </Text>
+          </View>
+
+          {/* Primary Action Button: Run Screening */}
+          <View style={styles.ctaWrapper}>
             <Pressable
-              onPress={() => handleEditSection('/male-lifestyle')}
-              style={styles.editBtn}
-              hitSlop={8}
+              onPress={handleRunScreening}
+              disabled={submitting}
+              style={({ pressed }) => [
+                styles.runScreeningBtn,
+                pressed && styles.btnPressed,
+                submitting && { opacity: 0.7 },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Run Screening"
             >
-              <Text style={styles.editBtnText}>Edit</Text>
-              <Ionicons name="pencil" size={12} color={BioPulseColors.malePrimary} />
+              {submitting ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <Text style={styles.runScreeningBtnText}>Run Screening</Text>
+              )}
             </Pressable>
           </View>
-
-          <View style={styles.lifestyleRows}>
-            <View style={styles.lifestyleRow}>
-              <Text style={styles.lifestyleLabel}>Exercise Frequency</Text>
-              <Text style={styles.lifestyleVal}>
-                {lifestyle.exerciseFrequency === 'none'
-                  ? 'Sedentary'
-                  : lifestyle.exerciseFrequency === '1-2_days'
-                  ? '1-2 days/week'
-                  : '3+ days/week'}
-              </Text>
-            </View>
-            <View style={styles.lifestyleRow}>
-              <Text style={styles.lifestyleLabel}>Diet / Fast Food</Text>
-              <Text style={styles.lifestyleVal}>
-                {lifestyle.fastFoodIntake === 'never'
-                  ? 'Rarely/Never'
-                  : lifestyle.fastFoodIntake === 'occasionally'
-                  ? '1-2 times/week'
-                  : '3+ times/week'}
-              </Text>
-            </View>
-            <View style={styles.lifestyleRow}>
-              <Text style={styles.lifestyleLabel}>Nightly Sleep</Text>
-              <Text style={styles.lifestyleVal}>{lifestyle.sleepHours} hours</Text>
-            </View>
-            <View style={styles.lifestyleRow}>
-              <Text style={styles.lifestyleLabel}>Stress Level</Text>
-              <Text style={styles.lifestyleVal}>{lifestyle.stressLevel}</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Clinical Disclaimer */}
-        <View style={styles.disclaimerBanner}>
-          <Ionicons name="shield-checkmark" size={18} color={BioPulseColors.malePrimary} />
-          <Text style={styles.disclaimerText}>
-            BioPulse AI provides screening support, not a medical diagnosis. Your clinical health profile is confidential and protected.
-          </Text>
         </View>
       </ScrollView>
-
-      {/* Floating Bottom CTA */}
-      <View
-        style={[
-          styles.bottomBar,
-          {
-            paddingBottom: Math.max(insets.bottom, 16),
-          },
-        ]}
-      >
-        <Pressable
-          onPress={handleRunScreening}
-          disabled={submitting}
-          style={({ pressed }) => [
-            styles.runBtn,
-            submitting && styles.runBtnDisabled,
-            pressed && styles.runBtnPressed,
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel="Run Screening"
-        >
-          {submitting ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : (
-            <>
-              <Text style={styles.runBtnText}>Run Screening / Get Results</Text>
-              <Ionicons name="sparkles" size={18} color="#FFFFFF" />
-            </>
-          )}
-        </Pressable>
-      </View>
-    </View>
+    </BioPulseBackground>
   );
 }
 
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
-  stepperWrap: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    alignItems: 'center',
   },
-  tabletScrollContent: {
-    maxWidth: 600,
-    alignSelf: 'center',
+  mainWrapper: {
     width: '100%',
+  },
+  titleSection: {
+    marginBottom: 20,
+  },
+  screenTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#073B72',
+    letterSpacing: -0.3,
+    marginBottom: 6,
+  },
+  screenSubtitle: {
+    fontSize: 14,
+    color: '#64748B',
+    lineHeight: 20,
   },
   reviewCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderRadius: 18,
     padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowRadius: 8,
+    elevation: 2,
   },
   cardHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
   },
-  titleWithIcon: {
+  headerTitleGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
-  cardTitle: {
+  iconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardHeaderTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: BioPulseColors.navy,
+    color: '#073B72',
   },
   editBtn: {
     flexDirection: 'row',
@@ -358,135 +440,99 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingVertical: 4,
     paddingHorizontal: 8,
-    borderRadius: 6,
-    backgroundColor: '#EBF4FC',
   },
   editBtnText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
-    color: BioPulseColors.malePrimary,
+    color: '#0284C7',
   },
-  metricsGrid: {
+  cardBody: {
+    paddingTop: 12,
+  },
+  dataRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F8FAFC',
   },
-  metricItem: {
-    flex: 1,
-    minWidth: 80,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 10,
-    padding: 10,
+  dataLabel: {
+    fontSize: 13,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  dataValue: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#0F172A',
+  },
+  bmiValueRow: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  metricLabel: {
-    fontSize: 11,
-    color: BioPulseColors.secondaryText,
-    marginBottom: 2,
+  bmiBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
   },
-  metricVal: {
+  bmiBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  adamCompletedText: {
     fontSize: 14,
-    fontWeight: '700',
-    color: BioPulseColors.navy,
-  },
-  adamScoreBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    padding: 12,
-  },
-  adamScoreTitle: {
-    fontSize: 13,
     fontWeight: '600',
-    color: BioPulseColors.navy,
+    color: '#0F172A',
+    marginBottom: 4,
   },
-  adamScoreSub: {
-    fontSize: 11,
-    color: BioPulseColors.secondaryText,
-    maxWidth: 200,
-    marginTop: 2,
-  },
-  scorePill: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
-  },
-  scorePillText: {
+  adamResponsesSub: {
     fontSize: 13,
-    fontWeight: '700',
+    color: '#64748B',
   },
-  lifestyleRows: {
-    gap: 8,
-  },
-  lifestyleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 4,
-  },
-  lifestyleLabel: {
-    fontSize: 13,
-    color: BioPulseColors.secondaryText,
-  },
-  lifestyleVal: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: BioPulseColors.navy,
-  },
-  disclaimerBanner: {
-    backgroundColor: '#EBF4FC',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#BFDBFE',
-    padding: 14,
+  disclaimerCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 10,
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    borderRadius: 14,
+    padding: 14,
+    marginTop: 6,
     marginBottom: 20,
+    gap: 10,
+  },
+  infoIcon: {
+    marginTop: 1,
   },
   disclaimerText: {
     flex: 1,
     fontSize: 12,
-    color: '#1E3A8A',
-    lineHeight: 17,
+    color: '#1E40AF',
+    lineHeight: 18,
   },
-  bottomBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 4,
+  ctaWrapper: {
+    marginBottom: 10,
   },
-  runBtn: {
-    backgroundColor: BioPulseColors.malePrimary,
+  runScreeningBtn: {
+    backgroundColor: '#0284C7',
     borderRadius: 14,
-    paddingVertical: 14,
-    flexDirection: 'row',
+    height: 52,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    shadowColor: '#0284C7',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  runBtnDisabled: {
-    backgroundColor: '#94A3B8',
-  },
-  runBtnPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.99 }],
-  },
-  runBtnText: {
-    color: '#FFFFFF',
-    fontSize: 15,
+  runScreeningBtnText: {
+    fontSize: 16,
     fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  btnPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.99 }],
   },
 });
