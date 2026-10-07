@@ -199,7 +199,6 @@ export interface NutritionPlanSummary {
   created_at: string;
 }
 
-<<<<<<< HEAD
 // ─── Food Logging ─────────────────────────────────────────────────────────────
 
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
