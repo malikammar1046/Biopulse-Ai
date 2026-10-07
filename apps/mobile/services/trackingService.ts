@@ -415,6 +415,23 @@ export class TrackingService {
     };
   }
 
+  static async deleteWaterLog(
+    logId: string,
+    token: string
+  ): Promise<ApiResponse<boolean>> {
+    if (!logId || !token) {
+      return { data: false, error: 'Log ID and token required.', status: 400 };
+    }
+
+    const url = `${SUPABASE_URL}/rest/v1/water_logs?id=eq.${logId}`;
+    const res = await safeRequest(url, {
+      method: 'DELETE',
+      headers: getSupabaseHeaders(token),
+    });
+
+    return { data: !res.error, error: res.error, status: res.status };
+  }
+
   // --------------------------------------------------------------------------
   // FITNESS & MOVEMENT LOGS
   // --------------------------------------------------------------------------
@@ -498,4 +515,9 @@ export class TrackingService {
       status: 201,
     };
   }
+
+  static logActivity = TrackingService.logFitness;
 }
+
+export const trackingService = TrackingService;
+

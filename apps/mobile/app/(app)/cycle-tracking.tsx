@@ -48,12 +48,16 @@ export default function CycleTrackingScreen() {
 
   const [activeTab, setActiveTab] = useState<'calendar' | 'insights' | 'history'>('calendar');
   const [selectedFlow, setSelectedFlow] = useState<'Light' | 'Moderate' | 'Heavy'>('Moderate');
-  const [startDate, setStartDate] = useState('3 Sep 2026');
-  const [endDate, setEndDate] = useState('5 Sep 2026');
-  const [notes, setNotes] = useState('');
+  const [startDate, setStartDate] = useState(
+    cycle.lastPeriodStartDate || new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+  );
+  const [endDate, setEndDate] = useState(
+    cycle.lastPeriodStartDate || new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+  );
+  const [notes, setNotes] = useState(cycle.notes || '');
 
-  const cycleDay = cycle.currentCycleDay || 14;
-  const daysUntilNext = cycle.nextPeriodDaysRemaining || 18;
+  const cycleDay = cycle.currentCycleDay;
+  const daysUntilNext = cycle.nextPeriodDaysRemaining;
 
   const handleSaveUpdate = useCallback(() => {
     updateCycle({
@@ -62,7 +66,9 @@ export default function CycleTrackingScreen() {
     });
     Alert.alert(
       'Cycle Updated',
-      `Period details and cycle parameters have been saved. Cycle Day: ${cycleDay}.`,
+      cycleDay
+        ? `Period details and cycle parameters have been saved. Cycle Day: ${cycleDay}.`
+        : 'Period details and cycle parameters have been saved.',
       [{ text: 'OK' }]
     );
   }, [selectedFlow, notes, cycle.notes, cycleDay, updateCycle]);
@@ -236,8 +242,12 @@ export default function CycleTrackingScreen() {
                 </View>
                 <View>
                   <Text style={styles.statusMutedLabel}>Today</Text>
-                  <Text style={styles.statusBoldTitle}>Cycle Day {cycleDay}</Text>
-                  <Text style={styles.statusPhaseText}>In follicular phase</Text>
+                  <Text style={styles.statusBoldTitle}>
+                    {cycleDay ? `Cycle Day ${cycleDay}` : 'Not Logged'}
+                  </Text>
+                  <Text style={styles.statusPhaseText}>
+                    {cycleDay ? `In ${cycle.phase || 'follicular'} phase` : 'Log period to track phase'}
+                  </Text>
                 </View>
               </View>
             </View>
@@ -247,8 +257,14 @@ export default function CycleTrackingScreen() {
             {/* Right Col: Next Period */}
             <View style={styles.statusColRight}>
               <Text style={styles.statusMutedLabel}>Next Period (Predicted)</Text>
-              <Text style={styles.statusBoldTitle}>2 Oct 2026</Text>
-              <Text style={styles.statusDaysRemaining}>in {daysUntilNext} days</Text>
+              <Text style={styles.statusBoldTitle}>
+                {daysUntilNext != null
+                  ? new Date(Date.now() + daysUntilNext * 86400000).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+                  : 'Pending Log'}
+              </Text>
+              <Text style={styles.statusDaysRemaining}>
+                {daysUntilNext != null ? `in ${daysUntilNext} days` : 'Log your period'}
+              </Text>
             </View>
           </View>
 

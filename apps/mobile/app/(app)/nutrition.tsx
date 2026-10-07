@@ -55,16 +55,16 @@ export default function NutritionScreen() {
   const [mealFats, setMealFats] = useState('');
   const [mealType, setMealType] = useState<'Breakfast' | 'Lunch' | 'Dinner' | 'Snacks'>('Lunch');
 
-  const consumedKcal = nutrition.caloriesConsumed || 1320;
+  const consumedKcal = nutrition.caloriesConsumed ?? 0;
   const targetKcal = nutrition.calorieTarget || 1800;
 
-  const proteinG = nutrition.proteinConsumed || 62;
+  const proteinG = nutrition.proteinConsumed ?? 0;
   const proteinTarget = nutrition.proteinTarget || 90;
 
-  const carbsG = nutrition.carbsConsumed || 148;
+  const carbsG = nutrition.carbsConsumed ?? 0;
   const carbsTarget = nutrition.carbsTarget || 220;
 
-  const fatsG = nutrition.fatsConsumed || 42;
+  const fatsG = nutrition.fatsConsumed ?? 0;
   const fatsTarget = nutrition.fatsTarget || 70;
 
   const handleAddSubmit = useCallback(() => {
@@ -126,7 +126,9 @@ export default function NutritionScreen() {
             <Pressable hitSlop={8}>
               <Ionicons name="chevron-back" size={18} color="#64748B" />
             </Pressable>
-            <Text style={styles.dateNavigatorText}>Today, 14 Sep 2026</Text>
+            <Text style={styles.dateNavigatorText}>
+              Today, {new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+            </Text>
             <Pressable hitSlop={8}>
               <Ionicons name="chevron-forward" size={18} color="#64748B" />
             </Pressable>

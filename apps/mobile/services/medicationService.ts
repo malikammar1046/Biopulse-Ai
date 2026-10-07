@@ -273,3 +273,6 @@ export class MedicationService {
     return { data: logs, error: null, status: 200 };
   }
 }
+
+export const medicationService = MedicationService;
+

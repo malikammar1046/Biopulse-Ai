@@ -67,52 +67,22 @@ export default function MedicationsScreen() {
   const [newMedTime, setNewMedTime] = useState('8:00 PM');
   const [newMedInstruction, setNewMedInstruction] = useState('Take with food');
 
-  // Baseline medication items matching reference mockup
-  const defaultMeds: MedScheduleItem[] = useMemo(() => [
-    {
-      id: 'med-metformin',
-      name: 'Metformin 500 mg',
-      dosage: '500 mg',
-      instructions: 'Take 1 tablet with food',
-      scheduledTime: '8:00 PM',
-      status: 'pending',
-      isDueNow: true,
-    },
-    {
-      id: 'med-vitamind',
-      name: 'Vitamin D3 1000 IU',
-      dosage: '1000 IU',
-      instructions: '1 tablet after breakfast',
-      scheduledTime: '9:00 AM',
-      status: 'taken',
-      isDueNow: false,
-    },
-    {
-      id: 'med-omega3',
-      name: 'Omega-3 500 mg',
-      dosage: '500 mg',
-      instructions: '1 capsule with lunch',
-      scheduledTime: '1:00 PM',
-      status: 'pending',
-      isDueNow: false,
-    },
-    {
-      id: 'med-iron',
-      name: 'Iron Supplement',
-      dosage: '65 mg',
-      instructions: '1 tablet with food',
-      scheduledTime: '8:00 PM',
-      status: 'pending',
-      isDueNow: false,
-    },
-  ], []);
-
-  // Merge store medications with default mockup display items
-  const [items, setItems] = useState<MedScheduleItem[]>(defaultMeds);
+  // Real authenticated medication items from health store
+  const items: MedScheduleItem[] = useMemo(() => {
+    return medications.map((m, index) => ({
+      id: m.id,
+      name: m.name,
+      dosage: m.dosage,
+      instructions: m.instructions || 'Take as prescribed',
+      scheduledTime: m.scheduledTime || '8:00 PM',
+      status: m.status,
+      isDueNow: index === 0 && m.status === 'pending',
+    }));
+  }, [medications]);
 
   // Primary due medication
   const dueNowItem = useMemo(() => {
-    return items.find((m) => m.isDueNow) || items[0];
+    return items.find((m) => m.isDueNow) || (items.length > 0 ? items[0] : null);
   }, [items]);
 
   // Other medications
@@ -122,9 +92,6 @@ export default function MedicationsScreen() {
 
   const handleAction = useCallback(
     (id: string, newStatus: 'taken' | 'skipped' | 'snoozed') => {
-      setItems((prev) =>
-        prev.map((item) => (item.id === id ? { ...item, status: newStatus } : item))
-      );
       markMedicationStatus(id, newStatus);
       const actionName =
         newStatus === 'taken' ? 'Taken' : newStatus === 'skipped' ? 'Skipped' : 'Snoozed for 30 min';
@@ -133,20 +100,16 @@ export default function MedicationsScreen() {
     [markMedicationStatus]
   );
 
+
   const handleToggleCheck = useCallback(
     (id: string) => {
-      setItems((prev) =>
-        prev.map((item) => {
-          if (item.id === id) {
-            const nextStatus = item.status === 'taken' ? 'pending' : 'taken';
-            markMedicationStatus(id, nextStatus);
-            return { ...item, status: nextStatus };
-          }
-          return item;
-        })
-      );
+      const target = items.find((m) => m.id === id);
+      if (target) {
+        const nextStatus = target.status === 'taken' ? 'pending' : 'taken';
+        markMedicationStatus(id, nextStatus);
+      }
     },
-    [markMedicationStatus]
+    [items, markMedicationStatus]
   );
 
   const handleAddSubmit = useCallback(() => {
@@ -154,28 +117,25 @@ export default function MedicationsScreen() {
       Alert.alert('Missing Name', 'Please enter a medication name.');
       return;
     }
-    const newItem: MedScheduleItem = {
-      id: `med-${Date.now()}`,
-      name: newMedName.trim(),
-      dosage: newMedDosage.trim() || 'Standard Dose',
-      instructions: newMedInstruction.trim() || 'Take with food',
-      scheduledTime: newMedTime.trim() || '8:00 PM',
-      status: 'pending',
-    };
-    setItems((prev) => [...prev, newItem]);
+    const name = newMedName.trim();
+    const dosage = newMedDosage.trim() || 'Standard Dose';
+    const instructions = newMedInstruction.trim() || 'Take with food';
+    const scheduledTime = newMedTime.trim() || '8:00 PM';
+
     addMedication({
-      name: newItem.name,
-      dosage: newItem.dosage,
-      scheduledTime: newItem.scheduledTime,
-      instructions: newItem.instructions,
+      name,
+      dosage,
+      scheduledTime,
+      instructions,
       status: 'pending',
       pathway: isFemale ? 'female' : 'male',
     });
     setShowAddModal(false);
     setNewMedName('');
     setNewMedDosage('');
-    Alert.alert('Medication Added', `"${newItem.name}" added to your daily schedule.`);
+    Alert.alert('Medication Added', `"${name}" added to your daily schedule.`);
   }, [newMedName, newMedDosage, newMedInstruction, newMedTime, addMedication, isFemale]);
+
 
   return (
     <View style={styles.root}>
@@ -248,8 +208,22 @@ export default function MedicationsScreen() {
         {/* Date Display */}
         <Text style={styles.dateText}>Today, 14 Sep 2026</Text>
 
+        {/* Empty State when no medications */}
+        {items.length === 0 && (
+          <View style={styles.dueCard}>
+            <View style={{ alignItems: 'center', paddingVertical: 24, paddingHorizontal: 16 }}>
+              <MaterialCommunityIcons name="pill" size={40} color="#94A3B8" />
+              <Text style={[styles.dueTitle, { marginTop: 12, textAlign: 'center' }]}>No medications scheduled</Text>
+              <Text style={[styles.dueSub, { textAlign: 'center', marginTop: 6 }]}>
+                Tap &apos;Add Medication&apos; or the &apos;+&apos; button above to track your prescriptions and supplements.
+              </Text>
+            </View>
+          </View>
+        )}
+
         {/* Primary Due Now Card */}
         {dueNowItem && (
+
           <View style={styles.dueCard}>
             <View style={styles.dueTopRow}>
               {/* Pink Capsule Icon Box */}

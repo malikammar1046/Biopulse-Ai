@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -42,8 +42,17 @@ export default function AppointmentsScreen() {
   const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
 
   const { appointments, rescheduleAppointment } = useHealthStore();
-
   const [activeTab, setActiveTab] = useState<'upcoming' | 'find' | 'history'>('upcoming');
+
+  const upcomingAppointments = useMemo(
+    () => appointments.filter((a) => a.status === 'Upcoming'),
+    [appointments]
+  );
+  const historyAppointments = useMemo(
+    () => appointments.filter((a) => a.status !== 'Upcoming'),
+    [appointments]
+  );
+  const activeAppointment = upcomingAppointments[0];
 
   const handleTabPress = (tab: 'upcoming' | 'find' | 'history') => {
     if (tab === 'find') {
@@ -125,94 +134,143 @@ export default function AppointmentsScreen() {
           </Pressable>
         </View>
 
-        {/* Section: Your Upcoming Appointment */}
-        <Text style={styles.sectionHeading}>Your Upcoming Appointment</Text>
+        {activeTab === 'upcoming' && (
+          <>
+            {/* Section: Your Upcoming Appointment */}
+            <Text style={styles.sectionHeading}>Your Upcoming Appointment</Text>
 
-        <View style={styles.upcomingCard}>
-          {/* Doctor Top Row */}
-          <View style={styles.docRow}>
-            <View style={styles.docAvatar}>
-              <Ionicons name="person" size={26} color="#073B72" />
-            </View>
+            {activeAppointment ? (
+              <View style={styles.upcomingCard}>
+                {/* Doctor Top Row */}
+                <View style={styles.docRow}>
+                  <View style={styles.docAvatar}>
+                    <Ionicons name="person" size={26} color="#073B72" />
+                  </View>
 
-            <View style={styles.docMeta}>
-              <Text style={styles.docName}>Dr. Sara Khan</Text>
-              <Text style={styles.docSpecialty}>
-                {isFemale ? 'Endocrinologist' : 'Andrologist & Endocrinologist'}
-              </Text>
-              <View style={styles.ratingRow}>
-                <Ionicons name="star" size={13} color="#F59E0B" />
-                <Text style={styles.ratingText}>4.8 (120 reviews)</Text>
+                  <View style={styles.docMeta}>
+                    <Text style={styles.docName}>{activeAppointment.doctorName}</Text>
+                    <Text style={styles.docSpecialty}>{activeAppointment.specialty}</Text>
+                    <View style={styles.ratingRow}>
+                      <Ionicons name="star" size={13} color="#F59E0B" />
+                      <Text style={styles.ratingText}>{(activeAppointment as any).rating || '4.8 (Verified)'}</Text>
+                    </View>
+                  </View>
+
+                  <Ionicons name="chevron-forward" size={18} color="#E11D48" />
+                </View>
+
+                {/* Appointment Meta Details */}
+                <View style={styles.detailsBlock}>
+                  <View style={styles.detailItem}>
+                    <Ionicons name="calendar-outline" size={16} color="#64748B" />
+                    <Text style={styles.detailText}>{activeAppointment.date}</Text>
+                  </View>
+
+                  <View style={styles.detailItem}>
+                    <Ionicons name="time-outline" size={16} color="#64748B" />
+                    <Text style={styles.detailText}>{activeAppointment.time}</Text>
+                  </View>
+
+                  <View style={styles.detailItem}>
+                    <Ionicons name="location-outline" size={16} color="#64748B" />
+                    <View>
+                      <Text style={styles.detailText}>{activeAppointment.location}</Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Action Buttons */}
+                <View style={styles.actionsRow}>
+                  <Pressable
+                    onPress={() => handleReschedule(activeAppointment.id, activeAppointment.doctorName)}
+                    style={({ pressed }) => [styles.rescheduleBtn, pressed && styles.btnPressed]}
+                  >
+                    <Text style={styles.rescheduleText}>Reschedule</Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => router.push('/(app)/doctor-profile' as any)}
+                    style={({ pressed }) => [styles.viewDetailsBtn, pressed && styles.btnPressed]}
+                  >
+                    <Text style={styles.viewDetailsText}>View Details</Text>
+                  </Pressable>
+                </View>
               </View>
-            </View>
-
-            <Ionicons name="chevron-forward" size={18} color="#E11D48" />
-          </View>
-
-          {/* Appointment Meta Details */}
-          <View style={styles.detailsBlock}>
-            <View style={styles.detailItem}>
-              <Ionicons name="calendar-outline" size={16} color="#64748B" />
-              <Text style={styles.detailText}>15 Mar 2026</Text>
-            </View>
-
-            <View style={styles.detailItem}>
-              <Ionicons name="time-outline" size={16} color="#64748B" />
-              <Text style={styles.detailText}>10:00 AM</Text>
-            </View>
-
-            <View style={styles.detailItem}>
-              <Ionicons name="location-outline" size={16} color="#64748B" />
-              <View>
-                <Text style={styles.detailText}>HealthCare Hospital, Lahore</Text>
-                <Text style={styles.detailSubText}>Johar Town, Lahore</Text>
+            ) : (
+              <View style={styles.emptyCard}>
+                <Ionicons name="calendar-outline" size={40} color="#94A3B8" style={{ marginBottom: 8 }} />
+                <Text style={styles.emptyTitle}>No Upcoming Appointments</Text>
+                <Text style={styles.emptySub}>
+                  You do not have any scheduled consultations. Browse verified doctors to book your appointment.
+                </Text>
+                <Pressable
+                  onPress={() => router.push('/(app)/specialists')}
+                  style={styles.bookEmptyBtn}
+                >
+                  <Text style={styles.bookEmptyBtnText}>Find Specialist</Text>
+                </Pressable>
               </View>
-            </View>
-          </View>
+            )}
 
-          {/* Action Buttons */}
-          <View style={styles.actionsRow}>
-            <Pressable
-              onPress={() => handleReschedule('apt-1', 'Dr. Sara Khan')}
-              style={({ pressed }) => [styles.rescheduleBtn, pressed && styles.btnPressed]}
-            >
-              <Text style={styles.rescheduleText}>Reschedule</Text>
-            </Pressable>
+            {/* Section: Upcoming Reminders */}
+            <Text style={styles.sectionHeading}>Upcoming Reminders</Text>
 
             <Pressable
-              onPress={() => router.push('/(app)/doctor-profile?id=dr-sara' as any)}
-              style={({ pressed }) => [styles.viewDetailsBtn, pressed && styles.btnPressed]}
+              onPress={() => router.push('/(app)/add-labs')}
+              style={({ pressed }) => [styles.reminderCard, pressed && styles.btnPressed]}
             >
-              <Text style={styles.viewDetailsText}>View Details</Text>
+              <View style={styles.reminderIconBox}>
+                <Ionicons name="calendar-outline" size={20} color="#8B5CF6" />
+              </View>
+
+              <View style={styles.reminderMeta}>
+                <Text style={styles.reminderTitle}>Lab Test</Text>
+                <Text style={styles.reminderSub}>
+                  {isFemale
+                    ? 'Hormone profile (FSH, LH, AMH)'
+                    : 'Morning Hormone profile (Testosterone, SHBG)'}
+                </Text>
+              </View>
+
+              <View style={styles.reminderRight}>
+                <Text style={styles.reminderDate}>Schedule</Text>
+                <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
+              </View>
             </Pressable>
-          </View>
-        </View>
+          </>
+        )}
 
-        {/* Section: Upcoming Reminders */}
-        <Text style={styles.sectionHeading}>Upcoming Reminders</Text>
-
-        <Pressable
-          onPress={() => router.push('/(app)/add-labs')}
-          style={({ pressed }) => [styles.reminderCard, pressed && styles.btnPressed]}
-        >
-          <View style={styles.reminderIconBox}>
-            <Ionicons name="calendar-outline" size={20} color="#8B5CF6" />
-          </View>
-
-          <View style={styles.reminderMeta}>
-            <Text style={styles.reminderTitle}>Lab Test</Text>
-            <Text style={styles.reminderSub}>
-              {isFemale
-                ? 'Hormone profile (FSH, LH, AMH)'
-                : 'Morning Hormone profile (Testosterone, SHBG)'}
-            </Text>
-          </View>
-
-          <View style={styles.reminderRight}>
-            <Text style={styles.reminderDate}>12 Mar 2026</Text>
-            <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
-          </View>
-        </Pressable>
+        {activeTab === 'history' && (
+          <>
+            <Text style={styles.sectionHeading}>Past Appointments</Text>
+            {historyAppointments.length === 0 ? (
+              <View style={styles.emptyCard}>
+                <Ionicons name="time-outline" size={40} color="#94A3B8" style={{ marginBottom: 8 }} />
+                <Text style={styles.emptyTitle}>No Past Appointments</Text>
+                <Text style={styles.emptySub}>Completed consultations will appear here.</Text>
+              </View>
+            ) : (
+              historyAppointments.map((apt: any) => (
+                <View key={apt.id} style={[styles.upcomingCard, { marginBottom: 12 }]}>
+                  <View style={styles.docRow}>
+                    <View style={styles.docAvatar}>
+                      <Ionicons name="person" size={24} color="#073B72" />
+                    </View>
+                    <View style={styles.docMeta}>
+                      <Text style={styles.docName}>{apt.doctorName}</Text>
+                      <Text style={styles.docSpecialty}>{apt.specialty}</Text>
+                    </View>
+                    <Text style={{ fontSize: 12, color: '#64748B', fontWeight: '600' }}>{apt.status}</Text>
+                  </View>
+                  <View style={styles.detailsBlock}>
+                    <Text style={styles.detailText}>{apt.date} at {apt.time}</Text>
+                    <Text style={styles.detailSubText}>{apt.location}</Text>
+                  </View>
+                </View>
+              ))
+            )}
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -457,5 +515,42 @@ const styles = StyleSheet.create({
 
   btnPressed: {
     opacity: 0.85,
+  },
+  emptyCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    alignItems: 'center',
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 6,
+  },
+  emptySub: {
+    fontSize: 13,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 16,
+  },
+  bookEmptyBtn: {
+    backgroundColor: '#E11D48',
+    borderRadius: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+  },
+  bookEmptyBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });

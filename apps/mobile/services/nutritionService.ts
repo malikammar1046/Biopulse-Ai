@@ -217,6 +217,8 @@ export class NutritionService {
   /**
    * Fetch today's food logs from public.nutrition_food_logs
    */
+  static getFoodLogs = NutritionService.getTodayFoodLogs;
+
   static async getTodayFoodLogs(
     userId: string,
     token: string
@@ -330,3 +332,6 @@ export class NutritionService {
     return { data: !res.error, error: res.error, status: res.status };
   }
 }
+
+export const nutritionService = NutritionService;
+

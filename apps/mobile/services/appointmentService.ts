@@ -227,4 +227,9 @@ export class AppointmentService {
 
     return { data: !res.error, error: res.error, status: res.status };
   }
+
+  static createAppointment = AppointmentService.bookAppointment;
 }
+
+export const appointmentService = AppointmentService;
+

@@ -54,30 +54,33 @@ export default function TrackHubScreen() {
 
   const topPad = Math.max(insets.top, 14);
 
-  // Dynamic values connected to health store with fallback to reference mockup
-  const cycleDay = cycle.currentCycleDay || 14;
-  const daysUntilNext = cycle.nextPeriodDaysRemaining || 12;
+  // Dynamic values connected directly to persistent health store
+  const cycleDay = cycle.currentCycleDay;
+  const daysUntilNext = cycle.nextPeriodDaysRemaining;
 
-  const reportedSymptomsCount = symptoms.symptoms.filter((s) => s.selected).length || 2;
-  const caloriesConsumed = nutrition.caloriesConsumed || (isFemale ? 1320 : 1520);
+  const reportedSymptomsCount = symptoms.symptoms.filter((s) => s.selected).length;
+  const caloriesConsumed = nutrition.caloriesConsumed ?? 0;
   const calorieTarget = nutrition.calorieTarget || (isFemale ? 1800 : 2200);
+  const mealsCount = nutrition.meals?.length || 0;
 
-  const waterConsumedL = water.consumedLiters ? water.consumedLiters.toFixed(1) : (isFemale ? '1.6' : '1.8');
-  const waterTargetL = water.targetLiters ? water.targetLiters.toFixed(1) : '2.5';
+  const waterConsumedL = (water.consumedLiters || 0).toFixed(1);
+  const waterTargetL = (water.targetLiters || 2.5).toFixed(1);
+  const glassesCount = Math.round(((water.consumedLiters || 0) * 1000) / 250);
 
-  const activeMinutes = movement.todayActivityMinutes || 45;
+  const activeMinutes = movement.todayActivityMinutes ?? 0;
   const targetMinutes = movement.targetMinutes || 30;
-  const activityPercent = Math.min(100, Math.round((activeMinutes / targetMinutes) * 70));
+  const activityPercent = targetMinutes > 0 ? Math.min(100, Math.round((activeMinutes / targetMinutes) * 100)) : 0;
 
-  const pendingMedsCount = medications.filter((m) => m.status === 'pending').length || 1;
+  const pendingMedsCount = medications.filter((m) => m.status === 'pending').length;
+  const nextMed = medications.find((m) => m.status === 'pending');
 
   // Female modules (Screen 23)
   const femaleModules = [
     {
       id: 'cycle',
       title: 'Cycle Tracking',
-      subtitle1: `Cycle Day ${cycleDay}`,
-      subtitle2: `Next period in ${daysUntilNext} days`,
+      subtitle1: cycleDay ? `Cycle Day ${cycleDay}` : 'Not logged yet',
+      subtitle2: daysUntilNext != null ? `Next period in ${daysUntilNext} days` : 'Tap to log cycle',
       icon: 'calendar-outline' as const,
       iconColor: '#F43F7D',
       iconBg: '#FDF2F8',
@@ -86,8 +89,8 @@ export default function TrackHubScreen() {
     {
       id: 'symptoms',
       title: 'Symptoms',
-      subtitle1: 'Logged today',
-      subtitle2: `${reportedSymptomsCount} symptoms recorded`,
+      subtitle1: reportedSymptomsCount > 0 ? 'Logged today' : 'Not logged today',
+      subtitle2: reportedSymptomsCount > 0 ? `${reportedSymptomsCount} symptoms recorded` : 'Tap to log symptoms',
       icon: 'happy-outline' as const,
       iconColor: '#F43F7D',
       iconBg: '#FDF2F8',
@@ -97,7 +100,7 @@ export default function TrackHubScreen() {
       id: 'nutrition',
       title: 'Nutrition',
       subtitle1: `${caloriesConsumed.toLocaleString()} / ${calorieTarget.toLocaleString()} kcal`,
-      subtitle2: '2 meals logged',
+      subtitle2: mealsCount > 0 ? `${mealsCount} meals logged` : 'No meals logged today',
       icon: 'restaurant-outline' as const,
       iconColor: '#16A34A',
       iconBg: '#F0FDF4',
@@ -107,7 +110,7 @@ export default function TrackHubScreen() {
       id: 'water',
       title: 'Water',
       subtitle1: `${waterConsumedL} / ${waterTargetL} L`,
-      subtitle2: '5 glasses today',
+      subtitle2: glassesCount > 0 ? `${glassesCount} glasses today` : 'No water logged yet',
       icon: 'water-outline' as const,
       iconColor: '#0284C7',
       iconBg: '#EFF6FF',
@@ -126,8 +129,8 @@ export default function TrackHubScreen() {
     {
       id: 'medications',
       title: 'Medications',
-      subtitle1: `${pendingMedsCount} reminder today`,
-      subtitle2: 'Next: 8:00 PM',
+      subtitle1: pendingMedsCount > 0 ? `${pendingMedsCount} reminder${pendingMedsCount === 1 ? '' : 's'} today` : 'All medications taken',
+      subtitle2: nextMed ? `Next: ${nextMed.scheduledTime}` : (medications.length > 0 ? 'Completed' : 'None scheduled'),
       icon: 'medical-outline' as const,
       iconColor: '#D97706',
       iconBg: '#FFFBEB',
@@ -209,8 +212,12 @@ export default function TrackHubScreen() {
                 </View>
                 <Text style={styles.gridCardTitle}>Symptoms</Text>
                 <View style={styles.cardContentBottom}>
-                  <Text style={styles.gridSubMuted}>Logged today</Text>
-                  <Text style={styles.gridSubActive}>{reportedSymptomsCount} symptoms</Text>
+                  <Text style={styles.gridSubMuted}>
+                    {reportedSymptomsCount > 0 ? 'Logged today' : 'No symptoms'}
+                  </Text>
+                  <Text style={styles.gridSubActive}>
+                    {reportedSymptomsCount > 0 ? `${reportedSymptomsCount} symptoms` : 'Tap to log'}
+                  </Text>
                 </View>
               </Pressable>
 
@@ -230,7 +237,7 @@ export default function TrackHubScreen() {
                     <View style={styles.gridProgressTrack}>
                       <View style={[styles.gridProgressFill, { width: `${activityPercent}%` }]} />
                     </View>
-                    <Text style={styles.gridProgressLabel}>70%</Text>
+                    <Text style={styles.gridProgressLabel}>{activityPercent}%</Text>
                   </View>
                 </View>
               </Pressable>
@@ -252,7 +259,9 @@ export default function TrackHubScreen() {
                     {caloriesConsumed.toLocaleString()}
                     <Text style={styles.gridSubMutedSmall}> / {calorieTarget.toLocaleString()} kcal</Text>
                   </Text>
-                  <Text style={styles.gridSubMuted}>2 meals logged</Text>
+                  <Text style={styles.gridSubMuted}>
+                    {mealsCount > 0 ? `${mealsCount} meal${mealsCount === 1 ? '' : 's'} logged` : 'No meals logged'}
+                  </Text>
                 </View>
               </Pressable>
 
@@ -267,7 +276,9 @@ export default function TrackHubScreen() {
                 <Text style={styles.gridCardTitle}>Water</Text>
                 <View style={styles.cardContentBottom}>
                   <Text style={styles.gridValBold}>{waterConsumedL} / {waterTargetL} L</Text>
-                  <Text style={styles.gridSubMuted}>6 glasses today</Text>
+                  <Text style={styles.gridSubMuted}>
+                    {glassesCount > 0 ? `${glassesCount} glass${glassesCount === 1 ? '' : 'es'} today` : 'No water logged'}
+                  </Text>
                 </View>
               </Pressable>
             </View>
@@ -284,8 +295,12 @@ export default function TrackHubScreen() {
                 </View>
                 <Text style={styles.gridCardTitle}>Medications</Text>
                 <View style={styles.cardContentBottom}>
-                  <Text style={styles.gridSubMuted}>{pendingMedsCount} reminder today</Text>
-                  <Text style={styles.gridSubActive}>Next: 8:00 PM</Text>
+                  <Text style={styles.gridSubMuted}>
+                    {pendingMedsCount > 0 ? `${pendingMedsCount} reminder${pendingMedsCount === 1 ? '' : 's'} today` : 'All taken'}
+                  </Text>
+                  <Text style={styles.gridSubActive}>
+                    {nextMed ? `Next: ${nextMed.scheduledTime}` : (medications.length > 0 ? 'Completed' : 'None scheduled')}
+                  </Text>
                 </View>
               </Pressable>
 

@@ -209,3 +209,6 @@ export class ReportService {
     };
   }
 }
+
+export const reportService = ReportService;
+

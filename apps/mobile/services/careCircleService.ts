@@ -227,3 +227,6 @@ export class CareCircleService {
     return { data: !res.error, error: res.error, status: res.status };
   }
 }
+
+export const careCircleService = CareCircleService;
+
