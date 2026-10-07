@@ -47,15 +47,15 @@ export default function ProfileScreen() {
   const { profile, bmi } = useHealthStore();
 
   const [emergencyContact, setEmergencyContact] = useState({
-    name: profile.emergencyContactName || (isFemale ? 'Ali Khan (Brother)' : 'Zainab Bibi (Spouse)'),
-    phone: profile.emergencyContactPhone || '+92 300 1234567',
+    name: profile.emergencyContactName || '',
+    phone: profile.emergencyContactPhone || '',
   });
 
-  const userName = user?.fullName || profile.fullName || (isFemale ? 'Ayesha Khan' : 'Hamza Malik');
-  const userAge = profile.age || 22;
-  const userHeight = profile.heightCm || (isFemale ? 165 : 178);
-  const userWeight = profile.weightKg || (isFemale ? 68 : 80);
-  const computedBmi = bmi ? bmi.toFixed(1) : (userWeight / Math.pow(userHeight / 100, 2)).toFixed(1);
+  const userName = user?.fullName || profile.fullName || 'BioPulse Member';
+  const userAge = profile.age || 0;
+  const userHeight = profile.heightCm || 0;
+  const userWeight = profile.weightKg || 0;
+  const computedBmi = bmi > 0 ? bmi.toFixed(1) : (userHeight > 0 && userWeight > 0 ? (userWeight / Math.pow(userHeight / 100, 2)).toFixed(1) : '--');
 
   const handleEditContact = () => {
     Alert.prompt

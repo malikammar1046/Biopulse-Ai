@@ -25,12 +25,39 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(() => getCurrentUser());
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [pathway, setPathwayState] = useState<HealthPathway | null>(() => getCurrentUser()?.pathway || null);
 
   useEffect(() => {
-    // Listen for Supabase session changes
+    let isMounted = true;
+
+    // 1. Initial persistent session restoration
+    async function initSession() {
+      try {
+        const session = await mobileSupabaseAuth.restoreSession();
+        if (isMounted) {
+          if (session?.user) {
+            const currentUser = getCurrentUser();
+            setUser(currentUser);
+            if (currentUser?.pathway) {
+              setPathwayState(currentUser.pathway);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('[BioPulse AuthContext] Session restore error:', err);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    initSession();
+
+    // 2. Listen for Supabase session changes
     const unsubscribe = subscribeToAuthChanges((session) => {
+      if (!isMounted) return;
       if (session?.user) {
         const currentUser = getCurrentUser();
         setUser(currentUser);
@@ -43,7 +70,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     });
 
-    return unsubscribe;
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const login = useCallback(async (email: string, password: string): Promise<LoginResult> => {

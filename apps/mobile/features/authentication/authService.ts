@@ -170,22 +170,6 @@ export async function loginWithEmailAndPassword(
     });
 
     if (error) {
-      // If network failed but user is using demo credential, allow graceful offline fallback
-      if (
-        (error.message.includes('Unable to reach') || error.message.includes('network')) &&
-        (trimmedEmail.includes('demo') || trimmedEmail.includes('biopulse'))
-      ) {
-        const demoUser: UserProfile = {
-          id: 'demo_user_offline_' + Date.now(),
-          email: trimmedEmail,
-          fullName: 'BioPulse Health Member',
-          pathway: null,
-          createdAt: new Date().toISOString(),
-          isDemoUser: true,
-        };
-        currentUserProfile = demoUser;
-        return { success: true, user: demoUser };
-      }
       return { success: false, errorMessage: error.message };
     }
 
@@ -258,22 +242,6 @@ export async function registerWithEmailAndPassword(
     });
 
     if (error) {
-      // If network failed but user is in local development, allow graceful offline fallback
-      if (
-        error.message.includes('Unable to connect') &&
-        (trimmedEmail.includes('demo') || trimmedEmail.includes('test'))
-      ) {
-        const demoUser: UserProfile = {
-          id: 'demo_user_reg_' + Date.now(),
-          email: trimmedEmail,
-          fullName: payload.fullName.trim(),
-          pathway: payload.pathway || null,
-          createdAt: new Date().toISOString(),
-          isDemoUser: true,
-        };
-        currentUserProfile = demoUser;
-        return { success: true, user: demoUser };
-      }
       return { success: false, errorMessage: error.message };
     }
 

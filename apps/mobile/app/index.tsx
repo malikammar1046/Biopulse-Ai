@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { BioPulseSplashScreen } from '../components/splash';
+import { useAuth } from '../features/authentication';
 
 /**
  * BioPulse AI Mobile Launch / Splash Experience
@@ -8,11 +9,12 @@ import { BioPulseSplashScreen } from '../components/splash';
  * Startup Route:
  * - Mounts immediately upon app launch
  * - Displays the dual-pathway BioPulse splash screen
- * - Resolves application initialization
- * - Seamlessly transitions to the existing application flow
+ * - Resolves application initialization & session restoration
+ * - Seamlessly transitions to authenticated home or onboarding flow
  */
 export default function StartupScreen() {
   const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
   const params = useLocalSearchParams<{ preview?: string }>();
   const isPreview = params.preview === 'true';
 
@@ -20,9 +22,13 @@ export default function StartupScreen() {
     if (isPreview) {
       return;
     }
-    // Continue through the application's existing routing flow to first onboarding screen
-    router.replace('/onboarding');
-  }, [isPreview, router]);
+    // Route to main application if valid session is active, otherwise onboarding
+    if (isAuthenticated) {
+      router.replace('/(app)');
+    } else {
+      router.replace('/onboarding');
+    }
+  }, [isPreview, isAuthenticated, router]);
 
   return (
     <BioPulseSplashScreen

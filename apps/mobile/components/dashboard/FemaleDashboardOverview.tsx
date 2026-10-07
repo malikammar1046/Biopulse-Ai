@@ -66,8 +66,8 @@ export const FemaleDashboardOverview: React.FC<FemaleDashboardOverviewProps> = (
       timeGreeting = 'Good evening';
     }
 
-    const rawName = profile?.fullName || 'Ayesha Khan';
-    const first = rawName.split(' ')[0] || 'Ayesha';
+    const rawName = profile?.fullName?.trim() || 'BioPulse Member';
+    const first = rawName ? rawName.split(' ')[0] : 'Member';
 
     const d = new Date();
     const dateStr = d.toLocaleDateString('en-US', {

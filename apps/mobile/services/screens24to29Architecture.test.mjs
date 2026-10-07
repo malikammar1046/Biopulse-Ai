@@ -3,12 +3,17 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const cycleFile = path.resolve('app/(app)/cycle-tracking.tsx');
-const symptomFile = path.resolve('app/(app)/symptom-log.tsx');
-const nutritionFile = path.resolve('app/(app)/nutrition.tsx');
-const mealPlanFile = path.resolve('app/(app)/meal-plan.tsx');
-const waterFile = path.resolve('app/(app)/water-log.tsx');
-const movementFile = path.resolve('app/(app)/movement.tsx');
+const resolveAppFile = (rel) => {
+  if (fs.existsSync(path.resolve(rel))) return path.resolve(rel);
+  return path.resolve('apps/mobile', rel);
+};
+
+const cycleFile = resolveAppFile('app/(app)/cycle-tracking.tsx');
+const symptomFile = resolveAppFile('app/(app)/symptom-log.tsx');
+const nutritionFile = resolveAppFile('app/(app)/nutrition.tsx');
+const mealPlanFile = resolveAppFile('app/(app)/meal-plan.tsx');
+const waterFile = resolveAppFile('app/(app)/water-log.tsx');
+const movementFile = resolveAppFile('app/(app)/movement.tsx');
 
 test('Screen 24: Cycle Tracking validates PCOS monitoring and calendar indicators', () => {
   const content = fs.readFileSync(cycleFile, 'utf8');

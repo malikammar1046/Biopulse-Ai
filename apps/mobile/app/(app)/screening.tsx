@@ -51,8 +51,8 @@ export default function ScreeningOverviewScreen() {
     if (profile.fullName && profile.fullName.trim().length > 0) {
       return profile.fullName.trim().split(' ')[0];
     }
-    return isFemale ? 'Ayesha' : 'Adrian';
-  }, [profile.fullName, isFemale]);
+    return 'Member';
+  }, [profile.fullName]);
 
   return (
     <View style={[styles.root, { backgroundColor: isFemale ? '#FFF7F9' : '#F4F9FD' }]}>
