@@ -24,7 +24,9 @@ import {
   ClinicalLabRow,
 } from '../store/healthStore';
 
-function getSupabaseHeaders(token: string): Record<string, string> {
+export { SUPABASE_URL, BACKEND_API_URL };
+
+export function getSupabaseHeaders(token: string): Record<string, string> {
   return {
     apikey: SUPABASE_ANON_KEY,
     Authorization: `Bearer ${token}`,
