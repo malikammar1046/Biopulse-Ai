@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   ScrollView,
   Pressable,
   Alert,
+  Image,
   useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -44,12 +45,31 @@ export default function ProfileScreen() {
   const { pathway, user } = useAuth();
   const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
 
-  const { profile, bmi } = useHealthStore();
+  const { profile, bmi, updateProfile } = useHealthStore();
 
   const [emergencyContact, setEmergencyContact] = useState({
     name: profile.emergencyContactName || '',
     phone: profile.emergencyContactPhone || '',
   });
+
+  const [avatarUrl, setAvatarUrl] = useState<string>(
+    profile.profilePhotoUrl || user?.avatarUrl || ''
+  );
+
+  useEffect(() => {
+    if (profile.profilePhotoUrl !== undefined) {
+      setAvatarUrl(profile.profilePhotoUrl || '');
+    }
+  }, [profile.profilePhotoUrl]);
+
+  useEffect(() => {
+    if (profile.emergencyContactName || profile.emergencyContactPhone) {
+      setEmergencyContact({
+        name: profile.emergencyContactName || '',
+        phone: profile.emergencyContactPhone || '',
+      });
+    }
+  }, [profile.emergencyContactName, profile.emergencyContactPhone]);
 
   const userName = user?.fullName || profile.fullName || 'BioPulse Member';
   const userAge = profile.age || 0;
@@ -58,23 +78,106 @@ export default function ProfileScreen() {
   const computedBmi = bmi > 0 ? bmi.toFixed(1) : (userHeight > 0 && userWeight > 0 ? (userWeight / Math.pow(userHeight / 100, 2)).toFixed(1) : '--');
 
   const handleEditContact = () => {
-    Alert.prompt
-      ? Alert.prompt(
-          'Edit Emergency Contact',
-          'Enter contact name and phone number',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Save',
-              onPress: (val) => {
-                if (val) setEmergencyContact((prev) => ({ ...prev, name: val }));
-              },
+    if (Alert.prompt) {
+      Alert.prompt(
+        'Edit Emergency Contact',
+        'Enter contact name and phone number (Name, Phone):',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Save',
+            onPress: (val) => {
+              if (val) {
+                const parts = val.split(',');
+                const newName = parts[0]?.trim() || emergencyContact.name;
+                const newPhone = parts[1]?.trim() || emergencyContact.phone;
+                setEmergencyContact({ name: newName, phone: newPhone });
+                updateProfile({
+                  emergencyContactName: newName,
+                  emergencyContactPhone: newPhone,
+                });
+              }
             },
-          ],
-          'plain-text',
-          emergencyContact.name
-        )
-      : Alert.alert('Emergency Contact', `Current Contact: ${emergencyContact.name} (${emergencyContact.phone})`);
+          },
+        ],
+        'plain-text',
+        `${emergencyContact.name}, ${emergencyContact.phone}`
+      );
+    } else {
+      Alert.alert(
+        'Emergency Contact',
+        `Current Contact: ${emergencyContact.name || 'Not set'} (${emergencyContact.phone || 'No phone'})\nTo edit, update in Settings.`,
+        [
+          { text: 'Settings', onPress: () => router.push('/(app)/settings') },
+          { text: 'OK' },
+        ]
+      );
+    }
+  };
+
+  const handleEditAvatar = () => {
+    if (Alert.prompt) {
+      Alert.prompt(
+        'Profile Photo',
+        'Enter image URL (or clear to use default neutral avatar):',
+        [
+          {
+            text: 'Use Default Avatar',
+            style: 'destructive',
+            onPress: () => {
+              setAvatarUrl('');
+              updateProfile({ profilePhotoUrl: '' });
+            },
+          },
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Save Photo',
+            onPress: (url) => {
+              const cleaned = url?.trim() || '';
+              setAvatarUrl(cleaned);
+              updateProfile({ profilePhotoUrl: cleaned });
+            },
+          },
+        ],
+        'plain-text',
+        avatarUrl
+      );
+    } else {
+      Alert.alert(
+        'Profile Photo',
+        'Default neutral avatar is active. You can customize your profile picture in Settings.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
+  const handleEditMeasurements = () => {
+    if (Alert.prompt) {
+      Alert.prompt(
+        'Update Measurements',
+        'Enter Height (cm) and Weight (kg) comma-separated (e.g. 165, 68):',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Save',
+            onPress: (val) => {
+              if (val) {
+                const [hStr, wStr] = val.split(',').map((s) => s.trim());
+                const h = parseFloat(hStr);
+                const w = parseFloat(wStr);
+                if (h > 0 && w > 0) {
+                  updateProfile({ heightCm: h, weightKg: w });
+                }
+              }
+            },
+          },
+        ],
+        'plain-text',
+        `${userHeight}, ${userWeight}`
+      );
+    } else {
+      Alert.alert('Measurements', `Height: ${userHeight} cm, Weight: ${userWeight} kg, BMI: ${computedBmi}`);
+    }
   };
 
   return (
@@ -115,14 +218,22 @@ export default function ProfileScreen() {
       >
         {/* Identity & Avatar */}
         <View style={styles.avatarSection}>
-          <View style={styles.avatarWrapper}>
-            <View style={styles.avatarCircle}>
-              <Ionicons name="person" size={46} color="#073B72" />
-            </View>
+          <Pressable onPress={handleEditAvatar} style={styles.avatarWrapper}>
+            {avatarUrl ? (
+              <Image
+                source={{ uri: avatarUrl }}
+                style={styles.avatarImage}
+                accessibilityLabel="Profile Avatar"
+              />
+            ) : (
+              <View style={styles.avatarCircle}>
+                <Ionicons name="person" size={46} color="#073B72" />
+              </View>
+            )}
             <View style={styles.cameraBadge}>
               <Ionicons name="camera" size={12} color="#FFFFFF" />
             </View>
-          </View>
+          </Pressable>
 
           <Text style={styles.userName}>{userName}</Text>
           <Text style={styles.userAge}>{userAge} years old</Text>
@@ -325,6 +436,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  avatarImage: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: '#F1F5F9',
   },
   cameraBadge: {
     position: 'absolute',

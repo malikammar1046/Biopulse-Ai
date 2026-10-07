@@ -18,6 +18,7 @@ import { BioPulseBackground } from '../components/common/BioPulseBackground';
 import { BioPulseButton } from '../components/common/BioPulseButton';
 import { MaleOnboardingHeader } from '../components/onboarding/MaleOnboardingHeader';
 import { useMaleOnboarding } from '../features/onboarding';
+import { useHealthStore } from '../store';
 import { submitMaleTier1AssessmentWithStatus } from '../services/assessmentService';
 
 /**
@@ -46,7 +47,9 @@ export default function MaleReviewScreen() {
     setActiveAssessment,
     setIsLoadingAssessment,
     setAssessmentError,
+    saveAndCompleteOnboarding,
   } = useMaleOnboarding();
+  const { updateProfile, updateScreeningAssessment } = useHealthStore();
 
   const [submitting, setSubmitting] = useState(false);
 
@@ -150,17 +153,37 @@ export default function MaleReviewScreen() {
     try {
       const res = await submitMaleTier1AssessmentWithStatus(payload);
       if (res.data) {
+        const assess = res.data as any;
         setActiveAssessment(res.data);
-        router.push('/male-screening-result');
-      } else {
-        Alert.alert(
-          'Screening Notice',
-          res.error || 'Unable to complete male screening at this time. Please try again.',
-          [{ text: 'OK' }]
-        );
+        updateScreeningAssessment({
+          probabilityPercent: Math.round((assess.probability ?? 0.35) * 100),
+          riskBand: assess.risk_category === 'high' || (assess.probability ?? 0) >= 0.6 ? 'Higher Risk' : 'Lower Risk',
+          riskCategory: (assess.risk_category?.toLowerCase() as 'lower' | 'intermediate' | 'higher') || 'lower',
+          tier: 1,
+          tierStatus: 'Tier 1 Complete',
+          topFactors: assess.top_factors || [],
+        });
       }
+
+      await saveAndCompleteOnboarding({
+        age: basicInfo.age,
+        heightCm: basicInfo.heightCm,
+        weightKg: basicInfo.weightKg,
+        waistCm: basicInfo.waistCm,
+      });
+
+      updateProfile({
+        age: basicInfo.age,
+        heightCm: basicInfo.heightCm,
+        weightKg: basicInfo.weightKg,
+        waistCm: basicInfo.waistCm,
+        isOnboarded: true,
+      });
+
+      router.push('/male-screening-result');
     } catch (err: any) {
       Alert.alert('Error', err?.message || 'An unexpected error occurred during screening.');
+      router.push('/male-screening-result');
     } finally {
       setSubmitting(false);
       setIsLoadingAssessment(false);
@@ -172,6 +195,9 @@ export default function MaleReviewScreen() {
     setActiveAssessment,
     setIsLoadingAssessment,
     setAssessmentError,
+    saveAndCompleteOnboarding,
+    updateProfile,
+    updateScreeningAssessment,
     router,
   ]);
 

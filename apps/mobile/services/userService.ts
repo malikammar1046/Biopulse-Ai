@@ -7,6 +7,7 @@
  */
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/supabase';
+import { persistentStorage } from '../lib/storage';
 import { BACKEND_API_URL } from './assessmentService';
 import {
   UserProfileState,
@@ -23,7 +24,9 @@ import {
   ClinicalLabRow,
 } from '../store/healthStore';
 
-function getSupabaseHeaders(token: string): Record<string, string> {
+export { SUPABASE_URL, BACKEND_API_URL };
+
+export function getSupabaseHeaders(token: string): Record<string, string> {
   return {
     apikey: SUPABASE_ANON_KEY,
     Authorization: `Bearer ${token}`,
@@ -77,12 +80,25 @@ export async function fetchUserProfileFromDb(
         heightCm: Number(row.height_cm) || 0,
         weightKg: Number(row.weight_kg) || 0,
         waistCm: Number(row.waist_cm) || 0,
+        hipCm: Number(row.hip_cm) || 0,
+        gender: row.gender || '',
+        pathway: row.pathway || null,
+        isOnboarded: Boolean(row.is_onboarded),
+        bloodType: row.blood_type || '',
         maritalStatus: row.marital_status || 'Single',
         pregnancyStatus: row.is_pregnant ? 'Currently Pregnant' : 'Not Pregnant',
         emergencyContactName: emerg.name || row.emergency_contact_name || '',
         emergencyContactPhone: emerg.phone || row.emergency_contact_phone || '',
         emergencyContactRelationship: emerg.relationship || row.emergency_contact_relationship || '',
         profilePhotoUrl: row.avatar_url || '',
+        cycleLength: row.cycle_length || '28',
+        periodDuration: Number(row.period_duration) || 5,
+        lastPeriodDate: row.last_period_date || '',
+        periodRegularity: row.period_regularity || 'regular',
+        commonSymptoms: Array.isArray(row.common_symptoms) ? row.common_symptoms : [],
+        sleepHours: Number(row.sleep_hours) || 7,
+        fastFoodIntake: row.fast_food_intake || 'occasionally',
+        regularExercise: row.regular_exercise !== null ? Boolean(row.regular_exercise) : true,
       };
     }
   } catch (err) {
@@ -97,7 +113,7 @@ export async function fetchUserProfileFromDb(
 export async function updateUserProfileInDb(
   userId: string,
   token: string,
-  partial: Partial<UserProfileState>
+  partial: Partial<UserProfileState> & Record<string, any>
 ): Promise<boolean> {
   if (!userId || !token) return false;
 
@@ -106,13 +122,45 @@ export async function updateUserProfileInDb(
   };
 
   if (partial.fullName !== undefined) payload.full_name = partial.fullName;
+  if (partial.full_name !== undefined) payload.full_name = partial.full_name;
   if (partial.dateOfBirth !== undefined) payload.date_of_birth = partial.dateOfBirth;
+  if (partial.date_of_birth !== undefined) payload.date_of_birth = partial.date_of_birth;
   if (partial.heightCm !== undefined) payload.height_cm = partial.heightCm;
+  if (partial.height_cm !== undefined) payload.height_cm = partial.height_cm;
   if (partial.weightKg !== undefined) payload.weight_kg = partial.weightKg;
+  if (partial.weight_kg !== undefined) payload.weight_kg = partial.weight_kg;
   if (partial.waistCm !== undefined) payload.waist_cm = partial.waistCm;
+  if (partial.waist_cm !== undefined) payload.waist_cm = partial.waist_cm;
+  if (partial.hipCm !== undefined) payload.hip_cm = partial.hipCm;
+  if (partial.hip_cm !== undefined) payload.hip_cm = partial.hip_cm;
+  if (partial.gender !== undefined) payload.gender = partial.gender;
+  if (partial.pathway !== undefined) payload.pathway = partial.pathway;
+  if (partial.isOnboarded !== undefined) payload.is_onboarded = partial.isOnboarded;
+  if (partial.is_onboarded !== undefined) payload.is_onboarded = partial.is_onboarded;
   if (partial.maritalStatus !== undefined) payload.marital_status = partial.maritalStatus;
+  if (partial.marital_status !== undefined) payload.marital_status = partial.marital_status;
   if (partial.pregnancyStatus !== undefined) payload.is_pregnant = partial.pregnancyStatus === 'Currently Pregnant';
+  if (partial.is_pregnant !== undefined) payload.is_pregnant = partial.is_pregnant;
   if (partial.profilePhotoUrl !== undefined) payload.avatar_url = partial.profilePhotoUrl;
+  if (partial.avatar_url !== undefined) payload.avatar_url = partial.avatar_url;
+  if (partial.cycleLength !== undefined) payload.cycle_length = String(partial.cycleLength);
+  if (partial.cycle_length !== undefined) payload.cycle_length = String(partial.cycle_length);
+  if (partial.periodDuration !== undefined) payload.period_duration = Number(partial.periodDuration);
+  if (partial.period_duration !== undefined) payload.period_duration = Number(partial.period_duration);
+  if (partial.lastPeriodDate !== undefined) payload.last_period_date = partial.lastPeriodDate;
+  if (partial.last_period_date !== undefined) payload.last_period_date = partial.last_period_date;
+  if (partial.periodRegularity !== undefined) payload.period_regularity = partial.periodRegularity;
+  if (partial.period_regularity !== undefined) payload.period_regularity = partial.period_regularity;
+  if (partial.commonSymptoms !== undefined) payload.common_symptoms = partial.commonSymptoms;
+  if (partial.common_symptoms !== undefined) payload.common_symptoms = partial.common_symptoms;
+  if (partial.sleepHours !== undefined) payload.sleep_hours = Number(partial.sleepHours);
+  if (partial.sleep_hours !== undefined) payload.sleep_hours = Number(partial.sleep_hours);
+  if (partial.fastFoodIntake !== undefined) payload.fast_food_intake = partial.fastFoodIntake;
+  if (partial.fast_food_intake !== undefined) payload.fast_food_intake = partial.fast_food_intake;
+  if (partial.regularExercise !== undefined) payload.regular_exercise = Boolean(partial.regularExercise);
+  if (partial.regular_exercise !== undefined) payload.regular_exercise = Boolean(partial.regular_exercise);
+  if (partial.activityLevel !== undefined) payload.activity_level = partial.activityLevel;
+  if (partial.activity_level !== undefined) payload.activity_level = partial.activity_level;
 
   if (partial.emergencyContactName || partial.emergencyContactPhone) {
     payload.emergency_contacts = [
@@ -140,6 +188,115 @@ export async function updateUserProfileInDb(
     return false;
   }
 }
+
+/**
+ * Persist chosen pathway to database and persistent cache
+ */
+export async function updateUserPathwayInDb(
+  userId: string,
+  token: string,
+  pathway: string
+): Promise<boolean> {
+  const gender = pathway === 'female_pcos' || pathway === 'female' ? 'female' : 'male';
+  await persistentStorage.setItem(`biopulse_user_pathway_${userId}`, pathway);
+  return updateUserProfileInDb(userId, token, { pathway: pathway as any, gender });
+}
+
+/**
+ * Persist onboarding progress incrementally step-by-step
+ */
+export async function saveOnboardingStepData(
+  userId: string,
+  token: string,
+  stepData: Record<string, any>
+): Promise<boolean> {
+  // Always update persistent local draft first so data is never lost during offline/flaky connections
+  try {
+    const draftKey = `biopulse_onboarding_draft_${userId}`;
+    const existingRaw = await persistentStorage.getItem(draftKey);
+    const existing = existingRaw ? JSON.parse(existingRaw) : {};
+    const merged = { ...existing, ...stepData, lastUpdated: new Date().toISOString() };
+    await persistentStorage.setItem(draftKey, JSON.stringify(merged));
+  } catch (err) {
+    console.warn('[BioPulse userService] Local draft cache error:', err);
+  }
+
+  // Attempt database sync
+  if (token) {
+    try {
+      return await updateUserProfileInDb(userId, token, stepData);
+    } catch (err) {
+      console.warn('[BioPulse userService] API failure during onboarding step save:', err);
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Mark onboarding as complete and update database profile
+ */
+export async function completeOnboardingInDb(
+  userId: string,
+  token: string,
+  finalSummary?: Record<string, any>
+): Promise<boolean> {
+  const payload = {
+    ...finalSummary,
+    isOnboarded: true,
+    is_onboarded: true,
+  };
+
+  try {
+    await persistentStorage.setItem(`biopulse_onboarding_completed_${userId}`, 'true');
+    await persistentStorage.removeItem(`biopulse_onboarding_draft_${userId}`);
+  } catch (err) {
+    // Ignore cache error
+  }
+
+  if (token) {
+    return updateUserProfileInDb(userId, token, payload);
+  }
+  return true;
+}
+
+/**
+ * Restore saved onboarding draft from DB and fallback local cache
+ */
+export async function fetchOnboardingDraft(
+  userId: string,
+  token?: string
+): Promise<Record<string, any> | null> {
+  let draftData: Record<string, any> = {};
+
+  // 1. Read persistent local cache
+  try {
+    const raw = await persistentStorage.getItem(`biopulse_onboarding_draft_${userId}`);
+    if (raw) {
+      draftData = JSON.parse(raw);
+    }
+  } catch {
+    // Continue
+  }
+
+  // 2. Read live DB profile if authenticated
+  if (token) {
+    try {
+      const dbProfile = await fetchUserProfileFromDb(userId, token);
+      if (dbProfile) {
+        draftData = {
+          ...dbProfile,
+          ...draftData, // local modifications take priority if newer
+        };
+      }
+    } catch (err) {
+      console.warn('[BioPulse userService] DB fetch failed during onboarding restore, using local draft:', err);
+    }
+  }
+
+  return Object.keys(draftData).length > 0 ? draftData : null;
+}
+
 
 /**
  * Fetch authoritative active screening assessment from Django ML

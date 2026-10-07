@@ -14,7 +14,7 @@ import { useAuth } from '../features/authentication';
  */
 export default function StartupScreen() {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, user, pathway } = useAuth();
   const params = useLocalSearchParams<{ preview?: string }>();
   const isPreview = params.preview === 'true';
 
@@ -22,13 +22,23 @@ export default function StartupScreen() {
     if (isPreview) {
       return;
     }
-    // Route to main application if valid session is active, otherwise onboarding
+    // Route to main application if valid session is active and onboarded, otherwise to onboarding/pathway
     if (isAuthenticated) {
-      router.replace('/(app)');
+      if (user?.isOnboarded === false) {
+        if (pathway === 'male_hypogonadism' || pathway === 'male') {
+          router.replace('/male-basic-info');
+        } else if (pathway === 'female_pcos' || pathway === 'female') {
+          router.replace('/female-basic-info');
+        } else {
+          router.replace('/pathway-selection');
+        }
+      } else {
+        router.replace('/(app)');
+      }
     } else {
       router.replace('/onboarding');
     }
-  }, [isPreview, isAuthenticated, router]);
+  }, [isPreview, isAuthenticated, user?.isOnboarded, pathway, router]);
 
   return (
     <BioPulseSplashScreen

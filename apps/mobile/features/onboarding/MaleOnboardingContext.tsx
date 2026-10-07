@@ -1,5 +1,11 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import type { ProgressiveAssessment } from '../../services/assessmentService';
+import { useAuth } from '../authentication';
+import {
+  saveOnboardingStepData,
+  completeOnboardingInDb,
+  fetchOnboardingDraft,
+} from '../../services/userService';
 
 export interface MaleBasicInfoState {
   age: number;
@@ -99,11 +105,14 @@ interface MaleOnboardingContextValue {
   setLastActiveScreeningRoute: (route: string | null) => void;
   resetOnboarding: () => void;
   calculateAdamScore: () => { score: number; isPositive: boolean };
+  saveAndCompleteOnboarding: (finalSummary?: Record<string, any>) => Promise<boolean>;
 }
 
 const MaleOnboardingContext = createContext<MaleOnboardingContextValue | undefined>(undefined);
 
 export const MaleOnboardingProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+
   const [basicInfo, setBasicInfo] = useState<MaleBasicInfoState>(DEFAULT_BASIC_INFO);
   const [adam, setAdam] = useState<AdamQuestionnaireState>(DEFAULT_ADAM);
   const [lifestyle, setLifestyle] = useState<MaleLifestyleState>(DEFAULT_LIFESTYLE);
@@ -111,6 +120,57 @@ export const MaleOnboardingProvider: React.FC<{ children: ReactNode }> = ({ chil
   const [isLoadingAssessment, setIsLoadingAssessment] = useState(false);
   const [assessmentError, setAssessmentError] = useState<string | null>(null);
   const [lastActiveScreeningRoute, setLastActiveScreeningRoute] = useState<string | null>(null);
+
+  // Restore draft state from DB / persistent storage on mount
+  useEffect(() => {
+    let isCurrent = true;
+    if (!user?.id) return;
+
+    fetchOnboardingDraft(user.id, user.accessToken)
+      .then((draft) => {
+        if (!isCurrent || !draft) return;
+
+        if (draft.heightCm || draft.weightKg || draft.age || draft.waistCm) {
+          setBasicInfo((prev) => ({
+            ...prev,
+            age: draft.age || prev.age,
+            heightCm: draft.heightCm || prev.heightCm,
+            weightKg: draft.weightKg || prev.weightKg,
+            waistCm: draft.waistCm || prev.waistCm,
+            bmi: draft.bmi || prev.bmi,
+          }));
+        }
+
+        if (draft.adam_answers) {
+          try {
+            const raw = typeof draft.adam_answers === 'string' ? JSON.parse(draft.adam_answers) : draft.adam_answers;
+            const converted: Record<number, boolean> = {};
+            Object.entries(raw).forEach(([k, v]) => {
+              const num = parseInt(k.replace('q', ''), 10);
+              if (!isNaN(num)) converted[num] = Boolean(v);
+            });
+            setAdam((prev) => ({ ...prev, answers: converted }));
+          } catch {
+            // Ignore
+          }
+        }
+
+        if (draft.sleepHours || draft.fastFoodIntake) {
+          setLifestyle((prev) => ({
+            ...prev,
+            sleepHours: Number(draft.sleepHours) || prev.sleepHours,
+            fastFoodIntake: draft.fastFoodIntake || prev.fastFoodIntake,
+          }));
+        }
+      })
+      .catch((err) => {
+        console.warn('[BioPulse MaleOnboarding] Draft restoration error:', err);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [user?.id, user?.accessToken]);
 
   const updateBasicInfo = useCallback((info: Partial<MaleBasicInfoState>) => {
     setBasicInfo((prev) => {
@@ -121,19 +181,37 @@ export const MaleOnboardingProvider: React.FC<{ children: ReactNode }> = ({ chil
           next.bmi = parseFloat((next.weightKg / (heightM * heightM)).toFixed(1));
         }
       }
+      if (user?.id) {
+        saveOnboardingStepData(user.id, user.accessToken || '', {
+          age: next.age,
+          heightCm: next.heightCm,
+          weightKg: next.weightKg,
+          waistCm: next.waistCm,
+          gender: 'male',
+          pathway: 'male_hypogonadism',
+        }).catch((e) => console.warn('[MaleOnboarding] save error:', e));
+      }
       return next;
     });
-  }, []);
+  }, [user?.id, user?.accessToken]);
 
   const setAdamAnswer = useCallback((questionId: number, answer: boolean) => {
-    setAdam((prev) => ({
-      ...prev,
-      answers: {
+    setAdam((prev) => {
+      const updatedAnswers = {
         ...prev.answers,
         [questionId]: answer,
-      },
-    }));
-  }, []);
+      };
+      if (user?.id) {
+        saveOnboardingStepData(user.id, user.accessToken || '', {
+          adam_answers: updatedAnswers,
+        }).catch((e) => console.warn('[MaleOnboarding] save error:', e));
+      }
+      return {
+        ...prev,
+        answers: updatedAnswers,
+      };
+    });
+  }, [user?.id, user?.accessToken]);
 
   const setAdamCurrentQuestion = useCallback((q: number) => {
     setAdam((prev) => ({
@@ -143,8 +221,31 @@ export const MaleOnboardingProvider: React.FC<{ children: ReactNode }> = ({ chil
   }, []);
 
   const updateLifestyle = useCallback((patch: Partial<MaleLifestyleState>) => {
-    setLifestyle((prev) => ({ ...prev, ...patch }));
-  }, []);
+    setLifestyle((prev) => {
+      const next = { ...prev, ...patch };
+      if (user?.id) {
+        saveOnboardingStepData(user.id, user.accessToken || '', {
+          sleepHours: next.sleepHours,
+          fastFoodIntake: next.fastFoodIntake,
+          regularExercise: next.exerciseFrequency !== 'none',
+          activityLevel: next.activityLevel,
+        }).catch((e) => console.warn('[MaleOnboarding] save error:', e));
+      }
+      return next;
+    });
+  }, [user?.id, user?.accessToken]);
+
+  const saveAndCompleteOnboarding = useCallback(
+    async (finalSummary?: Record<string, any>): Promise<boolean> => {
+      if (!user?.id) return true;
+      return completeOnboardingInDb(user.id, user.accessToken || '', {
+        pathway: 'male_hypogonadism',
+        gender: 'male',
+        ...finalSummary,
+      });
+    },
+    [user?.id, user?.accessToken]
+  );
 
   const calculateAdamScore = useCallback(() => {
     const answers = adam.answers;
@@ -192,6 +293,7 @@ export const MaleOnboardingProvider: React.FC<{ children: ReactNode }> = ({ chil
         setLastActiveScreeningRoute,
         resetOnboarding,
         calculateAdamScore,
+        saveAndCompleteOnboarding,
       }}
     >
       {children}

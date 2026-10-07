@@ -7,6 +7,7 @@ import {
   ScrollView,
   useWindowDimensions,
   Platform,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -123,6 +124,19 @@ export default function FemaleBasicInfoScreen() {
   }, [router]);
 
   const handleContinue = useCallback(() => {
+    if (age <= 0 || age > 120) {
+      Alert.alert('Invalid Date of Birth', 'Please select a valid date of birth.');
+      return;
+    }
+    if (heightCm < 80 || heightCm > 250) {
+      Alert.alert('Invalid Height', 'Please enter a valid height between 80 cm and 250 cm.');
+      return;
+    }
+    if (weightKg < 25 || weightKg > 300) {
+      Alert.alert('Invalid Weight', 'Please enter a valid weight between 25 kg and 300 kg.');
+      return;
+    }
+
     // Persist basic information
     updateBasicInfo({
       dateOfBirth: dob,

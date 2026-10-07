@@ -17,6 +17,7 @@ import { BioPulseBackground } from '../components/common/BioPulseBackground';
 import { BioPulseButton } from '../components/common/BioPulseButton';
 import { Logo } from '../components/brand/Logo';
 import { useFemaleOnboarding } from '../features/onboarding';
+import { useHealthStore } from '../store';
 
 interface FactorItem {
   id: number;
@@ -68,6 +69,7 @@ export default function FemaleScreeningResultScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { activeAssessment } = useFemaleOnboarding();
+  const { updateProfile } = useHealthStore();
 
   const topPad = Math.max(insets.top, 12);
   const bottomPad = Math.max(insets.bottom, 20);
@@ -83,6 +85,7 @@ export default function FemaleScreeningResultScreen() {
     : 'Higher Risk';
 
   const handleContinueNextTier = () => {
+    updateProfile({ isOnboarded: true });
     // Route to home dashboard (Screen 12)
     router.replace('/(app)');
   };

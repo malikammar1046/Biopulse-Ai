@@ -19,6 +19,7 @@ import { BioPulseButton } from '../components/common/BioPulseButton';
 import { FemaleOnboardingHeader } from '../components/onboarding/FemaleOnboardingHeader';
 import { useFemaleOnboarding } from '../features/onboarding';
 import { useAuth } from '../features/authentication';
+import { useHealthStore } from '../store';
 import {
   submitFemaleTier1AssessmentWithStatus,
   buildFemaleTier1Inputs,
@@ -70,7 +71,9 @@ export default function FemaleReviewScreen() {
     symptoms,
     lifestyle,
     setActiveAssessment,
+    saveAndCompleteOnboarding,
   } = useFemaleOnboarding();
+  const { updateProfile, updateScreeningAssessment } = useHealthStore();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const bottomPad = Math.max(insets.bottom, 20);
@@ -139,8 +142,33 @@ export default function FemaleReviewScreen() {
       const result = await submitFemaleTier1AssessmentWithStatus(inputs);
 
       if (result.data) {
+        const assess = result.data as any;
         setActiveAssessment(result.data);
+        updateScreeningAssessment({
+          probabilityPercent: Math.round((assess.probability ?? 0.72) * 100),
+          riskBand: assess.risk_category === 'high' || (assess.probability ?? 0) >= 0.6 ? 'Higher Risk' : 'Lower Risk',
+          riskCategory: (assess.risk_category?.toLowerCase() as 'lower' | 'intermediate' | 'higher') || 'higher',
+          tier: 1,
+          tierStatus: 'Tier 1 Complete',
+          topFactors: assess.top_factors || [],
+        });
       }
+
+      await saveAndCompleteOnboarding({
+        heightCm: basicInfo.heightCm,
+        weightKg: basicInfo.weightKg,
+        dateOfBirth: basicInfo.dateOfBirth,
+        maritalStatus: basicInfo.maritalStatus === 'married' ? 'Married' : 'Single',
+        pregnancyStatus: basicInfo.pregnancyStatus === 'currently_pregnant' ? 'Currently Pregnant' : 'Not Pregnant',
+      });
+
+      updateProfile({
+        heightCm: basicInfo.heightCm,
+        weightKg: basicInfo.weightKg,
+        dateOfBirth: basicInfo.dateOfBirth,
+        age: basicInfo.age,
+        isOnboarded: true,
+      });
 
       setIsSubmitting(false);
       // Advance to Screen 11: Screening Result

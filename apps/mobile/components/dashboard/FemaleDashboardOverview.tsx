@@ -6,7 +6,7 @@ import {
   ScrollView,
   Pressable,
   Switch,
-  Alert,
+  RefreshControl,
   useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../../constants/Colors';
 import { BioPulseBackground } from '../common/BioPulseBackground';
 import { BioPulseBottomNav, BOTTOM_NAV_HEIGHT } from '../navigation';
-import { useHealthStore } from '../../store/healthStore';
+import { useDashboardData } from '../../hooks/useDashboardData';
 
 export interface FemaleDashboardOverviewProps {
   onNotificationPress?: () => void;
@@ -25,14 +25,14 @@ export interface FemaleDashboardOverviewProps {
 /**
  * SCREEN 12: FEMALE HOME DASHBOARD
  *
- * Matches Screenshot 12:
- * - Header: Sun icon, "Good afternoon, [Name]", "Cycle Day 14 • [Date]", Bell icon
- * - PCOS Screening Card: 72% Probability ring, [⚠️ Higher Risk], Tier 1 Initial Screening
- * - Your Cycle Card: Day 14 of 32 days, Next period (in 14 days), Fertile window subcard
- * - Today Card: 3 metrics (Calories, Water, Activity) with icons
- * - Medication Reminder: "Take Metformin 500 mg", "Today, 8:00 PM" with interactive toggle
- * - Next Best Action: "Add clinical hormone labs" with beaker icon
- * - Fixed bottom navigation in female pink accent
+ * Connected directly to authoritative backend user data.
+ * Zero fabricated numbers:
+ * - Dynamic Greeting & First Name
+ * - Real PCOS Screening probability, risk band, and tier (or authentic Not Screened state)
+ * - Real Menstrual Cycle days and fertile window (or authentic No Cycle Logged state)
+ * - Real Today metrics for Nutrition, Water, and Activity
+ * - Real active Medications (or empty state)
+ * - Real Next Best Action based on actual clinical state
  */
 export const FemaleDashboardOverview: React.FC<FemaleDashboardOverviewProps> = ({
   onNotificationPress,
@@ -41,22 +41,14 @@ export const FemaleDashboardOverview: React.FC<FemaleDashboardOverviewProps> = (
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
 
-  const {
-    profile,
-    screening,
-    cycle,
-    nutrition,
-    water,
-    movement,
-    medications,
-  } = useHealthStore();
+  const { state, data, error, isRefreshing, refresh, retry } = useDashboardData('female');
 
-  const [medTaken, setMedTaken] = useState(true);
+  const [medTaken, setMedTaken] = useState(false);
 
   const topPad = Math.max(insets.top, 14);
   const bottomPad = Math.max(insets.bottom, 12);
 
-  // Derive time-of-day greeting & user first name
+  // Time-of-day greeting & user first name from backend
   const { greeting, firstName, formattedDate } = useMemo(() => {
     const hour = new Date().getHours();
     let timeGreeting = 'Good afternoon';
@@ -66,7 +58,7 @@ export const FemaleDashboardOverview: React.FC<FemaleDashboardOverviewProps> = (
       timeGreeting = 'Good evening';
     }
 
-    const rawName = profile?.fullName?.trim() || 'BioPulse Member';
+    const rawName = data?.userName?.trim() || '';
     const first = rawName ? rawName.split(' ')[0] : 'Member';
 
     const d = new Date();
@@ -78,17 +70,7 @@ export const FemaleDashboardOverview: React.FC<FemaleDashboardOverviewProps> = (
     });
 
     return { greeting: timeGreeting, firstName: first, formattedDate: dateStr };
-  }, [profile]);
-
-  // Screening values
-  const probability = screening?.probabilityPercent ?? 72;
-  const riskLabel = screening?.riskCategory ? screening.riskCategory.replace('_', ' ') : 'Higher Risk';
-  const tierNumber = screening?.tier ?? 1;
-
-  // Cycle values
-  const cycleDay = cycle?.currentCycleDay ?? 14;
-  const cycleTotalDays = cycle?.cycleLength ?? 32;
-  const daysUntilNext = cycle?.nextPeriodDaysRemaining ?? 14;
+  }, [data?.userName]);
 
   const handleNotificationClick = () => {
     if (onNotificationPress) {
@@ -97,6 +79,63 @@ export const FemaleDashboardOverview: React.FC<FemaleDashboardOverviewProps> = (
       router.push('/(app)/notifications');
     }
   };
+
+  // 1. Assessment derived state
+  const assessment = data?.assessment;
+  const hasAssessment = Boolean(assessment && assessment.hasAssessment);
+  const probability = assessment?.probabilityPercent ?? null;
+  const riskLabel = assessment?.riskLabel ?? 'Not Screened';
+  const tierNumber = assessment?.tier ?? 1;
+  const lastAssessedDate = assessment?.lastAssessedDate ?? 'Not assessed yet';
+
+  // 2. Cycle derived state
+  const cycle = data?.cycle;
+  const hasCycleData = Boolean(cycle && cycle.hasCycleData);
+  const cycleDay = cycle?.currentCycleDay ?? 0;
+  const cycleTotalDays = cycle?.cycleLength ?? 28;
+  const daysUntilNext = cycle?.nextPeriodDaysRemaining ?? 0;
+  const nextPeriodDate = cycle?.nextPeriodExpectedDate ?? '';
+  const fertileDates = cycle?.fertileWindowStart && cycle?.fertileWindowEnd
+    ? `${cycle.fertileWindowStart} – ${cycle.fertileWindowEnd}`
+    : 'Not logged';
+
+  // 3. Today metrics derived state
+  const caloriesVal = data?.nutrition?.hasNutritionLogs
+    ? `${data.nutrition.caloriesConsumed.toLocaleString()} / ${data.nutrition.calorieTarget.toLocaleString()}`
+    : `0 / ${data?.nutrition?.calorieTarget?.toLocaleString() || '1,800'}`;
+  const waterVal = data?.water?.hasWaterLogs
+    ? `${data.water.consumedLiters.toFixed(1)} / ${data.water.targetLiters.toFixed(1)}`
+    : `0.0 / 2.5`;
+  const activityVal = data?.movement?.hasMovementLogs
+    ? `${data.movement.todayActivityMinutes} min`
+    : `0 min`;
+
+  // 4. Medication derived state
+  const activeMed = data?.medication?.activeMedication;
+  const hasMedication = Boolean(data?.medication?.hasMedications && activeMed);
+
+  // If initial load failed with no cache
+  if (state === 'error' && !data) {
+    return (
+      <BioPulseBackground style={styles.container}>
+        <StatusBar style="dark" backgroundColor="transparent" translucent />
+        <View style={[styles.errorContainer, { paddingTop: topPad + 40 }]}>
+          <View style={styles.errorIconCircle}>
+            <Ionicons name="cloud-offline-outline" size={36} color="#EF4444" />
+          </View>
+          <Text style={styles.errorTitle}>Unable to load health summary</Text>
+          <Text style={styles.errorSubtitle}>
+            {error || 'Could not connect to BioPulse servers. Please check your connection.'}
+          </Text>
+          <Pressable onPress={retry} style={styles.retryButton}>
+            <Ionicons name="reload" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </Pressable>
+        </View>
+        <BioPulseBottomNav activeTab="home" />
+      </BioPulseBackground>
+    );
+  }
 
   return (
     <BioPulseBackground style={styles.container}>
@@ -112,7 +151,7 @@ export const FemaleDashboardOverview: React.FC<FemaleDashboardOverviewProps> = (
             </Text>
           </View>
           <Text style={styles.greetingSubtitle}>
-            Cycle Day {cycleDay} • {formattedDate}
+            {hasCycleData ? `Cycle Day ${cycleDay} • ${formattedDate}` : formattedDate}
           </Text>
         </View>
 
@@ -134,6 +173,14 @@ export const FemaleDashboardOverview: React.FC<FemaleDashboardOverviewProps> = (
           { paddingBottom: BOTTOM_NAV_HEIGHT + bottomPad + 24 },
         ]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={refresh}
+            tintColor="#F43F7D"
+            colors={['#F43F7D']}
+          />
+        }
       >
         <View style={[styles.mainWrapper, { maxWidth: Math.min(width, 460) }]}>
           {/* CARD 1: PCOS SCREENING */}
@@ -146,31 +193,60 @@ export const FemaleDashboardOverview: React.FC<FemaleDashboardOverviewProps> = (
                 <Text style={styles.cardTitle}>PCOS Screening</Text>
               </View>
 
-              <Pressable onPress={() => router.push('/female-screening-result')} hitSlop={10}>
-                <Text style={styles.cardLinkText}>View Screening &gt;</Text>
+              <Pressable
+                onPress={() => router.push(hasAssessment ? '/female-screening-result' : '/female-basic-info')}
+                hitSlop={10}
+              >
+                <Text style={styles.cardLinkText}>
+                  {hasAssessment ? 'View Screening >' : 'Start Screening >'}
+                </Text>
               </Pressable>
             </View>
 
-            <View style={styles.screeningBodyRow}>
-              {/* Probability Circular Gauge */}
-              <View style={styles.gaugeBox}>
-                <View style={styles.gaugeCircle}>
-                  <Text style={styles.gaugeNumber}>{probability}%</Text>
-                  <Text style={styles.gaugeLabel}>Probability</Text>
-                </View>
-              </View>
-
-              {/* Risk details */}
-              <View style={styles.screeningInfoCol}>
-                <View style={styles.higherRiskBadge}>
-                  <Ionicons name="warning-outline" size={14} color="#EF4444" style={{ marginRight: 4 }} />
-                  <Text style={styles.higherRiskText}>{riskLabel}</Text>
+            {hasAssessment ? (
+              <View style={styles.screeningBodyRow}>
+                {/* Probability Circular Gauge */}
+                <View style={styles.gaugeBox}>
+                  <View style={styles.gaugeCircle}>
+                    <Text style={styles.gaugeNumber}>{probability ?? 0}%</Text>
+                    <Text style={styles.gaugeLabel}>Probability</Text>
+                  </View>
                 </View>
 
-                <Text style={styles.tierText}>Tier {tierNumber} • Initial Screening</Text>
-                <Text style={styles.lastAssessedText}>Last assessed: {formattedDate}</Text>
+                {/* Risk details */}
+                <View style={styles.screeningInfoCol}>
+                  <View style={riskLabel.includes('Higher') ? styles.higherRiskBadge : styles.moderateRiskBadge}>
+                    <Ionicons
+                      name={riskLabel.includes('Higher') ? 'warning-outline' : 'shield-checkmark-outline'}
+                      size={14}
+                      color={riskLabel.includes('Higher') ? '#EF4444' : '#0D9488'}
+                      style={{ marginRight: 4 }}
+                    />
+                    <Text style={riskLabel.includes('Higher') ? styles.higherRiskText : styles.moderateRiskText}>
+                      {riskLabel}
+                    </Text>
+                  </View>
+
+                  <Text style={styles.tierText}>Tier {tierNumber} • Initial Screening</Text>
+                  <Text style={styles.lastAssessedText}>Last assessed: {lastAssessedDate}</Text>
+                </View>
               </View>
-            </View>
+            ) : (
+              <Pressable
+                onPress={() => router.push('/female-basic-info')}
+                style={styles.emptyScreeningRow}
+              >
+                <View style={styles.emptyGaugeBox}>
+                  <Ionicons name="help-circle-outline" size={32} color="#F43F7D" />
+                </View>
+                <View style={styles.emptyScreeningTextCol}>
+                  <Text style={styles.emptyCardTitle}>No screening yet</Text>
+                  <Text style={styles.emptyCardDesc}>
+                    Complete your initial screening to receive your personalized PCOS probability and risk factors.
+                  </Text>
+                </View>
+              </Pressable>
+            )}
           </View>
 
           {/* CARD 2: YOUR CYCLE */}
@@ -184,39 +260,59 @@ export const FemaleDashboardOverview: React.FC<FemaleDashboardOverviewProps> = (
               </View>
 
               <Pressable onPress={() => router.push('/(app)/cycle-tracking')} hitSlop={10}>
-                <Text style={styles.cardLinkText}>View &gt;</Text>
+                <Text style={styles.cardLinkText}>{hasCycleData ? 'View >' : 'Log Cycle >'}</Text>
               </Pressable>
             </View>
 
-            <View style={styles.cycleMetricsRow}>
-              <View>
-                <Text style={styles.cycleDaysBold}>
-                  Day {cycleDay}{' '}
-                  <Text style={styles.cycleDaysMuted}>of {cycleTotalDays} days</Text>
-                </Text>
-              </View>
+            {hasCycleData ? (
+              <>
+                <View style={styles.cycleMetricsRow}>
+                  <View>
+                    <Text style={styles.cycleDaysBold}>
+                      Day {cycleDay}{' '}
+                      <Text style={styles.cycleDaysMuted}>of {cycleTotalDays} days</Text>
+                    </Text>
+                  </View>
 
-              <View style={styles.nextPeriodBox}>
-                <Ionicons name="sync-outline" size={16} color={BioPulseColors.teal} style={{ marginRight: 6 }} />
-                <View>
-                  <Text style={styles.nextPeriodLabel}>Next period</Text>
-                  <Text style={styles.nextPeriodDate}>
-                    7 Apr 2025 <Text style={styles.nextPeriodDays}>(in {daysUntilNext} days)</Text>
+                  <View style={styles.nextPeriodBox}>
+                    <Ionicons name="sync-outline" size={16} color={BioPulseColors.teal} style={{ marginRight: 6 }} />
+                    <View>
+                      <Text style={styles.nextPeriodLabel}>Next period</Text>
+                      <Text style={styles.nextPeriodDate}>
+                        {nextPeriodDate || 'Predicted'}{' '}
+                        <Text style={styles.nextPeriodDays}>(in {daysUntilNext} days)</Text>
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Fertile Window Subcard */}
+                <View style={styles.fertileSubcard}>
+                  <View style={styles.fertileIconBox}>
+                    <Ionicons name="sparkles" size={14} color="#F43F7D" />
+                  </View>
+                  <View>
+                    <Text style={styles.fertileTitle}>Fertile window</Text>
+                    <Text style={styles.fertileDates}>{fertileDates}</Text>
+                  </View>
+                </View>
+              </>
+            ) : (
+              <Pressable
+                onPress={() => router.push('/(app)/cycle-tracking')}
+                style={styles.emptyCycleBox}
+              >
+                <View style={styles.emptyCycleIconBox}>
+                  <Ionicons name="calendar-outline" size={24} color="#F43F7D" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.emptyCardTitle}>No cycle logged yet</Text>
+                  <Text style={styles.emptyCardDesc}>
+                    Log your last period to receive accurate cycle day calculations, fertile windows, and period predictions.
                   </Text>
                 </View>
-              </View>
-            </View>
-
-            {/* Fertile Window Subcard */}
-            <View style={styles.fertileSubcard}>
-              <View style={styles.fertileIconBox}>
-                <Ionicons name="sparkles" size={14} color="#F43F7D" />
-              </View>
-              <View>
-                <Text style={styles.fertileTitle}>Fertile window</Text>
-                <Text style={styles.fertileDates}>28 Mar – 2 Apr 2025</Text>
-              </View>
-            </View>
+              </Pressable>
+            )}
           </View>
 
           {/* CARD 3: TODAY SUMMARY */}
@@ -238,7 +334,7 @@ export const FemaleDashboardOverview: React.FC<FemaleDashboardOverviewProps> = (
               {/* Calories */}
               <View style={styles.todayMetricCol}>
                 <Ionicons name="restaurant" size={20} color="#10B981" style={{ marginBottom: 4 }} />
-                <Text style={styles.todayMetricValue}>1,320 / 1,800</Text>
+                <Text style={styles.todayMetricValue}>{caloriesVal}</Text>
                 <Text style={styles.todayMetricUnit}>kcal</Text>
               </View>
 
@@ -247,7 +343,7 @@ export const FemaleDashboardOverview: React.FC<FemaleDashboardOverviewProps> = (
               {/* Water */}
               <View style={styles.todayMetricCol}>
                 <Ionicons name="water" size={20} color="#0EA5E9" style={{ marginBottom: 4 }} />
-                <Text style={styles.todayMetricValue}>1.6 / 2.5</Text>
+                <Text style={styles.todayMetricValue}>{waterVal}</Text>
                 <Text style={styles.todayMetricUnit}>L water</Text>
               </View>
 
@@ -256,7 +352,7 @@ export const FemaleDashboardOverview: React.FC<FemaleDashboardOverviewProps> = (
               {/* Activity */}
               <View style={styles.todayMetricCol}>
                 <Ionicons name="walk" size={20} color="#14B8C4" style={{ marginBottom: 4 }} />
-                <Text style={styles.todayMetricValue}>45 min</Text>
+                <Text style={styles.todayMetricValue}>{activityVal}</Text>
                 <Text style={styles.todayMetricUnit}>activity</Text>
               </View>
             </View>
@@ -264,24 +360,42 @@ export const FemaleDashboardOverview: React.FC<FemaleDashboardOverviewProps> = (
 
           {/* CARD 4: MEDICATION REMINDER */}
           <View style={styles.card}>
-            <View style={styles.medicationRow}>
-              <View style={styles.medicationLeft}>
-                <View style={styles.pillIconBox}>
-                  <Ionicons name="medical" size={18} color="#F43F7D" />
+            {hasMedication && activeMed ? (
+              <View style={styles.medicationRow}>
+                <View style={styles.medicationLeft}>
+                  <View style={styles.pillIconBox}>
+                    <Ionicons name="medical" size={18} color="#F43F7D" />
+                  </View>
+                  <View>
+                    <Text style={styles.medicationTitle}>Take {activeMed.name} {activeMed.dosage}</Text>
+                    <Text style={styles.medicationTime}>Today, {activeMed.scheduledTime}</Text>
+                  </View>
                 </View>
-                <View>
-                  <Text style={styles.medicationTitle}>Take Metformin 500 mg</Text>
-                  <Text style={styles.medicationTime}>Today, 8:00 PM</Text>
-                </View>
-              </View>
 
-              <Switch
-                value={medTaken}
-                onValueChange={setMedTaken}
-                trackColor={{ false: '#E2E8F0', true: '#10B981' }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
+                <Switch
+                  value={medTaken}
+                  onValueChange={setMedTaken}
+                  trackColor={{ false: '#E2E8F0', true: '#10B981' }}
+                  thumbColor="#FFFFFF"
+                />
+              </View>
+            ) : (
+              <Pressable
+                onPress={() => router.push('/(app)/medications')}
+                style={styles.medicationRow}
+              >
+                <View style={styles.medicationLeft}>
+                  <View style={[styles.pillIconBox, { backgroundColor: '#F1F5F9' }]}>
+                    <Ionicons name="medical-outline" size={18} color="#94A3B8" />
+                  </View>
+                  <View>
+                    <Text style={styles.medicationTitle}>Medication Schedule</Text>
+                    <Text style={styles.medicationTime}>No active medications scheduled for today</Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+              </Pressable>
+            )}
           </View>
 
           {/* CARD 5: NEXT BEST ACTION */}
@@ -348,35 +462,41 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: BioPulseColors.border,
+    borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   bellBadge: {
     position: 'absolute',
     top: 8,
-    right: 9,
+    right: 8,
     width: 7,
     height: 7,
-    borderRadius: 3.5,
-    backgroundColor: '#F43F7D',
+    borderRadius: 4,
+    backgroundColor: '#EF4444',
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 6,
+    paddingTop: 8,
   },
   mainWrapper: {
     width: '100%',
-    gap: 12,
+    alignSelf: 'center',
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 16,
     padding: 16,
-    borderWidth: 1.2,
-    borderColor: BioPulseColors.border,
-    shadowColor: '#16B8C4',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 6,
@@ -386,7 +506,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 14,
   },
   cardHeaderLeft: {
     flexDirection: 'row',
@@ -395,19 +515,19 @@ const styles = StyleSheet.create({
   cardHeaderIconBox: {
     width: 32,
     height: 32,
-    borderRadius: 10,
+    borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 8,
+    marginRight: 10,
   },
   cardTitle: {
-    fontSize: 15.5,
-    fontWeight: '800',
+    fontSize: 15,
+    fontWeight: '700',
     color: BioPulseColors.textPrimary,
   },
   cardLinkText: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#F43F7D',
   },
   screeningBodyRow: {
@@ -415,61 +535,114 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   gaugeBox: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginRight: 18,
   },
   gaugeCircle: {
-    width: 82,
-    height: 82,
-    borderRadius: 41,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     borderWidth: 6,
-    borderColor: '#FCE7F0',
-    borderTopColor: '#F43F7D',
-    borderRightColor: '#F43F7D',
+    borderColor: '#F43F7D',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#FDF2F8',
   },
   gaugeNumber: {
     fontSize: 20,
     fontWeight: '800',
     color: BioPulseColors.textPrimary,
+    letterSpacing: -0.5,
   },
   gaugeLabel: {
-    fontSize: 9.5,
+    fontSize: 10,
     color: BioPulseColors.textSecondary,
-    fontWeight: '600',
+    fontWeight: '500',
     marginTop: -2,
   },
   screeningInfoCol: {
     flex: 1,
-    marginLeft: 16,
-    gap: 4,
   },
   higherRiskBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
     backgroundColor: '#FEF2F2',
-    borderWidth: 1,
-    borderColor: '#FECACA',
-    paddingVertical: 3,
     paddingHorizontal: 8,
-    borderRadius: 12,
-    marginBottom: 4,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginBottom: 6,
   },
   higherRiskText: {
     fontSize: 12,
     fontWeight: '700',
     color: '#EF4444',
   },
-  tierText: {
-    fontSize: 13.5,
+  moderateRiskBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: '#F0FDFA',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginBottom: 6,
+  },
+  moderateRiskText: {
+    fontSize: 12,
     fontWeight: '700',
+    color: '#0D9488',
+  },
+  tierText: {
+    fontSize: 12.5,
+    fontWeight: '600',
     color: BioPulseColors.textPrimary,
+    marginBottom: 2,
   },
   lastAssessedText: {
     fontSize: 11.5,
     color: BioPulseColors.textSecondary,
+  },
+  emptyScreeningRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  emptyGaugeBox: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FDF2F8',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  emptyScreeningTextCol: {
+    flex: 1,
+  },
+  emptyCardTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: BioPulseColors.textPrimary,
+    marginBottom: 3,
+  },
+  emptyCardDesc: {
+    fontSize: 12,
+    color: BioPulseColors.textSecondary,
+    lineHeight: 16,
+  },
+  emptyCycleBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  emptyCycleIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#FDF2F8',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   cycleMetricsRow: {
     flexDirection: 'row',
@@ -492,47 +665,44 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   nextPeriodLabel: {
-    fontSize: 11,
+    fontSize: 10.5,
     color: BioPulseColors.textSecondary,
     fontWeight: '500',
   },
   nextPeriodDate: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
     color: BioPulseColors.textPrimary,
   },
   nextPeriodDays: {
-    fontSize: 11.5,
+    fontSize: 11,
     fontWeight: '500',
-    color: BioPulseColors.textSecondary,
+    color: BioPulseColors.teal,
   },
   fertileSubcard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF5F8',
-    borderRadius: 14,
+    backgroundColor: '#FDF2F8',
+    borderRadius: 10,
     padding: 10,
-    borderWidth: 1,
-    borderColor: '#FCE7F0',
   },
   fertileIconBox: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
+    width: 26,
+    height: 26,
+    borderRadius: 6,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
   },
   fertileTitle: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '700',
-    color: '#F43F7D',
+    color: '#BE185D',
   },
   fertileDates: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: BioPulseColors.textPrimary,
+    fontSize: 11,
+    color: BioPulseColors.textSecondary,
   },
   todayMetricsRow: {
     flexDirection: 'row',
@@ -545,20 +715,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   todayMetricValue: {
-    fontSize: 14,
-    fontWeight: '800',
+    fontSize: 13.5,
+    fontWeight: '700',
     color: BioPulseColors.textPrimary,
   },
   todayMetricUnit: {
     fontSize: 11,
     color: BioPulseColors.textSecondary,
-    fontWeight: '500',
     marginTop: 1,
   },
   metricDivider: {
     width: 1,
-    height: 36,
-    backgroundColor: BioPulseColors.borderSubtle,
+    height: 32,
+    backgroundColor: '#F1F5F9',
   },
   medicationRow: {
     flexDirection: 'row',
@@ -571,57 +740,100 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   pillIconBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: '#FDF2F6',
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: '#FDF2F8',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   medicationTitle: {
-    fontSize: 14.5,
+    fontSize: 13.5,
     fontWeight: '700',
     color: BioPulseColors.textPrimary,
   },
   medicationTime: {
-    fontSize: 12,
+    fontSize: 11.5,
     color: BioPulseColors.textSecondary,
-    marginTop: 2,
+    marginTop: 1,
   },
   nextActionCard: {
-    borderColor: '#BBE6ED',
+    backgroundColor: '#F0FDFA',
+    borderColor: '#CCFBF1',
   },
   nextActionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   nextActionIconBox: {
     width: 28,
     height: 28,
     borderRadius: 8,
-    backgroundColor: '#E6F8F9',
+    backgroundColor: '#CCFBF1',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 8,
   },
   nextActionLabel: {
-    fontSize: 11.5,
+    fontSize: 12,
     fontWeight: '700',
-    color: BioPulseColors.teal,
+    color: '#0D9488',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.4,
   },
   nextActionTitle: {
-    fontSize: 14.5,
+    fontSize: 14,
     fontWeight: '700',
     color: BioPulseColors.textPrimary,
-    marginBottom: 2,
+    marginBottom: 4,
   },
   nextActionDesc: {
     fontSize: 12,
     color: BioPulseColors.textSecondary,
     lineHeight: 17,
+  },
+  errorContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  errorIconCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: '#FEF2F2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: BioPulseColors.textPrimary,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  errorSubtitle: {
+    fontSize: 13,
+    color: BioPulseColors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 20,
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F43F7D',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  retryButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });
