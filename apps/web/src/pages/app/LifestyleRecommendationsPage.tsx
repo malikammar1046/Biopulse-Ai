@@ -227,9 +227,9 @@ export const LifestyleRecommendationsPage: React.FC = () => {
     }
   }, [data?.generated_at]);
 
-  // 1. Loading State (High-Fidelity Skeleton) - also during post-onboarding initialization
+  // 1. Loading State - full skeleton during post-onboarding initialization
   const isInitializing = postOnboardingReadiness === 'initializing';
-  if ((loading && !data) || isInitializing) {
+  if (isInitializing) {
     return <LifestyleSkeleton />;
   }
 
@@ -327,7 +327,128 @@ export const LifestyleRecommendationsPage: React.FC = () => {
     );
   }
 
-  // 3. Baseline / Empty State (If no recommendations exist)
+  // 3. Immediate Page Shell with Nutrition View while Recommendations are loading
+  if (loading && !data) {
+    return (
+      <div className="max-w-7xl mx-auto space-y-5 sm:space-y-6 pb-16 text-left">
+        {/* A. Clean Compact Toolbar */}
+        <div className="rounded-2xl bg-white border border-[#D7EAF2] p-4 sm:p-5 shadow-xs">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1.5 max-w-2xl">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                    isMale
+                      ? 'bg-sky-50 text-[#0868B9] border-sky-200'
+                      : 'bg-teal-50 text-[#0E9EAA] border-teal-200'
+                  }`}
+                >
+                  {defaultPathway === 'androsense'
+                    ? 'Male Hypogonadism Pathway'
+                    : 'Female PCOS Metabolic Pathway'}
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F5FBFD] text-[#0E9EAA] border border-[#D7EAF2]">
+                  <RefreshCw className="w-3 h-3 animate-spin text-[#0E9EAA]" />
+                  <span>Preparing recommendations...</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Priority Card Skeleton */}
+        <div className="h-28 rounded-3xl bg-white border border-[#D7EAF2] p-6 animate-pulse shadow-xs space-y-3">
+          <div className="h-3.5 w-36 bg-slate-200 rounded" />
+          <div className="h-5 w-3/4 bg-slate-200 rounded" />
+        </div>
+
+        {/* Main Three Pillar Tabs Navigation */}
+        <nav
+          aria-label="Lifestyle Pillars"
+          className="flex items-center gap-2 border-b border-[#D7EAF2] pb-2 overflow-x-auto scrollbar-none"
+          role="tablist"
+        >
+          <button
+            type="button"
+            role="tab"
+            id="tab-nutrition"
+            aria-selected={activeTab === 'nutrition'}
+            aria-controls="panel-nutrition"
+            onClick={() => setActiveTab('nutrition')}
+            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+              activeTab === 'nutrition'
+                ? isMale
+                  ? 'bg-[#0868B9] text-white shadow-xs'
+                  : 'bg-[#0E9EAA] text-white shadow-xs'
+                : 'text-[#55718F] hover:text-[#073B72] hover:bg-slate-100'
+            }`}
+          >
+            <Apple className="w-4 h-4" />
+            <span>Nutrition</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            id="tab-fitness"
+            aria-selected={activeTab === 'fitness'}
+            aria-controls="panel-fitness"
+            onClick={() => setActiveTab('fitness')}
+            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+              activeTab === 'fitness'
+                ? isMale
+                  ? 'bg-[#0868B9] text-white shadow-xs'
+                  : 'bg-[#0E9EAA] text-white shadow-xs'
+                : 'text-[#55718F] hover:text-[#073B72] hover:bg-slate-100'
+            }`}
+          >
+            <Dumbbell className="w-4 h-4" />
+            <span>Fitness</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            id="tab-lifestyle"
+            aria-selected={activeTab === 'lifestyle'}
+            aria-controls="panel-lifestyle"
+            onClick={() => setActiveTab('lifestyle')}
+            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+              activeTab === 'lifestyle'
+                ? isMale
+                  ? 'bg-[#0868B9] text-white shadow-xs'
+                  : 'bg-[#0E9EAA] text-white shadow-xs'
+                : 'text-[#55718F] hover:text-[#073B72] hover:bg-slate-100'
+            }`}
+          >
+            <HeartPulse className="w-4 h-4" />
+            <span>Lifestyle & Recovery</span>
+          </button>
+        </nav>
+
+        {/* Tab Panels */}
+        <main id="pillar-content-panels">
+          {activeTab === 'nutrition' && (
+            <div id="panel-nutrition" role="tabpanel" aria-labelledby="tab-nutrition">
+              <NutritionPillarView
+                recommendations={[]}
+                recommendationsLoading={true}
+                onSelectRecommendation={(rec) => setSelectedRecommendation(rec)}
+                onUpdateStatus={handleUpdateStatus}
+                isMale={isMale}
+              />
+            </div>
+          )}
+          {activeTab !== 'nutrition' && (
+            <div className="h-64 rounded-3xl bg-white border border-[#D7EAF2] p-8 animate-pulse text-center flex flex-col items-center justify-center space-y-2">
+              <RefreshCw className="w-6 h-6 animate-spin text-[#0E9EAA]" />
+              <p className="text-xs text-[#55718F]">Loading recommendations...</p>
+            </div>
+          )}
+        </main>
+      </div>
+    );
+  }
+
+  // 4. Baseline / Empty State (If no recommendations exist)
   if (!data || !data.recommendations || data.recommendations.length === 0) {
     return <LifestyleEmptyState isMale={isMale} />;
   }

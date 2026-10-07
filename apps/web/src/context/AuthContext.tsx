@@ -90,13 +90,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         (metaGender === 'female' ? 'female' : metaGender === 'male' ? 'male' : undefined) ||
         (profile.gender === 'female' ? 'female' : profile.gender === 'male' ? 'male' : undefined) ||
         (inMemoryGender === 'female' ? 'female' : inMemoryGender === 'male' ? 'male' : undefined) ||
-        'female';
+        (profile.isOnboarded ? 'female' : undefined);
 
       const resolvedGender =
         metaGender ||
         profile.gender ||
         inMemoryGender ||
-        (resolvedPathway === 'female' ? 'female' : resolvedPathway === 'male' ? 'male' : 'female');
+        (resolvedPathway === 'female' ? 'female' : resolvedPathway === 'male' ? 'male' : undefined);
 
       const updatedProfile: UserProfile = {
         ...profile,
@@ -122,11 +122,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         inMemoryPathway ||
         (metaGender === 'female' ? 'female' : metaGender === 'male' ? 'male' : undefined) ||
         (inMemoryGender === 'female' ? 'female' : inMemoryGender === 'male' ? 'male' : undefined) ||
-        'female';
+        undefined;
       const initialGender =
         metaGender ||
         inMemoryGender ||
-        (initialPathway === 'female' ? 'female' : initialPathway === 'male' ? 'male' : 'female');
+        (initialPathway === 'female' ? 'female' : initialPathway === 'male' ? 'male' : undefined);
 
       const initial = createEmptyUserProfile({
         id: activeUser.id,

@@ -29,6 +29,7 @@ import type {
   NutritionPlanSummary,
 } from '../../types/nutrition';
 import { nutritionService } from '../../services/nutritionService';
+import { useUserHealth } from '../../context/UserHealthContext';
 import { RecommendationCard } from './RecommendationCard';
 import { MissingDataBanner } from './MissingDataBanner';
 import { PlanGenerationWizardModal } from './PlanGenerationWizardModal';
@@ -36,8 +37,9 @@ import { LogMealModal } from './LogMealModal';
 import { MealRemindersModal } from './MealRemindersModal';
 
 interface NutritionPillarViewProps {
-  nutrition: NutritionPillar;
+  nutrition?: NutritionPillar;
   recommendations: RecommendationItem[];
+  recommendationsLoading?: boolean;
   onSelectRecommendation: (rec: RecommendationItem) => void;
   onUpdateStatus?: (
     recommendationId: string,
@@ -49,10 +51,13 @@ interface NutritionPillarViewProps {
 export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
   nutrition,
   recommendations,
+  recommendationsLoading = false,
   onSelectRecommendation,
   onUpdateStatus,
   isMale = false,
 }) => {
+  const { foodLogs: contextFoodLogs } = useUserHealth();
+
   // Plan State
   const [currentPlan, setCurrentPlan] = useState<WeeklyNutritionPlan | null>(null);
   const [planLoading, setPlanLoading] = useState<boolean>(true);
@@ -61,9 +66,29 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
 
   // Readiness State
   const [readiness, setReadiness] = useState<NutritionReadiness | null>(null);
+  const [readinessLoading, setReadinessLoading] = useState<boolean>(true);
 
   // Food Logs State
-  const [foodLogs, setFoodLogs] = useState<FoodLogItem[]>([]);
+  const [foodLogs, setFoodLogs] = useState<FoodLogItem[]>(() => {
+    if (contextFoodLogs && contextFoodLogs.length > 0) {
+      return contextFoodLogs.map((l) => ({
+        id: l.id,
+        user_id: l.userId,
+        meal_type: l.mealType,
+        food_name: l.foodName,
+        serving: l.serving || '1 serving',
+        portion_amount: 1,
+        portion_unit: l.serving,
+        calories: l.calories || 0,
+        protein_g: l.proteinG || 0,
+        carbs_g: l.carbsG || 0,
+        fat_g: l.fatG || 0,
+        logged_at: l.loggedAt,
+      }));
+    }
+    return [];
+  });
+  const [logsLoading, setLogsLoading] = useState<boolean>(() => !contextFoodLogs || contextFoodLogs.length === 0);
   const [logFilter, setLogFilter] = useState<'today' | 'yesterday' | 'week'>('today');
 
   // Plan History State
@@ -83,46 +108,81 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
     return new Date().toLocaleDateString('en-US', { weekday: 'long' });
   }, []);
 
-  // Fetch initial data
+  // Sync context foodLogs into local state if initialized later
+  useEffect(() => {
+    if (contextFoodLogs && contextFoodLogs.length > 0 && foodLogs.length === 0) {
+      setFoodLogs(
+        contextFoodLogs.map((l) => ({
+          id: l.id,
+          user_id: l.userId,
+          meal_type: l.mealType,
+          food_name: l.foodName,
+          serving: l.serving || '1 serving',
+          portion_amount: 1,
+          portion_unit: l.serving,
+          calories: l.calories || 0,
+          protein_g: l.proteinG || 0,
+          carbs_g: l.carbsG || 0,
+          fat_g: l.fatG || 0,
+          logged_at: l.loggedAt,
+        }))
+      );
+      setLogsLoading(false);
+    }
+  }, [contextFoodLogs]);
+
+  // Fetch initial data concurrently with independent section resolution
   const loadData = async () => {
     setPlanLoading(true);
-    try {
-      // 1. Current Plan
-      const plan = await nutritionService.getCurrentPlan();
+    setReadinessLoading(true);
+    if (!contextFoodLogs || contextFoodLogs.length === 0) {
+      setLogsLoading(true);
+    }
+
+    const [planRes, readinessRes, logsRes, histRes] = await Promise.allSettled([
+      nutritionService.getCurrentPlan(),
+      nutritionService.getReadiness(),
+      contextFoodLogs && contextFoodLogs.length > 0
+        ? Promise.resolve(null)
+        : nutritionService.fetchFoodLogs(),
+      nutritionService.getPlanHistory(5),
+    ]);
+
+    // 1. Current Plan result
+    if (planRes.status === 'fulfilled' && planRes.value) {
+      const plan = planRes.value;
       setCurrentPlan(plan);
       if (plan && plan.days && plan.days.length > 0) {
         const hasToday = plan.days.some((d) => d.day_name.toLowerCase() === todayDayName.toLowerCase());
         setSelectedDayName(hasToday ? todayDayName : plan.days[0].day_name);
       }
-    } catch (err: any) {
-      console.warn('Error loading current nutrition plan:', err);
+    } else if (planRes.status === 'rejected') {
+      console.warn('Error loading current nutrition plan:', planRes.reason);
     }
-
-    try {
-      // 2. Readiness
-      const r = await nutritionService.getReadiness();
-      setReadiness(r);
-    } catch (err: any) {
-      console.warn('Error checking readiness:', err);
-    }
-
-    try {
-      // 3. Food Logs
-      const logs = await nutritionService.fetchFoodLogs();
-      setFoodLogs(logs);
-    } catch (err: any) {
-      console.warn('Error fetching food logs:', err);
-    }
-
-    try {
-      // 4. Plan History
-      const hist = await nutritionService.getPlanHistory(5);
-      setPlanHistory(hist);
-    } catch (err: any) {
-      console.warn('Error fetching plan history:', err);
-    }
-
     setPlanLoading(false);
+
+    // 2. Readiness result
+    if (readinessRes.status === 'fulfilled' && readinessRes.value) {
+      setReadiness(readinessRes.value);
+    } else if (readinessRes.status === 'rejected') {
+      console.warn('Error checking readiness:', readinessRes.reason);
+    }
+    setReadinessLoading(false);
+
+    // 3. Food Logs result
+    if (logsRes.status === 'fulfilled' && logsRes.value) {
+      setFoodLogs(logsRes.value);
+    } else if (logsRes.status === 'rejected') {
+      console.warn('Error fetching food logs:', logsRes.reason);
+    }
+    setLogsLoading(false);
+
+    // 4. Plan History result
+    if (histRes.status === 'fulfilled' && histRes.value) {
+      setPlanHistory(histRes.value);
+    } else if (histRes.status === 'rejected') {
+      console.warn('Error fetching plan history:', histRes.reason);
+    }
   };
 
   useEffect(() => {
@@ -292,19 +352,19 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
   // Targets from plan or lifestyle
   const planTargets = (currentPlan?.targets || {}) as Record<string, any>;
   const targetCalories =
-    Number(planTargets.energy_kcal || planTargets.daily_calories_kcal || nutrition.daily_targets?.daily_calories_kcal || 0);
+    Number(planTargets.energy_kcal || planTargets.daily_calories_kcal || nutrition?.daily_targets?.daily_calories_kcal || 0);
   const targetProtein =
     typeof planTargets.protein_g === 'object' && planTargets.protein_g !== null
       ? Number(planTargets.protein_g.max || planTargets.protein_g.min || 0)
-      : Number(planTargets.protein_g || nutrition.daily_targets?.protein?.grams || 0);
+      : Number(planTargets.protein_g || nutrition?.daily_targets?.protein?.grams || 0);
   const targetCarbs =
     typeof planTargets.carbohydrate_g === 'object' && planTargets.carbohydrate_g !== null
       ? Number(planTargets.carbohydrate_g.max || planTargets.carbohydrate_g.min || 0)
-      : Number(planTargets.carbohydrate_g || nutrition.daily_targets?.carbohydrates?.grams || 0);
+      : Number(planTargets.carbohydrate_g || nutrition?.daily_targets?.carbohydrates?.grams || 0);
   const targetFat =
     typeof planTargets.fat_g === 'object' && planTargets.fat_g !== null
       ? Number(planTargets.fat_g.max || planTargets.fat_g.min || 0)
-      : Number(planTargets.fat_g || nutrition.daily_targets?.fats?.grams || 0);
+      : Number(planTargets.fat_g || nutrition?.daily_targets?.fats?.grams || 0);
 
   // Planned meals completed count for today
   const plannedMealCount = selectedDay?.meals?.length || 4;
@@ -380,20 +440,41 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
         </div>
 
         {/* Structured Missing Data Banner (Phase 1 & 19: No false age/SHAP warnings) */}
-        {readiness && (
+        {readinessLoading ? (
+          <div className="h-10 rounded-2xl bg-slate-100 animate-pulse" />
+        ) : readiness ? (
           <MissingDataBanner
             readiness={readiness}
             isMale={isMale}
             onOpenWizard={() => setIsWizardOpen(true)}
           />
-        )}
+        ) : null}
       </section>
 
       {/* ── 2. ACTIVE 7-DAY MEAL PLAN (Phase 6, 10, 11, 12) ── */}
       {planLoading && !currentPlan ? (
-        <section className="rounded-3xl border border-[#D7EAF2] bg-white p-8 sm:p-12 text-center">
-          <RefreshCw className="w-6 h-6 animate-spin mx-auto text-[#0E9EAA]" />
-          <p className="text-xs text-[#55718F] mt-2">Loading your meal plan...</p>
+        <section className="rounded-3xl border border-[#D7EAF2] bg-white p-6 sm:p-8 space-y-5 animate-pulse shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-2">
+              <div className="h-5 w-48 bg-slate-200/80 rounded-md" />
+              <div className="h-3.5 w-64 bg-slate-100 rounded-md" />
+            </div>
+            <div className="h-8 w-28 bg-slate-100 rounded-xl" />
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+              <div key={day} className="h-9 w-16 bg-slate-100 rounded-xl shrink-0" />
+            ))}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-32 bg-slate-50 border border-[#D7EAF2]/60 rounded-2xl p-4 space-y-2">
+                <div className="h-4 w-28 bg-slate-200 rounded" />
+                <div className="h-3 w-44 bg-slate-100 rounded" />
+                <div className="h-3 w-36 bg-slate-100 rounded" />
+              </div>
+            ))}
+          </div>
         </section>
       ) : currentPlan ? (
         <section className="space-y-5">
@@ -865,7 +946,12 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
           </div>
         </div>
 
-        {filteredLogs.length === 0 ? (
+        {logsLoading ? (
+          <div className="p-6 rounded-2xl bg-[#F5FBFD] border border-[#D7EAF2] text-center space-y-1.5 animate-pulse">
+            <Utensils className="w-6 h-6 mx-auto text-slate-300" />
+            <p className="text-xs font-bold text-slate-500">Loading meals...</p>
+          </div>
+        ) : filteredLogs.length === 0 ? (
           <div className="p-6 rounded-2xl bg-[#F5FBFD] border border-[#D7EAF2] text-center space-y-1.5">
             <Utensils className="w-6 h-6 mx-auto text-slate-400" />
             <p className="text-xs font-bold text-slate-700">No meals logged for this period</p>
@@ -912,7 +998,7 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
       </section>
 
       {/* ── 5. TARGETED FOOD SWAPS (Preserved from Lifestyle Architecture) ── */}
-      {nutrition.targeted_swaps && nutrition.targeted_swaps.length > 0 && (
+      {nutrition?.targeted_swaps && nutrition.targeted_swaps.length > 0 && (
         <section aria-labelledby="food-swaps-title" className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
@@ -982,7 +1068,20 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
       )}
 
       {/* ── 6. SPECIFIC NUTRITION ACTIONS & RECOMMENDATIONS ── */}
-      {recommendations.filter((r) => r.category === 'nutrition').length > 0 && (
+      {recommendationsLoading && (!recommendations || recommendations.filter((r) => r.category === 'nutrition').length === 0) ? (
+        <section aria-labelledby="nutrition-recs-title" className="space-y-4 pt-4 border-t border-[#D7EAF2]">
+          <div className="h-5 w-52 bg-slate-200/80 rounded-md animate-pulse" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {[1, 2].map((i) => (
+              <div key={i} className="h-44 rounded-2xl bg-slate-50 border border-[#D7EAF2] p-5 space-y-3 animate-pulse">
+                <div className="h-4 w-32 bg-slate-200 rounded" />
+                <div className="h-3 w-4/5 bg-slate-100 rounded" />
+                <div className="h-3 w-3/5 bg-slate-100 rounded" />
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : recommendations && recommendations.filter((r) => r.category === 'nutrition').length > 0 ? (
         <section aria-labelledby="nutrition-recs-title" className="space-y-4 pt-4 border-t border-[#D7EAF2]">
           <h3 id="nutrition-recs-title" className="text-lg font-bold text-[#073B72]">
             Evidence-Based Lifestyle Priorities
@@ -1001,7 +1100,7 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
               ))}
           </div>
         </section>
-      )}
+      ) : null}
 
       {/* ── MODALS ── */}
       {/* 1. Plan Generation 5-Step Wizard */}

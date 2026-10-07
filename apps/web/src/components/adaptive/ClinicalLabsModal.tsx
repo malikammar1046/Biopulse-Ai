@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
   Check,
@@ -10,17 +10,18 @@ import {
   Beaker01,
   Drop,
   ActivityHeart,
+  Upload01,
+  File01,
 } from '@untitledui/icons';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { ocrService } from '../../services/ocrService';
+import { reportService } from '../../services/reportService';
 import type { ReportResultInput } from '../../types/report';
 import { parseNumericValue } from '../../utils/reportCalculations';
 import {
   ClinicalModalLayout,
   ClinicalSection,
   ClinicalField,
-  EntryMethodSelector,
-  ReportUploadZone,
 } from './ClinicalModalPrimitives';
 
 interface ClinicalLabsModalProps {
@@ -62,9 +63,6 @@ export const FIELD_CONFIGS: FieldConfig[] = [
   { key: 'respiratory_rate', label: 'Respiratory Rate', unit: 'breaths/min', min: 6, max: 60, step: '1', category: 'vitals' },
 ];
 
-/**
- * Standard sample measurements for development testing only (gated behind DEV).
- */
 export const SAMPLE_MOCK_DATA: Record<string, string> = {
   fsh: '6.5',
   lh: '7.2',
@@ -83,9 +81,6 @@ export const SAMPLE_MOCK_DATA: Record<string, string> = {
   bp_diastolic: '76',
 };
 
-/**
- * Intelligently maps OCR extracted lab test results to the 15 Tier 2 biomarker keys.
- */
 export const mapOcrResultsToTier2 = (
   results: ReportResultInput[]
 ): { mapped: Record<string, string>; count: number } => {
@@ -121,53 +116,44 @@ export const mapOcrResultsToTier2 = (
       mapped['amh'] = valStr;
       count++;
     }
-    // 4. TSH
-    else if ((rawName.includes('tsh') || rawName.includes('thyroid')) && !mapped['tsh']) {
-      mapped['tsh'] = valStr;
-      count++;
-    }
-    // 5. Prolactin
+    // 4. Prolactin
     else if ((rawName.includes('prolactin') || rawName.includes('prl')) && !mapped['prolactin']) {
       mapped['prolactin'] = valStr;
       count++;
     }
+    // 5. TSH
+    else if ((rawName.includes('tsh') || rawName.includes('thyroid')) && !mapped['tsh']) {
+      mapped['tsh'] = valStr;
+      count++;
+    }
     // 6. Progesterone
-    else if (
-      (rawName.includes('progesterone') || rawName.includes('prg') || rawName === 'p4') &&
-      !mapped['progesterone']
-    ) {
+    else if ((rawName.includes('progesterone') || rawName.includes('prg')) && !mapped['progesterone']) {
       mapped['progesterone'] = valStr;
       count++;
     }
-    // 7. Vitamin D3
+    // 7. RBS / Glucose
     else if (
-      (rawName.includes('vitamin d') ||
-        rawName.includes('vit d') ||
-        rawName.includes('25-oh') ||
-        rawName.includes('d3')) &&
-      !mapped['vitamin_d3']
-    ) {
-      mapped['vitamin_d3'] = valStr;
-      count++;
-    }
-    // 8. RBS / Glucose
-    else if (
-      (rawName.includes('rbs') ||
-        rawName.includes('glucose') ||
-        rawName.includes('sugar') ||
+      (rawName.includes('glucose') ||
+        rawName.includes('rbs') ||
+        rawName.includes('blood sugar') ||
         rawName.includes('fbs')) &&
       !mapped['rbs']
     ) {
       mapped['rbs'] = valStr;
       count++;
     }
+    // 8. Vitamin D3
+    else if (
+      (rawName.includes('vitamin d') || rawName.includes('vit d') || rawName.includes('25-oh')) &&
+      !mapped['vitamin_d3']
+    ) {
+      mapped['vitamin_d3'] = valStr;
+      count++;
+    }
     // 9. Hemoglobin
     else if (
-      (rawName.includes('hemoglobin') ||
-        rawName.includes('haemoglobin') ||
-        rawName.includes('hb') ||
-        rawName.includes('hgb')) &&
-      !rawName.includes('hba1c') &&
+      (rawName.includes('hemoglobin') || rawName.includes('haemoglobin') || rawName.includes('hb')) &&
+      !rawName.includes('a1c') &&
       !mapped['hemoglobin']
     ) {
       mapped['hemoglobin'] = valStr;
@@ -175,8 +161,9 @@ export const mapOcrResultsToTier2 = (
     }
     // 10. Beta HCG
     else if (
-      (rawName.includes('beta hcg') || rawName.includes('beta-hcg') || rawName.includes('hcg')) &&
-      !rawName.includes('fsh')
+      rawName.includes('hcg') ||
+      rawName.includes('human chorionic') ||
+      rawName.includes('pregnancy')
     ) {
       if (!assignedBetaHcgI) {
         mapped['beta_hcg_i'] = valStr;
@@ -242,23 +229,53 @@ export const mapOcrResultsToTier2 = (
   return { mapped, count };
 };
 
+interface BiomarkerConflict {
+  key: string;
+  label: string;
+  unit: string;
+  values: Array<{
+    fileName: string;
+    valStr: string;
+  }>;
+}
+
+interface FieldProvenance {
+  source: string;
+  origin: 'extracted' | 'manual';
+}
+
+interface UploadedReportItem {
+  id: string;
+  name: string;
+  status: 'processing' | 'success' | 'error';
+  category?: FemaleCategory;
+  count?: number;
+  error?: string;
+}
+
 export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
 }) => {
-  const { activeAssessment, submitTier2, clearTier2, fetchClinicalState } = useUserHealth();
+  const { activeAssessment, submitTier2, clearTier2, fetchClinicalState, userProfile } = useUserHealth();
 
-  // Workflow entry mode: 'manual' vs 'upload'
-  const [entryMode, setEntryMode] = useState<'manual' | 'upload'>('manual');
+  // Multi-Report Clinical Inbox UI Mode
+  const [reportUploadTab, setReportUploadTab] = useState<'multiple' | 'category'>('multiple');
 
   // Form values & tracking
   const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [removedFields, setRemovedFields] = useState<string[]>([]);
   const [ocrExtractedFields, setOcrExtractedFields] = useState<string[]>([]);
+  const [fieldProvenances, setFieldProvenances] = useState<Record<string, FieldProvenance>>({});
 
-  // Categorized Accordion state (independent of clinical form state)
+  // Multi-report tracking & conflict resolution
+  const [uploadedReports, setUploadedReports] = useState<UploadedReportItem[]>([]);
+  const [conflicts, setConflicts] = useState<BiomarkerConflict[]>([]);
+  const [isScanningReports, setIsScanningReports] = useState(false);
+
+  // Categorized Accordion state
   const [expandedSections, setExpandedSections] = useState<Record<FemaleCategory, boolean>>({
     hormonal: true,
     metabolic: false,
@@ -272,8 +289,6 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
     }));
   };
 
-  // OCR state
-  const [isScanningReport, setIsScanningReport] = useState(false);
   const [ocrBanner, setOcrBanner] = useState<{
     type: 'success' | 'warning' | 'info';
     message: string;
@@ -289,6 +304,13 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
   const [success, setSuccess] = useState(false);
 
   const isDev = Boolean(import.meta.env.DEV);
+
+  const multiFileInputRef = useRef<HTMLInputElement>(null);
+  const categoryFileInputRefs = {
+    hormonal: useRef<HTMLInputElement>(null),
+    metabolic: useRef<HTMLInputElement>(null),
+    vitals: useRef<HTMLInputElement>(null),
+  };
 
   // Hydrate authoritative existing values when modal opens
   useEffect(() => {
@@ -316,26 +338,30 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
       if (!isMounted) return;
 
       const initial: Record<string, string> = {};
+      const initialProvenances: Record<string, FieldProvenance> = {};
       FIELD_CONFIGS.forEach((cfg) => {
         const val = savedInputs[cfg.key];
         if (val !== undefined && val !== null && val !== '') {
           initial[cfg.key] = String(val);
+          initialProvenances[cfg.key] = { source: 'Prior assessment', origin: 'manual' };
         } else {
           initial[cfg.key] = '';
         }
       });
 
       setFormValues(initial);
+      setFieldProvenances(initialProvenances);
       setFieldErrors({});
       setRemovedFields([]);
       setOcrExtractedFields([]);
+      setUploadedReports([]);
+      setConflicts([]);
       setExpandedSections({
         hormonal: true,
         metabolic: false,
         vitals: false,
       });
       setOcrBanner(null);
-      setEntryMode('manual');
       setError(null);
       setSuccess(false);
       setShowConfirmClear(false);
@@ -350,16 +376,18 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Handle single field change with calm inline validation
+  // Handle single field change with calm inline validation and provenance update
   const handleFieldChange = (key: string, val: string) => {
     setFormValues((prev) => ({ ...prev, [key]: val }));
 
-    // Unmark removal if user types a value
     if (val.trim() !== '') {
       setRemovedFields((prev) => prev.filter((f) => f !== key));
+      setFieldProvenances((prev) => ({
+        ...prev,
+        [key]: { source: 'Manual entry', origin: 'manual' },
+      }));
     }
 
-    // Inline validation check
     const cfg = FIELD_CONFIGS.find((f) => f.key === key);
     if (!cfg) return;
 
@@ -394,6 +422,11 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
   const handleClearField = (key: string) => {
     setFormValues((prev) => ({ ...prev, [key]: '' }));
     setOcrExtractedFields((prev) => prev.filter((k) => k !== key));
+    setFieldProvenances((prev) => {
+      const copy = { ...prev };
+      delete copy[key];
+      return copy;
+    });
     setFieldErrors((prev) => {
       const copy = { ...prev };
       delete copy[key];
@@ -409,6 +442,11 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
   // Development only: fill sample values
   const handleDevFillMock = () => {
     setFormValues({ ...SAMPLE_MOCK_DATA });
+    const provs: Record<string, FieldProvenance> = {};
+    Object.keys(SAMPLE_MOCK_DATA).forEach((k) => {
+      provs[k] = { source: 'Dev Sample', origin: 'manual' };
+    });
+    setFieldProvenances(provs);
     setFieldErrors({});
     setRemovedFields([]);
     setExpandedSections({
@@ -422,59 +460,206 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
     });
   };
 
-  // Process OCR lab report
-  const handleProcessReportFile = async (file: File) => {
-    if (!file) return;
-    setIsScanningReport(true);
+  // Multi-Report Clinical Inbox: Parallel file processing, storage preservation & conflict routing
+  const handleProcessMultipleFiles = async (
+    files: FileList | File[],
+    specificCategory?: FemaleCategory
+  ) => {
+    const fileArray = Array.from(files);
+    if (fileArray.length === 0) return;
+
+    setIsScanningReports(true);
     setOcrBanner(null);
     setError(null);
 
-    try {
-      const extracted = await ocrService.extractReportData(file, 'hormone_test');
-      const { mapped, count } = mapOcrResultsToTier2(extracted.extractedResults || []);
+    const newReportItems: UploadedReportItem[] = fileArray.map((f) => ({
+      id: `${f.name}_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      name: f.name,
+      status: 'processing' as const,
+      category: specificCategory,
+    }));
 
-      if (count > 0) {
-        setFormValues((prev) => ({ ...prev, ...mapped }));
-        const newlyExtractedKeys = Object.keys(mapped);
-        setOcrExtractedFields((prev) => Array.from(new Set([...prev, ...newlyExtractedKeys])));
-        setRemovedFields((prev) => prev.filter((f) => !newlyExtractedKeys.includes(f)));
+    setUploadedReports((prev) => [...prev, ...newReportItems]);
 
-        // Automatically expand only categories containing at least one successfully OCR-mapped value
-        const mappedKeysSet = new Set(newlyExtractedKeys);
-        const newlyMappedHormonal = FIELD_CONFIGS.filter((f) => f.category === 'hormonal').some((f) => mappedKeysSet.has(f.key));
-        const newlyMappedMetabolic = FIELD_CONFIGS.filter((f) => f.category === 'metabolic').some((f) => mappedKeysSet.has(f.key));
-        // Rule 5: Clinical vitals are for manual entry unless genuinely extracted by OCR
-        const newlyMappedVitals = FIELD_CONFIGS.filter((f) => f.category === 'vitals').some((f) => mappedKeysSet.has(f.key));
+    // Map each file safely in parallel
+    const uploadTasks = fileArray.map(async (file) => {
+      try {
+        const reportType =
+          specificCategory === 'metabolic'
+            ? 'blood_test'
+            : specificCategory === 'vitals'
+            ? 'other'
+            : 'hormone_test';
 
-        setExpandedSections({
-          hormonal: newlyMappedHormonal,
-          metabolic: newlyMappedMetabolic,
-          vitals: newlyMappedVitals,
-        });
+        // 1. OCR extraction
+        const extracted = await ocrService.extractReportData(file, reportType);
+        const { mapped, count } = mapOcrResultsToTier2(extracted.extractedResults || []);
 
-        // Automatically hand off to manual review of extracted values
-        setEntryMode('manual');
-        setOcrBanner({
-          type: 'success',
-          message: `Extracted ${count} result${count > 1 ? 's' : ''} from "${file.name}". You can review or adjust values below before saving.`,
-        });
-      } else {
-        setEntryMode('manual');
-        setOcrBanner({
-          type: 'warning',
-          message: `No recognized PCOS laboratory biomarkers found in "${file.name}". You can type values manually below.`,
+        // 2. Preserve report via existing reportService
+        const activeUid = userProfile?.id || activeAssessment?.patient_id || '';
+        if (activeUid) {
+          try {
+            const { filePath } = await reportService.uploadReportFile(activeUid, file);
+            await reportService.createMedicalReport(activeUid, {
+              title: file.name.replace(/\.[^/.]+$/, '').replace(/[_.-]/g, ' '),
+              reportType: reportType as any,
+              reportDate: new Date().toISOString().split('T')[0],
+              fileName: file.name,
+              fileSize: file.size,
+              filePath,
+              mimeType: file.type || 'application/pdf',
+              results: (extracted.extractedResults || []).map((r) => ({
+                testName: r.testName,
+                resultValue: r.resultValue,
+                resultNumeric: r.resultNumeric ?? parseNumericValue(r.resultValue),
+                unit: r.unit || '',
+                referenceRange: r.referenceRange || '',
+                status: 'within_range' as const,
+                userVerified: false,
+              })),
+            });
+          } catch (persistErr) {
+            console.warn('Report service save notice:', persistErr);
+          }
+        }
+
+        if (count === 0) {
+          return {
+            name: file.name,
+            status: 'error' as const,
+            error: 'No recognized biomarker numbers were identified in this file. You can enter values manually.',
+            mapped: {},
+            count: 0,
+          };
+        }
+
+        return {
+          name: file.name,
+          status: 'success' as const,
+          count,
+          mapped,
+        };
+      } catch (err: any) {
+        return {
+          name: file.name,
+          status: 'error' as const,
+          error: err?.message || 'Report extraction failed. You can enter values manually.',
+          mapped: {},
+          count: 0,
+        };
+      }
+    });
+
+    const results = await Promise.all(uploadTasks);
+
+    // Update statuses of uploaded reports
+    setUploadedReports((prev) =>
+      prev.map((item) => {
+        const match = results.find((r) => r.name === item.name);
+        return match
+          ? { ...item, status: match.status, count: match.count, error: match.error }
+          : item;
+      })
+    );
+
+    // Aggregate extracted values by biomarker to detect conflicts across multiple files
+    const biomarkerOccurrences: Record<string, Array<{ fileName: string; valStr: string }>> = {};
+    const extractedKeys = new Set<string>();
+
+    results.forEach((res) => {
+      if (res.status === 'success' && res.mapped) {
+        Object.entries(res.mapped).forEach(([key, valStr]) => {
+          if (!biomarkerOccurrences[key]) biomarkerOccurrences[key] = [];
+          biomarkerOccurrences[key].push({ fileName: res.name, valStr });
+          extractedKeys.add(key);
         });
       }
-    } catch (err: any) {
-      console.error('OCR report extraction failed:', err);
-      setEntryMode('manual');
+    });
+
+    const newConflicts: BiomarkerConflict[] = [];
+    const directUpdates: Record<string, string> = {};
+    const directProvs: Record<string, FieldProvenance> = {};
+
+    Object.entries(biomarkerOccurrences).forEach(([key, occurrences]) => {
+      const cfg = FIELD_CONFIGS.find((f) => f.key === key);
+      const uniqueValues = Array.from(new Set(occurrences.map((o) => o.valStr)));
+
+      if (uniqueValues.length > 1 && cfg) {
+        // Conflict UI requirement: Multiple files contain differing values for the same biomarker
+        newConflicts.push({
+          key,
+          label: cfg.label,
+          unit: cfg.unit,
+          values: occurrences,
+        });
+      } else {
+        // Single value or identical across reports
+        directUpdates[key] = occurrences[0].valStr;
+        directProvs[key] = { source: occurrences[0].fileName, origin: 'extracted' };
+      }
+    });
+
+    setFormValues((prev) => ({ ...prev, ...directUpdates }));
+    setFieldProvenances((prev) => ({ ...prev, ...directProvs }));
+
+    if (newConflicts.length > 0) {
+      setConflicts((prev) => [
+        ...prev.filter((c) => !newConflicts.some((nc) => nc.key === c.key)),
+        ...newConflicts,
+      ]);
+    }
+
+    const newlyExtractedKeys = Array.from(extractedKeys);
+    setOcrExtractedFields((prev) => Array.from(new Set([...prev, ...newlyExtractedKeys])));
+    setRemovedFields((prev) => prev.filter((f) => !newlyExtractedKeys.includes(f)));
+
+    // Expand categories where extracted biomarkers were placed
+    const extractedSet = new Set(newlyExtractedKeys);
+    const hasHormonal = FIELD_CONFIGS.filter((f) => f.category === 'hormonal').some((f) =>
+      extractedSet.has(f.key)
+    );
+    const hasMetabolic = FIELD_CONFIGS.filter((f) => f.category === 'metabolic').some((f) =>
+      extractedSet.has(f.key)
+    );
+    const hasVitals = FIELD_CONFIGS.filter((f) => f.category === 'vitals').some((f) =>
+      extractedSet.has(f.key)
+    );
+
+    setExpandedSections((prev) => ({
+      hormonal: hasHormonal || prev.hormonal,
+      metabolic: hasMetabolic || prev.metabolic,
+      vitals: hasVitals || prev.vitals,
+    }));
+
+    const successfulFilesCount = results.filter((r) => r.status === 'success').length;
+    const totalExtractedValues = results.reduce((sum, r) => sum + (r.count || 0), 0);
+
+    if (successfulFilesCount > 0) {
+      setOcrBanner({
+        type: 'success',
+        message: `Extracted ${totalExtractedValues} measurement${
+          totalExtractedValues > 1 ? 's' : ''
+        } from ${successfulFilesCount} clinical report${
+          successfulFilesCount > 1 ? 's' : ''
+        }. Review and edit any values below.`,
+      });
+    } else {
       setOcrBanner({
         type: 'warning',
-        message: 'Could not automatically scan this document. You can input your lab values manually.',
+        message: 'Could not extract measurements from the uploaded files. You can enter values manually below.',
       });
-    } finally {
-      setIsScanningReport(false);
     }
+
+    setIsScanningReports(false);
+  };
+
+  const handleResolveConflict = (key: string, chosenValue: string, sourceFileName: string) => {
+    setFormValues((prev) => ({ ...prev, [key]: chosenValue }));
+    setFieldProvenances((prev) => ({
+      ...prev,
+      [key]: { source: sourceFileName, origin: 'extracted' },
+    }));
+    setConflicts((prev) => prev.filter((c) => c.key !== key));
   };
 
   // Count populated fields
@@ -482,13 +667,13 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
     return FIELD_CONFIGS.filter((cfg) => formValues[cfg.key]?.trim() !== '').length;
   };
 
-  const countCategoryAdded = (category: 'hormonal' | 'metabolic' | 'vitals') => {
+  const countCategoryAdded = (category: FemaleCategory) => {
     return FIELD_CONFIGS.filter(
       (cfg) => cfg.category === category && formValues[cfg.key]?.trim() !== ''
     ).length;
   };
 
-  // Submit Handler
+  // Submit Handler: One single reassessment for all reports & manual entries combined
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -528,20 +713,15 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
       ).length;
 
       if (enteredCount === 0 && existingRemainingCount === 0) {
-        throw new Error('Please add at least one test result from your lab report before saving.');
+        throw new Error('Please add at least one clinical or laboratory measurement before saving.');
       }
 
-      if (import.meta.env.DEV) {
-        console.log(
-          `[TIER2_TRACE] event=submit_start user=${activeAssessment?.patient_id || 'unknown'} module=female_pcos active_before_id=${activeAssessment?.id} active_before_level=${activeAssessment?.assessment_level} tier2_field_count=${enteredCount}`
-        );
-      }
-
+      // Requirement 3: Enforce valid result check before showing success
       const result = await submitTier2(payload);
 
       if (!result) {
         throw new Error(
-          "We couldn't update your screening with these clinical values. Your previous assessment is unchanged. Please try again."
+          'Clinical data was not saved or the updated assessment could not be generated. Please try again.'
         );
       }
 
@@ -599,10 +779,10 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
       onClose={onClose}
       badgeText="Tier 2"
       title="Add Clinical & Laboratory Data"
-      description="Add the test results you currently have. You don't need to complete every field. You can return and add more later."
+      description="Add the test results you currently have. You don't need to complete every field. Previously saved values are preserved with patch semantics."
       accentColor="pink"
       isSubmitting={loading}
-      submitButtonText={loading ? 'Saving Results...' : 'Save Results →'}
+      submitButtonText={loading ? 'Saving Results...' : 'Save & Update Assessment →'}
       submitDisabled={enteredCount === 0 && !hasExistingSavedData}
       onSubmit={handleSubmit}
       footerLeft={
@@ -610,14 +790,13 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
           <span className="text-xs text-slate-500 font-medium">
             {enteredCount > 0 ? (
               <span className="text-pink-700 font-semibold">
-                {enteredCount} result{enteredCount > 1 ? 's' : ''} added
+                {enteredCount} measurement{enteredCount > 1 ? 's' : ''} added
               </span>
             ) : (
               'No results entered yet'
             )}
           </span>
 
-          {/* Development mock data button */}
           {isDev && (
             <button
               type="button"
@@ -630,7 +809,6 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
             </button>
           )}
 
-          {/* Revert / Clear Tier 2 Data */}
           {hasExistingSavedData && (
             showConfirmClear ? (
               <div className="flex items-center gap-2 p-1.5 rounded-xl bg-rose-50 border border-rose-200">
@@ -667,31 +845,250 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
         </div>
       }
     >
-      {/* Informative Guidance */}
-      <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs text-slate-600 leading-relaxed">
-        <span className="font-semibold text-slate-900">Partial data is normal: </span>
-        Add only the tests available on your lab report. Your previously saved results are preserved when adding new ones.
+      {/* ── Multi-Report Clinical Inbox ─────────────────────────────── */}
+      <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200 space-y-3">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+              <Upload01 className="w-3.5 h-3.5 text-[#F43F7D]" aria-hidden="true" />
+              <span>Add Clinical Reports</span>
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Upload one or multiple reports. BioPulse will extract available values and place them in the correct clinical sections.
+            </p>
+          </div>
+
+          {/* Mode Switcher */}
+          <div className="flex items-center p-0.5 bg-slate-200/70 rounded-xl text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => setReportUploadTab('multiple')}
+              className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                reportUploadTab === 'multiple'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Add Multiple Reports
+            </button>
+            <button
+              type="button"
+              onClick={() => setReportUploadTab('category')}
+              className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                reportUploadTab === 'category'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Upload by Category
+            </button>
+          </div>
+        </div>
+
+        {/* Tab A: Multi-Report Uploader */}
+        {reportUploadTab === 'multiple' ? (
+          <div>
+            <input
+              ref={multiFileInputRef}
+              type="file"
+              multiple
+              accept=".pdf,image/png,image/jpeg,image/jpg,image/webp"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                  handleProcessMultipleFiles(e.target.files);
+                }
+              }}
+            />
+            <div
+              onClick={() => !isScanningReports && multiFileInputRef.current?.click()}
+              className="p-6 rounded-xl border-2 border-dashed border-pink-200 hover:border-pink-300 bg-white hover:bg-pink-50/20 text-center cursor-pointer transition-colors space-y-2"
+            >
+              <div className="w-10 h-10 rounded-xl bg-pink-50 text-[#F43F7D] flex items-center justify-center mx-auto">
+                {isScanningReports ? (
+                  <Loading01 className="w-5 h-5 animate-spin" aria-hidden="true" />
+                ) : (
+                  <Upload01 className="w-5 h-5" aria-hidden="true" />
+                )}
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-slate-800">
+                  {isScanningReports
+                    ? 'Processing and extracting uploaded reports...'
+                    : 'Click to select multiple reports or drag and drop'}
+                </p>
+                <p className="text-[11px] text-slate-400">
+                  Select hormone reports, CBC, lipid profiles, or metabolic tests • PDF, PNG, JPG
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Tab B: Upload by Category */
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            {/* Category 1: Hormonal */}
+            <div className="p-3 rounded-xl bg-white border border-slate-200 space-y-2">
+              <input
+                ref={categoryFileInputRefs.hormonal}
+                type="file"
+                multiple
+                accept=".pdf,image/png,image/jpeg,image/jpg,image/webp"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files.length > 0) {
+                    handleProcessMultipleFiles(e.target.files, 'hormonal');
+                  }
+                }}
+              />
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                <Beaker01 className="w-3.5 h-3.5 text-pink-600" aria-hidden="true" />
+                <span>Hormonal Tests</span>
+              </div>
+              <p className="text-[10px] text-slate-500">
+                FSH, LH, AMH, Prolactin, TSH, Progesterone
+              </p>
+              <button
+                type="button"
+                onClick={() => categoryFileInputRefs.hormonal.current?.click()}
+                disabled={isScanningReports}
+                className="w-full py-1.5 px-2 bg-pink-50 hover:bg-pink-100 text-pink-700 text-[11px] font-semibold rounded-lg transition-colors cursor-pointer"
+              >
+                Upload Hormone Report
+              </button>
+            </div>
+
+            {/* Category 2: Metabolic */}
+            <div className="p-3 rounded-xl bg-white border border-slate-200 space-y-2">
+              <input
+                ref={categoryFileInputRefs.metabolic}
+                type="file"
+                multiple
+                accept=".pdf,image/png,image/jpeg,image/jpg,image/webp"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files.length > 0) {
+                    handleProcessMultipleFiles(e.target.files, 'metabolic');
+                  }
+                }}
+              />
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                <Drop className="w-3.5 h-3.5 text-sky-600" aria-hidden="true" />
+                <span>Metabolic & Blood</span>
+              </div>
+              <p className="text-[10px] text-slate-500">
+                Random Blood Sugar, Vitamin D3, Hemoglobin, Beta HCG
+              </p>
+              <button
+                type="button"
+                onClick={() => categoryFileInputRefs.metabolic.current?.click()}
+                disabled={isScanningReports}
+                className="w-full py-1.5 px-2 bg-sky-50 hover:bg-sky-100 text-sky-700 text-[11px] font-semibold rounded-lg transition-colors cursor-pointer"
+              >
+                Upload Metabolic Report
+              </button>
+            </div>
+
+            {/* Category 3: Clinical Vitals */}
+            <div className="p-3 rounded-xl bg-white border border-slate-200 space-y-2">
+              <input
+                ref={categoryFileInputRefs.vitals}
+                type="file"
+                multiple
+                accept=".pdf,image/png,image/jpeg,image/jpg,image/webp"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files.length > 0) {
+                    handleProcessMultipleFiles(e.target.files, 'vitals');
+                  }
+                }}
+              />
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                <ActivityHeart className="w-3.5 h-3.5 text-teal-600" aria-hidden="true" />
+                <span>Clinical Vitals</span>
+              </div>
+              <p className="text-[10px] text-slate-500">
+                Blood Pressure, Pulse Rate, Respiratory Rate
+              </p>
+              <button
+                type="button"
+                onClick={() => categoryFileInputRefs.vitals.current?.click()}
+                disabled={isScanningReports}
+                className="w-full py-1.5 px-2 bg-teal-50 hover:bg-teal-100 text-teal-700 text-[11px] font-semibold rounded-lg transition-colors cursor-pointer"
+              >
+                Upload Vitals / Clinic Sheet
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Uploaded Reports Inbox Tray */}
+        {uploadedReports.length > 0 && (
+          <div className="space-y-1.5 pt-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Processed Reports in Inbox:
+            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              {uploadedReports.map((item) => (
+                <div
+                  key={item.id}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs border ${
+                    item.status === 'processing'
+                      ? 'bg-slate-100 border-slate-200 text-slate-600'
+                      : item.status === 'success'
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                      : 'bg-rose-50 border-rose-200 text-rose-800'
+                  }`}
+                >
+                  <File01 className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                  <span className="font-medium truncate max-w-[140px]">{item.name}</span>
+                  {item.status === 'processing' ? (
+                    <Loading01 className="w-3 h-3 animate-spin text-slate-500" />
+                  ) : item.status === 'success' ? (
+                    <span className="text-[10px] font-bold text-emerald-600">
+                      ✓ {item.count} extracted
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-rose-600">⚠ Manual</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Choice of Entry Method: OCR vs Manual */}
-      <EntryMethodSelector
-        mode={entryMode}
-        onSelectMode={(mode) => {
-          setEntryMode(mode);
-          setOcrBanner(null);
-        }}
-        accentColor="pink"
-      />
-
-      {/* OCR Upload View */}
-      {entryMode === 'upload' && (
-        <div className="space-y-4">
-          <ReportUploadZone
-            isScanning={isScanningReport}
-            onFileSelect={handleProcessReportFile}
-            accentColor="pink"
-            formatDescription="PDF, JPG or PNG • Max 15MB"
-          />
+      {/* Conflict Resolution UI */}
+      {conflicts.length > 0 && (
+        <div className="space-y-2">
+          {conflicts.map((conflict) => (
+            <div
+              key={conflict.key}
+              className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 space-y-2 shadow-xs"
+            >
+              <div className="flex items-center gap-2 text-xs font-bold">
+                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" aria-hidden="true" />
+                <span>Multiple values found for {conflict.label}</span>
+              </div>
+              <p className="text-xs text-amber-800">
+                Different uploaded reports contain different results for this biomarker. Please select which value to use:
+              </p>
+              <div className="flex items-center gap-2 flex-wrap pt-1">
+                {conflict.values.map((opt, optIdx) => (
+                  <button
+                    key={optIdx}
+                    type="button"
+                    onClick={() => handleResolveConflict(conflict.key, opt.valStr, opt.fileName)}
+                    className="px-3 py-1.5 rounded-xl bg-white border border-amber-300 text-xs font-semibold text-amber-900 hover:bg-amber-100/70 shadow-xs cursor-pointer flex items-center gap-1.5"
+                  >
+                    <span className="text-slate-500">{opt.fileName}:</span>
+                    <strong className="text-slate-900">
+                      {opt.valStr} {conflict.unit}
+                    </strong>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -737,7 +1134,7 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
       {success && (
         <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
           <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600" aria-hidden="true" />
-          <span>Clinical results updated! Recalculating your assessment.</span>
+          <span>Clinical results saved and reassessment verified!</span>
         </div>
       )}
 
@@ -745,8 +1142,8 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
       <div className="space-y-3.5">
         {/* Section 1: Hormone Tests */}
         <ClinicalSection
-          title="Hormone Tests"
-          description="Core reproductive hormones used in your PCOS screening assessment."
+          title="Hormonal Tests"
+          description="Core reproductive and thyroid hormones from your endocrine panel."
           addedCount={hormonalCount}
           totalCount={6}
           collapsible={true}
@@ -755,6 +1152,11 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
           icon={<Beaker01 className="w-4 h-4" />}
           accentColor="pink"
         >
+          {hormonalCount === 0 && (
+            <div className="text-[11px] text-slate-500 italic pb-1">
+              Don&apos;t have a report for this section? Enter values manually below.
+            </div>
+          )}
           {FIELD_CONFIGS.filter((f) => f.category === 'hormonal').map((cfg) => (
             <ClinicalField
               key={cfg.key}
@@ -766,6 +1168,8 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
               max={cfg.max}
               step={cfg.step}
               isOcrExtracted={ocrExtractedFields.includes(cfg.key)}
+              sourceProvenance={fieldProvenances[cfg.key]?.source}
+              originStatus={fieldProvenances[cfg.key]?.origin}
               accentColor="pink"
               onChange={(val) => handleFieldChange(cfg.key, val)}
               onClear={() => handleClearField(cfg.key)}
@@ -777,7 +1181,7 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
         {/* Section 2: Metabolic & Blood Chemistry */}
         <ClinicalSection
           title="Metabolic & Blood Chemistry"
-          description="Glycemic and nutritional biomarkers that influence hormonal balance."
+          description="Glycemic and micronutrient biomarkers that influence metabolic regulation."
           addedCount={metabolicCount}
           totalCount={5}
           collapsible={true}
@@ -786,6 +1190,11 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
           icon={<Drop className="w-4 h-4" />}
           accentColor="pink"
         >
+          {metabolicCount === 0 && (
+            <div className="text-[11px] text-slate-500 italic pb-1">
+              Don&apos;t have a report for this section? Enter values manually below.
+            </div>
+          )}
           {FIELD_CONFIGS.filter((f) => f.category === 'metabolic').map((cfg) => (
             <ClinicalField
               key={cfg.key}
@@ -797,6 +1206,8 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
               max={cfg.max}
               step={cfg.step}
               isOcrExtracted={ocrExtractedFields.includes(cfg.key)}
+              sourceProvenance={fieldProvenances[cfg.key]?.source}
+              originStatus={fieldProvenances[cfg.key]?.origin}
               accentColor="pink"
               onChange={(val) => handleFieldChange(cfg.key, val)}
               onClear={() => handleClearField(cfg.key)}
@@ -807,8 +1218,8 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
 
         {/* Section 3: Clinical Vitals */}
         <ClinicalSection
-          title="Clinical Vitals"
-          description="Resting blood pressure and physiological baseline vitals."
+          title="Clinical Vitals / Blood & Clinical Measurements"
+          description="Resting blood pressure and physiological baseline measurements."
           addedCount={vitalsCount}
           totalCount={4}
           collapsible={true}
@@ -817,6 +1228,11 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
           icon={<ActivityHeart className="w-4 h-4" />}
           accentColor="pink"
         >
+          {vitalsCount === 0 && (
+            <div className="text-[11px] text-slate-500 italic pb-1">
+              Don&apos;t have a report for this section? Enter values manually below.
+            </div>
+          )}
           {FIELD_CONFIGS.filter((f) => f.category === 'vitals').map((cfg) => (
             <ClinicalField
               key={cfg.key}
@@ -828,6 +1244,8 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
               max={cfg.max}
               step={cfg.step}
               isOcrExtracted={ocrExtractedFields.includes(cfg.key)}
+              sourceProvenance={fieldProvenances[cfg.key]?.source}
+              originStatus={fieldProvenances[cfg.key]?.origin}
               accentColor="pink"
               onChange={(val) => handleFieldChange(cfg.key, val)}
               onClear={() => handleClearField(cfg.key)}
@@ -839,3 +1257,5 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
     </ClinicalModalLayout>
   );
 };
+
+export default ClinicalLabsModal;

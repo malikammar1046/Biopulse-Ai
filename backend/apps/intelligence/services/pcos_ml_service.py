@@ -1062,6 +1062,9 @@ class PCOSMLService:
                 'ultrasound_weight': w_img,
                 'clinical_probability': p_t2,
                 'ultrasound_probability': p_img,
+                'combined_score': p_fused,
+                'ultrasound_pcom_probability': img_res.get('pcom_probability'),
+                'threshold': MULTIMODAL_SCREENING_THRESHOLD,
                 'fusion_method': 'Weighted Probability Fusion'
             },
             'limitations': [

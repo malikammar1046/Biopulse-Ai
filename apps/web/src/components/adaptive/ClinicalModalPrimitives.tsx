@@ -238,6 +238,8 @@ interface ClinicalFieldProps {
   max: number;
   step?: string;
   isOcrExtracted?: boolean;
+  sourceProvenance?: string;
+  originStatus?: 'extracted' | 'manual';
   accentColor?: 'pink' | 'blue';
   onChange: (value: string) => void;
   onClear: () => void;
@@ -253,6 +255,8 @@ export const ClinicalField: React.FC<ClinicalFieldProps> = ({
   max,
   step = 'any',
   isOcrExtracted = false,
+  sourceProvenance,
+  originStatus,
   accentColor = 'pink',
   onChange,
   onClear,
@@ -328,6 +332,19 @@ export const ClinicalField: React.FC<ClinicalFieldProps> = ({
           {errorMessage}
         </p>
       ) : null}
+
+      {sourceProvenance && isFilled && (
+        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-sans pt-0.5">
+          <span className="text-slate-400">Source:</span>
+          <span className="font-semibold text-slate-700 truncate max-w-[200px]">{sourceProvenance}</span>
+          {originStatus === 'extracted' && (
+            <span className="text-emerald-700 font-semibold">• Extracted</span>
+          )}
+          {originStatus === 'manual' && (
+            <span className="text-slate-500 font-medium">• Manual entry</span>
+          )}
+        </div>
+      )}
     </div>
   );
 };
