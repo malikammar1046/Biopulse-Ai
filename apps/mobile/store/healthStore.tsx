@@ -194,12 +194,26 @@ export interface UserProfileState {
   heightCm: number;
   weightKg: number;
   waistCm: number;
+  hipCm?: number;
+  gender?: string;
+  pathway?: HealthPathway | null;
+  isOnboarded?: boolean;
+  bloodType?: string;
   maritalStatus: 'Single' | 'Married' | 'Prefer not to say';
   pregnancyStatus: 'Not Pregnant' | 'Currently Pregnant' | 'Trying to Conceive' | 'Prefer not to say';
   emergencyContactName: string;
   emergencyContactPhone: string;
   emergencyContactRelationship: string;
   profilePhotoUrl?: string;
+  cycleLength?: string;
+  periodDuration?: number;
+  lastPeriodDate?: string;
+  periodRegularity?: string;
+  commonSymptoms?: string[];
+  sleepHours?: number;
+  fastFoodIntake?: string;
+  regularExercise?: boolean;
+  activityLevel?: string;
 }
 
 export interface NotificationSettingsState {
@@ -315,6 +329,9 @@ const EMPTY_PROFILE: UserProfileState = {
   emergencyContactName: '',
   emergencyContactPhone: '',
   emergencyContactRelationship: '',
+  isOnboarded: false,
+  pathway: null,
+  gender: '',
 };
 
 const EMPTY_SCREENING: ScreeningAssessmentState = {
@@ -499,6 +516,9 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
         if (!isCurrent) return;
 
         if (dbProfile) {
+          if (dbProfile.pathway && dbProfile.pathway !== pathway) {
+            setPathway(dbProfile.pathway as HealthPathway);
+          }
           setProfile((prev) => ({
             ...prev,
             ...dbProfile,

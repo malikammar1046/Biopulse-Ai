@@ -8,6 +8,7 @@ import {
   TextInput,
   useWindowDimensions,
   Platform,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -141,6 +142,10 @@ export default function FemaleCycleHealthScreen() {
   };
 
   const handleContinue = useCallback(() => {
+    if (cycleLength < 15 || cycleLength > 120) {
+      Alert.alert('Invalid Cycle Length', 'Please enter a typical cycle length between 15 and 120 days.');
+      return;
+    }
     updateCycleHealth({
       regularity,
       cycleLength,

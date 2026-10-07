@@ -7,6 +7,7 @@ import {
   ScrollView,
   TextInput,
   useWindowDimensions,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -106,8 +107,22 @@ export default function MaleBasicHealthScreen() {
   }, [heightCm, weightKg]);
 
   const handleContinue = useCallback(() => {
+    const parsedAge = parseInt(age, 10);
+    if (!parsedAge || parsedAge < 18 || parsedAge > 120) {
+      Alert.alert('Invalid Age', 'Please enter a valid age between 18 and 120.');
+      return;
+    }
+    if (heightCm < 80 || heightCm > 250) {
+      Alert.alert('Invalid Height', 'Please enter a valid height between 80 cm and 250 cm.');
+      return;
+    }
+    if (weightKg < 25 || weightKg > 300) {
+      Alert.alert('Invalid Weight', 'Please enter a valid weight between 25 kg and 300 kg.');
+      return;
+    }
+
     updateBasicInfo({
-      age: parseInt(age, 10) || 32,
+      age: parsedAge,
       heightCm,
       weightKg,
       bmi,

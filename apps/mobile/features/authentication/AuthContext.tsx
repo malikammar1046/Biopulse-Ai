@@ -12,6 +12,7 @@ import {
   RegisterResult,
 } from './authService';
 import { subscribeToAuthChanges, mobileSupabaseAuth } from '../../lib/supabase';
+import { fetchUserProfileFromDb, updateUserPathwayInDb } from '../../services/userService';
 
 interface AuthContextValue extends AuthState {
   login: (email: string, password: string) => Promise<LoginResult>;
@@ -38,9 +39,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (isMounted) {
           if (session?.user) {
             const currentUser = getCurrentUser();
-            setUser(currentUser);
-            if (currentUser?.pathway) {
-              setPathwayState(currentUser.pathway);
+            if (currentUser) {
+              try {
+                const dbProfile = await fetchUserProfileFromDb(currentUser.id, session.access_token);
+                if (dbProfile) {
+                  if (dbProfile.pathway) {
+                    currentUser.pathway = dbProfile.pathway as HealthPathway;
+                    setPathwayState(dbProfile.pathway as HealthPathway);
+                  }
+                  if (dbProfile.isOnboarded !== undefined) {
+                    currentUser.isOnboarded = dbProfile.isOnboarded;
+                  }
+                  if (dbProfile.profilePhotoUrl) {
+                    currentUser.avatarUrl = dbProfile.profilePhotoUrl;
+                  }
+                }
+              } catch (e) {
+                console.warn('[BioPulse AuthContext] Profile load error:', e);
+              }
+              setUser({ ...currentUser });
+              if (currentUser.pathway) {
+                setPathwayState(currentUser.pathway);
+              }
             }
           }
         }
@@ -81,9 +101,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       const res = await loginWithEmailAndPassword(email, password);
       if (res.success && res.user) {
-        setUser(res.user);
-        if (res.user.pathway) {
-          setPathwayState(res.user.pathway);
+        const loadedUser = { ...res.user };
+        if (res.user.accessToken) {
+          try {
+            const dbProfile = await fetchUserProfileFromDb(res.user.id, res.user.accessToken);
+            if (dbProfile) {
+              if (dbProfile.pathway) loadedUser.pathway = dbProfile.pathway as HealthPathway;
+              if (dbProfile.isOnboarded !== undefined) loadedUser.isOnboarded = dbProfile.isOnboarded;
+              if (dbProfile.profilePhotoUrl) loadedUser.avatarUrl = dbProfile.profilePhotoUrl;
+            }
+          } catch {
+            // Non-blocking
+          }
+        }
+        setUser(loadedUser);
+        if (loadedUser.pathway) {
+          setPathwayState(loadedUser.pathway);
         }
       }
       return res;
@@ -127,9 +160,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setPathwayState(newPathway);
     const updated = updateUserPathway(newPathway);
     if (updated) {
-      setUser(updated);
+      setUser({ ...updated });
     }
-  }, []);
+    if (user?.id && user?.accessToken) {
+      updateUserPathwayInDb(user.id, user.accessToken, newPathway).catch((err) => {
+        console.warn('[BioPulse AuthContext] Error updating pathway in DB:', err);
+      });
+    }
+  }, [user?.id, user?.accessToken]);
 
   const value: AuthContextValue = {
     isAuthenticated: Boolean(user),
