@@ -20,6 +20,7 @@ import json
 import logging
 import os
 import sqlite3
+import sys
 import threading
 import uuid
 from datetime import datetime, timezone
@@ -60,67 +61,27 @@ _remote_table_available = True
 
 def _get_sqlite_path() -> str:
     try:
+        if any("test" in str(arg).lower() or "pytest" in str(arg).lower() for arg in sys.argv):
+            return str(Path(__file__).resolve().parent.parent.parent.parent / "test_fallback.sqlite3")
         db_path = settings.DATABASES.get("default", {}).get("NAME")
         if db_path:
-            return str(db_path)
+            db_path_str = str(db_path)
+            if not db_path_str.startswith("file:") and ":memory:" not in db_path_str:
+                return db_path_str
     except Exception:
         pass
     default_path = Path(__file__).resolve().parent.parent.parent.parent / "db.sqlite3"
     return str(default_path)
 
 
-class _DjangoSQLiteWrapper:
-    def __init__(self, django_conn: Any):
-        self._django_conn = django_conn
-        self._raw_conn = django_conn.connection
-
-    @property
-    def row_factory(self):
-        return getattr(self._raw_conn, "row_factory", None)
-
-    @row_factory.setter
-    def row_factory(self, val):
-        self._raw_conn.row_factory = val
-
-    def cursor(self):
-        return self._raw_conn.cursor()
-
-    def execute(self, sql: str, params: Any = ()):
-        return self._raw_conn.execute(sql, params)
-
-    def executemany(self, sql: str, seq_of_params: Any):
-        return self._raw_conn.executemany(sql, seq_of_params)
-
-    def commit(self) -> None:
-        if hasattr(self._raw_conn, "commit"):
-            self._raw_conn.commit()
-
-    def close(self) -> None:
-        pass
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        return False
-
-
-def _connect_sqlite(db_path: str | None = None, timeout: float = 15.0) -> Any:
+def _connect_sqlite(db_path: str | None = None, timeout: float = 30.0) -> sqlite3.Connection:
     if db_path is None:
         db_path = _get_sqlite_path()
-    try:
-        from django.db import connection
-        default_name = settings.DATABASES.get("default", {}).get("NAME")
-        if default_name and str(default_name) == str(db_path):
-            connection.ensure_connection()
-            if connection.connection:
-                return _DjangoSQLiteWrapper(connection)
-    except Exception:
-        pass
     is_uri = str(db_path).startswith("file:")
-    conn = sqlite3.connect(db_path, timeout=timeout, uri=is_uri)
+    conn = sqlite3.connect(db_path, timeout=timeout, uri=is_uri, isolation_level=None)
     try:
-        conn.execute("PRAGMA busy_timeout = 15000;")
+        conn.execute("PRAGMA busy_timeout = 30000;")
+        conn.execute("PRAGMA foreign_keys = ON;")
     except Exception:
         pass
     return conn
@@ -129,9 +90,28 @@ def _connect_sqlite(db_path: str | None = None, timeout: float = 15.0) -> Any:
 def init_sqlite_lifestyle_store() -> None:
     """Initializes local SQLite persistence table for offline/test environments."""
     db_path = _get_sqlite_path()
-    conn = _connect_sqlite(db_path, timeout=10.0)
-    try:
-        with conn:
+    if db_path in _initialized_lifestyle_db_paths:
+        return
+
+    with _lifestyle_init_lock:
+        if db_path in _initialized_lifestyle_db_paths:
+            return
+        is_uri = str(db_path).startswith("file:")
+        if not is_uri and not str(db_path).startswith(":memory:"):
+            try:
+                raw_init_conn = sqlite3.connect(db_path, timeout=30.0, isolation_level=None)
+                try:
+                    raw_init_conn.execute("PRAGMA busy_timeout = 30000;")
+                    raw_init_conn.execute("PRAGMA journal_mode = WAL;")
+                    raw_init_conn.execute("PRAGMA synchronous = NORMAL;")
+                finally:
+                    raw_init_conn.close()
+            except Exception as e:
+                logger.debug("Could not set SQLite WAL pragma on lifestyle store: %s", e)
+
+        conn = _connect_sqlite(db_path, timeout=30.0)
+        try:
+            conn.execute("BEGIN IMMEDIATE;")
             conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS intelligence_lifestyle_recommendations (
@@ -150,13 +130,19 @@ def init_sqlite_lifestyle_store() -> None:
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_intel_lifestyle_user ON intelligence_lifestyle_recommendations(user_id, module, is_active)"
             )
-    except Exception as e:
-        logger.warning("Failed to initialize SQLite lifestyle recommendations store: %s", e)
-    finally:
-        try:
-            conn.close()
-        except Exception:
-            pass
+            conn.execute("COMMIT;")
+            _initialized_lifestyle_db_paths.add(db_path)
+        except Exception as e:
+            try:
+                conn.execute("ROLLBACK;")
+            except Exception:
+                pass
+            logger.warning("Failed to initialize SQLite lifestyle recommendations store: %s", e)
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 
 def _is_supabase_network_disabled() -> bool:
@@ -261,36 +247,42 @@ class LifestyleRepository:
 
         # 2. SQLite Persistent Fallback
         init_sqlite_lifestyle_store()
+        conn = None
         try:
             db_path = _get_sqlite_path()
-            conn = _connect_sqlite(db_path, timeout=5.0)
-            with conn:
-                cursor = conn.cursor()
-                cursor.execute(
-                    """
-                    SELECT id, context_version, payload_json, item_statuses, created_at, updated_at
-                    FROM intelligence_lifestyle_recommendations
-                    WHERE user_id = ? AND module = ? AND is_active = 1
-                    ORDER BY created_at DESC LIMIT 1
-                    """,
-                    (user_id_str, module_name),
-                )
-                row = cursor.fetchone()
-                if row:
-                    payload = json.loads(row[2]) if row[2] else {}
-                    item_statuses = json.loads(row[3]) if row[3] else {}
-                    return {
-                        "id": str(row[0]),
-                        "user_id": user_id_str,
-                        "module": module_name,
-                        "context_version": str(row[1]),
-                        "payload": payload,
-                        "item_statuses": item_statuses,
-                        "created_at": str(row[4]),
-                        "updated_at": str(row[5]),
-                    }
+            conn = _connect_sqlite(db_path, timeout=10.0)
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT id, context_version, payload_json, item_statuses, created_at, updated_at
+                FROM intelligence_lifestyle_recommendations
+                WHERE user_id = ? AND module = ? AND is_active = 1
+                ORDER BY created_at DESC LIMIT 1
+                """,
+                (user_id_str, module_name),
+            )
+            row = cursor.fetchone()
+            if row:
+                payload = json.loads(row[2]) if row[2] else {}
+                item_statuses = json.loads(row[3]) if row[3] else {}
+                return {
+                    "id": str(row[0]),
+                    "user_id": user_id_str,
+                    "module": module_name,
+                    "context_version": str(row[1]),
+                    "payload": payload,
+                    "item_statuses": item_statuses,
+                    "created_at": str(row[4]),
+                    "updated_at": str(row[5]),
+                }
         except Exception as e:
             logger.debug("SQLite active lifestyle recommendations lookup error: %s", e)
+        finally:
+            if conn:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
 
         # 3. In-memory fallback
         with _lifestyle_lock:
@@ -333,24 +325,37 @@ class LifestyleRepository:
 
         # 2. SQLite Update
         init_sqlite_lifestyle_store()
+        conn = None
         try:
             db_path = _get_sqlite_path()
-            conn = _connect_sqlite(db_path, timeout=5.0)
-            with conn:
-                cursor = conn.cursor()
-                if module_name:
-                    cursor.execute(
-                        "UPDATE intelligence_lifestyle_recommendations SET is_active = 0 WHERE user_id = ? AND module = ? AND is_active = 1",
-                        (user_id_str, module_name),
-                    )
-                else:
-                    cursor.execute(
-                        "UPDATE intelligence_lifestyle_recommendations SET is_active = 0 WHERE user_id = ? AND is_active = 1",
-                        (user_id_str,),
-                    )
-                logger.info("SQLite active lifestyle recommendations invalidated for user %s (module: %s)", user_id_str[:8], module_name or "all")
+            conn = _connect_sqlite(db_path, timeout=10.0)
+            conn.execute("BEGIN IMMEDIATE;")
+            cursor = conn.cursor()
+            if module_name:
+                cursor.execute(
+                    "UPDATE intelligence_lifestyle_recommendations SET is_active = 0 WHERE user_id = ? AND module = ? AND is_active = 1",
+                    (user_id_str, module_name),
+                )
+            else:
+                cursor.execute(
+                    "UPDATE intelligence_lifestyle_recommendations SET is_active = 0 WHERE user_id = ? AND is_active = 1",
+                    (user_id_str,),
+                )
+            conn.execute("COMMIT;")
+            logger.info("SQLite active lifestyle recommendations invalidated for user %s (module: %s)", user_id_str[:8], module_name or "all")
         except Exception as e:
+            if conn:
+                try:
+                    conn.execute("ROLLBACK;")
+                except Exception:
+                    pass
             logger.debug("SQLite lifestyle invalidation notice: %s", e)
+        finally:
+            if conn:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
 
         # 3. In-memory update
         with _lifestyle_lock:
@@ -441,38 +446,51 @@ class LifestyleRepository:
 
         # 2. SQLite Mirror
         init_sqlite_lifestyle_store()
+        conn = None
         try:
             db_path = _get_sqlite_path()
-            conn = _connect_sqlite(db_path, timeout=5.0)
-            with conn:
-                cursor = conn.cursor()
-                cursor.execute(
-                    """
-                    UPDATE intelligence_lifestyle_recommendations
-                    SET is_active = 0
-                    WHERE user_id = ? AND module = ? AND is_active = 1
-                    """,
-                    (user_id_str, module_name),
-                )
-                cursor.execute(
-                    """
-                    INSERT INTO intelligence_lifestyle_recommendations
-                    (id, user_id, module, context_version, payload_json, item_statuses, is_active, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)
-                    """,
-                    (
-                        rec_id,
-                        user_id_str,
-                        module_name,
-                        context_version,
-                        json.dumps(payload),
-                        json.dumps(statuses),
-                        now_iso,
-                        now_iso,
-                    ),
-                )
+            conn = _connect_sqlite(db_path, timeout=10.0)
+            conn.execute("BEGIN IMMEDIATE;")
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                UPDATE intelligence_lifestyle_recommendations
+                SET is_active = 0
+                WHERE user_id = ? AND module = ? AND is_active = 1
+                """,
+                (user_id_str, module_name),
+            )
+            cursor.execute(
+                """
+                INSERT INTO intelligence_lifestyle_recommendations
+                (id, user_id, module, context_version, payload_json, item_statuses, is_active, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)
+                """,
+                (
+                    rec_id,
+                    user_id_str,
+                    module_name,
+                    context_version,
+                    json.dumps(payload),
+                    json.dumps(statuses),
+                    now_iso,
+                    now_iso,
+                ),
+            )
+            conn.execute("COMMIT;")
         except Exception as e:
+            if conn:
+                try:
+                    conn.execute("ROLLBACK;")
+                except Exception:
+                    pass
             logger.warning("SQLite save lifestyle recommendations error: %s", e)
+        finally:
+            if conn:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
 
         # 3. In-memory Mirror
         with _lifestyle_lock:
@@ -566,26 +584,39 @@ class LifestyleRepository:
                 logger.warning("Supabase update item status error: %s", e)
 
         # 4. Update SQLite
+        conn = None
         try:
             db_path = _get_sqlite_path()
-            conn = _connect_sqlite(db_path, timeout=5.0)
-            with conn:
-                cursor = conn.cursor()
-                cursor.execute(
-                    """
-                    UPDATE intelligence_lifestyle_recommendations
-                    SET item_statuses = ?, payload_json = ?, updated_at = ?
-                    WHERE id = ?
-                    """,
-                    (
-                        json.dumps(item_statuses),
-                        json.dumps(payload),
-                        now_iso,
-                        record_id,
-                    ),
-                )
+            conn = _connect_sqlite(db_path, timeout=10.0)
+            conn.execute("BEGIN IMMEDIATE;")
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                UPDATE intelligence_lifestyle_recommendations
+                SET item_statuses = ?, payload_json = ?, updated_at = ?
+                WHERE id = ?
+                """,
+                (
+                    json.dumps(item_statuses),
+                    json.dumps(payload),
+                    now_iso,
+                    record_id,
+                ),
+            )
+            conn.execute("COMMIT;")
         except Exception as e:
+            if conn:
+                try:
+                    conn.execute("ROLLBACK;")
+                except Exception:
+                    pass
             logger.warning("SQLite update item status error: %s", e)
+        finally:
+            if conn:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
 
         # 5. Update in-memory store
         with _lifestyle_lock:

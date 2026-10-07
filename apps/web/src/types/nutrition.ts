@@ -186,6 +186,7 @@ export interface WeeklyNutritionPlan {
   coverage: NutritionPlanCoverage;
   condition_guidance: string[];
   warnings: string[];
+  plan_data?: any;
 }
 
 export interface NutritionPlanSummary {
@@ -199,7 +200,6 @@ export interface NutritionPlanSummary {
   created_at: string;
 }
 
-<<<<<<< HEAD
 // ─── Food Logging ─────────────────────────────────────────────────────────────
 
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';

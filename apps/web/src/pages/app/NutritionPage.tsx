@@ -10,12 +10,9 @@ import {
   ShieldCheck,
   Flame,
   CheckCircle2,
-  AlertCircle,
-  SlidersHorizontal,
   ChevronRight,
   Send,
   Utensils,
-  Lock,
 } from 'lucide-react';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { nutritionService } from '../../services/nutritionService';
@@ -46,7 +43,7 @@ export const NutritionPage: React.FC = () => {
 
   // Core Data States
   const [readiness, setReadiness] = useState<NutritionReadiness | null>(null);
-  const [targets, setTargets] = useState<NutritionTargets | null>(null);
+  const [_targets, setTargets] = useState<NutritionTargets | null>(null);
   const [currentPlan, setCurrentPlan] = useState<WeeklyNutritionPlan | null>(null);
   const [preferences, setPreferences] = useState<NutritionPreferences | null>(null);
   const [reminders, setReminders] = useState<NutritionReminderPreferences | null>(null);
@@ -58,7 +55,7 @@ export const NutritionPage: React.FC = () => {
 
   // UI Navigation States
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [_error, setError] = useState<string | null>(null);
   const [selectedDayIndex, setSelectedDayIndex] = useState<number>(() => {
     // Default to today's day of week (1=Mon, 7=Sun)
     const day = new Date().getDay();
@@ -84,8 +81,6 @@ export const NutritionPage: React.FC = () => {
 
   // Accent Styles
   const accentColor = isMale ? 'bg-[#0868B9]' : 'bg-[#0E9EAA]';
-  const accentBorder = isMale ? 'border-[#0868B9]' : 'border-[#0E9EAA]';
-  const accentText = isMale ? 'text-[#0868B9]' : 'text-[#0E9EAA]';
 
   // ─── Fetch All Nutrition Context ──────────────────────────────────────────
   const fetchAllData = useCallback(async () => {

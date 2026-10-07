@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Bell, Clock, Check, ShieldCheck, AlertCircle } from 'lucide-react';
+import { X, Bell, Clock, Check, AlertCircle } from 'lucide-react';
 import type { MealReminder, NutritionReminderPreferences } from '../../types/nutrition';
 
 interface NutritionRemindersModalProps {
@@ -85,7 +85,6 @@ export const NutritionRemindersModal: React.FC<NutritionRemindersModalProps> = (
   };
 
   const accentColor = isMale ? 'bg-[#0868B9]' : 'bg-[#0E9EAA]';
-  const accentBorder = isMale ? 'border-[#0868B9]' : 'border-[#0E9EAA]';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
