@@ -37,16 +37,57 @@ CLINICAL_DISCLAIMER = get_pathway_disclaimer("female_pcos")
 
 ALLERGEN_INGREDIENT_MAP: Dict[str, Set[str]] = {
     "dairy": {"milk", "yogurt", "cheese", "paneer", "butter", "ghee", "cream", "whey", "curd", "dahi", "malai", "lassi"},
+    "milk": {"milk", "yogurt", "cheese", "paneer", "butter", "ghee", "cream", "whey", "curd", "dahi", "malai", "lassi"},
+    "lactose": {"milk", "yogurt", "cheese", "paneer", "butter", "cream", "whey", "curd", "dahi", "malai", "lassi"},
     "gluten": {"wheat", "barley", "rye", "roti", "paratha", "naan", "bread", "semolina", "sooji", "pasta", "couscous", "maida", "atta"},
-    "wheat": {"wheat", "roti", "paratha", "naan", "bread", "semolina", "sooji", "pasta", "couscous", "maida", "atta"},
-    "nuts": {"peanut", "almond", "walnut", "cashew", "pistachio", "hazelnut", "pecan", "macadamia", "nut butter"},
-    "peanuts": {"peanut", "peanut butter", "groundnut"},
-    "tree_nuts": {"almond", "walnut", "cashew", "pistachio", "hazelnut", "pecan"},
-    "eggs": {"egg", "eggs", "egg white", "egg yolk", "omelet", "mayonnaise"},
-    "fish": {"fish", "salmon", "tuna", "cod", "mackerel", "sardine", "tilapia", "trout"},
-    "shellfish": {"prawn", "shrimp", "crab", "lobster", "clam", "mussel", "oyster"},
-    "soy": {"soy", "tofu", "edamame", "soy sauce", "soy milk", "tempeh"},
+    "wheat": {"wheat", "barley", "rye", "roti", "paratha", "naan", "bread", "semolina", "sooji", "pasta", "couscous", "maida", "atta"},
+    "nuts": {"peanut", "peanuts", "almond", "almonds", "walnut", "walnuts", "cashew", "cashews", "pistachio", "pistachios", "hazelnut", "hazelnuts", "pecan", "pecans", "macadamia", "nut butter", "badam", "akhrot", "kaju", "pista"},
+    "peanuts": {"peanut", "peanuts", "peanut butter", "groundnut", "groundnuts", "mungfali", "moongfali"},
+    "peanut": {"peanut", "peanuts", "peanut butter", "groundnut", "groundnuts", "mungfali", "moongfali"},
+    "tree_nuts": {"almond", "almonds", "walnut", "walnuts", "cashew", "cashews", "pistachio", "pistachios", "hazelnut", "hazelnuts", "pecan", "pecans", "badam", "akhrot", "kaju", "pista", "nut butter", "nuts"},
+    "tree_nut": {"almond", "almonds", "walnut", "walnuts", "cashew", "cashews", "pistachio", "pistachios", "hazelnut", "hazelnuts", "pecan", "pecans", "badam", "akhrot", "kaju", "pista", "nut butter", "nuts"},
+    "eggs": {"egg", "eggs", "egg white", "egg whites", "egg yolk", "egg yolks", "omelet", "omelette", "mayonnaise", "anda", "anday"},
+    "egg": {"egg", "eggs", "egg white", "egg whites", "egg yolk", "egg yolks", "omelet", "omelette", "mayonnaise", "anda", "anday"},
+    "fish": {"fish", "salmon", "tuna", "cod", "mackerel", "sardine", "sardines", "tilapia", "trout", "machli", "machhli", "rohu"},
+    "shellfish": {"prawn", "prawns", "shrimp", "shrimps", "crab", "crabs", "lobster", "lobsters", "clam", "clams", "mussel", "mussels", "oyster", "oysters", "jhinga"},
+    "soy": {"soy", "tofu", "edamame", "soy sauce", "soy milk", "tempeh", "soya"},
+    "sesame": {"sesame", "til", "tahini"},
+    "seeds": {"seed", "seeds", "sunflower seed", "sunflower seeds", "pumpkin seed", "pumpkin seeds", "chia seed", "chia seeds", "flaxseed", "flaxseeds", "sesame", "tahini"},
+    "seed": {"seed", "seeds", "sunflower seed", "sunflower seeds", "pumpkin seed", "pumpkin seeds", "chia seed", "chia seeds", "flaxseed", "flaxseeds", "sesame", "tahini"},
+    "red_meat": {"beef", "mutton", "lamb", "veal", "pork", "steak", "keema", "meat"},
+    "poultry": {"chicken", "turkey", "duck"},
+    "seafood": {"fish", "prawn", "prawns", "shrimp", "shrimps", "crab", "crabs", "lobster", "lobsters", "machli", "jhinga", "seafood", "clam", "mussel", "oyster", "salmon", "tuna"},
+    "pork": {"pork", "bacon", "ham", "lard"},
+    "alcohol": {"alcohol", "wine", "beer", "liquor", "cocktail"},
+    "gelatin": {"gelatin", "gelatine"},
+    "honey": {"honey"},
 }
+
+
+def is_food_forbidden(text: str, excluded_categories: List[str]) -> Tuple[bool, Optional[str]]:
+    """
+    Deterministically checks if any term in `text` violates `excluded_categories`.
+    Returns (is_forbidden, matched_category_or_ingredient).
+    """
+    if not text or not excluded_categories:
+        return False, None
+    import re
+    t_clean = text.lower()
+    for cat in excluded_categories:
+        cat_norm = str(cat).strip().lower()
+        if not cat_norm or cat_norm == "none":
+            continue
+        # Direct category keyword match (allowing singular and plural forms)
+        base_cat = cat_norm[:-1] if cat_norm.endswith("s") and len(cat_norm) > 3 else cat_norm
+        if re.search(r"\b" + re.escape(base_cat) + r"(?:s|es)?\b", t_clean):
+            return True, cat_norm
+        # Check ingredient terms mapped to category (allowing optional plural)
+        terms = ALLERGEN_INGREDIENT_MAP.get(cat_norm, set())
+        for term in terms:
+            term_base = term[:-1] if term.endswith("s") and len(term) > 3 else term
+            if re.search(r"\b" + re.escape(term_base) + r"(?:s|es)?\b", t_clean):
+                return True, f"{cat_norm}:{term}"
+    return False, None
 
 
 PRODUCT_SAFETY_FLOOR_FEMALE: float = 1200.0
@@ -195,21 +236,26 @@ class LifestyleSafetyEngine:
         user_allergens = set(demo.allergens + demo.intolerances)
         for allergy_name in user_allergens:
             norm_a = allergy_name.strip().lower()
-            if norm_a in ALLERGEN_INGREDIENT_MAP:
-                result.excluded_food_categories.append(norm_a)
-                if result.safety_status == "ALLOW":
-                    result.safety_status = "MODIFY"
+            if not norm_a or norm_a == "none":
+                continue
+            result.excluded_food_categories.append(norm_a)
+            if result.safety_status == "ALLOW":
+                result.safety_status = "MODIFY"
 
         # 8. Dietary Pattern Invariants
         if demo.dietary_preference in ("vegetarian", "vegan"):
-            result.excluded_food_categories.extend(["red_meat", "poultry", "seafood", "gelatin"])
+            result.excluded_food_categories.extend(["red_meat", "poultry", "seafood", "fish", "shellfish", "gelatin"])
             if demo.dietary_preference == "vegan":
-                result.excluded_food_categories.extend(["dairy", "eggs", "honey"])
+                result.excluded_food_categories.extend(["dairy", "milk", "eggs", "egg", "honey"])
         elif demo.dietary_preference == "pescatarian":
             result.excluded_food_categories.extend(["red_meat", "poultry"])
+        elif demo.dietary_preference in ("halal", "halal_omnivore"):
+            result.excluded_food_categories.extend(["pork", "alcohol"])
 
-        # Deduplicate
-        result.excluded_food_categories = sorted(list(set(result.excluded_food_categories)))
+        # Deduplicate and remove any potential 'none'
+        result.excluded_food_categories = sorted(list(set(
+            c for c in result.excluded_food_categories if c and c.lower() != "none"
+        )))
         result.excluded_exercise_modalities = sorted(list(set(result.excluded_exercise_modalities)))
 
         return result

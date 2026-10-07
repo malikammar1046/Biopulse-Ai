@@ -57,22 +57,37 @@ export const LifestyleRecommendationsPage: React.FC = () => {
   const [dietaryPref, setDietaryPref] = useState<string>('standard');
   const [activityLevel, setActivityLevel] = useState<string>('moderate');
 
+  // In-flight abort controller to cancel stale duplicate fetches
+  const inFlightAbortRef = React.useRef<AbortController | null>(null);
+
   const fetchRecommendations = async (override?: LifestyleSimulationOverride, refresh = false) => {
+    // Abort any existing in-flight request to prevent race conditions & duplicate load
+    if (inFlightAbortRef.current) {
+      inFlightAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    inFlightAbortRef.current = controller;
+
     try {
       setError(null);
       setErrorType(null);
       if (override) {
         setSimulating(true);
         const result = await lifestyleService.simulateRecommendations(override);
+        if (controller.signal.aborted) return;
         setData(result);
       } else {
         setLoading(true);
-        const result = await lifestyleService.getRecommendations(defaultPathway, refresh);
+        const result = await lifestyleService.getRecommendations(defaultPathway, refresh, controller.signal);
+        if (controller.signal.aborted) return;
         setData(result);
       }
       setError(null);
       setErrorType(null);
     } catch (err: any) {
+      if (controller.signal.aborted || err?.name === 'AbortError') {
+        return;
+      }
       console.error('Failed to load lifestyle recommendations:', err);
       const msg = String(err?.message || '');
       const statusCode = err?.status || (err?.response && err.response.status);
@@ -115,20 +130,24 @@ export const LifestyleRecommendationsPage: React.FC = () => {
         setError("We couldn't prepare your recommendations right now.");
       }
     } finally {
-      setLoading(false);
-      setSimulating(false);
+      if (!controller.signal.aborted) {
+        setLoading(false);
+        setSimulating(false);
+      }
     }
   };
 
   useEffect(() => {
-    fetchRecommendations();
-  }, [defaultPathway]);
-
-  useEffect(() => {
-    if (postOnboardingReadiness === 'ready') {
-      fetchRecommendations();
+    if (postOnboardingReadiness === 'initializing') {
+      return;
     }
-  }, [postOnboardingReadiness]);
+    fetchRecommendations();
+    return () => {
+      if (inFlightAbortRef.current) {
+        inFlightAbortRef.current.abort();
+      }
+    };
+  }, [defaultPathway, postOnboardingReadiness]);
 
   const handleDietaryChange = (newPref: string) => {
     setDietaryPref(newPref);

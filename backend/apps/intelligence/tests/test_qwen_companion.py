@@ -150,7 +150,7 @@ class BioPulseContextAndPathwayTests(TestCase):
                 "assessment_level": "tier_1_2",
                 "risk_category": "higher",
                 "probability": 0.745,
-                "threshold": 0.38,
+                "threshold": 0.25,
                 "explanations": [
                     {"friendly_name": "Cycle Irregularity", "direction": "increases_risk"},
                     {"friendly_name": "Elevated LH:FSH", "direction": "increases_risk"},

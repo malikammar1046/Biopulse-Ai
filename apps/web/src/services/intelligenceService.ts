@@ -540,13 +540,25 @@ export async function submitTier2Assessment(inputs: Record<string, any>, userId?
     }, 60000);
 
     if (!response.ok) {
-      console.error('[PCOS-ML] Tier 2 submission failed:', response.status);
+      let errDetails = '';
+      try {
+        const errJson = await response.json();
+        errDetails = errJson.error || errJson.details || JSON.stringify(errJson);
+      } catch {
+        errDetails = response.statusText;
+      }
+      console.error('[PCOS-ML] Tier 2 submission failed:', response.status, errDetails);
       return null;
     }
 
     clearAssessmentCache();
     const data = (await response.json()) as ProgressiveAssessment;
     if (data) {
+      if (import.meta.env.DEV) {
+        console.log(
+          `[TIER2_TRACE] event=response_received assessment_id=${data.id || data.assessment_id} level=${data.assessment_level} probability=${data.probability}`
+        );
+      }
       saveLocalActiveAssessment(userId || data.patient_id, 'female_pcos', data);
     }
     return data;
@@ -617,13 +629,25 @@ export async function submitMaleTier2Assessment(inputs: Record<string, any>, use
     }, 60000);
 
     if (!response.ok) {
-      console.error('[Male-ML] Tier 2 submission failed:', response.status);
+      let errDetails = '';
+      try {
+        const errJson = await response.json();
+        errDetails = errJson.error || errJson.details || JSON.stringify(errJson);
+      } catch {
+        errDetails = response.statusText;
+      }
+      console.error('[Male-ML] Tier 2 submission failed:', response.status, errDetails);
       return null;
     }
 
     clearAssessmentCache();
     const data = (await response.json()) as ProgressiveAssessment;
     if (data) {
+      if (import.meta.env.DEV) {
+        console.log(
+          `[TIER2_TRACE] event=response_received assessment_id=${data.id || data.assessment_id} level=${data.assessment_level} probability=${data.probability}`
+        );
+      }
       saveLocalActiveAssessment(userId || data.patient_id, 'male_hypogonadism', data);
     }
     return data;

@@ -302,6 +302,66 @@ class LifestyleRepository:
         return None
 
     @classmethod
+    def invalidate_active_recommendations(
+        cls,
+        user_id: str,
+        module: str | None = None,
+        auth_token: str | None = None,
+    ) -> bool:
+        """
+        Explicitly marks active lifestyle recommendation records as inactive (is_active = False/0)
+        for the specified user and module (or across all modules if module is None).
+        Provides synchronous cache invalidation on clinical state, assessment, or profile updates.
+        """
+        global _remote_table_available
+        user_id_str = _validate_user_id(user_id)
+        module_name = str(module).strip().lower() if module else None
+
+        # 1. Supabase Update
+        client = get_supabase_client(auth_token)
+        if client and _remote_table_available and _is_valid_uuid(user_id_str):
+            try:
+                q = client.table("lifestyle_recommendations").update({"is_active": False}).eq(
+                    "user_id", user_id_str
+                ).eq("is_active", True)
+                if module_name:
+                    q = q.eq("module", module_name)
+                q.execute()
+                logger.info("Supabase active lifestyle recommendations invalidated for user %s (module: %s)", user_id_str[:8], module_name or "all")
+            except Exception as e:
+                logger.debug("Supabase lifestyle invalidation notice: %s", e)
+
+        # 2. SQLite Update
+        init_sqlite_lifestyle_store()
+        try:
+            db_path = _get_sqlite_path()
+            conn = _connect_sqlite(db_path, timeout=5.0)
+            with conn:
+                cursor = conn.cursor()
+                if module_name:
+                    cursor.execute(
+                        "UPDATE intelligence_lifestyle_recommendations SET is_active = 0 WHERE user_id = ? AND module = ? AND is_active = 1",
+                        (user_id_str, module_name),
+                    )
+                else:
+                    cursor.execute(
+                        "UPDATE intelligence_lifestyle_recommendations SET is_active = 0 WHERE user_id = ? AND is_active = 1",
+                        (user_id_str,),
+                    )
+                logger.info("SQLite active lifestyle recommendations invalidated for user %s (module: %s)", user_id_str[:8], module_name or "all")
+        except Exception as e:
+            logger.debug("SQLite lifestyle invalidation notice: %s", e)
+
+        # 3. In-memory update
+        with _lifestyle_lock:
+            history = _in_memory_lifestyle_store.get(user_id_str, [])
+            for rec in history:
+                if rec.get("is_active") and (module_name is None or rec.get("module") == module_name):
+                    rec["is_active"] = False
+
+        return True
+
+    @classmethod
     def save_recommendations(
         cls,
         user_id: str,

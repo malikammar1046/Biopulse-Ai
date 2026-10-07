@@ -111,6 +111,8 @@ class HealthSummaryPDFGenerator:
     """
 
     def __init__(self, data: Dict[str, Any]) -> None:
+        if not REPORTLAB_AVAILABLE:
+            raise RuntimeError("ReportLab is required for PDF generation. Install reportlab.")
         self.data = data
         self.styles = getSampleStyleSheet()
         self._init_custom_styles()

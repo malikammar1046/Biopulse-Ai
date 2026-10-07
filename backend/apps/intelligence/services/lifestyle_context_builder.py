@@ -23,6 +23,14 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Set
 
 from apps.health.services.supabase_health_service import health_service, PatientHealthData
+from apps.health.nutrition_vocabularies import (
+    normalize_food_allergens,
+    normalize_food_intolerances,
+    normalize_dietary_pattern,
+    CanonicalAllergen,
+    CanonicalIntolerance,
+    DietaryPattern,
+)
 from apps.intelligence.services.assessment_repository import assessment_repository
 from apps.intelligence.services.clinical_state_repository import clinical_state_repository
 from apps.intelligence.services.canonical_shap_registry import CANONICAL_SHAP_REGISTRY, get_feature_metadata
@@ -39,12 +47,15 @@ class PatientDemographics:
     height_cm: Optional[float] = None
     weight_kg: Optional[float] = None
     bmi: Optional[float] = None
+    waist_cm: Optional[float] = None
     waist_inch: Optional[float] = None
     hip_inch: Optional[float] = None
     waist_hip_ratio: Optional[float] = None
-    dietary_preference: str = "omnivore"  # 'omnivore', 'halal', 'vegetarian', 'vegan', 'pescatarian'
+    dietary_preference: str = "omnivore"  # 'omnivore', 'halal_omnivore', 'vegetarian', 'vegan', 'pescatarian'
     allergens: List[str] = field(default_factory=list)
     intolerances: List[str] = field(default_factory=list)
+    allergy_status: str = "unrecorded"  # 'unrecorded' | 'confirmed_none' | 'active_allergens'
+    non_food_allergies: List[str] = field(default_factory=list)
     activity_level: Optional[str] = None  # 'sedentary', 'light', 'moderate', 'active', 'very_active'
     sleep_hours: Optional[float] = None
     stress_level: Optional[str] = None  # 'low', 'moderate', 'high', 'severe'
@@ -54,19 +65,20 @@ class PatientDemographics:
     skin_darkening: Optional[bool] = None
     hair_growth: Optional[bool] = None
     acne: Optional[bool] = None
+    profile_updated_at: Optional[str] = None
 
 
 @dataclass
 class ScreeningContext:
-    has_assessment: bool
-    module: str
+    has_assessment: bool = False
+    module: str = "female_pcos"
     assessment_id: Optional[str] = None
     assessment_level: str = "tier_1"  # 'tier_1', 'tier_1_2', 'tier_1_2_3'
     risk_category: str = "lower"  # 'lower', 'moderate', 'elevated'
     risk_label: str = "Lower Screening Risk"
     probability: float = 0.0
     probability_percent: float = 0.0
-    threshold: float = 0.38
+    threshold: float = 0.25
     is_active: bool = False
     created_at: Optional[str] = None
 
@@ -132,13 +144,14 @@ class LongitudinalSummary:
 class ComprehensiveLifestyleContext:
     user_id: str
     demographics: PatientDemographics
-    screening: ScreeningContext
-    shap_drivers: List[ShapFactor]
-    shap_mitigators: List[ShapFactor]
-    symptoms: SymptomSummary
-    labs: LabBiomarkers
-    longitudinal: LongitudinalSummary
+    screening: ScreeningContext = field(default_factory=ScreeningContext)
+    shap_drivers: List[ShapFactor] = field(default_factory=list)
+    shap_mitigators: List[ShapFactor] = field(default_factory=list)
+    symptoms: SymptomSummary = field(default_factory=SymptomSummary)
+    labs: LabBiomarkers = field(default_factory=LabBiomarkers)
+    longitudinal: LongitudinalSummary = field(default_factory=LongitudinalSummary)
     missing_data: List[str] = field(default_factory=list)
+    personalization_level: str = "LEVEL_1_PROFILE"  # 'LEVEL_1_PROFILE', 'LEVEL_2_SCREENING', 'LEVEL_3_CLINICAL', 'LEVEL_4_LONGITUDINAL'
     context_version: str = ""
     generated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
@@ -218,11 +231,12 @@ class LifestyleContextBuilder:
         age = None
         height_cm = None
         weight_kg = None
+        waist_cm = None
         waist_inch = None
         hip_inch = None
-        dietary_pref = "omnivore"
-        allergens: List[str] = []
-        intolerances: List[str] = []
+        raw_dietary_pref = "omnivore"
+        raw_allergens_list: List[str] = []
+        raw_intolerances_list: List[str] = []
         activity_level = None
         sleep_hours = None
         stress_level = None
@@ -265,6 +279,9 @@ class LifestyleContextBuilder:
             weight_kg = getattr(profile_obj, "weight_kg", None) or (
                 profile_obj.get("weight_kg") if isinstance(profile_obj, dict) else None
             )
+            waist_cm = getattr(profile_obj, "waist_cm", None) or (
+                profile_obj.get("waist_cm") if isinstance(profile_obj, dict) else None
+            )
             waist_inch = getattr(profile_obj, "waist_inch", None) or (
                 profile_obj.get("waist_inch") if isinstance(profile_obj, dict) else None
             )
@@ -287,29 +304,45 @@ class LifestyleContextBuilder:
             activity_level = getattr(profile_obj, "activity_level", None)
             sleep_hours = getattr(profile_obj, "sleep_hours", None)
 
+            # Direct waist conversion if waist_inch missing but waist_cm present
+            if waist_inch is None and waist_cm is not None:
+                try:
+                    waist_inch = round(float(waist_cm) / 2.54, 1)
+                except (ValueError, TypeError):
+                    pass
+
+            # Direct dietary preference extraction
+            raw_dietary_pref = (
+                getattr(profile_obj, "dietary_preference", None)
+                or raw_dietary_pref
+            )
+
+            # Direct authoritative allergy sources from PatientProfile
+            if getattr(profile_obj, "allergies", None):
+                raw_allergens_list.extend(getattr(profile_obj, "allergies", []))
+            if getattr(profile_obj, "food_allergies", None):
+                raw_allergens_list.extend(getattr(profile_obj, "food_allergies", []))
+            if getattr(profile_obj, "food_intolerances", None):
+                raw_intolerances_list.extend(getattr(profile_obj, "food_intolerances", []))
+
             # Common symptoms list
             cs = [str(s).lower() for s in (getattr(profile_obj, "common_symptoms", []) or [])]
             skin_darkening = any("dark" in s or "acanthosis" in s for s in cs)
             hair_growth = any("hair" in s or "hirsutism" in s for s in cs)
             acne = any("acne" in s or "pimple" in s for s in cs)
 
-            # Preferences & lifestyle
-            if getattr(profile_obj, "dietary_preference", None):
-                dietary_pref = str(profile_obj.dietary_preference)
-            prof_allergies = list(getattr(profile_obj, "food_allergies", []) or getattr(profile_obj, "allergies", []) or [])
-            if prof_allergies:
-                allergens = prof_allergies
-            prof_intolerances = list(getattr(profile_obj, "food_intolerances", []) or [])
-            if prof_intolerances:
-                intolerances = prof_intolerances
-
+            # Preferences & lifestyle overrides
             lifestyle_data = getattr(profile_obj, "lifestyle", {})
             if isinstance(lifestyle_data, dict):
-                dietary_pref = lifestyle_data.get("dietaryPreference") or lifestyle_data.get("dietary_preference") or dietary_pref
-                if not allergens:
-                    allergens = lifestyle_data.get("allergens") or []
-                if not intolerances:
-                    intolerances = lifestyle_data.get("intolerances") or []
+                raw_dietary_pref = (
+                    lifestyle_data.get("dietaryPreference")
+                    or lifestyle_data.get("dietary_preference")
+                    or raw_dietary_pref
+                )
+                if lifestyle_data.get("allergens"):
+                    raw_allergens_list.extend(lifestyle_data["allergens"])
+                if lifestyle_data.get("intolerances"):
+                    raw_intolerances_list.extend(lifestyle_data["intolerances"])
                 activity_level = lifestyle_data.get("activityLevel") or lifestyle_data.get("activity_level") or activity_level
                 if sleep_hours is None and (lifestyle_data.get("sleepHours") or lifestyle_data.get("sleep_hours")):
                     try:
@@ -318,20 +351,53 @@ class LifestyleContextBuilder:
                         pass
                 stress_level = lifestyle_data.get("stressLevel") or lifestyle_data.get("stress_level") or stress_level
 
-        # 3. Retrieve Active Screening Assessment
+        # --- Canonical Normalization Layer ---
+        # 1. Allergies & Intolerances normalization (handling None, synonyms, non-food exclusions)
+        has_explicit_none = any(str(x).strip().lower() in ("none", "no allergies", "no known allergies", "[]") for x in raw_allergens_list)
+        norm_allergens, non_food_allergens, unmapped_from_allergies = normalize_food_allergens(raw_allergens_list)
+        norm_intolerances, _ = normalize_food_intolerances(raw_intolerances_list + unmapped_from_allergies)
+
+        # Distinguish Dairy Allergy vs Lactose Intolerance:
+        # If user explicitly entered "Dairy / Lactose" or "lactose", ensure lactose intolerance is captured
+        is_lactose_mentioned = any("lactose" in str(x).lower() for x in (raw_allergens_list + raw_intolerances_list))
+        if is_lactose_mentioned and CanonicalIntolerance.LACTOSE.value not in norm_intolerances:
+            norm_intolerances.append(CanonicalIntolerance.LACTOSE.value)
+
+        # Ensure "none" is never stored as an allergen
+        final_allergens = sorted([a for a in norm_allergens if a and a != "none"])
+        final_intolerances = sorted([i for i in norm_intolerances if i and i != "none"])
+
+        if final_allergens or final_intolerances:
+            allergy_status = "active_allergens"
+        elif has_explicit_none:
+            allergy_status = "confirmed_none"
+        else:
+            allergy_status = "unrecorded"
+
+        # 2. Dietary Pattern normalization
+        norm_diet = normalize_dietary_pattern(raw_dietary_pref)
+        canonical_dietary_pattern = norm_diet.value if norm_diet else "omnivore"
+
+        # 3. Retrieve Active Screening Assessment (Respecting true no-assessment state)
         active_rec = assessment_repository.get_active_assessment(user_id_str, module=module, auth_token=auth_token)
+        has_assessment = bool(
+            active_rec
+            and not active_rec.get("error")
+            and active_rec.get("has_assessment") is not False
+        )
+
         screening = ScreeningContext(
-            has_assessment=bool(active_rec),
+            has_assessment=has_assessment,
             module=module,
-            assessment_id=active_rec.get("id") if active_rec else None,
-            assessment_level=active_rec.get("assessment_level", "tier_1") if active_rec else "tier_1",
-            risk_category=active_rec.get("risk_category", "lower") if active_rec else "lower",
-            risk_label=active_rec.get("risk_label", "Lower Screening Risk") if active_rec else "Lower Screening Risk",
-            probability=float(active_rec.get("probability", 0.0)) if active_rec else 0.0,
-            probability_percent=float(active_rec.get("probability_percent", 0.0)) if active_rec else 0.0,
-            threshold=float(active_rec.get("threshold", 0.38)) if active_rec else 0.38,
-            is_active=bool(active_rec.get("is_active", False)) if active_rec else False,
-            created_at=active_rec.get("created_at") if active_rec else None,
+            assessment_id=active_rec.get("id") if has_assessment else None,
+            assessment_level=active_rec.get("assessment_level", "tier_1") if has_assessment else "none",
+            risk_category=active_rec.get("risk_category", "unscreened") if has_assessment else "unscreened",
+            risk_label=active_rec.get("risk_label", "Screening Pending") if has_assessment else "Screening Pending",
+            probability=float(active_rec.get("probability", 0.0)) if has_assessment else 0.0,
+            probability_percent=float(active_rec.get("probability_percent", 0.0)) if has_assessment else 0.0,
+            threshold=float(active_rec.get("threshold", 0.25)) if has_assessment else 0.25,
+            is_active=bool(active_rec.get("is_active", False)) if has_assessment else False,
+            created_at=active_rec.get("created_at") if has_assessment else None,
         )
 
         # Cross-reference active assessment features if profile fields were missing
@@ -381,12 +447,15 @@ class LifestyleContextBuilder:
             height_cm=float(height_cm) if height_cm is not None else None,
             weight_kg=float(weight_kg) if weight_kg is not None else None,
             bmi=bmi,
+            waist_cm=float(waist_cm) if waist_cm is not None else None,
             waist_inch=float(waist_inch) if waist_inch is not None else None,
             hip_inch=float(hip_inch) if hip_inch is not None else None,
             waist_hip_ratio=waist_hip_ratio,
-            dietary_preference=str(dietary_pref).lower(),
-            allergens=[str(a).lower() for a in allergens if a],
-            intolerances=[str(i).lower() for i in intolerances if i],
+            dietary_preference=canonical_dietary_pattern,
+            allergens=final_allergens,
+            intolerances=final_intolerances,
+            allergy_status=allergy_status,
+            non_food_allergies=non_food_allergens,
             activity_level=str(activity_level).lower() if activity_level else None,
             sleep_hours=float(sleep_hours) if sleep_hours is not None else None,
             stress_level=str(stress_level).lower() if stress_level else None,
@@ -396,6 +465,7 @@ class LifestyleContextBuilder:
             skin_darkening=skin_darkening,
             hair_growth=hair_growth,
             acne=acne,
+            profile_updated_at=str(getattr(profile_obj, "updated_at", "") or (profile_obj.get("updated_at", "") if isinstance(profile_obj, dict) else "") or ""),
         )
 
         # 4. Extract SHAP Factors from Active Assessment
@@ -685,6 +755,21 @@ class LifestyleContextBuilder:
         if not longitudinal.has_history:
             missing_data.append("longitudinal_history")
 
+        # 9. Determine Explicit Personalization Level
+        # LEVEL 1: Profile-only (no assessment completed)
+        # LEVEL 2: Profile + Active Screening + SHAP Drivers
+        # LEVEL 3: Level 2 + Verified Labs / Reported Symptoms
+        # LEVEL 4: Level 3 + Multi-assessment Longitudinal History & Adherence Trends
+        if screening.has_assessment:
+            if longitudinal.has_history and longitudinal.assessment_count > 1:
+                personalization_level = "LEVEL_4_LONGITUDINAL"
+            elif (lab_markers.raw_markers and len(lab_markers.raw_markers) > 0) or (symptoms.active_symptoms and len(symptoms.active_symptoms) > 0):
+                personalization_level = "LEVEL_3_CLINICAL"
+            else:
+                personalization_level = "LEVEL_2_SCREENING"
+        else:
+            personalization_level = "LEVEL_1_PROFILE"
+
         ctx = ComprehensiveLifestyleContext(
             user_id=user_id_str,
             demographics=demographics,
@@ -695,6 +780,7 @@ class LifestyleContextBuilder:
             labs=lab_markers,
             longitudinal=longitudinal,
             missing_data=missing_data,
+            personalization_level=personalization_level,
         )
         ctx.context_version = cls.compute_context_version(ctx)
         return ctx
@@ -704,8 +790,9 @@ class LifestyleContextBuilder:
         """
         Computes a deterministic 16-character SHA-256 fingerprint of the patient's
         clinically relevant state:
-        - pathway / demographics (weight, height, age, bmi, activity, diet, symptoms)
-        - screening assessment (id, level, probability, risk_category)
+        - pathway / demographics (weight, height, age, bmi, waist_cm, activity, sleep, stress, diet, allergens, intolerances)
+        - personalization level
+        - screening assessment (has_assessment, id, level, probability, risk_category)
         - top SHAP drivers
         - laboratory biomarkers (fasting glucose, hba1c, testosterone, insulin, lipids)
         - longitudinal trajectory (weight delta, probability trend)
@@ -720,15 +807,20 @@ class LifestyleContextBuilder:
             "age": demo.age,
             "weight_kg": round(demo.weight_kg, 1) if demo.weight_kg is not None else None,
             "height_cm": round(demo.height_cm, 1) if demo.height_cm is not None else None,
+            "waist_cm": round(demo.waist_cm, 1) if demo.waist_cm is not None else None,
             "bmi": round(demo.bmi, 1) if demo.bmi is not None else None,
             "activity_level": demo.activity_level or "",
+            "sleep_hours": round(demo.sleep_hours, 1) if demo.sleep_hours is not None else None,
+            "stress_level": demo.stress_level or "",
             "dietary_preference": demo.dietary_preference or "",
             "allergens": sorted(demo.allergens or []),
             "intolerances": sorted(demo.intolerances or []),
+            "personalization_level": getattr(context, "personalization_level", "LEVEL_1_PROFILE"),
+            "has_assessment": screening.has_assessment,
             "assessment_id": screening.assessment_id or "",
             "assessment_level": screening.assessment_level,
             "risk_category": screening.risk_category,
-            "probability": round(screening.probability, 3),
+            "probability": round(screening.probability, 3) if screening.has_assessment else None,
             "shap_drivers": sorted([d.feature_name for d in context.shap_drivers]),
             "symptoms": sorted(context.symptoms.active_symptoms),
             "fasting_glucose": labs.fasting_glucose_mg_dl,
@@ -740,3 +832,301 @@ class LifestyleContextBuilder:
         }
         encoded = json.dumps(state_digest, sort_keys=True, default=str).encode("utf-8")
         return hashlib.sha256(encoded).hexdigest()[:16]
+
+    @classmethod
+    def extract_freshness_inputs_from_profile_and_assessment(
+        cls,
+        profile_obj: Any,
+        active_assessment: Optional[Dict[str, Any]],
+        pathway: str,
+    ) -> Dict[str, Any]:
+        """
+        Extracts normalized lightweight inputs needed to test cache freshness
+        without querying non-profile tables (symptoms, logs, vitals).
+        """
+        raw_allergens_list: List[str] = []
+        raw_intolerances_list: List[str] = []
+        raw_dietary_pref = "omnivore"
+        activity_level = None
+        sleep_hours = None
+        stress_level = None
+        weight_kg = None
+        height_cm = None
+        waist_cm = None
+        profile_updated_at = ""
+
+        if profile_obj:
+            if isinstance(profile_obj, dict):
+                weight_kg = profile_obj.get("weight_kg")
+                height_cm = profile_obj.get("height_cm")
+                waist_cm = profile_obj.get("waist_cm")
+                activity_level = profile_obj.get("activity_level")
+                sleep_hours = profile_obj.get("sleep_hours")
+                stress_level = profile_obj.get("stress_level")
+                profile_updated_at = str(profile_obj.get("updated_at") or "")
+                raw_dietary_pref = profile_obj.get("dietary_preference") or raw_dietary_pref
+                if profile_obj.get("allergies"):
+                    raw_allergens_list.extend(profile_obj["allergies"])
+                if profile_obj.get("food_allergies"):
+                    raw_allergens_list.extend(profile_obj["food_allergies"])
+                if profile_obj.get("food_intolerances"):
+                    raw_intolerances_list.extend(profile_obj["food_intolerances"])
+                # nested lifestyle
+                ls = profile_obj.get("lifestyle", {})
+                if isinstance(ls, dict):
+                    raw_dietary_pref = ls.get("dietaryPreference") or ls.get("dietary_preference") or raw_dietary_pref
+                    if ls.get("allergens"):
+                        raw_allergens_list.extend(ls["allergens"])
+                    if ls.get("intolerances"):
+                        raw_intolerances_list.extend(ls["intolerances"])
+                    activity_level = ls.get("activityLevel") or ls.get("activity_level") or activity_level
+                    if sleep_hours is None and (ls.get("sleepHours") or ls.get("sleep_hours")):
+                        try:
+                            sleep_hours = float(ls.get("sleepHours") or ls.get("sleep_hours"))
+                        except (ValueError, TypeError):
+                            pass
+                    stress_level = ls.get("stressLevel") or ls.get("stress_level") or stress_level
+            else:
+                weight_kg = getattr(profile_obj, "weight_kg", None)
+                height_cm = getattr(profile_obj, "height_cm", None)
+                waist_cm = getattr(profile_obj, "waist_cm", None)
+                activity_level = getattr(profile_obj, "activity_level", None)
+                sleep_hours = getattr(profile_obj, "sleep_hours", None)
+                stress_level = getattr(profile_obj, "stress_level", None)
+                profile_updated_at = str(getattr(profile_obj, "updated_at", "") or "")
+                raw_dietary_pref = getattr(profile_obj, "dietary_preference", None) or raw_dietary_pref
+                if getattr(profile_obj, "allergies", None):
+                    raw_allergens_list.extend(getattr(profile_obj, "allergies", []))
+                if getattr(profile_obj, "food_allergies", None):
+                    raw_allergens_list.extend(getattr(profile_obj, "food_allergies", []))
+                if getattr(profile_obj, "food_intolerances", None):
+                    raw_intolerances_list.extend(getattr(profile_obj, "food_intolerances", []))
+                # Check nested lifestyle attribute if any
+                ls = getattr(profile_obj, "lifestyle", {})
+                if isinstance(ls, dict):
+                    raw_dietary_pref = ls.get("dietaryPreference") or ls.get("dietary_preference") or raw_dietary_pref
+                    if ls.get("allergens"):
+                        raw_allergens_list.extend(ls["allergens"])
+                    if ls.get("intolerances"):
+                        raw_intolerances_list.extend(ls["intolerances"])
+                    activity_level = ls.get("activityLevel") or ls.get("activity_level") or activity_level
+                    if sleep_hours is None and (ls.get("sleepHours") or ls.get("sleep_hours")):
+                        try:
+                            sleep_hours = float(ls.get("sleepHours") or ls.get("sleep_hours"))
+                        except (ValueError, TypeError):
+                            pass
+                    stress_level = ls.get("stressLevel") or ls.get("stress_level") or stress_level
+
+        norm_allergens, _, unmapped_from_allergies = normalize_food_allergens(raw_allergens_list)
+        norm_intolerances, _ = normalize_food_intolerances(raw_intolerances_list + unmapped_from_allergies)
+        final_allergens = sorted([a for a in norm_allergens if a and a != "none"])
+        final_intolerances = sorted([i for i in norm_intolerances if i and i != "none"])
+        norm_diet = normalize_dietary_pattern(raw_dietary_pref)
+        canonical_diet = norm_diet.value if norm_diet else "omnivore"
+
+        # Numerical biometrics
+        w_val = None
+        if weight_kg is not None:
+            try:
+                w_val = round(float(weight_kg), 1)
+            except (ValueError, TypeError):
+                pass
+        h_val = None
+        if height_cm is not None:
+            try:
+                h_val = round(float(height_cm), 1)
+            except (ValueError, TypeError):
+                pass
+        bmi_val = None
+        if w_val is not None and h_val is not None and h_val > 0:
+            bmi_val = round(float(w_val) / ((float(h_val) / 100.0) ** 2), 1)
+        waist_val = None
+        if waist_cm is not None:
+            try:
+                waist_val = round(float(waist_cm), 1)
+            except (ValueError, TypeError):
+                pass
+        sleep_val = None
+        if sleep_hours is not None:
+            try:
+                sleep_val = round(float(sleep_hours), 1)
+            except (ValueError, TypeError):
+                pass
+
+        # Assessment fields
+        has_assessment = bool(
+            active_assessment
+            and not active_assessment.get("error")
+            and active_assessment.get("has_assessment") is not False
+        )
+        assessment_id = str(active_assessment.get("id") or "") if has_assessment else ""
+        assessment_level = str(active_assessment.get("assessment_level") or "none") if has_assessment else "none"
+        risk_category = str(active_assessment.get("risk_category") or "unscreened") if has_assessment else "unscreened"
+        assessment_updated_at = str(
+            active_assessment.get("updated_at") or active_assessment.get("created_at") or ""
+        ) if has_assessment else ""
+
+        return {
+            "pathway": pathway,
+            "allergens": final_allergens,
+            "intolerances": final_intolerances,
+            "dietary_preference": canonical_diet,
+            "activity_level": str(activity_level).lower().strip() if activity_level else "",
+            "weight_kg": w_val,
+            "height_cm": h_val,
+            "waist_cm": waist_val,
+            "bmi": bmi_val,
+            "sleep_hours": sleep_val,
+            "stress_level": str(stress_level).lower().strip() if stress_level else "",
+            "profile_updated_at": profile_updated_at,
+            "has_assessment": has_assessment,
+            "assessment_id": assessment_id,
+            "assessment_level": assessment_level,
+            "risk_category": risk_category,
+            "assessment_updated_at": assessment_updated_at,
+        }
+
+    @classmethod
+    def extract_freshness_inputs_from_context(
+        cls,
+        context: ComprehensiveLifestyleContext,
+    ) -> Dict[str, Any]:
+        """
+        Extracts identical freshness inputs from a fully built context.
+        """
+        demo = context.demographics
+        screening = context.screening
+        return {
+            "pathway": demo.pathway,
+            "allergens": sorted(demo.allergens or []),
+            "intolerances": sorted(demo.intolerances or []),
+            "dietary_preference": demo.dietary_preference or "omnivore",
+            "activity_level": str(demo.activity_level or "").lower().strip(),
+            "weight_kg": round(float(demo.weight_kg), 1) if demo.weight_kg is not None else None,
+            "height_cm": round(float(demo.height_cm), 1) if demo.height_cm is not None else None,
+            "waist_cm": round(float(demo.waist_cm), 1) if demo.waist_cm is not None else None,
+            "bmi": round(float(demo.bmi), 1) if demo.bmi is not None else None,
+            "sleep_hours": round(float(demo.sleep_hours), 1) if demo.sleep_hours is not None else None,
+            "stress_level": str(demo.stress_level or "").lower().strip(),
+            "profile_updated_at": getattr(demo, "profile_updated_at", "") or "",
+            "has_assessment": screening.has_assessment,
+            "assessment_id": str(screening.assessment_id or ""),
+            "assessment_level": str(screening.assessment_level or "none"),
+            "risk_category": str(screening.risk_category or "unscreened"),
+            "assessment_updated_at": str(screening.created_at or ""),
+        }
+
+    @classmethod
+    def compute_freshness_fingerprint(cls, freshness_inputs: Dict[str, Any]) -> str:
+        """
+        Computes a deterministic 16-character SHA-256 hash of the lightweight freshness inputs.
+        """
+        encoded = json.dumps(freshness_inputs, sort_keys=True, default=str).encode("utf-8")
+        return hashlib.sha256(encoded).hexdigest()[:16]
+
+    @classmethod
+    def is_cache_fresh(
+        cls,
+        user_id: str,
+        canonical_module: str,
+        cached_record: Dict[str, Any],
+        auth_token: Optional[str] = None,
+        profile_override: Any = None,
+        assessment_override: Optional[Dict[str, Any]] = None,
+    ) -> tuple[bool, str]:
+        """
+        Performs a CHEAP freshness verification (<50ms) using ONLY profile + active assessment.
+        Does NOT rebuild all 9 tables.
+        Returns (is_fresh: bool, reason: str).
+        """
+        if not cached_record:
+            return False, "no_cached_record"
+
+        payload = cached_record.get("payload")
+        if not payload or not isinstance(payload, dict):
+            return False, "invalid_cached_payload"
+
+        cached_fingerprint = payload.get("freshness_fingerprint")
+        cached_inputs = payload.get("freshness_inputs")
+
+        if not cached_fingerprint or not cached_inputs or not isinstance(cached_inputs, dict):
+            # Legacy cache before freshness fingerprinting -> invalidate and regenerate once
+            return False, "missing_freshness_metadata"
+
+        # 1. Fetch lightweight inputs (ONLY profile + active assessment)
+        try:
+            if profile_override is not None:
+                profile_obj = profile_override
+            else:
+                profile_obj = health_service.fetch_profile(user_id, auth_token=auth_token)
+        except Exception as e:
+            logger.warning("Lightweight profile fetch failed for freshness check: %s", e)
+            return False, "profile_fetch_failed"
+
+        try:
+            if assessment_override is not None:
+                active_assessment = assessment_override
+            else:
+                active_assessment = assessment_repository.get_active_assessment(
+                    user_id, module=canonical_module, auth_token=auth_token
+                )
+        except Exception as e:
+            logger.warning("Lightweight assessment fetch failed for freshness check: %s", e)
+            return False, "assessment_fetch_failed"
+
+        # 2. Extract current lightweight inputs
+        curr_inputs = cls.extract_freshness_inputs_from_profile_and_assessment(
+            profile_obj=profile_obj,
+            active_assessment=active_assessment,
+            pathway=canonical_module,
+        )
+
+        # 3. Synchronous Clinical Safety & Profile Invalidation Checks
+        if curr_inputs["allergens"] != cached_inputs.get("allergens"):
+            return False, f"allergy_changed: {cached_inputs.get('allergens')} -> {curr_inputs['allergens']}"
+
+        if curr_inputs["intolerances"] != cached_inputs.get("intolerances"):
+            return False, f"intolerance_changed: {cached_inputs.get('intolerances')} -> {curr_inputs['intolerances']}"
+
+        if curr_inputs["dietary_preference"] != cached_inputs.get("dietary_preference"):
+            return False, f"diet_changed: {cached_inputs.get('dietary_preference')} -> {curr_inputs['dietary_preference']}"
+
+        if curr_inputs["assessment_id"] != cached_inputs.get("assessment_id") or curr_inputs["assessment_level"] != cached_inputs.get("assessment_level"):
+            return False, f"assessment_tier_changed: id={cached_inputs.get('assessment_id')}->{curr_inputs['assessment_id']}, lvl={cached_inputs.get('assessment_level')}->{curr_inputs['assessment_level']}"
+
+        if curr_inputs["activity_level"] != cached_inputs.get("activity_level"):
+            return False, f"activity_changed: {cached_inputs.get('activity_level')} -> {curr_inputs['activity_level']}"
+
+        if curr_inputs["weight_kg"] != cached_inputs.get("weight_kg") or curr_inputs["bmi"] != cached_inputs.get("bmi"):
+            return False, f"biometrics_changed: wt={cached_inputs.get('weight_kg')}->{curr_inputs['weight_kg']}, bmi={cached_inputs.get('bmi')}->{curr_inputs['bmi']}"
+
+        if curr_inputs["sleep_hours"] != cached_inputs.get("sleep_hours") or curr_inputs["stress_level"] != cached_inputs.get("stress_level"):
+            return False, f"sleep_stress_changed: sleep={cached_inputs.get('sleep_hours')}->{curr_inputs['sleep_hours']}, stress={cached_inputs.get('stress_level')}->{curr_inputs['stress_level']}"
+
+        if curr_inputs["assessment_updated_at"] and cached_inputs.get("assessment_updated_at") and curr_inputs["assessment_updated_at"] != cached_inputs.get("assessment_updated_at"):
+            return False, "assessment_reevaluated"
+
+        if curr_inputs["profile_updated_at"] and cached_inputs.get("profile_updated_at") and curr_inputs["profile_updated_at"] != cached_inputs.get("profile_updated_at"):
+            return False, "profile_updated_timestamp_changed"
+
+        # 4. Fingerprint Hash Check
+        curr_fingerprint = cls.compute_freshness_fingerprint(curr_inputs)
+        if curr_fingerprint != cached_fingerprint:
+            return False, f"fingerprint_mismatch_{cached_fingerprint}_vs_{curr_fingerprint}"
+
+        # 5. Defense-in-depth Safety Scan: verify NO declared allergen violates cached foods
+        if curr_inputs["allergens"] or curr_inputs["intolerances"]:
+            from apps.intelligence.services.safety_guardrails import is_food_safe_for_user
+            nutrition_data = payload.get("nutrition", {})
+            for concept in nutrition_data.get("meal_concepts", []):
+                for fkey in ("breakfast", "lunch", "dinner", "snack"):
+                    food_text = concept.get(fkey, "")
+                    if food_text and not is_food_safe_for_user(food_text, curr_inputs["allergens"], curr_inputs["intolerances"]):
+                        return False, f"payload_allergen_conflict_in_meal: {food_text[:30]}"
+            for swap in nutrition_data.get("smart_swaps", []):
+                for skey in ("from_food", "to_food"):
+                    sfood = swap.get(skey, "")
+                    if sfood and not is_food_safe_for_user(sfood, curr_inputs["allergens"], curr_inputs["intolerances"]):
+                        return False, f"payload_allergen_conflict_in_swap: {sfood[:30]}"
+
+        return True, "fresh"

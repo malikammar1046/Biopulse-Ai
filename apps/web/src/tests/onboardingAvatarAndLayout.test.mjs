@@ -2,9 +2,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 
+import { fileURLToPath } from 'node:url';
+
 console.log('=== RUNNING ONBOARDING AVATAR & CARD POSITION TEST SUITE ===');
 
-const webRoot = path.resolve('d:/PMOSense2/PMOSense/apps/web');
+const thisDir = path.dirname(fileURLToPath(import.meta.url));
+const webRoot = path.resolve(thisDir, '..', '..');
 
 // 1. Verify default avatar asset exists and is valid SVG
 const defaultAvatarPath = path.join(webRoot, 'public/avatars/avatar-default.svg');

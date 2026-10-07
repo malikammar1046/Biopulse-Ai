@@ -6,26 +6,26 @@ import { resolveRiskBand, RiskCategory } from '../../services/assessmentService'
 export interface PcosRiskProbabilityCardProps {
   probability: number; // 0.0 to 1.0
   riskCategory?: string;
-  threshold?: number; // default 0.38
-  lowCutoff?: number; // default 0.20
+  threshold?: number; // default 0.25
+  lowCutoff?: number; // default 0.18
   onInfoPress?: () => void;
 }
 
 /**
- * BioPulse PCOS Risk Probability Hero Card
+ * BioPulse PCOS Screening Likelihood Card
  *
  * Implements:
  * - Real returned probability rendering (e.g. 72%)
- * - Canonical risk band resolution (Lower / Intermediate / Higher Risk)
+ * - Canonical likelihood band resolution (Lower / Intermediate / Higher Likelihood)
  * - Semicircular SVG-free gauge with proportional angular indicator
- * - Dynamic threshold legend (< 20%, 20% - 37%, >= 38%)
+ * - Qualitative likelihood category legend (without exposing internal decision cutoffs)
  * - Explicit non-diagnostic clinical disclaimer
  */
 export const PcosRiskProbabilityCard: React.FC<PcosRiskProbabilityCardProps> = ({
   probability,
   riskCategory,
-  threshold = 0.38,
-  lowCutoff = 0.20,
+  threshold = 0.25,
+  lowCutoff = 0.18,
 }) => {
   const band = useMemo(
     () => resolveRiskBand(probability, riskCategory, threshold, lowCutoff),
@@ -33,8 +33,6 @@ export const PcosRiskProbabilityCard: React.FC<PcosRiskProbabilityCardProps> = (
   );
 
   const probPercent = Math.round(probability * 100);
-  const lowThresholdPct = Math.round(lowCutoff * 100);
-  const highThresholdPct = Math.round(threshold * 100);
 
   // Rotation for semi-circular gauge: from -90deg (0%) to 90deg (100%)
   const clampedProb = Math.max(0, Math.min(1, probability));
@@ -50,7 +48,7 @@ export const PcosRiskProbabilityCard: React.FC<PcosRiskProbabilityCardProps> = (
             <View style={styles.shieldIconBadge}>
               <Ionicons name="shield-checkmark-outline" size={17} color="#E0316A" />
             </View>
-            <Text style={styles.cardTitle}>PCOS Risk Probability</Text>
+            <Text style={styles.cardTitle}>Estimated Screening Likelihood</Text>
             <Ionicons name="information-circle-outline" size={16} color="#64748B" style={styles.infoIcon} />
           </View>
 
@@ -101,17 +99,14 @@ export const PcosRiskProbabilityCard: React.FC<PcosRiskProbabilityCardProps> = (
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#10B981' }]} />
               <Text style={styles.legendLabel}>Lower</Text>
-              <Text style={styles.legendThreshold}>&lt; {lowThresholdPct}%</Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#F59E0B' }]} />
               <Text style={styles.legendLabel}>Intermediate</Text>
-              <Text style={styles.legendThreshold}>{lowThresholdPct}% – {highThresholdPct - 1}%</Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#E0316A' }]} />
               <Text style={styles.legendLabel}>Higher</Text>
-              <Text style={styles.legendThreshold}>≥ {highThresholdPct}%</Text>
             </View>
           </View>
         </View>

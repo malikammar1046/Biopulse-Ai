@@ -90,7 +90,7 @@ class LifestyleRecommendationsEngineTests(TestCase):
                 risk_label="Elevated Screening Risk",
                 probability=0.74,
                 probability_percent=74.0,
-                threshold=0.38,
+                threshold=0.25,
                 is_active=True,
             ),
             shap_drivers=[

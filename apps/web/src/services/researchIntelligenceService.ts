@@ -80,7 +80,7 @@ export class ResearchIntelligenceService {
     if (mlAssessment && mlAssessment.backend_mode !== 'insufficient_data' && mlAssessment.risk_category !== 'insufficient_data') {
       const isHighRisk = mlAssessment.is_higher_risk;
       const prob = mlAssessment.pcos_probability;
-      const threshold = mlAssessment.screening_threshold ?? 0.38;
+      const threshold = mlAssessment.screening_threshold ?? 0.25;
 
       // Authentic TreeSHAP factors from backend
       const shapFactors: ContributingFactor[] = (mlAssessment.explanations || []).map((exp: ShapExplanation) => ({

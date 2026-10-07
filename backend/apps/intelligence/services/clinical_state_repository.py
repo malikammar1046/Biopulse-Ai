@@ -462,6 +462,15 @@ class ClinicalStateRepository:
         with _clinical_lock:
             _in_memory_clinical_state[mem_key] = record
 
+        # 4. Synchronously invalidate cached lifestyle recommendations on clinical state update
+        try:
+            from apps.intelligence.services.lifestyle_repository import lifestyle_repository
+            lifestyle_repository.invalidate_active_recommendations(
+                user_id=user_id_str, module=module_name, auth_token=auth_token
+            )
+        except Exception as e:
+            logger.debug("Lifestyle cache invalidation notice on clinical state save: %s", e)
+
         return record
 
     @classmethod

@@ -75,6 +75,8 @@ class PatientProfile:
     abortions_count: int | None = None     # 0, 1, 2...
     fast_food_intake: str | None = None    # "frequent" | "occasional" | "rare_never"
     regular_exercise: bool | None = None   # True | False
+    stress_level: str | None = None        # "low" | "moderate" | "high" | "severe"
+    lifestyle: dict[str, Any] = field(default_factory=dict)
     updated_at: str | None = None
     created_at: str | None = None
 
@@ -271,7 +273,7 @@ class SupabaseHealthService:
             "daily_water_glasses,dietary_preference,conditions,medications,"
             "waist_cm,hip_cm,allergies,food_allergies,food_intolerances,"
             "marital_status,marriage_years,is_pregnant,abortions_count,"
-            "fast_food_intake,regular_exercise,updated_at,created_at"
+            "fast_food_intake,regular_exercise,stress_level,lifestyle,updated_at,created_at"
         )
         base_select = (
             "id,gender,pathway,height_cm,weight_kg,date_of_birth,cycle_length,"
@@ -376,6 +378,8 @@ class SupabaseHealthService:
             abortions_count=row.get("abortions_count"),
             fast_food_intake=row.get("fast_food_intake"),
             regular_exercise=row.get("regular_exercise"),
+            stress_level=row.get("stress_level") or (row.get("lifestyle", {}).get("stressLevel") if isinstance(row.get("lifestyle"), dict) else None),
+            lifestyle=row.get("lifestyle") if isinstance(row.get("lifestyle"), dict) else {},
             updated_at=row.get("updated_at"),
             created_at=row.get("created_at"),
         )

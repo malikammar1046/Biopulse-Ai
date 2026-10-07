@@ -8,6 +8,8 @@ import {
   Trash01,
   RefreshCw01,
   Beaker01,
+  Drop,
+  ActivityHeart,
 } from '@untitledui/icons';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { ocrService } from '../../services/ocrService';
@@ -27,6 +29,8 @@ interface ClinicalLabsModalProps {
   onSuccess?: () => void;
 }
 
+export type FemaleCategory = 'hormonal' | 'metabolic' | 'vitals';
+
 interface FieldConfig {
   key: string;
   label: string;
@@ -34,7 +38,7 @@ interface FieldConfig {
   min: number;
   max: number;
   step?: string;
-  category: 'hormonal' | 'metabolic' | 'vitals';
+  category: FemaleCategory;
 }
 
 export const FIELD_CONFIGS: FieldConfig[] = [
@@ -254,6 +258,20 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
   const [removedFields, setRemovedFields] = useState<string[]>([]);
   const [ocrExtractedFields, setOcrExtractedFields] = useState<string[]>([]);
 
+  // Categorized Accordion state (independent of clinical form state)
+  const [expandedSections, setExpandedSections] = useState<Record<FemaleCategory, boolean>>({
+    hormonal: true,
+    metabolic: false,
+    vitals: false,
+  });
+
+  const toggleSection = (category: FemaleCategory) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [category]: !prev[category],
+    }));
+  };
+
   // OCR state
   const [isScanningReport, setIsScanningReport] = useState(false);
   const [ocrBanner, setOcrBanner] = useState<{
@@ -311,6 +329,11 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
       setFieldErrors({});
       setRemovedFields([]);
       setOcrExtractedFields([]);
+      setExpandedSections({
+        hormonal: true,
+        metabolic: false,
+        vitals: false,
+      });
       setOcrBanner(null);
       setEntryMode('manual');
       setError(null);
@@ -388,6 +411,11 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
     setFormValues({ ...SAMPLE_MOCK_DATA });
     setFieldErrors({});
     setRemovedFields([]);
+    setExpandedSections({
+      hormonal: true,
+      metabolic: true,
+      vitals: true,
+    });
     setOcrBanner({
       type: 'info',
       message: 'Populated sample lab measurements for development verification.',
@@ -410,6 +438,19 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
         const newlyExtractedKeys = Object.keys(mapped);
         setOcrExtractedFields((prev) => Array.from(new Set([...prev, ...newlyExtractedKeys])));
         setRemovedFields((prev) => prev.filter((f) => !newlyExtractedKeys.includes(f)));
+
+        // Automatically expand only categories containing at least one successfully OCR-mapped value
+        const mappedKeysSet = new Set(newlyExtractedKeys);
+        const newlyMappedHormonal = FIELD_CONFIGS.filter((f) => f.category === 'hormonal').some((f) => mappedKeysSet.has(f.key));
+        const newlyMappedMetabolic = FIELD_CONFIGS.filter((f) => f.category === 'metabolic').some((f) => mappedKeysSet.has(f.key));
+        // Rule 5: Clinical vitals are for manual entry unless genuinely extracted by OCR
+        const newlyMappedVitals = FIELD_CONFIGS.filter((f) => f.category === 'vitals').some((f) => mappedKeysSet.has(f.key));
+
+        setExpandedSections({
+          hormonal: newlyMappedHormonal,
+          metabolic: newlyMappedMetabolic,
+          vitals: newlyMappedVitals,
+        });
 
         // Automatically hand off to manual review of extracted values
         setEntryMode('manual');
@@ -490,7 +531,29 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
         throw new Error('Please add at least one test result from your lab report before saving.');
       }
 
-      await submitTier2(payload);
+      if (import.meta.env.DEV) {
+        console.log(
+          `[TIER2_TRACE] event=submit_start user=${activeAssessment?.patient_id || 'unknown'} module=female_pcos active_before_id=${activeAssessment?.id} active_before_level=${activeAssessment?.assessment_level} tier2_field_count=${enteredCount}`
+        );
+      }
+
+      const result = await submitTier2(payload);
+
+      if (!result) {
+        throw new Error(
+          "We couldn't update your screening with these clinical values. Your previous assessment is unchanged. Please try again."
+        );
+      }
+
+      if (
+        result.assessment_level !== 'tier_1_2' &&
+        result.assessment_level !== 'tier_1_2_3'
+      ) {
+        throw new Error(
+          'Clinical data was not incorporated into the active assessment.'
+        );
+      }
+
       setSuccess(true);
       if (onSuccess) onSuccess();
       setTimeout(() => {
@@ -678,15 +741,18 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
         </div>
       )}
 
-      {/* Form Fields: Progressive Disclosure in 2-Column Sections */}
-      <div className="space-y-4">
-        {/* Section 1: Hormone Tests (Always open) */}
+      {/* Form Fields: Categorized Accordion Sections */}
+      <div className="space-y-3.5">
+        {/* Section 1: Hormone Tests */}
         <ClinicalSection
           title="Hormone Tests"
           description="Core reproductive hormones used in your PCOS screening assessment."
           addedCount={hormonalCount}
-          collapsible={false}
-          defaultExpanded={true}
+          totalCount={6}
+          collapsible={true}
+          isExpanded={expandedSections.hormonal}
+          onToggle={() => toggleSection('hormonal')}
+          icon={<Beaker01 className="w-4 h-4" />}
           accentColor="pink"
         >
           {FIELD_CONFIGS.filter((f) => f.category === 'hormonal').map((cfg) => (
@@ -708,13 +774,16 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
           ))}
         </ClinicalSection>
 
-        {/* Section 2: Metabolic & Blood Tests (Collapsible) */}
+        {/* Section 2: Metabolic & Blood Chemistry */}
         <ClinicalSection
           title="Metabolic & Blood Chemistry"
           description="Glycemic and nutritional biomarkers that influence hormonal balance."
           addedCount={metabolicCount}
+          totalCount={5}
           collapsible={true}
-          defaultExpanded={metabolicCount > 0}
+          isExpanded={expandedSections.metabolic}
+          onToggle={() => toggleSection('metabolic')}
+          icon={<Drop className="w-4 h-4" />}
           accentColor="pink"
         >
           {FIELD_CONFIGS.filter((f) => f.category === 'metabolic').map((cfg) => (
@@ -736,13 +805,16 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
           ))}
         </ClinicalSection>
 
-        {/* Section 3: Physical Vitals (Collapsible) */}
+        {/* Section 3: Clinical Vitals */}
         <ClinicalSection
           title="Clinical Vitals"
           description="Resting blood pressure and physiological baseline vitals."
           addedCount={vitalsCount}
+          totalCount={4}
           collapsible={true}
-          defaultExpanded={vitalsCount > 0}
+          isExpanded={expandedSections.vitals}
+          onToggle={() => toggleSection('vitals')}
+          icon={<ActivityHeart className="w-4 h-4" />}
           accentColor="pink"
         >
           {FIELD_CONFIGS.filter((f) => f.category === 'vitals').map((cfg) => (

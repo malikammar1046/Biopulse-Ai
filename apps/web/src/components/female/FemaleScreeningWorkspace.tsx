@@ -41,15 +41,11 @@ export interface RiskRangeConfig {
 
 /**
  * Derives authoritative risk thresholds and range labels from the active assessment configuration.
- * Consumes real model threshold configuration (e.g. Tier 1: 20% low cutoff, 38% screening cutoff;
- * Tier 2/3: 18% low cutoff, 29% screening cutoff).
+ * Consumes Policy v2 screening configuration (18% lower cutoff, 25% primary operating cutoff).
  */
 export function getAuthoritativeRiskRanges(assessment: any): RiskRangeConfig {
-  const level = assessment?.assessment_level;
-  const isTier2Or3 = level === 'tier_1_2' || level === 'tier_1_2_3' || level === 'tier_1_3';
-
-  const defaultHigh = isTier2Or3 ? 29 : 38;
-  const defaultLow = isTier2Or3 ? 18 : 20;
+  const defaultHigh = 25;
+  const defaultLow = 18;
 
   const highCutoff =
     assessment?.threshold !== undefined && assessment?.threshold !== null
@@ -61,9 +57,9 @@ export function getAuthoritativeRiskRanges(assessment: any): RiskRangeConfig {
   return {
     lowCutoffPercent: lowCutoff,
     highCutoffPercent: highCutoff,
-    lowLabel: `0 – ${lowCutoff}%`,
-    intermediateLabel: `${lowCutoff} – ${highCutoff}%`,
-    highLabel: `${highCutoff}%+`,
+    lowLabel: 'Lower likelihood',
+    intermediateLabel: 'Intermediate likelihood',
+    highLabel: 'Higher likelihood',
   };
 }
 
@@ -458,16 +454,16 @@ export const FemaleScreeningWorkspace: React.FC = () => {
             {/* Spectrum Range Labels */}
             <div className="flex justify-between items-start mt-2 text-xs select-none">
               <div className="text-left">
-                <span className="block font-semibold text-[#027A48]">Lower Risk</span>
-                <span className="text-[11px] text-[#667085]">{riskRanges.lowLabel}</span>
+                <span className="block font-semibold text-[#027A48]">Lower Likelihood</span>
+                <span className="text-[11px] text-[#667085]">General profile</span>
               </div>
               <div className="text-center">
-                <span className="block font-medium text-[#667085]">Intermediate Risk</span>
-                <span className="text-[11px] text-[#98A2B3]">{riskRanges.intermediateLabel}</span>
+                <span className="block font-medium text-[#667085]">Intermediate Likelihood</span>
+                <span className="text-[11px] text-[#98A2B3]">Monitoring zone</span>
               </div>
               <div className="text-right">
-                <span className="block font-semibold text-[#B42318]">Higher Risk</span>
-                <span className="text-[11px] text-[#98A2B3]">{riskRanges.highLabel}</span>
+                <span className="block font-semibold text-[#B42318]">Higher Likelihood</span>
+                <span className="text-[11px] text-[#98A2B3]">Clinical evaluation</span>
               </div>
             </div>
           </div>

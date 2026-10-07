@@ -12,7 +12,7 @@
 - **Django Backend Application (`apps.intelligence`)**:
   - `views.py`: Exposes `/api/v1/intelligence/status/`, `/health/`, `/assessment/`.
   - `intelligence_orchestrator.py`: Coordinates data retrieval from `supabase_health_service.py`, feature extraction, ML prediction, and TreeSHAP explanation.
-  - `ovasense_ml_bridge.py`: Wraps `machine-learning/Ovasense-ML/models/ovasense_final_model.joblib` (ExtraTreesClassifier, 16 features, 0.38 calibrated screening threshold) and `shap.TreeExplainer`.
+  - `ovasense_ml_bridge.py`: Wraps `machine-learning/Ovasense-ML/models/ovasense_final_model.joblib` (ExtraTreesClassifier, 16 features, previous deployed screening threshold 0.38, updated under Policy v2 to 0.25) and `shap.TreeExplainer`.
 
 ---
 
@@ -55,7 +55,7 @@ Replace this client-side simulated `setTimeout` logic with a live HTTP request t
 
 ## 5. Existing ML & TreeSHAP Capabilities
 - **Model**: `ExtraTreesClassifier` trained on 16 clinical, hormonal, metabolic, and lifestyle features.
-- **Calibrated Screening Cutoff**: `0.38` (38% probability threshold for higher-risk stratification).
+- **Calibrated Screening Cutoff**: `0.25` under Policy v2 (Previous deployed threshold: `0.38`).
 - **Explainability**: `TreeSHAP` computes exact positive/negative Shapley values for each of the 16 features for the specific patient.
 - **LLM Rule**: The LLM explains what these Shapley values mean in plain patient-friendly language (e.g. *"Your cycle irregularity and BMI contributed most strongly to this screening indicator"*), but CANNOT recalculate the score or alter the ML result.
 

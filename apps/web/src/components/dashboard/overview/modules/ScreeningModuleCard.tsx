@@ -42,10 +42,9 @@ export const ScreeningModuleCard: React.FC<ScreeningModuleCardProps> = ({
   const subtitle = 'Based on your latest assessment and health data';
   const riskTypeLabel = isFemale ? 'PCOS Risk' : 'Male Risk';
 
-  // Authoritative clinical risk classification matching Screening Workspace cutoffs
-  const isTier2Or3Female = isFemale && (assessmentLevel === 'tier_1_2' || assessmentLevel === 'tier_1_2_3' || assessmentLevel === 'tier_1_3');
-  const highCutoff = isFemale ? (isTier2Or3Female ? 29 : 38) : 18.08;
-  const lowCutoff = isFemale ? (isTier2Or3Female ? 18 : 20) : 10;
+  // Authoritative clinical risk classification matching policy v2 cutoffs
+  const highCutoff = isFemale ? 25 : 18.08;
+  const lowCutoff = isFemale ? 18 : 10;
 
   let isHigh = false;
   let isIntermediate = false;
@@ -61,7 +60,7 @@ export const ScreeningModuleCard: React.FC<ScreeningModuleCardProps> = ({
 
   // Consistent with Screening Workspace & Design System tokens
   const riskBadgeColor = isHigh
-    ? 'bg-[#FEF3F2] text-[#B42318] border-[#FECDCA]'
+    ? (isFemale ? 'bg-[#FDE6EF] text-[#DC326C] border-[#F43F7D]/20' : 'bg-[#FEF3F2] text-[#B42318] border-[#FECDCA]')
     : isIntermediate
     ? 'bg-[#FFFAEB] text-[#B54708] border-[#FEDF89]'
     : 'bg-[#ECFDF3] text-[#027A48] border-[#D1FADF]';
@@ -72,11 +71,9 @@ export const ScreeningModuleCard: React.FC<ScreeningModuleCardProps> = ({
     ? '#F59E0B'
     : '#10B981';
 
-  const riskDisplayName = riskLabel || (isHigh
-    ? 'Higher Screening Risk'
-    : isIntermediate
-    ? 'Intermediate Screening Risk'
-    : 'Lower Screening Risk');
+  const riskDisplayName = riskLabel || (isFemale
+    ? (isHigh ? 'Higher likelihood' : isIntermediate ? 'Intermediate likelihood' : 'Lower likelihood')
+    : (isHigh ? 'Higher Screening Risk' : isIntermediate ? 'Intermediate Screening Risk' : 'Lower Screening Risk'));
 
   const RiskIcon = isHigh
     ? AlertCircle
@@ -92,10 +89,10 @@ export const ScreeningModuleCard: React.FC<ScreeningModuleCardProps> = ({
   // Friendly clinical summary
   const summaryText = isFemale
     ? isHigh
-      ? 'Your results suggest elevated indicators associated with PCOS. Review detailed biomarker factors.'
+      ? 'Several of your current screening factors are associated with PCOS. Review detailed biomarker factors.'
       : isIntermediate
-      ? 'Your results suggest an intermediate risk of PCOS. Continue tracking symptoms and lifestyle for better insights.'
-      : 'Your results suggest lower likelihood of PCOS based on current inputs.'
+      ? 'Some of your current health patterns are associated with PCOS, but the result is not conclusive. Adding laboratory results may provide a more informed assessment.'
+      : 'Your current screening pattern shows fewer features associated with PCOS.'
     : isHigh
     ? 'Your screening suggests elevated indicators of hypogonadism. Consider confirming with morning testosterone testing.'
     : isIntermediate
