@@ -153,38 +153,67 @@ export default function ScreeningOverviewScreen() {
             </View>
 
             {/* Donut Ring & Summary */}
-            <View style={styles.overviewBody}>
-              <View style={[styles.donutGauge, { borderColor: themeAccent, borderTopColor: isFemale ? '#FF80A8' : '#2196E3' }]}>
-                <Text style={styles.donutGaugePercent}>{screening.probabilityPercent}%</Text>
-                <Text style={[styles.donutGaugeLabel, { color: themeAccent }]}>
-                  {screening.riskBand.replace(' Risk', '')}
+            {screening.tierStatus === 'Not Assessed' ? (
+              <View style={{ paddingVertical: 16, alignItems: 'center' }}>
+                <View style={[styles.cardIconBox, { backgroundColor: themeSoftBg, width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center', marginBottom: 10 }]}>
+                  <Ionicons name="clipboard-outline" size={24} color={themeAccent} />
+                </View>
+                <Text style={{ fontSize: 16, fontWeight: '700', color: '#073B72', textAlign: 'center', marginBottom: 4 }}>
+                  {isFemale ? 'No PCOS Screening Completed' : 'No Hypogonadism Screening Completed'}
                 </Text>
+                <Text style={{ fontSize: 13, color: '#64748B', textAlign: 'center', lineHeight: 18, marginBottom: 16, paddingHorizontal: 16 }}>
+                  Complete your initial Tier 1 assessment to receive validated AI probability and personalized clinical risk analysis.
+                </Text>
+                <Pressable
+                  onPress={() => router.push(isFemale ? '/female-review' : '/male-review')}
+                  style={[styles.primaryCTA, { backgroundColor: themeAccent, alignSelf: 'stretch', marginHorizontal: 8 }]}
+                >
+                  <Text style={styles.primaryCTAText}>Start Screening Assessment</Text>
+                  <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+                </Pressable>
               </View>
+            ) : (
+              <View style={styles.overviewBody}>
+                <View style={[styles.donutGauge, { borderColor: themeAccent, borderTopColor: isFemale ? '#FF80A8' : '#2196E3' }]}>
+                  <Text style={styles.donutGaugePercent}>{screening.probabilityPercent}%</Text>
+                  <Text style={[styles.donutGaugeLabel, { color: themeAccent }]}>
+                    {screening.riskBand.replace(' Risk', '')}
+                  </Text>
+                </View>
 
-              <View style={styles.overviewDetails}>
-                <Text style={styles.overviewDescription}>
-                  {isFemale
-                    ? "Your screening result suggests a higher likelihood of PCOS based on the information you've shared."
-                    : 'Your answers suggest a moderate likelihood of low testosterone (hypogonadism).'}
-                </Text>
+                <View style={styles.overviewDetails}>
+                  <Text style={styles.overviewDescription}>
+                    {isFemale
+                      ? (screening.riskCategory === 'higher'
+                          ? "Your screening result suggests a higher likelihood of PCOS based on the information you've shared."
+                          : screening.riskCategory === 'intermediate'
+                          ? "Your screening result suggests an intermediate likelihood of PCOS. Continued monitoring recommended."
+                          : "Your screening result suggests a lower likelihood of PCOS.")
+                      : (screening.riskCategory === 'higher'
+                          ? "Your answers suggest a higher likelihood of late-onset androgen deficiency."
+                          : screening.riskCategory === 'intermediate'
+                          ? "Your answers suggest a moderate likelihood of low testosterone (hypogonadism)."
+                          : "Your screening pattern indicates lower likelihood of androgen deficiency.")}
+                  </Text>
 
-                <View style={styles.tierStatusRow}>
-                  <View style={[styles.tierStatusBadge, { backgroundColor: themeSoftBg }]}>
-                    <Ionicons name="checkmark-circle" size={13} color={themeAccent} />
-                    <Text style={[styles.tierStatusBadgeText, { color: themeAccent }]}>
-                      Tier 1 Complete
+                  <View style={styles.tierStatusRow}>
+                    <View style={[styles.tierStatusBadge, { backgroundColor: themeSoftBg }]}>
+                      <Ionicons name="checkmark-circle" size={13} color={themeAccent} />
+                      <Text style={[styles.tierStatusBadgeText, { color: themeAccent }]}>
+                        {screening.tierStatus}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.lastUpdatedRow}>
+                    <Ionicons name="calendar-outline" size={13} color="#8A9BA8" />
+                    <Text style={styles.lastUpdatedText}>
+                      Last updated {screening.lastAssessedDate}
                     </Text>
                   </View>
                 </View>
-
-                <View style={styles.lastUpdatedRow}>
-                  <Ionicons name="calendar-outline" size={13} color="#8A9BA8" />
-                  <Text style={styles.lastUpdatedText}>
-                    Last updated {screening.lastAssessedDate}
-                  </Text>
-                </View>
               </View>
-            </View>
+            )}
 
             {/* Non-Diagnostic Callout */}
             <View style={[styles.calloutBox, { backgroundColor: themeSoftBg, borderColor: themeCardBorder }]}>
@@ -218,26 +247,32 @@ export default function ScreeningOverviewScreen() {
             <View style={styles.stepperContainer}>
               {/* Tier 1 */}
               <View style={styles.stepItem}>
-                <View style={[styles.stepCircleComplete, { backgroundColor: themeAccent }]}>
-                  <Ionicons name="checkmark" size={14} color="#FFFFFF" />
+                <View style={screening.tierStatus === 'Not Assessed' ? [styles.stepCircleActive, { borderColor: themeAccent }] : [styles.stepCircleComplete, { backgroundColor: themeAccent }]}>
+                  {screening.tierStatus === 'Not Assessed' ? (
+                    <Text style={[styles.stepCircleActiveText, { color: themeAccent }]}>1</Text>
+                  ) : (
+                    <Ionicons name="checkmark" size={14} color="#FFFFFF" />
+                  )}
                 </View>
                 <View style={styles.stepInfo}>
                   <Text style={styles.stepNumber}>Tier 1</Text>
-                  <Text style={[styles.stepStatus, { color: themeAccent }]}>Complete</Text>
+                  <Text style={[styles.stepStatus, { color: themeAccent }]}>
+                    {screening.tierStatus === 'Not Assessed' ? 'Pending' : 'Complete'}
+                  </Text>
                   <Text style={styles.stepSub}>Questionnaire & symptoms</Text>
                 </View>
               </View>
 
-              <View style={[styles.stepConnector, { backgroundColor: themeAccent }]} />
+              <View style={[styles.stepConnector, { backgroundColor: screening.tierStatus === 'Not Assessed' ? '#E2E8F0' : themeAccent }]} />
 
               {/* Tier 2 */}
               <View style={styles.stepItem}>
-                <View style={[styles.stepCircleActive, { borderColor: themeAccent }]}>
-                  <Text style={[styles.stepCircleActiveText, { color: themeAccent }]}>2</Text>
+                <View style={screening.tierStatus === 'Not Assessed' ? styles.stepCirclePending : [styles.stepCircleActive, { borderColor: themeAccent }]}>
+                  <Text style={screening.tierStatus === 'Not Assessed' ? styles.stepCirclePendingText : [styles.stepCircleActiveText, { color: themeAccent }]}>2</Text>
                 </View>
                 <View style={styles.stepInfo}>
                   <Text style={styles.stepNumber}>Tier 2</Text>
-                  <Text style={styles.stepStatus}>Next Step</Text>
+                  <Text style={styles.stepStatus}>{screening.tierStatus === 'Not Assessed' ? 'Upcoming' : 'Next Step'}</Text>
                   <Text style={styles.stepSub}>Add clinical labs</Text>
                 </View>
               </View>
@@ -259,10 +294,12 @@ export default function ScreeningOverviewScreen() {
 
             {/* Primary CTA Button */}
             <Pressable
-              onPress={() => router.push('/(app)/tier-progress')}
+              onPress={() => router.push(screening.tierStatus === 'Not Assessed' ? (isFemale ? '/female-review' : '/male-review') : '/(app)/tier-progress')}
               style={[styles.primaryCTA, { backgroundColor: themeAccent }]}
             >
-              <Text style={styles.primaryCTAText}>Continue to Next Tier</Text>
+              <Text style={styles.primaryCTAText}>
+                {screening.tierStatus === 'Not Assessed' ? 'Start Tier 1 Assessment' : 'Continue to Next Tier'}
+              </Text>
               <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
             </Pressable>
           </View>

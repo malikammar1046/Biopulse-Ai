@@ -19,7 +19,12 @@ import { BioPulseButton } from '../components/common/BioPulseButton';
 import { MaleOnboardingHeader } from '../components/onboarding/MaleOnboardingHeader';
 import { useMaleOnboarding } from '../features/onboarding';
 import { useHealthStore } from '../store';
-import { submitMaleTier1AssessmentWithStatus } from '../services/assessmentService';
+import {
+  submitMaleTier1AssessmentWithStatus,
+  buildMaleTier1Inputs,
+  validateMaleReviewInputs,
+  resolveRiskBand,
+} from '../services/assessmentService';
 
 /**
  * SCREEN 16 — MALE REVIEW
@@ -49,7 +54,7 @@ export default function MaleReviewScreen() {
     setAssessmentError,
     saveAndCompleteOnboarding,
   } = useMaleOnboarding();
-  const { updateProfile, updateScreeningAssessment } = useHealthStore();
+  const { updateProfile, updateScreeningAssessment, refreshAssessment } = useHealthStore();
 
   const [submitting, setSubmitting] = useState(false);
 
@@ -127,43 +132,53 @@ export default function MaleReviewScreen() {
   );
 
   const handleRunScreening = useCallback(async () => {
+    // 1. Strict clinical validation
+    const validation = validateMaleReviewInputs(basicInfo, adam);
+    if (!validation.isValid) {
+      Alert.alert(
+        'Required Clinical Information Missing',
+        validation.error || 'Please provide all required health measurements before continuing.'
+      );
+      return;
+    }
+
     setSubmitting(true);
     setIsLoadingAssessment(true);
     setAssessmentError(null);
 
-    const answersRecord: Record<string, boolean> = {};
-    Object.entries(adam.answers).forEach(([k, v]) => {
-      answersRecord[`q${k}`] = v;
-    });
-
-    const payload = {
-      age: basicInfo.age || 32,
-      weight_kg: basicInfo.weightKg || 76,
-      height_cm: basicInfo.heightCm || 178,
-      bmi: basicInfo.bmi || 24.0,
-      waist_cm: basicInfo.waistCm || 86,
-      sleep_hours: lifestyle.sleepHours || 7,
-      low_energy_flag: adam.answers[2] ? 1 : 0,
-      decreased_libido_flag: adam.answers[1] ? 1 : 0,
-      exercise_frequency: lifestyle.exerciseFrequency || '1-2_days',
-      fast_food: lifestyle.fastFoodIntake === 'frequently' ? 1 : 0,
-      adam_answers: answersRecord,
-    };
+    const payload = buildMaleTier1Inputs(basicInfo, adam, lifestyle);
 
     try {
       const res = await submitMaleTier1AssessmentWithStatus(payload);
-      if (res.data) {
-        const assess = res.data as any;
-        setActiveAssessment(res.data);
-        updateScreeningAssessment({
-          probabilityPercent: Math.round((assess.probability ?? 0.35) * 100),
-          riskBand: assess.risk_category === 'high' || (assess.probability ?? 0) >= 0.6 ? 'Higher Risk' : 'Lower Risk',
-          riskCategory: (assess.risk_category?.toLowerCase() as 'lower' | 'intermediate' | 'higher') || 'lower',
-          tier: 1,
-          tierStatus: 'Tier 1 Complete',
-          topFactors: assess.top_factors || [],
-        });
+
+      if (res.error || !res.data) {
+        Alert.alert(
+          'Screening Engine Unavailable',
+          res.error || 'Failed to connect to the BioPulse assessment pipeline. Please check your network connection and retry.'
+        );
+        return;
       }
+
+      const assess = res.data;
+      const band = resolveRiskBand(assess.probability, assess.risk_category, assess.threshold || 0.45);
+
+      setActiveAssessment(assess);
+      updateScreeningAssessment({
+        probabilityPercent: assess.probability_percent ?? Math.round(assess.probability * 100),
+        riskBand: (band.label === 'Higher Likelihood' ? 'Higher Risk' : band.label === 'Intermediate Likelihood' ? 'Intermediate Risk' : 'Lower Risk') as any,
+        riskCategory: band.category,
+        tier: 1,
+        tierStatus: 'Tier 1 Complete',
+        lastAssessedDate: 'Today',
+        topFactors: (assess.explanations || []).map((exp, idx) => ({
+          id: `factor_${idx}`,
+          name: exp.feature_name || exp.feature_key,
+          impactPercent: exp.explanation_share_percent || Math.round(Math.abs(exp.impact_score || 0) * 100),
+          direction: (exp.direction === 'increases_risk' || exp.direction === 'positive' || exp.direction === 'higher' ? 'increases_risk' : 'decreases_risk') as any,
+          explanation: exp.description || exp.patient_explanation || '',
+          iconName: 'pulse',
+        })),
+      });
 
       await saveAndCompleteOnboarding({
         age: basicInfo.age,
@@ -180,10 +195,11 @@ export default function MaleReviewScreen() {
         isOnboarded: true,
       });
 
+      refreshAssessment().catch(() => {});
+
       router.push('/male-screening-result');
     } catch (err: any) {
-      Alert.alert('Error', err?.message || 'An unexpected error occurred during screening.');
-      router.push('/male-screening-result');
+      Alert.alert('Assessment Error', err?.message || 'An unexpected error occurred during screening.');
     } finally {
       setSubmitting(false);
       setIsLoadingAssessment(false);
@@ -198,6 +214,7 @@ export default function MaleReviewScreen() {
     saveAndCompleteOnboarding,
     updateProfile,
     updateScreeningAssessment,
+    refreshAssessment,
     router,
   ]);
 

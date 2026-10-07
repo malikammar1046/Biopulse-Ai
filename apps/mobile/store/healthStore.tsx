@@ -21,6 +21,7 @@ import {
   reportService,
   nutritionService,
   notificationService,
+  ProgressiveAssessment,
 } from '../services';
 
 
@@ -42,7 +43,7 @@ export interface ScreeningFactor {
 export interface ScreeningAssessmentState {
   probabilityPercent: number;
   riskBand: 'Lower Risk' | 'Intermediate Risk' | 'Higher Risk';
-  riskCategory: 'lower' | 'intermediate' | 'higher';
+  riskCategory: 'lower' | 'intermediate' | 'higher' | 'insufficient_data';
   tier: number;
   tierStatus: string;
   lastAssessedDate: string;
@@ -258,7 +259,9 @@ export interface RealtimeHealthStoreValue {
 
   // Screening
   screening: ScreeningAssessmentState;
+  assessmentHistory: ProgressiveAssessment[];
   updateScreeningAssessment: (assessment: Partial<ScreeningAssessmentState>) => void;
+  refreshAssessment: () => Promise<void>;
 
   // Cycle (Female)
   cycle: CycleTrackingState;
@@ -449,6 +452,7 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
   const [pathway, setPathway] = useState<HealthPathway>('female');
   const [profile, setProfile] = useState<UserProfileState>(EMPTY_PROFILE);
   const [screening, setScreening] = useState<ScreeningAssessmentState>(EMPTY_SCREENING);
+  const [assessmentHistory, setAssessmentHistory] = useState<ProgressiveAssessment[]>([]);
   const [cycle, setCycle] = useState<CycleTrackingState>(EMPTY_CYCLE);
   const [symptoms, setSymptoms] = useState<SymptomCheckInState>(EMPTY_SYMPTOMS);
   const [meals, setMeals] = useState<MealItem[]>([]);
@@ -467,6 +471,7 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
   const resetHealthState = useCallback(() => {
     setProfile(EMPTY_PROFILE);
     setScreening(EMPTY_SCREENING);
+    setAssessmentHistory([]);
     setCycle(EMPTY_CYCLE);
     setSymptoms(EMPTY_SYMPTOMS);
     setMeals([]);
@@ -530,6 +535,7 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
         const [
           dbProfile,
           assessmentData,
+          assessmentHistoryData,
           cycleData,
           waterData,
           medsList,
@@ -543,6 +549,7 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
         ] = await Promise.all([
           fetchUserProfileFromDb(currentUserId, token),
           assessmentService.fetchActiveScreeningAssessment(currentUserId),
+          assessmentService.fetchAssessmentHistory(currentUserId, initialPathway),
           fetchCycleRecordsFromDb(currentUserId, token),
           fetchTodayWaterLogsFromDb(currentUserId, token),
           fetchMedicationsFromDb(currentUserId, token),
@@ -596,6 +603,10 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
               iconName: 'pulse',
             })),
           }));
+        }
+
+        if (assessmentHistoryData && assessmentHistoryData.length > 0) {
+          setAssessmentHistory(assessmentHistoryData);
         }
 
         if (cycleData) {
@@ -806,6 +817,49 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
   const updateScreeningAssessment = useCallback((assessment: Partial<ScreeningAssessmentState>) => {
     setScreening((prev) => ({ ...prev, ...assessment }));
   }, []);
+
+  const refreshAssessment = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const [activeRes, histRes] = await Promise.all([
+        assessmentService.fetchActiveScreeningAssessment(user.id),
+        assessmentService.fetchAssessmentHistory(user.id, pathway),
+      ]);
+      if (activeRes) {
+        setScreening((prev) => ({
+          ...prev,
+          probabilityPercent: activeRes.probability_percent || Math.round((activeRes.probability || 0) * 100),
+          riskBand: (activeRes.risk_label || (activeRes.risk_category === 'higher' ? 'Higher Risk' : activeRes.risk_category === 'intermediate' ? 'Intermediate Risk' : 'Lower Risk')) as any,
+          riskCategory: (activeRes.risk_category || 'lower') as any,
+          tier: activeRes.assessment_level === 'tier_1_2_3' ? 3 : activeRes.assessment_level === 'tier_1_2' ? 2 : 1,
+          tierStatus: activeRes.assessment_level ? `Tier ${activeRes.assessment_level === 'tier_1_2_3' ? 3 : activeRes.assessment_level === 'tier_1_2' ? 2 : 1} Complete` : 'Tier 1 Complete',
+          lastAssessedDate: 'Recent Assessment',
+          isNonDiagnostic: true,
+          topFactors: (activeRes.explanations || []).map((exp: any, idx: number) => ({
+            id: `factor_${idx}`,
+            name: exp.feature_name || exp.feature_key,
+            impactPercent: exp.explanation_share_percent || Math.round(Math.abs(exp.impact_score || 0) * 100),
+            direction: (exp.direction === 'increases_risk' || exp.direction === 'positive' || exp.direction === 'higher' ? 'increases_risk' : 'decreases_risk') as any,
+            explanation: exp.description || exp.patient_explanation || '',
+            iconName: 'pulse',
+          })),
+          allFactors: (activeRes.explanations || []).map((exp: any, idx: number) => ({
+            id: `factor_${idx}`,
+            name: exp.feature_name || exp.feature_key,
+            impactPercent: exp.explanation_share_percent || Math.round(Math.abs(exp.impact_score || 0) * 100),
+            direction: (exp.direction === 'increases_risk' || exp.direction === 'positive' || exp.direction === 'higher' ? 'increases_risk' : 'decreases_risk') as any,
+            explanation: exp.description || exp.patient_explanation || '',
+            iconName: 'pulse',
+          })),
+        }));
+      }
+      if (histRes && histRes.length > 0) {
+        setAssessmentHistory(histRes);
+      }
+    } catch (err) {
+      console.warn('[BioPulse HealthStore] Error refreshing assessment:', err);
+    }
+  }, [user?.id, pathway]);
 
   const updateCycle = useCallback((partial: Partial<CycleTrackingState>) => {
     setCycle((prev) => {
@@ -1215,7 +1269,9 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
     updateProfile,
     updateProfileMetrics,
     screening,
+    assessmentHistory,
     updateScreeningAssessment,
+    refreshAssessment,
     cycle,
     updateCycle,
     logPeriodStart,

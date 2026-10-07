@@ -150,10 +150,13 @@ export interface RiskBandDisplay {
   progressPercent: number;
 }
 
+export const FEMALE_DEFAULT_THRESHOLD = 0.25;
+export const MALE_DEFAULT_THRESHOLD = 0.45;
+
 export function resolveRiskBand(
   probability: number,
   category?: string,
-  threshold: number = 0.25,
+  threshold: number = FEMALE_DEFAULT_THRESHOLD,
   lowCutoff: number = 0.18
 ): RiskBandDisplay {
   const normCategory = (category || '').toLowerCase().trim();
@@ -471,6 +474,9 @@ export function buildFemaleTier1Inputs(
 /**
  * Validates female review inputs before triggering backend inference
  */
+/**
+ * Validates female review inputs before triggering backend inference
+ */
 export function validateFemaleReviewInputs(
   basicInfo: {
     dateOfBirth?: string;
@@ -482,25 +488,85 @@ export function validateFemaleReviewInputs(
     cycleLength?: number;
     lastPeriodDate?: string;
   }
-): { isValid: boolean; error?: string } {
+): { isValid: boolean; error?: string; missingFields?: string[] } {
+  const missing: string[] = [];
+
   if (!basicInfo.dateOfBirth) {
-    return { isValid: false, error: 'Date of birth is required.' };
+    missing.push('Date of birth');
   }
   if (!basicInfo.age || basicInfo.age < 12 || basicInfo.age > 65) {
-    return { isValid: false, error: 'Age must be between 12 and 65 years.' };
+    if (!basicInfo.age) missing.push('Age');
+    else return { isValid: false, error: 'Age must be between 12 and 65 years.', missingFields: ['Age'] };
   }
   if (!basicInfo.heightCm || basicInfo.heightCm < 100 || basicInfo.heightCm > 240) {
-    return { isValid: false, error: 'Height must be between 100 and 240 cm.' };
+    if (!basicInfo.heightCm) missing.push('Height');
+    else return { isValid: false, error: 'Height must be between 100 and 240 cm.', missingFields: ['Height'] };
   }
   if (!basicInfo.weightKg || basicInfo.weightKg < 30 || basicInfo.weightKg > 250) {
-    return { isValid: false, error: 'Weight must be between 30 and 250 kg.' };
+    if (!basicInfo.weightKg) missing.push('Weight');
+    else return { isValid: false, error: 'Weight must be between 30 and 250 kg.', missingFields: ['Weight'] };
   }
   if (!cycleHealth.cycleLength || cycleHealth.cycleLength < 21 || cycleHealth.cycleLength > 45) {
-    return { isValid: false, error: 'Average cycle length must be between 21 and 45 days.' };
+    if (!cycleHealth.cycleLength) missing.push('Cycle length');
+    else return { isValid: false, error: 'Average cycle length must be between 21 and 45 days.', missingFields: ['Cycle length'] };
   }
   if (!cycleHealth.lastPeriodDate) {
-    return { isValid: false, error: 'Last period start date is required.' };
+    missing.push('Last period start date');
   }
+
+  if (missing.length > 0) {
+    return {
+      isValid: false,
+      error: `Missing required screening information: ${missing.join(', ')}. Please provide all clinical measurements before assessing.`,
+      missingFields: missing,
+    };
+  }
+
+  return { isValid: true };
+}
+
+/**
+ * Validates male review inputs before triggering backend inference
+ */
+export function validateMaleReviewInputs(
+  basicInfo: {
+    age?: number;
+    heightCm?: number;
+    weightKg?: number;
+    waistCm?: number;
+  },
+  adam?: {
+    answers?: Record<number, boolean>;
+  }
+): { isValid: boolean; error?: string; missingFields?: string[] } {
+  const missing: string[] = [];
+
+  if (!basicInfo.age || basicInfo.age < 18 || basicInfo.age > 90) {
+    if (!basicInfo.age) missing.push('Age');
+    else return { isValid: false, error: 'Age must be between 18 and 90 years.', missingFields: ['Age'] };
+  }
+  if (!basicInfo.heightCm || basicInfo.heightCm < 100 || basicInfo.heightCm > 240) {
+    if (!basicInfo.heightCm) missing.push('Height');
+    else return { isValid: false, error: 'Height must be between 100 and 240 cm.', missingFields: ['Height'] };
+  }
+  if (!basicInfo.weightKg || basicInfo.weightKg < 30 || basicInfo.weightKg > 250) {
+    if (!basicInfo.weightKg) missing.push('Weight');
+    else return { isValid: false, error: 'Weight must be between 30 and 250 kg.', missingFields: ['Weight'] };
+  }
+
+  const answeredAdamCount = adam?.answers ? Object.keys(adam.answers).length : 0;
+  if (answeredAdamCount < 5) {
+    missing.push('ADAM Questionnaire Answers (at least 5 required)');
+  }
+
+  if (missing.length > 0) {
+    return {
+      isValid: false,
+      error: `Missing required screening information: ${missing.join(', ')}. Please complete all fields before assessing.`,
+      missingFields: missing,
+    };
+  }
+
   return { isValid: true };
 }
 
@@ -519,6 +585,52 @@ export interface MaleTier1Inputs {
 }
 
 /**
+ * Transform UI Male Onboarding State into authoritative Male Tier 1 API Payload
+ */
+export function buildMaleTier1Inputs(
+  basicInfo: {
+    age?: number;
+    heightCm?: number;
+    weightKg?: number;
+    bmi?: number;
+    waistCm?: number;
+  },
+  adam?: {
+    answers?: Record<number, boolean>;
+  },
+  lifestyle?: {
+    sleepHours?: number;
+    exerciseFrequency?: string;
+    fastFoodIntake?: string;
+  }
+): MaleTier1Inputs {
+  const answersRecord: Record<string, boolean> = {};
+  if (adam?.answers) {
+    Object.entries(adam.answers).forEach(([k, v]) => {
+      answersRecord[`q${k}`] = v;
+    });
+  }
+
+  const weight = Number(basicInfo.weightKg) || 0;
+  const height = Number(basicInfo.heightCm) || 0;
+  const calculatedBmi = height > 0 ? parseFloat((weight / ((height / 100) ** 2)).toFixed(1)) : 24.0;
+
+  return {
+    age: Number(basicInfo.age) || 0,
+    weight_kg: weight,
+    height_cm: height,
+    bmi: Number(basicInfo.bmi) || calculatedBmi,
+    waist_cm: basicInfo.waistCm ? Number(basicInfo.waistCm) : undefined,
+    sleep_hours: lifestyle?.sleepHours ? Number(lifestyle.sleepHours) : undefined,
+    low_energy_flag: adam?.answers && adam.answers[2] ? 1 : 0,
+    decreased_libido_flag: adam?.answers && adam.answers[1] ? 1 : 0,
+    exercise_frequency: lifestyle?.exerciseFrequency,
+    fast_food: lifestyle?.fastFoodIntake === 'frequently' ? 1 : 0,
+    adam_answers: answersRecord,
+  };
+}
+
+/**
  * Submit Tier 1 Male Screening Inputs to the live ML model with explicit error reporting
  */
 export async function submitMaleTier1AssessmentWithStatus(
@@ -529,61 +641,11 @@ export async function submitMaleTier1AssessmentWithStatus(
   const token = session?.access_token;
 
   if (!token) {
-    // If running in local/demo mode without token, produce authoritative local score
-    const hasLibidoLoss = inputs.decreased_libido_flag === 1;
-    const hasFatigue = inputs.low_energy_flag === 1;
-    let prob = 0.22;
-    if (hasLibidoLoss) prob += 0.35;
-    if (hasFatigue) prob += 0.20;
-    if ((inputs.bmi || 24) > 28) prob += 0.15;
-    prob = Math.min(0.92, Math.max(0.08, prob));
-
-    const bandDisplay = resolveRiskBand(prob, undefined, 0.45);
-    const riskCat = bandDisplay.category;
-    const mockMale: ProgressiveAssessment = {
-      assessment_id: `male-tier1-${Date.now()}`,
-      module: 'male_hypogonadism',
-      assessment_level: 'tier_1',
-      tiers_included: [1],
-      model_name: 'BioPulse LOH LightGBM + ADAM Ensemble',
-      probability: prob,
-      probability_percent: Math.round(prob * 100),
-      threshold: 0.45,
-      risk_category: riskCat,
-      risk_label: riskCat === 'higher' ? 'Higher Screening Risk' : riskCat === 'intermediate' ? 'Intermediate Screening Risk' : 'Lower Screening Risk',
-      explanations: [
-        {
-          feature_key: 'decreased_libido_flag',
-          feature_name: 'Libido & Androgen Signaling',
-          patient_label: hasLibidoLoss ? 'Reported reduction' : 'Maintained',
-          impact_score: hasLibidoLoss ? 0.38 : -0.15,
-          direction: hasLibidoLoss ? 'increases_risk' : 'decreases_risk',
-          description: 'Primary clinical indicator of androgen deficiency and hypothalamic-pituitary-gonadal axis tone.',
-        },
-        {
-          feature_key: 'low_energy_flag',
-          feature_name: 'Energy & Daytime Stamina',
-          patient_label: hasFatigue ? 'Reduced stamina' : 'Normal energy',
-          impact_score: hasFatigue ? 0.22 : -0.10,
-          direction: hasFatigue ? 'increases_risk' : 'decreases_risk',
-          description: 'Reflects metabolic vigor and androgenic influence on mitochondrial oxidative capacity.',
-        },
-        {
-          feature_key: 'bmi',
-          feature_name: 'Metabolic & Adiposity Index',
-          patient_label: `${inputs.bmi || 24} kg/m²`,
-          impact_score: (inputs.bmi || 24) > 28 ? 0.18 : -0.08,
-          direction: (inputs.bmi || 24) > 28 ? 'increases_risk' : 'decreases_risk',
-          description: 'Visceral adiposity enhances peripheral aromatase activity, converting testosterone to estradiol.',
-        },
-      ],
-      next_available_tier: 2,
-      next_step: 'Schedule morning total and free testosterone laboratory confirmation.',
-      disclaimer: 'BioPulse AI provides screening risk assessment support, not a clinical diagnosis.',
-      created_at: new Date().toISOString(),
-      is_active: true,
+    return {
+      data: null,
+      error: 'Authentication required. Please sign in or register before submitting your assessment.',
+      statusCode: 401,
     };
-    return { data: mockMale, error: null, statusCode: 200 };
   }
 
   try {
@@ -620,14 +682,109 @@ export async function submitMaleTier1AssessmentWithStatus(
   }
 }
 
+/**
+ * Fetch chronological assessment history from Django or Supabase
+ */
+export async function fetchAssessmentHistory(
+  userId?: string,
+  module?: 'female_pcos' | 'male_hypogonadism' | string
+): Promise<ProgressiveAssessment[]> {
+  const session = mobileSupabaseAuth.getSession();
+  const token = session?.access_token;
+  const targetUser = userId || session?.user?.id;
+  const targetModule = module || 'female_pcos';
+
+  // 1. Try authoritative Django endpoint if token available
+  if (token) {
+    try {
+      const response = await fetchWithTimeout(
+        `${BACKEND_API_URL}/v1/intelligence/assessment/history/?module=${targetModule}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data && Array.isArray(data.history)) {
+          return data.history as ProgressiveAssessment[];
+        }
+        if (Array.isArray(data)) {
+          return data as ProgressiveAssessment[];
+        }
+      }
+    } catch {
+      // Fall through to Supabase
+    }
+  }
+
+  // 2. Query Supabase screening_assessments directly via REST
+  if (targetUser) {
+    try {
+      const supaUrl = `${SUPABASE_URL}/rest/v1/screening_assessments?patient_id=eq.${targetUser}&module=eq.${targetModule}&order=created_at.desc`;
+      const response = await fetchWithTimeout(supaUrl, {
+        method: 'GET',
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${token || SUPABASE_ANON_KEY}`,
+          Accept: 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const rows = await response.json();
+        if (Array.isArray(rows)) {
+          return rows.map((row: any) => ({
+            id: row.id,
+            assessment_id: row.id,
+            patient_id: row.patient_id,
+            module: row.module,
+            assessment_level: row.assessment_level,
+            tiers_included: row.tiers_included || [1],
+            model_name: row.model_name,
+            model_version: row.model_version,
+            probability: Number(row.probability ?? 0),
+            probability_percent: Number(row.probability_percent ?? (Number(row.probability ?? 0) * 100)),
+            threshold: Number(row.threshold ?? (targetModule === 'male_hypogonadism' ? 0.45 : 0.25)),
+            risk_category: row.risk_category || 'lower',
+            risk_label: row.risk_label,
+            explanations: row.explanations || [],
+            shap_explanation: row.shap_explanation || null,
+            limitations: row.limitations || [],
+            next_available_tier: row.next_available_tier,
+            disclaimer: row.disclaimer,
+            created_at: row.created_at,
+            is_active: Boolean(row.is_active),
+          }));
+        }
+      }
+    } catch {
+      // Supabase REST error
+    }
+  }
+
+  return [];
+}
+
 export const assessmentService = {
+  FEMALE_DEFAULT_THRESHOLD,
+  MALE_DEFAULT_THRESHOLD,
   fetchActiveScreeningAssessment,
   getLatestAssessment: fetchActiveScreeningAssessment,
+  fetchAssessmentHistory,
   submitTier1Screening: submitFemaleTier1AssessmentWithStatus,
   submitFemaleTier1Assessment,
   submitFemaleTier1AssessmentWithStatus,
   submitMaleTier1Screening: submitMaleTier1AssessmentWithStatus,
   submitMaleTier1AssessmentWithStatus,
+  validateFemaleReviewInputs,
+  validateMaleReviewInputs,
+  buildFemaleTier1Inputs,
+  buildMaleTier1Inputs,
   resolveRiskBand,
   resolveNextAction,
 };
