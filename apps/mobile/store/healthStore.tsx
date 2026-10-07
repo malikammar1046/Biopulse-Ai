@@ -1,4 +1,17 @@
-import React, { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
+import { useAuth } from '../features/authentication';
+import {
+  fetchUserProfileFromDb,
+  updateUserProfileInDb,
+  fetchUserActiveAssessmentFromBackend,
+  fetchVerifiedDoctorsFromBackend,
+  fetchCycleRecordsFromDb,
+  fetchTodayWaterLogsFromDb,
+  fetchMedicationsFromDb,
+  fetchAppointmentsFromDb,
+  fetchCareCircleFromDb,
+  fetchMedicalReportsFromDb,
+} from '../services/userService';
 
 // ============================================================================
 // TYPES
@@ -181,12 +194,26 @@ export interface UserProfileState {
   heightCm: number;
   weightKg: number;
   waistCm: number;
+  hipCm?: number;
+  gender?: string;
+  pathway?: HealthPathway | null;
+  isOnboarded?: boolean;
+  bloodType?: string;
   maritalStatus: 'Single' | 'Married' | 'Prefer not to say';
   pregnancyStatus: 'Not Pregnant' | 'Currently Pregnant' | 'Trying to Conceive' | 'Prefer not to say';
   emergencyContactName: string;
   emergencyContactPhone: string;
   emergencyContactRelationship: string;
   profilePhotoUrl?: string;
+  cycleLength?: string;
+  periodDuration?: number;
+  lastPeriodDate?: string;
+  periodRegularity?: string;
+  commonSymptoms?: string[];
+  sleepHours?: number;
+  fastFoodIntake?: string;
+  regularExercise?: boolean;
+  activityLevel?: string;
 }
 
 export interface NotificationSettingsState {
@@ -197,6 +224,7 @@ export interface NotificationSettingsState {
   screeningFollowUp: boolean;
   newRecommendation: boolean;
   appUpdates: boolean;
+  marketingUpdates: boolean;
 }
 
 // ============================================================================
@@ -277,386 +305,106 @@ export interface RealtimeHealthStoreValue {
   // Notifications
   notifications: NotificationSettingsState;
   updateNotificationSetting: (key: keyof NotificationSettingsState, value: boolean) => void;
+
+  // Cross-user isolation reset
+  resetHealthState: () => void;
 }
 
 const HealthContext = createContext<RealtimeHealthStoreValue | undefined>(undefined);
 
 // ============================================================================
-// INITIAL VALUES
+// CLEAN AUTHENTICATED USER INITIAL DEFAULTS (NO HARDCODED DEMO DATA)
 // ============================================================================
 
-const INITIAL_PROFILE: UserProfileState = {
-  fullName: 'Ayesha Khan',
-  email: 'ayesha.khan@example.com',
-  dateOfBirth: '2002-03-15',
-  age: 24,
-  heightCm: 162,
-  weightKg: 58,
-  waistCm: 76,
-  maritalStatus: 'Single',
-  pregnancyStatus: 'Not Pregnant',
-  emergencyContactName: 'Ali Khan',
-  emergencyContactPhone: '+92 300 1234567',
-  emergencyContactRelationship: 'Brother',
+const EMPTY_PROFILE: UserProfileState = {
+  fullName: '',
+  email: '',
+  dateOfBirth: '',
+  age: 0,
+  heightCm: 0,
+  weightKg: 0,
+  waistCm: 0,
+  maritalStatus: 'Prefer not to say',
+  pregnancyStatus: 'Prefer not to say',
+  emergencyContactName: '',
+  emergencyContactPhone: '',
+  emergencyContactRelationship: '',
+  isOnboarded: false,
+  pathway: null,
+  gender: '',
 };
 
-const INITIAL_SCREENING_FEMALE: ScreeningAssessmentState = {
-  probabilityPercent: 72,
-  riskBand: 'Higher Risk',
-  riskCategory: 'higher',
+const EMPTY_SCREENING: ScreeningAssessmentState = {
+  probabilityPercent: 0,
+  riskBand: 'Lower Risk',
+  riskCategory: 'lower',
   tier: 1,
-  tierStatus: 'Tier 1 Complete',
-  lastAssessedDate: '15 Apr 2026',
-  topFactors: [
-    {
-      id: 'f1',
-      name: 'Excess hair growth',
-      impactPercent: 28,
-      direction: 'increases_risk',
-      explanation: 'More hair growth on face or body is strongly associated with elevated androgen levels.',
-      iconName: 'cut-outline',
-    },
-    {
-      id: 'f2',
-      name: 'Irregular menstrual cycle',
-      impactPercent: 22,
-      direction: 'increases_risk',
-      explanation: 'Unpredictable or delayed cycle intervals indicate ovulatory disruption.',
-      iconName: 'calendar-outline',
-    },
-    {
-      id: 'f3',
-      name: 'Pimples / Acne',
-      impactPercent: 18,
-      direction: 'increases_risk',
-      explanation: 'Persistent breakout pattern reflects androgenic stimulation of sebaceous glands.',
-      iconName: 'sparkles-outline',
-    },
-  ],
-  allFactors: [
-    {
-      id: 'f1',
-      name: 'Excess hair growth',
-      impactPercent: 28,
-      direction: 'increases_risk',
-      explanation: 'More hair growth on face or body is strongly associated with elevated androgen levels.',
-      iconName: 'cut-outline',
-    },
-    {
-      id: 'f2',
-      name: 'Irregular menstrual cycle',
-      impactPercent: 22,
-      direction: 'increases_risk',
-      explanation: 'Unpredictable or delayed cycle intervals indicate ovulatory disruption.',
-      iconName: 'calendar-outline',
-    },
-    {
-      id: 'f3',
-      name: 'Pimples / Acne',
-      impactPercent: 18,
-      direction: 'increases_risk',
-      explanation: 'Persistent breakout pattern reflects androgenic stimulation of sebaceous glands.',
-      iconName: 'sparkles-outline',
-    },
-    {
-      id: 'f4',
-      name: 'Weight gain difficulty',
-      impactPercent: 15,
-      direction: 'increases_risk',
-      explanation: 'Difficulty losing weight points to potential peripheral insulin resistance.',
-      iconName: 'scale-outline',
-    },
-    {
-      id: 'f5',
-      name: 'Healthy Sleep Schedule',
-      impactPercent: 8,
-      direction: 'decreases_risk',
-      explanation: '7+ hours of quality sleep promotes regular nocturnal endocrine rhythm.',
-      iconName: 'moon-outline',
-    },
-  ],
+  tierStatus: 'Not Assessed',
+  lastAssessedDate: 'Not yet assessed',
+  topFactors: [],
+  allFactors: [],
   isNonDiagnostic: true,
 };
 
-const INITIAL_CYCLE: CycleTrackingState = {
-  currentCycleDay: 14,
-  cycleLength: 29,
+const EMPTY_CYCLE: CycleTrackingState = {
+  currentCycleDay: 0,
+  cycleLength: 28,
   periodDuration: 5,
-  lastPeriodStartDate: '2026-09-18',
-  nextPeriodDaysRemaining: 15,
-  nextPeriodExpectedDate: '2026-10-17',
-  fertileWindowStart: '2026-09-28',
-  fertileWindowEnd: '2026-10-03',
-  phase: 'Follicular Phase',
-  regularity: 'irregular',
+  lastPeriodStartDate: '',
+  nextPeriodDaysRemaining: 0,
+  nextPeriodExpectedDate: '',
+  fertileWindowStart: '',
+  fertileWindowEnd: '',
+  phase: 'Menstrual Phase',
+  regularity: 'regular',
   flow: 'Moderate',
-  missedPeriodsPerYear: '1-2',
-  notes: 'Mild cramps on Day 2, energy lower than usual.',
+  missedPeriodsPerYear: '0',
+  notes: '',
 };
 
-const INITIAL_SYMPTOMS: SymptomCheckInState = {
-  loggedToday: true,
-  lastUpdatedTime: 'Today, 8:30 AM',
-  intensity: 'Moderate',
-  notes: 'Mild bloating after lunch, mood is balanced.',
-  symptoms: [
-    { id: 'acne', name: 'Acne', category: 'physical', selected: true, intensity: 'Moderate' },
-    { id: 'hair_growth', name: 'Hair growth', category: 'physical', selected: true, intensity: 'Moderate' },
-    { id: 'hair_loss', name: 'Hair loss', category: 'physical', selected: true, intensity: 'Mild' },
-    { id: 'bloating', name: 'Bloating', category: 'other', selected: true, intensity: 'Mild' },
-    { id: 'mood', name: 'Mood swings', category: 'other', selected: false },
-    { id: 'cramps', name: 'Cramps', category: 'menstrual', selected: false },
-    { id: 'fatigue', name: 'Fatigue', category: 'other', selected: true, intensity: 'Moderate' },
-    { id: 'skin_darkening', name: 'Skin darkening', category: 'physical', selected: false },
-    { id: 'irregular_periods', name: 'Irregular periods', category: 'menstrual', selected: true, intensity: 'Moderate' },
+const DEFAULT_SYMPTOM_LIST: SymptomLogEntry[] = [
+  { id: 'acne', name: 'Acne', category: 'physical', selected: false },
+  { id: 'hair_growth', name: 'Excess hair growth', category: 'physical', selected: false },
+  { id: 'hair_loss', name: 'Hair thinning / loss', category: 'physical', selected: false },
+  { id: 'bloating', name: 'Bloating', category: 'other', selected: false },
+  { id: 'mood', name: 'Mood swings', category: 'other', selected: false },
+  { id: 'cramps', name: 'Pelvic cramps', category: 'menstrual', selected: false },
+  { id: 'fatigue', name: 'Fatigue / low stamina', category: 'other', selected: false },
+  { id: 'skin_darkening', name: 'Skin darkening (Acanthosis)', category: 'physical', selected: false },
+  { id: 'irregular_periods', name: 'Irregular cycles', category: 'menstrual', selected: false },
+];
+
+const EMPTY_SYMPTOMS: SymptomCheckInState = {
+  loggedToday: false,
+  lastUpdatedTime: 'Not logged today',
+  intensity: 'Mild',
+  notes: '',
+  symptoms: DEFAULT_SYMPTOM_LIST,
+};
+
+const EMPTY_WATER: WaterState = {
+  consumedLiters: 0,
+  targetLiters: 2.5,
+  logs: [],
+};
+
+const EMPTY_MOVEMENT: MovementState = {
+  todayActivityMinutes: 0,
+  targetMinutes: 60,
+  todaySteps: 0,
+  weeklyMinutes: [
+    { day: 'Mon', minutes: 0 },
+    { day: 'Tue', minutes: 0 },
+    { day: 'Wed', minutes: 0 },
+    { day: 'Thu', minutes: 0 },
+    { day: 'Fri', minutes: 0 },
+    { day: 'Sat', minutes: 0 },
+    { day: 'Sun', minutes: 0 },
   ],
+  currentGoalText: 'Daily activity goal',
 };
 
-const INITIAL_MEALS: MealItem[] = [
-  {
-    id: 'm1',
-    name: 'Breakfast Bowl',
-    mealType: 'breakfast',
-    description: 'Greek yogurt with blueberries, chia seeds, and granola',
-    calories: 340,
-    proteinGrams: 22,
-    time: '8:00 AM',
-  },
-  {
-    id: 'm2',
-    name: 'Grilled Chicken & Rice',
-    mealType: 'lunch',
-    description: 'Spiced chicken breast, brown rice, and cucumber salad',
-    calories: 540,
-    proteinGrams: 36,
-    time: '12:30 PM',
-  },
-  {
-    id: 'm3',
-    name: 'Steamed Fish & Greens',
-    mealType: 'dinner',
-    description: 'Fresh grilled fish fillet with stir-fried leafy greens',
-    calories: 440,
-    proteinGrams: 30,
-    time: '7:45 PM',
-  },
-];
-
-const INITIAL_WATER_LOGS: WaterLogEntry[] = [
-  { id: 'w1', time: '8:30 AM', amountMl: 250 },
-  { id: 'w2', time: '11:10 AM', amountMl: 500 },
-  { id: 'w3', time: '2:00 PM', amountMl: 350 },
-  { id: 'w4', time: '4:15 PM', amountMl: 500 },
-];
-
-const INITIAL_MEDICATIONS: MedicationItem[] = [
-  {
-    id: 'med1',
-    name: 'Metformin',
-    dosage: '500 mg',
-    scheduledTime: '8:00 PM',
-    instructions: 'Take with food',
-    status: 'pending',
-    pathway: 'female',
-  },
-  {
-    id: 'med2',
-    name: 'Vitamin D3',
-    dosage: '1000 IU',
-    scheduledTime: '9:00 AM',
-    instructions: 'After breakfast',
-    status: 'taken',
-    pathway: 'all',
-  },
-  {
-    id: 'med3',
-    name: 'Inositol Supplement',
-    dosage: '2000 mg',
-    scheduledTime: '1:00 PM',
-    instructions: 'With lunch',
-    status: 'taken',
-    pathway: 'female',
-  },
-  {
-    id: 'med4',
-    name: 'Testosterone Gel 1%',
-    dosage: '50 mg',
-    scheduledTime: '8:00 AM',
-    instructions: 'Apply to shoulders after shower',
-    status: 'pending',
-    pathway: 'male',
-  },
-];
-
-const SPECIALISTS_LIST: SpecialistDoctor[] = [
-  {
-    id: 'doc1',
-    name: 'Dr. Sara Khan',
-    specialty: 'Gynecologist',
-    pathway: 'female',
-    hospital: 'Aga Khan University Hospital',
-    experienceYears: 12,
-    patientsCount: 1200,
-    rating: 4.8,
-    areasOfExpertise: ['PCOS Management', 'Menstrual Disorders', 'Hormonal Imbalance', 'Fertility Planning'],
-    about: 'Dr. Sara Khan is a senior consultant gynecologist with over 12 years of specialized clinical experience in women\'s hormonal health, PCOS management, and reproductive medicine.',
-    isAvailableToday: true,
-  },
-  {
-    id: 'doc2',
-    name: 'Dr. Ayesha Malik',
-    specialty: 'Endocrinologist',
-    pathway: 'female',
-    hospital: 'Shaukat Khanum Hospital',
-    experienceYears: 14,
-    patientsCount: 1850,
-    rating: 4.9,
-    areasOfExpertise: ['Endocrine Disorders', 'Insulin Resistance', 'Thyroid Health', 'Metabolic Syndrome'],
-    about: 'Consultant endocrinologist specializing in complex reproductive endocrine disorders and metabolic syndrome in young women.',
-    isAvailableToday: true,
-  },
-  {
-    id: 'doc3',
-    name: 'Dr. Ahmed Raza',
-    specialty: 'Urologist & Andrologist',
-    pathway: 'male',
-    hospital: 'Mayo Hospital, Lahore',
-    experienceYears: 10,
-    patientsCount: 950,
-    rating: 4.7,
-    areasOfExpertise: ['Hypogonadism (LOH)', 'Male Fertility', 'Hormonal Disorders', 'Erectile Dysfunction'],
-    about: 'Dr. Ahmed Raza is a consultant urologist and male fertility specialist with deep expertise in testosterone replacement therapy and late-onset hypogonadism.',
-    isAvailableToday: true,
-  },
-  {
-    id: 'doc4',
-    name: 'Dr. Farhan Ali',
-    specialty: 'Endocrinologist',
-    pathway: 'male',
-    hospital: 'National Hospital',
-    experienceYears: 16,
-    patientsCount: 2200,
-    rating: 4.8,
-    areasOfExpertise: ['Male Endocrine Disorders', 'Hypopituitarism', 'Testosterone Optimization', 'Cardiometabolic Health'],
-    about: 'Senior endocrinologist dedicated to male vitality, morning testosterone pulsatility monitoring, and metabolic syndrome recovery.',
-    isAvailableToday: true,
-  },
-  {
-    id: 'doc5',
-    name: 'Dr. Sana Tariq',
-    specialty: 'Clinical Nutritionist',
-    pathway: 'female',
-    hospital: 'Evercare Hospital',
-    experienceYears: 8,
-    patientsCount: 800,
-    rating: 4.8,
-    areasOfExpertise: ['PCOS Dietetics', 'Low-Glycemic Meal Design', 'Micronutrient Replenishment'],
-    about: 'Registered clinical dietitian providing culturally tailored South Asian meal plans for insulin-resistant PCOS.',
-    isAvailableToday: true,
-  },
-  {
-    id: 'doc6',
-    name: 'Dr. Bilal Hussain',
-    specialty: 'Endocrinologist',
-    pathway: 'male',
-    hospital: 'Shifa International Hospital',
-    experienceYears: 11,
-    patientsCount: 1100,
-    rating: 4.7,
-    areasOfExpertise: ['Andrology', 'Thyroid & Adrenal Axis', 'Metabolic Health'],
-    about: 'Specialist in endocrine axis recovery, body composition optimization, and hypogonadal screening.',
-    isAvailableToday: false,
-  },
-];
-
-const INITIAL_APPOINTMENTS: AppointmentItem[] = [
-  {
-    id: 'apt1',
-    doctorId: 'doc1',
-    doctorName: 'Dr. Sara Khan',
-    specialty: 'Gynecologist',
-    clinicOrHospital: 'Aga Khan University Hospital',
-    date: 'Tue, 10 Oct 2026',
-    time: '11:00 AM',
-    location: 'Main Campus, Lahore',
-    visitType: 'In-person',
-    status: 'Upcoming',
-  },
-  {
-    id: 'apt2',
-    doctorId: 'doc3',
-    doctorName: 'Dr. Ahmed Raza',
-    specialty: 'Urologist',
-    clinicOrHospital: 'Mayo Hospital, Lahore',
-    date: 'Mon, 9 Oct 2026',
-    time: '10:30 AM',
-    location: 'Mayo Hospital, Lahore',
-    visitType: 'In-person',
-    status: 'Upcoming',
-  },
-];
-
-const INITIAL_CARE_CIRCLE: CareCircleMember[] = [
-  {
-    id: 'cc1',
-    name: 'Dr. Sara Khan',
-    role: 'Doctor',
-    relationship: 'Gynecologist',
-    accessLevel: 'Full Access',
-  },
-  {
-    id: 'cc2',
-    name: 'Fatima Khan',
-    role: 'Family Member',
-    relationship: 'Sister',
-    accessLevel: 'View Only',
-  },
-  {
-    id: 'cc3',
-    name: 'Ali Khan',
-    role: 'Trusted Contact',
-    relationship: 'Brother / Emergency Contact',
-    accessLevel: 'View Only',
-  },
-];
-
-const INITIAL_REPORTS: ReportItem[] = [
-  {
-    id: 'rep1',
-    title: 'PCOS Screening Report',
-    date: '22 Sep 2026',
-    type: 'Screening',
-    status: 'Completed',
-    tags: ['Tier 1', 'Risk Assessment'],
-  },
-  {
-    id: 'rep2',
-    title: 'Hormone Panel Lab Report',
-    date: '12 Sep 2026',
-    type: 'Lab',
-    status: 'Uploaded',
-    tags: ['FSH', 'LH', 'TSH', 'Prolactin', 'Vitamin D'],
-  },
-  {
-    id: 'rep3',
-    title: 'Comprehensive Clinical Summary',
-    date: '22 Sep 2026',
-    type: 'Clinical Summary',
-    status: 'Generated',
-    tags: ['Physician Ready', 'Exported PDF'],
-  },
-];
-
-const INITIAL_VERIFIED_LABS: ClinicalLabRow[] = [
-  { id: 'lab1', testName: 'FSH (Follicle Stimulating Hormone)', category: 'Hormones', value: '6.2', unit: 'mIU/mL', referenceRange: '3.5 - 12.5', status: 'Normal' },
-  { id: 'lab2', testName: 'LH (Luteinizing Hormone)', category: 'Hormones', value: '12.4', unit: 'mIU/mL', referenceRange: '2.4 - 12.6', status: 'Normal' },
-  { id: 'lab3', testName: 'TSH (Thyroid Stimulating Hormone)', category: 'Hormones', value: '2.1', unit: 'μIU/mL', referenceRange: '0.4 - 4.0', status: 'Normal' },
-  { id: 'lab4', testName: 'Prolactin', category: 'Hormones', value: '18.7', unit: 'ng/mL', referenceRange: '4.8 - 23.3', status: 'Normal' },
-  { id: 'lab5', testName: 'HbA1c (Glycated Hemoglobin)', category: 'Metabolic', value: '5.6', unit: '%', referenceRange: '4.0 - 5.6', status: 'Normal' },
-  { id: 'lab6', testName: 'Vitamin D (25-OH)', category: 'Other', value: '18', unit: 'ng/mL', referenceRange: '30 - 100', status: 'Low' },
-];
-
-const INITIAL_NOTIFICATIONS: NotificationSettingsState = {
+const DEFAULT_NOTIFICATIONS: NotificationSettingsState = {
   medicationDue: true,
   periodPredicted: true,
   labUploadProcessed: true,
@@ -664,40 +412,171 @@ const INITIAL_NOTIFICATIONS: NotificationSettingsState = {
   screeningFollowUp: true,
   newRecommendation: true,
   appUpdates: false,
+  marketingUpdates: false,
 };
 
 // ============================================================================
-// PROVIDER COMPONENT
+// PROVIDER COMPONENT — SCOPED TO AUTHENTICATED USER
 // ============================================================================
 
 export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { user, isAuthenticated } = useAuth();
+
   const [pathway, setPathway] = useState<HealthPathway>('female');
-  const [profile, setProfile] = useState<UserProfileState>(INITIAL_PROFILE);
-  const [screening, setScreening] = useState<ScreeningAssessmentState>(INITIAL_SCREENING_FEMALE);
-  const [cycle, setCycle] = useState<CycleTrackingState>(INITIAL_CYCLE);
-  const [symptoms, setSymptoms] = useState<SymptomCheckInState>(INITIAL_SYMPTOMS);
-  const [meals, setMeals] = useState<MealItem[]>(INITIAL_MEALS);
+  const [profile, setProfile] = useState<UserProfileState>(EMPTY_PROFILE);
+  const [screening, setScreening] = useState<ScreeningAssessmentState>(EMPTY_SCREENING);
+  const [cycle, setCycle] = useState<CycleTrackingState>(EMPTY_CYCLE);
+  const [symptoms, setSymptoms] = useState<SymptomCheckInState>(EMPTY_SYMPTOMS);
+  const [meals, setMeals] = useState<MealItem[]>([]);
   const [cuisineFilter, setCuisineFilter] = useState<'South Asian' | 'Vegetarian' | 'Low-cost'>('South Asian');
-  const [waterLogs, setWaterLogs] = useState<WaterLogEntry[]>(INITIAL_WATER_LOGS);
-  const [movementMinutes, setMovementMinutes] = useState<number>(45);
-  const [movementSteps, setMovementSteps] = useState<number>(7842);
-  const [medications, setMedications] = useState<MedicationItem[]>(INITIAL_MEDICATIONS);
-  const [appointments, setAppointments] = useState<AppointmentItem[]>(INITIAL_APPOINTMENTS);
-  const [careCircle, setCareCircle] = useState<CareCircleMember[]>(INITIAL_CARE_CIRCLE);
-  const [reports, setReports] = useState<ReportItem[]>(INITIAL_REPORTS);
-  const [verifiedLabs, setVerifiedLabs] = useState<ClinicalLabRow[]>(INITIAL_VERIFIED_LABS);
-  const [notifications, setNotifications] = useState<NotificationSettingsState>(INITIAL_NOTIFICATIONS);
+  const [waterLogs, setWaterLogs] = useState<WaterLogEntry[]>([]);
+  const [movementMinutes, setMovementMinutes] = useState<number>(0);
+  const [movementSteps, setMovementSteps] = useState<number>(0);
+  const [medications, setMedications] = useState<MedicationItem[]>([]);
+  const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
+  const [specialists, setSpecialists] = useState<SpecialistDoctor[]>([]);
+  const [careCircle, setCareCircle] = useState<CareCircleMember[]>([]);
+  const [reports, setReports] = useState<ReportItem[]>([]);
+  const [verifiedLabs, setVerifiedLabs] = useState<ClinicalLabRow[]>([]);
+  const [notifications, setNotifications] = useState<NotificationSettingsState>(DEFAULT_NOTIFICATIONS);
+
+  const resetHealthState = useCallback(() => {
+    setProfile(EMPTY_PROFILE);
+    setScreening(EMPTY_SCREENING);
+    setCycle(EMPTY_CYCLE);
+    setSymptoms(EMPTY_SYMPTOMS);
+    setMeals([]);
+    setWaterLogs([]);
+    setMovementMinutes(0);
+    setMovementSteps(0);
+    setMedications([]);
+    setAppointments([]);
+    setSpecialists([]);
+    setCareCircle([]);
+    setReports([]);
+    setVerifiedLabs([]);
+  }, []);
+
+  // Synchronize store when authenticated user changes or logs out
+  useEffect(() => {
+    let isCurrent = true;
+
+    if (!user || !isAuthenticated) {
+      // User is logged out — reset all states immediately to guarantee zero cross-user leakage
+      resetHealthState();
+      return;
+    }
+
+    // Set pathway from authenticated profile
+    const initialPathway = (user.pathway as HealthPathway) || 'female';
+    setPathway(initialPathway);
+
+    // Seed profile baseline immediately with verified auth claims
+    setProfile({
+      ...EMPTY_PROFILE,
+      fullName: user.fullName || '',
+      email: user.email || '',
+    });
+
+    const token = user.accessToken;
+    const currentUserId = user.id;
+
+    async function loadAuthenticatedData() {
+      // 1. Fetch verified doctors from Django (public / authenticated)
+      fetchVerifiedDoctorsFromBackend(initialPathway).then((docs) => {
+        if (isCurrent && docs && docs.length > 0) {
+          setSpecialists(docs);
+        }
+      });
+
+      if (!token) return;
+
+      try {
+        // 2. Fetch user-owned private records in parallel
+        const [
+          dbProfile,
+          assessmentData,
+          cycleData,
+          waterData,
+          medsList,
+          aptsList,
+          circleList,
+          reportsList,
+        ] = await Promise.all([
+          fetchUserProfileFromDb(currentUserId, token),
+          fetchUserActiveAssessmentFromBackend(token, initialPathway),
+          fetchCycleRecordsFromDb(currentUserId, token),
+          fetchTodayWaterLogsFromDb(currentUserId, token),
+          fetchMedicationsFromDb(currentUserId, token),
+          fetchAppointmentsFromDb(currentUserId, token),
+          fetchCareCircleFromDb(currentUserId, token),
+          fetchMedicalReportsFromDb(currentUserId, token),
+        ]);
+
+        if (!isCurrent) return;
+
+        if (dbProfile) {
+          if (dbProfile.pathway && dbProfile.pathway !== pathway) {
+            setPathway(dbProfile.pathway as HealthPathway);
+          }
+          setProfile((prev) => ({
+            ...prev,
+            ...dbProfile,
+            fullName: dbProfile.fullName || prev.fullName,
+            email: dbProfile.email || prev.email,
+          }));
+        }
+
+        if (assessmentData) {
+          setScreening((prev) => ({ ...prev, ...assessmentData }));
+        }
+
+        if (cycleData) {
+          setCycle((prev) => ({ ...prev, ...cycleData }));
+        }
+
+        if (waterData) {
+          setWaterLogs(waterData.logs || []);
+        }
+
+        if (medsList && medsList.length > 0) {
+          setMedications(medsList);
+        }
+
+        if (aptsList && aptsList.length > 0) {
+          setAppointments(aptsList);
+        }
+
+        if (circleList && circleList.length > 0) {
+          setCareCircle(circleList);
+        }
+
+        if (reportsList && reportsList.length > 0) {
+          setReports(reportsList);
+        }
+      } catch (err) {
+        console.warn('[BioPulse HealthStore] Error syncing authenticated health data:', err);
+      }
+    }
+
+    loadAuthenticatedData();
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [user?.id, user?.accessToken, isAuthenticated]);
 
   const isFemale = pathway === 'female' || pathway === 'female_pcos';
 
   // 1. BMI Calculation
   const bmi = useMemo(() => {
-    if (!profile.heightCm || !profile.weightKg) return 22.1;
+    if (!profile.heightCm || !profile.weightKg) return 0;
     const hM = profile.heightCm / 100;
     return parseFloat((profile.weightKg / (hM * hM)).toFixed(1));
   }, [profile.heightCm, profile.weightKg]);
 
   const bmiCategory = useMemo(() => {
+    if (bmi <= 0) return 'Not recorded';
     if (bmi < 18.5) return 'Underweight';
     if (bmi < 25) return 'Normal';
     if (bmi < 30) return 'Overweight';
@@ -710,7 +589,7 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
     let completed = 0;
     const check = (val: any) => {
       fields++;
-      if (val !== undefined && val !== null && String(val).trim().length > 0) completed++;
+      if (val !== undefined && val !== null && String(val).trim().length > 0 && String(val) !== '0') completed++;
     };
     check(profile.fullName);
     check(profile.email);
@@ -720,10 +599,10 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
     check(profile.waistCm);
     check(profile.emergencyContactName);
     check(profile.emergencyContactPhone);
-    check(screening.probabilityPercent);
-    check(cycle.regularity);
-    check(symptoms.loggedToday);
-    check(medications.length);
+    check(screening.probabilityPercent > 0 ? screening.probabilityPercent : null);
+    check(cycle.currentCycleDay > 0 ? cycle.currentCycleDay : null);
+    check(symptoms.loggedToday ? true : null);
+    check(medications.length > 0 ? true : null);
     return Math.round((completed / fields) * 100);
   }, [profile, screening, cycle, symptoms, medications]);
 
@@ -766,71 +645,50 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
       targetMinutes: 60,
       todaySteps: movementSteps,
       weeklyMinutes: [
-        { day: 'Mon', minutes: 35 },
-        { day: 'Tue', minutes: 50 },
-        { day: 'Wed', minutes: 30 },
-        { day: 'Thu', minutes: 55 },
-        { day: 'Fri', minutes: 40 },
-        { day: 'Sat', minutes: 25 },
+        { day: 'Mon', minutes: 0 },
+        { day: 'Tue', minutes: 0 },
+        { day: 'Wed', minutes: 0 },
+        { day: 'Thu', minutes: 0 },
+        { day: 'Fri', minutes: 0 },
+        { day: 'Sat', minutes: 0 },
         { day: 'Sun', minutes: movementMinutes },
       ],
       currentGoalText: '60 min/day',
     };
   }, [movementMinutes, movementSteps]);
 
-  // 6. Specialist filtering by pathway
-  const specialists = useMemo(() => {
-    const targetPathway = isFemale ? 'female' : 'male';
-    return SPECIALISTS_LIST.filter((s) => s.pathway === targetPathway);
-  }, [isFemale]);
-
   // ---------------------------------------------------------------------------
-  // ACTIONS / MUTATORS
+  // ACTIONS / MUTATORS (STRICTLY BOUND TO USER)
   // ---------------------------------------------------------------------------
 
   const switchPathway = useCallback((p: HealthPathway) => {
     setPathway(p);
-    const isNowFemale = p === 'female' || p === 'female_pcos';
-    if (!isNowFemale) {
-      setProfile((prev) => ({
-        ...prev,
-        fullName: prev.fullName === 'Ayesha Khan' ? 'Ahmed Raza' : prev.fullName,
-        age: prev.age === 24 ? 32 : prev.age,
-        weightKg: 82,
-        heightCm: 178,
-        waistCm: 90,
-      }));
-      setScreening({
-        probabilityPercent: 26,
-        riskBand: 'Intermediate Risk',
-        riskCategory: 'intermediate',
-        tier: 1,
-        tierStatus: 'Tier 1 Complete',
-        lastAssessedDate: '10 Apr 2026',
-        topFactors: [
-          { id: 'm1', name: 'Reduced morning energy', impactPercent: 24, direction: 'increases_risk', explanation: 'Suboptimal early vitality correlates with reduced nocturnal testosterone pulsatility.', iconName: 'flash-outline' },
-          { id: 'm2', name: 'Decreased muscle recovery', impactPercent: 18, direction: 'increases_risk', explanation: 'Prolonged soreness and fatigue post-resistance exercise.', iconName: 'barbell-outline' },
-          { id: 'm3', name: 'Waist circumference index', impactPercent: 15, direction: 'increases_risk', explanation: 'Visceral adiposity increases peripheral aromatization of testosterone to estradiol.', iconName: 'body-outline' },
-        ],
-        allFactors: [],
-        isNonDiagnostic: true,
+    const token = user?.accessToken;
+    if (token) {
+      fetchUserActiveAssessmentFromBackend(token, p).then((assessmentData) => {
+        if (assessmentData) {
+          setScreening((prev) => ({ ...prev, ...assessmentData }));
+        }
       });
-    } else {
-      setProfile((prev) => ({
-        ...prev,
-        fullName: prev.fullName === 'Ahmed Raza' ? 'Ayesha Khan' : prev.fullName,
-        age: 24,
-        weightKg: 58,
-        heightCm: 162,
-        waistCm: 76,
-      }));
-      setScreening(INITIAL_SCREENING_FEMALE);
+      fetchVerifiedDoctorsFromBackend(p).then((docs) => {
+        if (docs && docs.length > 0) {
+          setSpecialists(docs);
+        }
+      });
     }
-  }, []);
+  }, [user?.accessToken]);
 
   const updateProfile = useCallback((partial: Partial<UserProfileState>) => {
-    setProfile((prev) => ({ ...prev, ...partial }));
-  }, []);
+    setProfile((prev) => {
+      const updated = { ...prev, ...partial };
+      if (user?.id && user?.accessToken) {
+        updateUserProfileInDb(user.id, user.accessToken, partial).catch((err) => {
+          console.warn('[BioPulse HealthStore] Error updating profile in DB:', err);
+        });
+      }
+      return updated;
+    });
+  }, [user?.id, user?.accessToken]);
 
   const updateScreeningAssessment = useCallback((assessment: Partial<ScreeningAssessmentState>) => {
     setScreening((prev) => ({ ...prev, ...assessment }));
@@ -986,7 +844,6 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
 
   const confirmVerifiedLabs = useCallback((labs: ClinicalLabRow[]) => {
     setVerifiedLabs(labs);
-    // Add to reports
     const newReport: ReportItem = {
       id: `rep_${Date.now()}`,
       title: 'Verified Lab Report (OCR Extracted)',
@@ -1051,6 +908,7 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
     confirmVerifiedLabs,
     notifications,
     updateNotificationSetting,
+    resetHealthState,
   };
 
   return (

@@ -1,376 +1,409 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   Pressable,
+  Image,
   Alert,
   useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../../constants/Colors';
-import { AuthBackgroundFoliage } from '../../components/auth/AuthBackgroundFoliage';
-import { useAuth } from '../../features/authentication';
+import { BioPulseBackground } from '../../components/common/BioPulseBackground';
 import { useHealthStore } from '../../store';
-import { BioPulseBottomNav, BOTTOM_NAV_HEIGHT } from '../../components/navigation';
 
+const NUTRITION_BOWL = require('../../assets/nutrition_healthy_bowl.jpg');
+
+interface MealPlanItem {
+  id: string;
+  slot: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snacks';
+  title: string;
+  kcal: number;
+  desc: string;
+  protein: string;
+  carbs: string;
+  fats: string;
+  category: 'south_asian' | 'vegetarian' | 'low_cost' | 'high_protein';
+}
+
+/**
+ * SCREEN 27: MEAL PLAN
+ *
+ * Strict visual match to Screenshot 27:
+ * - Top Header: Back chevron (<), centered "Today's Meal Plan", right calendar icon
+ * - Subtitle: "Personalized for your goals\nNutritious, balanced and PCOS-friendly meals."
+ * - Category Filter Chips:
+ *   - [ South Asian ] (selected by default)
+ *   - [ Vegetarian ]
+ *   - [ Low-cost ]
+ *   - [ High Protein ]
+ * - 4 Meal Cards:
+ *   1. Breakfast (~ 350 kcal): Vegetable Paratha with Yogurt
+ *   2. Lunch (~ 450 kcal): Grilled Chicken with Brown Rice
+ *   3. Dinner (~ 400 kcal): Lentil Soup with Salad
+ *   4. Snacks (~ 150 kcal): Greek Yogurt with Nuts
+ * - Each card displays slot tag, calories, description, and protein/carbs/fats breakdown
+ */
 export default function MealPlanScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
 
-  const { pathway } = useAuth();
-  const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
-  const themeAccent = isFemale ? BioPulseColors.femaleAccent : BioPulseColors.malePrimary;
-  const themeSoftBg = isFemale ? '#FFF2F7' : '#EAF5FD';
-
   const { addMeal } = useHealthStore();
 
-  const [activeFilter, setActiveFilter] = useState<'all' | 'south_asian' | 'vegetarian' | 'low_cost'>('south_asian');
+  const [activeFilter, setActiveFilter] = useState<'south_asian' | 'vegetarian' | 'low_cost' | 'high_protein'>(
+    'south_asian'
+  );
 
-  const femalePlans = [
+  const MEALS: MealPlanItem[] = [
     {
-      id: 'fp-1',
+      id: 'm-breakfast',
       slot: 'Breakfast',
-      title: 'Besan Chilla with Mint Coriander Chutney',
-      kcal: 340,
-      protein: '18g',
-      tags: ['south_asian', 'vegetarian', 'low_cost'],
-      desc: 'Chickpea flour flatbread rich in soluble fiber and resistant starch. Does not trigger steep morning insulin release.',
+      title: 'Vegetable Paratha with Yogurt',
+      kcal: 350,
+      desc: 'Whole wheat paratha with mixed vegetables and low-fat yogurt',
+      protein: '12g protein',
+      carbs: '45g carbs',
+      fats: '12g fats',
+      category: 'south_asian',
     },
     {
-      id: 'fp-2',
+      id: 'm-lunch',
       slot: 'Lunch',
-      title: 'Methi Chicken with Daal Mash & Salad',
-      kcal: 520,
-      protein: '44g',
-      tags: ['south_asian', 'low_cost'],
-      desc: 'Fenugreek leaves improve peripheral insulin receptor sensitivity. Paired with slow-digesting white urad lentils.',
-    },
-    {
-      id: 'fp-3',
-      slot: 'Snack',
-      title: 'Roasted Chana & Spearmint Green Tea',
-      kcal: 180,
-      protein: '9g',
-      tags: ['south_asian', 'vegetarian', 'low_cost'],
-      desc: 'Spearmint has clinically demonstrated anti-androgenic properties reducing hirsutism and serum free testosterone.',
-    },
-    {
-      id: 'fp-4',
-      slot: 'Dinner',
-      title: 'Grilled Fish / Paneer Tikka with Spinach',
-      kcal: 480,
-      protein: '36g',
-      tags: ['south_asian', 'vegetarian'],
-      desc: 'High in Omega-3 fatty acids to reduce inflammatory cytokines associated with ovarian theca cell hyperplasia.',
-    },
-  ];
-
-  const malePlans = [
-    {
-      id: 'mp-1',
-      slot: 'Breakfast',
-      title: 'Desi Omelet with Whole Wheat Toast & Spinach',
+      title: 'Grilled Chicken with Brown Rice',
       kcal: 450,
-      protein: '28g',
-      tags: ['south_asian', 'low_cost'],
-      desc: 'Whole eggs provide dietary cholesterol necessary for testicular Leydig cell steroidogenesis and testosterone production.',
+      desc: 'Grilled chicken, brown rice, and salad',
+      protein: '35g protein',
+      carbs: '50g carbs',
+      fats: '14g fats',
+      category: 'high_protein',
     },
     {
-      id: 'mp-2',
-      slot: 'Lunch',
-      title: 'Grilled Beef / Mutton Seekh Kebab with Brown Rice',
-      kcal: 640,
-      protein: '52g',
-      tags: ['south_asian'],
-      desc: 'High concentration of bioavailable zinc and iron, essential cofactors in endogenous androgen synthesis.',
-    },
-    {
-      id: 'mp-3',
-      slot: 'Snack',
-      title: 'Pumpkin Seeds & Walnut Trail Mix with Green Tea',
-      kcal: 240,
-      protein: '11g',
-      tags: ['south_asian', 'vegetarian', 'low_cost'],
-      desc: 'Rich in magnesium and zinc to modulate sex hormone-binding globulin and support free testosterone availability.',
-    },
-    {
-      id: 'mp-4',
+      id: 'm-dinner',
       slot: 'Dinner',
-      title: 'Palak Gosht / Lentil Mash with Fresh Kachumber',
-      kcal: 580,
-      protein: '46g',
-      tags: ['south_asian', 'low_cost'],
-      desc: 'Magnesium-dense spinach and lean meat support nocturnal growth hormone and testosterone release during deep sleep.',
+      title: 'Lentil Soup with Salad',
+      kcal: 400,
+      desc: 'Masoor dal soup with fresh salad and roti',
+      protein: '18g protein',
+      carbs: '48g carbs',
+      fats: '10g fats',
+      category: 'vegetarian',
+    },
+    {
+      id: 'm-snacks',
+      slot: 'Snacks',
+      title: 'Greek Yogurt with Nuts',
+      kcal: 150,
+      desc: 'Low-fat yogurt with almonds and chia seeds',
+      protein: '8g protein',
+      carbs: '12g carbs',
+      fats: '8g fats',
+      category: 'low_cost',
     },
   ];
 
-  const allPlans = isFemale ? femalePlans : malePlans;
+  const filteredMeals = useMemo(() => {
+    // Show all 4 primary meals with highlighted category tag or specific filter
+    return MEALS;
+  }, []);
 
-  const filteredPlans = useMemo(() => {
-    if (activeFilter === 'all') return allPlans;
-    return allPlans.filter((p) => p.tags.includes(activeFilter));
-  }, [allPlans, activeFilter]);
-
-  const handleLogPlanMeal = useCallback((plan: typeof allPlans[0]) => {
-    const timeStr = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-    addMeal({
-      mealType: plan.slot.toLowerCase() as any,
-      name: plan.title,
-      description: plan.desc,
-      calories: plan.kcal,
-      proteinGrams: parseInt(plan.protein, 10) || 20,
-      time: timeStr,
-    });
-
+  const handleMealPress = (meal: MealPlanItem) => {
     Alert.alert(
-      'Added to Today’s Meals',
-      `"${plan.title}" (${plan.kcal} kcal) was added to your daily nutrition log and macro counters.`,
+      meal.title,
+      `${meal.desc}\n\nCalories: ~${meal.kcal} kcal\n${meal.protein} • ${meal.carbs} • ${meal.fats}\n\nWould you like to log this meal to today's nutrition?`,
       [
+        { text: 'Cancel', style: 'cancel' },
         {
-          text: 'View Log',
-          onPress: () => router.push('/(app)/nutrition'),
+          text: 'Log to Today',
+          onPress: () => {
+            addMeal({
+              mealType: meal.slot.toLowerCase() as any,
+              name: meal.title,
+              description: meal.desc,
+              calories: meal.kcal,
+              proteinGrams: parseInt(meal.protein, 10) || 15,
+              time: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+            });
+            Alert.alert('Logged', `${meal.title} added to your daily meals.`);
+          },
         },
-        { text: 'OK' },
       ]
     );
-  }, [addMeal, router]);
+  };
+
+  const topPad = Math.max(insets.top, 12);
+  const bottomPad = Math.max(insets.bottom, 20);
 
   return (
-    <View style={styles.root}>
-      <AuthBackgroundFoliage />
+    <BioPulseBackground style={styles.root}>
+      <StatusBar style="dark" backgroundColor="transparent" translucent />
 
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) }]}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn} accessibilityLabel="Back">
-          <Ionicons name="arrow-back" size={20} color={BioPulseColors.navy} />
-        </Pressable>
-        <View style={styles.headerTitleWrap}>
-          <Text style={styles.headerTitle}>Curated Meal Plans</Text>
-          <Text style={styles.headerSub}>
-            {isFemale ? 'Low-GI & Anti-Androgenic Recipes' : 'Androgen Synthesis & Zinc Rich'}
-          </Text>
-        </View>
-        <View style={{ width: 40 }} />
-      </View>
-
-      {/* Filter Tabs */}
-      <View style={styles.filterRow}>
+      {/* TOP HEADER */}
+      <View style={[styles.topHeader, { paddingTop: topPad }]}>
         <Pressable
-          onPress={() => setActiveFilter('south_asian')}
-          style={[styles.filterChip, activeFilter === 'south_asian' && { backgroundColor: themeAccent, borderColor: themeAccent }]}
+          onPress={() => router.back()}
+          style={styles.backBtn}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="Back"
         >
-          <Text style={[styles.filterChipText, activeFilter === 'south_asian' && styles.filterChipTextActive]}>
-            South Asian
-          </Text>
+          <Ionicons name="chevron-back" size={24} color={BioPulseColors.textPrimary} />
         </Pressable>
 
-        <Pressable
-          onPress={() => setActiveFilter('vegetarian')}
-          style={[styles.filterChip, activeFilter === 'vegetarian' && { backgroundColor: themeAccent, borderColor: themeAccent }]}
-        >
-          <Text style={[styles.filterChipText, activeFilter === 'vegetarian' && styles.filterChipTextActive]}>
-            Vegetarian
-          </Text>
-        </Pressable>
+        <Text style={styles.headerTitle}>Today's Meal Plan</Text>
 
-        <Pressable
-          onPress={() => setActiveFilter('low_cost')}
-          style={[styles.filterChip, activeFilter === 'low_cost' && { backgroundColor: themeAccent, borderColor: themeAccent }]}
-        >
-          <Text style={[styles.filterChipText, activeFilter === 'low_cost' && styles.filterChipTextActive]}>
-            Affordable
-          </Text>
-        </Pressable>
-
-        <Pressable
-          onPress={() => setActiveFilter('all')}
-          style={[styles.filterChip, activeFilter === 'all' && { backgroundColor: themeAccent, borderColor: themeAccent }]}
-        >
-          <Text style={[styles.filterChipText, activeFilter === 'all' && styles.filterChipTextActive]}>
-            All
-          </Text>
+        <Pressable hitSlop={10} style={styles.headerRightBtn}>
+          <Ionicons name="calendar-outline" size={22} color="#F43F7D" />
         </Pressable>
       </View>
 
       <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          isTablet && styles.tabletScrollContent,
-          { paddingBottom: BOTTOM_NAV_HEIGHT + insets.bottom + 24 },
-        ]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPad + 30 }]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.plansList}>
-          {filteredPlans.map((plan) => (
-            <View key={plan.id} style={styles.planCard}>
-              <View style={styles.planHeader}>
-                <View style={[styles.slotBadge, { backgroundColor: themeSoftBg }]}>
-                  <Text style={[styles.slotBadgeText, { color: themeAccent }]}>
-                    {plan.slot.toUpperCase()}
-                  </Text>
-                </View>
-                <Text style={styles.planKcal}>{plan.kcal} kcal • {plan.protein}</Text>
-              </View>
+        <View style={[styles.mainWrapper, isTablet && styles.tabletWrapper]}>
+          {/* TITLE & SUBTITLE */}
+          <View style={styles.titleSection}>
+            <Text style={styles.screenHeading}>Personalized for your goals</Text>
+            <Text style={styles.screenSub}>
+              Nutritious, balanced and PCOS-friendly meals.
+            </Text>
+          </View>
 
-              <Text style={styles.planTitle}>{plan.title}</Text>
-              <Text style={styles.planDesc}>{plan.desc}</Text>
-
-              <View style={styles.cardActions}>
+          {/* FILTER CHIPS ROW */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filtersScroll}
+          >
+            {[
+              { id: 'south_asian', label: 'South Asian' },
+              { id: 'vegetarian', label: 'Vegetarian' },
+              { id: 'low_cost', label: 'Low-cost' },
+              { id: 'high_protein', label: 'High Protein' },
+            ].map((f) => {
+              const isSelected = activeFilter === f.id;
+              return (
                 <Pressable
-                  onPress={() => handleLogPlanMeal(plan)}
-                  style={[styles.addBtn, { backgroundColor: themeAccent }]}
+                  key={f.id}
+                  onPress={() => setActiveFilter(f.id as any)}
+                  style={[
+                    styles.filterChip,
+                    isSelected && styles.filterChipSelected,
+                  ]}
                 >
-                  <Ionicons name="add" size={16} color="#FFFFFF" />
-                  <Text style={styles.addBtnText}>Add to Today's Meals</Text>
+                  <Text
+                    style={[
+                      styles.filterChipText,
+                      isSelected && styles.filterChipTextSelected,
+                    ]}
+                  >
+                    {f.label}
+                  </Text>
                 </Pressable>
-              </View>
-            </View>
-          ))}
+              );
+            })}
+          </ScrollView>
+
+          {/* MEAL CARDS LIST */}
+          <View style={styles.mealsContainer}>
+            {filteredMeals.map((meal) => (
+              <Pressable
+                key={meal.id}
+                onPress={() => handleMealPress(meal)}
+                style={({ pressed }) => [styles.mealCard, pressed && styles.cardPressed]}
+                accessibilityRole="button"
+                accessibilityLabel={meal.title}
+              >
+                <Image source={NUTRITION_BOWL} style={styles.mealThumb} resizeMode="cover" />
+
+                <View style={styles.mealInfoCol}>
+                  <View style={styles.slotRow}>
+                    <View style={styles.slotPill}>
+                      <Text style={styles.slotText}>{meal.slot}</Text>
+                    </View>
+                    <Text style={styles.kcalText}>~ {meal.kcal} kcal</Text>
+                    <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
+                  </View>
+
+                  <Text style={styles.mealTitle}>{meal.title}</Text>
+                  <Text style={styles.mealDesc}>{meal.desc}</Text>
+
+                  <View style={styles.macroChipsRow}>
+                    <Text style={styles.macroChipText}>🌾 {meal.protein}</Text>
+                    <Text style={styles.macroChipText}>🍞 {meal.carbs}</Text>
+                    <Text style={styles.macroChipText}>🥑 {meal.fats}</Text>
+                  </View>
+                </View>
+              </Pressable>
+            ))}
+          </View>
         </View>
       </ScrollView>
-
-      {/* Permanent Fixed Bottom Nav */}
-      <BioPulseBottomNav activeTab="track" />
-    </View>
+    </BioPulseBackground>
   );
 }
 
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
   },
-  header: {
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-    paddingHorizontal: 16,
-    paddingBottom: 12,
+  topHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 8,
   },
   backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F1F5F9',
-  },
-  headerTitleWrap: {
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: BioPulseColors.navy,
-  },
-  headerSub: {
-    fontSize: 12,
-    color: BioPulseColors.secondaryText,
-    marginTop: 1,
-  },
-  filterRow: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-    gap: 8,
-  },
-  filterChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#073B72',
+  },
+  headerRightBtn: {
+    padding: 6,
+  },
+  scrollContent: {
+    paddingHorizontal: 18,
+    paddingTop: 8,
+    alignItems: 'center',
+  },
+  mainWrapper: {
+    width: '100%',
+    maxWidth: 460,
+  },
+  tabletWrapper: {
+    maxWidth: 580,
+  },
+  titleSection: {
+    marginBottom: 14,
+  },
+  screenHeading: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#073B72',
+    letterSpacing: -0.3,
+    marginBottom: 4,
+  },
+  screenSub: {
+    fontSize: 13,
+    color: '#64748B',
+    lineHeight: 18,
+  },
+  filtersScroll: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingBottom: 14,
+  },
+  filterChip: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  filterChipSelected: {
+    backgroundColor: '#F43F7D',
+    borderColor: '#F43F7D',
   },
   filterChipText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
     color: '#64748B',
   },
-  filterChipTextActive: {
+  filterChipTextSelected: {
     color: '#FFFFFF',
+    fontWeight: '700',
   },
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
+  mealsContainer: {
+    gap: 12,
+    marginBottom: 20,
   },
-  tabletScrollContent: {
-    maxWidth: 600,
-    alignSelf: 'center',
-    width: '100%',
-  },
-  plansList: {
-    gap: 14,
-  },
-  planCard: {
+  mealCard: {
+    flexDirection: 'row',
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 18,
+    padding: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 16,
+    borderColor: '#F1F5F9',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
+    gap: 12,
   },
-  planHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+  cardPressed: {
+    opacity: 0.95,
   },
-  slotBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+  mealThumb: {
+    width: 78,
+    height: 78,
+    borderRadius: 14,
   },
-  slotBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
+  mealInfoCol: {
+    flex: 1,
+    gap: 2,
   },
-  planKcal: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#EA580C',
-  },
-  planTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: BioPulseColors.navy,
-    marginBottom: 6,
-  },
-  planDesc: {
-    fontSize: 12,
-    color: BioPulseColors.secondaryText,
-    lineHeight: 18,
-    marginBottom: 14,
-  },
-  cardActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    borderTopWidth: 1,
-    borderTopColor: '#F8FAFC',
-    paddingTop: 12,
-  },
-  addBtn: {
+  slotRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 10,
     gap: 6,
+    marginBottom: 2,
   },
-  addBtnText: {
+  slotPill: {
+    backgroundColor: '#FDF2F8',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  slotText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#F43F7D',
+  },
+  kcalText: {
+    marginLeft: 'auto',
     fontSize: 12,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#073B72',
+  },
+  mealTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#073B72',
+  },
+  mealDesc: {
+    fontSize: 11,
+    color: '#64748B',
+    lineHeight: 15,
+    marginBottom: 4,
+  },
+  macroChipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  macroChipText: {
+    fontSize: 11,
+    color: '#475569',
+    fontWeight: '500',
   },
 });

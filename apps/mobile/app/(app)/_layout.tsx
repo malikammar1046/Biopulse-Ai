@@ -1,8 +1,31 @@
 import React from 'react';
-import { Stack } from 'expo-router';
+import { Stack, Redirect } from 'expo-router';
+import { View, ActivityIndicator } from 'react-native';
 import { BioPulseColors } from '../../constants/Colors';
+import { useAuth } from '../../features/authentication';
 
 export default function AppGroupLayout() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: BioPulseColors.background,
+        }}
+      >
+        <ActivityIndicator size="large" color={BioPulseColors.primary} />
+      </View>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Redirect href="/(auth)/login" />;
+  }
+
   return (
     <Stack
       screenOptions={{

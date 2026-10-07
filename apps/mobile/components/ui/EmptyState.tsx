@@ -4,11 +4,13 @@ import { BorderRadius, Spacing } from '../../constants/Layout';
 import { Typography as TypoTokens } from '../../constants/Typography';
 import { useThemeColor } from '../../hooks/useThemeColor';
 import { Button } from './Button';
+import { SaladBowlIllustration } from './StateIllustrations';
 
 export interface EmptyStateProps {
   title: string;
   description: string;
   icon?: React.ReactNode;
+  illustration?: 'meals' | 'default';
   actionLabel?: string;
   onAction?: () => void;
   secondaryActionLabel?: string;
@@ -20,6 +22,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   title,
   description,
   icon,
+  illustration,
   actionLabel,
   onAction,
   secondaryActionLabel,
@@ -30,23 +33,29 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 
   return (
     <View style={[styles.container, style]}>
-      <View
-        style={[
-          styles.iconContainer,
-          {
-            backgroundColor: theme.primarySoft,
-            borderColor: theme.borderSubtle,
-          },
-        ]}
-      >
-        {icon ? (
-          icon
-        ) : (
-          <View
-            style={[styles.defaultOrb, { backgroundColor: theme.primaryLight }]}
-          />
-        )}
-      </View>
+      {illustration === 'meals' ? (
+        <View style={styles.illustrationWrapper}>
+          <SaladBowlIllustration size={130} />
+        </View>
+      ) : (
+        <View
+          style={[
+            styles.iconContainer,
+            {
+              backgroundColor: theme.primarySoft,
+              borderColor: theme.borderSubtle,
+            },
+          ]}
+        >
+          {icon ? (
+            icon
+          ) : (
+            <View
+              style={[styles.defaultOrb, { backgroundColor: theme.primaryLight }]}
+            />
+          )}
+        </View>
+      )}
 
       <Text
         accessibilityRole="header"
@@ -88,6 +97,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: Spacing['3xl'],
     paddingHorizontal: Spacing.xl,
+  },
+  illustrationWrapper: {
+    marginBottom: Spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   iconContainer: {
     width: 64,

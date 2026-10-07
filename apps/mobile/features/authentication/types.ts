@@ -9,6 +9,8 @@ export interface UserProfile {
   createdAt: string;
   accessToken?: string;
   isDemoUser?: boolean;
+  isOnboarded?: boolean;
+  avatarUrl?: string;
 }
 
 export interface AuthState {

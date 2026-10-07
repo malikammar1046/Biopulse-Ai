@@ -5,36 +5,22 @@ import {
   Pressable,
   StyleSheet,
   ScrollView,
-  Image,
   useWindowDimensions,
+  Platform,
   Alert,
 } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../constants/Colors';
-import { AuthBackgroundFoliage } from '../components/auth/AuthBackgroundFoliage';
-import {
-  OnboardingStepper,
-  PathwayHeader,
-  DatePickerModal,
-  BmiGaugeCard,
-} from '../components/onboarding';
+import { BioPulseBackground } from '../components/common/BioPulseBackground';
+import { BioPulseButton } from '../components/common/BioPulseButton';
+import { DatePickerModal } from '../components/onboarding/DatePickerModal';
 import { useFemaleOnboarding } from '../features/onboarding';
 
-const FEMALE_HERO = require('../assets/female_pathway_hero.png');
-
-const FEMALE_ONBOARDING_STEPS = [
-  { id: 1, label: 'Basic Info' },
-  { id: 2, label: 'Cycle Health' },
-  { id: 3, label: 'Symptoms' },
-  { id: 4, label: 'Lifestyle' },
-  { id: 5, label: 'Review' },
-];
-
 /**
- * Accurately calculate age from date of birth (ISO 'YYYY-MM-DD').
- * Dynamically computes against the current local date.
+ * Calculate age dynamically from ISO 'YYYY-MM-DD'
  */
 function calculateAge(dobIso: string): number {
   if (!dobIso) return 24;
@@ -53,7 +39,7 @@ function calculateAge(dobIso: string): number {
 }
 
 /**
- * Format ISO date ('2002-03-15') into readable display ('15 Mar 2002')
+ * Format ISO date string into readable text (e.g. '15 Mar 2002')
  */
 function formatReadableDate(dobIso: string): string {
   if (!dobIso) return '15 Mar 2002';
@@ -64,443 +50,284 @@ function formatReadableDate(dobIso: string): string {
   return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+type PregnancyOption = 'not_pregnant' | 'trying_to_conceive' | 'currently_pregnant';
+
 /**
- * Screen 7: FEMALE "Basic Information" (Refined Layout)
+ * Screen 6: Female Onboarding — Basic Information
  *
  * Implements:
  * - Step 1 of 5 in Female PCOS Screening Pathway
- * - Screen 5 header architecture with "PERSONALIZED HEALTH INTELLIGENCE"
- * - Decorative female character artwork in header
- * - Date of Birth with platform date picker & strictly derived read-only age
- * - Metric height (cm) & weight (kg) selectors
- * - Dynamic Body Mass Index (BMI) gauge with WHO classification
- * - Marital status selection with conditional marriage duration for Tier-1 ML
- * - Pregnancy status with clinically sound non-diagnostic mapping
- * - Informational privacy and personalization banner
- * - Full state persistence via FemaleOnboardingContext
+ * - Date of Birth selector with live calculated Age
+ * - Height (cm) and Weight (kg) inputs with quick adjust buttons
+ * - Live automatic BMI gauge & WHO clinical categorization
+ * - Pregnancy status selector
+ * - "Continue  →" CTA persisting state into FemaleOnboardingContext
  */
 export default function FemaleBasicInfoScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
-  const isTablet = width >= 768;
-  const isNarrow = width < 360;
+  const { width, height } = useWindowDimensions();
 
-  // Retrieve persistent state from FemaleOnboardingContext
   const { basicInfo, updateBasicInfo } = useFemaleOnboarding();
 
-  // Local form state
+  // Local interactive state
   const [dob, setDob] = useState<string>(basicInfo.dateOfBirth || '2002-03-15');
   const [heightCm, setHeightCm] = useState<number>(basicInfo.heightCm || 162);
   const [weightKg, setWeightKg] = useState<number>(basicInfo.weightKg || 58);
-  const [maritalStatus, setMaritalStatus] = useState<
-    'single' | 'married' | 'prefer_not_to_say'
-  >(basicInfo.maritalStatus || 'single');
-  const [marriageYears, setMarriageYears] = useState<number>(basicInfo.marriageYears ?? 1);
-  const [pregnancyStatus, setPregnancyStatus] = useState<
-    'not_pregnant' | 'currently_pregnant' | 'trying_to_conceive' | 'prefer_not_to_say'
-  >(basicInfo.pregnancyStatus || 'not_pregnant');
+  const [pregnancyStatus, setPregnancyStatus] = useState<PregnancyOption>(
+    (basicInfo.pregnancyStatus as PregnancyOption) || 'not_pregnant'
+  );
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
-  // Date picker modal state
-  const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
+  const topPad = Math.max(insets.top, Platform.OS === 'android' ? 16 : 12);
+  const bottomPad = Math.max(insets.bottom, 20);
 
-  // Derived age dynamically computed from Date of Birth
+  // Derived calculations
   const age = useMemo(() => calculateAge(dob), [dob]);
 
-  // Derived BMI
-  const computedBmi = useMemo(() => {
+  const { bmi, bmiCategory, bmiColor, bmiBg } = useMemo(() => {
     const heightM = heightCm / 100;
-    return Math.round((weightKg / (heightM * heightM)) * 10) / 10;
+    const computedBmi =
+      heightM > 0 ? parseFloat((weightKg / (heightM * heightM)).toFixed(1)) : 22.1;
+
+    let category = 'Normal weight';
+    let color: string = BioPulseColors.teal;
+    let bg = '#E6F8F9';
+
+    if (computedBmi < 18.5) {
+      category = 'Underweight';
+      color = '#3B82F6';
+      bg = '#EFF6FF';
+    } else if (computedBmi < 25.0) {
+      category = 'Normal weight';
+      color = '#10B981';
+      bg = '#ECFDF5';
+    } else if (computedBmi < 30.0) {
+      category = 'Overweight';
+      color = '#F59E0B';
+      bg = '#FFFBEB';
+    } else {
+      category = 'Elevated (Obese)';
+      color = '#EF4444';
+      bg = '#FEF2F2';
+    }
+
+    return { bmi: computedBmi, bmiCategory: category, bmiColor: color, bmiBg: bg };
   }, [heightCm, weightKg]);
 
-  // Save state to context
-  const saveState = useCallback(
-    (overrides?: Partial<typeof basicInfo>) => {
-      updateBasicInfo({
-        dateOfBirth: dob,
-        age,
-        heightCm,
-        weightKg,
-        bmi: computedBmi,
-        maritalStatus,
-        marriageYears: maritalStatus === 'married' ? marriageYears : 0,
-        pregnancyStatus,
-        ...overrides,
-      });
-    },
-    [
-      dob,
-      age,
-      heightCm,
-      weightKg,
-      computedBmi,
-      maritalStatus,
-      marriageYears,
-      pregnancyStatus,
-      updateBasicInfo,
-    ]
-  );
-
-  const params = useLocalSearchParams<{ returnTo?: string }>();
-  const isFromReview = params.returnTo === 'review';
-
-  // Back Navigation
   const handleBack = useCallback(() => {
-    saveState();
-    if (isFromReview) {
-      router.push('/female-review');
-    } else if (router.canGoBack()) {
+    if (router.canGoBack()) {
       router.back();
     } else {
       router.replace('/pathway-selection');
     }
-  }, [saveState, isFromReview, router]);
+  }, [router]);
 
-  // Skip Navigation
-  const handleSkip = useCallback(() => {
-    Alert.alert(
-      'Skip Basic Info?',
-      'Standard demographic baselines (24 years, 162 cm, 58 kg) will be used for your initial screening.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Skip to Cycle Health',
-          style: 'destructive',
-          onPress: () => {
-            saveState();
-            if (isFromReview) {
-              router.push('/female-review');
-            } else {
-              router.push('/female-cycle-health');
-            }
-          },
-        },
-      ]
-    );
-  }, [saveState, isFromReview, router]);
-
-  // Continue CTA
   const handleContinue = useCallback(() => {
-    // Validate bounds
-    if (age < 12 || age > 65) {
-      Alert.alert('Validation Notice', 'Please verify your date of birth.');
+    if (age <= 0 || age > 120) {
+      Alert.alert('Invalid Date of Birth', 'Please select a valid date of birth.');
       return;
     }
-    if (heightCm < 100 || heightCm > 240) {
-      Alert.alert('Validation Notice', 'Please enter a realistic height between 100 and 240 cm.');
+    if (heightCm < 80 || heightCm > 250) {
+      Alert.alert('Invalid Height', 'Please enter a valid height between 80 cm and 250 cm.');
       return;
     }
-    if (weightKg < 30 || weightKg > 250) {
-      Alert.alert('Validation Notice', 'Please enter a realistic weight between 30 and 250 kg.');
+    if (weightKg < 25 || weightKg > 300) {
+      Alert.alert('Invalid Weight', 'Please enter a valid weight between 25 kg and 300 kg.');
       return;
     }
 
-    saveState();
-    if (isFromReview) {
-      router.push('/female-review');
-    } else {
-      router.push('/female-cycle-health');
-    }
-  }, [age, heightCm, weightKg, isFromReview, saveState, router]);
+    // Persist basic information
+    updateBasicInfo({
+      dateOfBirth: dob,
+      age,
+      heightCm,
+      weightKg,
+      bmi,
+      pregnancyStatus,
+    });
 
-  // Height and Weight Steppers
-  const decrementHeight = () => heightCm > 120 && setHeightCm((h) => h - 1);
-  const incrementHeight = () => heightCm < 220 && setHeightCm((h) => h + 1);
-
-  const decrementWeight = () => weightKg > 35 && setWeightKg((w) => w - 1);
-  const incrementWeight = () => weightKg < 200 && setWeightKg((w) => w + 1);
+    // Advance to Step 2: Cycle Health
+    router.push('/female-cycle-health');
+  }, [dob, age, heightCm, weightKg, bmi, pregnancyStatus, updateBasicInfo, router]);
 
   return (
-    <View
-      style={[
-        styles.root,
-        {
-          paddingTop: Math.max(insets.top, 8),
-          paddingBottom: Math.max(insets.bottom, 16),
-        },
-      ]}
-    >
-      <AuthBackgroundFoliage />
+    <BioPulseBackground style={styles.container}>
+      <StatusBar style="dark" backgroundColor="transparent" translucent />
+
+      {/* Top Navigation Bar with Step Indicator */}
+      <View style={[styles.topBar, { paddingTop: topPad }]}>
+        <Pressable onPress={handleBack} style={styles.backButton} hitSlop={12}>
+          <Ionicons name="arrow-back" size={24} color={BioPulseColors.textPrimary} />
+        </Pressable>
+
+        <View style={styles.stepIndicatorContainer}>
+          <Text style={styles.stepIndicatorText}>Step 1 of 5</Text>
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: '20%' }]} />
+          </View>
+        </View>
+
+        <View style={{ width: 40 }} />
+      </View>
 
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          isTablet && styles.tabletScrollContent,
+          { paddingBottom: bottomPad + 16 },
         ]}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
       >
-        <View style={[styles.container, isTablet && styles.tabletContainer]}>
-          {/* 1. Header (Screen 5 Architecture with Skip on Right) */}
-          <View style={styles.headerWrapper}>
-            <PathwayHeader onBack={handleBack} />
+        <View style={[styles.mainWrapper, { maxWidth: Math.min(width, 460) }]}>
+          {/* Header Title */}
+          <View style={styles.titleSection}>
+            <Text style={styles.screenTitle}>Basic Information</Text>
+            <Text style={styles.screenSubtitle}>
+              These metrics establish your baseline for personalized PCOS screening.
+            </Text>
+          </View>
+
+          {/* 1. Date of Birth & Age Card */}
+          <View style={styles.card}>
+            <Text style={styles.cardHeaderTitle}>Date of Birth & Age</Text>
             <Pressable
-              onPress={handleSkip}
-              hitSlop={8}
-              style={({ pressed }) => [styles.skipBtn, pressed && styles.skipBtnPressed]}
+              onPress={() => setIsDatePickerOpen(true)}
+              style={styles.dobSelector}
               accessibilityRole="button"
-              accessibilityLabel="Skip basic information step"
+              accessibilityLabel="Select Date of Birth"
             >
-              <Text style={styles.skipText}>Skip </Text>
-              <Ionicons name="chevron-forward" size={14} color={BioPulseColors.femaleAccent} />
+              <View style={styles.dobLeft}>
+                <Ionicons
+                  name="calendar-outline"
+                  size={20}
+                  color={BioPulseColors.teal}
+                  style={{ marginRight: 10 }}
+                />
+                <Text style={styles.dobDateText}>{formatReadableDate(dob)}</Text>
+              </View>
+
+              <View style={styles.ageBadge}>
+                <Text style={styles.ageBadgeText}>{age} yrs</Text>
+              </View>
             </Pressable>
           </View>
 
-          {/* 2. Onboarding Stepper (Step 1 Active: Basic Info) */}
-          <OnboardingStepper
-            currentStep={1}
-            steps={FEMALE_ONBOARDING_STEPS}
-            accentColor={BioPulseColors.femaleAccent}
-          />
+          {/* 2. Height & Weight Measurements Card */}
+          <View style={styles.card}>
+            <Text style={styles.cardHeaderTitle}>Measurements</Text>
 
-          {/* 3. Title Block with Decorative Hero Artwork */}
-          <View style={styles.titleSectionRow}>
-            <View style={styles.titleTextCol}>
-              <Text style={styles.screenTitle}>Basic Information</Text>
-              <Text style={styles.screenDescription}>
-                Let’s start with some basic information about you.
-              </Text>
+            {/* Height Row */}
+            <View style={styles.metricRow}>
+              <View>
+                <Text style={styles.metricLabel}>Height</Text>
+                <Text style={styles.metricValue}>
+                  {heightCm} <Text style={styles.metricUnit}>cm</Text>
+                </Text>
+              </View>
+
+              <View style={styles.adjustButtonsRow}>
+                <Pressable
+                  onPress={() => setHeightCm((h) => Math.max(120, h - 1))}
+                  style={styles.adjustBtn}
+                  hitSlop={8}
+                >
+                  <Ionicons name="remove" size={18} color={BioPulseColors.textPrimary} />
+                </Pressable>
+                <Pressable
+                  onPress={() => setHeightCm((h) => Math.min(220, h + 1))}
+                  style={styles.adjustBtn}
+                  hitSlop={8}
+                >
+                  <Ionicons name="add" size={18} color={BioPulseColors.textPrimary} />
+                </Pressable>
+              </View>
             </View>
 
-            {/* Decorative Female Illustration */}
-            <View
-              style={styles.heroArtworkWrap}
-              accessible={false}
-              aria-hidden={true}
-            >
-              <Image
-                source={FEMALE_HERO}
-                style={styles.heroArtworkImage}
-                resizeMode="cover"
-                accessible={false}
-              />
-            </View>
-          </View>
+            <View style={styles.divider} />
 
-          {/* 4. Row 1: Date of Birth & Derived Age (Paired Cards) */}
-          <View style={[styles.pairedCardsRow, isNarrow && styles.pairedCardsStacked]}>
-            {/* Date of Birth Card */}
-            <View style={[styles.smallCard, !isNarrow && styles.halfCard]}>
-              <Text style={styles.fieldLabel}>Date of Birth</Text>
-              <Pressable
-                onPress={() => setIsDatePickerVisible(true)}
-                style={styles.interactiveBox}
-                accessibilityRole="button"
-                accessibilityLabel={`Date of birth: ${formatReadableDate(dob)}`}
-              >
-                <Ionicons
-                  name="calendar-outline"
-                  size={16}
-                  color={BioPulseColors.femaleAccent}
-                  style={styles.fieldIcon}
-                />
-                <Text style={styles.interactiveBoxText}>{formatReadableDate(dob)}</Text>
-                <Ionicons name="chevron-down" size={15} color="#64748B" />
-              </Pressable>
-            </View>
+            {/* Weight Row */}
+            <View style={styles.metricRow}>
+              <View>
+                <Text style={styles.metricLabel}>Weight</Text>
+                <Text style={styles.metricValue}>
+                  {weightKg} <Text style={styles.metricUnit}>kg</Text>
+                </Text>
+              </View>
 
-            {/* Age Card (Derived / Read-only) */}
-            <View style={[styles.smallCard, !isNarrow && styles.halfCard]}>
-              <Text style={styles.fieldLabel}>Age</Text>
-              <View style={[styles.interactiveBox, styles.readOnlyBox]}>
-                <Ionicons
-                  name="person-outline"
-                  size={16}
-                  color={BioPulseColors.femaleAccent}
-                  style={styles.fieldIcon}
-                />
-                <Text style={styles.readOnlyText}>{age} years</Text>
+              <View style={styles.adjustButtonsRow}>
+                <Pressable
+                  onPress={() => setWeightKg((w) => Math.max(35, w - 1))}
+                  style={styles.adjustBtn}
+                  hitSlop={8}
+                >
+                  <Ionicons name="remove" size={18} color={BioPulseColors.textPrimary} />
+                </Pressable>
+                <Pressable
+                  onPress={() => setWeightKg((w) => Math.min(200, w + 1))}
+                  style={styles.adjustBtn}
+                  hitSlop={8}
+                >
+                  <Ionicons name="add" size={18} color={BioPulseColors.textPrimary} />
+                </Pressable>
               </View>
             </View>
           </View>
 
-          {/* 5. Row 2: Height & Weight (Paired Cards) */}
-          <View style={[styles.pairedCardsRow, isNarrow && styles.pairedCardsStacked]}>
-            {/* Height Card */}
-            <View style={[styles.smallCard, !isNarrow && styles.halfCard]}>
-              <Text style={styles.fieldLabel}>Height</Text>
-              <View style={styles.interactiveBox}>
-                <Ionicons
-                  name="resize-outline"
-                  size={16}
-                  color={BioPulseColors.femaleAccent}
-                  style={styles.fieldIcon}
-                />
-                <View style={styles.measureStepper}>
-                  <Pressable
-                    onPress={decrementHeight}
-                    style={({ pressed }) => [styles.microBtn, pressed && styles.microBtnPressed]}
-                    accessibilityLabel="Decrease height"
-                  >
-                    <Ionicons name="remove" size={13} color="#073B72" />
-                  </Pressable>
-
-                  <Text style={styles.measureValueText}>{heightCm}</Text>
-
-                  <Pressable
-                    onPress={incrementHeight}
-                    style={({ pressed }) => [styles.microBtn, pressed && styles.microBtnPressed]}
-                    accessibilityLabel="Increase height"
-                  >
-                    <Ionicons name="add" size={13} color="#073B72" />
-                  </Pressable>
-                </View>
-
-                <View style={styles.unitBadge}>
-                  <Text style={styles.unitBadgeText}>cm</Text>
-                  <Ionicons name="chevron-down" size={11} color="#64748B" />
-                </View>
+          {/* 3. Automatic BMI Calculation Card */}
+          <View style={[styles.card, styles.bmiCard]}>
+            <View style={styles.bmiHeaderRow}>
+              <View>
+                <Text style={styles.bmiTitle}>Body Mass Index (BMI)</Text>
+                <Text style={styles.bmiSubtext}>WHO Clinical Classification</Text>
+              </View>
+              <View style={[styles.bmiCategoryBadge, { backgroundColor: bmiBg }]}>
+                <Text style={[styles.bmiCategoryText, { color: bmiColor }]}>
+                  {bmiCategory}
+                </Text>
               </View>
             </View>
 
-            {/* Weight Card */}
-            <View style={[styles.smallCard, !isNarrow && styles.halfCard]}>
-              <Text style={styles.fieldLabel}>Weight</Text>
-              <View style={styles.interactiveBox}>
-                <Ionicons
-                  name="speedometer-outline"
-                  size={16}
-                  color={BioPulseColors.femaleAccent}
-                  style={styles.fieldIcon}
-                />
-                <View style={styles.measureStepper}>
-                  <Pressable
-                    onPress={decrementWeight}
-                    style={({ pressed }) => [styles.microBtn, pressed && styles.microBtnPressed]}
-                    accessibilityLabel="Decrease weight"
-                  >
-                    <Ionicons name="remove" size={13} color="#073B72" />
-                  </Pressable>
-
-                  <Text style={styles.measureValueText}>{weightKg}</Text>
-
-                  <Pressable
-                    onPress={incrementWeight}
-                    style={({ pressed }) => [styles.microBtn, pressed && styles.microBtnPressed]}
-                    accessibilityLabel="Increase weight"
-                  >
-                    <Ionicons name="add" size={13} color="#073B72" />
-                  </Pressable>
-                </View>
-
-                <View style={styles.unitBadge}>
-                  <Text style={styles.unitBadgeText}>kg</Text>
-                  <Ionicons name="chevron-down" size={11} color="#64748B" />
-                </View>
-              </View>
+            <View style={styles.bmiScoreRow}>
+              <Text style={styles.bmiScore}>{bmi}</Text>
+              <Text style={styles.bmiScoreUnit}>kg/m²</Text>
             </View>
           </View>
 
-          {/* 6. Row 3: Body Mass Index (BMI) Unified Dynamic Card */}
-          <BmiGaugeCard heightCm={heightCm} weightKg={weightKg} />
+          {/* 4. Pregnancy Status Card */}
+          <View style={styles.card}>
+            <Text style={styles.cardHeaderTitle}>Pregnancy Status</Text>
+            <Text style={styles.cardSubtitle}>
+              Helps refine hormonal assessment parameters.
+            </Text>
 
-          {/* 7. Row 4: Marital Status */}
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionTitleRow}>
-              <Ionicons
-                name="heart-outline"
-                size={16}
-                color={BioPulseColors.femaleAccent}
-                style={styles.sectionHeaderIcon}
-              />
-              <Text style={styles.fieldLabel}>Marital Status</Text>
-            </View>
-
-            <View style={styles.segmentedRow}>
-              {(['single', 'married', 'prefer_not_to_say'] as const).map((opt) => {
-                const isSelected = maritalStatus === opt;
-                const label =
-                  opt === 'single'
-                    ? 'Single'
-                    : opt === 'married'
-                    ? 'Married'
-                    : 'Prefer not to say';
+            <View style={styles.pregnancyOptionsContainer}>
+              {[
+                { key: 'not_pregnant', label: 'Not pregnant' },
+                { key: 'trying_to_conceive', label: 'Trying to conceive' },
+                { key: 'currently_pregnant', label: 'Currently pregnant' },
+              ].map((opt) => {
+                const isSelected = pregnancyStatus === opt.key;
                 return (
                   <Pressable
-                    key={`marital-${opt}`}
-                    onPress={() => setMaritalStatus(opt)}
+                    key={opt.key}
+                    onPress={() => setPregnancyStatus(opt.key as PregnancyOption)}
                     style={[
-                      styles.segmentBtn,
-                      isSelected ? styles.segmentBtnActive : styles.segmentBtnInactive,
+                      styles.pregnancyOption,
+                      isSelected && styles.pregnancyOptionSelected,
                     ]}
-                    accessibilityRole="radio"
-                    accessibilityState={{ selected: isSelected }}
                   >
-                    <Text
+                    <View
                       style={[
-                        styles.segmentText,
-                        isSelected ? styles.segmentTextActive : styles.segmentTextInactive,
+                        styles.radioCircle,
+                        isSelected && styles.radioCircleSelected,
                       ]}
                     >
-                      {label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-
-            {/* Conditionally asked marriage duration for ML Tier-1 requirement */}
-            {maritalStatus === 'married' && (
-              <View style={styles.subQuestionBox}>
-                <Text style={styles.subQuestionLabel}>Years married (for clinical modeling):</Text>
-                <View style={styles.subStepperRow}>
-                  <Pressable
-                    onPress={() => marriageYears > 0 && setMarriageYears((y) => y - 1)}
-                    style={styles.microBtn}
-                  >
-                    <Ionicons name="remove" size={13} color="#073B72" />
-                  </Pressable>
-                  <Text style={styles.subStepperValue}>
-                    {marriageYears} {marriageYears === 1 ? 'year' : 'years'}
-                  </Text>
-                  <Pressable
-                    onPress={() => marriageYears < 40 && setMarriageYears((y) => y + 1)}
-                    style={styles.microBtn}
-                  >
-                    <Ionicons name="add" size={13} color="#073B72" />
-                  </Pressable>
-                </View>
-              </View>
-            )}
-          </View>
-
-          {/* 8. Row 5: Pregnancy Status */}
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionTitleRow}>
-              <Ionicons
-                name="female-outline"
-                size={16}
-                color={BioPulseColors.femaleAccent}
-                style={styles.sectionHeaderIcon}
-              />
-              <Text style={styles.fieldLabel}>Pregnancy Status</Text>
-            </View>
-
-            <View style={styles.pregnancyPillsRow}>
-              {(
-                [
-                  { id: 'not_pregnant', label: 'Not Pregnant' },
-                  { id: 'currently_pregnant', label: 'Currently Pregnant' },
-                  { id: 'trying_to_conceive', label: 'Trying to Conceive' },
-                  { id: 'prefer_not_to_say', label: 'Prefer not to say' },
-                ] as const
-              ).map((opt) => {
-                const isSelected = pregnancyStatus === opt.id;
-                return (
-                  <Pressable
-                    key={`preg-${opt.id}`}
-                    onPress={() => setPregnancyStatus(opt.id)}
-                    style={[
-                      styles.pregnancyPill,
-                      isSelected ? styles.segmentBtnActive : styles.segmentBtnInactive,
-                    ]}
-                    accessibilityRole="radio"
-                    accessibilityState={{ selected: isSelected }}
-                  >
+                      {isSelected && <View style={styles.radioInnerDot} />}
+                    </View>
                     <Text
                       style={[
-                        styles.pregnancyPillText,
-                        isSelected ? styles.segmentTextActive : styles.segmentTextInactive,
+                        styles.pregnancyOptionText,
+                        isSelected && styles.pregnancyOptionTextSelected,
                       ]}
                     >
                       {opt.label}
@@ -511,372 +338,289 @@ export default function FemaleBasicInfoScreen() {
             </View>
           </View>
 
-          {/* 9. Row 6: Information Banner */}
-          <View style={styles.infoBanner}>
-            <Ionicons
-              name="information-circle"
-              size={18}
-              color="#64748B"
-              style={styles.infoIcon}
+          {/* 5. Continue CTA */}
+          <View style={styles.ctaContainer}>
+            <BioPulseButton
+              title="Continue"
+              variant="primary"
+              showArrow
+              onPress={handleContinue}
             />
-            <Text style={styles.infoText}>
-              This information helps us provide more accurate screening and personalized recommendations for your PCOS health.{'\n'}Your data is private and secure.
-            </Text>
           </View>
-
-          {/* 10. Row 7: Continue CTA Button */}
-          <Pressable
-            onPress={handleContinue}
-            style={({ pressed }) => [
-              styles.continueButton,
-              pressed && styles.continueButtonPressed,
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel="Continue to Cycle Health"
-          >
-            <View style={styles.buttonInnerRow}>
-              <Text style={styles.continueButtonText}>Continue</Text>
-              <Ionicons
-                name="arrow-forward"
-                size={17}
-                color="#FFFFFF"
-                style={styles.arrowIcon}
-              />
-            </View>
-          </Pressable>
         </View>
       </ScrollView>
 
-      {/* Date of Birth Picker Modal */}
+      {/* Date Picker Modal */}
       <DatePickerModal
-        visible={isDatePickerVisible}
+        visible={isDatePickerOpen}
         initialDateIso={dob}
-        onClose={() => setIsDatePickerVisible(false)}
-        onConfirm={(newDob) => setDob(newDob)}
+        onConfirm={(newIsoDate) => {
+          setDob(newIsoDate);
+          setIsDatePickerOpen(false);
+        }}
+        onClose={() => setIsDatePickerOpen(false)}
       />
-    </View>
+    </BioPulseBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
+  container: {
     flex: 1,
-    backgroundColor: '#FEF8FA',
+  },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: BioPulseColors.border,
+  },
+  stepIndicatorContainer: {
+    alignItems: 'center',
+  },
+  stepIndicatorText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: BioPulseColors.teal,
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  progressTrack: {
+    width: 100,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(22, 184, 196, 0.2)',
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: BioPulseColors.teal,
+    borderRadius: 2,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 16,
-    paddingBottom: 24,
-  },
-  tabletScrollContent: {
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: 18,
   },
-  container: {
+  mainWrapper: {
     width: '100%',
   },
-  tabletContainer: {
-    maxWidth: 600,
-  },
-  headerWrapper: {
-    position: 'relative',
-    width: '100%',
-  },
-  skipBtn: {
-    position: 'absolute',
-    right: 8,
-    top: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    zIndex: 10,
-  },
-  skipBtnPressed: {
-    opacity: 0.6,
-  },
-  skipText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: BioPulseColors.femaleAccent,
-  },
-  titleSectionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 0,
-    marginBottom: 12,
-  },
-  titleTextCol: {
-    flex: 1,
-    paddingRight: 6,
+  titleSection: {
+    marginVertical: 14,
   },
   screenTitle: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '800',
-    color: BioPulseColors.navy,
-    letterSpacing: -0.3,
-    marginBottom: 4,
+    color: BioPulseColors.textPrimary,
+    letterSpacing: -0.4,
   },
-  screenDescription: {
-    fontSize: 13,
-    lineHeight: 18,
-    color: '#64748B',
-    fontWeight: '400',
+  screenSubtitle: {
+    fontSize: 13.5,
+    color: BioPulseColors.textSecondary,
+    marginTop: 4,
+    lineHeight: 20,
   },
-  heroArtworkWrap: {
-    width: 86,
-    height: 86,
-    borderRadius: 43,
-    overflow: 'hidden',
-  },
-  heroArtworkImage: {
-    width: '100%',
-    height: '100%',
-  },
-  pairedCardsRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 10,
-  },
-  pairedCardsStacked: {
-    flexDirection: 'column',
-  },
-  halfCard: {
-    flex: 1,
-  },
-  smallCard: {
+  card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#F1D5DF',
-    padding: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.02,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  fieldLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: BioPulseColors.navy,
-    marginBottom: 6,
-  },
-  interactiveBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FAFCFF',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    paddingVertical: 7,
-    paddingHorizontal: 8,
-    gap: 6,
-  },
-  fieldIcon: {
-    marginRight: 2,
-  },
-  interactiveBoxText: {
-    flex: 1,
-    fontSize: 13,
-    fontWeight: '700',
-    color: BioPulseColors.navy,
-  },
-  readOnlyBox: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
-  },
-  readOnlyText: {
-    flex: 1,
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#475569',
-  },
-  measureStepper: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 2,
-  },
-  microBtn: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-  },
-  microBtnPressed: {
-    backgroundColor: '#F1F5F9',
-  },
-  measureValueText: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: BioPulseColors.navy,
-  },
-  unitBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    backgroundColor: '#F1F5F9',
-    paddingVertical: 4,
-    paddingHorizontal: 6,
-    borderRadius: 6,
-  },
-  unitBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#475569',
-  },
-  sectionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#F1D5DF',
-    padding: 12,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.02,
-    shadowRadius: 3,
-    elevation: 1,
-  },
-  sectionTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 8,
-  },
-  sectionHeaderIcon: {
-    marginRight: 2,
-  },
-  segmentedRow: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  segmentBtn: {
-    flex: 1,
-    paddingVertical: 9,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-  },
-  segmentBtnActive: {
-    backgroundColor: '#FFF0F5',
-    borderColor: BioPulseColors.femaleAccent,
-  },
-  segmentBtnInactive: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E2E8F0',
-  },
-  segmentText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  segmentTextActive: {
-    color: BioPulseColors.femaleAccent,
-    fontWeight: '700',
-  },
-  segmentTextInactive: {
-    color: '#55718F',
-  },
-  subQuestionBox: {
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#F8DCE5',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  subQuestionLabel: {
-    fontSize: 11.5,
-    color: '#64748B',
-    fontWeight: '500',
-  },
-  subStepperRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  subStepperValue: {
-    fontSize: 12.5,
-    fontWeight: '700',
-    color: BioPulseColors.navy,
-  },
-  pregnancyPillsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  pregnancyPill: {
-    paddingVertical: 7,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pregnancyPillText: {
-    fontSize: 11.5,
-    fontWeight: '600',
-  },
-  infoBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F1F5F9',
-    borderRadius: 12,
-    paddingVertical: 9,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderRadius: 20,
+    padding: 18,
+    borderWidth: 1.2,
+    borderColor: BioPulseColors.border,
     marginBottom: 14,
-    gap: 10,
-  },
-  infoIcon: {
-    flexShrink: 0,
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 11.5,
-    lineHeight: 15.5,
-    color: '#475569',
-    fontWeight: '500',
-  },
-  continueButton: {
-    width: '100%',
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: BioPulseColors.femaleAccent,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: BioPulseColors.femaleAccent,
+    shadowColor: '#16B8C4',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.28,
-    shadowRadius: 10,
-    elevation: 4,
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  continueButtonPressed: {
-    transform: [{ scale: 0.985 }],
-    opacity: 0.92,
-  },
-  buttonInnerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  continueButtonText: {
+  cardHeaderTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
-    letterSpacing: -0.2,
+    color: BioPulseColors.textPrimary,
+    marginBottom: 4,
   },
-  arrowIcon: {
-    marginLeft: 8,
+  cardSubtitle: {
+    fontSize: 12.5,
+    color: BioPulseColors.textSecondary,
+    marginBottom: 12,
+  },
+  dobSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F5FBFC',
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: BioPulseColors.border,
+    marginTop: 8,
+  },
+  dobLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dobDateText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: BioPulseColors.textPrimary,
+  },
+  ageBadge: {
+    backgroundColor: BioPulseColors.teal,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  ageBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  metricRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+  },
+  metricLabel: {
+    fontSize: 13,
+    color: BioPulseColors.textSecondary,
+    fontWeight: '500',
+  },
+  metricValue: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: BioPulseColors.textPrimary,
+    marginTop: 2,
+  },
+  metricUnit: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: BioPulseColors.textSecondary,
+  },
+  adjustButtonsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  adjustBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: '#F0F9FB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: BioPulseColors.border,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: BioPulseColors.borderSubtle,
+    marginVertical: 10,
+  },
+  bmiCard: {
+    backgroundColor: '#FFFFFF',
+    borderColor: 'rgba(22, 184, 196, 0.35)',
+  },
+  bmiHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  bmiTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: BioPulseColors.textPrimary,
+  },
+  bmiSubtext: {
+    fontSize: 12,
+    color: BioPulseColors.textSecondary,
+    marginTop: 2,
+  },
+  bmiCategoryBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  bmiCategoryText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  bmiScoreRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginTop: 8,
+  },
+  bmiScore: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: BioPulseColors.textPrimary,
+  },
+  bmiScoreUnit: {
+    fontSize: 14,
+    color: BioPulseColors.textSecondary,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  pregnancyOptionsContainer: {
+    gap: 8,
+    marginTop: 4,
+  },
+  pregnancyOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: BioPulseColors.border,
+    backgroundColor: '#F8FCFD',
+  },
+  pregnancyOptionSelected: {
+    borderColor: BioPulseColors.teal,
+    backgroundColor: '#EBF8FA',
+  },
+  radioCircle: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 1.5,
+    borderColor: BioPulseColors.textMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  radioCircleSelected: {
+    borderColor: BioPulseColors.teal,
+  },
+  radioInnerDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: BioPulseColors.teal,
+  },
+  pregnancyOptionText: {
+    fontSize: 14,
+    color: BioPulseColors.textSecondary,
+    fontWeight: '500',
+  },
+  pregnancyOptionTextSelected: {
+    color: BioPulseColors.textPrimary,
+    fontWeight: '700',
+  },
+  ctaContainer: {
+    marginTop: 8,
+    marginBottom: 16,
   },
 });

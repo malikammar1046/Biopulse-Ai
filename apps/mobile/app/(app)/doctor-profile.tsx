@@ -8,24 +8,30 @@ import {
   Alert,
   useWindowDimensions,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../../constants/Colors';
-import { AuthBackgroundFoliage } from '../../components/auth/AuthBackgroundFoliage';
+import { BioPulseBackground } from '../../components/common/BioPulseBackground';
 import { useAuth } from '../../features/authentication';
-import { BioPulseBottomNav, BOTTOM_NAV_HEIGHT } from '../../components/navigation';
-
 import { useHealthStore } from '../../store';
 
 /**
- * SCREEN 40: Doctor Profile
- * 
- * Provides:
- * - Detailed clinical credentials, specialty, expertise, and verified affiliations
- * - Consultation availability and schedule slots
- * - CTAs: Book Appointment and Add to Care Circle
- * - Full pathway awareness (Pink accents for Female PCOS, Blue accents for Male Andrology)
+ * SCREEN 40: DOCTOR PROFILE
+ *
+ * Strict visual match to Screenshot 40:
+ * - Top Header: Back chevron (<), favorite heart (♡)
+ * - Doctor Overview:
+ *   - Avatar with white coat
+ *   - "Dr. Ayesha Malik" with verified checkmark
+ *   - "Endocrinologist", "MBBS, FCPS (Endocrinology)"
+ *   - "⭐ 4.9 (152 reviews)"
+ * - About section: "Specializes in hormonal disorders, PCOS, thyroid diseases and women's endocrine health."
+ * - 3 Metric Highlight boxes: [ 8+ Years Experience ], [ 500+ Patients Treated ], [ Shaukat Khanum Hospital, Lahore ]
+ * - Areas of Expertise chips: PCOS, Hormonal Disorders, Thyroid, Menstrual Irregularities, Reproductive Endocrinology
+ * - Availability selector: Mon 15 Mar, Tue 16 Mar (active pink), Wed 17 Mar, Thu 18 Mar, Fri 19 Mar
+ * - Dual Bottom CTAs: [ 👤+ Add to Care Circle ] & [ 📅 Book Appointment ]
  */
 export default function DoctorProfileScreen() {
   const router = useRouter();
@@ -34,139 +40,126 @@ export default function DoctorProfileScreen() {
   const isTablet = width >= 768;
 
   const { pathway } = useAuth();
+  const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
+
   const { bookAppointment, addToCareCircle } = useHealthStore();
 
-  const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
-  const themeAccent = isFemale ? BioPulseColors.femaleAccent : BioPulseColors.malePrimary;
-  const badgeBg = isFemale ? '#FDF0F4' : '#EBF4FC';
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [selectedDay, setSelectedDay] = useState('Tue 16 Mar');
+  const [inCareCircle, setInCareCircle] = useState(false);
 
-  const [selectedSlot, setSelectedSlot] = useState<string>('Thu, 10:30 AM');
-  const [inCareCircle, setInCareCircle] = useState<boolean>(false);
-
-  // Default doctor profile adapted to pathway
   const doctor = isFemale
     ? {
-        name: 'Dr. Fatima Noor',
-        credentials: 'MD, FCPS (Reproductive Endocrinology)',
-        specialty: 'Reproductive Endocrinologist',
-        hospital: 'Aga Khan University Hospital, Karachi',
-        experience: '14 years clinical experience',
+        name: 'Dr. Ayesha Malik',
+        specialty: 'Endocrinologist',
+        degrees: 'MBBS, FCPS (Endocrinology)',
         rating: 4.9,
-        reviewsCount: 142,
-        consultationFee: 'PKR 3,500 (~$12)',
+        reviewsCount: 152,
         about:
-          'Specialist in polycystic ovary syndrome (PCOS), ovulatory dysfunction, and metabolic hormonal management. Dedicated to evidence-based lifestyle integration alongside clinical protocols.',
+          "Specializes in hormonal disorders, PCOS, thyroid diseases and women's endocrine health.",
+        experienceYears: '8+',
+        patientsTreated: '500+',
+        hospitalName: 'Shaukat Khanum\nHospital',
+        hospitalCity: 'Lahore',
         expertise: [
-          'PCOS Phenotyping',
-          'Insulin Resistance',
-          'Ovulation Tracking',
-          'Hormonal Lab Interpretation',
-          'Fertility Counseling',
-        ],
-        availableSlots: [
-          'Thu, 10:30 AM',
-          'Thu, 11:30 AM',
-          'Thu, 02:00 PM',
-          'Fri, 04:30 PM',
+          'PCOS',
+          'Hormonal Disorders',
+          'Thyroid',
+          'Menstrual Irregularities',
+          'Reproductive Endocrinology',
         ],
       }
     : {
-        name: 'Dr. Tariq Mahmood',
-        credentials: 'MD, FRCS (Urology & Andrology)',
-        specialty: 'Clinical Andrologist & Endocrinologist',
-        hospital: 'Aga Khan University Hospital, Karachi',
-        experience: '18 years clinical experience',
+        name: 'Dr. Ahmed Raza',
+        specialty: 'Endocrinologist',
+        degrees: 'MBBS, FCPS (Endocrinology)',
         rating: 4.9,
-        reviewsCount: 189,
-        consultationFee: 'PKR 4,000 (~$14)',
+        reviewsCount: 142,
         about:
-          'Senior specialist in hypogonadism, testosterone deficiency protocols, and male metabolic health. Focuses on clinical risk-tier evaluation and sustainable hormonal optimization.',
+          'Specializes in male endocrine health, late-onset hypogonadism, metabolic syndrome, and testosterone optimization.',
+        experienceYears: '12+',
+        patientsTreated: '750+',
+        hospitalName: 'Aga Khan University\nHospital',
+        hospitalCity: 'Lahore',
         expertise: [
-          'Hypogonadism Screening',
-          'Testosterone Replacement Monitoring',
-          'Metabolic Syndrome in Men',
-          'Endocrine Lab Panels',
-          'ADAM Score Stratification',
-        ],
-        availableSlots: [
-          'Wed, 09:30 AM',
-          'Wed, 11:00 AM',
-          'Thu, 03:00 PM',
-          'Sat, 10:00 AM',
+          'Hypogonadism',
+          'Testosterone Replacement',
+          'Metabolic Syndrome',
+          'Endocrine Recovery',
+          'Andrology',
         ],
       };
 
-  const handleBook = () => {
-    Alert.alert(
-      'Confirm Consultation',
-      `Book video appointment with ${doctor.name} for ${selectedSlot}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Confirm Booking',
-          onPress: () => {
-            bookAppointment({
-              doctorId: doctor.name,
-              doctorName: doctor.name,
-              specialty: doctor.specialty,
-              clinicOrHospital: doctor.hospital,
-              location: 'Karachi, Pakistan',
-              visitType: 'Online Consultation',
-              date: selectedSlot.includes(',') ? selectedSlot.split(',')[0].trim() : 'Thursday',
-              time: selectedSlot.includes(',') ? selectedSlot.split(',')[1].trim() : selectedSlot,
-            });
+  const availabilityDays = [
+    { day: 'Mon', date: '15 Mar', slots: '10 slots' },
+    { day: 'Tue', date: '16 Mar', slots: '8 slots' },
+    { day: 'Wed', date: '17 Mar', slots: '6 slots' },
+    { day: 'Thu', date: '18 Mar', slots: '9 slots' },
+    { day: 'Fri', date: '19 Mar', slots: '5 slots' },
+  ];
 
-            Alert.alert(
-              'Appointment Scheduled',
-              `Your appointment is booked for ${selectedSlot}. A calendar invite and clinical summary will be shared.`,
-              [
-                {
-                  text: 'View Appointments',
-                  onPress: () => router.push('/(app)/appointments'),
-                },
-                { text: 'OK' },
-              ]
-            );
-          },
+  const handleBook = () => {
+    bookAppointment({
+      doctorId: 'doc-ayesha',
+      doctorName: doctor.name,
+      specialty: doctor.specialty,
+      clinicOrHospital: doctor.hospitalName.replace('\n', ' '),
+      date: '16 Mar 2026',
+      time: '10:00 AM',
+      location: `${doctor.hospitalName.replace('\n', ' ')}, ${doctor.hospitalCity}`,
+      visitType: 'In-person',
+    });
+
+    Alert.alert(
+      'Appointment Booked',
+      `Your consultation with ${doctor.name} has been scheduled for 16 Mar 2026.`,
+      [
+        {
+          text: 'View Appointments',
+          onPress: () => router.push('/(app)/appointments'),
         },
+        { text: 'OK' },
       ]
     );
   };
 
-  const handleToggleCareCircle = () => {
-    if (!inCareCircle) {
-      setInCareCircle(true);
-      addToCareCircle({
-        name: doctor.name,
-        role: 'Doctor',
-        accessLevel: 'Clinical Summary Only',
-        email: `${doctor.name.toLowerCase().replace(/[^a-z]/g, '')}@aku.edu`,
-      });
-      Alert.alert(
-        'Added to Care Circle',
-        `${doctor.name} has been added to your Care Circle with clinician-level read access to your latest validated screening summary.`
-      );
-    } else {
-      setInCareCircle(false);
-      Alert.alert('Removed', `${doctor.name} was removed from your Care Circle.`);
-    }
+  const handleAddToCircle = () => {
+    addToCareCircle({
+      name: doctor.name,
+      role: 'Doctor',
+      relationship: doctor.specialty,
+      accessLevel: 'Clinical Summary Only',
+    });
+    setInCareCircle(true);
+    Alert.alert('Care Circle Updated', `${doctor.name} was added to your Care Circle.`);
   };
 
   return (
     <View style={styles.root}>
-      <AuthBackgroundFoliage />
+      <StatusBar style="dark" />
+      <BioPulseBackground />
 
-      {/* Header Bar */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) }]}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={20} color={BioPulseColors.navy} />
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 14) }]}>
+        <Pressable
+          onPress={() => router.back()}
+          style={styles.headerBtn}
+          accessibilityLabel="Back"
+          hitSlop={8}
+        >
+          <Ionicons name="chevron-back" size={24} color="#0F172A" />
         </Pressable>
-        <Text style={styles.headerTitle}>Physician Profile</Text>
-        <Pressable onPress={handleToggleCareCircle} style={styles.circleIconBtn}>
+
+        <Pressable
+          onPress={() => setIsFavorite(!isFavorite)}
+          style={styles.headerBtn}
+          accessibilityLabel="Favorite"
+          hitSlop={8}
+        >
           <Ionicons
-            name={inCareCircle ? 'people' : 'people-outline'}
+            name={isFavorite ? 'heart' : 'heart-outline'}
             size={22}
-            color={inCareCircle ? themeAccent : '#64748B'}
+            color="#E11D48"
           />
         </Pressable>
       </View>
@@ -174,163 +167,123 @@ export default function DoctorProfileScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          isTablet && styles.tabletScrollContent,
-          { paddingBottom: BOTTOM_NAV_HEIGHT + insets.bottom + 32 },
+          isTablet && styles.tabletContent,
+          { paddingBottom: insets.bottom + 85 },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Main Profile Card */}
-        <View style={styles.profileCard}>
-          <View style={styles.topInfoRow}>
-            <View style={[styles.avatarBox, { backgroundColor: badgeBg }]}>
-              <Ionicons name="person" size={36} color={themeAccent} />
-            </View>
-
-            <View style={styles.infoCol}>
-              <Text style={styles.docName}>{doctor.name}</Text>
-              <Text style={styles.docCreds}>{doctor.credentials}</Text>
-              <View style={[styles.specialtyBadge, { backgroundColor: badgeBg }]}>
-                <Text style={[styles.specialtyText, { color: themeAccent }]}>
-                  {doctor.specialty}
-                </Text>
-              </View>
-
-              <View style={styles.ratingRow}>
-                <Ionicons name="star" size={14} color="#F59E0B" />
-                <Text style={styles.ratingVal}>{doctor.rating}</Text>
-                <Text style={styles.reviewCount}>({doctor.reviewsCount} reviews)</Text>
-              </View>
-            </View>
+        {/* Doctor Overview Top Row */}
+        <View style={styles.docOverviewRow}>
+          <View style={styles.docAvatarBox}>
+            <Ionicons name="person" size={40} color="#073B72" />
           </View>
 
-          <View style={styles.divider} />
-
-          {/* Quick Info Grid */}
-          <View style={styles.metaGrid}>
-            <View style={styles.metaItem}>
-              <Ionicons name="business-outline" size={16} color="#64748B" />
-              <View>
-                <Text style={styles.metaLabel}>Affiliation</Text>
-                <Text style={styles.metaValue} numberOfLines={1}>
-                  {doctor.hospital}
-                </Text>
-              </View>
+          <View style={styles.docMeta}>
+            <View style={styles.nameRow}>
+              <Text style={styles.docName}>{doctor.name}</Text>
+              <Ionicons name="checkmark-circle" size={16} color="#0284C7" style={{ marginLeft: 4 }} />
             </View>
 
-            <View style={styles.metaItem}>
-              <Ionicons name="ribbon-outline" size={16} color="#64748B" />
-              <View>
-                <Text style={styles.metaLabel}>Experience</Text>
-                <Text style={styles.metaValue}>{doctor.experience}</Text>
-              </View>
-            </View>
+            <Text style={styles.docSpecialty}>{doctor.specialty}</Text>
+            <Text style={styles.docDegrees}>{doctor.degrees}</Text>
 
-            <View style={styles.metaItem}>
-              <Ionicons name="cash-outline" size={16} color="#64748B" />
-              <View>
-                <Text style={styles.metaLabel}>Consultation</Text>
-                <Text style={styles.metaValue}>{doctor.consultationFee}</Text>
-              </View>
+            <View style={styles.ratingRow}>
+              <Ionicons name="star" size={13} color="#EAB308" />
+              <Text style={styles.ratingText}>
+                {doctor.rating} ({doctor.reviewsCount} reviews)
+              </Text>
             </View>
           </View>
         </View>
 
-        {/* About Clinical Focus */}
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Clinical Focus & Philosophy</Text>
+        {/* About Section */}
+        <View style={styles.sectionWrap}>
+          <Text style={styles.sectionTitle}>About</Text>
           <Text style={styles.aboutText}>{doctor.about}</Text>
         </View>
 
+        {/* 3 Metric Highlight Boxes */}
+        <View style={styles.metricsRow}>
+          <View style={styles.metricBox}>
+            <Ionicons name="medal-outline" size={20} color="#0284C7" />
+            <Text style={styles.metricVal}>{doctor.experienceYears}</Text>
+            <Text style={styles.metricLabel}>Years{'\n'}Experience</Text>
+          </View>
+
+          <View style={styles.metricBox}>
+            <Ionicons name="people-outline" size={20} color="#0284C7" />
+            <Text style={styles.metricVal}>{doctor.patientsTreated}</Text>
+            <Text style={styles.metricLabel}>Patients{'\n'}Treated</Text>
+          </View>
+
+          <View style={styles.metricBox}>
+            <Ionicons name="business-outline" size={20} color="#0284C7" />
+            <Text style={styles.metricHospitalVal}>{doctor.hospitalName}</Text>
+            <Text style={styles.metricHospitalCity}>{doctor.hospitalCity}</Text>
+          </View>
+        </View>
+
         {/* Areas of Expertise */}
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Key Clinical Specialties</Text>
+        <View style={styles.sectionWrap}>
+          <Text style={styles.sectionTitle}>Areas of Expertise</Text>
           <View style={styles.chipsWrap}>
-            {doctor.expertise.map((exp, idx) => (
-              <View key={idx} style={[styles.chip, { borderColor: themeAccent + '30' }]}>
-                <Ionicons name="checkmark-circle" size={14} color={themeAccent} />
-                <Text style={styles.chipText}>{exp}</Text>
+            {doctor.expertise.map((item, idx) => (
+              <View key={idx} style={styles.chipPill}>
+                <Text style={styles.chipText}>{item}</Text>
               </View>
             ))}
           </View>
         </View>
 
-        {/* Schedule & Availability */}
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Select Consultation Slot</Text>
-          <Text style={styles.subtext}>
-            Secure end-to-end encrypted video consult via BioPulse Telehealth.
-          </Text>
+        {/* Availability */}
+        <View style={styles.sectionWrap}>
+          <View style={styles.availHeader}>
+            <Text style={styles.sectionTitle}>Availability</Text>
+            <Pressable hitSlop={6}>
+              <Text style={styles.viewAllText}>View all</Text>
+            </Pressable>
+          </View>
 
-          <View style={styles.slotsGrid}>
-            {doctor.availableSlots.map((slot) => {
-              const isSelected = selectedSlot === slot;
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.daysRow}>
+            {availabilityDays.map((d, idx) => {
+              const fullKey = `${d.day} ${d.date}`;
+              const isSelected = selectedDay === fullKey;
               return (
                 <Pressable
-                  key={slot}
-                  onPress={() => setSelectedSlot(slot)}
-                  style={[
-                    styles.slotPill,
-                    isSelected && {
-                      backgroundColor: badgeBg,
-                      borderColor: themeAccent,
-                    },
-                  ]}
+                  key={idx}
+                  onPress={() => setSelectedDay(fullKey)}
+                  style={[styles.dayCard, isSelected && styles.dayCardActive]}
                 >
-                  <Ionicons
-                    name="time-outline"
-                    size={14}
-                    color={isSelected ? themeAccent : '#64748B'}
-                  />
-                  <Text
-                    style={[
-                      styles.slotText,
-                      isSelected && { color: themeAccent, fontWeight: '700' },
-                    ]}
-                  >
-                    {slot}
-                  </Text>
+                  <Text style={[styles.dayName, isSelected && styles.dayTextActive]}>{d.day}</Text>
+                  <Text style={[styles.dayDate, isSelected && styles.dayTextActive]}>{d.date}</Text>
+                  <Text style={[styles.daySlots, isSelected && styles.dayTextActive]}>{d.slots}</Text>
                 </Pressable>
               );
             })}
-          </View>
-        </View>
-
-        {/* Action Buttons */}
-        <View style={styles.actionBlock}>
-          <Pressable
-            onPress={handleBook}
-            style={[styles.primaryBookBtn, { backgroundColor: themeAccent }]}
-          >
-            <Ionicons name="calendar" size={18} color="#FFFFFF" />
-            <Text style={styles.primaryBookText}>Book Appointment • {selectedSlot}</Text>
-          </Pressable>
-
-          <Pressable
-            onPress={handleToggleCareCircle}
-            style={[
-              styles.careCircleBtn,
-              { borderColor: inCareCircle ? '#10B981' : themeAccent },
-            ]}
-          >
-            <Ionicons
-              name={inCareCircle ? 'checkmark-circle' : 'person-add-outline'}
-              size={18}
-              color={inCareCircle ? '#10B981' : themeAccent}
-            />
-            <Text
-              style={[
-                styles.careCircleBtnText,
-                { color: inCareCircle ? '#10B981' : themeAccent },
-              ]}
-            >
-              {inCareCircle ? 'In Your Care Circle (Shared)' : 'Add to Care Circle'}
-            </Text>
-          </Pressable>
+          </ScrollView>
         </View>
       </ScrollView>
 
-      {/* Bottom Nav */}
-      <BioPulseBottomNav activeTab="more" />
+      {/* Dual Bottom CTAs */}
+      <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 14) }]}>
+        <Pressable
+          onPress={handleAddToCircle}
+          style={({ pressed }) => [styles.careCircleBtn, pressed && styles.btnPressed]}
+        >
+          <Ionicons name="person-add-outline" size={16} color="#E11D48" style={{ marginRight: 6 }} />
+          <Text style={styles.careCircleText}>
+            {inCareCircle ? 'In Care Circle' : 'Add to Care Circle'}
+          </Text>
+        </Pressable>
+
+        <Pressable
+          onPress={handleBook}
+          style={({ pressed }) => [styles.bookBtn, pressed && styles.btnPressed]}
+        >
+          <Ionicons name="calendar-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
+          <Text style={styles.bookText}>Book Appointment</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -338,228 +291,259 @@ export default function DoctorProfileScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FAF5FF',
   },
   header: {
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingBottom: 6,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    backgroundColor: 'transparent',
   },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  headerBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F1F5F9',
-  },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: BioPulseColors.navy,
-  },
-  circleIconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F1F5F9',
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 16,
-    gap: 14,
+    paddingTop: 6,
   },
-  tabletScrollContent: {
+  tabletContent: {
     maxWidth: 600,
     alignSelf: 'center',
     width: '100%',
   },
-  profileCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  topInfoRow: {
+
+  // Overview
+  docOverviewRow: {
     flexDirection: 'row',
-    gap: 14,
+    alignItems: 'center',
+    marginBottom: 16,
   },
-  avatarBox: {
-    width: 72,
-    height: 72,
+  docAvatarBox: {
+    width: 64,
+    height: 64,
     borderRadius: 20,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 14,
   },
-  infoCol: {
+  docMeta: {
     flex: 1,
-    justifyContent: 'center',
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   docName: {
     fontSize: 17,
     fontWeight: '800',
-    color: BioPulseColors.navy,
+    color: '#0F172A',
   },
-  docCreds: {
+  docSpecialty: {
+    fontSize: 13,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  docDegrees: {
     fontSize: 12,
     color: '#64748B',
     marginTop: 1,
   },
-  specialtyBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    marginTop: 6,
-  },
-  specialtyText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: 4,
     gap: 4,
-    marginTop: 6,
   },
-  ratingVal: {
+  ratingText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#D97706',
+    color: '#334155',
   },
-  reviewCount: {
-    fontSize: 11.5,
-    color: '#94A3B8',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#F1F5F9',
-    marginVertical: 14,
-  },
-  metaGrid: {
-    gap: 10,
-  },
-  metaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  metaLabel: {
-    fontSize: 10.5,
-    color: '#94A3B8',
-    fontWeight: '500',
-  },
-  metaValue: {
-    fontSize: 12.5,
-    fontWeight: '600',
-    color: '#1E293B',
-  },
-  sectionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 16,
+
+  // Section
+  sectionWrap: {
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: BioPulseColors.navy,
+    color: '#0F172A',
     marginBottom: 8,
   },
   aboutText: {
-    fontSize: 13,
-    color: '#475569',
-    lineHeight: 19,
-  },
-  subtext: {
     fontSize: 12,
     color: '#64748B',
-    marginBottom: 12,
+    lineHeight: 18,
   },
+
+  // 3 Metric Boxes
+  metricsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 16,
+  },
+  metricBox: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    shadowColor: '#000',
+    shadowOpacity: 0.02,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  metricVal: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginTop: 4,
+  },
+  metricLabel: {
+    fontSize: 10,
+    color: '#64748B',
+    textAlign: 'center',
+    marginTop: 2,
+    lineHeight: 12,
+  },
+  metricHospitalVal: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#0F172A',
+    textAlign: 'center',
+    marginTop: 4,
+    lineHeight: 12,
+  },
+  metricHospitalCity: {
+    fontSize: 9,
+    color: '#64748B',
+    textAlign: 'center',
+    marginTop: 2,
+  },
+
+  // Expertise Chips
   chipsWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 6,
-    backgroundColor: '#F8FAFC',
+  },
+  chipPill: {
+    backgroundColor: '#FDF2F8',
+    borderColor: '#FCE7F3',
     borderWidth: 1,
+    borderRadius: 16,
     paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingVertical: 5,
   },
   chipText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#334155',
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#E11D48',
   },
-  slotsGrid: {
+
+  // Availability
+  availHeader: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  slotPill: {
-    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    marginBottom: 8,
   },
-  slotText: {
+  viewAllText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#475569',
+    color: '#0284C7',
   },
-  actionBlock: {
-    gap: 10,
-    marginTop: 6,
-  },
-  primaryBookBtn: {
+  daysRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
     gap: 8,
-    height: 48,
-    borderRadius: 14,
   },
-  primaryBookText: {
-    color: '#FFFFFF',
-    fontSize: 14,
+  dayCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    minWidth: 62,
+  },
+  dayCardActive: {
+    borderColor: '#E11D48',
+    backgroundColor: '#FFF1F2',
+  },
+  dayName: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  dayDate: {
+    fontSize: 12,
     fontWeight: '700',
+    color: '#0F172A',
+    marginVertical: 2,
+  },
+  daySlots: {
+    fontSize: 10,
+    color: '#64748B',
+  },
+  dayTextActive: {
+    color: '#E11D48',
+  },
+
+  // Dual Bottom Bar
+  bottomBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#FAF5FF',
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    gap: 10,
   },
   careCircleBtn: {
+    flex: 1,
     flexDirection: 'row',
+    height: 42,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E11D48',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    height: 46,
-    borderRadius: 14,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
   },
-  careCircleBtnText: {
-    fontSize: 13.5,
+  careCircleText: {
+    fontSize: 12,
     fontWeight: '700',
+    color: '#E11D48',
+  },
+  bookBtn: {
+    flex: 1.2,
+    flexDirection: 'row',
+    height: 42,
+    borderRadius: 10,
+    backgroundColor: '#E11D48',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bookText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+
+  btnPressed: {
+    opacity: 0.85,
   },
 });

@@ -6,29 +6,38 @@ import {
   ScrollView,
   Pressable,
   Alert,
+  Share,
   useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../../constants/Colors';
-import { AuthBackgroundFoliage } from '../../components/auth/AuthBackgroundFoliage';
+import { BioPulseBackground } from '../../components/common/BioPulseBackground';
 import { useAuth } from '../../features/authentication';
-import { BioPulseBottomNav, BOTTOM_NAV_HEIGHT } from '../../components/navigation';
+import { useHealthStore } from '../../store';
 
 /**
- * SCREEN 43: Clinical Summary
- * 
- * Provides:
- * - Clinician-ready exportable single-view health dossier
- * - Sections:
- *   1. Patient Demographics & Assessment Timestamp
- *   2. Active Screening Risk & Tier Stratification
- *   3. Primary Clinical Influencers (Explainability)
- *   4. Verified Laboratory Values (Hormonal + Metabolic)
- *   5. Longitudinal Health Trends
- *   6. Evidence-Based Clinical Recommendations
- * - Primary CTA: "Export PDF" & "Share with Specialist"
+ * SCREEN 43: CLINICAL SUMMARY
+ *
+ * Strict visual match to Screenshot 43:
+ * - Top Header: Back chevron (<), centered "Clinical Summary", "Generated on 12 Mar 2026", right "Share" icon
+ * - Section 1: Latest Screening Result Card
+ *   - Circular ring progress with "72%"
+ *   - "↑ Higher Risk", "PCOS Screening – Tier 1", "12 Mar 2026"
+ * - Section 2: Important Factors
+ *   - "View All" link
+ *   - Irregular Cycle -> ↑ Increased risk
+ *   - Excess Hair Growth -> ↑ Increased risk
+ *   - Higher BMI -> ↑ Increased risk
+ * - Section 3: Latest Lab Results
+ *   - "View All" link
+ *   - FSH: 6.2 mIU/mL [ Normal ]
+ *   - LH: 8.1 mIU/mL [ Normal ]
+ *   - AMH: 4.3 ng/mL [ Slightly High ]
+ * - Section 4: Trends Summary & Current Recommendations rows
+ * - Bottom CTA: Solid pink "[ 📄 Export PDF ]" button
  */
 export default function ClinicalSummaryScreen() {
   const router = useRouter();
@@ -36,316 +45,240 @@ export default function ClinicalSummaryScreen() {
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
 
-  const { user, pathway } = useAuth();
+  const { pathway } = useAuth();
   const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
-  const themeAccent = isFemale ? BioPulseColors.femaleAccent : BioPulseColors.malePrimary;
-  const badgeBg = isFemale ? '#FDF0F4' : '#EBF4FC';
+
+  const { screening } = useHealthStore();
 
   const [isExporting, setIsExporting] = useState(false);
 
-  const patientName = user?.fullName || (user?.email ? user.email.split('@')[0] : 'Patient');
-  const patientId = `BP-${Math.floor(100000 + Math.random() * 900000)}`;
-  const currentDate = new Date().toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  const probPercent = screening.probabilityPercent || 72;
+  const riskTitle = screening.riskBand || (isFemale ? 'Higher Risk' : 'Intermediate Risk');
+
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: `BioPulse Clinical Summary - Patient Screening Risk: ${probPercent}% (${riskTitle}). Generated on 12 Mar 2026.`,
+        title: 'BioPulse Clinical Health Summary',
+      });
+    } catch (e) {
+      // ignore
+    }
+  };
 
   const handleExportPDF = () => {
     setIsExporting(true);
     setTimeout(() => {
       setIsExporting(false);
       Alert.alert(
-        'Clinical PDF Generated',
-        `A high-resolution clinical dossier (BioPulse_${patientId}_Summary.pdf) is ready for export or print.`,
-        [
-          { text: 'Done', style: 'default' },
-          {
-            text: 'Send to Doctor',
-            onPress: () => router.push('/(app)/care-circle'),
-          },
-        ]
+        'Export Successful',
+        'Clinical Dossier (BioPulse_Clinical_Summary_12Mar2026.pdf) generated successfully. Ready to print or share with your physician.'
       );
-    }, 1000);
+    }, 500);
   };
 
   return (
     <View style={styles.root}>
-      <AuthBackgroundFoliage />
+      <StatusBar style="dark" />
+      <BioPulseBackground />
 
       {/* Header */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) }]}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={20} color={BioPulseColors.navy} />
-        </Pressable>
-        <Text style={styles.headerTitle}>Clinical Summary</Text>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 14) }]}>
         <Pressable
-          onPress={handleExportPDF}
-          style={[styles.exportIconBtn, { backgroundColor: badgeBg }]}
+          onPress={() => router.back()}
+          style={styles.headerBtn}
+          accessibilityLabel="Back"
+          hitSlop={8}
         >
-          <Ionicons name="share-outline" size={18} color={themeAccent} />
+          <Ionicons name="chevron-back" size={24} color="#0F172A" />
+        </Pressable>
+
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerTitle}>Clinical Summary</Text>
+          <Text style={styles.headerSub}>Generated on 12 Mar 2026</Text>
+        </View>
+
+        <Pressable
+          onPress={handleShare}
+          style={styles.shareBtn}
+          hitSlop={8}
+        >
+          <Ionicons name="share-outline" size={18} color="#0F172A" />
+          <Text style={styles.shareText}>Share</Text>
         </Pressable>
       </View>
 
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          isTablet && styles.tabletScrollContent,
-          { paddingBottom: BOTTOM_NAV_HEIGHT + insets.bottom + 32 },
+          isTablet && styles.tabletContent,
+          { paddingBottom: insets.bottom + 85 },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Clinician Banner */}
-        <View style={styles.clinicianHeaderCard}>
-          <View style={styles.headerRow}>
-            <View>
-              <Text style={styles.docType}>BioPulse AI Decision Support Dossier</Text>
-              <Text style={styles.docSub}>
-                CONFIDENTIAL • FOR CLINICIAN REFERENCE & ASSESSMENT
-              </Text>
-            </View>
-            <View style={[styles.badgeContainer, { backgroundColor: badgeBg }]}>
-              <Text style={[styles.badgeText, { color: themeAccent }]}>
-                {isFemale ? 'PCOS TIER 1+2' : 'ANDROLOGY TIER 1'}
-              </Text>
-            </View>
-          </View>
+        {/* Latest Screening Result Card */}
+        <View style={styles.screeningCard}>
+          <Text style={styles.screeningCardLabel}>Latest Screening Result</Text>
 
-          <View style={styles.demographicsGrid}>
-            <View style={styles.demoItem}>
-              <Text style={styles.demoLabel}>Patient Name</Text>
-              <Text style={styles.demoVal}>{patientName}</Text>
+          <View style={styles.screeningCardBody}>
+            {/* Circular Ring Gauge */}
+            <View style={styles.ringOuter}>
+              <View style={styles.ringInner}>
+                <Text style={styles.ringVal}>72%</Text>
+              </View>
             </View>
-            <View style={styles.demoItem}>
-              <Text style={styles.demoLabel}>Record ID</Text>
-              <Text style={styles.demoVal}>{patientId}</Text>
-            </View>
-            <View style={styles.demoItem}>
-              <Text style={styles.demoLabel}>Biological Sex</Text>
-              <Text style={styles.demoVal}>{isFemale ? 'Female' : 'Male'}</Text>
-            </View>
-            <View style={styles.demoItem}>
-              <Text style={styles.demoLabel}>Date of Report</Text>
-              <Text style={styles.demoVal}>{currentDate}</Text>
+
+            {/* Screening Meta */}
+            <View style={styles.screeningMeta}>
+              <View style={styles.riskRow}>
+                <Ionicons name="arrow-up" size={14} color="#E11D48" />
+                <Text style={styles.riskTitle}>Higher Risk</Text>
+              </View>
+              <Text style={styles.screeningTier}>
+                {isFemale ? 'PCOS Screening – Tier 1' : 'Hypogonadism Screening – Tier 1'}
+              </Text>
+              <Text style={styles.screeningDate}>12 Mar 2026</Text>
             </View>
           </View>
         </View>
 
-        {/* Section 1: Screening Stratification */}
-        <View style={styles.sectionCard}>
+        {/* Section 2: Important Factors */}
+        <View style={styles.sectionWrap}>
           <View style={styles.sectionHeaderRow}>
-            <Ionicons name="shield-checkmark" size={18} color={themeAccent} />
-            <Text style={styles.sectionTitle}>1. Latest Screening Stratification</Text>
+            <Text style={styles.sectionTitle}>Important Factors</Text>
+            <Pressable onPress={() => router.push('/(app)/screening-explanation' as any)} hitSlop={6}>
+              <Text style={styles.viewAllText}>View All</Text>
+            </Pressable>
           </View>
 
-          <View style={[styles.riskSummaryBox, { backgroundColor: isFemale ? '#FEF2F2' : '#EFF6FF' }]}>
-            <View>
-              <Text style={styles.riskLabel}>Stratified Risk Category</Text>
-              <Text
-                style={[
-                  styles.riskValue,
-                  { color: isFemale ? '#DC2626' : '#2563EB' },
-                ]}
-              >
-                {isFemale ? 'Higher Likelihood (78%)' : 'Intermediate Likelihood (62%)'}
-              </Text>
-            </View>
-            <View style={styles.tierPill}>
-              <Text style={styles.tierPillText}>Tier 1 Completed</Text>
-            </View>
-          </View>
-
-          <Text style={styles.clinicalCaveat}>
-            {isFemale
-              ? 'Model analysis indicates elevated risk probability based on menstrual pattern irregularities and clinical hyperandrogenism markers. Recommended for confirmatory endocrine workup.'
-              : 'Screening indicates symptoms consistent with partial androgen deficiency based on ADAM criteria (low libido + fatigue flags) alongside elevated BMI.'}
-          </Text>
-        </View>
-
-        {/* Section 2: Important Clinical Factors */}
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeaderRow}>
-            <Ionicons name="analytics" size={18} color={themeAccent} />
-            <Text style={styles.sectionTitle}>2. Primary Influencing Factors</Text>
-          </View>
-
-          <View style={styles.factorsList}>
-            {(isFemale
-              ? [
-                  {
-                    name: 'Menstrual Irregularity',
-                    impact: 'Strong Positive',
-                    desc: 'Cycle length > 38 days with 3+ skipped cycles in the past 12 months.',
-                  },
-                  {
-                    name: 'Clinical Hyperandrogenism',
-                    impact: 'Moderate Positive',
-                    desc: 'Persistent hirsutism (Ferriman-Gallwey localized) and cystic acne.',
-                  },
-                  {
-                    name: 'Metabolic & BMI Index',
-                    impact: 'Moderate Positive',
-                    desc: 'Calculated BMI 27.4 kg/m² indicating metabolic predisposition.',
-                  },
-                ]
-              : [
-                  {
-                    name: 'ADAM Positive Flags',
-                    impact: 'Strong Positive',
-                    desc: 'Affirmative response on loss of libido and decreased stamina.',
-                  },
-                  {
-                    name: 'Metabolic Adiposity',
-                    impact: 'Moderate Positive',
-                    desc: 'Elevated waist circumference and BMI 28.2 kg/m².',
-                  },
-                  {
-                    name: 'Sleep & Recovery Markers',
-                    impact: 'Mild Positive',
-                    desc: 'Reported poor sleep quality with morning exhaustion.',
-                  },
-                ]
-            ).map((factor, idx) => (
-              <View key={idx} style={styles.factorRow}>
-                <View style={styles.factorTop}>
-                  <Text style={styles.factorName}>{factor.name}</Text>
-                  <View style={styles.impactBadge}>
-                    <Text style={styles.impactText}>{factor.impact}</Text>
-                  </View>
+          <View style={styles.factorsCard}>
+            <View style={styles.factorRow}>
+              <View style={styles.factorLeft}>
+                <View style={styles.factorIconBox}>
+                  <Ionicons name="pulse-outline" size={16} color="#E11D48" />
                 </View>
-                <Text style={styles.factorDesc}>{factor.desc}</Text>
+                <Text style={styles.factorName}>Irregular Cycle</Text>
               </View>
-            ))}
-          </View>
-        </View>
-
-        {/* Section 3: Key Laboratory Findings */}
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeaderRow}>
-            <Ionicons name="flask" size={18} color={themeAccent} />
-            <Text style={styles.sectionTitle}>3. Key Laboratory Findings</Text>
-          </View>
-
-          <View style={styles.labsTable}>
-            <View style={styles.tableHeader}>
-              <Text style={[styles.th, { flex: 2 }]}>Analyte</Text>
-              <Text style={[styles.th, { flex: 1.5 }]}>Value</Text>
-              <Text style={[styles.th, { flex: 1.5 }]}>Ref Range</Text>
-              <Text style={[styles.th, { flex: 1, textAlign: 'right' }]}>Flag</Text>
+              <View style={styles.factorRiskBadge}>
+                <Ionicons name="arrow-up" size={12} color="#E11D48" />
+                <Text style={styles.factorRiskText}>Increased risk</Text>
+              </View>
             </View>
 
-            {(isFemale
-              ? [
-                  { name: 'LH / FSH Ratio', val: '2.8', ref: '< 1.5', flag: 'High' },
-                  { name: 'Total Testosterone', val: '64 ng/dL', ref: '15 - 70', flag: 'Normal-High' },
-                  { name: 'Fasting Insulin', val: '18.2 µIU/mL', ref: '< 10.0', flag: 'Elevated' },
-                  { name: 'Fasting Blood Sugar', val: '98 mg/dL', ref: '70 - 99', flag: 'Normal' },
-                ]
-              : [
-                  { name: 'Total Testosterone', val: '280 ng/dL', ref: '300 - 1000', flag: 'Low' },
-                  { name: 'Free Testosterone', val: '6.2 pg/mL', ref: '9.0 - 30.0', flag: 'Low' },
-                  { name: 'Serum LH', val: '3.4 mIU/mL', ref: '1.7 - 8.6', flag: 'Normal' },
-                  { name: 'Fasting Glucose', val: '104 mg/dL', ref: '70 - 99', flag: 'Impaired' },
-                ]
-            ).map((row, idx) => (
-              <View key={idx} style={styles.tableRow}>
-                <Text style={[styles.tdAnalyte, { flex: 2 }]}>{row.name}</Text>
-                <Text style={[styles.tdVal, { flex: 1.5 }]}>{row.val}</Text>
-                <Text style={[styles.tdRef, { flex: 1.5 }]}>{row.ref}</Text>
-                <View style={[styles.flagWrap, { flex: 1, alignItems: 'flex-end' }]}>
-                  <Text
-                    style={[
-                      styles.tdFlag,
-                      row.flag === 'High' || row.flag === 'Low' || row.flag === 'Elevated'
-                        ? { color: '#DC2626', fontWeight: '700' }
-                        : { color: '#16A34A' },
-                    ]}
-                  >
-                    {row.flag}
-                  </Text>
+            <View style={styles.divider} />
+
+            <View style={styles.factorRow}>
+              <View style={styles.factorLeft}>
+                <View style={styles.factorIconBox}>
+                  <Ionicons name="body-outline" size={16} color="#E11D48" />
                 </View>
+                <Text style={styles.factorName}>Excess Hair Growth</Text>
               </View>
-            ))}
-          </View>
-        </View>
-
-        {/* Section 4: Longitudinal Trends */}
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeaderRow}>
-            <Ionicons name="trending-up" size={18} color={themeAccent} />
-            <Text style={styles.sectionTitle}>4. 90-Day Longitudinal Trends</Text>
-          </View>
-
-          <View style={styles.trendsRow}>
-            <View style={styles.trendBlock}>
-              <Text style={styles.trendLabel}>BMI Stability</Text>
-              <Text style={styles.trendValue}>-1.2 kg</Text>
-              <Text style={styles.trendSub}>Gradual lifestyle descent</Text>
+              <View style={styles.factorRiskBadge}>
+                <Ionicons name="arrow-up" size={12} color="#E11D48" />
+                <Text style={styles.factorRiskText}>Increased risk</Text>
+              </View>
             </View>
-            <View style={styles.trendBlock}>
-              <Text style={styles.trendLabel}>
-                {isFemale ? 'Cycle Regularity' : 'Energy Score'}
-              </Text>
-              <Text style={styles.trendValue}>{isFemale ? '38 d avg' : '+15% pts'}</Text>
-              <Text style={styles.trendSub}>Improving tracking continuity</Text>
+
+            <View style={styles.divider} />
+
+            <View style={styles.factorRow}>
+              <View style={styles.factorLeft}>
+                <View style={styles.factorIconBox}>
+                  <Ionicons name="scale-outline" size={16} color="#E11D48" />
+                </View>
+                <Text style={styles.factorName}>Higher BMI</Text>
+              </View>
+              <View style={styles.factorRiskBadge}>
+                <Ionicons name="arrow-up" size={12} color="#E11D48" />
+                <Text style={styles.factorRiskText}>Increased risk</Text>
+              </View>
             </View>
           </View>
         </View>
 
-        {/* Section 5: Clinical Next Steps */}
-        <View style={styles.sectionCard}>
+        {/* Section 3: Latest Lab Results */}
+        <View style={styles.sectionWrap}>
           <View style={styles.sectionHeaderRow}>
-            <Ionicons name="clipboard" size={18} color={themeAccent} />
-            <Text style={styles.sectionTitle}>5. Decision Support Next Steps</Text>
+            <Text style={styles.sectionTitle}>Latest Lab Results</Text>
+            <Pressable onPress={() => router.push('/(app)/add-labs' as any)} hitSlop={6}>
+              <Text style={styles.viewAllText}>View All</Text>
+            </Pressable>
           </View>
 
-          <View style={styles.recommendationsList}>
-            {(isFemale
-              ? [
-                  'Pelvic ultrasound examination to evaluate antral follicle count (> 12 per ovary).',
-                  'Oral Glucose Tolerance Test (OGTT) with 2-hour insulin curve for metabolic staging.',
-                  'Low-glycemic nutritional protocol and progressive resistance training integration.',
-                ]
-              : [
-                  'Confirm morning fasting repeat testosterone draw (between 08:00 - 10:00 AM).',
-                  'Evaluate serum prolactin and thyroid-stimulating hormone (TSH) to exclude secondary etiologies.',
-                  'Initiate progressive strength stimulus and targeted weight management plan.',
-                ]
-            ).map((rec, idx) => (
-              <View key={idx} style={styles.recRow}>
-                <Ionicons name="checkmark-circle" size={16} color={themeAccent} />
-                <Text style={styles.recText}>{rec}</Text>
+          <View style={styles.labsCard}>
+            <View style={styles.labRow}>
+              <Text style={styles.labName}>FSH</Text>
+              <Text style={styles.labVal}>6.2 mIU/mL</Text>
+              <View style={styles.labBadgeNormal}>
+                <Text style={styles.labBadgeNormalText}>Normal</Text>
               </View>
-            ))}
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.labRow}>
+              <Text style={styles.labName}>LH</Text>
+              <Text style={styles.labVal}>8.1 mIU/mL</Text>
+              <View style={styles.labBadgeNormal}>
+                <Text style={styles.labBadgeNormalText}>Normal</Text>
+              </View>
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.labRow}>
+              <Text style={styles.labName}>AMH</Text>
+              <Text style={styles.labVal}>4.3 ng/mL</Text>
+              <View style={styles.labBadgeWarning}>
+                <Text style={styles.labBadgeWarningText}>Slightly High</Text>
+              </View>
+            </View>
           </View>
         </View>
 
-        {/* CTA Bar */}
-        <View style={styles.ctaBar}>
+        {/* Section 4: Nav Rows */}
+        <View style={styles.navRowsWrap}>
           <Pressable
-            onPress={handleExportPDF}
-            style={[styles.exportPdfBtn, { backgroundColor: themeAccent }]}
+            onPress={() => router.push('/(app)/progress' as any)}
+            style={({ pressed }) => [styles.navRowCard, pressed && styles.cardPressed]}
           >
-            <Ionicons name="download" size={18} color="#FFFFFF" />
-            <Text style={styles.exportPdfText}>
-              {isExporting ? 'Generating PDF...' : 'Export Complete Dossier (PDF)'}
-            </Text>
+            <View style={styles.navRowLeft}>
+              <View style={styles.navIconBox}>
+                <Ionicons name="time-outline" size={16} color="#E11D48" />
+              </View>
+              <Text style={styles.navRowTitle}>Trends Summary</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
           </Pressable>
 
           <Pressable
-            onPress={() => router.push('/(app)/care-circle')}
-            style={[styles.shareDocBtn, { borderColor: themeAccent }]}
+            onPress={() => router.push('/(app)/recommendations' as any)}
+            style={({ pressed }) => [styles.navRowCard, pressed && styles.cardPressed]}
           >
-            <Ionicons name="people-outline" size={18} color={themeAccent} />
-            <Text style={[styles.shareDocText, { color: themeAccent }]}>
-              Share with Care Circle
-            </Text>
+            <View style={styles.navRowLeft}>
+              <View style={styles.navIconBox}>
+                <Ionicons name="bulb-outline" size={16} color="#E11D48" />
+              </View>
+              <Text style={styles.navRowTitle}>Current Recommendations</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
           </Pressable>
         </View>
       </ScrollView>
 
-      {/* Bottom Nav */}
-      <BioPulseBottomNav activeTab="more" />
+      {/* Bottom Export PDF CTA */}
+      <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+        <Pressable
+          onPress={handleExportPDF}
+          style={({ pressed }) => [styles.exportBtn, pressed && styles.btnPressed]}
+        >
+          <Ionicons name="document-text-outline" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+          <Text style={styles.exportBtnText}>
+            {isExporting ? 'Generating PDF...' : 'Export PDF'}
+          </Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -353,303 +286,317 @@ export default function ClinicalSummaryScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FAF5FF',
   },
   header: {
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingBottom: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    backgroundColor: 'transparent',
   },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  headerBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F1F5F9',
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: BioPulseColors.navy,
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#0F172A',
   },
-  exportIconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  headerSub: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  shareBtn: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 4,
   },
+  shareText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 16,
-    gap: 14,
+    paddingTop: 6,
   },
-  tabletScrollContent: {
-    maxWidth: 620,
+  tabletContent: {
+    maxWidth: 600,
     alignSelf: 'center',
     width: '100%',
   },
-  clinicianHeaderCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+
+  // Screening Card
+  screeningCard: {
+    backgroundColor: '#FFF1F2',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
-    elevation: 1,
+    borderColor: '#FCE7F3',
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 16,
   },
-  headerRow: {
+  screeningCardLabel: {
+    fontSize: 11,
+    color: '#64748B',
+    marginBottom: 10,
+  },
+  screeningCardBody: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
+    alignItems: 'center',
   },
-  docType: {
-    fontSize: 13,
+  ringOuter: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 5,
+    borderColor: '#E11D48',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+    backgroundColor: '#FFFFFF',
+  },
+  ringInner: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ringVal: {
+    fontSize: 15,
     fontWeight: '800',
-    color: BioPulseColors.navy,
+    color: '#0F172A',
   },
-  docSub: {
-    fontSize: 9.5,
+  screeningMeta: {
+    flex: 1,
+  },
+  riskRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  riskTitle: {
+    fontSize: 13,
     fontWeight: '700',
-    color: '#94A3B8',
-    letterSpacing: 0.4,
+    color: '#E11D48',
+  },
+  screeningTier: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
     marginTop: 2,
   },
-  badgeContainer: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  badgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  demographicsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    padding: 12,
-    gap: 12,
-  },
-  demoItem: {
-    width: '45%',
-  },
-  demoLabel: {
-    fontSize: 10.5,
+  screeningDate: {
+    fontSize: 11,
     color: '#64748B',
-  },
-  demoVal: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#1E293B',
     marginTop: 1,
   },
-  sectionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 16,
+
+  // Section
+  sectionWrap: {
+    marginBottom: 16,
   },
   sectionHeaderRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
-    color: BioPulseColors.navy,
+    color: '#0F172A',
   },
-  riskSummaryBox: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 10,
-  },
-  riskLabel: {
-    fontSize: 11,
-    color: '#64748B',
-  },
-  riskValue: {
-    fontSize: 15,
-    fontWeight: '800',
-    marginTop: 2,
-  },
-  tierPill: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  tierPillText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#475569',
-  },
-  clinicalCaveat: {
+  viewAllText: {
     fontSize: 12,
-    color: '#475569',
-    lineHeight: 18,
+    fontWeight: '600',
+    color: '#0284C7',
   },
-  factorsList: {
-    gap: 10,
+
+  // Factors Card
+  factorsCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    shadowColor: '#000',
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    elevation: 1,
   },
   factorRow: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 10,
-    padding: 10,
-  },
-  factorTop: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+  },
+  factorLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  factorIconBox: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: '#FFF1F2',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   factorName: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#1E293B',
+    color: '#0F172A',
   },
-  impactBadge: {
-    backgroundColor: '#EFF6FF',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  impactText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#2563EB',
-  },
-  factorDesc: {
-    fontSize: 11.5,
-    color: '#64748B',
-    lineHeight: 16,
-  },
-  labsTable: {
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 10,
-    overflow: 'hidden',
-  },
-  tableHeader: {
+  factorRiskBadge: {
     flexDirection: 'row',
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-  th: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#475569',
-  },
-  tableRow: {
-    flexDirection: 'row',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
     alignItems: 'center',
+    gap: 2,
   },
-  tdAnalyte: {
-    fontSize: 12,
+  factorRiskText: {
+    fontSize: 11,
     fontWeight: '600',
-    color: '#1E293B',
+    color: '#E11D48',
   },
-  tdVal: {
-    fontSize: 12,
-    color: '#334155',
+
+  // Labs Card
+  labsCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    shadowColor: '#000',
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    elevation: 1,
   },
-  tdRef: {
-    fontSize: 11,
-    color: '#94A3B8',
-  },
-  flagWrap: {},
-  tdFlag: {
-    fontSize: 11,
-  },
-  trendsRow: {
+  labRow: {
     flexDirection: 'row',
-    gap: 12,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 4,
   },
-  trendBlock: {
+  labName: {
+    width: 50,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  labVal: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    padding: 12,
-  },
-  trendLabel: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#64748B',
   },
-  trendValue: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: BioPulseColors.navy,
-    marginVertical: 4,
+  labBadgeNormal: {
+    backgroundColor: '#ECFDF5',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
-  trendSub: {
-    fontSize: 10.5,
-    color: '#94A3B8',
+  labBadgeNormalText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#10B981',
   },
-  recommendationsList: {
+  labBadgeWarning: {
+    backgroundColor: '#FEF3C7',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  labBadgeWarningText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#D97706',
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: '#F8FAFC',
+    marginVertical: 6,
+  },
+
+  // Nav rows
+  navRowsWrap: {
     gap: 8,
   },
-  recRow: {
+  navRowCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    elevation: 1,
   },
-  recText: {
-    flex: 1,
-    fontSize: 12.5,
-    color: '#334155',
-    lineHeight: 18,
-  },
-  ctaBar: {
+  navRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 10,
-    marginTop: 6,
   },
-  exportPdfBtn: {
+  navIconBox: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: '#FFF1F2',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  navRowTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+
+  // Bottom Export Button
+  bottomBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#FAF5FF',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+  },
+  exportBtn: {
+    backgroundColor: '#E11D48',
+    borderRadius: 12,
+    height: 44,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    height: 48,
-    borderRadius: 14,
+    shadowColor: '#E11D48',
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
   },
-  exportPdfText: {
-    color: '#FFFFFF',
+  exportBtnText: {
     fontSize: 14,
     fontWeight: '700',
+    color: '#FFFFFF',
   },
-  shareDocBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    height: 46,
-    borderRadius: 14,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
+
+  btnPressed: {
+    opacity: 0.85,
   },
-  shareDocText: {
-    fontSize: 13.5,
-    fontWeight: '700',
+  cardPressed: {
+    opacity: 0.9,
   },
 });

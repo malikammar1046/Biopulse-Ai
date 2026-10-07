@@ -224,37 +224,63 @@ export type ColorKey = keyof ColorTheme;
  */
 export const BioPulseColors = {
   // Brand Identity
+  primary: '#16B8C4',
   teal: '#16B8C4',
-  tealSoft: '#E5F6F8',
+  tealDark: '#0D9BA6',
+  tealLight: '#39CCD6',
+  tealSoft: '#E6F7F9',
   navy: '#073B72',
   navyDark: '#052B54',
-  secondaryText: '#55718F',
-  textMuted: '#8BA1B7',
+  
+  // High contrast text hierarchy from references
+  textPrimary: '#0A3445',
+  textSecondary: '#4B6E7D',
+  textMuted: '#8BA8B3',
+  textInverse: '#FFFFFF',
+  secondaryText: '#4B6E7D',
 
   // Surfaces & Backgrounds
-  background: '#FEF8FA', // Warm blush healthcare tint matching visual reference
+  background: '#F0F9FB',
   backgroundPure: '#FFFFFF',
   surface: '#FFFFFF',
-  border: '#D7EAF2',
-  borderSubtle: '#E4EFF5',
+  surfaceFrosted: 'rgba(255, 255, 255, 0.85)',
+  surfaceSubtle: '#EBF6F9',
+  border: '#CFEAF0',
+  borderSubtle: '#E2F2F6',
+  borderActive: '#16B8C4',
 
   // Dual-Pathway Accents
-  femaleAccent: '#F43F7D', // Primary pink
-  femaleSoft: '#FDF0F4',
+  femalePrimary: '#0E9EAA',
+  femaleAccent: '#F43F7D',
+  femaleSoft: '#FDF0F5',
+  femaleBorder: '#F9CFDE',
   femaleTrack: '#FCE7F0',
+
   malePrimary: '#0868B9',
   maleSecondary: '#2196E3',
+  maleAccent: '#287DDB',
   maleSoft: '#EBF4FC',
+  maleBorder: '#CEE3F8',
 
   // Trust Indicators
-  indicatorLeftBg: '#FDF0F4',
-  indicatorCenterBg: '#E5F6F8',
-  indicatorRightBg: '#FDF0F4',
+  indicatorLeftBg: '#F0F9FB',
+  indicatorCenterBg: '#F0F9FB',
+  indicatorRightBg: '#F0F9FB',
+  trustBadgeBg: '#EBF7FA',
+  trustBadgeBorder: '#D0ECF2',
+
+  // Feedback & Status
+  success: '#10B981',
+  successSoft: '#ECFDF5',
+  warning: '#F59E0B',
+  warningSoft: '#FFFBEB',
+  error: '#EF4444',
+  errorSoft: '#FEF2F2',
 
   // Loading & Progress
-  progressTrack: '#FCE7F0',
-  progressFill: '#F43F7D',
-  loadingText: '#55718F',
+  progressTrack: '#E0F2F5',
+  progressFill: '#16B8C4',
+  loadingText: '#4B6E7D',
 } as const;
 
 export type BioPulseColorKey = keyof typeof BioPulseColors;

@@ -1,19 +1,26 @@
 const TOKEN = 'lZHhBkZQVfCFeprWDYL5dEo1Ul_-GK6cHHTJx48V';
-const BUILD_ID = process.argv[2] || '87b86a95-6717-45e3-aa77-0d23086b301b';
+const BUILD_ID = 'a528ef3a-cff6-40fd-9536-65d06f0a4f56';
 
 async function main() {
   const query = `
-    query GetBuild($buildId: ID!) {
+    query GetBuild($id: ID!) {
       builds {
-        byId(buildId: $buildId) {
+        byId(buildId: $id) {
           id
           status
-          projectMetadataFileUrl
-          logFileUrls
-          message
+          platform
+          createdAt
+          updatedAt
+          gitCommitHash
+          gitCommitMessage
+          logFiles
+          artifacts {
+            buildUrl
+            applicationArchiveUrl
+          }
           error {
-            errorCode
             message
+            errorCode
           }
         }
       }
@@ -26,18 +33,11 @@ async function main() {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${TOKEN}`
     },
-    body: JSON.stringify({ query, variables: { buildId: BUILD_ID } })
+    body: JSON.stringify({ query, variables: { id: BUILD_ID } })
   });
 
   const data = await res.json();
   console.log(JSON.stringify(data, null, 2));
-
-  if (data?.data?.builds?.byId?.projectMetadataFileUrl) {
-    const metaRes = await fetch(data.data.builds.byId.projectMetadataFileUrl);
-    const metaText = await metaRes.text();
-    console.log('\n--- Project Metadata ---');
-    console.log(metaText);
-  }
 }
 
 main().catch(console.error);

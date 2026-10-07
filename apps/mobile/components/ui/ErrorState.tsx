@@ -4,6 +4,7 @@ import { BorderRadius, Spacing } from '../../constants/Layout';
 import { Typography as TypoTokens } from '../../constants/Typography';
 import { useThemeColor } from '../../hooks/useThemeColor';
 import { Button } from './Button';
+import { SadCloudIllustration } from './StateIllustrations';
 
 export interface ErrorStateProps {
   title?: string;
@@ -57,16 +58,8 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
 
   return (
     <View style={[styles.container, style]}>
-      <View
-        style={[
-          styles.iconContainer,
-          {
-            backgroundColor: theme.errorSoft,
-            borderColor: theme.errorBorder,
-          },
-        ]}
-      >
-        <Text style={[styles.errorExclamation, { color: theme.error }]}>!</Text>
+      <View style={styles.illustrationWrapper}>
+        <SadCloudIllustration size={120} />
       </View>
 
       <Text
@@ -100,18 +93,10 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing['3xl'],
     paddingHorizontal: Spacing.xl,
   },
-  iconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: BorderRadius.full,
+  illustrationWrapper: {
+    marginBottom: Spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.lg,
-    borderWidth: 1.5,
-  },
-  errorExclamation: {
-    fontSize: 28,
-    fontWeight: TypoTokens.fontWeight.bold,
   },
   title: {
     fontSize: TypoTokens.fontSize.h3,

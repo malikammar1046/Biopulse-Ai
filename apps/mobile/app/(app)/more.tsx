@@ -214,8 +214,16 @@ export default function MoreMenuScreen() {
         items: [
           { id: 'profile', label: 'Profile & Health Information', icon: 'person-outline', route: '/(app)/profile' },
           { id: 'notifications', label: 'Notifications', icon: 'notifications-outline', route: '/(app)/notifications' },
+          { id: 'notif_prefs', label: 'Notification Preferences', icon: 'options-outline', route: '/(app)/notification-preferences' },
           { id: 'privacy', label: 'Privacy & Security', icon: 'lock-closed-outline', route: '/(app)/settings' },
           { id: 'settings', label: 'Settings', icon: 'settings-outline', route: '/(app)/settings' },
+        ],
+      },
+      {
+        title: 'STATES & DIAGNOSTICS',
+        items: [
+          { id: 'empty_states', label: 'Empty States Showcase', icon: 'grid-outline', route: '/(app)/empty-states' },
+          { id: 'loading_states', label: 'Loading & Error States', icon: 'sync-outline', route: '/(app)/loading-error-states' },
         ],
       },
     ];

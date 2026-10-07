@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,32 +12,37 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../../constants/Colors';
-import { AuthBackgroundFoliage } from '../../components/auth/AuthBackgroundFoliage';
+import { BioPulseBackground } from '../../components/common/BioPulseBackground';
 import { useAuth } from '../../features/authentication';
-import { BioPulseBottomNav, BOTTOM_NAV_HEIGHT } from '../../components/navigation';
-
-export interface CareCircleMember {
-  id: string;
-  name: string;
-  role: 'Physician / Specialist' | 'Family Member' | 'Trusted Contact';
-  accessLevel: 'Clinical Summary Only' | 'Full Health Records' | 'Emergency Only';
-  email: string;
-  addedDate: string;
-  verified: boolean;
-}
-
 import { useHealthStore } from '../../store';
 
+interface CirclePerson {
+  id: string;
+  name: string;
+  category: 'Doctors' | 'Family' | 'Others';
+  roleTag: string;
+  roleTagBg: string;
+  roleTagColor: string;
+  subtitle: string;
+  accessDesc: string;
+}
+
 /**
- * SCREEN 41: Care Circle
- * 
- * Provides:
- * - Controlled sharing of clinical summaries and screening progress
- * - Member cards (Doctor, Family, Trusted Contact) with access permissions
- * - Privacy-first invite flow with explicit consent boundaries
- * - Does NOT resemble social media or chat; strictly clinical delegation
+ * SCREEN 41: CARE CIRCLE
+ *
+ * Strict visual match to Screenshot 41:
+ * - Top Header: Back chevron (<), "Care Circle ⓘ", "+ Invite someone" CTA button
+ * - Subtitle: "Add trusted people to support your health journey. You can control what they can see."
+ * - Category filter pills: [ All (3) ] (active solid pink), [ Doctors (1) ], [ Family (1) ], [ Others (1) ]
+ * - Member Cards:
+ *   1. Dr. Ayesha Malik (Doctor, Endocrinologist, "Access: Medical reports, screening results", Manage + ⋮)
+ *   2. Sarah Khan (Family Member, Sister, "Access: Basic health summary, reminders", Manage + ⋮)
+ *   3. Ali Ahmed (Trusted Contact, Friend, "Access: Emergency contact only", Manage + ⋮)
+ * - Bottom Privacy Guarantee Box:
+ *   - Shield icon, "Your data stays private. You control what each person can see and can remove access at any time."
  */
 export default function CareCircleScreen() {
   const router = useRouter();
@@ -46,330 +51,271 @@ export default function CareCircleScreen() {
   const isTablet = width >= 768;
 
   const { pathway } = useAuth();
-  const { careCircle, addToCareCircle, removeFromCareCircle } = useHealthStore();
-
   const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
-  const themeAccent = isFemale ? BioPulseColors.femaleAccent : BioPulseColors.malePrimary;
-  const badgeBg = isFemale ? '#FDF0F4' : '#EBF4FC';
 
-  const [inviteModalVisible, setInviteModalVisible] = useState(false);
+  const { careCircle, removeFromCareCircle, addToCareCircle } = useHealthStore();
+
+  const [activeTab, setActiveTab] = useState<'All' | 'Doctors' | 'Family' | 'Others'>('All');
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteName, setInviteName] = useState('');
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState<'Doctor' | 'Family Member' | 'Trusted Contact'>('Family Member');
-  const [inviteAccess, setInviteAccess] = useState<'Full Access' | 'View Only' | 'Clinical Summary Only'>('Clinical Summary Only');
+  const [inviteRole, setInviteRole] = useState('Family');
 
-  const handleRemove = (member: { id: string; name: string }) => {
+  const members: CirclePerson[] = useMemo(() => {
+    return careCircle.map((cc) => ({
+      id: cc.id,
+      name: cc.name,
+      category: cc.role === 'Doctor' ? 'Doctors' : cc.role === 'Family Member' ? 'Family' : 'Others',
+      roleTag: cc.role,
+      roleTagBg: cc.role === 'Doctor' ? '#E0F2FE' : '#F1F5F9',
+      roleTagColor: cc.role === 'Doctor' ? '#0284C7' : '#475569',
+      subtitle: cc.relationship || (cc.role === 'Doctor' ? 'Healthcare Provider' : 'Contact'),
+      accessDesc: cc.accessLevel || 'Screening summaries & reports',
+    }));
+  }, [careCircle]);
+
+  const filteredMembers = useMemo(() => {
+    if (activeTab === 'All') return members;
+    return members.filter((m) => m.category === activeTab);
+  }, [members, activeTab]);
+
+  const handleManage = (person: CirclePerson) => {
     Alert.alert(
-      'Revoke Access',
-      `Revoke health data access for ${member.name}? They will immediately lose access to your records.`,
+      `Manage ${person.name}`,
+      `Current Access: ${person.accessDesc}`,
       [
-        { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Revoke Access',
+          text: 'Remove from Care Circle',
           style: 'destructive',
           onPress: () => {
-            removeFromCareCircle(member.id);
+            removeFromCareCircle(person.id);
+            Alert.alert('Removed', `${person.name} has been removed from your Care Circle.`);
           },
         },
+        { text: 'Cancel', style: 'cancel' },
       ]
     );
   };
 
-  const handleSendInvite = () => {
-    if (!inviteName.trim() || !inviteEmail.trim()) {
-      Alert.alert('Missing Details', 'Please provide a name and email address.');
+  const handleInviteSubmit = () => {
+    if (!inviteName.trim()) {
+      Alert.alert('Missing Name', 'Please enter a name or email address.');
       return;
     }
+    const roleTyped: 'Doctor' | 'Family Member' | 'Trusted Contact' =
+      inviteRole === 'Doctor' ? 'Doctor' : inviteRole === 'Family' ? 'Family Member' : 'Trusted Contact';
+    
     addToCareCircle({
       name: inviteName.trim(),
-      role: inviteRole,
-      accessLevel: inviteAccess,
-      email: inviteEmail.trim(),
+      role: roleTyped,
+      relationship: roleTyped,
+      accessLevel: 'Full Access',
+      verified: false,
     });
-    setInviteModalVisible(false);
+
     setInviteName('');
-    setInviteEmail('');
-    Alert.alert(
-      'Invitation Dispatched',
-      `A secure verification link has been sent to ${inviteEmail.trim()}. They will have ${inviteAccess} permissions once verified.`
-    );
+    setShowInviteModal(false);
+    Alert.alert('Invitation Generated', `An invitation for ${inviteName.trim()} has been added to your Care Circle.`);
   };
 
   return (
     <View style={styles.root}>
-      <AuthBackgroundFoliage />
+      <StatusBar style="dark" />
+      <BioPulseBackground />
 
       {/* Header */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) }]}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={20} color={BioPulseColors.navy} />
-        </Pressable>
-        <Text style={styles.headerTitle}>Care Circle</Text>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 14) }]}>
+        <View style={styles.headerLeft}>
+          <Pressable
+            onPress={() => router.back()}
+            style={styles.backBtn}
+            accessibilityLabel="Back"
+            hitSlop={8}
+          >
+            <Ionicons name="chevron-back" size={24} color="#0F172A" />
+          </Pressable>
+
+          <View style={styles.titleWithInfo}>
+            <Text style={styles.headerTitle}>Care Circle</Text>
+            <Ionicons name="information-circle-outline" size={18} color="#64748B" style={{ marginLeft: 4 }} />
+          </View>
+        </View>
+
         <Pressable
-          onPress={() => setInviteModalVisible(true)}
-          style={[styles.addIconBtn, { backgroundColor: badgeBg }]}
+          onPress={() => setShowInviteModal(true)}
+          style={({ pressed }) => [styles.inviteBtn, pressed && styles.btnPressed]}
         >
-          <Ionicons name="person-add" size={18} color={themeAccent} />
+          <Ionicons name="add" size={16} color="#E11D48" style={{ marginRight: 2 }} />
+          <Text style={styles.inviteText}>Invite someone</Text>
         </Pressable>
       </View>
 
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          isTablet && styles.tabletScrollContent,
-          { paddingBottom: BOTTOM_NAV_HEIGHT + insets.bottom + 24 },
+          isTablet && styles.tabletContent,
+          { paddingBottom: insets.bottom + 40 },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Privacy & Governance Notice */}
-        <View style={styles.noticeCard}>
-          <Ionicons name="shield-checkmark" size={22} color="#10B981" />
-          <View style={styles.noticeTextCol}>
-            <Text style={styles.noticeTitle}>Clinical Privacy Guard</Text>
-            <Text style={styles.noticeBody}>
-              Members only view data granted by your specified access level. You can revoke or change permissions at any time.
-            </Text>
-          </View>
-        </View>
+        {/* Subtitle */}
+        <Text style={styles.subText}>
+          Add trusted people to support your health journey.{'\n'}You can control what they can see.
+        </Text>
 
-        {/* Member Count */}
-        <View style={styles.countRow}>
-          <Text style={styles.countText}>{careCircle.length} Active Care Members</Text>
-          <Pressable onPress={() => setInviteModalVisible(true)}>
-            <Text style={[styles.inviteLink, { color: themeAccent }]}>+ Invite Member</Text>
-          </Pressable>
+        {/* Category Filter Pills */}
+        <View style={styles.pillsRow}>
+          {(['All', 'Doctors', 'Family', 'Others'] as const).map((tab) => {
+            const count =
+              tab === 'All'
+                ? members.length
+                : members.filter((m) => m.category === tab).length;
+            const isSelected = activeTab === tab;
+            return (
+              <Pressable
+                key={tab}
+                onPress={() => setActiveTab(tab)}
+                style={[styles.catPill, isSelected && styles.catPillActive]}
+              >
+                <Text style={[styles.catText, isSelected && styles.catTextActive]}>
+                  {tab} ({count})
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
 
         {/* Members List */}
         <View style={styles.membersList}>
-          {careCircle.map((member) => (
-            <View key={member.id} style={styles.memberCard}>
-              <View style={styles.memberCardTop}>
-                <View
-                  style={[
-                    styles.roleAvatar,
-                    {
-                      backgroundColor:
-                        member.role === 'Doctor'
-                          ? badgeBg
-                          : '#F1F5F9',
-                    },
-                  ]}
-                >
-                  <Ionicons
-                    name={
-                      member.role === 'Doctor'
-                        ? 'medical'
-                        : member.role === 'Family Member'
-                        ? 'heart'
-                        : 'shield'
-                    }
-                    size={22}
-                    color={
-                      member.role === 'Doctor'
-                        ? themeAccent
-                        : '#64748B'
-                    }
-                  />
-                </View>
-
-                <View style={styles.memberInfoCol}>
-                  <View style={styles.nameRow}>
-                    <Text style={styles.memberName}>{member.name}</Text>
-                    {member.verified !== false ? (
-                      <View style={styles.verifiedBadge}>
-                        <Ionicons name="checkmark-circle" size={12} color="#10B981" />
-                        <Text style={styles.verifiedText}>Active</Text>
-                      </View>
-                    ) : (
-                      <View style={styles.pendingBadge}>
-                        <Ionicons name="time-outline" size={12} color="#F59E0B" />
-                        <Text style={styles.pendingText}>Pending</Text>
-                      </View>
-                    )}
-                  </View>
-                  <Text style={styles.memberRole}>{member.role}</Text>
-                  <Text style={styles.memberEmail}>{member.email || 'Direct Health Link'}</Text>
-                </View>
+          {filteredMembers.length === 0 ? (
+            <View style={{ padding: 28, alignItems: 'center', backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#F1F5F9', marginVertical: 12 }}>
+              <Ionicons name="people-outline" size={42} color="#94A3B8" style={{ marginBottom: 12 }} />
+              <Text style={{ fontSize: 16, fontWeight: '700', color: '#0F172A', marginBottom: 6 }}>No Members Connected</Text>
+              <Text style={{ fontSize: 14, color: '#64748B', textAlign: 'center', lineHeight: 20, marginBottom: 16 }}>
+                Invite a trusted healthcare provider or family member to securely view permitted health summaries.
+              </Text>
+              <Pressable
+                onPress={() => setShowInviteModal(true)}
+                style={({ pressed }) => [styles.inviteBtn, pressed && styles.btnPressed, { alignSelf: 'center' }]}
+              >
+                <Ionicons name="add" size={16} color="#E11D48" style={{ marginRight: 4 }} />
+                <Text style={styles.inviteText}>Invite someone</Text>
+              </Pressable>
+            </View>
+          ) : (
+            filteredMembers.map((person) => (
+            <View key={person.id} style={styles.personCard}>
+              {/* Left Indicator */}
+              <View style={styles.indicatorBox}>
+                <Ionicons name="person-outline" size={14} color="#E11D48" />
               </View>
 
-              <View style={styles.memberCardDivider} />
+              {/* Avatar */}
+              <View style={styles.avatarBox}>
+                <Ionicons name="person" size={24} color="#073B72" />
+              </View>
 
-              <View style={styles.memberCardBottom}>
-                <View style={styles.accessBadgeRow}>
-                  <Ionicons name="key-outline" size={14} color="#64748B" />
-                  <Text style={styles.accessLabel}>Access: </Text>
-                  <Text style={[styles.accessValue, { color: themeAccent }]}>
-                    {member.accessLevel}
-                  </Text>
+              {/* Details */}
+              <View style={styles.personMeta}>
+                <View style={styles.nameTagRow}>
+                  <Text style={styles.personName}>{person.name}</Text>
+                  <View style={[styles.roleTag, { backgroundColor: person.roleTagBg }]}>
+                    <Text style={[styles.roleText, { color: person.roleTagColor }]}>
+                      {person.roleTag}
+                    </Text>
+                  </View>
                 </View>
 
+                <Text style={styles.personSub}>{person.subtitle}</Text>
+                <Text style={styles.accessText}>Access: {person.accessDesc}</Text>
+              </View>
+
+              {/* Actions */}
+              <View style={styles.cardActions}>
                 <Pressable
-                  onPress={() => handleRemove(member)}
-                  style={styles.revokeBtn}
+                  onPress={() => handleManage(person)}
+                  style={({ pressed }) => [styles.manageBtn, pressed && styles.btnPressed]}
+                >
+                  <Text style={styles.manageText}>Manage</Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => handleManage(person)}
+                  style={styles.moreBtn}
                   hitSlop={8}
                 >
-                  <Ionicons name="trash-outline" size={15} color="#EF4444" />
-                  <Text style={styles.revokeText}>Manage</Text>
+                  <Ionicons name="ellipsis-vertical" size={18} color="#64748B" />
                 </Pressable>
               </View>
             </View>
-          ))}
+          )))}
         </View>
 
-        {/* Invite CTA Banner */}
-        <Pressable
-          onPress={() => setInviteModalVisible(true)}
-          style={[styles.bigInviteCard, { borderColor: themeAccent + '40' }]}
-        >
-          <View style={[styles.bigInviteIcon, { backgroundColor: badgeBg }]}>
-            <Ionicons name="person-add-outline" size={24} color={themeAccent} />
-          </View>
-          <View style={styles.bigInviteTextCol}>
-            <Text style={styles.bigInviteTitle}>Invite Healthcare Provider or Contact</Text>
-            <Text style={styles.bigInviteSub}>
-              Share structured screening assessments directly with your doctor.
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
-        </Pressable>
+        {/* Bottom Privacy Guarantee Box */}
+        <View style={styles.privacyBox}>
+          <Ionicons name="shield-checkmark" size={20} color="#0284C7" style={{ marginRight: 10 }} />
+          <Text style={styles.privacyText}>
+            Your data stays private. You control what each person can see and can remove access at any time.
+          </Text>
+        </View>
       </ScrollView>
 
       {/* Invite Modal */}
       <Modal
-        visible={inviteModalVisible}
+        visible={showInviteModal}
         transparent
-        animationType="slide"
-        onRequestClose={() => setInviteModalVisible(false)}
+        animationType="fade"
+        onRequestClose={() => setShowInviteModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalSheet}>
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowInviteModal(false)}
+        >
+          <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add Care Circle Member</Text>
-              <Pressable
-                onPress={() => setInviteModalVisible(false)}
-                style={styles.modalCloseBtn}
-              >
-                <Ionicons name="close" size={20} color="#64748B" />
+              <Text style={styles.modalTitle}>Invite to Care Circle</Text>
+              <Pressable onPress={() => setShowInviteModal(false)}>
+                <Ionicons name="close" size={22} color="#0F172A" />
               </Pressable>
             </View>
 
-            <ScrollView contentContainerStyle={styles.modalScroll}>
-              <Text style={styles.inputLabel}>Full Name</Text>
-              <TextInput
-                value={inviteName}
-                onChangeText={setInviteName}
-                placeholder="e.g. Dr. Sarah Jenkins or Ahmed Khan"
-                placeholderTextColor="#94A3B8"
-                style={styles.modalInput}
-              />
+            <Text style={styles.inputLabel}>Full Name or Email</Text>
+            <TextInput
+              style={styles.input}
+              value={inviteName}
+              onChangeText={setInviteName}
+              placeholder="e.g. Dr. Ahmed or Mom"
+              placeholderTextColor="#94A3B8"
+            />
 
-              <Text style={styles.inputLabel}>Email Address</Text>
-              <TextInput
-                value={inviteEmail}
-                onChangeText={setInviteEmail}
-                placeholder="doctor@hospital.org"
-                placeholderTextColor="#94A3B8"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                style={styles.modalInput}
-              />
-
-              <Text style={styles.inputLabel}>Relationship</Text>
-              <View style={styles.pillRow}>
-                {(['Doctor', 'Family Member', 'Trusted Contact'] as const).map(
-                  (r) => {
-                    const isSel = inviteRole === r;
-                    return (
-                      <Pressable
-                        key={r}
-                        onPress={() => setInviteRole(r)}
-                        style={[
-                          styles.pill,
-                          isSel && {
-                            backgroundColor: badgeBg,
-                            borderColor: themeAccent,
-                          },
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.pillText,
-                            isSel && { color: themeAccent, fontWeight: '700' },
-                          ]}
-                        >
-                          {r}
-                        </Text>
-                      </Pressable>
-                    );
-                  }
-                )}
-              </View>
-
-              <Text style={styles.inputLabel}>Permitted Health Access</Text>
-              <View style={styles.accessOptionsCol}>
-                {[
-                  {
-                    level: 'Clinical Summary Only' as const,
-                    desc: 'Latest screening risk tier, primary factors, and lab summary.',
-                  },
-                  {
-                    level: 'Full Access' as const,
-                    desc: 'Screening history, daily logs, medications, and labs.',
-                  },
-                  {
-                    level: 'View Only' as const,
-                    desc: 'Read-only access to vital summaries and daily adherence.',
-                  },
-                ].map((item) => {
-                  const isSel = inviteAccess === item.level;
-                  return (
-                    <Pressable
-                      key={item.level}
-                      onPress={() => setInviteAccess(item.level)}
-                      style={[
-                        styles.accessOptionCard,
-                        isSel && {
-                          borderColor: themeAccent,
-                          backgroundColor: badgeBg + '40',
-                        },
-                      ]}
+            <Text style={styles.inputLabel}>Relationship</Text>
+            <View style={styles.modalRoleRow}>
+              {(['Doctor', 'Family', 'Trusted Contact'] as const).map((r) => {
+                const isSelected = inviteRole === r;
+                return (
+                  <Pressable
+                    key={r}
+                    onPress={() => setInviteRole(r)}
+                    style={[styles.modalRolePill, isSelected && styles.modalRolePillActive]}
+                  >
+                    <Text
+                      style={[styles.modalRoleText, isSelected && styles.modalRoleTextActive]}
                     >
-                      <Ionicons
-                        name={isSel ? 'radio-button-on' : 'radio-button-off'}
-                        size={18}
-                        color={isSel ? themeAccent : '#94A3B8'}
-                      />
-                      <View style={{ flex: 1 }}>
-                        <Text
-                          style={[
-                            styles.accessOptionTitle,
-                            isSel && { color: themeAccent, fontWeight: '700' },
-                          ]}
-                        >
-                          {item.level}
-                        </Text>
-                        <Text style={styles.accessOptionDesc}>{item.desc}</Text>
-                      </View>
-                    </Pressable>
-                  );
-                })}
-              </View>
+                      {r}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
 
-              <Pressable
-                onPress={handleSendInvite}
-                style={[styles.modalSendBtn, { backgroundColor: themeAccent }]}
-              >
-                <Ionicons name="mail" size={18} color="#FFFFFF" />
-                <Text style={styles.modalSendText}>Send Secure Invite</Text>
-              </Pressable>
-            </ScrollView>
-          </View>
-        </View>
+            <Pressable
+              onPress={handleInviteSubmit}
+              style={({ pressed }) => [styles.modalSendBtn, pressed && styles.btnPressed]}
+            >
+              <Text style={styles.modalSendText}>Send Invitation</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
       </Modal>
-
-      {/* Bottom Nav */}
-      <BioPulseBottomNav activeTab="more" />
     </View>
   );
 }
@@ -377,340 +323,286 @@ export default function CareCircleScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FAF5FF',
   },
   header: {
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
     paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingBottom: 6,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    backgroundColor: 'transparent',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F1F5F9',
+    marginRight: 6,
+  },
+  titleWithInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: BioPulseColors.navy,
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#0F172A',
   },
-  addIconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  inviteBtn: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E11D48',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#FFFFFF',
   },
+  inviteText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#E11D48',
+  },
+
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 16,
-    gap: 14,
+    paddingTop: 4,
   },
-  tabletScrollContent: {
+  tabletContent: {
     maxWidth: 600,
     alignSelf: 'center',
     width: '100%',
   },
-  noticeCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    backgroundColor: '#ECFDF5',
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-    borderRadius: 14,
-    padding: 14,
-  },
-  noticeTextCol: {
-    flex: 1,
-  },
-  noticeTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#065F46',
-    marginBottom: 2,
-  },
-  noticeBody: {
+  subText: {
     fontSize: 12,
-    color: '#047857',
+    color: '#64748B',
     lineHeight: 17,
+    marginBottom: 14,
   },
-  countRow: {
+
+  // Pills
+  pillsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 4,
+    gap: 8,
+    marginBottom: 16,
   },
-  countText: {
-    fontSize: 13,
+  catPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
+  },
+  catPillActive: {
+    backgroundColor: '#E11D48',
+  },
+  catText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  catTextActive: {
+    color: '#FFFFFF',
     fontWeight: '700',
-    color: BioPulseColors.navy,
   },
-  inviteLink: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
+
+  // Members
   membersList: {
     gap: 12,
+    marginBottom: 20,
   },
-  memberCard: {
+  personCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
+    padding: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 16,
+    borderColor: '#F1F5F9',
+    flexDirection: 'row',
+    alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
     elevation: 1,
   },
-  memberCardTop: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  roleAvatar: {
-    width: 46,
-    height: 46,
-    borderRadius: 14,
+  indicatorBox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#FDF2F8',
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 8,
   },
-  memberInfoCol: {
-    flex: 1,
-  },
-  nameRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  memberName: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: BioPulseColors.navy,
-  },
-  verifiedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    backgroundColor: '#D1FAE5',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  verifiedText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#065F46',
-  },
-  pendingBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    backgroundColor: '#FEF3C7',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  pendingText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#B45309',
-  },
-  memberRole: {
-    fontSize: 12,
-    color: '#64748B',
-    marginTop: 2,
-  },
-  memberEmail: {
-    fontSize: 11.5,
-    color: '#94A3B8',
-    marginTop: 2,
-  },
-  memberCardDivider: {
-    height: 1,
-    backgroundColor: '#F1F5F9',
-    marginVertical: 12,
-  },
-  memberCardBottom: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  accessBadgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  accessLabel: {
-    fontSize: 12,
-    color: '#64748B',
-  },
-  accessValue: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  revokeBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    backgroundColor: '#FEF2F2',
-  },
-  revokeText: {
-    fontSize: 11.5,
-    fontWeight: '600',
-    color: '#EF4444',
-  },
-  bigInviteCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderRadius: 16,
-    padding: 16,
-    marginTop: 6,
-  },
-  bigInviteIcon: {
+  avatarBox: {
     width: 44,
     height: 44,
-    borderRadius: 12,
+    borderRadius: 22,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 12,
   },
-  bigInviteTextCol: {
+  personMeta: {
     flex: 1,
   },
-  bigInviteTitle: {
-    fontSize: 13.5,
-    fontWeight: '700',
-    color: BioPulseColors.navy,
+  nameTagRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
-  bigInviteSub: {
-    fontSize: 11.5,
+  personName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  roleTag: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  roleText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  personSub: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 1,
+  },
+  accessText: {
+    fontSize: 10,
     color: '#64748B',
     marginTop: 2,
   },
+
+  cardActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  manageBtn: {
+    borderWidth: 1,
+    borderColor: '#E11D48',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    backgroundColor: '#FFFFFF',
+  },
+  manageText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#E11D48',
+  },
+  moreBtn: {
+    padding: 2,
+  },
+
+  // Privacy Box
+  privacyBox: {
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#DBEAFE',
+    borderRadius: 14,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  privacyText: {
+    flex: 1,
+    fontSize: 11,
+    color: '#0F172A',
+    lineHeight: 16,
+  },
+
+  // Modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
-  modalSheet: {
+  modalCard: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: '90%',
-    paddingBottom: 24,
+    borderRadius: 20,
+    padding: 20,
+    width: '100%',
+    maxWidth: 420,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 8,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    marginBottom: 16,
   },
   modalTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
-    color: BioPulseColors.navy,
-  },
-  modalCloseBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F1F5F9',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalScroll: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    gap: 12,
+    color: '#0F172A',
   },
   inputLabel: {
-    fontSize: 12.5,
-    fontWeight: '700',
-    color: '#334155',
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#475569',
+    marginBottom: 6,
+    marginTop: 10,
   },
-  modalInput: {
+  input: {
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    height: 44,
-    fontSize: 13,
-    color: '#1E293B',
-  },
-  pillRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  pill: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
     borderRadius: 10,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: '#0F172A',
   },
-  pillText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#475569',
-  },
-  accessOptionsCol: {
-    gap: 8,
-  },
-  accessOptionCard: {
+  modalRoleRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    gap: 8,
+    marginVertical: 4,
   },
-  accessOptionTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#1E293B',
+  modalRolePill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+    backgroundColor: '#F1F5F9',
   },
-  accessOptionDesc: {
-    fontSize: 11.5,
+  modalRolePillActive: {
+    backgroundColor: '#E11D48',
+  },
+  modalRoleText: {
+    fontSize: 11,
     color: '#64748B',
-    marginTop: 2,
-    lineHeight: 16,
+    fontWeight: '600',
+  },
+  modalRoleTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
   modalSendBtn: {
-    flexDirection: 'row',
+    backgroundColor: '#E11D48',
+    borderRadius: 12,
+    paddingVertical: 13,
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    height: 48,
-    borderRadius: 14,
-    marginTop: 10,
+    marginTop: 20,
   },
   modalSendText: {
     color: '#FFFFFF',
-    fontSize: 14,
     fontWeight: '700',
+    fontSize: 14,
+  },
+
+  btnPressed: {
+    opacity: 0.85,
   },
 });

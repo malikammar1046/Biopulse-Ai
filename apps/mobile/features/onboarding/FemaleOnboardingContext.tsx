@@ -1,5 +1,11 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import type { ProgressiveAssessment } from '../../services/assessmentService';
+import { useAuth } from '../authentication';
+import {
+  saveOnboardingStepData,
+  completeOnboardingInDb,
+  fetchOnboardingDraft,
+} from '../../services/userService';
 
 export type CycleRegularity = 'regular' | 'irregular' | 'not_sure';
 export type MissedPeriodsRange = '0' | '1-2' | '3+';
@@ -86,11 +92,14 @@ interface FemaleOnboardingContextValue {
   resetOnboarding: () => void;
   lastActiveScreeningRoute: string;
   setLastActiveScreeningRoute: (route: string) => void;
+  saveAndCompleteOnboarding: (finalSummary?: Record<string, any>) => Promise<boolean>;
 }
 
 const FemaleOnboardingContext = createContext<FemaleOnboardingContextValue | undefined>(undefined);
 
 export const FemaleOnboardingProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+
   const [basicInfo, setBasicInfo] = useState<FemaleBasicInfoState>(DEFAULT_BASIC_INFO);
   const [cycleHealth, setCycleHealth] = useState<FemaleCycleHealthState>(DEFAULT_CYCLE_HEALTH);
   const [symptoms, setSymptoms] = useState<string[]>([
@@ -105,21 +114,129 @@ export const FemaleOnboardingProvider: React.FC<{ children: ReactNode }> = ({ ch
   const [assessmentError, setAssessmentError] = useState<string | null>(null);
   const [lastActiveScreeningRoute, setLastActiveScreeningRoute] = useState<string>('/female-symptoms');
 
+  // Hydrate draft state from DB / persistent storage on mount or account switch
+  useEffect(() => {
+    let isCurrent = true;
+    if (!user?.id) return;
+
+    fetchOnboardingDraft(user.id, user.accessToken)
+      .then((draft) => {
+        if (!isCurrent || !draft) return;
+
+        // Restore basic info
+        if (draft.dateOfBirth || draft.heightCm || draft.weightKg) {
+          setBasicInfo((prev) => ({
+            ...prev,
+            dateOfBirth: draft.dateOfBirth || prev.dateOfBirth,
+            age: draft.age || prev.age,
+            heightCm: draft.heightCm || prev.heightCm,
+            weightKg: draft.weightKg || prev.weightKg,
+            bmi: draft.bmi || prev.bmi,
+            maritalStatus: draft.maritalStatus === 'Married' ? 'married' : prev.maritalStatus,
+            pregnancyStatus: draft.pregnancyStatus === 'Currently Pregnant' ? 'currently_pregnant' : prev.pregnancyStatus,
+          }));
+        }
+
+        // Restore cycle health
+        if (draft.cycleLength || draft.lastPeriodDate || draft.periodDuration) {
+          setCycleHealth((prev) => ({
+            ...prev,
+            cycleLength: Number(draft.cycleLength) || prev.cycleLength,
+            lastPeriodDate: draft.lastPeriodDate || prev.lastPeriodDate,
+            periodDuration: Number(draft.periodDuration) || prev.periodDuration,
+            regularity: draft.periodRegularity === 'mostly_regular' ? 'regular' : (draft.periodRegularity || prev.regularity),
+          }));
+        }
+
+        // Restore symptoms
+        if (Array.isArray(draft.commonSymptoms) && draft.commonSymptoms.length > 0) {
+          setSymptoms(draft.commonSymptoms);
+        }
+
+        // Restore lifestyle
+        if (draft.sleepHours || draft.fastFoodIntake) {
+          setLifestyle((prev) => ({
+            ...prev,
+            sleepHours: Number(draft.sleepHours) || prev.sleepHours,
+            fastFoodIntake: draft.fastFoodIntake || prev.fastFoodIntake,
+          }));
+        }
+      })
+      .catch((err) => {
+        console.warn('[BioPulse FemaleOnboarding] Draft restoration error:', err);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [user?.id, user?.accessToken]);
+
   const updateBasicInfo = useCallback((partial: Partial<FemaleBasicInfoState>) => {
-    setBasicInfo((prev) => ({ ...prev, ...partial }));
-  }, []);
+    setBasicInfo((prev) => {
+      const next = { ...prev, ...partial };
+      if (user?.id) {
+        saveOnboardingStepData(user.id, user.accessToken || '', {
+          dateOfBirth: next.dateOfBirth,
+          heightCm: next.heightCm,
+          weightKg: next.weightKg,
+          waistCm: (partial as any).waistCm,
+          maritalStatus: next.maritalStatus === 'married' ? 'Married' : 'Single',
+          pregnancyStatus: next.pregnancyStatus === 'currently_pregnant' ? 'Currently Pregnant' : 'Not Pregnant',
+        }).catch((e) => console.warn('[FemaleOnboarding] save error:', e));
+      }
+      return next;
+    });
+  }, [user?.id, user?.accessToken]);
 
   const updateCycleHealth = useCallback((partial: Partial<FemaleCycleHealthState>) => {
-    setCycleHealth((prev) => ({ ...prev, ...partial }));
-  }, []);
+    setCycleHealth((prev) => {
+      const next = { ...prev, ...partial };
+      if (user?.id) {
+        saveOnboardingStepData(user.id, user.accessToken || '', {
+          cycleLength: String(next.cycleLength),
+          periodDuration: next.periodDuration,
+          lastPeriodDate: next.lastPeriodDate,
+          periodRegularity: next.regularity,
+        }).catch((e) => console.warn('[FemaleOnboarding] save error:', e));
+      }
+      return next;
+    });
+  }, [user?.id, user?.accessToken]);
 
   const updateSymptoms = useCallback((newSymptoms: string[]) => {
     setSymptoms(newSymptoms);
-  }, []);
+    if (user?.id) {
+      saveOnboardingStepData(user.id, user.accessToken || '', {
+        commonSymptoms: newSymptoms,
+      }).catch((e) => console.warn('[FemaleOnboarding] save error:', e));
+    }
+  }, [user?.id, user?.accessToken]);
 
   const updateLifestyle = useCallback((partial: Partial<FemaleLifestyleState>) => {
-    setLifestyle((prev) => ({ ...prev, ...partial }));
-  }, []);
+    setLifestyle((prev) => {
+      const next = { ...prev, ...partial };
+      if (user?.id) {
+        saveOnboardingStepData(user.id, user.accessToken || '', {
+          sleepHours: next.sleepHours,
+          fastFoodIntake: next.fastFoodIntake,
+          regularExercise: next.exerciseFrequency !== 'none',
+        }).catch((e) => console.warn('[FemaleOnboarding] save error:', e));
+      }
+      return next;
+    });
+  }, [user?.id, user?.accessToken]);
+
+  const saveAndCompleteOnboarding = useCallback(
+    async (finalSummary?: Record<string, any>): Promise<boolean> => {
+      if (!user?.id) return true;
+      return completeOnboardingInDb(user.id, user.accessToken || '', {
+        pathway: 'female_pcos',
+        gender: 'female',
+        ...finalSummary,
+      });
+    },
+    [user?.id, user?.accessToken]
+  );
 
   const resetOnboarding = useCallback(() => {
     setBasicInfo(DEFAULT_BASIC_INFO);
@@ -152,6 +269,7 @@ export const FemaleOnboardingProvider: React.FC<{ children: ReactNode }> = ({ ch
         resetOnboarding,
         lastActiveScreeningRoute,
         setLastActiveScreeningRoute,
+        saveAndCompleteOnboarding,
       }}
     >
       {children}
@@ -166,3 +284,4 @@ export function useFemaleOnboarding(): FemaleOnboardingContextValue {
   }
   return context;
 }
+

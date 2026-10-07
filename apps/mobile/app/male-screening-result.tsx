@@ -14,6 +14,7 @@ import { BioPulseColors } from '../constants/Colors';
 import { AuthBackgroundFoliage } from '../components/auth/AuthBackgroundFoliage';
 import { PathwayHeader } from '../components/onboarding';
 import { useMaleOnboarding } from '../features/onboarding';
+import { useHealthStore } from '../store';
 import { BioPulseBottomNav, BOTTOM_NAV_HEIGHT } from '../components/navigation';
 
 export default function MaleScreeningResultScreen() {
@@ -23,6 +24,7 @@ export default function MaleScreeningResultScreen() {
   const isTablet = width >= 768;
 
   const { activeAssessment, calculateAdamScore } = useMaleOnboarding();
+  const { updateProfile } = useHealthStore();
   const adamSummary = calculateAdamScore();
 
   // Probability and risk category fallback
@@ -86,8 +88,9 @@ export default function MaleScreeningResultScreen() {
   }, [activeAssessment, adamSummary]);
 
   const handleGoHome = useCallback(() => {
+    updateProfile({ isOnboarded: true });
     router.replace('/(app)');
-  }, [router]);
+  }, [updateProfile, router]);
 
   const handleViewExplanation = useCallback(() => {
     router.push('/(app)/screening-explanation');

@@ -56,7 +56,9 @@ export const ROUTES = {
     LIFESTYLE: '/app/lifestyle',
     TIMELINE: '/app/timeline',
     SETTINGS: '/app/settings',
+    NUTRITION: '/app/nutrition',
   },
+
 } as const;
 
 /**

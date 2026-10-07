@@ -9,42 +9,50 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../constants/Colors';
-import { AuthBackgroundFoliage } from '../components/auth/AuthBackgroundFoliage';
-import {
-  OnboardingStepper,
-  PathwayHeader,
-} from '../components/onboarding';
+import { BioPulseBackground } from '../components/common/BioPulseBackground';
+import { MaleOnboardingHeader } from '../components/onboarding/MaleOnboardingHeader';
 import { useMaleOnboarding, ADAM_QUESTIONS } from '../features/onboarding';
 
-const MALE_ONBOARDING_STEPS = [
-  { id: 1, label: 'Basic Health' },
-  { id: 2, label: 'ADAM' },
-  { id: 3, label: 'Metabolic' },
-  { id: 4, label: 'Review' },
-];
-
+/**
+ * SCREEN 14 — MALE ADAM QUESTIONNAIRE
+ *
+ * Strict visual match to Screenshot 14:
+ * - Header: Back button (<), centered "Question X of 10", continuous blue progress bar below
+ * - Focused Card:
+ *   - Male gender icon badge (light blue square with ♂)
+ *   - Question title: "Do you have a decrease in libido (sex drive)?"
+ *   - Clinical context: "A reduced interest in sexual activity can be a sign of lower testosterone levels in some men."
+ *   - Large selectable answer cards: [ Yes ] and [ No ]
+ *     - Selected: royal blue border (#0284C7), soft blue bg (#EFF6FF), solid blue circular checkmark, bold text
+ *     - Unselected: clean border (#E2E8F0), white bg, empty radio circle, neutral text
+ * - Bottom action bar:
+ *   - Dual buttons: [ Back ] (outline/white) and [ Continue ] (solid royal blue #0284C7)
+ * - State and navigation:
+ *   - Advances through all 10 ADAM questions
+ *   - Preserves answers in useMaleOnboarding()
+ *   - Routes to /male-lifestyle upon question 10 completion
+ */
 export default function MaleAdamScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const isTablet = width >= 768;
 
   const { adam, setAdamAnswer, setLastActiveScreeningRoute } = useMaleOnboarding();
   const [currentIdx, setCurrentIdx] = useState<number>(0); // 0 to 9
 
-  const currentQ = ADAM_QUESTIONS[currentIdx];
+  const currentQ = ADAM_QUESTIONS[currentIdx] || ADAM_QUESTIONS[0];
   const totalQuestions = ADAM_QUESTIONS.length;
   const currentAnswer = adam.answers[currentQ.id];
 
-  const answeredCount = useMemo(() => {
-    return Object.keys(adam.answers).length;
-  }, [adam.answers]);
-
-  const handleSelectAnswer = useCallback((val: boolean) => {
-    setAdamAnswer(currentQ.id, val);
-  }, [currentQ.id, setAdamAnswer]);
+  const handleSelectAnswer = useCallback(
+    (val: boolean) => {
+      setAdamAnswer(currentQ.id, val);
+    },
+    [currentQ.id, setAdamAnswer]
+  );
 
   const handleNext = useCallback(() => {
     if (currentIdx < totalQuestions - 1) {
@@ -64,486 +72,325 @@ export default function MaleAdamScreen() {
   }, [currentIdx, router]);
 
   const progressPercent = Math.round(((currentIdx + 1) / totalQuestions) * 100);
+  const bottomPad = Math.max(insets.bottom, 16);
 
   return (
-    <View style={styles.root}>
-      <AuthBackgroundFoliage />
+    <BioPulseBackground style={styles.root}>
+      <StatusBar style="dark" backgroundColor="transparent" translucent />
 
-      {/* Pathway Header */}
-      <View style={{ paddingTop: Math.max(insets.top, 10) }}>
-        <PathwayHeader
-          onBack={handlePrev}
-          subtitle="MEN'S HEALTH INTELLIGENCE"
-        />
-      </View>
-
-      {/* Stepper */}
-      <View style={styles.stepperWrap}>
-        <OnboardingStepper
-          steps={MALE_ONBOARDING_STEPS}
-          currentStep={2}
-          accentColor={BioPulseColors.malePrimary}
-        />
-      </View>
+      {/* Header with Back button, "Question X of 10" and continuous progress bar */}
+      <MaleOnboardingHeader
+        customLabel={`Question ${currentIdx + 1} of ${totalQuestions}`}
+        isContinuousProgress
+        progressPercent={progressPercent}
+        onBack={handlePrev}
+        accentColor="#0284C7"
+      />
 
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          isTablet && styles.tabletScrollContent,
-          { paddingBottom: Math.max(insets.bottom, 24) + 80 },
+          { paddingBottom: bottomPad + 84 },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Progress Bar & Counter Card */}
-        <View style={styles.counterCard}>
-          <View style={styles.counterHeader}>
-            <Text style={styles.counterBadge}>
-              Question {currentIdx + 1} of {totalQuestions}
-            </Text>
-            <Text style={styles.progressPercentText}>{progressPercent}% completed</Text>
-          </View>
-          <View style={styles.progressBarTrack}>
-            <View style={[styles.progressBarFill, { width: `${progressPercent}%` }]} />
-          </View>
-          <Text style={styles.standardText}>
-            Validated Saint Louis University Androgen Deficiency in Aging Males (ADAM) Tool
-          </Text>
-        </View>
+        <View style={[styles.mainWrapper, { maxWidth: Math.min(width, 460) }]}>
+          {/* Main Question Card */}
+          <View style={styles.questionCard}>
+            {/* Male Symbol Icon Badge */}
+            <View style={styles.iconBadge}>
+              <Ionicons name="male" size={28} color="#0284C7" />
+            </View>
 
-        {/* Current Question Card */}
-        <View style={styles.questionCard}>
-          <View style={styles.questionNumBadge}>
-            <Text style={styles.questionNumText}>Q{currentQ.id}</Text>
-          </View>
+            {/* Question Text */}
+            <Text style={styles.questionTitle}>{currentQ.question}</Text>
 
-          <Text style={styles.questionTitle}>{currentQ.question}</Text>
-          <Text style={styles.questionDesc}>{currentQ.description}</Text>
+            {/* Short Clinical Context */}
+            <Text style={styles.questionDesc}>{currentQ.description}</Text>
 
-          {/* Large Yes / No Chips */}
-          <View style={styles.optionsRow}>
-            {/* YES OPTION */}
-            <Pressable
-              onPress={() => handleSelectAnswer(true)}
-              style={({ pressed }) => [
-                styles.optionBtn,
-                currentAnswer === true && styles.optionBtnSelectedYes,
-                pressed && styles.optionBtnPressed,
-              ]}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: currentAnswer === true }}
-              accessibilityLabel={`Yes for question ${currentQ.id}`}
-            >
-              <View
-                style={[
-                  styles.optionIconCircle,
-                  currentAnswer === true && styles.optionIconCircleSelectedYes,
+            {/* Vertical Answer Options */}
+            <View style={styles.optionsContainer}>
+              {/* YES OPTION */}
+              <Pressable
+                onPress={() => handleSelectAnswer(true)}
+                style={({ pressed }) => [
+                  styles.optionCard,
+                  currentAnswer === true && styles.optionCardSelected,
+                  pressed && styles.optionCardPressed,
                 ]}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: currentAnswer === true }}
+                accessibilityLabel={`Yes for question ${currentQ.id}`}
               >
-                <Ionicons
-                  name="checkmark"
-                  size={22}
-                  color={currentAnswer === true ? '#FFFFFF' : '#64748B'}
-                />
-              </View>
-              <Text
-                style={[
-                  styles.optionText,
-                  currentAnswer === true && styles.optionTextSelectedYes,
-                ]}
-              >
-                Yes
-              </Text>
-            </Pressable>
-
-            {/* NO OPTION */}
-            <Pressable
-              onPress={() => handleSelectAnswer(false)}
-              style={({ pressed }) => [
-                styles.optionBtn,
-                currentAnswer === false && styles.optionBtnSelectedNo,
-                pressed && styles.optionBtnPressed,
-              ]}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: currentAnswer === false }}
-              accessibilityLabel={`No for question ${currentQ.id}`}
-            >
-              <View
-                style={[
-                  styles.optionIconCircle,
-                  currentAnswer === false && styles.optionIconCircleSelectedNo,
-                ]}
-              >
-                <Ionicons
-                  name="close"
-                  size={22}
-                  color={currentAnswer === false ? '#FFFFFF' : '#64748B'}
-                />
-              </View>
-              <Text
-                style={[
-                  styles.optionText,
-                  currentAnswer === false && styles.optionTextSelectedNo,
-                ]}
-              >
-                No
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-
-        {/* Question Quick Jump Dots */}
-        <View style={styles.dotsCard}>
-          <Text style={styles.dotsTitle}>Questions Navigation</Text>
-          <View style={styles.dotsGrid}>
-            {ADAM_QUESTIONS.map((q, idx) => {
-              const isAnswered = adam.answers[q.id] !== undefined;
-              const isCurrent = idx === currentIdx;
-              const ans = adam.answers[q.id];
-
-              let bg = '#F1F5F9';
-              let border = '#E2E8F0';
-              let textC = '#64748B';
-
-              if (isCurrent) {
-                border = BioPulseColors.malePrimary;
-                bg = '#EBF4FC';
-                textC = BioPulseColors.malePrimary;
-              } else if (isAnswered) {
-                bg = ans ? '#EFF6FF' : '#F8FAFC';
-                border = ans ? '#93C5FD' : '#CBD5E1';
-                textC = ans ? '#1D4ED8' : '#475569';
-              }
-
-              return (
-                <Pressable
-                  key={q.id}
-                  onPress={() => setCurrentIdx(idx)}
-                  style={[styles.jumpDot, { backgroundColor: bg, borderColor: border }]}
+                <View
+                  style={[
+                    styles.radioCircle,
+                    currentAnswer === true && styles.radioCircleSelected,
+                  ]}
                 >
-                  <Text style={[styles.jumpDotText, { color: textC, fontWeight: isCurrent ? '700' : '500' }]}>
-                    {q.id}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
+                  {currentAnswer === true && (
+                    <Ionicons name="checkmark" size={15} color="#FFFFFF" />
+                  )}
+                </View>
+                <Text
+                  style={[
+                    styles.optionLabel,
+                    currentAnswer === true && styles.optionLabelSelected,
+                  ]}
+                >
+                  Yes
+                </Text>
+              </Pressable>
 
-        {/* Clinical Note Banner */}
-        <View style={styles.clinicalBanner}>
-          <Ionicons name="shield-checkmark-outline" size={18} color="#0369A1" />
-          <Text style={styles.clinicalText}>
-            Questions 1 and 7 assess primary sexual and erectile symptoms with the highest clinical sensitivity for testosterone deficiency.
-          </Text>
+              {/* NO OPTION */}
+              <Pressable
+                onPress={() => handleSelectAnswer(false)}
+                style={({ pressed }) => [
+                  styles.optionCard,
+                  currentAnswer === false && styles.optionCardSelected,
+                  pressed && styles.optionCardPressed,
+                ]}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: currentAnswer === false }}
+                accessibilityLabel={`No for question ${currentQ.id}`}
+              >
+                <View
+                  style={[
+                    styles.radioCircle,
+                    currentAnswer === false && styles.radioCircleSelected,
+                  ]}
+                >
+                  {currentAnswer === false && (
+                    <Ionicons name="checkmark" size={15} color="#FFFFFF" />
+                  )}
+                </View>
+                <Text
+                  style={[
+                    styles.optionLabel,
+                    currentAnswer === false && styles.optionLabelSelected,
+                  ]}
+                >
+                  No
+                </Text>
+              </Pressable>
+            </View>
+          </View>
         </View>
       </ScrollView>
 
-      {/* Floating Bottom Action */}
-      <View
-        style={[
-          styles.bottomBar,
-          {
-            paddingBottom: Math.max(insets.bottom, 16),
-          },
-        ]}
-      >
-        <View style={styles.bottomButtonsRow}>
-          {currentIdx > 0 && (
-            <Pressable
-              onPress={handlePrev}
-              style={styles.backStepBtn}
-              accessibilityRole="button"
-              accessibilityLabel="Previous Question"
-            >
-              <Ionicons name="arrow-back" size={18} color={BioPulseColors.navy} />
-              <Text style={styles.backStepBtnText}>Back</Text>
-            </Pressable>
-          )}
+      {/* Decorative subtle background wave effect at bottom corner */}
+      <View style={styles.decorativeWave} pointerEvents="none">
+        <View style={styles.waveBubble1} />
+        <View style={styles.waveBubble2} />
+      </View>
 
+      {/* Floating Bottom Dual Action Bar */}
+      <View style={[styles.bottomBar, { paddingBottom: bottomPad }]}>
+        <View style={[styles.bottomRow, { maxWidth: Math.min(width, 460) }]}>
+          {/* Back Button */}
           <Pressable
-            onPress={handleNext}
-            disabled={currentAnswer === undefined}
+            onPress={handlePrev}
             style={({ pressed }) => [
-              styles.nextBtn,
-              currentAnswer === undefined && styles.nextBtnDisabled,
-              pressed && styles.nextBtnPressed,
+              styles.backButton,
+              pressed && styles.buttonPressed,
             ]}
             accessibilityRole="button"
-            accessibilityLabel={currentIdx === totalQuestions - 1 ? 'Save & Continue' : 'Next Question'}
+            accessibilityLabel="Back to previous question"
           >
-            <Text style={styles.nextBtnText}>
-              {currentIdx === totalQuestions - 1 ? 'Continue to Lifestyle' : 'Next Question'}
-            </Text>
-            <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+            <Text style={styles.backButtonText}>Back</Text>
+          </Pressable>
+
+          {/* Continue Button */}
+          <Pressable
+            onPress={handleNext}
+            style={({ pressed }) => [
+              styles.continueButton,
+              pressed && styles.buttonPressed,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Continue to next question"
+          >
+            <Text style={styles.continueButtonText}>Continue</Text>
           </Pressable>
         </View>
       </View>
-    </View>
+    </BioPulseBackground>
   );
 }
 
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
-  stepperWrap: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-  },
-  tabletScrollContent: {
-    maxWidth: 600,
-    alignSelf: 'center',
-    width: '100%',
-  },
-  counterCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  counterHeader: {
-    flexDirection: 'row',
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: 16,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
   },
-  counterBadge: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: BioPulseColors.malePrimary,
-    backgroundColor: '#EBF4FC',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  progressPercentText: {
-    fontSize: 12,
-    color: BioPulseColors.secondaryText,
-    fontWeight: '600',
-  },
-  progressBarTrack: {
-    height: 6,
-    backgroundColor: '#F1F5F9',
-    borderRadius: 3,
-    overflow: 'hidden',
-    marginBottom: 8,
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: BioPulseColors.malePrimary,
-    borderRadius: 3,
-  },
-  standardText: {
-    fontSize: 11,
-    color: BioPulseColors.secondaryText,
-    fontStyle: 'italic',
+  mainWrapper: {
+    width: '100%',
   },
   questionCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    borderRadius: 22,
+    padding: 24,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    borderColor: '#F1F5F9',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowRadius: 14,
+    elevation: 3,
   },
-  questionNumBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#0868B9',
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    marginBottom: 12,
-  },
-  questionNumText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  questionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: BioPulseColors.navy,
-    lineHeight: 25,
-    marginBottom: 8,
-  },
-  questionDesc: {
-    fontSize: 13,
-    color: BioPulseColors.secondaryText,
-    lineHeight: 18,
-    marginBottom: 24,
-  },
-  optionsRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  optionBtn: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: '#E2E8F0',
-    paddingVertical: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  optionBtnSelectedYes: {
-    backgroundColor: '#EFF6FF',
-    borderColor: BioPulseColors.malePrimary,
-  },
-  optionBtnSelectedNo: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#64748B',
-  },
-  optionBtnPressed: {
-    opacity: 0.85,
-  },
-  optionIconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#E2E8F0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  optionIconCircleSelectedYes: {
-    backgroundColor: BioPulseColors.malePrimary,
-  },
-  optionIconCircleSelectedNo: {
-    backgroundColor: '#64748B',
-  },
-  optionText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#334155',
-  },
-  optionTextSelectedYes: {
-    color: BioPulseColors.malePrimary,
-    fontWeight: '800',
-  },
-  optionTextSelectedNo: {
-    color: '#1E293B',
-    fontWeight: '800',
-  },
-  dotsCard: {
-    backgroundColor: '#FFFFFF',
+  iconBadge: {
+    width: 52,
+    height: 52,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 16,
-    marginBottom: 16,
-  },
-  dotsTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: BioPulseColors.navy,
-    marginBottom: 10,
-  },
-  dotsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  jumpDot: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 1,
+    backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  jumpDotText: {
-    fontSize: 12,
-  },
-  clinicalBanner: {
-    backgroundColor: '#F0F9FF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#BAE6FD',
-    padding: 12,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
     marginBottom: 20,
   },
-  clinicalText: {
-    flex: 1,
-    fontSize: 12,
-    color: '#0369A1',
-    lineHeight: 17,
+  questionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#073B72',
+    lineHeight: 28,
+    letterSpacing: -0.2,
+  },
+  questionDesc: {
+    fontSize: 14,
+    color: '#64748B',
+    lineHeight: 22,
+    marginTop: 10,
+    marginBottom: 28,
+  },
+  optionsContainer: {
+    gap: 12,
+  },
+  optionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
+    paddingVertical: 18,
+    paddingHorizontal: 18,
+  },
+  optionCardSelected: {
+    borderColor: '#0284C7',
+    backgroundColor: '#EFF6FF',
+  },
+  optionCardPressed: {
+    opacity: 0.9,
+  },
+  radioCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#CBD5E1',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  radioCircleSelected: {
+    backgroundColor: '#0284C7',
+    borderColor: '#0284C7',
+  },
+  optionLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1E293B',
+  },
+  optionLabelSelected: {
+    fontWeight: '700',
+    color: '#073B72',
+  },
+  decorativeWave: {
+    position: 'absolute',
+    bottom: 80,
+    right: -40,
+    width: 220,
+    height: 180,
+    overflow: 'hidden',
+    zIndex: -1,
+  },
+  waveBubble1: {
+    position: 'absolute',
+    right: -20,
+    bottom: -30,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: '#E0F2FE',
+    opacity: 0.35,
+  },
+  waveBubble2: {
+    position: 'absolute',
+    right: 30,
+    bottom: 10,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#BAE6FD',
+    opacity: 0.25,
   },
   bottomBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-    paddingHorizontal: 16,
+    borderTopColor: '#F1F5F9',
     paddingTop: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 4,
+    paddingHorizontal: 20,
+    alignItems: 'center',
   },
-  bottomButtonsRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  backStepBtn: {
-    paddingHorizontal: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
+  bottomRow: {
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
+    gap: 12,
   },
-  backStepBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: BioPulseColors.navy,
-  },
-  nextBtn: {
+  backButton: {
     flex: 1,
-    backgroundColor: BioPulseColors.malePrimary,
+    height: 52,
     borderRadius: 14,
-    paddingVertical: 14,
-    flexDirection: 'row',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
   },
-  nextBtnDisabled: {
-    backgroundColor: '#94A3B8',
-    opacity: 0.6,
+  backButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#073B72',
   },
-  nextBtnPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.99 }],
+  continueButton: {
+    flex: 1.6,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: '#0284C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#0284C7',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  nextBtnText: {
-    color: '#FFFFFF',
-    fontSize: 15,
+  continueButtonText: {
+    fontSize: 16,
     fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  buttonPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.99 }],
   },
 });
