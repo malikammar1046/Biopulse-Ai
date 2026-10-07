@@ -32,10 +32,10 @@ export const FemaleScreeningCard: React.FC<FemaleScreeningCardProps> = ({
   hasAssessment,
   probabilityPercent,
   riskCategory = 'lower',
-  riskLabel,
+  riskLabel: _riskLabel,
   assessmentLevel = 'tier_1',
   updatedAt,
-  threshold = 0.38,
+  threshold: _threshold = 0.25,
   onStartScreening,
   onViewAssessment,
   onAddLabs,
@@ -89,28 +89,44 @@ export const FemaleScreeningCard: React.FC<FemaleScreeningCardProps> = ({
   const isTier3 = assessmentLevel === 'tier_1_2_3' || assessmentLevel === 'tier_1_3';
 
   const tierName = isTier3 ? 'Tier 3' : isTier2 ? 'Tier 2' : 'Tier 1';
+  const tierStatusBadge = isTier3 || isTier2 ? 'Comprehensive screening' : 'Tier 1 screening';
   const tierSummary = isTier3
-    ? 'Your result includes clinical laboratory values and ultrasound analysis.'
+    ? 'Your current screening combines your health profile, symptoms, clinical laboratory values, and ultrasound imaging.'
     : isTier2
-    ? 'Your result includes your verified clinical laboratory values.'
-    : 'Your current screening is based on your self-reported symptoms and lifestyle information.';
+    ? 'Your current screening result combines your health profile, symptoms and available laboratory information.'
+    : 'Your current screening result is based on your health profile, cycle information, symptoms and lifestyle factors.';
 
   // Map category to calm patient-friendly label & badge variant
   const normalizedCategory = riskCategory?.toLowerCase() || 'lower';
   const badgeVariant =
     normalizedCategory === 'higher' || normalizedCategory === 'elevated'
-      ? 'danger'
+      ? 'pink'
       : normalizedCategory === 'intermediate' || normalizedCategory === 'moderate'
       ? 'warning'
+      : normalizedCategory === 'unavailable'
+      ? 'neutral'
       : 'success';
 
   const categoryLabel =
-    riskLabel ||
-    (normalizedCategory === 'higher' || normalizedCategory === 'elevated'
-      ? 'Higher Screening Risk'
+    normalizedCategory === 'higher' || normalizedCategory === 'elevated'
+      ? 'Higher likelihood'
       : normalizedCategory === 'intermediate' || normalizedCategory === 'moderate'
-      ? 'Moderate Screening Risk'
-      : 'Lower Screening Risk');
+      ? 'Intermediate likelihood'
+      : normalizedCategory === 'unavailable'
+      ? 'Assessment unavailable'
+      : 'Lower likelihood';
+
+  const nextStepAdvice = isTier2
+    ? (normalizedCategory === 'higher' || normalizedCategory === 'elevated'
+      ? 'Consider discussing your screening result and relevant symptoms with a qualified healthcare professional.'
+      : normalizedCategory === 'intermediate' || normalizedCategory === 'moderate'
+      ? 'Consider discussing persistent symptoms and lab findings with a healthcare professional.'
+      : 'Continue monitoring your health patterns and consult a clinician if symptoms persist.')
+    : (normalizedCategory === 'higher' || normalizedCategory === 'elevated'
+      ? 'Adding recommended laboratory results will build a more informed assessment. Consider discussing symptoms with a healthcare professional.'
+      : normalizedCategory === 'intermediate' || normalizedCategory === 'moderate'
+      ? 'Add recommended laboratory results to build a more informed assessment.'
+      : 'Continue tracking your health and repeat assessment if your information changes.');
 
   return (
     <FemaleCard className="flex flex-col justify-between space-y-6 h-full select-none">
@@ -126,7 +142,7 @@ export const FemaleScreeningCard: React.FC<FemaleScreeningCardProps> = ({
                 PCOS Screening
               </h2>
               <span className="text-[11px] text-[#667085]">
-                {tierName} Assessment {updatedAt ? `· Updated ${updatedAt}` : ''}
+                {tierStatusBadge} {updatedAt ? `· Updated ${updatedAt}` : ''}
               </span>
             </div>
           </div>
@@ -136,23 +152,24 @@ export const FemaleScreeningCard: React.FC<FemaleScreeningCardProps> = ({
           </FemaleStatusBadge>
         </div>
 
-        {/* Risk Percentage & Gauge Indicator */}
+        {/* Likelihood Percentage & Gauge Indicator */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-6 py-1 px-1">
           <div className="space-y-1.5 text-center sm:text-left">
             <span className="text-xs font-medium text-[#667085] block">
-              Screening Probability Score
+              Estimated screening likelihood
             </span>
             <div className="flex items-baseline justify-center sm:justify-start gap-1.5">
               <span className="text-4xl sm:text-5xl font-bold tracking-tight text-[#111318]">
                 {probabilityPercent}%
               </span>
-              <span className="text-xs text-[#98A2B3] font-medium">
-                (threshold {Math.round(threshold * 100)}%)
-              </span>
             </div>
             <p className="text-xs sm:text-sm text-[#475569] leading-relaxed max-w-md pt-1">
               {tierSummary}
             </p>
+            <div className="pt-2 text-xs text-[#027A48] bg-[#ECFDF3] rounded-xl px-3 py-2 border border-[#D1FADF]/60 max-w-md">
+              <span className="font-semibold text-[#027A48] block mb-0.5">Next step</span>
+              <span className="text-[#05603A]">{nextStepAdvice}</span>
+            </div>
           </div>
 
           {/* Minimalist Apple Circular Indicator */}
@@ -290,7 +307,7 @@ export const FemaleScreeningCard: React.FC<FemaleScreeningCardProps> = ({
         </div>
 
         <p className="text-[11px] text-[#98A2B3] leading-relaxed">
-          Evidence-based screening indicator · Does not constitute a clinical diagnosis. Consult a physician for diagnostic evaluation.
+          This is a screening estimate, not a diagnosis. Does not confirm or rule out PCOS. Consult a physician for diagnostic evaluation.
         </p>
       </div>
     </FemaleCard>

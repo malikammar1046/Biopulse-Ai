@@ -450,7 +450,7 @@ class LongitudinalHealthService:
                     "tiers_included": ass.get("tiers_included", [1]),
                     "probability": float(ass.get("probability", 0.0)),
                     "probability_percent": round(float(ass.get("probability_percent", 0.0)), 1),
-                    "threshold": float(ass.get("threshold", 0.38)),
+                    "threshold": float(ass.get("threshold", 0.1808 if normalized_module == "male_hypogonadism" else 0.25)),
                     "risk_category": ass.get("risk_category", "lower"),
                     "risk_label": ass.get("risk_label", "Lower Screening Risk"),
                     "model_name": ass.get("model_name", "BioPulse AI Model"),

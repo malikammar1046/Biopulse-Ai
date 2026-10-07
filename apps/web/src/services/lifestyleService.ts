@@ -49,14 +49,21 @@ class LifestyleService {
    */
   async getRecommendations(
     module?: 'ovasense' | 'androsense' | 'female_pcos' | 'male_hypogonadism',
-    refresh = false
+    refresh = false,
+    signal?: AbortSignal
   ): Promise<LifestyleRecommendationsResult> {
     const retryDelays = [0, 250, 500];
     let lastError: any = null;
 
     for (let attempt = 0; attempt < retryDelays.length; attempt++) {
+      if (signal?.aborted) {
+        throw new DOMException('Aborted', 'AbortError');
+      }
       if (attempt > 0) {
         await new Promise((resolve) => setTimeout(resolve, retryDelays[attempt]));
+      }
+      if (signal?.aborted) {
+        throw new DOMException('Aborted', 'AbortError');
       }
 
       try {
@@ -70,6 +77,7 @@ class LifestyleService {
         const res = await fetch(url, {
           method: 'GET',
           headers,
+          signal,
         });
 
         if (!res.ok) {
@@ -91,6 +99,9 @@ class LifestyleService {
 
         return await res.json();
       } catch (err: any) {
+        if (err?.name === 'AbortError' || signal?.aborted) {
+          throw err;
+        }
         lastError = err;
         if (attempt < retryDelays.length - 1) {
           continue;

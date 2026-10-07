@@ -136,22 +136,22 @@ assert.strictEqual(completeness, 92);
 console.log('✓ Profile completeness computed dynamically: ' + completeness + '%');
 
 // 5. PCOS Risk assessment & SHAP factors display
-function resolveRiskBand(probability, threshold = 0.38, lowCutoff = 0.20) {
+function resolveRiskBand(probability, threshold = 0.25, lowCutoff = 0.18) {
   if (probability >= threshold) {
-    return { label: 'Higher Risk', badgeBg: '#FCE8EF', textColor: '#E0316A' };
+    return { label: 'Higher Likelihood', badgeBg: '#FCE8EF', textColor: '#E0316A' };
   }
   if (probability >= lowCutoff) {
-    return { label: 'Intermediate Risk', badgeBg: '#FEF3C7', textColor: '#D97706' };
+    return { label: 'Intermediate Likelihood', badgeBg: '#FEF3C7', textColor: '#D97706' };
   }
-  return { label: 'Lower Risk', badgeBg: '#ECFDF5', textColor: '#059669' };
+  return { label: 'Lower Likelihood', badgeBg: '#ECFDF5', textColor: '#059669' };
 }
 
 const higherRisk = resolveRiskBand(0.72);
-assert.strictEqual(higherRisk.label, 'Higher Risk');
+assert.strictEqual(higherRisk.label, 'Higher Likelihood');
 assert.strictEqual(higherRisk.textColor, '#E0316A');
 
 const lowerRisk = resolveRiskBand(0.14);
-assert.strictEqual(lowerRisk.label, 'Lower Risk');
+assert.strictEqual(lowerRisk.label, 'Lower Likelihood');
 assert.strictEqual(lowerRisk.textColor, '#059669');
 console.log('✓ Risk bands and probability thresholds verified for both Higher and Lower bounds');
 

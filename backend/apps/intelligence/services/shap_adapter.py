@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import logging
 import threading
+import math
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -359,6 +360,8 @@ class FoldAwareCalibratedExplainer:
             # Format patient recorded value
             meta = get_feature_metadata(feat)
             patient_val_raw = raw_inputs.get(feat, df_input[feat].iloc[0] if feat in df_input.columns else None)
+            if patient_val_raw is not None and pd.isna(patient_val_raw):
+                patient_val_raw = None
             patient_val_formatted = meta.formatter(patient_val_raw)
             # Patient-facing non-causation explanation and fold stability handling
             agreement_meta = feature_fold_agreements[feat]
@@ -398,18 +401,21 @@ class FoldAwareCalibratedExplainer:
                 }
 
             num_val = None
-            if patient_val_raw is not None:
+            if patient_val_raw is not None and not pd.isna(patient_val_raw):
                 try:
-                    num_val = float(patient_val_raw)
+                    fval = float(patient_val_raw)
+                    num_val = None if (math.isnan(fval) or math.isinf(fval)) else fval
                 except (ValueError, TypeError):
                     num_val = None
+
+            raw_val_clean = patient_val_raw if (patient_val_raw is not None and not pd.isna(patient_val_raw)) else "n/a"
 
             factors_list.append({
                 "feature_key": feat,
                 "feature_name": meta.patient_label,
                 "patient_label": meta.patient_label,
                 "patient_value": patient_val_formatted,
-                "raw_value": patient_val_raw if patient_val_raw is not None else "n/a",
+                "raw_value": raw_val_clean,
                 "value": num_val,
                 "shap_value": round(sv, 5),
                 "absolute_shap": round(asv, 5),

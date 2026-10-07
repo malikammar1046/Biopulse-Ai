@@ -46,7 +46,6 @@ export const DigitalTwinInsightCard: React.FC<DigitalTwinProps> = ({
     authoritativeAssessment,
     probabilityPercent,
     riskCategory,
-    threshold: authThreshold,
   } = React.useMemo(() => {
     return getAuthoritativeAssessmentForPathway({
       activeAssessment,
@@ -75,7 +74,6 @@ export const DigitalTwinInsightCard: React.FC<DigitalTwinProps> = ({
   const patternDisplay = isML ? getRiskPatternDisplay(currentCategory) : null;
   const probStr = probabilityPercent !== null && probabilityPercent !== undefined ? `${probabilityPercent.toFixed(1)}%` : null;
   const confidenceStr = mlAssessment?.confidence ? formatConfidence(mlAssessment.confidence) : null;
-  const threshold = authThreshold ?? 0.38;
 
   const handleRetry = async () => {
     await refreshActiveAssessment();
@@ -255,14 +253,14 @@ export const DigitalTwinInsightCard: React.FC<DigitalTwinProps> = ({
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <div>
                 <span className="text-[11px] font-mono uppercase text-[#64748B] tracking-wider block">
-                  Estimated Screening Probability
+                  Estimated Screening Likelihood
                 </span>
                 <div className="flex items-baseline gap-2 mt-0.5">
                   <span className="text-3xl sm:text-4xl font-extrabold font-mono text-[#0F172A] tracking-tight">
                     {probStr || '—'}
                   </span>
                   <span className="text-xs font-mono text-[#64748B]">
-                    {pathway === 'male' ? 'Hypogonadism screening score' : 'PCOS screening score'}
+                    {pathway === 'male' ? 'Hypogonadism screening score' : 'PCOS screening estimate'}
                   </span>
                 </div>
               </div>
@@ -275,10 +273,11 @@ export const DigitalTwinInsightCard: React.FC<DigitalTwinProps> = ({
                     {patternDisplay.label}
                   </span>
                 )}
-                <span className="text-[11px] font-mono text-[#64748B]">
-                  Screening cutoff: <strong className="text-[#0F172A]">{(threshold * 100).toFixed(0)}%</strong>
-                  {confidenceStr && <span className="ml-1 text-[#475569]">· Conf: {confidenceStr}</span>}
-                </span>
+                {confidenceStr && (
+                  <span className="text-[11px] font-mono text-[#64748B]">
+                    Confidence: <span className="text-[#475569]">{confidenceStr}</span>
+                  </span>
+                )}
               </div>
             </div>
 

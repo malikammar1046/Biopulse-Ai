@@ -180,10 +180,10 @@ export const AppDownloadPage: React.FC = () => {
       },
       errorCorrectionLevel: 'H',
     })
-      .then((url) => {
+      .then((url: string) => {
         if (isMounted) setQrCodeDataUrl(url);
       })
-      .catch((err) => {
+      .catch((err: any) => {
         console.error('Failed to generate QR Code:', err);
       });
 

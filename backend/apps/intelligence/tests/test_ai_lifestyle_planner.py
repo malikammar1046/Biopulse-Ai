@@ -188,7 +188,7 @@ class AILifestylePlannerTests(TestCase):
                 risk_label="Elevated Screening Risk",
                 probability=0.72,
                 probability_percent=72.0,
-                threshold=0.38,
+                threshold=0.25,
                 is_active=True,
             ),
             shap_drivers=[

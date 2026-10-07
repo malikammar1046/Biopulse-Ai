@@ -629,7 +629,7 @@ class MaleMLService:
                 pattern_name = "Elevated Pituitary Signal Pattern (Primary)"
                 pattern_description = (
                     "Total testosterone is below standard reference range with elevated LH or FSH. "
-                    "This pattern suggests the brain is sending strong signals to stimulate testosterone production."
+                    "This pattern reflects elevated gonadotropin signaling in the presence of lower circulating testosterone."
                 )
                 pattern_code = "primary_pattern"
             elif lh is not None or fsh is not None:

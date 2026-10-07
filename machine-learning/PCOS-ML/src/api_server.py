@@ -207,8 +207,8 @@ def assess():
         df_t1_input = pd.DataFrame([row_t1])[t1_features]
         p_t1 = float(t1_model.predict_proba(df_t1_input)[:, 1][0])
         
-        # Screening threshold 0.25
-        t1_category = "Elevated Risk (Above 0.25 Screening Threshold)" if p_t1 >= 0.25 else "Low Risk (Below Screening Threshold)"
+        # Screening policy v2: operating threshold 0.25, lower cutoff 0.18
+        t1_category = "Higher Likelihood" if p_t1 >= 0.25 else "Intermediate Likelihood" if p_t1 >= 0.18 else "Lower Likelihood"
         
         # --- Tier 2 Prediction (32 Cumulative Features) ---
         row_t2 = {}
@@ -216,7 +216,7 @@ def assess():
             row_t2[f] = float(patient_vars.get(f, feature_medians.get(f, 0)))
         df_t2_input = pd.DataFrame([row_t2])[t2_features]
         p_t2 = float(t2_pipeline.predict_proba(df_t2_input)[:, 1][0])
-        t2_category = "Elevated Risk (Above 0.29 Clinical Threshold)" if p_t2 >= 0.29 else "Low Risk (Below Clinical Threshold)"
+        t2_category = "Higher Likelihood" if p_t2 >= 0.25 else "Intermediate Likelihood" if p_t2 >= 0.18 else "Lower Likelihood"
         t2_delta = round((p_t2 - p_t1) * 100, 2)
         
         # --- Tier 3 Prediction (Ultrasound Image) ---
@@ -306,7 +306,15 @@ def assess():
             'final_assessment': {
                 'probability': p_final,
                 'percentage': round(p_final * 100, 1),
-                'risk_category': 'Elevated Risk' if p_final >= 0.29 else 'Low Risk',
+                'risk_category': (
+                    'Elevated Likelihood (Exploratory)' if p_final >= 0.29 else 'Lower Likelihood (Exploratory)'
+                ) if is_multimodal else (
+                    'Higher Likelihood' if p_final >= 0.25 else 'Intermediate Likelihood' if p_final >= 0.18 else 'Lower Likelihood'
+                ),
+                'screening_threshold': 0.29 if is_multimodal else 0.25,
+                'screening_policy_version': 'exploratory_v1' if is_multimodal else 'v2',
+                'operating_status': 'exploratory_pending_clinical_validation' if is_multimodal else 'validated_screening_v2',
+                'is_diagnostic': False,
                 'clinical_probability': round(p_t2, 4),
                 'clinical_percentage': round(p_t2 * 100, 1),
                 'ultrasound_probability': round(p_pcos_t3, 4) if p_pcos_t3 is not None else None,
@@ -325,6 +333,7 @@ def assess():
                 'percentage': round(p_t1 * 100, 1),
                 'risk_category': t1_category,
                 'screening_threshold': 0.25,
+                'screening_policy_version': 'v2',
                 'features_used': 16,
                 'model_name': 'Extra Trees + Platt Sigmoid Calibration'
             },
@@ -332,6 +341,8 @@ def assess():
                 'probability': round(p_t2, 4),
                 'percentage': round(p_t2 * 100, 1),
                 'risk_category': t2_category,
+                'screening_threshold': 0.25,
+                'screening_policy_version': 'v2',
                 'change_from_tier1': t2_delta,
                 'features_used': 32,
                 'model_name': 'Extra Trees + Platt Sigmoid Calibration (Cumulative)'

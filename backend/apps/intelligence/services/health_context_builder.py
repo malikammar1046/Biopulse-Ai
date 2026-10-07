@@ -77,6 +77,37 @@ CRITICAL SAFETY & CLINICAL INVARIANTS:
 - The Digital Twin observations provided below are read-only rule-based physiological metrics. You cannot alter or recompute them.
 - The BioPulse ML models are authoritative. Do not attempt to compute or alter the screening probability yourself.
 - Explain medical terms (such as hyperandrogenism, luteal phase, insulin sensitivity, PCOM) in supportive everyday language.
+
+AUTHORITATIVE LIFESTYLE & NUTRITION PROTOCOL RULES:
+The BioPulse Lifestyle Protocol provided in the context below is authoritative.
+You may:
+- explain it
+- personalize implementation
+- suggest safe alternatives
+- simplify meals
+- suggest equivalent workouts
+- coach adherence
+
+You must NOT:
+- recommend any excluded allergen
+- violate dietary pattern
+- override exercise safety limits
+- change calorie or macro calculations
+- invent new screening probabilities
+- reinterpret lab results
+- prescribe medications or automatically recommend supplements/dosing (e.g. magnesium glycinate, inositol, zinc, vitamin D, or herbal boosters). Emphasize food sources of nutrients. If a verified deficiency exists, advise: "Discuss appropriate correction with your healthcare professional."
+- make overstrong claims about restoring hormones, normalizing ovulation, or reversing insulin resistance. Always use conservative, supportive phrasing (e.g. "supports strength and metabolic health", "supports healthy body composition", "supports restorative sleep", "supports general hormonal wellbeing", "supports consistent energy").
+- contradict clinician-review flags.
+
+DETERMINISTIC NUMBERS INVARIANT:
+The following values are deterministic calculations and MUST NEVER be recalculated, estimated differently, or overridden:
+- daily calories
+- protein, carbs, fat, and fiber targets
+- hydration targets
+- exercise intensity and heart-rate ceilings
+- screening risk probability and thresholds
+- lab biomarker values and reference ranges
+Your role is strictly to explain and coach adherence to these pre-computed numbers.
 """
 
 MALE_SYSTEM_PROMPT = """You are the BioPulse AI Companion, an intelligent, empathetic, and evidence-grounded health literacy companion for men's hormonal health and male hypogonadism screening.
@@ -96,7 +127,207 @@ CRITICAL SAFETY & CLINICAL INVARIANTS:
 - STRICT ISOLATION: DO NOT mention PCOS, PMOS, or OvaSense in this male pathway unless the user explicitly asks a general educational/comparative question about them.
 - The BioPulse ML models are authoritative. Do not attempt to compute or alter the screening probability yourself.
 - Explain physiological concepts (such as hypothalamic-pituitary-gonadal axis, bioavailable testosterone, gonadotropins) in plain, practical language.
+
+AUTHORITATIVE LIFESTYLE & NUTRITION PROTOCOL RULES:
+The BioPulse Lifestyle Protocol provided in the context below is authoritative.
+You may:
+- explain it
+- personalize implementation
+- suggest safe alternatives
+- simplify meals
+- suggest equivalent workouts
+- coach adherence
+
+You must NOT:
+- recommend any excluded allergen
+- violate dietary pattern
+- override exercise safety limits
+- change calorie or macro calculations
+- invent new screening probabilities
+- reinterpret lab results
+- prescribe medications or automatically recommend supplements/dosing (e.g. magnesium glycinate, zinc supplements, testosterone boosters, vitamin D, or herbal formulas). Emphasize food sources of nutrients. If a verified deficiency exists, advise: "Discuss appropriate correction with your healthcare professional."
+- make overstrong claims about stimulating or optimizing endogenous testosterone, increasing androgen receptor density, or restoring hormones. Always use conservative, supportive phrasing (e.g. "supports strength and metabolic health", "supports healthy body composition", "supports restorative sleep", "supports general hormonal wellbeing", "supports consistent energy").
+- contradict clinician-review flags.
+
+DETERMINISTIC NUMBERS INVARIANT:
+The following values are deterministic calculations and MUST NEVER be recalculated, estimated differently, or overridden:
+- daily calories
+- protein, carbs, fat, and fiber targets
+- hydration targets
+- exercise intensity and heart-rate ceilings
+- screening risk probability and thresholds
+- lab biomarker values and reference ranges
+Your role is strictly to explain and coach adherence to these pre-computed numbers.
 """
+
+
+def format_authoritative_lifestyle_protocol(
+    payload: Dict[str, Any],
+    context: Optional[Any] = None,
+    safety: Optional[Any] = None,
+) -> str:
+    """
+    Constructs the complete authoritative, structured BioPulse Lifestyle Protocol context
+    for the AI Companion.
+    """
+    p = payload
+    c_ver = p.get("context_version", "N/A")
+    p_lvl = p.get("personalization_level", "LEVEL_1_PROFILE")
+    has_assess = p.get("has_assessment", True)
+    pathway = p.get("pathway", "female")
+
+    # Patient basis
+    evidence = p.get("evidence_rationale", {}) or {}
+    shap_drivers = evidence.get("attributed_shap_drivers", [])
+    lab_markers = evidence.get("attributed_lab_markers", [])
+    symptoms = evidence.get("attributed_symptoms", [])
+    clinical_synthesis = evidence.get("clinical_synthesis", "")
+    risk_cat = p.get("risk_category", "N/A")
+    risk_pct = p.get("risk_probability_percent", 0.0)
+
+    # Safety & Boundaries
+    excluded_foods = []
+    excluded_exercises = []
+    joint_prot = False
+    recov_first = False
+    allergens = []
+    intolerances = []
+    dietary_pat = "omnivore"
+
+    if safety:
+        excluded_foods = getattr(safety, "excluded_food_categories", [])
+        excluded_exercises = getattr(safety, "excluded_exercise_modalities", [])
+        joint_prot = getattr(safety, "joint_protection_active", False)
+        recov_first = getattr(safety, "recovery_first_active", False)
+    if context and hasattr(context, "demographics"):
+        allergens = getattr(context.demographics, "allergens", [])
+        intolerances = getattr(context.demographics, "intolerances", [])
+        dietary_pat = getattr(context.demographics, "dietary_preference", "omnivore")
+
+    clinician_rev = p.get("clinician_review", {}) or {}
+    needs_review = clinician_rev.get("needs_review", False)
+    safety_notices = p.get("safety_notices", [])
+
+    # Nutrition
+    nutr = p.get("nutrition", {}) or {}
+    dt = nutr.get("daily_targets", {}) or {}
+    swaps = nutr.get("targeted_swaps", []) or []
+    meals = nutr.get("meal_concepts", []) or []
+    guidelines = nutr.get("key_guidelines", []) or []
+
+    # Fitness
+    fit = p.get("fitness", {}) or {}
+    sched = fit.get("weekly_schedule", []) or []
+
+    # Lifestyle
+    ls = p.get("lifestyle", {}) or {}
+    habits = ls.get("recommended_habits", []) or []
+
+    # Format text lines
+    lines = [
+        f"[TIER 4] [AUTHORITATIVE BIOPULSE LIFESTYLE PROTOCOL]:",
+        f"Context Version: {c_ver} | Personalization Level: {p_lvl} | Assessment Active: {has_assess}",
+        "",
+        "=== PATIENT BASIS ===",
+        f"- Pathway: {pathway.upper()} | Screening Status: {risk_cat} ({risk_pct:.1f}% risk)",
+        f"- Top Contributing Factors / SHAP: {', '.join(shap_drivers) if shap_drivers else 'None'}",
+        f"- Relevant Verified Labs: {', '.join(lab_markers) if lab_markers else 'None'}",
+        f"- Relevant Symptoms: {', '.join(symptoms) if symptoms else 'None'}",
+        f"- Clinical Synthesis: {clinical_synthesis or 'Standard protocol based on profile and biometrics.'}",
+        "",
+        "=== SAFETY & BOUNDARIES (STRICT) ===",
+        f"- Food Allergies (IgE): {', '.join(allergens) if allergens else 'None recorded'}",
+        f"- Food Intolerances: {', '.join(intolerances) if intolerances else 'None recorded'}",
+        f"- Dietary Pattern: {str(dietary_pat).upper()}",
+        f"- Strictly Excluded Foods: {', '.join(excluded_foods) if excluded_foods else 'None'}",
+        f"- Excluded Exercise Modalities: {', '.join(excluded_exercises) if excluded_exercises else 'None'}",
+        f"- Joint Protection Active: {joint_prot} (High-impact jumping strictly forbidden)",
+        f"- Recovery-First Flag: {recov_first} (High-volume training suspended)",
+        f"- Clinician Review Flag: {needs_review}" + (f" ({clinician_rev.get('reason')})" if needs_review and clinician_rev.get("reason") else ""),
+        f"- Safety Notices: {'; '.join(safety_notices) if safety_notices else 'Standard protocol.'}",
+        "",
+        "=== NUTRITION PROTOCOL ===",
+        f"- Strategy Title: {nutr.get('strategy_title', 'Balanced Nutrition')}",
+        f"- Summary: {nutr.get('strategy_summary', '')}",
+        "- Deterministic Daily Targets (Do NOT alter or recalculate):",
+        f"  • Daily Calories: ~{dt.get('daily_calories_kcal', 'N/A')} kcal/day",
+        f"  • Protein Target: {dt.get('protein_grams', 'N/A')}g",
+        f"  • Carbohydrate Target: {dt.get('carbs_grams', 'N/A')}g",
+        f"  • Fat Target: {dt.get('fat_grams', 'N/A')}g",
+        f"  • Fiber Target: {dt.get('fiber_grams', 'N/A')}g",
+        f"  • Hydration: {dt.get('hydration_liters', 'N/A')} L/day",
+    ]
+
+    if meals:
+        lines.append("- Meal Concepts (Authoritative - do NOT substitute with forbidden foods):")
+        for m in meals:
+            if isinstance(m, dict):
+                timing = m.get("timing", "")
+                m_title = m.get("title", "")
+                m_name = m.get("meal_name", "")
+                desc = m.get("description", "")
+                ings = ", ".join(m.get("ingredients", []))
+                lines.append(f"  • [{m_name.upper()} - {timing}] {m_title}: {desc} (Ingredients: {ings})")
+
+    if swaps:
+        lines.append("- Targeted Safe Food Swaps:")
+        for s in swaps:
+            if isinstance(s, dict):
+                r_food = s.get("replace_food", "")
+                alt_food = s.get("recommended_alternative", "")
+                rat = s.get("clinical_rationale", "")
+                lines.append(f"  • Replace {r_food} -> {alt_food} ({rat})")
+
+    if guidelines:
+        lines.append("- Key Nutrition Guidelines:")
+        for g in guidelines[:4]:
+            lines.append(f"  • {g}")
+
+    lines.extend([
+        "",
+        "=== FITNESS PROTOCOL ===",
+        f"- Protocol Name: {fit.get('protocol_name', 'Active Movement')}",
+        f"- Target Frequency: {fit.get('weekly_frequency', '3-4 sessions/week')}",
+        f"- Aerobic Target: {fit.get('aerobic_target_minutes', '150 min/week')}",
+        f"- Resistance Target: {fit.get('resistance_target_sessions', '2 sessions/week')}",
+        f"- Pathway Benefit: {fit.get('pathway_clinical_benefit', '')}",
+        f"- Recovery Guidance: {fit.get('recovery_guidance', '')}",
+    ])
+
+    if sched:
+        lines.append("- Weekly Exercise Schedule:")
+        for s in sched:
+            if isinstance(s, dict):
+                d_num = s.get("day", 1)
+                d_name = s.get("day_name", "")
+                sess = s.get("session_name", "")
+                dur = s.get("duration_mins", 0)
+                intens = s.get("intensity", "")
+                mod = s.get("modality", "")
+                cue = s.get("coaching_cue", "")
+                moves = ", ".join(s.get("key_movements", []))
+                lines.append(f"  • Day {d_num} ({d_name}): {sess} [{mod}, {dur}m, {intens} intensity] - Moves: {moves}. Cue: {cue}")
+
+    lines.extend([
+        "",
+        "=== LIFESTYLE / SLEEP / STRESS PROTOCOL ===",
+        f"- Sleep Target: {ls.get('sleep_target_hours', '7-8 hours/night')}",
+        f"- Circadian Guidance: {ls.get('circadian_headline', '')}",
+        f"- Stress Protocol: {ls.get('stress_management_protocol', '')}",
+    ])
+
+    if habits:
+        lines.append("- Recommended Habits:")
+        for h in habits:
+            if isinstance(h, dict):
+                cat = h.get("category", "")
+                title = h.get("title", "")
+                act = h.get("action_item", "")
+                timing = h.get("timing", "")
+                rat = h.get("rationale", "")
+                lines.append(f"  • [{cat}] {title}: {act} ({timing}) - {rat}")
+
+    return "\n".join(lines)
 
 
 class HealthContextBuilder:
@@ -168,12 +399,34 @@ class HealthContextBuilder:
         ]):
             return "SCREENING_ASSESSMENT"
 
-        # 2. Nutrition, diet, hydration, fitness, sleep inquiries
-        if any(k in msg for k in [
+        # 2. Nutrition, diet, hydration, fitness, sleep, stress, routine inquiries
+        lifestyle_keywords = [
             "food", "diet", "nutrition", "meal", "water", "hydration",
             "exercise", "workout", "fitness", "sleep", "lifestyle", "habit",
-            "routine", "pakistani diet", "calorie", "stamina"
-        ]):
+            "routine", "pakistani diet", "calorie", "calories", "stamina",
+            "eat", "eating", "breakfast", "lunch", "dinner", "snack", "snacks",
+            "protein", "carb", "carbs", "carbohydrate", "fat", "macros",
+            "recipe", "recipes", "yogurt", "fruit", "fruits", "vegetable", "vegetables",
+            "stress", "stressing", "relax", "relaxation", "meditation", "recovery",
+            "tonight", "bedtime", "wake up", "cardio", "strength", "lifting", "gym",
+            "stretch", "stretching", "steps", "walking", "fasting", "intermittent"
+        ]
+        lifestyle_patterns = [
+            r"\bwhat\s+(?:should|can)\s+i\s+eat\b",
+            r"\bwhat\s+can\s+i\s+have\b",
+            r"\bcan\s+i\s+eat\b",
+            r"\bcan\s+i\s+have\b",
+            r"\bgive\s+me\s+(?:a\s+)?snack\b",
+            r"\bhow\s+much\s+protein\b",
+            r"\bwhat\s+workout\b",
+            r"\bshould\s+i\s+exercise\b",
+            r"\bgive\s+me\s+(?:today's\s+)?workout\b",
+            r"\bhow\s+can\s+i\s+sleep\b",
+            r"\bwhat\s+should\s+i\s+do\s+tonight\b",
+            r"\bhow\s+can\s+i\s+reduce\s+stress\b",
+            r"\bwhat\s+should\s+my\s+routine\s+be\b",
+        ]
+        if any(k in msg for k in lifestyle_keywords) or any(re.search(p, msg) for p in lifestyle_patterns):
             return "LIFESTYLE_NUTRITION"
 
         # 3. Lab / biomarker inquiries
@@ -359,12 +612,12 @@ class HealthContextBuilder:
                 else getattr(assessment, "screening_threshold", getattr(assessment, "threshold", None))
             )
             if raw_thresh is None or "Mock" in type(raw_thresh).__name__:
-                thresh_val = 0.50 if is_male else 0.38
+                thresh_val = 0.50 if is_male else 0.25
             else:
                 try:
                     thresh_val = float(raw_thresh)
                 except Exception:
-                    thresh_val = 0.50 if is_male else 0.38
+                    thresh_val = 0.50 if is_male else 0.25
             cutoff_pct = f"{round(thresh_val * 100 if thresh_val <= 1.0 else thresh_val)}%"
 
             # Extract top SHAP factors
@@ -573,48 +826,63 @@ class HealthContextBuilder:
             context_lines.append(f"[TIER 5] [USER-REPORTED - Lifestyle Logs]: {', '.join(nutr)}")
             context_used["diet"] = True
 
-        # --- ACTIVE LIFESTYLE PROTOCOL (Deterministic) ---
-        active_lifestyle = None
+        # --- ACTIVE LIFESTYLE PROTOCOL (Deterministic BioPulse Protocol) ---
         if intent in ("LIFESTYLE_NUTRITION", "COMPREHENSIVE"):
             try:
+                from apps.intelligence.services.lifestyle_context_builder import LifestyleContextBuilder
+                from apps.intelligence.services.lifestyle_safety_rules import LifestyleSafetyEngine
+                from apps.intelligence.services.lifestyle_recommendation_engine import LifestyleRecommendationEngine
                 from apps.intelligence.services.lifestyle_repository import lifestyle_repository
-                active_lifestyle = lifestyle_repository.get_active_recommendations(
+
+                # 1. Build authoritative Lifestyle Context from current patient state
+                ls_ctx = LifestyleContextBuilder.build_context(
                     user_id=patient_uuid,
                     module=pathway,
                     auth_token=auth_token,
                 )
-            except Exception as e:
-                logger.debug("Failed fetching active lifestyle for companion context: %s", e)
+                current_version = ls_ctx.context_version
 
-        if active_lifestyle and isinstance(active_lifestyle.get("payload"), dict):
-            p = active_lifestyle["payload"]
-            ls_parts = []
-            nutr_pillar = p.get("nutrition", {})
-            if isinstance(nutr_pillar, dict) and nutr_pillar.get("strategy_title"):
-                ls_parts.append(f"Nutrition Strategy: {nutr_pillar['strategy_title']}")
-            dt = nutr_pillar.get("daily_targets", {}) if isinstance(nutr_pillar, dict) else {}
-            if isinstance(dt, dict) and dt.get("daily_calories_kcal"):
-                ls_parts.append(f"Calorie Target: ~{dt['daily_calories_kcal']} kcal/day")
-            swaps = nutr_pillar.get("targeted_swaps", []) if isinstance(nutr_pillar, dict) else []
-            if isinstance(swaps, list) and swaps:
-                swap_strs = [f"{s.get('replace_food')} -> {s.get('recommended_alternative')}" for s in swaps[:2] if isinstance(s, dict)]
-                if swap_strs:
-                    ls_parts.append(f"Recommended Swaps: {'; '.join(swap_strs)}")
-            fit_pillar = p.get("fitness", {})
-            if isinstance(fit_pillar, dict) and fit_pillar.get("protocol_name"):
-                ls_parts.append(f"Fitness Protocol: {fit_pillar['protocol_name']}")
-            recs_list = p.get("recommendations", [])
-            if isinstance(recs_list, list) and recs_list:
-                top_acts = [f"{r.get('title')} [{r.get('status', 'ACTIVE')}]" for r in recs_list[:4] if isinstance(r, dict)]
-                if top_acts:
-                    ls_parts.append(f"Active Priorities: {'; '.join(top_acts)}")
-            if ls_parts:
-                context_lines.append(
-                    "[TIER 4] [ACTIVE LIFESTYLE RECOMMENDATIONS - Deterministic BioPulse Protocol]:\n"
-                    + "\n".join(f"- {part}" for part in ls_parts)
-                    + "\n(Explain and reinforce these exact recommendations when the patient asks about diet, fitness, or recovery)."
+                # 2. Check persistent repository for matching context_version
+                cached_record = lifestyle_repository.get_active_recommendations(
+                    user_id=patient_uuid,
+                    module=pathway,
+                    auth_token=auth_token,
                 )
-                context_used["lifestyle"] = True
+
+                if cached_record and cached_record.get("context_version") == current_version:
+                    ls_payload = cached_record.get("payload")
+                    ls_safety = LifestyleSafetyEngine.evaluate_safety(ls_ctx)
+                else:
+                    # Context fresh or cache stale -> evaluate safety & generate authoritative protocol
+                    ls_safety = LifestyleSafetyEngine.evaluate_safety(ls_ctx)
+                    res = LifestyleRecommendationEngine.generate(ls_ctx, ls_safety)
+                    ls_payload = res.to_dict()
+                    existing_statuses = cached_record.get("item_statuses") if cached_record else {}
+                    lifestyle_repository.save_recommendations(
+                        user_id=patient_uuid,
+                        module=pathway,
+                        context_version=current_version,
+                        payload=ls_payload,
+                        item_statuses=existing_statuses,
+                        auth_token=auth_token,
+                    )
+
+                if ls_payload and isinstance(ls_payload, dict):
+                    ls_block = format_authoritative_lifestyle_protocol(
+                        payload=ls_payload,
+                        context=ls_ctx,
+                        safety=ls_safety,
+                    )
+                    context_lines.append(ls_block)
+                    context_used["lifestyle"] = True
+                    context_used["context_version"] = current_version
+                    context_used["personalization_level"] = ls_payload.get("personalization_level", "LEVEL_1_PROFILE")
+                    context_used["excluded_food_categories"] = getattr(ls_safety, "excluded_food_categories", [])
+                    context_used["allergens"] = getattr(ls_ctx.demographics, "allergens", [])
+                    context_used["intolerances"] = getattr(ls_ctx.demographics, "intolerances", [])
+                    context_used["dietary_preference"] = getattr(ls_ctx.demographics, "dietary_preference", "omnivore")
+            except Exception as exc:
+                logger.warning("Failed building authoritative lifestyle context for AI companion: %s", exc)
 
         # --- ACTIVE 7-DAY MEAL PLAN (Deterministic) ---
         active_meal_plan = None

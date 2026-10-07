@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import os
 import sqlite3
 import sys
@@ -23,9 +24,34 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
+
+
+def sanitize_json_value(val: Any) -> Any:
+    """
+    Recursively ensures all floats and numbers are JSON-compliant (no NaN, Inf, -Inf).
+    Replaces NaN/Inf with None (null in JSON).
+    """
+    if isinstance(val, float):
+        if math.isnan(val) or math.isinf(val):
+            return None
+        return val
+    if isinstance(val, (np.floating, np.integer)):
+        fval = float(val)
+        if math.isnan(fval) or math.isinf(fval):
+            return None
+        return fval
+    if isinstance(val, np.ndarray):
+        return [sanitize_json_value(x) for x in val.tolist()]
+    if isinstance(val, dict):
+        return {k: sanitize_json_value(v) for k, v in val.items()}
+    if isinstance(val, list):
+        return [sanitize_json_value(x) for x in val]
+    return val
 
 
 class PersistenceError(Exception):
@@ -145,6 +171,20 @@ def _normalize_assessment_record(item: dict[str, Any]) -> dict[str, Any]:
             item["longitudinal_shap_comparison"] = json.loads(item["longitudinal_shap_comparison"])
         except Exception:
             pass
+
+    # Historical screening policy integrity: records without screening_policy_version
+    # MUST NOT be automatically promoted to v2. They are designated as legacy_v1.
+    policy_ver = item.get("screening_policy_version")
+    if not policy_ver:
+        item["screening_policy_version"] = "legacy_v1"
+
+    # Preserve original stored historical classification, threshold, and probability
+    if "original_risk_category" not in item:
+        item["original_risk_category"] = item.get("risk_category")
+    if "original_threshold" not in item:
+        item["original_threshold"] = item.get("threshold")
+    if "original_probability" not in item:
+        item["original_probability"] = item.get("probability")
     return item
 
 
@@ -380,17 +420,21 @@ class AssessmentRepository:
                 )
                 t2 = st.get("tier_2_inputs") or {}
                 t1 = st.get("tier_1_inputs") or {}
+                level = res_dict.get("assessment_level", "tier_1")
+                is_male = res_dict.get("module") == "male_hypogonadism"
+                has_t2 = level in ("tier_1_2", "tier_1_2_3")
+                has_t3 = level in ("tier_1_3", "tier_1_2_3") and not is_male
+
                 res_dict["authoritative_tier_2_inputs"] = t2
                 res_dict["authoritative_tier_1_inputs"] = t1
+                res_dict["tier_1_inputs"] = res_dict.get("tier_1_inputs") or t1
+                if has_t2:
+                    res_dict["tier_2_inputs"] = res_dict.get("tier_2_inputs") or t2
                 res_dict["available_historical_evidence"] = {
                     "tier_1": bool(t1),
                     "tier_2": bool(t2),
                     "tier_3_ultrasound": bool(st.get("ultrasound_inputs")),
                 }
-                level = res_dict.get("assessment_level", "tier_1")
-                is_male = res_dict.get("module") == "male_hypogonadism"
-                has_t2 = level in ("tier_1_2", "tier_1_2_3")
-                has_t3 = level in ("tier_1_3", "tier_1_2_3") and not is_male
 
                 res_dict["evidence_used"] = {
                     "tier_1": True,
@@ -410,6 +454,18 @@ class AssessmentRepository:
                     res_dict["gradcam_url"] = None
                     res_dict["gradcam_b64"] = None
                     res_dict["ultrasound_report_id"] = None
+
+                if not res_dict.get("input_hash"):
+                    try:
+                        from apps.intelligence.services.screening_hash import compute_canonical_input_hash
+                        res_dict["input_hash"] = compute_canonical_input_hash(
+                            raw=t1 or res_dict.get("input_features") or {},
+                            module=res_dict.get("module", module_name),
+                            tier2_inputs=t2 if has_t2 else None,
+                            model_version=res_dict.get("model_version", "1.0.0"),
+                        )
+                    except Exception:
+                        pass
             except Exception as e:
                 logger.debug("Attach authoritative state error: %s", e)
             return res_dict
@@ -612,9 +668,14 @@ class AssessmentRepository:
             "model_version": assessment_data.get("model_version", "1.0.0"),
             "probability": assessment_data.get("probability", 0.0),
             "probability_percent": assessment_data.get("probability_percent", 0.0),
-            "threshold": assessment_data.get("threshold", 0.38),
+            "threshold": assessment_data.get("threshold", 0.1808 if is_male else 0.25),
+            "screening_policy_version": assessment_data.get("screening_policy_version", "v2"),
+            "original_risk_category": assessment_data.get("original_risk_category", assessment_data.get("risk_category", "lower")),
+            "original_threshold": assessment_data.get("original_threshold", assessment_data.get("threshold", 0.1808 if is_male else 0.25)),
+            "original_probability": assessment_data.get("original_probability", assessment_data.get("probability", 0.0)),
+            "is_diagnostic": assessment_data.get("is_diagnostic", False),
             "risk_category": assessment_data.get("risk_category", "lower"),
-            "risk_label": assessment_data.get("risk_label", "Lower Screening Risk"),
+            "risk_label": assessment_data.get("risk_label", "Lower Screening Risk" if is_male else "Lower Likelihood"),
             "summary_text": assessment_data.get("summary_text", ""),
             "is_active": make_active,
             "replaced_assessment_id": replaced_id,
@@ -653,6 +714,7 @@ class AssessmentRepository:
             "created_at": now_iso,
             "updated_at": now_iso,
         }
+        record = sanitize_json_value(record)
 
         # 1. Authoritative Remote Persistence via save_screening_assessment() RPC
         global _remote_table_available
@@ -683,9 +745,9 @@ class AssessmentRepository:
                     "p_model_version": assessment_data.get("model_version", "1.0.0"),
                     "p_probability": float(assessment_data.get("probability", 0.0)),
                     "p_probability_percent": float(assessment_data.get("probability_percent", 0.0)),
-                    "p_threshold": float(assessment_data.get("threshold", 0.38)),
+                    "p_threshold": float(assessment_data.get("threshold", 0.1808 if is_male else 0.25)),
                     "p_risk_category": assessment_data.get("risk_category", "lower"),
-                    "p_risk_label": assessment_data.get("risk_label", "Lower Screening Risk"),
+                    "p_risk_label": assessment_data.get("risk_label", "Lower Screening Risk" if is_male else "Lower Likelihood"),
                     "p_summary_text": assessment_data.get("summary_text", ""),
                     "p_input_availability": assessment_data.get("input_availability", {}),
                     "p_input_features": assessment_data.get("input_features", {}),
@@ -700,6 +762,7 @@ class AssessmentRepository:
                     "p_shap_explanation": assessment_data.get("shap_explanation"),
                     "p_longitudinal_shap_comparison": assessment_data.get("longitudinal_shap_comparison"),
                 }
+                rpc_payload = sanitize_json_value(rpc_payload)
                 res = client.rpc("save_screening_assessment", rpc_payload).execute()
                 if res.data:
                     remote_record = res.data
@@ -788,6 +851,16 @@ class AssessmentRepository:
                     if existing.get("module", "female_pcos") == module_name:
                         existing["is_active"] = False
             _in_memory_assessments[user_id_str].append(record)
+
+        # 4. Synchronously invalidate cached lifestyle recommendations on new active assessment
+        if make_active:
+            try:
+                from apps.intelligence.services.lifestyle_repository import lifestyle_repository
+                lifestyle_repository.invalidate_active_recommendations(
+                    user_id=user_id_str, module=module_name, auth_token=auth_token
+                )
+            except Exception as e:
+                logger.debug("Lifestyle cache invalidation notice on assessment save: %s", e)
 
         return record
 

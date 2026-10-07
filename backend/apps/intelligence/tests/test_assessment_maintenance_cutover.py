@@ -147,7 +147,7 @@ class AssessmentMaintenanceModeTests(TestCase):
                     "model_version": "1.0",
                     "probability": 0.45,
                     "probability_percent": 45.0,
-                    "threshold": 0.38,
+                    "threshold": 0.25,
                     "risk_category": "elevated",
                     "disclaimer": "Test disclaimer",
                 },

@@ -172,10 +172,10 @@ export const AssessmentHistoryModal: React.FC<AssessmentHistoryModalProps> = ({
 
                       <div>
                         <span className="text-[10px] font-mono text-sky-200 uppercase">
-                          Model Cutoff
+                          Policy Version
                         </span>
-                        <p className="text-sm font-mono text-white">
-                          {(item.threshold * 100).toFixed(0)}%
+                        <p className="text-xs font-mono text-white mt-1">
+                          {item.screening_policy_version ? item.screening_policy_version.toUpperCase() : 'LEGACY_V1'}
                         </p>
                       </div>
 

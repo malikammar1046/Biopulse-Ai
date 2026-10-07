@@ -109,5 +109,70 @@ class TestPCOSMLService(unittest.TestCase):
         self.assertIn('pcom_status', mm_res)
         print("Multimodal Test Result:", mm_res['probability'], mm_res['risk_category'], "PCOM:", mm_res['pcom_status'])
 
+    def test_screening_policy_v2_boundaries(self):
+        """
+        Verify exact boundary behavior for PCOS Screening Policy v2:
+        - Lower: p < 0.18
+        - Intermediate: 0.18 <= p < 0.25
+        - Higher: p >= 0.25
+        - Unrounded float precision verification
+        - Missing/None/NaN safety (returns 'unavailable', never defaults to 'lower')
+        """
+        from apps.intelligence.services.pcos_ml_service import (
+            PCOS_SCREENING_POLICY_VERSION,
+            PCOS_LOWER_LIKELIHOOD_CUTOFF,
+            PCOS_SCREENING_THRESHOLD,
+            TIER1_SCREENING_THRESHOLD,
+            TIER2_SCREENING_THRESHOLD,
+            TIER3_PCOM_THRESHOLD,
+            MULTIMODAL_SCREENING_THRESHOLD,
+            classify_pcos_screening_likelihood,
+        )
+        import math
+
+        # 1. Version and cutoff constants
+        self.assertEqual(PCOS_SCREENING_POLICY_VERSION, "v2")
+        self.assertEqual(PCOS_LOWER_LIKELIHOOD_CUTOFF, 0.18)
+        self.assertEqual(PCOS_SCREENING_THRESHOLD, 0.25)
+        self.assertEqual(TIER1_SCREENING_THRESHOLD, 0.25)
+        self.assertEqual(TIER2_SCREENING_THRESHOLD, 0.25)
+        self.assertEqual(TIER3_PCOM_THRESHOLD, 0.50)
+        self.assertEqual(MULTIMODAL_SCREENING_THRESHOLD, 0.29)
+
+        # 2. Exact boundary tests
+        test_cases = [
+            (0.0000, "lower", "Lower Likelihood"),
+            (0.1799, "lower", "Lower Likelihood"),
+            (0.1800, "intermediate", "Intermediate Likelihood"),
+            (0.2000, "intermediate", "Intermediate Likelihood"),
+            (0.2499, "intermediate", "Intermediate Likelihood"),
+            (0.2500, "higher", "Higher Likelihood"),
+            (0.5000, "higher", "Higher Likelihood"),
+            (0.9000, "higher", "Higher Likelihood"),
+            (1.0000, "higher", "Higher Likelihood"),
+        ]
+        for prob, expected_cat, expected_label in test_cases:
+            cat, label = classify_pcos_screening_likelihood(prob)
+            self.assertEqual(cat, expected_cat, f"Mismatch for prob {prob}: expected category {expected_cat}, got {cat}")
+            self.assertEqual(label, expected_label, f"Mismatch for prob {prob}: expected label {expected_label}, got {label}")
+
+        # 3. Probability precision: raw 0.2496 displays as 25% but MUST classify as Intermediate
+        raw_prob = 0.2496
+        self.assertEqual(round(raw_prob * 100), 25)  # Displays as 25%
+        cat_raw, label_raw = classify_pcos_screening_likelihood(raw_prob)
+        self.assertEqual(cat_raw, "intermediate", "Display rounding must NOT bleed into classification")
+        self.assertEqual(label_raw, "Intermediate Likelihood")
+
+        # 4. Missing data safety: None/NaN must return unavailable, NEVER lower
+        cat_none, label_none = classify_pcos_screening_likelihood(None)
+        self.assertEqual(cat_none, "unavailable")
+        self.assertEqual(label_none, "Assessment Unavailable")
+
+        cat_nan, label_nan = classify_pcos_screening_likelihood(math.nan)
+        self.assertEqual(cat_nan, "unavailable")
+        self.assertEqual(label_nan, "Assessment Unavailable")
+
+
 if __name__ == '__main__':
     unittest.main()
+

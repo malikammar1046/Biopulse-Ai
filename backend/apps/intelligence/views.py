@@ -51,7 +51,13 @@ from apps.intelligence.services.intelligence_orchestrator import (
     format_assessment_response,
 )
 from apps.intelligence.services.assessment_repository import assessment_repository, PersistenceError
-from apps.intelligence.services.pcos_ml_service import pcos_ml_service
+from apps.intelligence.services.pcos_ml_service import (
+    pcos_ml_service,
+    PCOS_SCREENING_POLICY,
+    TIER1_SCREENING_THRESHOLD,
+    TIER2_SCREENING_THRESHOLD,
+    MULTIMODAL_SCREENING_THRESHOLD,
+)
 from apps.intelligence.services.male_ml_service import male_ml_service
 from apps.intelligence.services.safety_guardrails import SafetyGuardrails
 from apps.intelligence.services.health_context_builder import HealthContextBuilder
@@ -100,21 +106,25 @@ class IntelligenceStatusView(APIView):
                     "name": "Extra Trees + Platt Sigmoid Calibration",
                     "version": "PCOS-ML v1.2-T1",
                     "features_count": 16,
-                    "screening_threshold": 0.38,
+                    "screening_threshold": TIER1_SCREENING_THRESHOLD,
+                    "screening_policy_version": PCOS_SCREENING_POLICY["version"],
                     "explainability": "TreeSHAP",
                 },
                 "tier_1_2": {
                     "name": "Cumulative Extra Trees + Platt Sigmoid Calibration",
                     "version": "PCOS-ML v1.2-T2",
                     "features_count": 32,
-                    "screening_threshold": 0.29,
+                    "screening_threshold": TIER2_SCREENING_THRESHOLD,
+                    "screening_policy_version": PCOS_SCREENING_POLICY["version"],
                     "explainability": "TreeSHAP",
                 },
                 "tier_1_2_3": {
                     "name": "Weighted Multimodal Probability Fusion",
                     "version": "PCOS-ML v1.2-Multimodal",
                     "weights": {"clinical": 0.95, "ultrasound": 0.05},
-                    "screening_threshold": 0.29,
+                    "screening_threshold": MULTIMODAL_SCREENING_THRESHOLD,
+                    "screening_policy_version": "exploratory_v1",
+                    "operating_point_status": "exploratory_pending_clinical_validation",
                 },
                 "tier3_vision": {
                     "name": "EfficientNet-B0 + PCOM Classifier",
@@ -320,6 +330,15 @@ class MaleTier2AssessmentView(APIView):
         auth_token = getattr(request.user, "raw_token", None)
         clinical_payload = request.data if isinstance(request.data, dict) else {}
 
+        active_before = assessment_repository.get_active_assessment(patient_uuid, module="male_hypogonadism", auth_token=auth_token)
+        logger.info(
+            "[TIER2_TRACE] event=submit_start user=%s module=male_hypogonadism active_before_id=%s active_before_level=%s tier2_field_count=%d",
+            patient_uuid[:8] if len(patient_uuid) >= 8 else patient_uuid,
+            (active_before.get("id") or active_before.get("assessment_id")) if active_before else "none",
+            active_before.get("assessment_level") if active_before else "none",
+            len([k for k, v in clinical_payload.items() if v is not None and str(v).strip() != ""]),
+        )
+
         try:
             result = run_male_tier2_assessment(
                 patient_uuid,
@@ -408,6 +427,15 @@ class Tier2AssessmentView(APIView):
         patient_uuid = str(request.user.id)
         auth_token = getattr(request.user, "raw_token", None)
         clinical_payload = request.data if isinstance(request.data, dict) else {}
+
+        active_before = assessment_repository.get_active_assessment(patient_uuid, module="female_pcos", auth_token=auth_token)
+        logger.info(
+            "[TIER2_TRACE] event=submit_start user=%s module=female_pcos active_before_id=%s active_before_level=%s tier2_field_count=%d",
+            patient_uuid[:8] if len(patient_uuid) >= 8 else patient_uuid,
+            (active_before.get("id") or active_before.get("assessment_id")) if active_before else "none",
+            active_before.get("assessment_level") if active_before else "none",
+            len([k for k, v in clinical_payload.items() if v is not None and str(v).strip() != ""]),
+        )
 
         try:
             result = run_tier2_assessment(
@@ -723,6 +751,12 @@ class IntelligenceChatView(APIView):
                 patient_email=patient_email,
             )
             sanitized_answer, safety_level = SafetyGuardrails.sanitize_llm_response(llm_res.answer)
+            excluded_cats = used_context.get("excluded_food_categories") or []
+            sanitized_answer = SafetyGuardrails.validate_dietary_safety(
+                sanitized_answer,
+                excluded_categories=excluded_cats,
+                user_message=clean_user_msg,
+            )
             final_safety = "caution" if safety_level == "caution" else llm_res.safety_level
             latency_ms = (time.perf_counter() - start_time) * 1000
 

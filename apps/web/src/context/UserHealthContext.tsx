@@ -2049,6 +2049,16 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             })
             .catch(() => {});
 
+          fetchActiveAssessment(true, 'male_hypogonadism', authoritativeUserId)
+            .then((verified) => {
+              if (verified && verified.id === res.id) {
+                if (import.meta.env.DEV) {
+                  console.log(`[TIER2_TRACE] event=active_readback_verified id=${verified.id} level=${verified.assessment_level}`);
+                }
+              }
+            })
+            .catch(() => {});
+
           triggerAssessmentNotification(
             'Updated Result: Your hypogonadism screening assessment has been updated with clinical evidence.',
             'success'
@@ -2192,6 +2202,16 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           fetchAssessmentHistory('female_pcos')
             .then((history) => {
               setAssessmentHistory((prev) => deduplicateHistory(history, transition.nextState.activeAssessment || prev[0]));
+            })
+            .catch(() => {});
+
+          fetchActiveAssessment(true, 'female_pcos', authoritativeUserId)
+            .then((verified) => {
+              if (verified && verified.id === res.id) {
+                if (import.meta.env.DEV) {
+                  console.log(`[TIER2_TRACE] event=active_readback_verified id=${verified.id} level=${verified.assessment_level}`);
+                }
+              }
             })
             .catch(() => {});
 
