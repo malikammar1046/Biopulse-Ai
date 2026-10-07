@@ -3,12 +3,17 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const doctorProfileFile = path.resolve('app/(app)/doctor-profile.tsx');
-const careCircleFile = path.resolve('app/(app)/care-circle.tsx');
-const reportsFile = path.resolve('app/(app)/reports.tsx');
-const clinicalSummaryFile = path.resolve('app/(app)/clinical-summary.tsx');
-const profileFile = path.resolve('app/(app)/profile.tsx');
-const settingsFile = path.resolve('app/(app)/settings.tsx');
+const resolveAppFile = (rel) => {
+  if (fs.existsSync(path.resolve(rel))) return path.resolve(rel);
+  return path.resolve('apps/mobile', rel);
+};
+
+const doctorProfileFile = resolveAppFile('app/(app)/doctor-profile.tsx');
+const careCircleFile = resolveAppFile('app/(app)/care-circle.tsx');
+const reportsFile = resolveAppFile('app/(app)/reports.tsx');
+const clinicalSummaryFile = resolveAppFile('app/(app)/clinical-summary.tsx');
+const profileFile = resolveAppFile('app/(app)/profile.tsx');
+const settingsFile = resolveAppFile('app/(app)/settings.tsx');
 
 test('Screen 40: Doctor Profile validates credentials, expertise, hospital, availability, and dual CTAs', () => {
   const content = fs.readFileSync(doctorProfileFile, 'utf8');

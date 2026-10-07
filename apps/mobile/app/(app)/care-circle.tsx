@@ -60,40 +60,18 @@ export default function CareCircleScreen() {
   const [inviteName, setInviteName] = useState('');
   const [inviteRole, setInviteRole] = useState('Family');
 
-  const defaultMembers: CirclePerson[] = useMemo(() => [
-    {
-      id: 'person-1',
-      name: isFemale ? 'Dr. Ayesha Malik' : 'Dr. Ahmed Raza',
-      category: 'Doctors',
-      roleTag: 'Doctor',
-      roleTagBg: '#E0F2FE',
-      roleTagColor: '#0284C7',
-      subtitle: isFemale ? 'Endocrinologist' : 'Andrologist',
-      accessDesc: 'Medical reports, screening results',
-    },
-    {
-      id: 'person-2',
-      name: 'Sarah Khan',
-      category: 'Family',
-      roleTag: 'Family Member',
-      roleTagBg: '#E0F2FE',
-      roleTagColor: '#0284C7',
-      subtitle: 'Sister',
-      accessDesc: 'Basic health summary, reminders',
-    },
-    {
-      id: 'person-3',
-      name: 'Ali Ahmed',
-      category: 'Others',
-      roleTag: 'Trusted Contact',
-      roleTagBg: '#E0F2FE',
-      roleTagColor: '#0284C7',
-      subtitle: 'Friend',
-      accessDesc: 'Emergency contact only',
-    },
-  ], [isFemale]);
-
-  const [members, setMembers] = useState<CirclePerson[]>(defaultMembers);
+  const members: CirclePerson[] = useMemo(() => {
+    return careCircle.map((cc) => ({
+      id: cc.id,
+      name: cc.name,
+      category: cc.role === 'Doctor' ? 'Doctors' : cc.role === 'Family Member' ? 'Family' : 'Others',
+      roleTag: cc.role,
+      roleTagBg: cc.role === 'Doctor' ? '#E0F2FE' : '#F1F5F9',
+      roleTagColor: cc.role === 'Doctor' ? '#0284C7' : '#475569',
+      subtitle: cc.relationship || (cc.role === 'Doctor' ? 'Healthcare Provider' : 'Contact'),
+      accessDesc: cc.accessLevel || 'Screening summaries & reports',
+    }));
+  }, [careCircle]);
 
   const filteredMembers = useMemo(() => {
     if (activeTab === 'All') return members;
@@ -109,7 +87,6 @@ export default function CareCircleScreen() {
           text: 'Remove from Care Circle',
           style: 'destructive',
           onPress: () => {
-            setMembers((prev) => prev.filter((p) => p.id !== person.id));
             removeFromCareCircle(person.id);
             Alert.alert('Removed', `${person.name} has been removed from your Care Circle.`);
           },
@@ -126,26 +103,18 @@ export default function CareCircleScreen() {
     }
     const roleTyped: 'Doctor' | 'Family Member' | 'Trusted Contact' =
       inviteRole === 'Doctor' ? 'Doctor' : inviteRole === 'Family' ? 'Family Member' : 'Trusted Contact';
-    const newPerson: CirclePerson = {
-      id: `person-${Date.now()}`,
-      name: inviteName.trim(),
-      category: inviteRole === 'Doctor' ? 'Doctors' : inviteRole === 'Family' ? 'Family' : 'Others',
-      roleTag: roleTyped,
-      roleTagBg: '#E0F2FE',
-      roleTagColor: '#0284C7',
-      subtitle: roleTyped,
-      accessDesc: 'Basic health summary, reminders',
-    };
-    setMembers((prev) => [...prev, newPerson]);
+    
     addToCareCircle({
-      name: newPerson.name,
+      name: inviteName.trim(),
       role: roleTyped,
-      relationship: newPerson.subtitle,
-      accessLevel: 'View Only',
+      relationship: roleTyped,
+      accessLevel: 'Full Access',
+      verified: false,
     });
-    setShowInviteModal(false);
+
     setInviteName('');
-    Alert.alert('Invitation Sent', `Invitation sent to ${newPerson.name}.`);
+    setShowInviteModal(false);
+    Alert.alert('Invitation Generated', `An invitation for ${inviteName.trim()} has been added to your Care Circle.`);
   };
 
   return (
@@ -217,7 +186,23 @@ export default function CareCircleScreen() {
 
         {/* Members List */}
         <View style={styles.membersList}>
-          {filteredMembers.map((person) => (
+          {filteredMembers.length === 0 ? (
+            <View style={{ padding: 28, alignItems: 'center', backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#F1F5F9', marginVertical: 12 }}>
+              <Ionicons name="people-outline" size={42} color="#94A3B8" style={{ marginBottom: 12 }} />
+              <Text style={{ fontSize: 16, fontWeight: '700', color: '#0F172A', marginBottom: 6 }}>No Members Connected</Text>
+              <Text style={{ fontSize: 14, color: '#64748B', textAlign: 'center', lineHeight: 20, marginBottom: 16 }}>
+                Invite a trusted healthcare provider or family member to securely view permitted health summaries.
+              </Text>
+              <Pressable
+                onPress={() => setShowInviteModal(true)}
+                style={({ pressed }) => [styles.inviteBtn, pressed && styles.btnPressed, { alignSelf: 'center' }]}
+              >
+                <Ionicons name="add" size={16} color="#E11D48" style={{ marginRight: 4 }} />
+                <Text style={styles.inviteText}>Invite someone</Text>
+              </Pressable>
+            </View>
+          ) : (
+            filteredMembers.map((person) => (
             <View key={person.id} style={styles.personCard}>
               {/* Left Indicator */}
               <View style={styles.indicatorBox}>
@@ -262,7 +247,7 @@ export default function CareCircleScreen() {
                 </Pressable>
               </View>
             </View>
-          ))}
+          )))}
         </View>
 
         {/* Bottom Privacy Guarantee Box */}

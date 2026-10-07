@@ -7,6 +7,7 @@
  */
 
 import { Platform } from 'react-native';
+import { persistentStorage } from './storage';
 
 declare const process: {
   env: Record<string, string | undefined>;
@@ -18,6 +19,8 @@ export const SUPABASE_URL =
 export const SUPABASE_ANON_KEY =
   process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ||
   'sb_publishable_rZfbhMCOuoCGq4TVmjiEbA_wnlcutJP';
+
+export const AUTH_SESSION_STORAGE_KEY = 'biopulse_auth_session';
 
 export interface SupabaseUserMetadata {
   full_name?: string;
@@ -74,8 +77,20 @@ export function subscribeToAuthChanges(
   };
 }
 
-function notifyAuthListeners(session: SupabaseAuthSession | null) {
+function notifyAuthListeners(session: SupabaseAuthSession | null, persist = true) {
   activeSessionCache = session;
+  if (persist) {
+    if (session) {
+      persistentStorage.setItem(AUTH_SESSION_STORAGE_KEY, JSON.stringify(session)).catch((e) => {
+        console.warn('[BioPulse Supabase] Failed to persist session:', e);
+      });
+    } else {
+      persistentStorage.removeItem(AUTH_SESSION_STORAGE_KEY).catch((e) => {
+        console.warn('[BioPulse Supabase] Failed to remove persisted session:', e);
+      });
+    }
+  }
+
   sessionListeners.forEach((listener) => {
     try {
       listener(session);
@@ -331,5 +346,74 @@ export const mobileSupabaseAuth = {
    */
   setSession(session: SupabaseAuthSession | null): void {
     notifyAuthListeners(session);
+  },
+
+  /**
+   * Refresh active session using refresh_token
+   */
+  async refreshSession(refreshToken?: string): Promise<SupabaseAuthSession | null> {
+    const tokenToUse = refreshToken || activeSessionCache?.refresh_token;
+    if (!tokenToUse) {
+      return null;
+    }
+
+    try {
+      const { status, body } = await fetchAuthEndpoint('/token?grant_type=refresh_token', {
+        method: 'POST',
+        body: { refresh_token: tokenToUse },
+      });
+
+      if (status >= 200 && status < 300 && body.access_token && body.user) {
+        const refreshedSession: SupabaseAuthSession = {
+          access_token: body.access_token,
+          token_type: body.token_type || 'bearer',
+          expires_in: body.expires_in || 3600,
+          expires_at: Math.floor(Date.now() / 1000) + (body.expires_in || 3600),
+          refresh_token: body.refresh_token || tokenToUse,
+          user: body.user,
+        };
+        notifyAuthListeners(refreshedSession, true);
+        return refreshedSession;
+      }
+    } catch (err) {
+      console.warn('[BioPulse Supabase] Token refresh error:', err);
+    }
+    return null;
+  },
+
+  /**
+   * Restore stored session from persistent storage on startup
+   */
+  async restoreSession(): Promise<SupabaseAuthSession | null> {
+    try {
+      const raw = await persistentStorage.getItem(AUTH_SESSION_STORAGE_KEY);
+      if (!raw) {
+        return null;
+      }
+
+      const parsed: SupabaseAuthSession = JSON.parse(raw);
+      if (!parsed?.access_token || !parsed?.user) {
+        await persistentStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+        return null;
+      }
+
+      const nowSec = Math.floor(Date.now() / 1000);
+      const isExpired = parsed.expires_at ? parsed.expires_at <= nowSec + 60 : false;
+
+      if (isExpired && parsed.refresh_token) {
+        const refreshed = await this.refreshSession(parsed.refresh_token);
+        if (refreshed) {
+          return refreshed;
+        }
+      }
+
+      // Valid session restored
+      notifyAuthListeners(parsed, false);
+      return parsed;
+    } catch (err) {
+      console.warn('[BioPulse Supabase] Session restoration failed:', err);
+      await persistentStorage.removeItem(AUTH_SESSION_STORAGE_KEY).catch(() => {});
+      return null;
+    }
   },
 };

@@ -3,10 +3,15 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const medsFile = path.resolve('app/(app)/medications.tsx');
-const trackFile = path.resolve('app/(app)/track.tsx');
-const progressFile = path.resolve('app/(app)/progress.tsx');
-const metricDetailFile = path.resolve('app/(app)/metric-detail.tsx');
+const resolveAppFile = (rel) => {
+  if (fs.existsSync(path.resolve(rel))) return path.resolve(rel);
+  return path.resolve('apps/mobile', rel);
+};
+
+const medsFile = resolveAppFile('app/(app)/medications.tsx');
+const trackFile = resolveAppFile('app/(app)/track.tsx');
+const progressFile = resolveAppFile('app/(app)/progress.tsx');
+const metricDetailFile = resolveAppFile('app/(app)/metric-detail.tsx');
 
 test('Screen 30: Medication Screen validates active dose, actions, and scheduled list', () => {
   const content = fs.readFileSync(medsFile, 'utf8');

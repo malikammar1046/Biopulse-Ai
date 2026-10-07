@@ -76,7 +76,7 @@ export default function FemaleReviewScreen() {
   const bottomPad = Math.max(insets.bottom, 20);
 
   // User display name
-  const displayName = user?.fullName || 'Ayesha Khan';
+  const displayName = user?.fullName?.trim() || 'BioPulse Member';
 
   // Format symptoms list
   const symptomsText = useMemo(() => {

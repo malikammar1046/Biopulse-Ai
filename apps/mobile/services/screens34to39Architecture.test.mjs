@@ -3,11 +3,16 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const guidanceFile = path.resolve('app/(app)/guidance.tsx');
-const recommendationsFile = path.resolve('app/(app)/recommendations.tsx');
-const aiFile = path.resolve('app/(app)/ai-companion.tsx');
-const appointmentsFile = path.resolve('app/(app)/appointments.tsx');
-const specialistsFile = path.resolve('app/(app)/specialists.tsx');
+const resolveAppFile = (rel) => {
+  if (fs.existsSync(path.resolve(rel))) return path.resolve(rel);
+  return path.resolve('apps/mobile', rel);
+};
+
+const guidanceFile = resolveAppFile('app/(app)/guidance.tsx');
+const recommendationsFile = resolveAppFile('app/(app)/recommendations.tsx');
+const aiFile = resolveAppFile('app/(app)/ai-companion.tsx');
+const appointmentsFile = resolveAppFile('app/(app)/appointments.tsx');
+const specialistsFile = resolveAppFile('app/(app)/specialists.tsx');
 
 test('Screen 34: Guidance Home validates Next Best Action, categorized sections, and bottom nav', () => {
   const content = fs.readFileSync(guidanceFile, 'utf8');
