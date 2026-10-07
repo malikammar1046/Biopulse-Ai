@@ -56,7 +56,7 @@ export default function SpecialistsScreen() {
   const { pathway } = useAuth();
   const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
 
-  const { bookAppointment } = useHealthStore();
+  const { specialists, bookAppointment } = useHealthStore();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchInput, setShowSearchInput] = useState(false);
@@ -190,9 +190,23 @@ export default function SpecialistsScreen() {
     },
   ];
 
-  const rawDoctorsList = isFemale ? femaleDoctors : maleDoctors;
+  const rawDoctorsList = useMemo(() => {
+    if (specialists && specialists.length > 0) {
+      return specialists.map((s) => ({
+        id: s.id,
+        name: s.name,
+        specialty: s.specialty,
+        degrees: (s as any).degrees || 'MBBS, FCPS',
+        hospital: s.hospital,
+        city: (s as any).city || 'Lahore',
+        rating: s.rating || 4.9,
+        reviewCount: (s as any).reviewCount || (s as any).patientsCount || 120,
+      }));
+    }
+    return isFemale ? femaleDoctors : maleDoctors;
+  }, [specialists, isFemale]);
 
-  // In Screenshots 38 and 39, Endocrinologists is active, showing the top 2 doctors
+  // Filter doctors by search or selected specialty
   const doctorsList = useMemo(() => {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -200,8 +214,11 @@ export default function SpecialistsScreen() {
         (d) => d.name.toLowerCase().includes(q) || d.hospital.toLowerCase().includes(q)
       );
     }
-    return rawDoctorsList.slice(0, 2);
-  }, [rawDoctorsList, searchQuery]);
+    const filteredBySpec = rawDoctorsList.filter(
+      (d) => d.specialty.toLowerCase().includes(selectedSpecialty.toLowerCase().replace(/s$/, ''))
+    );
+    return filteredBySpec.length > 0 ? filteredBySpec : rawDoctorsList.slice(0, 3);
+  }, [rawDoctorsList, searchQuery, selectedSpecialty]);
 
   const [favorites, setFavorites] = useState<Record<string, boolean>>({});
 

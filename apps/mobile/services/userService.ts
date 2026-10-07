@@ -23,17 +23,9 @@ import {
   ReportItem,
   ClinicalLabRow,
 } from '../store/healthStore';
+import { getSupabaseHeaders } from './api';
 
-export { SUPABASE_URL, BACKEND_API_URL };
 
-export function getSupabaseHeaders(token: string): Record<string, string> {
-  return {
-    apikey: SUPABASE_ANON_KEY,
-    Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json',
-    Accept: 'application/json',
-  };
-}
 
 /**
  * Fetch patient profile from Supabase profiles table

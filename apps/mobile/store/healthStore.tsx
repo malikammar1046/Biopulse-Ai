@@ -1,9 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, ReactNode } from 'react';
 import { useAuth } from '../features/authentication';
 import {
   fetchUserProfileFromDb,
   updateUserProfileInDb,
-  fetchUserActiveAssessmentFromBackend,
   fetchVerifiedDoctorsFromBackend,
   fetchCycleRecordsFromDb,
   fetchTodayWaterLogsFromDb,
@@ -12,6 +11,18 @@ import {
   fetchCareCircleFromDb,
   fetchMedicalReportsFromDb,
 } from '../services/userService';
+import {
+  profileService,
+  trackingService,
+  assessmentService,
+  medicationService,
+  appointmentService,
+  careCircleService,
+  reportService,
+  nutritionService,
+  notificationService,
+} from '../services';
+
 
 // ============================================================================
 // TYPES
@@ -404,6 +415,19 @@ const EMPTY_MOVEMENT: MovementState = {
   currentGoalText: 'Daily activity goal',
 };
 
+const EMPTY_NUTRITION: NutritionState = {
+  caloriesConsumed: 0,
+  calorieTarget: 1800,
+  proteinConsumed: 0,
+  proteinTarget: 90,
+  carbsConsumed: 0,
+  carbsTarget: 180,
+  fatsConsumed: 0,
+  fatsTarget: 55,
+  meals: [],
+  cuisineFilter: 'South Asian',
+};
+
 const DEFAULT_NOTIFICATIONS: NotificationSettingsState = {
   medicationDue: true,
   periodPredicted: true,
@@ -457,15 +481,26 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
     setVerifiedLabs([]);
   }, []);
 
+  const lastLoadedUserIdRef = useRef<string | null>(null);
+
   // Synchronize store when authenticated user changes or logs out
   useEffect(() => {
     let isCurrent = true;
 
     if (!user || !isAuthenticated) {
       // User is logged out — reset all states immediately to guarantee zero cross-user leakage
+      lastLoadedUserIdRef.current = null;
       resetHealthState();
       return;
     }
+
+    const currentUserId = user.id;
+
+    // Detect user switch: purge User A state before loading User B
+    if (lastLoadedUserIdRef.current && lastLoadedUserIdRef.current !== currentUserId) {
+      resetHealthState();
+    }
+    lastLoadedUserIdRef.current = currentUserId;
 
     // Set pathway from authenticated profile
     const initialPathway = (user.pathway as HealthPathway) || 'female';
@@ -479,7 +514,6 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
     });
 
     const token = user.accessToken;
-    const currentUserId = user.id;
 
     async function loadAuthenticatedData() {
       // 1. Fetch verified doctors from Django (public / authenticated)
@@ -502,15 +536,23 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
           aptsList,
           circleList,
           reportsList,
+          notifPrefs,
+          recentSymptoms,
+          fitnessLogs,
+          foodLogsRes,
         ] = await Promise.all([
           fetchUserProfileFromDb(currentUserId, token),
-          fetchUserActiveAssessmentFromBackend(token, initialPathway),
+          assessmentService.fetchActiveScreeningAssessment(currentUserId),
           fetchCycleRecordsFromDb(currentUserId, token),
           fetchTodayWaterLogsFromDb(currentUserId, token),
           fetchMedicationsFromDb(currentUserId, token),
           fetchAppointmentsFromDb(currentUserId, token),
           fetchCareCircleFromDb(currentUserId, token),
           fetchMedicalReportsFromDb(currentUserId, token),
+          notificationService.getPreferences(token, currentUserId),
+          trackingService.getRecentSymptoms(currentUserId, token, 15),
+          trackingService.getTodayFitnessLogs(currentUserId, token),
+          nutritionService.getFoodLogs(currentUserId, token),
         ]);
 
         if (!isCurrent) return;
@@ -528,7 +570,32 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
         }
 
         if (assessmentData) {
-          setScreening((prev) => ({ ...prev, ...assessmentData }));
+          setScreening((prev) => ({
+            ...prev,
+            probabilityPercent: assessmentData.probability_percent || Math.round((assessmentData.probability || 0) * 100),
+            riskBand: (assessmentData.risk_label || (assessmentData.risk_category === 'higher' ? 'Higher Risk' : assessmentData.risk_category === 'intermediate' ? 'Intermediate Risk' : 'Lower Risk')) as any,
+            riskCategory: (assessmentData.risk_category || 'lower') as any,
+            tier: assessmentData.assessment_level === 'tier_1_2_3' ? 3 : assessmentData.assessment_level === 'tier_1_2' ? 2 : 1,
+            tierStatus: assessmentData.assessment_level ? `Tier ${assessmentData.assessment_level === 'tier_1_2_3' ? 3 : assessmentData.assessment_level === 'tier_1_2' ? 2 : 1} Complete` : 'Tier 1 Complete',
+            lastAssessedDate: 'Recent Assessment',
+            isNonDiagnostic: true,
+            topFactors: (assessmentData.explanations || []).map((exp: any, idx: number) => ({
+              id: `factor_${idx}`,
+              name: exp.feature_name || exp.feature_key,
+              impactPercent: exp.explanation_share_percent || Math.round(Math.abs(exp.impact_score || 0) * 100),
+              direction: (exp.direction === 'increases_risk' || exp.direction === 'positive' || exp.direction === 'higher' ? 'increases_risk' : 'decreases_risk') as any,
+              explanation: exp.description || exp.patient_explanation || '',
+              iconName: 'pulse',
+            })),
+            allFactors: (assessmentData.explanations || []).map((exp: any, idx: number) => ({
+              id: `factor_${idx}`,
+              name: exp.feature_name || exp.feature_key,
+              impactPercent: exp.explanation_share_percent || Math.round(Math.abs(exp.impact_score || 0) * 100),
+              direction: (exp.direction === 'increases_risk' || exp.direction === 'positive' || exp.direction === 'higher' ? 'increases_risk' : 'decreases_risk') as any,
+              explanation: exp.description || exp.patient_explanation || '',
+              iconName: 'pulse',
+            })),
+          }));
         }
 
         if (cycleData) {
@@ -554,6 +621,42 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
         if (reportsList && reportsList.length > 0) {
           setReports(reportsList);
         }
+
+        if (notifPrefs?.data) {
+          setNotifications(notifPrefs.data);
+        }
+
+        if (recentSymptoms?.data && recentSymptoms.data.length > 0) {
+          const symptomMap = new Set(recentSymptoms.data.map((s: any) => s.symptomType));
+          const latestOccurred = recentSymptoms.data[0]?.occurredAt;
+          setSymptoms((prev) => ({
+            ...prev,
+            loggedToday: true,
+            lastUpdatedTime: latestOccurred ? new Date(latestOccurred).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Today',
+            symptoms: prev.symptoms.map((s) => ({
+              ...s,
+              selected: symptomMap.has(s.id),
+            })),
+          }));
+        }
+
+        if (fitnessLogs?.data && fitnessLogs.data.length > 0) {
+          const totalMins = fitnessLogs.data.reduce((acc: number, curr: any) => acc + (Number(curr.durationMinutes) || 0), 0);
+          setMovementMinutes(totalMins);
+        }
+
+        if (foodLogsRes?.data && foodLogsRes.data.length > 0) {
+          const parsedMeals: MealItem[] = foodLogsRes.data.map((f: any) => ({
+            id: f.id,
+            name: f.foodName,
+            mealType: (f.mealType?.toLowerCase() || 'lunch') as any,
+            description: f.portionDescription || f.foodName,
+            calories: f.calories,
+            proteinGrams: f.proteinG,
+            time: f.loggedAt ? new Date(f.loggedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '12:00 PM',
+          }));
+          setMeals(parsedMeals);
+        }
       } catch (err) {
         console.warn('[BioPulse HealthStore] Error syncing authenticated health data:', err);
       }
@@ -565,6 +668,7 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
       isCurrent = false;
     };
   }, [user?.id, user?.accessToken, isAuthenticated]);
+
 
   const isFemale = pathway === 'female' || pathway === 'female_pcos';
 
@@ -664,10 +768,19 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
   const switchPathway = useCallback((p: HealthPathway) => {
     setPathway(p);
     const token = user?.accessToken;
-    if (token) {
-      fetchUserActiveAssessmentFromBackend(token, p).then((assessmentData) => {
+    if (token && user?.id) {
+      assessmentService.fetchActiveScreeningAssessment(user.id).then((assessmentData) => {
         if (assessmentData) {
-          setScreening((prev) => ({ ...prev, ...assessmentData }));
+          setScreening((prev) => ({
+            ...prev,
+            probabilityPercent: assessmentData.probability_percent || Math.round((assessmentData.probability || 0) * 100),
+            riskBand: (assessmentData.risk_label || (assessmentData.risk_category === 'higher' ? 'Higher Risk' : assessmentData.risk_category === 'intermediate' ? 'Intermediate Risk' : 'Lower Risk')) as any,
+            riskCategory: (assessmentData.risk_category || 'lower') as any,
+            tier: assessmentData.assessment_level === 'tier_1_2_3' ? 3 : assessmentData.assessment_level === 'tier_1_2' ? 2 : 1,
+            tierStatus: assessmentData.assessment_level ? `Tier ${assessmentData.assessment_level === 'tier_1_2_3' ? 3 : assessmentData.assessment_level === 'tier_1_2' ? 2 : 1} Complete` : 'Tier 1 Complete',
+            lastAssessedDate: 'Recent Assessment',
+            isNonDiagnostic: true,
+          }));
         }
       });
       fetchVerifiedDoctorsFromBackend(p).then((docs) => {
@@ -676,7 +789,7 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
         }
       });
     }
-  }, [user?.accessToken]);
+  }, [user?.accessToken, user?.id]);
 
   const updateProfile = useCallback((partial: Partial<UserProfileState>) => {
     setProfile((prev) => {
@@ -695,8 +808,21 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
   }, []);
 
   const updateCycle = useCallback((partial: Partial<CycleTrackingState>) => {
-    setCycle((prev) => ({ ...prev, ...partial }));
-  }, []);
+    setCycle((prev) => {
+      const updated = { ...prev, ...partial };
+      if (user?.id && user?.accessToken) {
+        trackingService.logCycle(user.id, user.accessToken, {
+          periodStartDate: updated.lastPeriodStartDate || new Date().toISOString().split('T')[0],
+          cycleLength: updated.cycleLength,
+          flow: updated.flow?.toLowerCase(),
+          notes: updated.notes,
+        }).catch((err) => {
+          console.warn('[BioPulse HealthStore] Error syncing cycle update to DB:', err);
+        });
+      }
+      return updated;
+    });
+  }, [user?.id, user?.accessToken]);
 
   const logPeriodStart = useCallback((dateString: string, flow: 'Light' | 'Moderate' | 'Heavy' = 'Moderate') => {
     setCycle((prev) => ({
@@ -707,16 +833,40 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
       flow,
       nextPeriodDaysRemaining: prev.cycleLength,
     }));
-  }, []);
+    if (user?.id && user?.accessToken) {
+      trackingService.logCycle(user.id, user.accessToken, {
+        periodStartDate: dateString,
+        flow: flow.toLowerCase(),
+        cycleLength: cycle.cycleLength || 28,
+      }).catch((err) => {
+        console.warn('[BioPulse HealthStore] Error logging period in DB:', err);
+      });
+      updateUserProfileInDb(user.id, user.accessToken, {
+        lastPeriodDate: dateString,
+      }).catch(() => {});
+    }
+  }, [user?.id, user?.accessToken, cycle.cycleLength]);
 
   const toggleSymptom = useCallback((symptomId: string) => {
-    setSymptoms((prev) => ({
-      ...prev,
-      loggedToday: true,
-      lastUpdatedTime: 'Just now',
-      symptoms: prev.symptoms.map((s) => (s.id === symptomId ? { ...s, selected: !s.selected } : s)),
-    }));
-  }, []);
+    setSymptoms((prev) => {
+      const updatedList = prev.symptoms.map((s) => (s.id === symptomId ? { ...s, selected: !s.selected } : s));
+      const target = updatedList.find((s) => s.id === symptomId);
+      if (target?.selected && user?.id && user?.accessToken) {
+        trackingService.logSymptom(user.id, user.accessToken, {
+          symptomType: symptomId,
+          severity: prev.intensity.toLowerCase(),
+        }).catch((err) => {
+          console.warn('[BioPulse HealthStore] Error persisting symptom check-in:', err);
+        });
+      }
+      return {
+        ...prev,
+        loggedToday: true,
+        lastUpdatedTime: 'Just now',
+        symptoms: updatedList,
+      };
+    });
+  }, [user?.id, user?.accessToken]);
 
   const setSymptomIntensity = useCallback((intensity: 'Mild' | 'Moderate' | 'Severe') => {
     setSymptoms((prev) => ({
@@ -727,25 +877,69 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
   }, []);
 
   const saveSymptomCheckIn = useCallback((notes: string) => {
-    setSymptoms((prev) => ({
-      ...prev,
-      loggedToday: true,
-      lastUpdatedTime: 'Just now',
-      notes,
-    }));
-  }, []);
+    setSymptoms((prev) => {
+      const selectedSymptoms = prev.symptoms.filter((s) => s.selected);
+      if (user?.id && user?.accessToken && selectedSymptoms.length > 0) {
+        Promise.all(
+          selectedSymptoms.map((s) =>
+            trackingService.logSymptom(user.id, user.accessToken!, {
+              symptomType: s.id,
+              severity: prev.intensity.toLowerCase(),
+              notes,
+            })
+          )
+        ).catch((err) => {
+          console.warn('[BioPulse HealthStore] Error saving symptom check-in:', err);
+        });
+        updateUserProfileInDb(user.id, user.accessToken, {
+          common_symptoms: selectedSymptoms.map((s) => s.id),
+        }).catch(() => {});
+      }
+      return {
+        ...prev,
+        loggedToday: true,
+        lastUpdatedTime: 'Just now',
+        notes,
+      };
+    });
+  }, [user?.id, user?.accessToken]);
 
   const addMeal = useCallback((meal: Omit<MealItem, 'id'>) => {
+    const tempId = `meal_${Date.now()}`;
     const newMeal: MealItem = {
       ...meal,
-      id: `meal_${Date.now()}`,
+      id: tempId,
     };
     setMeals((prev) => [...prev, newMeal]);
-  }, []);
+    if (user?.id && user?.accessToken) {
+      nutritionService.logFood(user.id, user.accessToken, {
+        mealType: meal.mealType,
+        foodName: meal.name,
+        portionDescription: meal.description,
+        calories: meal.calories,
+        proteinG: meal.proteinGrams,
+        carbsG: Math.round(meal.calories * 0.45 / 4),
+        fatG: Math.round(meal.calories * 0.28 / 9),
+      }).then((res) => {
+        if (res.data?.id) {
+          setMeals((prev) =>
+            prev.map((m) => (m.id === tempId ? { ...m, id: res.data!.id } : m))
+          );
+        }
+      }).catch((err) => {
+        console.warn('[BioPulse HealthStore] Error persisting food log in DB:', err);
+      });
+    }
+  }, [user?.id, user?.accessToken]);
 
   const deleteMeal = useCallback((id: string) => {
     setMeals((prev) => prev.filter((m) => m.id !== id));
-  }, []);
+    if (user?.accessToken) {
+      nutritionService.deleteFoodLog(id, user.accessToken).catch((err) => {
+        console.warn('[BioPulse HealthStore] Error deleting food log in DB:', err);
+      });
+    }
+  }, [user?.accessToken]);
 
   const setCuisineFilterAction = useCallback((filter: 'South Asian' | 'Vegetarian' | 'Low-cost') => {
     setCuisineFilter(filter);
@@ -759,16 +953,45 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
       time: timeFormatted,
       amountMl,
     };
-    setWaterLogs((prev) => [...prev, newEntry]);
-  }, []);
+    setWaterLogs((prev) => {
+      const nextLogs = [...prev, newEntry];
+      if (user?.id && user?.accessToken) {
+        const totalMl = nextLogs.reduce((acc, curr) => acc + curr.amountMl, 0);
+        const glasses = Math.round(totalMl / 250);
+        trackingService.logWater(user.id, user.accessToken, glasses, isFemale ? 10 : 12).catch((err) => {
+          console.warn('[BioPulse HealthStore] Error persisting water log to DB:', err);
+        });
+      }
+      return nextLogs;
+    });
+  }, [user?.id, user?.accessToken, isFemale]);
 
   const deleteWaterLog = useCallback((id: string) => {
-    setWaterLogs((prev) => prev.filter((w) => w.id !== id));
-  }, []);
+    setWaterLogs((prev) => {
+      const nextLogs = prev.filter((w) => w.id !== id);
+      if (user?.id && user?.accessToken) {
+        const uid = user.id;
+        const token = user.accessToken;
+        trackingService.deleteWaterLog(id, token).catch(() => {
+          const totalMl = nextLogs.reduce((acc, curr) => acc + curr.amountMl, 0);
+          const glasses = Math.round(totalMl / 250);
+          trackingService.logWater(uid, token, glasses, isFemale ? 10 : 12).catch((err) => {
+            console.warn('[BioPulse HealthStore] Error updating water log in DB:', err);
+          });
+        });
+      }
+      return nextLogs;
+    });
+  }, [user?.id, user?.accessToken, isFemale]);
 
   const resetWater = useCallback(() => {
     setWaterLogs([]);
-  }, []);
+    if (user?.id && user?.accessToken) {
+      trackingService.logWater(user.id, user.accessToken, 0, isFemale ? 10 : 12).catch((err) => {
+        console.warn('[BioPulse HealthStore] Error resetting water log in DB:', err);
+      });
+    }
+  }, [user?.id, user?.accessToken, isFemale]);
 
   const removeMeal = deleteMeal;
 
@@ -781,30 +1004,86 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
     if (steps) {
       setMovementSteps((prev) => prev + steps);
     }
-  }, []);
+    if (user?.id && user?.accessToken) {
+      trackingService.logActivity(user.id, user.accessToken, {
+        activityType: 'general',
+        activityName: 'Activity',
+        durationMinutes: minutes,
+        notes: steps ? `${steps} steps` : undefined,
+      }).catch((err) => {
+        console.warn('[BioPulse HealthStore] Error persisting activity log to DB:', err);
+      });
+    }
+  }, [user?.id, user?.accessToken]);
 
   const markMedicationStatus = useCallback((id: string, status: 'pending' | 'taken' | 'skipped' | 'snoozed') => {
     setMedications((prev) =>
       prev.map((med) => (med.id === id ? { ...med, status } : med))
     );
-  }, []);
+    if (user?.id && user?.accessToken && (status === 'taken' || status === 'skipped')) {
+      medicationService.logDose(user.id, user.accessToken, {
+        medicationId: id,
+        status,
+      }).catch((err) => {
+        console.warn('[BioPulse HealthStore] Error logging dose to DB:', err);
+      });
+    }
+  }, [user?.id, user?.accessToken]);
 
   const addMedication = useCallback((med: Omit<MedicationItem, 'id'>) => {
+    const tempId = `med_${Date.now()}`;
     const newMed: MedicationItem = {
       ...med,
-      id: `med_${Date.now()}`,
+      id: tempId,
     };
     setMedications((prev) => [...prev, newMed]);
-  }, []);
+    if (user?.id && user?.accessToken) {
+      medicationService.addMedication(user.id, user.accessToken, {
+        name: med.name,
+        dose: med.dosage,
+        scheduledTimes: [med.scheduledTime],
+        instructions: med.instructions,
+        pathway: med.pathway,
+      }).then((res) => {
+        if (res.data?.id) {
+          setMedications((prev) =>
+            prev.map((m) => (m.id === tempId ? { ...m, id: res.data!.id } : m))
+          );
+        }
+      }).catch((err) => {
+        console.warn('[BioPulse HealthStore] Error adding medication to DB:', err);
+      });
+    }
+  }, [user?.id, user?.accessToken]);
 
   const bookAppointment = useCallback((appointment: Omit<AppointmentItem, 'id' | 'status'>) => {
+    const tempId = `apt_${Date.now()}`;
     const newApt: AppointmentItem = {
       ...appointment,
-      id: `apt_${Date.now()}`,
+      id: tempId,
       status: 'Upcoming',
     };
     setAppointments((prev) => [newApt, ...prev]);
-  }, []);
+    if (user?.id && user?.accessToken) {
+      appointmentService.bookAppointment(user.id, user.accessToken, {
+        doctorId: appointment.doctorId,
+        doctorName: appointment.doctorName,
+        specialty: appointment.specialty,
+        date: appointment.date,
+        time: appointment.time,
+        location: appointment.location,
+        visitType: appointment.visitType,
+      }).then((res) => {
+        if (res.data?.id) {
+          setAppointments((prev) =>
+            prev.map((a) => (a.id === tempId ? { ...a, id: res.data!.id } : a))
+          );
+        }
+      }).catch((err) => {
+        console.warn('[BioPulse HealthStore] Error creating appointment in DB:', err);
+      });
+    }
+  }, [user?.id, user?.accessToken]);
 
   const rescheduleAppointment = useCallback((id: string, date: string, time: string) => {
     setAppointments((prev) =>
@@ -816,23 +1095,62 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
     setAppointments((prev) =>
       prev.map((a) => (a.id === id ? { ...a, status: 'Cancelled' } : a))
     );
-  }, []);
+    if (user?.accessToken) {
+      appointmentService.cancelAppointment(id, user.accessToken).catch((err) => {
+        console.warn('[BioPulse HealthStore] Error cancelling appointment in DB:', err);
+      });
+    }
+  }, [user?.accessToken]);
 
   const addCareCircleMember = useCallback((member: CareCircleMember) => {
     setCareCircle((prev) => [...prev, member]);
-  }, []);
+    if (user?.id && user?.accessToken) {
+      careCircleService.inviteMember(user.id, user.accessToken, {
+        name: member.name,
+        email: member.email || `${member.name.toLowerCase().replace(/\s+/g, '')}@example.com`,
+        role: member.role,
+        relationship: member.relationship,
+        accessLevel: member.accessLevel,
+      }).catch((err) => {
+        console.warn('[BioPulse HealthStore] Error adding Care Circle member to DB:', err);
+      });
+    }
+  }, [user?.id, user?.accessToken]);
 
   const removeCareCircleMember = useCallback((id: string) => {
     setCareCircle((prev) => prev.filter((m) => m.id !== id));
-  }, []);
+    if (user?.accessToken) {
+      careCircleService.revokeMember(id, user.accessToken).catch((err) => {
+        console.warn('[BioPulse HealthStore] Error revoking Care Circle member in DB:', err);
+      });
+    }
+  }, [user?.accessToken]);
 
   const addToCareCircle = useCallback((member: Omit<CareCircleMember, 'id'>) => {
+    const tempId = `care_${Date.now()}`;
     const newMember: CareCircleMember = {
       ...member,
-      id: `care_${Date.now()}`,
+      id: tempId,
     };
     setCareCircle((prev) => [...prev, newMember]);
-  }, []);
+    if (user?.id && user?.accessToken) {
+      careCircleService.inviteMember(user.id, user.accessToken, {
+        name: member.name,
+        email: member.email || `${member.name.toLowerCase().replace(/\s+/g, '')}@example.com`,
+        role: member.role,
+        relationship: member.relationship,
+        accessLevel: member.accessLevel,
+      }).then((res) => {
+        if (res.data?.id) {
+          setCareCircle((prev) =>
+            prev.map((m) => (m.id === tempId ? { ...m, id: res.data!.id } : m))
+          );
+        }
+      }).catch((err) => {
+        console.warn('[BioPulse HealthStore] Error adding Care Circle member to DB:', err);
+      });
+    }
+  }, [user?.id, user?.accessToken]);
 
   const removeFromCareCircle = removeCareCircleMember;
 
@@ -844,8 +1162,9 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
 
   const confirmVerifiedLabs = useCallback((labs: ClinicalLabRow[]) => {
     setVerifiedLabs(labs);
+    const tempId = `rep_${Date.now()}`;
     const newReport: ReportItem = {
-      id: `rep_${Date.now()}`,
+      id: tempId,
       title: 'Verified Lab Report (OCR Extracted)',
       date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
       type: 'Lab',
@@ -853,11 +1172,37 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
       tags: labs.map((l) => l.testName.split(' ')[0]),
     };
     setReports((prev) => [newReport, ...prev]);
-  }, []);
+    if (user?.id && user?.accessToken) {
+      reportService.saveVerifiedReport(user.id, user.accessToken, {
+        title: 'Verified Lab Report (OCR Extracted)',
+        reportType: 'lab',
+        reportDate: new Date().toISOString().split('T')[0],
+        tests: labs.map((l) => ({
+          testName: l.testName,
+          category: l.category,
+          value: l.value,
+          unit: l.unit,
+          referenceRange: l.referenceRange,
+          status: l.status,
+        })),
+      }).catch((err) => {
+        console.warn('[BioPulse HealthStore] Error persisting verified report in DB:', err);
+      });
+    }
+  }, [user?.id, user?.accessToken]);
 
   const updateNotificationSetting = useCallback((key: keyof NotificationSettingsState, value: boolean) => {
-    setNotifications((prev) => ({ ...prev, [key]: value }));
-  }, []);
+    setNotifications((prev) => {
+      const updated = { ...prev, [key]: value };
+      if (user?.id && user?.accessToken) {
+        notificationService.updatePreferences(user.accessToken, user.id, { [key]: value }).catch((err) => {
+          console.warn('[BioPulse HealthStore] Error saving notification preferences in DB:', err);
+        });
+      }
+      return updated;
+    });
+  }, [user?.id, user?.accessToken]);
+
 
   const contextValue: RealtimeHealthStoreValue = {
     pathway,

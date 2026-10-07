@@ -52,82 +52,57 @@ export default function ReportsScreen() {
   const { pathway } = useAuth();
   const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
 
+  const { reports, screening } = useHealthStore();
+
   const [activeTab, setActiveTab] = useState<'All' | 'Screening' | 'Lab Reports' | 'Summaries'>('All');
 
-  const allReports: ReportCardItem[] = useMemo(() => [
-    {
-      id: 'rep-screening',
-      category: 'Screening',
-      title: isFemale ? 'PCOS Screening Report' : 'Hypogonadism Screening Report',
-      subtitle: 'Tier 1 Assessment',
-      date: '12 Mar 2026',
-      status: 'Completed',
-      icon: 'document-text',
-      iconBg: '#FFE4E6',
-      iconColor: '#E11D48',
-      route: '/(app)/screening-explanation',
-    },
-    {
-      id: 'rep-hormone',
-      category: 'Lab Reports',
-      title: 'Hormone Lab Report',
-      subtitle: 'Blood Tests',
-      date: '10 Mar 2026',
-      status: 'Completed',
-      icon: 'flask',
-      iconBg: '#E0F2FE',
-      iconColor: '#0284C7',
-      route: '/(app)/add-labs',
-    },
-    {
-      id: 'rep-summary',
-      category: 'Summaries',
-      title: 'Clinical Summary',
-      subtitle: 'AI Generated Summary',
-      date: '10 Mar 2026',
-      status: 'Completed',
-      icon: 'clipboard',
-      iconBg: '#F3E8FF',
-      iconColor: '#8B5CF6',
-      route: '/(app)/clinical-summary',
-    },
-    {
-      id: 'rep-ultrasound',
-      category: 'Lab Reports',
-      title: isFemale ? 'Ultrasound Report' : 'Endocrine Ultrasound Report',
-      subtitle: isFemale ? 'Ovarian Ultrasound' : 'Scrotal Ultrasound',
-      date: '2 Mar 2026',
-      status: 'Uploaded',
-      icon: 'water',
-      iconBg: '#E0F2FE',
-      iconColor: '#0284C7',
-      route: '/(app)/reports',
-    },
-    {
-      id: 'rep-lifestyle',
-      category: 'Summaries',
-      title: 'Lifestyle Progress Report',
-      subtitle: '1 Feb 2026',
-      date: '1 Feb 2026',
-      status: 'Completed',
-      icon: 'document-text',
-      iconBg: '#F3E8FF',
-      iconColor: '#8B5CF6',
-      route: '/(app)/progress',
-    },
-    {
-      id: 'rep-monthly',
-      category: 'Summaries',
-      title: 'Monthly Summary',
-      subtitle: 'Jan 2026',
-      date: 'Jan 2026',
-      status: 'Completed',
-      icon: 'document-text',
-      iconBg: '#F3E8FF',
-      iconColor: '#8B5CF6',
-      route: '/(app)/progress',
-    },
-  ], [isFemale]);
+  const allReports: ReportCardItem[] = useMemo(() => {
+    const list: ReportCardItem[] = [];
+
+    // Verified persistent screening assessment
+    if (screening.tierStatus && screening.tierStatus !== 'Not Assessed') {
+      list.push({
+        id: 'rep-screening',
+        category: 'Screening',
+        title: isFemale ? 'PCOS Screening Report' : 'Hypogonadism Screening Report',
+        subtitle: `${screening.tierStatus} (${screening.riskBand})`,
+        date: screening.lastAssessedDate || 'Recent Assessment',
+        status: 'Completed',
+        icon: 'document-text',
+        iconBg: '#FFE4E6',
+        iconColor: '#E11D48',
+        route: '/(app)/screening-explanation',
+      });
+    }
+
+    // Verified persistent user reports & lab documents
+    if (reports && reports.length > 0) {
+      reports.forEach((r) => {
+        const isLab = r.type === 'Lab';
+        const isSummary = r.type === 'Clinical Summary';
+        const category: 'Screening' | 'Lab Reports' | 'Summaries' = isLab
+          ? 'Lab Reports'
+          : isSummary
+          ? 'Summaries'
+          : 'Screening';
+
+        list.push({
+          id: r.id,
+          category,
+          title: r.title,
+          subtitle: (r.tags && r.tags.length > 0 ? r.tags.join(', ') : r.type) || 'Health Record',
+          date: r.date,
+          status: (r.status === 'Uploaded' ? 'Uploaded' : 'Completed') as 'Completed' | 'Uploaded',
+          icon: isLab ? 'flask' : 'document-text',
+          iconBg: isLab ? '#E0F2FE' : '#F3E8FF',
+          iconColor: isLab ? '#0284C7' : '#8B5CF6',
+          route: isLab ? '/(app)/add-labs' : '/(app)/clinical-summary',
+        });
+      });
+    }
+
+    return list;
+  }, [screening, reports, isFemale]);
 
   const displayedReports = useMemo(() => {
     if (activeTab === 'All') return allReports;
@@ -184,55 +159,71 @@ export default function ReportsScreen() {
 
         {/* Reports List */}
         <View style={styles.reportsList}>
-          {displayedReports.map((item) => (
-            <Pressable
-              key={item.id}
-              onPress={() => item.route && router.push(item.route as any)}
-              style={({ pressed }) => [styles.reportCard, pressed && styles.cardPressed]}
-            >
-              {/* Icon Box */}
-              <View style={[styles.iconBox, { backgroundColor: item.iconBg }]}>
-                <Ionicons name={item.icon} size={20} color={item.iconColor} />
-              </View>
+          {displayedReports.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <Ionicons name="document-text-outline" size={42} color="#94A3B8" style={{ marginBottom: 8 }} />
+              <Text style={styles.emptyTitle}>No Reports Available</Text>
+              <Text style={styles.emptySub}>
+                Complete a clinical screening assessment or upload lab results to view generated health reports.
+              </Text>
+              <Pressable
+                onPress={() => router.push('/(app)/assessment')}
+                style={styles.emptyBtn}
+              >
+                <Text style={styles.emptyBtnText}>Start Assessment</Text>
+              </Pressable>
+            </View>
+          ) : (
+            displayedReports.map((item) => (
+              <Pressable
+                key={item.id}
+                onPress={() => item.route && router.push(item.route as any)}
+                style={({ pressed }) => [styles.reportCard, pressed && styles.cardPressed]}
+              >
+                {/* Icon Box */}
+                <View style={[styles.iconBox, { backgroundColor: item.iconBg }]}>
+                  <Ionicons name={item.icon} size={20} color={item.iconColor} />
+                </View>
 
-              {/* Meta */}
-              <View style={styles.reportMeta}>
-                <Text style={styles.reportTitle}>{item.title}</Text>
-                <Text style={styles.reportSub}>{item.subtitle}</Text>
-                <Text style={styles.reportDate}>{item.date}</Text>
-              </View>
+                {/* Meta */}
+                <View style={styles.reportMeta}>
+                  <Text style={styles.reportTitle}>{item.title}</Text>
+                  <Text style={styles.reportSub}>{item.subtitle}</Text>
+                  <Text style={styles.reportDate}>{item.date}</Text>
+                </View>
 
-              {/* Status and Action */}
-              <View style={styles.rightActionCol}>
-                <View
-                  style={[
-                    styles.statusBadge,
-                    item.status === 'Completed'
-                      ? styles.badgeCompleted
-                      : styles.badgeUploaded,
-                  ]}
-                >
-                  <Text
+                {/* Status and Action */}
+                <View style={styles.rightActionCol}>
+                  <View
                     style={[
-                      styles.statusText,
+                      styles.statusBadge,
                       item.status === 'Completed'
-                        ? styles.textCompleted
-                        : styles.textUploaded,
+                        ? styles.badgeCompleted
+                        : styles.badgeUploaded,
                     ]}
                   >
-                    {item.status}
-                  </Text>
-                </View>
-
-                <View style={styles.viewRow}>
-                  <View style={styles.viewBtn}>
-                    <Text style={styles.viewBtnText}>View</Text>
+                    <Text
+                      style={[
+                        styles.statusText,
+                        item.status === 'Completed'
+                          ? styles.textCompleted
+                          : styles.textUploaded,
+                      ]}
+                    >
+                      {item.status}
+                    </Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
+
+                  <View style={styles.viewRow}>
+                    <View style={styles.viewBtn}>
+                      <Text style={styles.viewBtnText}>View</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
+                  </View>
                 </View>
-              </View>
-            </Pressable>
-          ))}
+              </Pressable>
+            ))
+          )}
         </View>
       </ScrollView>
     </View>
@@ -403,5 +394,42 @@ const styles = StyleSheet.create({
 
   cardPressed: {
     opacity: 0.88,
+  },
+  emptyCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    alignItems: 'center',
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 6,
+  },
+  emptySub: {
+    fontSize: 13,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 16,
+  },
+  emptyBtn: {
+    backgroundColor: '#E11D48',
+    borderRadius: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+  },
+  emptyBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });

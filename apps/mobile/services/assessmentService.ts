@@ -620,4 +620,17 @@ export async function submitMaleTier1AssessmentWithStatus(
   }
 }
 
+export const assessmentService = {
+  fetchActiveScreeningAssessment,
+  getLatestAssessment: fetchActiveScreeningAssessment,
+  submitTier1Screening: submitFemaleTier1AssessmentWithStatus,
+  submitFemaleTier1Assessment,
+  submitFemaleTier1AssessmentWithStatus,
+  submitMaleTier1Screening: submitMaleTier1AssessmentWithStatus,
+  submitMaleTier1AssessmentWithStatus,
+  resolveRiskBand,
+  resolveNextAction,
+};
+
+
 
