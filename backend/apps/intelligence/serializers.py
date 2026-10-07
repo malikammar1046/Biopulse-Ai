@@ -54,6 +54,7 @@ class ProgressiveAssessmentSerializer(serializers.Serializer):
     pcom_probability = serializers.FloatField(allow_null=True, required=False)
     gradcam_b64 = serializers.CharField(allow_null=True, required=False)
     gradcam_url = serializers.CharField(allow_null=True, required=False)
+    fusion_details = serializers.DictField(required=False, allow_null=True)
     is_active = serializers.BooleanField(required=False, default=True)
     disclaimer = serializers.CharField(required=False)
     created_at = serializers.CharField(required=False, allow_blank=True)

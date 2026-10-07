@@ -700,6 +700,7 @@ class AssessmentRepository:
             "gradcam_url": assessment_data.get("gradcam_url") if has_t3 else None,
             "gradcam_b64": assessment_data.get("gradcam_b64") if has_t3 else None,
             "ultrasound_report_id": assessment_data.get("ultrasound_report_id") if has_t3 else None,
+            "fusion_details": assessment_data.get("fusion_details") if has_t3 else None,
             "status_code": assessment_data.get("status_code"),
             "notice": assessment_data.get("notice"),
             "next_step": assessment_data.get("next_step", ""),

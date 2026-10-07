@@ -258,11 +258,13 @@ export interface AvailableHistoricalEvidence {
 
 export interface FusionDetails {
   clinical_probability: number;
-  ultrasound_pcom_probability: number;
+  ultrasound_pcom_probability?: number;
+  ultrasound_probability?: number;
   clinical_weight: number;
   ultrasound_weight: number;
   combined_score: number;
-  threshold: number;
+  threshold?: number;
+  fusion_method?: string;
 }
 
 export interface HormonePatternInterpretation {

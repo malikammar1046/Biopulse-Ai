@@ -1186,12 +1186,14 @@ def format_assessment_response(record: dict[str, Any]) -> dict[str, Any]:
         gradcam_url = None
         gradcam_b64 = None
         ultrasound_report_id = None
+        fusion_details = None
     else:
         pcom_status = record.get('pcom_status')
         pcom_probability = record.get('pcom_probability')
         gradcam_url = record.get('gradcam_url')
         gradcam_b64 = record.get('gradcam_b64')
         ultrasound_report_id = record.get('ultrasound_report_id')
+        fusion_details = record.get('fusion_details')
 
     input_features = record.get('input_features', {})
     authoritative_tier_1 = record.get('authoritative_tier_1_inputs', input_features)
@@ -1242,6 +1244,7 @@ def format_assessment_response(record: dict[str, Any]) -> dict[str, Any]:
         'gradcam_url': gradcam_url,
         'gradcam_b64': gradcam_b64,
         'ultrasound_report_id': ultrasound_report_id,
+        'fusion_details': fusion_details,
         'is_active': bool(record.get('is_active', True)),
         'tier_2_available_count': tier_2_available_count,
         'tier_2_total_count': tier_2_total_count,
