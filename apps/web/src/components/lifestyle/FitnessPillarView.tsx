@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import {
   Dumbbell,
-  CheckCircle2,
   ChevronDown,
   ChevronUp,
+  Clock,
+  ShieldCheck,
 } from 'lucide-react';
 import type { FitnessPillar, RecommendationItem } from '../../types/lifestyle';
 import { RecommendationCard } from './RecommendationCard';
+import { getWorkoutImage } from '../../utils/lifestyleImages';
 
 interface FitnessPillarViewProps {
   fitness: FitnessPillar;
@@ -34,147 +36,157 @@ export const FitnessPillarView: React.FC<FitnessPillarViewProps> = ({
   };
 
   return (
-    <div className="space-y-8 animate-fadeIn">
-      {/* 1. Protocol Overview */}
-      <section
-        aria-labelledby="fitness-protocol-title"
-        className="rounded-2xl bg-white border border-[#D7EAF2] p-6 sm:p-8 space-y-4 shadow-xs"
-      >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div
-              className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                isMale ? 'bg-sky-50 text-[#0868B9]' : 'bg-teal-50 text-[#0E9EAA]'
-              }`}
-            >
-              <Dumbbell className="w-5 h-5" />
-            </div>
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#55718F] block">
-                Movement & Conditioning Protocol
+    <div className="space-y-8 animate-fadeIn text-left">
+      {/* ── 1. PROTOCOL OVERVIEW HERO WITH ATHLETIC ART ── */}
+      <section className="rounded-3xl bg-white border border-[#E2EEF4] p-7 sm:p-9 shadow-sm space-y-6">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="space-y-3 max-w-2xl">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-sky-50 text-[#0868B9] border border-sky-100">
+                <Dumbbell className="w-3.5 h-3.5" />
+                Movement Architecture
               </span>
-              <h2 id="fitness-protocol-title" className="text-xl sm:text-2xl font-bold text-[#073B72]">
-                {fitness.protocol_name}
-              </h2>
+              <span className="text-xs text-slate-500 font-medium">
+                {fitness.weekly_frequency || '3–4 Sessions Weekly'}
+              </span>
+            </div>
+
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#073B72] tracking-tight">
+              {fitness.protocol_name}
+            </h2>
+
+            <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+              {fitness.overview}
+            </p>
+          </div>
+
+          {/* Target Weekly Badges */}
+          <div className="flex sm:flex-col gap-3 shrink-0">
+            <div className="p-4 rounded-2xl bg-[#F7FBFC] border border-[#E2EEF4] text-center sm:text-left space-y-1 min-w-[160px]">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                Aerobic Conditioning
+              </span>
+              <div className="text-xl font-black text-[#073B72] font-mono">
+                {fitness.aerobic_target_minutes} <span className="text-xs font-normal text-slate-500">min/wk</span>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-[#F7FBFC] border border-[#E2EEF4] text-center sm:text-left space-y-1 min-w-[160px]">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                Resistance Stimulus
+              </span>
+              <div className="text-xl font-black text-[#073B72] font-mono">
+                {fitness.resistance_target_sessions} <span className="text-xs font-normal text-slate-500">sessions/wk</span>
+              </div>
             </div>
           </div>
+        </div>
 
-          {/* Quick Target Badges */}
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <span className="px-3 py-1.5 rounded-xl bg-[#F5FBFD] border border-[#D7EAF2] text-xs font-bold text-[#073B72]">
-              {fitness.aerobic_target_minutes} min/wk Aerobic
-            </span>
-            <span className="px-3 py-1.5 rounded-xl bg-[#F5FBFD] border border-[#D7EAF2] text-xs font-bold text-[#073B72]">
-              {fitness.resistance_target_sessions}x/wk Resistance
-            </span>
+        {/* Hormonal & Metabolic Mechanism Banner */}
+        {fitness.pathway_clinical_benefit && (
+          <div className="p-5 rounded-2xl bg-[#F7FBFC] border border-[#E2EEF4] text-xs sm:text-sm text-slate-700 space-y-1.5 leading-relaxed">
+            <div className="flex items-center gap-1.5 font-bold text-[#073B72] text-xs uppercase tracking-wider">
+              <ShieldCheck className="w-4 h-4 text-[#0E9EAA]" />
+              <span>Target Hormonal & Metabolic Adaptation</span>
+            </div>
+            <p>{fitness.pathway_clinical_benefit}</p>
           </div>
-        </div>
-
-        <p className="text-sm sm:text-base text-slate-700 leading-relaxed max-w-4xl">
-          {fitness.overview}
-        </p>
-
-        {/* Clinical Pathway Benefit */}
-        <div className="p-4 rounded-xl bg-[#F5FBFD] border border-[#D7EAF2] text-xs sm:text-sm text-slate-800 space-y-1">
-          <strong className="block text-xs font-bold uppercase tracking-wider text-[#073B72]">
-            Hormonal & Metabolic Mechanism
-          </strong>
-          <p className="leading-relaxed">{fitness.pathway_clinical_benefit}</p>
-        </div>
+        )}
       </section>
 
-      {/* 2. 7-Day Lightweight Weekly Schedule (Expandable, not 7 giant cards) */}
+      {/* ── 2. 7-DAY VISUAL MOVEMENT SCHEDULE ── */}
       {fitness.weekly_schedule && fitness.weekly_schedule.length > 0 && (
-        <section aria-labelledby="weekly-schedule-title" className="space-y-4">
+        <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 id="weekly-schedule-title" className="text-lg font-bold text-[#073B72]">
-                Suggested Weekly Structure
-              </h3>
-              <p className="text-xs text-[#55718F]">
-                {fitness.weekly_frequency || 'Balanced weekly routine designed for joint safety and metabolic adaptation'}
-              </p>
+              <h3 className="text-lg font-bold text-[#073B72]">Weekly Movement Rhythm</h3>
+              <p className="text-xs text-slate-500">Progressive volume balanced with autonomic joint recovery</p>
             </div>
-            <span className="text-xs text-[#55718F] hidden sm:inline">
-              Click any day to expand movements
-            </span>
           </div>
 
-          <div className="rounded-2xl bg-white border border-[#D7EAF2] overflow-hidden divide-y divide-[#D7EAF2] shadow-xs">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {fitness.weekly_schedule.map((session, idx) => {
+              const visual = getWorkoutImage(session.modality, session.focus);
               const isExpanded = expandedDay === idx;
+
               return (
-                <div key={idx} className="transition-colors hover:bg-[#F5FBFD]/50">
-                  {/* Day Summary Row */}
-                  <button
-                    type="button"
-                    onClick={() => toggleDay(idx)}
-                    className="w-full px-5 py-4 flex items-center justify-between gap-4 text-left cursor-pointer focus:outline-none"
-                    aria-expanded={isExpanded}
-                  >
-                    <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                      <span className="w-12 sm:w-14 text-xs sm:text-sm font-bold text-[#073B72] shrink-0">
+                <div
+                  key={idx}
+                  className="rounded-3xl bg-white border border-[#E2EEF4] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between"
+                >
+                  <div>
+                    {/* Visual Photo Banner */}
+                    <div className="relative h-40 w-full overflow-hidden bg-slate-100 group">
+                      <img
+                        src={visual.url}
+                        alt={session.focus}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        loading="lazy"
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.opacity = '0';
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/20 to-transparent" />
+
+                      <div className="absolute top-3.5 left-3.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-white/95 backdrop-blur-md text-[#073B72] shadow-sm">
                         {session.day_name}
-                      </span>
-                      <div className="min-w-0">
-                        <span className="text-xs sm:text-sm font-semibold text-slate-900 block truncate">
-                          {session.focus}
+                      </div>
+
+                      <div className="absolute bottom-3.5 right-3.5 flex items-center gap-2">
+                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-black/60 backdrop-blur-md text-white border border-white/20 flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-sky-300" />
+                          {session.duration_mins} min
                         </span>
-                        <span className="text-[11px] text-[#55718F]">
-                          {session.modality} • {session.duration_mins} mins
+                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-[#0E9EAA]/90 text-white backdrop-blur-md shadow-xs">
+                          {session.intensity}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 shrink-0">
-                      <span
-                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
-                          session.intensity === 'low'
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : session.intensity === 'moderate'
-                            ? 'bg-sky-50 text-sky-700 border border-sky-200'
-                            : 'bg-purple-50 text-purple-700 border border-purple-200'
-                        }`}
-                      >
-                        {session.intensity}
-                      </span>
-                      {isExpanded ? (
-                        <ChevronUp className="w-4 h-4 text-[#55718F]" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4 text-[#55718F]" />
-                      )}
-                    </div>
-                  </button>
-
-                  {/* Expanded Details */}
-                  {isExpanded && (
-                    <div className="px-5 pb-5 pt-1 space-y-3 bg-[#F5FBFD]/60 border-t border-dashed border-[#D7EAF2]/80 animate-fadeIn">
-                      <div className="space-y-1.5">
-                        <span className="text-[11px] font-semibold uppercase tracking-wider text-[#55718F] block">
-                          Key Movements & Activities
-                        </span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {session.key_movements.map((movement, mIdx) => (
-                            <span
-                              key={mIdx}
-                              className="text-xs px-2.5 py-1 rounded-lg bg-white border border-[#D7EAF2] text-slate-800 font-medium"
-                            >
-                              {movement}
-                            </span>
-                          ))}
-                        </div>
+                    {/* Content */}
+                    <div className="p-5 space-y-2.5">
+                      <div className="text-xs font-bold uppercase tracking-wider text-[#0E9EAA]">
+                        {session.modality || 'Conditioning'}
                       </div>
+                      <h4 className="text-base font-bold text-[#073B72] leading-snug">
+                        {session.focus}
+                      </h4>
 
+                      {/* Coaching Cue */}
                       {session.coaching_cue && (
-                        <div className="p-3 rounded-xl bg-white border border-[#D7EAF2] text-xs text-slate-700 italic">
-                          <strong className="not-italic text-[#073B72] font-semibold mr-1">
-                            Coaching Cue:
-                          </strong>
-                          {session.coaching_cue}
+                        <p className="text-xs text-slate-600 leading-relaxed italic bg-[#F7FBFC] p-3 rounded-xl border border-[#E2EEF4]">
+                          &ldquo;{session.coaching_cue}&rdquo;
+                        </p>
+                      )}
+
+                      {/* Move Details Accordion */}
+                      {session.key_movements && session.key_movements.length > 0 && (
+                        <div>
+                          <button
+                            type="button"
+                            onClick={() => toggleDay(idx)}
+                            className="text-xs font-semibold text-[#0868B9] hover:underline flex items-center gap-1 pt-1 cursor-pointer"
+                          >
+                            <span>Key movements ({session.key_movements.length})</span>
+                            {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                          </button>
+
+                          {isExpanded && (
+                            <div className="pt-2 flex flex-wrap gap-1.5 animate-fadeIn">
+                              {session.key_movements.map((move, mIdx) => (
+                                <span
+                                  key={mIdx}
+                                  className="text-[11px] px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium"
+                                >
+                                  {move}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
-                  )}
+                  </div>
                 </div>
               );
             })}
@@ -182,28 +194,10 @@ export const FitnessPillarView: React.FC<FitnessPillarViewProps> = ({
         </section>
       )}
 
-      {/* 3. Systemic Recovery & Joint Protection Guidance */}
-      {fitness.recovery_guidance && (
-        <section
-          aria-labelledby="recovery-guidance-title"
-          className="rounded-2xl bg-teal-50/60 border border-teal-200/80 p-5 sm:p-6 flex items-start gap-3 text-slate-800"
-        >
-          <CheckCircle2 className="w-5 h-5 text-[#20B486] shrink-0 mt-0.5" />
-          <div className="space-y-1 text-xs sm:text-sm leading-relaxed">
-            <h3 id="recovery-guidance-title" className="font-bold text-[#073B72]">
-              Joint Comfort & Systemic Recovery
-            </h3>
-            <p className="text-slate-700">{fitness.recovery_guidance}</p>
-          </div>
-        </section>
-      )}
-
-      {/* 4. Filtered Fitness Recommendations */}
+      {/* ── 3. CLINICAL FITNESS RECOMMENDATIONS ── */}
       {fitnessRecs.length > 0 && (
-        <section aria-labelledby="fitness-recs-title" className="space-y-4 pt-4 border-t border-[#D7EAF2]">
-          <h3 id="fitness-recs-title" className="text-lg font-bold text-[#073B72]">
-            Specific Movement Actions
-          </h3>
+        <section className="space-y-4 pt-2">
+          <h3 className="text-lg font-bold text-[#073B72]">Evidence-Based Movement Priorities</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {fitnessRecs.map((rec) => (
               <RecommendationCard
