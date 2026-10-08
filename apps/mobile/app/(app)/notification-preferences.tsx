@@ -116,6 +116,17 @@ export default function NotificationPreferencesScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
+        {/* PUSH INFRASTRUCTURE TRANSPARENCY NOTICE */}
+        <View style={styles.infraNoticeCard}>
+          <View style={styles.infraNoticeHeader}>
+            <Ionicons name="information-circle-outline" size={17} color="#0284C7" />
+            <Text style={styles.infraNoticeTitle}>Channel Status: In-App Alerts Live</Text>
+          </View>
+          <Text style={styles.infraNoticeDesc}>
+            In-app clinical notifications are active and backed by your health records. External push notifications via device APNs/FCM are currently in staging development.
+          </Text>
+        </View>
+
         {/* REMINDERS SECTION */}
         <View style={styles.sectionBlock}>
           <Text style={styles.sectionHeading}>Reminders</Text>
@@ -299,5 +310,29 @@ const styles = StyleSheet.create({
   },
   switchControl: {
     transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }],
+  },
+  infraNoticeCard: {
+    backgroundColor: '#F0F9FF',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+    padding: 12,
+    marginBottom: 16,
+  },
+  infraNoticeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  infraNoticeTitle: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#0369A1',
+  },
+  infraNoticeDesc: {
+    fontSize: 11.5,
+    color: '#475569',
+    lineHeight: 16,
   },
 });

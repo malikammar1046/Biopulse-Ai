@@ -478,7 +478,7 @@ export async function fetchMedicationsFromDb(
 
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/medications?user_id=eq.${userId}&is_active=eq.true&select=*`,
+      `${SUPABASE_URL}/rest/v1/medications?user_id=eq.${userId}&is_active=eq.true&order=created_at.desc&select=*`,
       {
         method: 'GET',
         headers: getSupabaseHeaders(token),
@@ -491,10 +491,18 @@ export async function fetchMedicationsFromDb(
         return rows.map((m: any) => ({
           id: String(m.id),
           name: m.name,
-          dosage: `${m.dose || ''} ${m.unit || ''}`.trim(),
-          scheduledTime: Array.isArray(m.scheduled_times) && m.scheduled_times[0] ? m.scheduled_times[0] : '08:00 AM',
-          instructions: m.notes || 'Take with water after meals',
+          dose: m.dose || '',
+          unit: m.unit || 'mg',
+          dosage: `${m.dose || ''} ${m.unit || ''}`.trim() || 'Standard Dose',
+          frequency: m.frequency || 'once_daily',
+          scheduledTimes: Array.isArray(m.scheduled_times) ? m.scheduled_times : ['08:00'],
+          scheduledTime: Array.isArray(m.scheduled_times) && m.scheduled_times[0] ? m.scheduled_times[0] : '08:00',
+          startDate: m.start_date,
+          endDate: m.end_date || null,
+          notes: m.notes || '',
+          instructions: m.notes || 'Take as directed',
           status: 'pending',
+          isActive: Boolean(m.is_active),
           pathway: 'all',
         }));
       }
@@ -526,18 +534,25 @@ export async function fetchAppointmentsFromDb(
     if (res.ok) {
       const rows = await res.json();
       if (Array.isArray(rows)) {
-        return rows.map((a: any) => ({
-          id: String(a.id),
-          doctorId: String(a.provider_id || ''),
-          doctorName: a.provider_name || 'Dr. Specialist',
-          specialty: a.provider_specialty || 'Consultant',
-          clinicOrHospital: a.location || 'Clinic Consultation',
-          date: a.scheduled_date || (a.scheduled_at ? new Date(a.scheduled_at).toLocaleDateString() : ''),
-          time: a.scheduled_time || '15:30',
-          location: a.location || 'Clinic Consultation',
-          visitType: a.meeting_url ? 'Online Consultation' : 'In-person',
-          status: a.status === 'completed' ? 'Completed' : a.status === 'cancelled' ? 'Cancelled' : 'Upcoming',
-        }));
+        return rows.map((a: any) => {
+          const s = (a.status || '').toLowerCase();
+          const uiStatus = s === 'completed' ? 'Completed' : s === 'cancelled' ? 'Cancelled' : 'Upcoming';
+          return {
+            id: String(a.id),
+            doctorId: String(a.provider_id || ''),
+            doctorName: a.provider_name || 'Dr. Specialist',
+            specialty: a.provider_specialty || 'Consultant',
+            clinicOrHospital: a.location || 'Clinic Consultation',
+            date: a.scheduled_date || (a.scheduled_at ? a.scheduled_at.split('T')[0] : ''),
+            time: a.scheduled_time || '10:00 AM',
+            location: a.location || 'Clinic Consultation',
+            visitType: a.meeting_url ? 'Online Consultation' : 'In-person',
+            status: uiStatus,
+            appointmentType: a.appointment_type,
+            reason: a.reason,
+            patientNotes: a.patient_notes,
+          };
+        });
       }
     }
   } catch (err) {
@@ -557,7 +572,7 @@ export async function fetchCareCircleFromDb(
 
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/care_circle_members?patient_id=eq.${userId}&status=neq.revoked&select=*`,
+      `${SUPABASE_URL}/rest/v1/care_circle_members?patient_id=eq.${userId}&status=neq.revoked&select=*,care_circle_permissions(*)`,
       {
         method: 'GET',
         headers: getSupabaseHeaders(token),
@@ -567,15 +582,34 @@ export async function fetchCareCircleFromDb(
     if (res.ok) {
       const rows = await res.json();
       if (Array.isArray(rows)) {
-        return rows.map((cc: any) => ({
-          id: String(cc.id),
-          name: cc.member_name,
-          role: cc.role === 'doctor' ? 'Doctor' : cc.role === 'family' ? 'Family Member' : 'Trusted Contact',
-          relationship: cc.relationship || '',
-          accessLevel: 'Full Access',
-          email: cc.member_email,
-          verified: cc.status === 'active',
-        }));
+        return rows.map((cc: any) => {
+          const role = cc.role === 'doctor' ? 'Doctor' : cc.role === 'family' ? 'Family Member' : 'Trusted Contact';
+          const permMap: Record<string, boolean> = {};
+          if (Array.isArray(cc.care_circle_permissions)) {
+            for (const p of cc.care_circle_permissions) {
+              if (p.permission_key && typeof p.enabled === 'boolean') {
+                permMap[p.permission_key] = p.enabled;
+              }
+            }
+          }
+          const accessDesc = role === 'Doctor'
+            ? 'Medical reports, screening results & clinical logs'
+            : role === 'Family Member'
+              ? (permMap.reports ? 'Full access including diagnostic reports & tracking' : 'Basic health summary, symptoms & reminders')
+              : 'Emergency contact & scheduled appointments only';
+
+          return {
+            id: String(cc.id),
+            name: cc.member_name,
+            role,
+            relationship: cc.relationship || '',
+            accessLevel: accessDesc,
+            email: cc.member_email,
+            verified: cc.status === 'active',
+            permissions: permMap,
+            status: cc.status,
+          };
+        });
       }
     }
   } catch (err) {

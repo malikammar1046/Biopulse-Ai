@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   ScrollView,
   Pressable,
   Alert,
+  ActivityIndicator,
+  RefreshControl,
   useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -23,13 +25,16 @@ import { useHealthStore } from '../../store';
  * - Top Header: Back chevron (<), centered "Water Log"
  * - Date Navigator: < Today, 14 Sep 2026 >
  * - Large Circular Progress Card:
- *   - Circular ring gauge with 1.6 L of 2.5 L and water droplet
- *   - Right: Daily Goal (2.5 L) with edit pencil
+ *   - Circular ring gauge with consumed liters of target liters and water droplet
+ *   - Right: Daily Goal with edit indicator
  *   - Encouragement box: "You're doing great! Keep going to stay hydrated."
  * - Quick Add Buttons: [+ 250 ml] and [+ 500 ml]
  * - Today's History Section:
- *   - Header: "Today's History" and "Total: 1.6 L"
- *   - List items: water glass icon, time (8:00 AM, 10:30 AM...), amount (250 ml, 500 ml...), delete icon
+ *   - Header: "Today's History" and "Total: X.X L"
+ *   - List items: water glass icon, time, amount, delete icon
+ * - Persistent Backend Integration:
+ *   - Connects to public.water_logs in Supabase
+ *   - Loading, Error, Retry, Empty, and Delete handling
  */
 export default function WaterLogScreen() {
   const router = useRouter();
@@ -37,21 +42,52 @@ export default function WaterLogScreen() {
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
 
-  const { water, addWaterMl, deleteWaterLog } = useHealthStore();
+  const {
+    water,
+    addWaterMl,
+    deleteWaterLog,
+    isLoadingWater,
+    waterError,
+    loadWaterData,
+  } = useHealthStore();
+
+  const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
 
   const currentLiters = (water.consumedLiters || 0).toFixed(1);
   const targetLiters = (water.targetLiters || 2.5).toFixed(1);
 
   const handleAdd = useCallback(
-    (ml: number) => {
-      addWaterMl(ml);
+    async (ml: number) => {
+      const ok = await addWaterMl(ml);
+      if (ok) {
+        setFeedbackMsg(`Added +${ml} ml to today's hydration total.`);
+        setTimeout(() => setFeedbackMsg(null), 3000);
+      } else {
+        Alert.alert('Save Failed', 'Could not record water intake. Please try again.');
+      }
     },
     [addWaterMl]
   );
 
   const handleDelete = useCallback(
-    (id: string) => {
-      deleteWaterLog(id);
+    (id: string, amountMl: number) => {
+      Alert.alert(
+        'Delete Water Entry',
+        `Are you sure you want to remove this ${amountMl} ml log?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              const ok = await deleteWaterLog(id);
+              if (!ok) {
+                Alert.alert('Error', 'Failed to delete water log from server.');
+              }
+            },
+          },
+        ]
+      );
     },
     [deleteWaterLog]
   );
@@ -83,6 +119,13 @@ export default function WaterLogScreen() {
       <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPad + 30 }]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoadingWater}
+            onRefresh={() => loadWaterData()}
+            tintColor="#0284C7"
+          />
+        }
       >
         <View style={[styles.mainWrapper, isTablet && styles.tabletWrapper]}>
           {/* DATE NAVIGATOR */}
@@ -97,6 +140,25 @@ export default function WaterLogScreen() {
               <Ionicons name="chevron-forward" size={18} color="#64748B" />
             </Pressable>
           </View>
+
+          {/* SUCCESS BANNER */}
+          {feedbackMsg && (
+            <View style={styles.successBanner}>
+              <Ionicons name="checkmark-circle" size={18} color="#10B981" />
+              <Text style={styles.successBannerText}>{feedbackMsg}</Text>
+            </View>
+          )}
+
+          {/* ERROR BANNER */}
+          {waterError && (
+            <View style={styles.errorBanner}>
+              <Ionicons name="alert-circle-outline" size={18} color="#EF4444" />
+              <Text style={styles.errorBannerText}>{waterError}</Text>
+              <Pressable onPress={() => loadWaterData()} style={styles.retryBtn}>
+                <Text style={styles.retryBtnText}>Retry</Text>
+              </Pressable>
+            </View>
+          )}
 
           {/* LARGE CIRCULAR PROGRESS CARD */}
           <View style={styles.progressCard}>
@@ -113,9 +175,7 @@ export default function WaterLogScreen() {
             <View style={styles.detailsCol}>
               <View style={styles.goalHeaderRow}>
                 <Text style={styles.goalLabel}>Daily Goal</Text>
-                <Pressable hitSlop={6}>
-                  <Ionicons name="pencil-outline" size={15} color="#0284C7" />
-                </Pressable>
+                <Ionicons name="water-outline" size={14} color="#0284C7" />
               </View>
               <Text style={styles.goalValue}>{targetLiters} L</Text>
 
@@ -145,7 +205,7 @@ export default function WaterLogScreen() {
               accessibilityLabel="Add 250 ml"
             >
               <Ionicons name="add" size={18} color="#F43F7D" style={{ marginRight: 4 }} />
-              <Text style={styles.quickAddBtnText}>250 ml</Text>
+              <Text style={styles.quickAddBtnText}>+ 250 ml</Text>
             </Pressable>
 
             <Pressable
@@ -155,14 +215,17 @@ export default function WaterLogScreen() {
               accessibilityLabel="Add 500 ml"
             >
               <Ionicons name="add" size={18} color="#F43F7D" style={{ marginRight: 4 }} />
-              <Text style={styles.quickAddBtnText}>500 ml</Text>
+              <Text style={styles.quickAddBtnText}>+ 500 ml</Text>
             </Pressable>
           </View>
 
           {/* TODAY'S HISTORY SECTION */}
           <View style={styles.historySection}>
             <View style={styles.historyHeaderRow}>
-              <Text style={styles.historyTitle}>Today's History</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={styles.historyTitle}>Today's History</Text>
+                {isLoadingWater && <ActivityIndicator size="small" color="#0284C7" />}
+              </View>
               <Text style={styles.historyTotal}>Total: {currentLiters} L</Text>
             </View>
 
@@ -180,9 +243,10 @@ export default function WaterLogScreen() {
                     <Text style={styles.historyTime}>{item.time}</Text>
                     <Text style={styles.historyAmount}>{item.amountMl} ml</Text>
                     <Pressable
-                      onPress={() => handleDelete(item.id)}
+                      onPress={() => handleDelete(item.id, item.amountMl)}
                       hitSlop={8}
                       style={styles.deleteBtn}
+                      accessibilityLabel="Delete water entry"
                     >
                       <Ionicons name="trash-outline" size={16} color="#94A3B8" />
                     </Pressable>
@@ -246,6 +310,53 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#073B72',
+  },
+  successBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 12,
+    gap: 8,
+  },
+  successBannerText: {
+    fontSize: 13,
+    color: '#065F46',
+    fontWeight: '600',
+    flex: 1,
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 12,
+    gap: 8,
+  },
+  errorBannerText: {
+    fontSize: 13,
+    color: '#991B1B',
+    fontWeight: '500',
+    flex: 1,
+  },
+  retryBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: '#EF4444',
+    borderRadius: 6,
+  },
+  retryBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
   },
   progressCard: {
     flexDirection: 'row',

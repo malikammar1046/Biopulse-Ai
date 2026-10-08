@@ -7,6 +7,7 @@ import {
   Pressable,
   Image,
   RefreshControl,
+  ActivityIndicator,
   useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -83,6 +84,23 @@ export const MaleDashboardOverview: React.FC<MaleDashboardOverviewProps> = ({
 
   const topPad = Math.max(insets.top, 12);
   const bottomPad = Math.max(insets.bottom, 12);
+
+  // Initial loading state when no cache is available yet
+  if (state === 'loading' && !data) {
+    return (
+      <BioPulseBackground style={styles.root}>
+        <StatusBar style="dark" backgroundColor="transparent" translucent />
+        <View style={[styles.errorContainer, { paddingTop: topPad + 80 }]}>
+          <ActivityIndicator size="large" color="#0284C7" />
+          <Text style={[styles.errorTitle, { marginTop: 16 }]}>Loading Health Dashboard</Text>
+          <Text style={styles.errorSubtitle}>
+            Synchronizing your clinical parameters and latest tracking data...
+          </Text>
+        </View>
+        <BioPulseBottomNav activeTab="home" />
+      </BioPulseBackground>
+    );
+  }
 
   // If initial load failed with no cache
   if (state === 'error' && !data) {

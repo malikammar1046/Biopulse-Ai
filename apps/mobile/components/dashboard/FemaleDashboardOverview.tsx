@@ -7,6 +7,7 @@ import {
   Pressable,
   Switch,
   RefreshControl,
+  ActivityIndicator,
   useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -113,6 +114,23 @@ export const FemaleDashboardOverview: React.FC<FemaleDashboardOverviewProps> = (
   // 4. Medication derived state
   const activeMed = data?.medication?.activeMedication;
   const hasMedication = Boolean(data?.medication?.hasMedications && activeMed);
+
+  // Initial loading state when no cache is available yet
+  if (state === 'loading' && !data) {
+    return (
+      <BioPulseBackground style={styles.container}>
+        <StatusBar style="dark" backgroundColor="transparent" translucent />
+        <View style={[styles.errorContainer, { paddingTop: topPad + 80 }]}>
+          <ActivityIndicator size="large" color="#F43F7D" />
+          <Text style={[styles.errorTitle, { marginTop: 16 }]}>Loading Health Dashboard</Text>
+          <Text style={styles.errorSubtitle}>
+            Synchronizing your clinical parameters and latest tracking data...
+          </Text>
+        </View>
+        <BioPulseBottomNav activeTab="home" />
+      </BioPulseBackground>
+    );
+  }
 
   // If initial load failed with no cache
   if (state === 'error' && !data) {

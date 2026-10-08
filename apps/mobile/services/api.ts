@@ -90,6 +90,98 @@ export function getDjangoHeaders(token?: string): Record<string, string> {
 }
 
 // ============================================================================
+// AUTH EXPIRATION & SESSION STATE
+// ============================================================================
+
+export type AuthFailureListener = () => void;
+const authFailureListeners = new Set<AuthFailureListener>();
+let isSessionExpired = false;
+
+export function registerAuthFailureListener(listener: AuthFailureListener): () => void {
+  authFailureListeners.add(listener);
+  return () => {
+    authFailureListeners.delete(listener);
+  };
+}
+
+export function notifyAuthFailure(): void {
+  isSessionExpired = true;
+  for (const listener of authFailureListeners) {
+    try {
+      listener();
+    } catch (err) {
+      console.warn('[BioPulse api] Error in auth failure listener:', err);
+    }
+  }
+}
+
+export function isAuthExpired(): boolean {
+  return isSessionExpired;
+}
+
+export function setAuthExpired(expired: boolean): void {
+  isSessionExpired = expired;
+}
+
+// ============================================================================
+// OFFLINE ARCHITECTURE SPECIFICATION
+// ============================================================================
+
+/**
+ * Truthful, authoritative declaration of offline capabilities across BioPulse Mobile.
+ * - Offline Reading: Supported via persistent local cache (dashboard cache, user profile draft, session tokens).
+ * - Offline Mutations: NOT supported. Clinical safety requires real-time backend validation.
+ *   Mutations are safely rejected with truthful messaging; zero fake health data is ever generated.
+ */
+export const OFFLINE_ARCHITECTURE_DECLARATION = {
+  supportsOfflineReading: true,
+  supportsOfflineMutations: false,
+  cachingLayer: 'persistentStorage (expo-file-system / localStorage)',
+  syncBehavior: 'Optimistic local cache restored upon restart. Online connection strictly required for new clinical inputs.',
+  gracefulOfflineMessage: "You appear to be offline. Please reconnect to the internet to complete this action and synchronize your health records.",
+} as const;
+
+// ============================================================================
+// ERROR CLASSIFICATION HELPERS
+// ============================================================================
+
+export function isNetworkOfflineError(status: number, error?: string | null): boolean {
+  if (status === 0 || status === 408) return true;
+  if (!error) return false;
+  const lower = error.toLowerCase();
+  return (
+    lower.includes('network') ||
+    lower.includes('offline') ||
+    lower.includes('internet') ||
+    lower.includes('failed to fetch') ||
+    lower.includes('timed out') ||
+    lower.includes('connection')
+  );
+}
+
+export function isAuthExpiredError(status: number): boolean {
+  return status === 401;
+}
+
+export function isValidationError(status: number): boolean {
+  return status === 400 || status === 422;
+}
+
+export function isServerError(status: number): boolean {
+  return status >= 500 && status <= 599;
+}
+
+export function isTimeoutError(status: number): boolean {
+  return status === 408;
+}
+
+export function isMalformedResponseError(status: number, error?: string | null): boolean {
+  if (status === 422 && error?.toLowerCase().includes('malformed')) return true;
+  if (error?.toLowerCase().includes('malformed') || error?.toLowerCase().includes('unexpected token')) return true;
+  return false;
+}
+
+// ============================================================================
 // RESPONSE NORMALIZER
 // ============================================================================
 
@@ -99,6 +191,7 @@ export function getDjangoHeaders(token?: string): Record<string, string> {
 export async function normalizeResponse<T>(res: Response): Promise<ApiResponse<T>> {
   let responseData: any = null;
   let errorMessage: string | null = null;
+  let isMalformed = false;
 
   try {
     const text = await res.text();
@@ -106,11 +199,25 @@ export async function normalizeResponse<T>(res: Response): Promise<ApiResponse<T
       responseData = JSON.parse(text);
     }
   } catch (_err) {
-    // Malformed JSON response
+    // Malformed JSON response body
     responseData = null;
+    isMalformed = true;
+  }
+
+  // Handle malformed response on otherwise successful HTTP status
+  if (isMalformed && res.ok) {
+    return {
+      data: null,
+      error: 'Malformed response received from server. Please try again.',
+      status: 422,
+    };
   }
 
   if (!res.ok) {
+    if (res.status === 401) {
+      notifyAuthFailure();
+    }
+
     if (responseData && typeof responseData === 'object') {
       errorMessage =
         responseData.message ||
@@ -162,6 +269,15 @@ export async function safeRequest<T>(
   options: RequestInit = {},
   timeoutMs: number = API_CONFIG.timeoutMs
 ): Promise<ApiResponse<T>> {
+  // Prevent unauthorized cascading requests if session has expired
+  if (isSessionExpired && options.headers && (options.headers as any)['Authorization']) {
+    return {
+      data: null,
+      error: 'User session has expired. Please sign in again.',
+      status: 401,
+    };
+  }
+
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -188,4 +304,5 @@ export async function safeRequest<T>(
     };
   }
 }
+
 

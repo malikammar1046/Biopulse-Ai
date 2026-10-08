@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -17,25 +17,23 @@ import { BioPulseColors } from '../../constants/Colors';
 import { BioPulseBackground } from '../../components/common/BioPulseBackground';
 import { useAuth } from '../../features/authentication';
 import { useHealthStore } from '../../store';
+import {
+  formatAssessmentDate,
+  formatShapFactorForPatient,
+  getFeatureIconName,
+} from '../../services/assessmentService';
 
 /**
  * SCREEN 43: CLINICAL SUMMARY
  *
  * Strict visual match to Screenshot 43:
- * - Top Header: Back chevron (<), centered "Clinical Summary", "Generated on 12 Mar 2026", right "Share" icon
+ * - Top Header: Back chevron (<), centered "Clinical Summary", dynamic generated date, right "Share" icon
  * - Section 1: Latest Screening Result Card
- *   - Circular ring progress with "72%"
- *   - "↑ Higher Risk", "PCOS Screening – Tier 1", "12 Mar 2026"
+ *   - Circular ring progress with real probability %
+ *   - Risk badge & label, module tier, real assessment date
  * - Section 2: Important Factors
- *   - "View All" link
- *   - Irregular Cycle -> ↑ Increased risk
- *   - Excess Hair Growth -> ↑ Increased risk
- *   - Higher BMI -> ↑ Increased risk
+ *   - Real SHAP contributing factors formatted for patient understanding
  * - Section 3: Latest Lab Results
- *   - "View All" link
- *   - FSH: 6.2 mIU/mL [ Normal ]
- *   - LH: 8.1 mIU/mL [ Normal ]
- *   - AMH: 4.3 ng/mL [ Slightly High ]
  * - Section 4: Trends Summary & Current Recommendations rows
  * - Bottom CTA: Solid pink "[ 📄 Export PDF ]" button
  */
@@ -52,13 +50,35 @@ export default function ClinicalSummaryScreen() {
 
   const [isExporting, setIsExporting] = useState(false);
 
-  const probPercent = screening.probabilityPercent || 72;
-  const riskTitle = screening.riskBand || (isFemale ? 'Higher Risk' : 'Intermediate Risk');
+  const isAssessed = screening.tierStatus !== 'Not Assessed' && screening.probabilityPercent > 0;
+  const probPercent = screening.probabilityPercent;
+  const riskTitle = isAssessed ? (screening.riskBand || (isFemale ? 'Higher Risk' : 'Intermediate Risk')) : 'Not Assessed';
+  const screeningDate = isAssessed
+    ? (screening.lastAssessedDate || (screening.createdAt ? formatAssessmentDate(screening.createdAt) : 'Recent Assessment'))
+    : 'No Assessment';
+
+  const importantFactors = useMemo(() => {
+    const raw = screening.topFactors || [];
+    if (raw.length > 0) {
+      return raw.slice(0, 3).map((f, i) => {
+        const pf = formatShapFactorForPatient(f, i);
+        return {
+          id: pf.feature_key || `factor_${i}`,
+          name: pf.patient_label || pf.feature_name,
+          direction: pf.direction,
+          isIncrease: pf.direction === 'increases_risk',
+          icon: (pf.iconName || getFeatureIconName(pf.feature_key)) as any,
+          label: pf.direction === 'increases_risk' ? 'Increased risk' : 'Favorable factor',
+        };
+      });
+    }
+    return [];
+  }, [screening.topFactors]);
 
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `BioPulse Clinical Summary - Patient Screening Risk: ${probPercent}% (${riskTitle}). Generated on 12 Mar 2026.`,
+        message: `BioPulse Clinical Summary - Patient Screening Risk: ${isAssessed ? `${probPercent}%` : 'Not Assessed'} (${riskTitle}). Generated on ${screeningDate}.`,
         title: 'BioPulse Clinical Health Summary',
       });
     } catch (e) {
@@ -72,7 +92,7 @@ export default function ClinicalSummaryScreen() {
       setIsExporting(false);
       Alert.alert(
         'Export Successful',
-        'Clinical Dossier (BioPulse_Clinical_Summary_12Mar2026.pdf) generated successfully. Ready to print or share with your physician.'
+        `Clinical Dossier (BioPulse_Clinical_Summary_${screeningDate.replace(/\s+/g, '_')}.pdf) generated successfully. Ready to print or share with your physician.`
       );
     }, 500);
   };
@@ -95,7 +115,7 @@ export default function ClinicalSummaryScreen() {
 
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>Clinical Summary</Text>
-          <Text style={styles.headerSub}>Generated on 12 Mar 2026</Text>
+          <Text style={styles.headerSub}>Generated on {screeningDate}</Text>
         </View>
 
         <Pressable
@@ -124,20 +144,31 @@ export default function ClinicalSummaryScreen() {
             {/* Circular Ring Gauge */}
             <View style={styles.ringOuter}>
               <View style={styles.ringInner}>
-                <Text style={styles.ringVal}>72%</Text>
+                <Text style={styles.ringVal}>{isAssessed ? `${probPercent}%` : '—'}</Text>
               </View>
             </View>
 
             {/* Screening Meta */}
             <View style={styles.screeningMeta}>
               <View style={styles.riskRow}>
-                <Ionicons name="arrow-up" size={14} color="#E11D48" />
-                <Text style={styles.riskTitle}>Higher Risk</Text>
+                <Ionicons
+                  name={riskTitle.toLowerCase().includes('lower') ? 'arrow-down' : 'arrow-up'}
+                  size={14}
+                  color={riskTitle.toLowerCase().includes('lower') ? '#10B981' : '#E11D48'}
+                />
+                <Text
+                  style={[
+                    styles.riskTitle,
+                    riskTitle.toLowerCase().includes('lower') && { color: '#10B981' },
+                  ]}
+                >
+                  {riskTitle}
+                </Text>
               </View>
               <Text style={styles.screeningTier}>
-                {isFemale ? 'PCOS Screening – Tier 1' : 'Hypogonadism Screening – Tier 1'}
+                {isFemale ? 'PCOS Screening' : 'Hypogonadism Screening'} – Tier {screening.tier || 1}
               </Text>
-              <Text style={styles.screeningDate}>12 Mar 2026</Text>
+              <Text style={styles.screeningDate}>{screeningDate}</Text>
             </View>
           </View>
         </View>
@@ -146,54 +177,61 @@ export default function ClinicalSummaryScreen() {
         <View style={styles.sectionWrap}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>Important Factors</Text>
-            <Pressable onPress={() => router.push('/(app)/screening-explanation' as any)} hitSlop={6}>
-              <Text style={styles.viewAllText}>View All</Text>
-            </Pressable>
+            {isAssessed && (
+              <Pressable onPress={() => router.push('/(app)/screening-explanation' as any)} hitSlop={6}>
+                <Text style={styles.viewAllText}>View All</Text>
+              </Pressable>
+            )}
           </View>
 
           <View style={styles.factorsCard}>
-            <View style={styles.factorRow}>
-              <View style={styles.factorLeft}>
-                <View style={styles.factorIconBox}>
-                  <Ionicons name="pulse-outline" size={16} color="#E11D48" />
-                </View>
-                <Text style={styles.factorName}>Irregular Cycle</Text>
+            {importantFactors.length === 0 ? (
+              <View style={{ padding: 16, alignItems: 'center' }}>
+                <Text style={{ fontSize: 13, color: '#64748B' }}>
+                  {isAssessed
+                    ? 'Assessment factors will appear here once computed.'
+                    : 'Complete a screening to view your contributing factors.'}
+                </Text>
               </View>
-              <View style={styles.factorRiskBadge}>
-                <Ionicons name="arrow-up" size={12} color="#E11D48" />
-                <Text style={styles.factorRiskText}>Increased risk</Text>
-              </View>
-            </View>
-
-            <View style={styles.divider} />
-
-            <View style={styles.factorRow}>
-              <View style={styles.factorLeft}>
-                <View style={styles.factorIconBox}>
-                  <Ionicons name="body-outline" size={16} color="#E11D48" />
-                </View>
-                <Text style={styles.factorName}>Excess Hair Growth</Text>
-              </View>
-              <View style={styles.factorRiskBadge}>
-                <Ionicons name="arrow-up" size={12} color="#E11D48" />
-                <Text style={styles.factorRiskText}>Increased risk</Text>
-              </View>
-            </View>
-
-            <View style={styles.divider} />
-
-            <View style={styles.factorRow}>
-              <View style={styles.factorLeft}>
-                <View style={styles.factorIconBox}>
-                  <Ionicons name="scale-outline" size={16} color="#E11D48" />
-                </View>
-                <Text style={styles.factorName}>Higher BMI</Text>
-              </View>
-              <View style={styles.factorRiskBadge}>
-                <Ionicons name="arrow-up" size={12} color="#E11D48" />
-                <Text style={styles.factorRiskText}>Increased risk</Text>
-              </View>
-            </View>
+            ) : (
+              importantFactors.map((factor, index) => (
+                <React.Fragment key={factor.id}>
+                  {index > 0 && <View style={styles.divider} />}
+                  <View style={styles.factorRow}>
+                    <View style={styles.factorLeft}>
+                      <View style={[styles.factorIconBox, { backgroundColor: isFemale ? '#FFF1F2' : '#EFF6FF' }]}>
+                        <Ionicons
+                          name={factor.icon}
+                          size={16}
+                          color={isFemale ? '#E11D48' : '#0284C7'}
+                        />
+                      </View>
+                      <Text style={styles.factorName}>{factor.name}</Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.factorRiskBadge,
+                        !factor.isIncrease && { backgroundColor: '#ECFDF5' },
+                      ]}
+                    >
+                      <Ionicons
+                        name={factor.isIncrease ? 'arrow-up' : 'arrow-down'}
+                        size={12}
+                        color={factor.isIncrease ? '#E11D48' : '#10B981'}
+                      />
+                      <Text
+                        style={[
+                          styles.factorRiskText,
+                          !factor.isIncrease && { color: '#10B981' },
+                        ]}
+                      >
+                        {factor.label}
+                      </Text>
+                    </View>
+                  </View>
+                </React.Fragment>
+              ))
+            )}
           </View>
         </View>
 

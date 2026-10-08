@@ -32,6 +32,8 @@ export interface ShapFactor {
   feature_key: string;
   feature_name: string;
   patient_label?: string;
+  human_label?: string;
+  iconName?: string;
   patient_value?: string;
   impact_score: number;
   direction: 'increases_risk' | 'decreases_risk' | 'positive' | 'negative' | 'higher' | 'lower' | 'neutral';
@@ -39,6 +41,7 @@ export interface ShapFactor {
   relative_influence?: number;
   description?: string;
   patient_explanation?: string;
+  [key: string]: any;
 }
 
 export interface ProgressiveAssessment {
@@ -116,8 +119,22 @@ export const FEATURE_CANONICAL_LABELS: Record<string, { label: string; icon: str
   age: { label: 'Age profile', icon: 'person-outline' },
   'Age (yrs)': { label: 'Age profile', icon: 'person-outline' },
   waist_hip_ratio: { label: 'Waist-to-hip ratio', icon: 'body-outline' },
+  waist_cm: { label: 'Waist circumference', icon: 'body-outline' },
   fast_food: { label: 'Dietary intake balance', icon: 'restaurant-outline' },
   regular_exercise: { label: 'Physical activity level', icon: 'walk-outline' },
+  exercise_frequency: { label: 'Physical activity routine', icon: 'walk-outline' },
+  sleep_hours: { label: 'Sleep duration & quality', icon: 'moon-outline' },
+  low_energy_flag: { label: 'Daytime fatigue / energy level', icon: 'battery-dead-outline' },
+  decreased_libido_flag: { label: 'Sexual interest / libido pattern', icon: 'heart-outline' },
+  libido: { label: 'Sexual interest / libido pattern', icon: 'heart-outline' },
+  energy: { label: 'Energy & endurance levels', icon: 'battery-charging-outline' },
+  erection_strength: { label: 'Erectile firmness & stamina', icon: 'pulse-outline' },
+  strength: { label: 'Muscle strength & physical vitality', icon: 'barbell-outline' },
+  sports_ability: { label: 'Physical stamina & sports ability', icon: 'fitness-outline' },
+  work_performance: { label: 'Work engagement & productivity', icon: 'briefcase-outline' },
+  post_dinner_sleep: { label: 'Post-dinner sleepiness pattern', icon: 'bed-outline' },
+  sadness_grumpiness: { label: 'Mood variability & emotional state', icon: 'happy-outline' },
+  adam_answers: { label: 'ADAM Symptom Profile', icon: 'clipboard-outline' },
 };
 
 export function getFeatureLabel(key: string, fallback?: string): string {
@@ -133,6 +150,140 @@ export function getFeatureIconName(key: string): any {
     return FEATURE_CANONICAL_LABELS[key].icon;
   }
   return 'analytics-outline';
+}
+
+/**
+ * Format a raw model SHAP factor or explanation object into patient-facing language
+ */
+export function formatShapFactorForPatient(factor: any, index: number = 0): ShapFactor {
+  const key = factor.feature_key || factor.key || factor.id || `factor_${index}`;
+  const rawDirection = String(factor.direction || '').toLowerCase();
+  const impact = Number(factor.impact_score ?? factor.impact ?? 0);
+
+  let direction: 'increases_risk' | 'decreases_risk' | 'neutral' = 'neutral';
+  if (
+    rawDirection.includes('increase') ||
+    rawDirection.includes('positive') ||
+    rawDirection.includes('higher') ||
+    impact > 0.001
+  ) {
+    direction = 'increases_risk';
+  } else if (
+    rawDirection.includes('decrease') ||
+    rawDirection.includes('negative') ||
+    rawDirection.includes('lower') ||
+    impact < -0.001
+  ) {
+    direction = 'decreases_risk';
+  }
+
+  const patientTitle =
+    factor.feature_name ||
+    factor.human_label ||
+    factor.title ||
+    factor.name ||
+    getFeatureLabel(key);
+
+  // Friendly patient explanations tailored to clinical feature context
+  const getContextualExplanation = (featKey: string, dir: string) => {
+    const k = featKey.toLowerCase();
+    if (k.includes('cycle') || k.includes('period')) {
+      return dir === 'increases_risk'
+        ? 'Variability or irregularities in menstrual cycle length are clinically associated with ovulatory patterns.'
+        : 'Consistent cycle duration represents a stable hormonal ovulatory baseline.';
+    }
+    if (k.includes('hair') || k.includes('hirsutism')) {
+      return dir === 'increases_risk'
+        ? 'Reported excess or coarse hair growth correlates with active androgen influence.'
+        : 'Minimal or normal hair growth indicates balanced peripheral androgen activity.';
+    }
+    if (k.includes('bmi') || k.includes('weight')) {
+      return dir === 'increases_risk'
+        ? 'Body mass and metabolic metrics correlate with endocrine and insulin sensitivity patterns.'
+        : 'Body composition metrics align favorably within normal screening ranges.';
+    }
+    if (k.includes('skin') || k.includes('acanthosis')) {
+      return dir === 'increases_risk'
+        ? 'Skin pigmentation patterns are an observable clinical marker for insulin resistance.'
+        : 'Absence of skin darkening markers is a favorable metabolic indicator.';
+    }
+    if (k.includes('pimple') || k.includes('acne')) {
+      return dir === 'increases_risk'
+        ? 'Persistent acne patterns reflect sebum gland sensitivity to circulating androgens.'
+        : 'Skin profile reflects balanced androgenic receptor activation.';
+    }
+    if (k.includes('libido')) {
+      return dir === 'increases_risk'
+        ? 'Marked reduction in libido serves as a primary clinical indicator of lower bioavailable testosterone.'
+        : 'Reported libido levels align with healthy hypothalamic-pituitary-gonadal activity.';
+    }
+    if (k.includes('energy') || k.includes('fatigue')) {
+      return dir === 'increases_risk'
+        ? 'Daytime fatigue and reduced vitality were evaluated as contributing factors to your score.'
+        : 'Consistent daily vitality correlates with sustained endocrine equilibrium.';
+    }
+    if (k.includes('erect') || k.includes('strength')) {
+      return dir === 'increases_risk'
+        ? 'Changes in physical vigor or stamina contribute toward screening likelihood.'
+        : 'Physical vitality and endurance markers remain favorable.';
+    }
+    if (k.includes('sleep')) {
+      return dir === 'decreases_risk'
+        ? 'Adequate and restorative nocturnal sleep supports natural diurnal hormone rhythm.'
+        : 'Sleep disruption patterns can modulate nocturnal hormone synthesis.';
+    }
+    if (k.includes('exercise')) {
+      return dir === 'decreases_risk'
+        ? 'Regular physical exercise promotes insulin sensitivity and hormonal balance.'
+        : 'Activity level is evaluated as part of overall metabolic lifestyle risk.';
+    }
+    if (k.includes('adam')) {
+      return dir === 'increases_risk'
+        ? 'Affirmative responses on the clinical ADAM questionnaire contributed to the screening result.'
+        : 'Responses on the clinical ADAM questionnaire indicate low symptom burden.';
+    }
+
+    return dir === 'increases_risk'
+      ? 'Contributed toward a higher likelihood based on screening patterns.'
+      : dir === 'decreases_risk'
+      ? 'Favorable indicator associated with reduced likelihood.'
+      : 'Evaluated as part of your overall clinical screening profile.';
+  };
+
+  const patientExplanation =
+    factor.patient_explanation ||
+    factor.description ||
+    factor.explanation ||
+    getContextualExplanation(key, direction);
+
+  return {
+    feature_key: key,
+    feature_name: patientTitle,
+    patient_label: factor.patient_label || factor.patient_value || (factor.value !== undefined ? String(factor.value) : undefined),
+    patient_value: factor.patient_value || factor.value,
+    impact_score: impact,
+    direction,
+    explanation_share_percent: factor.explanation_share_percent,
+    relative_influence: factor.relative_influence,
+    description: patientExplanation,
+    patient_explanation: patientExplanation,
+    human_label: patientTitle,
+    iconName: factor.iconName || getFeatureIconName(key),
+  };
+}
+
+/**
+ * Format an assessment ISO date string into a patient-friendly presentation string
+ */
+export function formatAssessmentDate(dateStr?: string): string {
+  if (!dateStr) return 'Recent Assessment';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch {
+    return dateStr;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -286,26 +437,49 @@ async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = D
 /**
  * Fetch the user's current authoritative active assessment
  */
-export async function fetchActiveScreeningAssessment(userId?: string): Promise<ProgressiveAssessment | null> {
+export async function fetchActiveScreeningAssessment(
+  userId?: string,
+  module?: 'female_pcos' | 'male_hypogonadism' | string
+): Promise<ProgressiveAssessment | null> {
   const session = mobileSupabaseAuth.getSession();
   const token = session?.access_token;
   const targetUser = userId || session?.user?.id;
+  const targetModule = module || 'female_pcos';
 
   // 1. Try authoritative backend endpoint if token available
   if (token) {
     try {
-      const response = await fetchWithTimeout(`${BACKEND_API_URL}/v1/intelligence/assessment/active/`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetchWithTimeout(
+        `${BACKEND_API_URL}/v1/intelligence/assessment/active/?module=${targetModule}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
         if (data && (data.probability !== undefined || data.has_assessment)) {
-          return data as ProgressiveAssessment;
+          const rawExps =
+            Array.isArray(data.explanations) && data.explanations.length > 0
+              ? data.explanations
+              : data.shap_explanation?.factors || [];
+          const normalizedExps = rawExps.map((f: any, idx: number) => formatShapFactorForPatient(f, idx));
+
+          return {
+            ...data,
+            id: data.id || data.assessment_id,
+            assessment_id: data.assessment_id || data.id,
+            patient_id: data.patient_id || targetUser,
+            module: data.module || targetModule,
+            explanations: normalizedExps,
+            threshold: Number(data.threshold ?? (targetModule === 'male_hypogonadism' ? 0.45 : 0.25)),
+            probability: Number(data.probability ?? 0),
+            probability_percent: Number(data.probability_percent ?? (Number(data.probability ?? 0) * 100)),
+          } as ProgressiveAssessment;
         }
       }
     } catch {
@@ -313,10 +487,10 @@ export async function fetchActiveScreeningAssessment(userId?: string): Promise<P
     }
   }
 
-  // 2. Query Supabase screening_assessments directly via REST
+  // 2. Query Supabase screening_assessments directly via REST (scoped to targetUser: patient_id=eq.${targetUser})
   if (targetUser) {
     try {
-      const supaUrl = `${SUPABASE_URL}/rest/v1/screening_assessments?patient_id=eq.${targetUser}&module=eq.female_pcos&is_active=eq.true&order=created_at.desc&limit=1`;
+      const supaUrl = `${SUPABASE_URL}/rest/v1/screening_assessments?or=(user_id.eq.${targetUser},patient_id.eq.${targetUser})&module=eq.${targetModule}&is_active=eq.true&order=created_at.desc&limit=1`;
       const response = await fetchWithTimeout(supaUrl, {
         method: 'GET',
         headers: {
@@ -330,21 +504,27 @@ export async function fetchActiveScreeningAssessment(userId?: string): Promise<P
         const rows = await response.json();
         if (Array.isArray(rows) && rows.length > 0) {
           const row = rows[0];
+          const rawExps =
+            Array.isArray(row.explanations) && row.explanations.length > 0
+              ? row.explanations
+              : row.shap_explanation?.factors || [];
+          const normalizedExps = rawExps.map((f: any, idx: number) => formatShapFactorForPatient(f, idx));
+
           return {
             id: row.id,
             assessment_id: row.id,
-            patient_id: row.patient_id,
-            module: row.module || 'female_pcos',
+            patient_id: row.patient_id || row.user_id || targetUser,
+            module: row.module || targetModule,
             assessment_level: row.assessment_level || 'tier_1',
             tiers_included: row.tiers_included || [1],
-            model_name: row.model_name || 'Extra Trees + Platt Sigmoid Calibration (Tier 1)',
-            model_version: row.model_version || 'PCOS-ML v1.2-T1',
+            model_name: row.model_name || (targetModule === 'male_hypogonadism' ? 'Hypogonadism Clinical Model' : 'Extra Trees + Platt Sigmoid Calibration (Tier 1)'),
+            model_version: row.model_version || (targetModule === 'male_hypogonadism' ? 'MALE-ML v1.0' : 'PCOS-ML v1.2-T1'),
             probability: Number(row.probability ?? 0),
             probability_percent: Number(row.probability_percent ?? (Number(row.probability ?? 0) * 100)),
-            threshold: Number(row.threshold ?? 0.25),
+            threshold: Number(row.threshold ?? (targetModule === 'male_hypogonadism' ? 0.45 : 0.25)),
             risk_category: row.risk_category || 'lower',
             risk_label: row.risk_label,
-            explanations: row.explanations || [],
+            explanations: normalizedExps,
             shap_explanation: row.shap_explanation || null,
             limitations: row.limitations || [],
             next_available_tier: row.next_available_tier ?? 2,
@@ -710,11 +890,22 @@ export async function fetchAssessmentHistory(
 
       if (response.ok) {
         const data = await response.json();
-        if (data && Array.isArray(data.history)) {
-          return data.history as ProgressiveAssessment[];
-        }
-        if (Array.isArray(data)) {
-          return data as ProgressiveAssessment[];
+        const rawList = Array.isArray(data.history) ? data.history : Array.isArray(data) ? data : [];
+        if (rawList.length > 0) {
+          return rawList.map((item: any) => {
+            const rawExps =
+              Array.isArray(item.explanations) && item.explanations.length > 0
+                ? item.explanations
+                : item.shap_explanation?.factors || [];
+            return {
+              ...item,
+              id: item.id || item.assessment_id,
+              assessment_id: item.assessment_id || item.id,
+              patient_id: item.patient_id || targetUser,
+              module: item.module || targetModule,
+              explanations: rawExps.map((f: any, idx: number) => formatShapFactorForPatient(f, idx)),
+            } as ProgressiveAssessment;
+          });
         }
       }
     } catch {
@@ -725,7 +916,7 @@ export async function fetchAssessmentHistory(
   // 2. Query Supabase screening_assessments directly via REST
   if (targetUser) {
     try {
-      const supaUrl = `${SUPABASE_URL}/rest/v1/screening_assessments?patient_id=eq.${targetUser}&module=eq.${targetModule}&order=created_at.desc`;
+      const supaUrl = `${SUPABASE_URL}/rest/v1/screening_assessments?or=(user_id.eq.${targetUser},patient_id.eq.${targetUser})&module=eq.${targetModule}&order=created_at.desc`;
       const response = await fetchWithTimeout(supaUrl, {
         method: 'GET',
         headers: {
@@ -738,28 +929,36 @@ export async function fetchAssessmentHistory(
       if (response.ok) {
         const rows = await response.json();
         if (Array.isArray(rows)) {
-          return rows.map((row: any) => ({
-            id: row.id,
-            assessment_id: row.id,
-            patient_id: row.patient_id,
-            module: row.module,
-            assessment_level: row.assessment_level,
-            tiers_included: row.tiers_included || [1],
-            model_name: row.model_name,
-            model_version: row.model_version,
-            probability: Number(row.probability ?? 0),
-            probability_percent: Number(row.probability_percent ?? (Number(row.probability ?? 0) * 100)),
-            threshold: Number(row.threshold ?? (targetModule === 'male_hypogonadism' ? 0.45 : 0.25)),
-            risk_category: row.risk_category || 'lower',
-            risk_label: row.risk_label,
-            explanations: row.explanations || [],
-            shap_explanation: row.shap_explanation || null,
-            limitations: row.limitations || [],
-            next_available_tier: row.next_available_tier,
-            disclaimer: row.disclaimer,
-            created_at: row.created_at,
-            is_active: Boolean(row.is_active),
-          }));
+          return rows.map((row: any) => {
+            const rawExps =
+              Array.isArray(row.explanations) && row.explanations.length > 0
+                ? row.explanations
+                : row.shap_explanation?.factors || [];
+            const normalizedExps = rawExps.map((f: any, idx: number) => formatShapFactorForPatient(f, idx));
+
+            return {
+              id: row.id,
+              assessment_id: row.id,
+              patient_id: row.patient_id || row.user_id || targetUser,
+              module: row.module || targetModule,
+              assessment_level: row.assessment_level || 'tier_1',
+              tiers_included: row.tiers_included || [1],
+              model_name: row.model_name || (targetModule === 'male_hypogonadism' ? 'Hypogonadism Clinical Model' : 'Extra Trees + Platt Sigmoid Calibration (Tier 1)'),
+              model_version: row.model_version || (targetModule === 'male_hypogonadism' ? 'MALE-ML v1.0' : 'PCOS-ML v1.2-T1'),
+              probability: Number(row.probability ?? 0),
+              probability_percent: Number(row.probability_percent ?? (Number(row.probability ?? 0) * 100)),
+              threshold: Number(row.threshold ?? (targetModule === 'male_hypogonadism' ? 0.45 : 0.25)),
+              risk_category: row.risk_category || 'lower',
+              risk_label: row.risk_label,
+              explanations: normalizedExps,
+              shap_explanation: row.shap_explanation || null,
+              limitations: row.limitations || [],
+              next_available_tier: row.next_available_tier,
+              disclaimer: row.disclaimer,
+              created_at: row.created_at,
+              is_active: Boolean(row.is_active),
+            };
+          });
         }
       }
     } catch {
@@ -770,12 +969,110 @@ export async function fetchAssessmentHistory(
   return [];
 }
 
+/**
+ * Fetch a specific historical assessment by ID
+ */
+export async function getHistoricalAssessmentById(
+  assessmentId: string,
+  userId?: string
+): Promise<ProgressiveAssessment | null> {
+  if (!assessmentId) return null;
+  const session = mobileSupabaseAuth.getSession();
+  const token = session?.access_token;
+  const targetUser = userId || session?.user?.id;
+
+  // 1. Try Django endpoint
+  if (token) {
+    try {
+      const response = await fetchWithTimeout(
+        `${BACKEND_API_URL}/v1/intelligence/assessment/${assessmentId}/`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        if (data && (data.id || data.assessment_id)) {
+          const rawExps =
+            Array.isArray(data.explanations) && data.explanations.length > 0
+              ? data.explanations
+              : data.shap_explanation?.factors || [];
+          return {
+            ...data,
+            id: data.id || data.assessment_id,
+            assessment_id: data.assessment_id || data.id,
+            explanations: rawExps.map((f: any, idx: number) => formatShapFactorForPatient(f, idx)),
+          } as ProgressiveAssessment;
+        }
+      }
+    } catch {
+      // Fall through to Supabase
+    }
+  }
+
+  // 2. Query Supabase
+  try {
+    const supaUrl = `${SUPABASE_URL}/rest/v1/screening_assessments?id=eq.${assessmentId}&limit=1`;
+    const response = await fetchWithTimeout(supaUrl, {
+      method: 'GET',
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${token || SUPABASE_ANON_KEY}`,
+        Accept: 'application/json',
+      },
+    });
+    if (response.ok) {
+      const rows = await response.json();
+      if (Array.isArray(rows) && rows.length > 0) {
+        const row = rows[0];
+        const rawExps =
+          Array.isArray(row.explanations) && row.explanations.length > 0
+            ? row.explanations
+            : row.shap_explanation?.factors || [];
+        return {
+          id: row.id,
+          assessment_id: row.id,
+          patient_id: row.patient_id || row.user_id || targetUser,
+          module: row.module,
+          assessment_level: row.assessment_level,
+          tiers_included: row.tiers_included || [1],
+          model_name: row.model_name,
+          model_version: row.model_version,
+          probability: Number(row.probability ?? 0),
+          probability_percent: Number(row.probability_percent ?? (Number(row.probability ?? 0) * 100)),
+          threshold: Number(row.threshold ?? 0.25),
+          risk_category: row.risk_category || 'lower',
+          risk_label: row.risk_label,
+          explanations: rawExps.map((f: any, idx: number) => formatShapFactorForPatient(f, idx)),
+          shap_explanation: row.shap_explanation || null,
+          limitations: row.limitations || [],
+          next_available_tier: row.next_available_tier,
+          disclaimer: row.disclaimer,
+          created_at: row.created_at,
+          is_active: Boolean(row.is_active),
+        };
+      }
+    }
+  } catch {
+    // Ignore error
+  }
+
+  return null;
+}
+
 export const assessmentService = {
   FEMALE_DEFAULT_THRESHOLD,
   MALE_DEFAULT_THRESHOLD,
   fetchActiveScreeningAssessment,
   getLatestAssessment: fetchActiveScreeningAssessment,
   fetchAssessmentHistory,
+  getHistoricalAssessmentById,
+  formatShapFactorForPatient,
+  formatAssessmentDate,
   submitTier1Screening: submitFemaleTier1AssessmentWithStatus,
   submitFemaleTier1Assessment,
   submitFemaleTier1AssessmentWithStatus,
