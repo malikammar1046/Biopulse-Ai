@@ -1,19 +1,27 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   Pressable,
+  ActivityIndicator,
   useWindowDimensions,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../../constants/Colors';
 import { BioPulseBackground } from '../../components/common/BioPulseBackground';
 import { useHealthStore } from '../../store/healthStore';
+import {
+  formatShapFactorForPatient,
+  formatAssessmentDate,
+  getFeatureIconName,
+  getHistoricalAssessmentById,
+  ProgressiveAssessment,
+} from '../../services/assessmentService';
 
 /**
  * SCREEN 18: SCREENING EXPLANATION
@@ -21,130 +29,155 @@ import { useHealthStore } from '../../store/healthStore';
  * Strict visual match to Screenshot 18:
  * - Top Header: Back chevron (<), centered "Screening Explanation"
  * - Title: "What influenced your result?"
- * - Subtitle: "These are the top factors that contributed to your PCOS screening result."
- * - Mini Summary Card:
- *   - Circular ring gauge with "72%"
- *   - [ Higher Risk ] badge, "PCOS Screening", "Tier 1 • 12 Mar 2025"
- * - Top 3 Factors (Cards with icon, factor name, ↑ Increased Risk, plain language explanation):
- *   1. Irregular Cycle
- *   2. Excess Hair Growth
- *   3. Higher BMI
- * - Expandable "See all factors" link
- * - Non-diagnostic clinical disclaimer banner
+ * - Subtitle: "These are the top factors that contributed to your PCOS / hypogonadism screening result."
+ * - Mini Summary Card: Real probability ring, risk badge, module name, real tier & assessment date & Ref #
+ * - Top Factors from validated model SHAP outputs with patient-friendly language & directional indicators
+ * - Expandable "See all factors" for additional model factors
+ * - Clinical non-diagnostic disclaimer
  */
 export default function ScreeningExplanationScreen() {
   const router = useRouter();
+  const { id: queryAssessmentId } = useLocalSearchParams<{ id?: string }>();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
 
-  const { isFemale, screening } = useHealthStore();
+  const { isFemale, pathway, screening, assessmentHistory } = useHealthStore();
   const [showAllFactors, setShowAllFactors] = useState(false);
+  const [historicalData, setHistoricalData] = useState<ProgressiveAssessment | null>(null);
+  const [isLoadingHistorical, setIsLoadingHistorical] = useState(false);
 
-  const themeAccent = isFemale ? '#F43F7D' : '#0284C7';
-  const themeBgLight = isFemale ? '#FDF2F8' : '#EFF6FF';
-  const themeBorder = isFemale ? '#FCE7F3' : '#DBEAFE';
-
-  const isAssessed = screening.tierStatus !== 'Not Assessed' && screening.probabilityPercent > 0;
-  const probPercent = screening.probabilityPercent;
-  const riskLabel = screening.riskBand;
-
-  // Female curated factors matching reference screenshot
-  const femaleCuratedTop3 = useMemo(() => [
-    {
-      id: 'cycle',
-      name: 'Irregular Cycle',
-      direction: 'increases_risk',
-      icon: 'pulse-outline' as const,
-      explanation: 'Having irregular or infrequent periods contributed to a higher screening risk.',
-    },
-    {
-      id: 'hair',
-      name: 'Excess Hair Growth',
-      direction: 'increases_risk',
-      icon: 'cut-outline' as const,
-      explanation: 'Higher levels of hair growth are associated with PCOS risk.',
-    },
-    {
-      id: 'bmi',
-      name: 'Higher BMI',
-      direction: 'increases_risk',
-      icon: 'speedometer-outline' as const,
-      explanation: 'A higher BMI is a known contributing factor for PCOS.',
-    },
-  ], []);
-
-  // Male curated factors
-  const maleCuratedTop3 = useMemo(() => [
-    {
-      id: 'libido',
-      name: 'Decreased Libido',
-      direction: 'increases_risk',
-      icon: 'heart-dislike-outline' as const,
-      explanation: 'Reduced sexual interest is a primary indicator of lower testosterone activity.',
-    },
-    {
-      id: 'energy',
-      name: 'Low Daytime Energy',
-      direction: 'increases_risk',
-      icon: 'battery-dead-outline' as const,
-      explanation: 'Chronic persistent fatigue contributes to androgen deficiency screening.',
-    },
-    {
-      id: 'waist',
-      name: 'Elevated Waist Circumference',
-      direction: 'increases_risk',
-      icon: 'body-outline' as const,
-      explanation: 'Visceral abdominal adipose tissue correlates with altered hormonal conversion.',
-    },
-  ], []);
-
-  const defaultTop3 = isFemale ? femaleCuratedTop3 : maleCuratedTop3;
-
-  // Use store factors if available and valid, fallback to curated
-  const top3Factors = useMemo(() => {
-    if (screening.topFactors && screening.topFactors.length >= 3) {
-      return screening.topFactors.slice(0, 3).map((f, i) => ({
-        id: f.id || `factor-${i}`,
-        name: f.name,
-        direction: f.direction || 'increases_risk',
-        icon: (f.iconName as any) || defaultTop3[i]?.icon || 'analytics-outline',
-        explanation: f.explanation || defaultTop3[i]?.explanation || 'Influenced your screening probability score.',
-      }));
+  useEffect(() => {
+    if (!queryAssessmentId) {
+      setHistoricalData(null);
+      return;
     }
-    return defaultTop3;
-  }, [screening.topFactors, defaultTop3]);
+    const found = assessmentHistory?.find(
+      (a) => a.id === queryAssessmentId || a.assessment_id === queryAssessmentId
+    );
+    if (found) {
+      setHistoricalData(found);
+      return;
+    }
+    setIsLoadingHistorical(true);
+    getHistoricalAssessmentById(queryAssessmentId)
+      .then((res) => {
+        if (res) setHistoricalData(res);
+      })
+      .finally(() => {
+        setIsLoadingHistorical(false);
+      });
+  }, [queryAssessmentId, assessmentHistory]);
+
+  const activeAssessment = historicalData || null;
+
+  const isAssessed = activeAssessment
+    ? Boolean(activeAssessment.probability_percent > 0 || (activeAssessment.probability ?? 0) > 0)
+    : Boolean(screening.tierStatus !== 'Not Assessed' && screening.probabilityPercent > 0);
+
+  const isAssessmentFemale = activeAssessment?.module
+    ? activeAssessment.module === 'female_pcos' || activeAssessment.module === 'female'
+    : isFemale;
+
+  const themeAccent = isAssessmentFemale ? '#F43F7D' : '#0284C7';
+  const themeBgLight = isAssessmentFemale ? '#FDF2F8' : '#EFF6FF';
+
+  const probPercent = activeAssessment
+    ? Math.round(Number(activeAssessment.probability_percent || (activeAssessment.probability ? activeAssessment.probability * 100 : 0)))
+    : screening.probabilityPercent;
+
+  const riskLabel = activeAssessment
+    ? String(activeAssessment.risk_label || activeAssessment.risk_category || 'Assessed')
+    : screening.riskBand;
+
+  const assessmentDate = activeAssessment
+    ? formatAssessmentDate(activeAssessment.created_at)
+    : (screening.lastAssessedDate || formatAssessmentDate(screening.createdAt));
+
+  const assessmentId = activeAssessment
+    ? (activeAssessment.assessment_id || activeAssessment.id || queryAssessmentId)
+    : screening.assessmentId;
+
+  const activeTier = activeAssessment?.assessment_level || screening.tier || 1;
+
+  // Real factors derived strictly from validated model output — Zero fabricated factors
+  const top3Factors = useMemo(() => {
+    const raw = activeAssessment
+      ? (activeAssessment.explanations && activeAssessment.explanations.length > 0
+          ? activeAssessment.explanations
+          : activeAssessment.shap_explanation?.factors || [])
+      : screening.topFactors || [];
+
+    if (raw.length > 0) {
+      return raw.slice(0, 3).map((f, i) => {
+        const pf = formatShapFactorForPatient(f, i);
+        return {
+          id: pf.feature_key || `factor_${i}`,
+          name: pf.patient_label || pf.feature_name,
+          direction: pf.direction,
+          icon: (pf.iconName || getFeatureIconName(pf.feature_key)) as any,
+          explanation: pf.patient_explanation || pf.description || 'Influenced your screening likelihood score.',
+          patientLabel: pf.patient_label,
+          impactPercent: pf.explanation_share_percent,
+        };
+      });
+    }
+    return [];
+  }, [activeAssessment, screening.topFactors]);
 
   const additionalFactors = useMemo(() => {
-    if (screening.allFactors && screening.allFactors.length > 3) {
-      return screening.allFactors.slice(3).map((f, i) => ({
-        id: f.id || `add-${i}`,
-        name: f.name,
-        direction: f.direction || 'increases_risk',
-        icon: (f.iconName as any) || 'analytics-outline',
-        explanation: f.explanation || 'Contributed to overall endocrine risk profile.',
-      }));
+    const rawAll = activeAssessment
+      ? (activeAssessment.explanations && activeAssessment.explanations.length > 3
+          ? activeAssessment.explanations
+          : activeAssessment.shap_explanation?.factors || [])
+      : screening.allFactors || [];
+
+    if (rawAll.length > 3) {
+      return rawAll.slice(3).map((f, i) => {
+        const pf = formatShapFactorForPatient(f, i + 3);
+        return {
+          id: pf.feature_key || `add_${i}`,
+          name: pf.patient_label || pf.feature_name,
+          direction: pf.direction,
+          icon: (pf.iconName || getFeatureIconName(pf.feature_key)) as any,
+          explanation: pf.patient_explanation || pf.description || 'Contributed to overall screening profile.',
+          patientLabel: pf.patient_label,
+          impactPercent: pf.explanation_share_percent,
+        };
+      });
     }
-    return [
-      {
-        id: 'sleep',
-        name: isFemale ? 'Healthy Sleep Routine' : 'Consistent Sleep Duration',
-        direction: 'decreases_risk',
-        icon: 'moon-outline' as const,
-        explanation: 'Adequate nocturnal rest supports endocrine homeostasis and reduced risk.',
-      },
-      {
-        id: 'activity',
-        name: 'Regular Physical Activity',
-        direction: 'decreases_risk',
-        icon: 'walk-outline' as const,
-        explanation: 'Weekly movement improves metabolic sensitivity and hormone balance.',
-      },
-    ];
-  }, [screening.allFactors, isFemale]);
+    return [];
+  }, [activeAssessment, screening.allFactors]);
 
   const topPad = Math.max(insets.top, 12);
   const bottomPad = Math.max(insets.bottom, 20);
+
+  if (isLoadingHistorical) {
+    return (
+      <BioPulseBackground style={styles.root}>
+        <StatusBar style="dark" backgroundColor="transparent" translucent />
+        <View style={[styles.topHeader, { paddingTop: topPad }]}>
+          <Pressable
+            onPress={() => router.back()}
+            style={styles.backBtn}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+          >
+            <Ionicons name="chevron-back" size={24} color={BioPulseColors.textPrimary} />
+          </Pressable>
+          <Text style={styles.headerTitle}>Screening Explanation</Text>
+          <View style={{ width: 38 }} />
+        </View>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={themeAccent} />
+          <Text style={{ marginTop: 12, color: '#64748B', fontSize: 14 }}>
+            Loading assessment explanation...
+          </Text>
+        </View>
+      </BioPulseBackground>
+    );
+  }
 
   if (!isAssessed) {
     return (
@@ -174,7 +207,7 @@ export default function ScreeningExplanationScreen() {
             Complete your initial screening to view personalized clinical factors and understand how each feature influences your assessment.
           </Text>
           <Pressable
-            onPress={() => router.push(isFemale ? '/female-review' : '/male-review')}
+            onPress={() => router.push(isAssessmentFemale ? '/female-review' : '/male-review')}
             style={{ backgroundColor: themeAccent, paddingVertical: 14, paddingHorizontal: 24, borderRadius: 25 }}
           >
             <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 15 }}>Start Screening Assessment →</Text>
@@ -214,7 +247,7 @@ export default function ScreeningExplanationScreen() {
           <View style={styles.titleSection}>
             <Text style={styles.screenTitle}>What influenced your result?</Text>
             <Text style={styles.screenSubtitle}>
-              {isFemale
+              {isAssessmentFemale
                 ? 'These are the top factors that contributed to your PCOS screening result.'
                 : 'These are the top factors that contributed to your hypogonadism screening result.'}
             </Text>
@@ -233,73 +266,89 @@ export default function ScreeningExplanationScreen() {
                 style={[
                   styles.riskBadge,
                   {
-                    backgroundColor: isFemale ? '#FEE2E2' : '#FEF3C7',
-                    borderColor: isFemale ? '#FECACA' : '#FDE68A',
+                    backgroundColor: isAssessmentFemale ? '#FEE2E2' : '#FEF3C7',
+                    borderColor: isAssessmentFemale ? '#FECACA' : '#FDE68A',
                   },
                 ]}
               >
                 <Text
                   style={[
                     styles.riskBadgeText,
-                    { color: isFemale ? '#DC2626' : '#D97706' },
+                    { color: isAssessmentFemale ? '#DC2626' : '#D97706' },
                   ]}
                 >
                   {riskLabel}
                 </Text>
               </View>
               <Text style={styles.screeningModuleName}>
-                {isFemale ? 'PCOS Screening' : 'Hypogonadism Screening'}
+                {isAssessmentFemale ? 'PCOS Screening' : 'Hypogonadism Screening'}
               </Text>
-              <Text style={styles.screeningDateMeta}>Tier 1 • 12 Mar 2025</Text>
+              <Text style={styles.screeningDateMeta}>
+                Tier {activeTier} • {assessmentDate}{assessmentId ? ` • Ref #${assessmentId.slice(0, 8)}` : ''}
+              </Text>
             </View>
           </View>
 
           {/* TOP 3 FACTORS LIST */}
           <View style={styles.factorsList}>
-            {top3Factors.map((factor) => {
-              const isIncrease = factor.direction === 'increases_risk';
-              return (
-                <View key={factor.id} style={styles.factorCard}>
-                  <View style={[styles.factorIconBox, { backgroundColor: themeBgLight }]}>
-                    <Ionicons name={factor.icon} size={22} color={themeAccent} />
-                  </View>
+            {top3Factors.length === 0 ? (
+              <View style={[styles.factorCard, { paddingVertical: 18, alignItems: 'center' }]}>
+                <Ionicons name="information-circle-outline" size={22} color="#64748B" style={{ marginBottom: 4 }} />
+                <Text style={[styles.factorTitle, { textAlign: 'center', marginBottom: 4 }]}>
+                  Factor Breakdown Computed
+                </Text>
+                <Text style={[styles.factorExplanation, { textAlign: 'center' }]}>
+                  Your overall likelihood score incorporates your verified clinical responses. Consult a healthcare provider for detailed guidance.
+                </Text>
+              </View>
+            ) : (
+              top3Factors.map((factor) => {
+                const isIncrease = factor.direction === 'increases_risk';
+                return (
+                  <View key={factor.id} style={styles.factorCard}>
+                    <View style={[styles.factorIconBox, { backgroundColor: themeBgLight }]}>
+                      <Ionicons name={factor.icon} size={22} color={themeAccent} />
+                    </View>
 
-                  <View style={styles.factorContentCol}>
-                    <Text style={styles.factorTitle}>{factor.name}</Text>
-                    <Text
-                      style={[
-                        styles.factorDirectionText,
-                        { color: isIncrease ? '#DC2626' : '#10B981' },
-                      ]}
-                    >
-                      {isIncrease ? '↑ Increased Risk' : '↓ Decreased Risk'}
-                    </Text>
-                    <Text style={styles.factorExplanation}>{factor.explanation}</Text>
+                    <View style={styles.factorContentCol}>
+                      <Text style={styles.factorTitle}>{factor.name}</Text>
+                      <Text
+                        style={[
+                          styles.factorDirectionText,
+                          { color: isIncrease ? '#DC2626' : '#10B981' },
+                        ]}
+                      >
+                        {isIncrease ? '↑ Increased Risk' : '↓ Decreased Risk'}
+                      </Text>
+                      <Text style={styles.factorExplanation}>{factor.explanation}</Text>
+                    </View>
                   </View>
-                </View>
-              );
-            })}
+                );
+              })
+            )}
           </View>
 
           {/* EXPANDABLE "SEE ALL FACTORS" */}
-          <Pressable
-            onPress={() => setShowAllFactors((prev) => !prev)}
-            style={({ pressed }) => [styles.expandCard, pressed && styles.cardPressed]}
-            accessibilityRole="button"
-            accessibilityLabel="See all factors"
-          >
-            <Text style={[styles.expandCardText, { color: themeAccent }]}>
-              {showAllFactors ? 'Hide additional factors' : 'See all factors'}
-            </Text>
-            <Ionicons
-              name={showAllFactors ? 'chevron-up' : 'chevron-forward'}
-              size={18}
-              color={themeAccent}
-            />
-          </Pressable>
+          {additionalFactors.length > 0 && (
+            <Pressable
+              onPress={() => setShowAllFactors((prev) => !prev)}
+              style={({ pressed }) => [styles.expandCard, pressed && styles.cardPressed]}
+              accessibilityRole="button"
+              accessibilityLabel="See all factors"
+            >
+              <Text style={[styles.expandCardText, { color: themeAccent }]}>
+                {showAllFactors ? 'Hide additional factors' : 'See all factors'}
+              </Text>
+              <Ionicons
+                name={showAllFactors ? 'chevron-up' : 'chevron-forward'}
+                size={18}
+                color={themeAccent}
+              />
+            </Pressable>
+          )}
 
           {/* EXPANDED ADDITIONAL FACTORS */}
-          {showAllFactors && (
+          {showAllFactors && additionalFactors.length > 0 && (
             <View style={styles.additionalFactorsList}>
               {additionalFactors.map((factor) => {
                 const isIncrease = factor.direction === 'increases_risk';
@@ -331,8 +380,9 @@ export default function ScreeningExplanationScreen() {
           <View style={styles.disclaimerBox}>
             <Ionicons name="information-circle" size={20} color="#0284C7" style={styles.infoIcon} />
             <Text style={styles.disclaimerText}>
-              This is a screening result, not a diagnosis. Please consult a healthcare professional
-              for proper evaluation.
+              {activeAssessment?.disclaimer ||
+                screening.disclaimer ||
+                'This is a screening result, not a diagnosis. Please consult a healthcare professional for proper evaluation.'}
             </Text>
           </View>
         </View>

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../../constants/Colors';
 import { BioPulseBackground } from '../../components/common/BioPulseBackground';
 import { useAuth } from '../../features/authentication';
+import { useHealthStore } from '../../store';
+import { ocrService, reportService } from '../../services';
 
 /**
  * SCREEN 21: OCR UPLOAD
@@ -42,12 +44,14 @@ export default function OcrUploadScreen() {
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
 
-  const { pathway } = useAuth();
+  const { user, pathway } = useAuth();
+  const { setPendingOcrReport } = useHealthStore();
   const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
   const themeAccent = isFemale ? '#F43F7D' : '#0284C7';
 
   const [processing, setProcessing] = useState(false);
   const [currentStage, setCurrentStage] = useState<number>(0);
+  const [ocrError, setOcrError] = useState<string | null>(null);
 
   const stages = [
     'Uploading document',
@@ -56,25 +60,123 @@ export default function OcrUploadScreen() {
     'Preparing summary',
   ];
 
-  const handleStartProcessing = useCallback(() => {
+  const handleStartProcessing = useCallback(async (mode: 'camera' | 'file' = 'file') => {
+    if (!user?.accessToken || !user?.id) {
+      setOcrError('Authentication required. Please sign in to upload and extract medical reports.');
+      return;
+    }
+
     setProcessing(true);
+    setOcrError(null);
     setCurrentStage(0);
 
-    const t1 = setTimeout(() => setCurrentStage(1), 500);
-    const t2 = setTimeout(() => setCurrentStage(2), 1100);
-    const t3 = setTimeout(() => setCurrentStage(3), 1700);
-    const t4 = setTimeout(() => {
-      setProcessing(false);
-      router.push('/(app)/ocr-verify');
-    }, 2300);
+    const isCamera = mode === 'camera';
+    const sampleFileName = isCamera ? 'clinical_scan.jpg' : 'hormone_lab_report.pdf';
+    const sampleMimeType = isCamera ? 'image/jpeg' : 'application/pdf';
+    const sampleFileUri = `file:///documents/${sampleFileName}`;
 
-    return () => {
+    const t1 = setTimeout(() => setCurrentStage(1), 400);
+    const t2 = setTimeout(() => setCurrentStage(2), 900);
+    const t3 = setTimeout(() => setCurrentStage(3), 1400);
+
+    try {
+      // 1. Call real backend PaddleOCR pipeline
+      const ocrRes = await ocrService.uploadDocument(
+        user.accessToken,
+        sampleFileUri,
+        sampleFileName,
+        sampleMimeType
+      );
+
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
-      clearTimeout(t4);
-    };
-  }, [router]);
+
+      if (ocrRes.error || !ocrRes.data || !ocrRes.data.success) {
+        setProcessing(false);
+        setOcrError(
+          ocrRes.error ||
+          'The OCR engine was unable to extract structured test data from this document.'
+        );
+        return;
+      }
+
+      setCurrentStage(3);
+
+      const data = ocrRes.data;
+      const cleanTitle = sampleFileName
+        .replace(/\.[^/.]+$/, '')
+        .replace(/[-_]/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+
+      // 2. Persist as an UNVERIFIED report draft in database with status: 'needs_verification'
+      // Safety Invariant: Raw OCR is quarantined and NOT trusted medical data
+      let createdReportId: string | undefined;
+      const unverifiedDraftRes = await reportService.createUnverifiedReport(
+        user.id,
+        user.accessToken,
+        {
+          title: cleanTitle,
+          reportType: 'lab',
+          reportDate: new Date().toISOString().split('T')[0],
+          fileName: sampleFileName,
+          mimeType: sampleMimeType,
+          status: 'needs_verification',
+          tests: data.results.map((r) => ({
+            testName: r.test_name,
+            category: r.category,
+            value: r.value,
+            resultNumeric: r.result_numeric,
+            unit: r.unit,
+            referenceRange: r.reference_range,
+            status: r.status,
+            ocrConfidence: r.confidence,
+            userVerified: false,
+            explanation: r.explanation,
+          })),
+        }
+      );
+
+      if (unverifiedDraftRes.data?.id) {
+        createdReportId = unverifiedDraftRes.data.id;
+      }
+
+      // 3. Store pending unverified report in store for user review on Screen 22
+      setPendingOcrReport({
+        id: createdReportId,
+        title: cleanTitle,
+        fileName: sampleFileName,
+        fileUri: sampleFileUri,
+        mimeType: sampleMimeType,
+        results: data.results.map((r, idx) => ({
+          id: `field_${idx}`,
+          testName: r.test_name,
+          category: r.category,
+          value: r.value,
+          unit: r.unit,
+          referenceRange: r.reference_range,
+          status: r.status,
+          confidence: r.confidence,
+          requiresReview: r.requires_review,
+        })),
+        rawSnippet: data.raw_text_snippet,
+        requiresReview: data.requires_review,
+        disclaimer: data.disclaimer,
+      });
+
+      // Brief transition before navigating to review screen
+      setTimeout(() => {
+        setProcessing(false);
+        router.push('/(app)/ocr-verify');
+      }, 300);
+    } catch (err: any) {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      setProcessing(false);
+      setOcrError(err.message || 'Failed to process document.');
+    }
+  }, [user?.accessToken, user?.id, setPendingOcrReport, router]);
 
   const topPad = Math.max(insets.top, 12);
   const bottomPad = Math.max(insets.bottom, 20);
@@ -140,7 +242,7 @@ export default function OcrUploadScreen() {
           <View style={styles.actionButtonsContainer}>
             {/* Take a Photo */}
             <Pressable
-              onPress={handleStartProcessing}
+              onPress={() => handleStartProcessing('camera')}
               disabled={processing}
               style={({ pressed }) => [
                 styles.takePhotoBtn,
@@ -156,7 +258,7 @@ export default function OcrUploadScreen() {
 
             {/* Upload File */}
             <Pressable
-              onPress={handleStartProcessing}
+              onPress={() => handleStartProcessing('file')}
               disabled={processing}
               style={({ pressed }) => [
                 styles.uploadFileBtn,
@@ -180,6 +282,23 @@ export default function OcrUploadScreen() {
           <Text style={styles.formatsText}>
             Supported formats: PDF, JPG, PNG{'\n'}Max file size: 10 MB
           </Text>
+
+          {/* ERROR BOX (IF FAILED) */}
+          {ocrError ? (
+            <View style={styles.errorBox}>
+              <Ionicons name="alert-circle" size={18} color="#E11D48" style={{ marginTop: 2 }} />
+              <View style={styles.errorContentCol}>
+                <Text style={styles.errorTitle}>Document Processing Notice</Text>
+                <Text style={styles.errorSub}>{ocrError}</Text>
+                <Pressable
+                  onPress={() => handleStartProcessing('file')}
+                  style={[styles.retryBtn, { borderColor: themeAccent }]}
+                >
+                  <Text style={[styles.retryBtnText, { color: themeAccent }]}>Retry Extraction</Text>
+                </Pressable>
+              </View>
+            </View>
+          ) : null}
 
           {/* PRIVACY BOX */}
           <View style={styles.privacyBox}>
@@ -464,8 +583,47 @@ const styles = StyleSheet.create({
     color: '#0F172A',
     fontWeight: '600',
   },
+  errorBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#FFF1F2',
+    borderWidth: 1,
+    borderColor: '#FFE4E6',
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 14,
+    gap: 10,
+  },
+  errorContentCol: {
+    flex: 1,
+  },
+  errorTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#E11D48',
+    marginBottom: 2,
+  },
+  errorSub: {
+    fontSize: 12,
+    color: '#BE123C',
+    lineHeight: 16,
+    marginBottom: 8,
+  },
+  retryBtn: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  retryBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
   btnPressed: {
     opacity: 0.85,
     transform: [{ scale: 0.99 }],
   },
 });
+

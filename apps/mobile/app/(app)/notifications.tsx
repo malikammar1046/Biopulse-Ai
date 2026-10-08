@@ -5,6 +5,8 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
+  ActivityIndicator,
+  RefreshControl,
   useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -13,6 +15,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../../constants/Colors';
 import { useAuth } from '../../features/authentication';
+import { useHealthStore } from '../../store';
 import { BioPulseBottomNav, BOTTOM_NAV_HEIGHT } from '../../components/navigation';
 
 export interface BioPulseNotificationItem {
@@ -54,90 +57,32 @@ export default function NotificationsScreen() {
   const { pathway } = useAuth();
   const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
 
+  const {
+    notificationList,
+    isLoadingNotifications,
+    notificationError,
+    loadNotifications,
+    markNotificationAsRead,
+    markAllNotificationsAsRead,
+  } = useHealthStore();
+
   const [activeTab, setActiveTab] = useState<'All' | 'Unread' | 'Reminders' | 'System'>('All');
 
-  const [items, setItems] = useState<BioPulseNotificationItem[]>([
-    {
-      id: 'notif-1',
-      title: 'Medication due',
-      subtitle: 'Metformin 500 mg\nTake 1 tablet with food.',
-      time: '8:00 PM',
-      section: 'Today',
-      category: 'Reminders',
-      isRead: false,
-      iconName: 'medkit',
-      iconColor: '#E11D48',
-      iconBg: '#FCE7F3',
-      route: '/(app)/medications',
-    },
-    {
-      id: 'notif-2',
-      title: isFemale ? 'Period predicted' : 'Vitality check-in due',
-      subtitle: isFemale
-        ? 'Your next period is expected\nin 2 days (16 Sep 2026).'
-        : 'Update today’s energy and stamina score\nfor refined hormone tracking.',
-      time: '10:30 AM',
-      section: 'Today',
-      category: 'Reminders',
-      isRead: false,
-      iconName: 'calendar',
-      iconColor: '#E11D48',
-      iconBg: '#FCE7F3',
-      route: isFemale ? '/(app)/cycle-tracking' : '/(app)/symptom-log',
-    },
-    {
-      id: 'notif-3',
-      title: 'Lab upload processed',
-      subtitle: 'Your hormone lab report\nhas been successfully processed.',
-      time: '09:15 AM',
-      section: 'Today',
-      category: 'System',
-      isRead: true,
-      iconName: 'document-text',
-      iconColor: '#0284C7',
-      iconBg: '#E0F2FE',
-      route: '/(app)/add-labs',
-    },
-    {
-      id: 'notif-4',
-      title: 'Appointment tomorrow',
-      subtitle: 'Dr. Ayesha Malik\n10:00 AM at HealthCare Hospital',
-      time: '08:00 AM',
-      section: 'Today',
-      category: 'Reminders',
-      isRead: true,
-      iconName: 'calendar-outline',
-      iconColor: '#E11D48',
-      iconBg: '#FCE7F3',
-      route: '/(app)/appointments',
-    },
-    {
-      id: 'notif-5',
-      title: 'Screening follow-up',
-      subtitle: 'Consider adding clinical labs\nfor a more accurate assessment.',
-      time: '5:20 PM',
-      section: 'Yesterday',
-      category: 'System',
-      isRead: false,
-      iconName: 'bar-chart',
-      iconColor: '#E11D48',
-      iconBg: '#FCE7F3',
-      route: '/(app)/screening',
-    },
-    {
-      id: 'notif-6',
-      title: 'New recommendation',
-      subtitle: 'A personalized nutrition plan\nis available for you.',
-      time: '3:10 PM',
-      section: 'Yesterday',
-      category: 'System',
-      isRead: true,
-      iconName: 'bulb-outline',
-      iconColor: '#D97706',
-      iconBg: '#FEF3C7',
-      route: '/(app)/guidance',
-    },
-  ]);
+  const items: BioPulseNotificationItem[] = useMemo(() => {
+    return notificationList.map((n) => ({
+      id: n.id,
+      title: n.title,
+      subtitle: n.subtitle,
+      time: n.time,
+      section: n.section,
+      category: n.category,
+      isRead: n.isRead,
+      iconName: (n.iconName as keyof typeof Ionicons.glyphMap) || 'notifications',
+      iconColor: n.iconColor || '#0284C7',
+      iconBg: n.iconBg || '#E0F2FE',
+      route: n.route,
+    }));
+  }, [notificationList]);
 
   const unreadCount = useMemo(() => items.filter((item) => !item.isRead).length, [items]);
 
@@ -163,14 +108,12 @@ export default function NotificationsScreen() {
 
   const handleItemPress = useCallback(
     (item: BioPulseNotificationItem) => {
-      setItems((prev) =>
-        prev.map((i) => (i.id === item.id ? { ...i, isRead: true } : i))
-      );
+      markNotificationAsRead(item.id);
       if (item.route) {
         router.push(item.route as any);
       }
     },
-    [router]
+    [router, markNotificationAsRead]
   );
 
   const topPad = Math.max(insets.top, 12);
@@ -282,11 +225,65 @@ export default function NotificationsScreen() {
           { paddingBottom: BOTTOM_NAV_HEIGHT + bottomPad + 24 },
         ]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoadingNotifications}
+            onRefresh={() => loadNotifications?.()}
+            tintColor="#E11D48"
+          />
+        }
       >
+        {/* LOADING STATE */}
+        {isLoadingNotifications && items.length === 0 && (
+          <View style={styles.stateCard}>
+            <ActivityIndicator size="small" color="#E11D48" style={{ marginBottom: 10 }} />
+            <Text style={styles.stateTitle}>Loading notifications...</Text>
+          </View>
+        )}
+
+        {/* ERROR STATE */}
+        {Boolean(notificationError) && items.length === 0 && (
+          <View style={styles.stateCard}>
+            <Ionicons name="alert-circle-outline" size={32} color="#EF4444" style={{ marginBottom: 8 }} />
+            <Text style={styles.stateTitle}>Unable to load notifications</Text>
+            <Text style={styles.stateSub}>{notificationError}</Text>
+            <Pressable onPress={() => loadNotifications()} style={styles.retryBtn}>
+              <Text style={styles.retryBtnText}>Retry</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {/* EMPTY STATE */}
+        {!isLoadingNotifications && !notificationError && filteredItems.length === 0 && (
+          <View style={styles.stateCard}>
+            <Ionicons name="notifications-outline" size={36} color="#94A3B8" style={{ marginBottom: 10 }} />
+            <Text style={styles.stateTitle}>
+              {activeTab === 'Unread' ? 'No Unread Notifications' : 'No Notifications Yet'}
+            </Text>
+            <Text style={styles.stateSub}>
+              {activeTab === 'Unread'
+                ? "You're all caught up! You have read all your alerts."
+                : 'As you book appointments, log medications, and receive lab reports, your clinical notifications will appear here.'}
+            </Text>
+          </View>
+        )}
+
         {/* TODAY SECTION */}
         {todayItems.length > 0 && (
           <View style={styles.sectionBlock}>
-            <Text style={styles.sectionHeading}>Today</Text>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionHeading}>Today</Text>
+              {unreadCount > 0 && (
+                <Pressable
+                  onPress={() => markAllNotificationsAsRead()}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Mark all as read"
+                >
+                  <Text style={styles.markAllReadText}>Mark all as read</Text>
+                </Pressable>
+              )}
+            </View>
             <View style={styles.cardContainer}>
               {todayItems.map((item, idx) => (
                 <Pressable
@@ -459,12 +456,22 @@ const styles = StyleSheet.create({
   sectionBlock: {
     marginBottom: 16,
   },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+    paddingHorizontal: 2,
+  },
   sectionHeading: {
     fontSize: 13,
     fontWeight: '700',
     color: '#0F172A',
-    marginBottom: 8,
-    marginLeft: 2,
+  },
+  markAllReadText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#E11D48',
   },
   cardContainer: {
     backgroundColor: '#FFFFFF',
@@ -567,5 +574,40 @@ const styles = StyleSheet.create({
     fontSize: 13.5,
     fontWeight: '700',
     color: '#0F172A',
+  },
+  stateCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    padding: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 12,
+  },
+  stateTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  stateSub: {
+    fontSize: 12.5,
+    color: '#64748B',
+    lineHeight: 18,
+    textAlign: 'center',
+    marginBottom: 14,
+  },
+  retryBtn: {
+    backgroundColor: '#FFE4E6',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  retryBtnText: {
+    color: '#E11D48',
+    fontSize: 13,
+    fontWeight: '700',
   },
 });

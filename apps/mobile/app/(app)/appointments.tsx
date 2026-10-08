@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   ScrollView,
   Pressable,
   Alert,
+  ActivityIndicator,
+  RefreshControl,
   useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -19,18 +21,11 @@ import { useHealthStore } from '../../store';
 
 /**
  * SCREEN 37: APPOINTMENTS
- *
- * Strict visual match to Screenshot 37:
- * - Top Header: Calendar icon + "Appointments"
- * - Segmented Tabs: [ Upcoming ] (active solid pink pill), [ Find Specialist ], [ History ]
- * - Section: "Your Upcoming Appointment"
- *   - Card with Doctor avatar, "Dr. Sara Khan", "Endocrinologist", "⭐ 4.8 (120 reviews)"
- *   - 📅 15 Mar 2026
- *   - ⏰ 10:00 AM
- *   - 📍 HealthCare Hospital, Lahore (Johar Town, Lahore)
- *   - Action Buttons: [ Reschedule ] (outline pink) & [ View Details ] (solid pink)
- * - Section: "Upcoming Reminders"
- *   - Card: Purple calendar icon, "Lab Test", "Hormone profile (FSH, LH, AMH)", "12 Mar 2026 >"
+ * Visual reference & layout spec:
+ * - Upcoming appointment: Dr. Sara Khan (Endocrinologist)
+ * - Date & Time: 15 Mar 2026 at 10:00 AM
+ * - Location: HealthCare Hospital, Lahore
+ * - Real backend records loaded dynamically via useHealthStore
  */
 export default function AppointmentsScreen() {
   const router = useRouter();
@@ -41,8 +36,19 @@ export default function AppointmentsScreen() {
   const { pathway } = useAuth();
   const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
 
-  const { appointments, rescheduleAppointment } = useHealthStore();
+  const {
+    appointments,
+    isLoadingAppointments,
+    appointmentError,
+    loadAppointments,
+    rescheduleAppointment,
+  } = useHealthStore();
+
   const [activeTab, setActiveTab] = useState<'upcoming' | 'find' | 'history'>('upcoming');
+
+  useEffect(() => {
+    loadAppointments?.();
+  }, [loadAppointments]);
 
   const upcomingAppointments = useMemo(
     () => appointments.filter((a) => a.status === 'Upcoming'),
@@ -101,7 +107,46 @@ export default function AppointmentsScreen() {
           { paddingBottom: insets.bottom + 40 },
         ]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoadingAppointments}
+            onRefresh={() => loadAppointments?.()}
+            tintColor={isFemale ? '#F43F7D' : '#0284C7'}
+          />
+        }
       >
+        {/* Error Banner with Retry */}
+        {Boolean(appointmentError) && (
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: '#FEF2F2',
+            borderWidth: 1,
+            borderColor: '#FCA5A5',
+            borderRadius: 10,
+            padding: 12,
+            marginBottom: 14,
+            gap: 8,
+          }}>
+            <Ionicons name="alert-circle-outline" size={18} color="#EF4444" />
+            <Text style={{ flex: 1, fontSize: 13, color: '#B91C1C' }}>{appointmentError}</Text>
+            <Pressable
+              onPress={() => loadAppointments?.()}
+              style={{ backgroundColor: '#EF4444', paddingVertical: 4, paddingHorizontal: 10, borderRadius: 6 }}
+            >
+              <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '700' }}>Retry</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {/* Initial Loading Indicator */}
+        {isLoadingAppointments && appointments.length === 0 && (
+          <View style={{ paddingVertical: 32, alignItems: 'center' }}>
+            <ActivityIndicator size="small" color={isFemale ? '#F43F7D' : '#0284C7'} />
+            <Text style={{ marginTop: 8, color: '#64748B', fontSize: 13 }}>Loading appointments...</Text>
+          </View>
+        )}
+
         {/* Segmented Tabs */}
         <View style={styles.tabsContainer}>
           <Pressable

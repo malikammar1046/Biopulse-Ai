@@ -215,20 +215,19 @@ export class NutritionService {
   // --------------------------------------------------------------------------
 
   /**
-   * Fetch today's food logs from public.nutrition_food_logs
+   * Fetch food logs for a given date from public.nutrition_food_logs
    */
-  static getFoodLogs = NutritionService.getTodayFoodLogs;
-
-  static async getTodayFoodLogs(
+  static async getFoodLogsByDate(
     userId: string,
-    token: string
+    token: string,
+    dateStr?: string
   ): Promise<ApiResponse<NutritionFoodLog[]>> {
     if (!userId || !token) {
       return { data: null, error: 'User is not authenticated.', status: 401 };
     }
 
-    const todayStr = new Date().toISOString().split('T')[0];
-    const url = `${SUPABASE_URL}/rest/v1/nutrition_food_logs?user_id=eq.${userId}&logged_at=gte.${todayStr}T00:00:00Z&logged_at=lte.${todayStr}T23:59:59Z&order=logged_at.desc&select=*`;
+    const targetDate = dateStr || new Date().toISOString().split('T')[0];
+    const url = `${SUPABASE_URL}/rest/v1/nutrition_food_logs?user_id=eq.${userId}&logged_at=gte.${targetDate}T00:00:00Z&logged_at=lte.${targetDate}T23:59:59Z&order=logged_at.desc&select=*`;
     const res = await safeRequest<any[]>(url, {
       method: 'GET',
       headers: getSupabaseHeaders(token),
@@ -252,6 +251,9 @@ export class NutritionService {
 
     return { data: logs, error: null, status: 200 };
   }
+
+  static getFoodLogs = (userId: string, token: string) => NutritionService.getFoodLogsByDate(userId, token);
+  static getTodayFoodLogs = (userId: string, token: string) => NutritionService.getFoodLogsByDate(userId, token);
 
   /**
    * Log food consumption to public.nutrition_food_logs
