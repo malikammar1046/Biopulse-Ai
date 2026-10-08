@@ -8,6 +8,8 @@ import { DEFAULT_USER_PROFILE, createEmptyUserProfile } from '../data/mockDashbo
 import { clearAllLocalAssessments } from '../services/intelligenceService';
 import { lifestyleService } from '../services/lifestyleService';
 import { nutritionService } from '../services/nutritionService';
+import { changeLocale } from '../i18n/locale';
+import type { SupportedLocale } from '../i18n/types';
 
 interface AuthContextType {
   user: SupabaseUser | null;
@@ -25,6 +27,7 @@ interface AuthContextType {
   updateUserProfile: (data: Partial<UserProfile>) => Promise<{ success: boolean; error?: string }>;
   resetToDefaultProfile: () => void;
   deleteAccountAndData: () => Promise<{ success: boolean; error?: string }>;
+  updateUserLanguage: (locale: 'en' | 'ur') => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -83,6 +86,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const inMemoryPathway = currentInMemory.id === activeUser.id ? currentInMemory.pathway : undefined;
     const inMemoryGender = currentInMemory.id === activeUser.id ? currentInMemory.gender : undefined;
 
+    const metaLanguage = (userMeta.preferred_language as SupportedLocale) || undefined;
+    if (metaLanguage === 'en' || metaLanguage === 'ur') {
+      await changeLocale(metaLanguage, true);
+    }
+
     if (profile) {
       // Prioritize explicit metadata and profile pathway, then in-memory pathway, then gender-derived
       const resolvedPathway =
@@ -104,6 +112,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ...profile,
         pathway: resolvedPathway,
         gender: resolvedGender,
+        preferredLanguage: (metaLanguage === 'en' || metaLanguage === 'ur') ? metaLanguage : profile.preferredLanguage,
         waistCm: profile.waistCm ?? (userMeta.waist_cm !== undefined ? userMeta.waist_cm : undefined),
         mensHealth: profile.mensHealth || userMeta.mens_health || undefined,
         generalHealth: profile.generalHealth || userMeta.general_health || undefined,
@@ -550,6 +559,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateUserLanguage = async (locale: 'en' | 'ur') => {
+    await changeLocale(locale, true);
+    setUserProfile((prev) => {
+      const next = { ...prev, preferredLanguage: locale };
+      try {
+        localStorage.setItem(STORAGE_PROFILE_KEY, JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+
+    if (user && isSupabaseConfigured()) {
+      try {
+        await supabase.auth.updateUser({
+          data: { preferred_language: locale },
+        });
+      } catch (err) {
+        console.warn('Failed to persist preferred_language to user_metadata:', err);
+      }
+    }
+  };
+
   const isAuthenticated = isSupabaseConfigured() ? Boolean(user) : Boolean(userProfile.id);
   const isOnboarded = userProfile.isOnboarded;
 
@@ -571,6 +603,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updateUserProfile,
         resetToDefaultProfile,
         deleteAccountAndData,
+        updateUserLanguage,
       }}
     >
       {children}

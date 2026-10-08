@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Calendar, Plus, ShieldTick } from '@untitledui/icons';
 import { motion } from 'framer-motion';
 
@@ -7,6 +8,8 @@ interface CycleEmptyStateProps {
 }
 
 export const CycleEmptyState: React.FC<CycleEmptyStateProps> = ({ onLogPeriod }) => {
+  const { t } = useTranslation(['cycle', 'common']);
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }}
@@ -22,13 +25,16 @@ export const CycleEmptyState: React.FC<CycleEmptyStateProps> = ({ onLogPeriod })
       {/* Main Copy */}
       <div className="space-y-2">
         <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#DC326C] px-3 py-1 rounded-full bg-[#FDE6EF]">
-          Cycle Intelligence
+          {t('cycle:cycleIntelligenceTag', { defaultValue: 'Cycle Intelligence' })}
         </span>
         <h2 className="text-2xl sm:text-3xl font-extrabold font-display text-[#0F172A] tracking-tight">
-          Your cycle story starts here.
+          {t('cycle:cycleStoryTitle', { defaultValue: 'Your cycle story starts here.' })}
         </h2>
         <p className="text-sm text-[#475569] max-w-md mx-auto leading-relaxed">
-          Log your first period to begin understanding your patterns, biological phases, and longitudinal rhythms.
+          {t('cycle:cycleStoryDesc', {
+            defaultValue:
+              'Log your first period to begin understanding your patterns, biological phases, and longitudinal rhythms.',
+          })}
         </p>
       </div>
 
@@ -40,14 +46,14 @@ export const CycleEmptyState: React.FC<CycleEmptyStateProps> = ({ onLogPeriod })
           className="w-full sm:w-auto inline-flex items-center justify-center gap-2 h-11 px-6 rounded-lg font-medium text-sm text-white bg-[#F43F7D] hover:bg-[#DC326C] shadow-xs transition-all cursor-pointer"
         >
           <Plus className="w-4 h-4" aria-hidden="true" />
-          <span>Log Your First Period</span>
+          <span>{t('cycle:logFirstPeriodCTA', { defaultValue: 'Log Your First Period' })}</span>
         </button>
       </div>
 
       {/* Privacy & Clinical Boundary Disclaimer */}
       <div className="pt-6 border-t border-[#EAECF0] flex items-center justify-center gap-2 text-xs text-[#64748B]">
         <ShieldTick className="w-4 h-4 text-[#F43F7D] shrink-0" aria-hidden="true" />
-        <span>Your cycle records are privately encrypted with Row Level Security (RLS).</span>
+        <span>{t('cycle:cycleEncryptedNotice', { defaultValue: 'Your cycle records are privately encrypted with Row Level Security (RLS).' })}</span>
       </div>
     </motion.div>
   );

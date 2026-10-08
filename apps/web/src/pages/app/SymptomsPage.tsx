@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { Plus, RefreshCw01 } from '@untitledui/icons';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { TodayCheckInCard } from '../../components/symptoms/TodayCheckInCard';
@@ -15,6 +16,7 @@ import type {
 } from '../../types/symptom';
 
 export const SymptomsPage: React.FC = () => {
+  const { t } = useTranslation(['symptoms', 'common']);
   const {
     userProfile,
     symptomRecords,
@@ -86,7 +88,7 @@ export const SymptomsPage: React.FC = () => {
           className={`h-10 w-10 flex items-center justify-center rounded-xl bg-white border border-[#EAECF0] text-[#64748B] transition-colors cursor-pointer ${
             isMale ? 'hover:text-[#0288D1] hover:bg-[#F8FAFC]' : 'hover:text-[#F43F7D] hover:bg-[#FDE6EF]/30'
           }`}
-          title="Refresh symptom logs"
+          title={t('symptoms:refreshSymptomsTitle', { defaultValue: 'Refresh symptom logs' })}
         >
           <RefreshCw01 className={`w-4 h-4 shrink-0 ${symptomsLoading ? 'animate-spin' : ''}`} aria-hidden="true" />
         </button>
@@ -99,7 +101,7 @@ export const SymptomsPage: React.FC = () => {
           }`}
         >
           <Plus className="w-4 h-4 shrink-0" aria-hidden="true" />
-          <span>Log a Symptom</span>
+          <span>{t('symptoms:logSymptomCTA', { defaultValue: 'Log a Symptom' })}</span>
         </button>
       </div>
 

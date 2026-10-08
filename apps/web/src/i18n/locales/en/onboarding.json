@@ -1,0 +1,173 @@
+{
+  "title": "Welcome to Your BioPulse Setup",
+  "subtitle": "Help us personalize your endocrine screening experience with a few confidential questions",
+  "steps": {
+    "pathway": "Select Pathway",
+    "personal": "Personal Biometrics",
+    "clinical": "Clinical Symptoms",
+    "lifestyle": "Daily Habits",
+    "goals": "Health Goals"
+  },
+  "pathwaySelection": {
+    "title": "Choose Your Primary Clinical Pathway",
+    "subtitle": "BioPulse provides separate, isolated algorithms for women and men",
+    "femaleCard": "Women's Health (PCOS)",
+    "femaleDesc": "Screening for polycystic ovary syndrome, cycle irregular patterns, acne, hirsutism, and insulin resistance.",
+    "maleCard": "Men's Health (Hypogonadism)",
+    "maleDesc": "Screening for testosterone deficiency, low energy, muscle recovery, intimacy changes, and metabolic markers.",
+    "eyebrow": "Science Today. Healthier Tomorrows.",
+    "femaleHeading": "Female Health",
+    "femaleSubheading": "PCOS Screening",
+    "femaleDescription": "Understand your hormones. Take control of your health. A brighter tomorrow.",
+    "femaleTag": "Healthier Her",
+    "femaleFeature1": "Menstrual & hormonal health",
+    "femaleFeature2": "Metabolic insights",
+    "femaleFeature3": "Reproductive wellness",
+    "femaleFeature4": "Personalized guidance",
+    "femaleButton": "Choose Female Path",
+    "femaleLoading": "Starting Female Path...",
+    "femaleTagline": "For her. A healthier, brighter you.",
+    "femaleSideNote": "Different journeys. A healthier you.",
+    "maleHeading": "Male Health",
+    "maleSubheading": "Hypogonadism Screening",
+    "maleDescription": "Understand your hormones. Reclaim your energy, vitality and well-being.",
+    "maleTag": "Stronger Him",
+    "maleFeature1": "Hormonal health",
+    "maleFeature2": "Energy & vitality",
+    "maleFeature3": "Metabolic function",
+    "maleFeature4": "Personalized guidance",
+    "maleButton": "Choose Male Path",
+    "maleLoading": "Starting Male Path...",
+    "maleTagline": "For him. A stronger, brighter tomorrow.",
+    "maleSideNote": "Your health today. A brighter tomorrow.",
+    "stepBadge": "Step 2 of 2: Choose Pathway"
+  },
+  "stepLabels": {
+    "basicInfo": "Basic Info",
+    "medicalHistory": "Medical History",
+    "periodCycle": "Period & Cycle",
+    "symptoms": "Symptoms",
+    "reviewReady": "Review & Ready",
+    "healthProfile": "Health Profile",
+    "symptomsAdam": "Symptoms / ADAM",
+    "lifestyle": "Lifestyle"
+  },
+  "layout": {
+    "forWomen": "FOR WOMEN",
+    "forMen": "FOR MEN",
+    "womenTitle": "Your Health, Your Future",
+    "womenSubtitle": "A few simple steps help us understand your health and personalize your PCOS screening and guidance.",
+    "menTitle": "Your Health, Your Strength",
+    "menSubtitle": "A few simple steps help us understand your health and personalize your Male Hypogonadism screening and guidance.",
+    "pcosOnboarding": "PCOS ONBOARDING",
+    "maleOnboarding": "MALE HYPOGONADISM ONBOARDING",
+    "stepProgress": "Step {{current}} of {{total}}",
+    "continue": "Continue",
+    "back": "Back",
+    "reviewProfile": "Review Profile",
+    "completeSetup": "Complete Setup",
+    "saving": "Saving...",
+    "secureNotice": "Your information is secure and private."
+  },
+  "biometrics": {
+    "height": "Height",
+    "heightCm": "Height (cm)",
+    "weight": "Weight",
+    "weightKg": "Weight (kg)",
+    "waist": "Waist Circumference",
+    "waistCm": "Waist (cm)",
+    "calculatedBmi": "Calculated BMI",
+    "bmiCategory": "BMI Category"
+  },
+  "womensQuestions": {
+    "cycleLength": "Typical Menstrual Cycle Length (days)",
+    "cycleLengthIrregular": "Irregular / Unpredictable",
+    "periodDuration": "Period Bleeding Duration (days)",
+    "periodRegularity": "Cycle Regularity",
+    "regularityOptions": {
+      "very_regular": "Very regular (26-32 days)",
+      "mostly_regular": "Mostly regular (within a few days)",
+      "sometimes_irregular": "Sometimes irregular",
+      "often_irregular": "Frequently irregular / Misses months",
+      "not_sure": "Not sure"
+    },
+    "symptomsLabel": "Experienced Symptoms (Select all that apply)",
+    "symptoms": {
+      "acne": "Persistent facial or body acne",
+      "hirsutism": "Excess facial or body hair growth",
+      "hairLoss": "Scalp hair thinning or loss",
+      "weightGain": "Difficulty losing weight / Rapid gain",
+      "skinDarkening": "Dark patches on neck or skin folds (Acanthosis)"
+    }
+  },
+  "mensQuestions": {
+    "energyLevel": "Daily Energy Level",
+    "energyOptions": {
+      "high": "High & consistent",
+      "moderate": "Moderate throughout day",
+      "low": "Frequently low / Sluggish",
+      "very_low": "Severely low / Exhausted"
+    },
+    "sexDrive": "Libido & Intimacy Interest",
+    "sexDriveOptions": {
+      "normal": "Normal / Expected",
+      "reduced": "Noticeably reduced",
+      "significantly_reduced": "Significantly reduced"
+    },
+    "muscleStrength": "Muscle Strength & Physical Recovery",
+    "muscleOptions": {
+      "stable": "Stable / Good",
+      "reduced": "Decreased stamina or strength",
+      "significantly_reduced": "Significant loss of muscle or strength"
+    },
+    "sleepQuality": "Sleep Quality",
+    "sleepOptions": {
+      "restful": "Deep & restful",
+      "frequently_waking": "Frequently waking up during night",
+      "poor": "Poor / Unrefreshing sleep"
+    }
+  },
+  "lifestyleQuestions": {
+    "activityLevel": "Physical Activity Level",
+    "activityOptions": {
+      "sedentary": "Sedentary (mostly sitting)",
+      "light": "Light activity (light walks 1-2 days)",
+      "moderate": "Moderate (active 3-4 days/week)",
+      "very_active": "Very active (daily vigorous exercise)"
+    },
+    "waterIntake": "Daily Water Intake (glasses)",
+    "sleepHours": "Average Sleep Duration (hours/night)",
+    "dietaryPreference": "Dietary Preference",
+    "dietaryOptions": {
+      "halal_non_veg": "Pakistani / Halal Non-Vegetarian",
+      "vegetarian": "Vegetarian",
+      "vegan": "Vegan",
+      "no_preference": "No specific restriction"
+    },
+    "fastFoodIntake": "Fast Food & Fried Food Frequency",
+    "fastFoodOptions": {
+      "frequent": "Frequent (3+ times per week)",
+      "occasional": "Occasional (1-2 times per week)",
+      "rare_never": "Rarely or never"
+    }
+  },
+  "goalsQuestions": {
+    "title": "What are your primary health goals?",
+    "subtitle": "Select up to 3 priority outcomes",
+    "goals": {
+      "understand_symptoms": "Understand my hormonal symptoms",
+      "improve_diet": "Adopt Pakistani healthy nutrition",
+      "regulate_cycle": "Support menstrual regularity",
+      "boost_energy": "Overcome chronic fatigue & low energy",
+      "weight_management": "Sustainable weight & metabolic balance",
+      "prepare_doctor": "Prepare for a specialist appointment"
+    },
+    "coachingStyle": "Guidance & Coaching Preference",
+    "coachingOptions": {
+      "gentle_nudges": "Gentle weekly summaries",
+      "structured_weekly": "Structured weekly plans",
+      "daily_coaching": "Active daily habit tracking"
+    }
+  },
+  "finishButton": "Complete Setup & View Dashboard"
+}

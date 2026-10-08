@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   CheckCircle,
   AlertCircle,
@@ -40,6 +41,7 @@ import { GoalsTab } from './settings/tabs/GoalsTab';
 import { AccountTab } from './settings/tabs/AccountTab';
 
 export const SettingsPage: React.FC = () => {
+  const { t } = useTranslation(['settings', 'common']);
   const navigate = useNavigate();
   const { userProfile, updateUserProfile, submitTier1 } = useUserHealth();
   const { logout, deleteAccountAndData } = useAuth();
@@ -93,7 +95,7 @@ export const SettingsPage: React.FC = () => {
     return calculateProfileCompleteness(draft, isMale);
   }, [draft, isMale]);
 
-  const tabs = useMemo(() => getSettingsTabs(isMale), [isMale]);
+  const tabs = useMemo(() => getSettingsTabs(isMale, t), [isMale, t]);
 
   // Validation
   const validateForm = (): boolean => {
@@ -197,11 +199,11 @@ export const SettingsPage: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-[#0288D1] uppercase tracking-wider">
-              Clinical Health Center
+              {t('settings:clinicalCenter', 'Clinical Health Center')}
             </span>
             <span className="text-slate-300">•</span>
             <span className="text-xs font-medium text-slate-500">
-              {isMale ? 'Male Hypogonadism Protocol' : 'PCOS Screening Protocol'}
+              {isMale ? t('settings:maleProtocol', 'Male Hypogonadism Protocol') : t('settings:pcosProtocol', 'PCOS Screening Protocol')}
             </span>
           </div>
 
@@ -214,14 +216,14 @@ export const SettingsPage: React.FC = () => {
                 className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-xs"
               >
                 <CheckCircle className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
-                <span>Changes saved</span>
+                <span>{t('settings:changesSaved', 'Changes saved')}</span>
               </motion.div>
             )}
 
             {hasChanges && (
               <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
                 <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                <span>Unsaved changes</span>
+                <span>{t('settings:unsavedChanges', 'Unsaved changes')}</span>
               </div>
             )}
           </div>

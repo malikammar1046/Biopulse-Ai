@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -13,6 +14,7 @@ import { Container } from '../../../components/ui/Container';
 import { ROUTES } from '../../../constants/routes';
 
 export const HowItWorksSection: React.FC = () => {
+  const { t } = useTranslation('public');
   return (
     <section className="relative py-20 sm:py-28 bg-[#FAFCFF] text-[#162A45] border-t border-slate-200/70 overflow-hidden select-none">
       {/* ── Soft Ambient Glows ── */}
@@ -37,7 +39,7 @@ export const HowItWorksSection: React.FC = () => {
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E0F7FA] border border-[#B2EBF2] text-xs font-semibold text-[#00838F] shadow-2xs">
             <span className="w-2 h-2 rounded-full bg-[#00838F]" />
             <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.18em]">
-              How BioPulse AI Works
+              {t('howItWorks.eyebrow')}
             </span>
           </div>
 
@@ -47,7 +49,7 @@ export const HowItWorksSection: React.FC = () => {
           </h2>
 
           <p className="text-xs sm:text-sm lg:text-base text-slate-600 max-w-xl mx-auto leading-relaxed font-sans">
-            A simple, guided process that turns your information into meaningful insights &mdash; so you can take the next step with confidence.
+            {t('howItWorks.subtitle')}
           </p>
         </div>
 
@@ -102,7 +104,7 @@ export const HowItWorksSection: React.FC = () => {
                     </div>
 
                     <h3 className="text-lg sm:text-xl font-bold font-display text-[#0F254B] leading-snug">
-                      Share Your Health Information
+                      {t('howItWorks.step1Title')}
                     </h3>
 
                     <p className="text-xs sm:text-[13px] text-slate-600 leading-relaxed font-sans">

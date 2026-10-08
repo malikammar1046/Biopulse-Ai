@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
   Send01,
   RefreshCw01,
@@ -16,6 +17,7 @@ import { DigitalTwinService } from '../../services/digitalTwinService';
 import { AIMessageContent } from '../../components/common/AIMessageContent';
 
 export const ChatPage: React.FC = () => {
+  const { t } = useTranslation(['chat', 'common']);
   const {
     messages,
     isLoading,
@@ -143,7 +145,7 @@ export const ChatPage: React.FC = () => {
             </div>
 
             <p className="text-xs text-[#64748B] font-sans truncate mt-0.5">
-              Health literacy & screening pattern explanation • Non-diagnostic
+              {t('chat:subtitle', { defaultValue: 'Health literacy & screening pattern explanation • Non-diagnostic' })}
             </p>
           </div>
         </div>
@@ -158,18 +160,18 @@ export const ChatPage: React.FC = () => {
             aria-label="Inspect Health Context"
           >
             <Database01 className="w-3.5 h-3.5 text-[#64748B]" aria-hidden="true" />
-            <span>Inspect Context</span>
+            <span>{t('common:inspect', { defaultValue: 'Inspect Context' })}</span>
           </button>
 
           <button
             type="button"
             onClick={clearConversation}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-[#E2E8F0] text-xs font-sans font-medium text-[#475569] hover:text-[#0F172A] transition-colors cursor-pointer shadow-2xs"
-            title="Start New Chat"
-            aria-label="New Chat"
+            title={t('chat:newChat', { defaultValue: 'Start New Chat' })}
+            aria-label={t('chat:newChat', { defaultValue: 'New Chat' })}
           >
             <RefreshCw01 className="w-3.5 h-3.5 text-[#64748B]" aria-hidden="true" />
-            <span className="hidden xs:inline">New Chat</span>
+            <span className="hidden xs:inline">{t('chat:newChat', { defaultValue: 'New Chat' })}</span>
           </button>
         </div>
       </header>
@@ -277,7 +279,7 @@ export const ChatPage: React.FC = () => {
                 />
               </div>
               <span className="text-xs font-medium text-[#64748B]">
-                BioPulse AI is reviewing your context...
+                {t('chat:typing', { defaultValue: 'BioPulse AI is reviewing your clinical context...' })}
               </span>
             </div>
           </div>
@@ -291,7 +293,7 @@ export const ChatPage: React.FC = () => {
         <div className="px-5 py-3 bg-white border-t border-[#E2E8F0] shrink-0">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#64748B]">
-              Suggested Inquiries
+              {t('chat:suggestedPrompts.title', { defaultValue: 'Suggested Discussion Topics' })}
             </span>
           </div>
           <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
@@ -325,7 +327,7 @@ export const ChatPage: React.FC = () => {
             placeholder={placeholderText}
             disabled={isLoading}
             className="flex-1 bg-transparent px-2.5 py-1.5 text-base sm:text-sm text-[#0F172A] placeholder-[#94A3B8] focus:outline-none resize-none max-h-36 disabled:opacity-60 leading-relaxed"
-            aria-label="Ask BioPulse AI"
+            aria-label={t('chat:inputPlaceholder', { defaultValue: 'Ask BioPulse AI' })}
           />
 
           <button
@@ -337,7 +339,7 @@ export const ChatPage: React.FC = () => {
                 ? 'bg-[#F43F7D] hover:bg-[#DC326C] active:bg-[#BE185D]'
                 : 'bg-[#0868B9] hover:bg-[#065293] active:bg-[#043c6d]'
             }`}
-            aria-label="Send Message"
+            aria-label={t('chat:send', { defaultValue: 'Send Message' })}
           >
             <Send01 className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
           </button>
@@ -345,10 +347,12 @@ export const ChatPage: React.FC = () => {
 
         <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-[#64748B] px-1">
           <span>
-            {aiBrandName} provides educational screening literacy and is not a medical diagnosis device.
+            {t('chat:disclaimer', {
+              defaultValue: 'BioPulse AI provides educational information and is not a medical doctor.',
+            })}
           </span>
           <span className="hidden sm:inline font-mono text-[10px]">
-            Press Enter to send, Shift+Enter for new line
+            {t('common:enterToSend', { defaultValue: 'Press Enter to send' })}
           </span>
         </div>
       </div>

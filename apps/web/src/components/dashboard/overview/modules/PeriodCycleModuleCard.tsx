@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Heart, Calendar, Droplets } from 'lucide-react';
 import { DashboardModuleCard } from '../DashboardModuleCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
@@ -19,14 +20,16 @@ export const PeriodCycleModuleCard: React.FC<PeriodCycleModuleCardProps> = ({
   onLogPeriod,
   updatedAt = '12 mins ago',
 }) => {
+  const { t } = useTranslation(['dashboard', 'cycle']);
+
   const menuItems = [
     {
-      label: 'Open Cycle Tracking',
+      label: t('dashboard:openCycleTracking'),
       onClick: onOpenCycle,
       icon: Heart,
     },
     {
-      label: 'Log New Period',
+      label: t('dashboard:logNewPeriod'),
       onClick: onLogPeriod,
       icon: Droplets,
     },
@@ -35,8 +38,8 @@ export const PeriodCycleModuleCard: React.FC<PeriodCycleModuleCardProps> = ({
   if (!cycleStats.hasData || cycleStats.currentCycleDay === null) {
     return (
       <DashboardModuleCard
-        title="Period Cycle"
-        subtitle="Current cycle information"
+        title={t('dashboard:periodCycle')}
+        subtitle={t('dashboard:currentCycleInfo')}
         icon={Droplets}
         accentColor="pink"
         isLive={false}
@@ -44,9 +47,9 @@ export const PeriodCycleModuleCard: React.FC<PeriodCycleModuleCardProps> = ({
         loading={loading}
       >
         <DashboardEmptyState
-          title="No cycle history yet"
-          description="Log your period dates to track your menstrual rhythm, fertile windows, and ovulation estimates."
-          actionLabel="Add Cycle Data"
+          title={t('dashboard:noCycleHistory')}
+          description={t('dashboard:noCycleHistoryDesc')}
+          actionLabel={t('dashboard:addCycleData')}
           onAction={onLogPeriod}
           icon={Droplets}
           accentColor="pink"
@@ -65,12 +68,12 @@ export const PeriodCycleModuleCard: React.FC<PeriodCycleModuleCardProps> = ({
 
   return (
     <DashboardModuleCard
-      title="Period Cycle"
-      subtitle="Current cycle information"
+      title={t('dashboard:periodCycle')}
+      subtitle={t('dashboard:currentCycleInfo')}
       icon={Droplets}
       accentColor="pink"
       isLive={true}
-      syncedModule="Cycle Tracking"
+      syncedModule={t('dashboard:cycleTrackingSynced')}
       updatedAt={updatedAt}
       menuItems={menuItems}
       loading={loading}
@@ -81,14 +84,14 @@ export const PeriodCycleModuleCard: React.FC<PeriodCycleModuleCardProps> = ({
           {/* Current Cycle Day */}
           <div className="p-3 rounded-2xl bg-[#FFF5F8] border border-[#FDE6EF] flex flex-col justify-between">
             <span className="text-[11px] font-medium text-slate-500 font-sans">
-              Current Cycle Day
+              {t('dashboard:cycleDay')}
             </span>
             <div className="flex items-baseline gap-1 mt-1">
               <span className="text-3xl font-extrabold font-display text-slate-900 leading-none">
                 {currentCycleDay}
               </span>
               <span className="text-xs text-slate-500 font-mono">
-                of ~{totalCycleDays} days
+                of ~{totalCycleDays} {t('cycle:days')}
               </span>
             </div>
             <div className="mt-2">
@@ -101,7 +104,7 @@ export const PeriodCycleModuleCard: React.FC<PeriodCycleModuleCardProps> = ({
           {/* Next Period (Predicted) */}
           <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] flex flex-col justify-between">
             <span className="text-[11px] font-medium text-slate-500 font-sans">
-              Next Period (Predicted)
+              {t('cycle:nextPeriodIn')}
             </span>
             <div className="flex items-center gap-2 mt-1">
               <div className="w-7 h-7 rounded-lg bg-[#FDE6EF] flex items-center justify-center text-[#E11D48] shrink-0">
@@ -113,7 +116,7 @@ export const PeriodCycleModuleCard: React.FC<PeriodCycleModuleCardProps> = ({
                 </span>
                 {nextPeriodDays !== null && (
                   <span className="text-[10px] text-slate-500 font-mono block">
-                    In {nextPeriodDays} day{nextPeriodDays === 1 ? '' : 's'}
+                    In {nextPeriodDays} {t('cycle:days')}
                   </span>
                 )}
               </div>
@@ -140,7 +143,7 @@ export const PeriodCycleModuleCard: React.FC<PeriodCycleModuleCardProps> = ({
                 }`}
               />
               <span className="text-[11px] font-semibold text-slate-800 mt-1">
-                Period
+                {t('dashboard:cycleCard.phases.period')}
               </span>
               <span className="text-[9.5px] text-slate-400 font-mono">
                 Days 1–5
@@ -157,7 +160,7 @@ export const PeriodCycleModuleCard: React.FC<PeriodCycleModuleCardProps> = ({
                 }`}
               />
               <span className="text-[11px] font-semibold text-slate-800 mt-1">
-                Fertile Window
+                {t('dashboard:cycleCard.phases.follicular')}
               </span>
               <span className="text-[9.5px] text-slate-400 font-mono">
                 Days 10–15
@@ -174,7 +177,7 @@ export const PeriodCycleModuleCard: React.FC<PeriodCycleModuleCardProps> = ({
                 }`}
               />
               <span className="text-[11px] font-semibold text-slate-800 mt-1">
-                Ovulation
+                {t('dashboard:cycleCard.phases.ovulation')}
               </span>
               <span className="text-[9.5px] text-slate-400 font-mono">
                 Day ~14

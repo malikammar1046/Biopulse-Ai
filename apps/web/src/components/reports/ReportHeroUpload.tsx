@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { UploadCloud01, FileCheck02, ShieldTick } from '@untitledui/icons';
 import type { ReportSummaryStats } from '../../types/report';
 import { useUserHealth } from '../../context/UserHealthContext';
@@ -15,6 +16,7 @@ export const ReportHeroUpload: React.FC<ReportHeroUploadProps> = ({
   onFileSelected,
   onOpenUploadWizard,
 }) => {
+  const { t } = useTranslation(['reports', 'common']);
   const { userProfile } = useUserHealth();
   const pathway = resolvePathway(userProfile.gender, userProfile.pathway);
   const isFemale = pathway === 'female';
@@ -83,7 +85,7 @@ export const ReportHeroUpload: React.FC<ReportHeroUploadProps> = ({
               : 'bg-[#E0F2FE] text-[#0288D1] border-[#BAE6FD]'
           }`}>
             <FileCheck02 className={`w-3.5 h-3.5 ${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'}`} aria-hidden="true" />
-            <span>Health Document Hub</span>
+            <span>{t('reports:healthDocHub', { defaultValue: 'Health Document Hub' })}</span>
           </div>
         </div>
 
@@ -95,7 +97,7 @@ export const ReportHeroUpload: React.FC<ReportHeroUploadProps> = ({
             <span className={`text-[10px] font-mono uppercase tracking-wider block ${
               isFemale ? 'text-[#98A2B3]' : 'text-[#64748B]'
             }`}>
-              Total Reports
+              {t('reports:totalReportsCount', { defaultValue: 'Total Reports' })}
             </span>
             <span className={`text-lg font-bold font-display ${
               isFemale ? 'text-[#111318]' : 'text-[#0F172A]'
@@ -110,7 +112,7 @@ export const ReportHeroUpload: React.FC<ReportHeroUploadProps> = ({
             <span className={`text-[10px] font-mono uppercase tracking-wider block ${
               isFemale ? 'text-[#98A2B3]' : 'text-[#64748B]'
             }`}>
-              Needs a closer look
+              {t('reports:needsCloserLook', { defaultValue: 'Needs a closer look' })}
             </span>
             <span
               className={`text-lg font-bold font-display ${
@@ -119,7 +121,7 @@ export const ReportHeroUpload: React.FC<ReportHeroUploadProps> = ({
                   : isFemale ? 'text-[#16A36A]' : 'text-[#059669]'
               }`}
             >
-              {stats.needsReviewCount} {stats.needsReviewCount === 1 ? 'test' : 'tests'}
+              {stats.needsReviewCount} {stats.needsReviewCount === 1 ? t('reports:testLabel', { defaultValue: 'test' }) : t('reports:testsLabel', { defaultValue: 'tests' })}
             </span>
           </div>
         </div>
@@ -159,10 +161,10 @@ export const ReportHeroUpload: React.FC<ReportHeroUploadProps> = ({
 
         <div className="space-y-1">
           <p className="text-sm font-semibold text-[#0F172A]">
-            Drag & drop your lab or ultrasound document here, or <span className={`underline ${isFemale ? 'text-[#DC326C]' : 'text-[#0288D1]'}`}>browse files</span>
+            {t('reports:dragDropLabReports', { defaultValue: 'Drag & drop your lab reports here, or click to browse' })}
           </p>
           <p className="text-xs text-[#64748B]">
-            Supports PDF, JPG, PNG up to 10MB • Secured with authenticated access
+            {t('reports:supportedFormats', { defaultValue: 'Supports PDF, JPG, PNG up to 10MB • Secured with authenticated access' })}
           </p>
         </div>
 
@@ -170,17 +172,17 @@ export const ReportHeroUpload: React.FC<ReportHeroUploadProps> = ({
           <span className={`text-[10px] font-mono font-semibold px-2.5 py-1 rounded-full bg-white border text-[#475569] ${
             isFemale ? 'border-[#EAECF0]' : 'border-[#BAE6FD]'
           }`}>
-            PDF Documents
+            PDF
           </span>
           <span className={`text-[10px] font-mono font-semibold px-2.5 py-1 rounded-full bg-white border text-[#475569] ${
             isFemale ? 'border-[#EAECF0]' : 'border-[#BAE6FD]'
           }`}>
-            Phone Photos / Scans
+            JPG / PNG
           </span>
           <span className={`text-[10px] font-mono font-semibold px-2.5 py-1 rounded-full bg-white border text-[#475569] ${
             isFemale ? 'border-[#EAECF0]' : 'border-[#BAE6FD]'
           }`}>
-            Ultrasound Images
+            Ultrasound
           </span>
         </div>
       </div>
@@ -189,7 +191,7 @@ export const ReportHeroUpload: React.FC<ReportHeroUploadProps> = ({
       <div className="relative z-10 pt-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs border-t text-[#64748B] border-[#EAECF0]">
         <div className="flex items-center gap-2">
           <ShieldTick className="w-4 h-4 text-[#059669]" aria-hidden="true" />
-          <span>Your medical reports are stored in your private, encrypted account. Only you have access.</span>
+          <span>{t('auth:secureDataTransfer', { defaultValue: 'Your medical reports are stored in your private, encrypted account.' })}</span>
         </div>
 
         <button
@@ -202,7 +204,7 @@ export const ReportHeroUpload: React.FC<ReportHeroUploadProps> = ({
             isFemale ? 'text-[#DC326C] hover:text-[#B82558]' : 'text-[#0288D1] hover:text-[#01579B]'
           }`}
         >
-          Open manual report wizard
+          {t('reports:browseFileCTA', { defaultValue: 'Open manual report wizard' })}
         </button>
       </div>
     </div>

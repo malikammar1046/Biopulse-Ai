@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ArrowRight, Lock01, ActivityHeart } from '@untitledui/icons';
 import { ROUTES } from '../../../constants/routes';
 import { OnboardingStepper } from './OnboardingStepper';
@@ -28,6 +29,8 @@ export const FemaleOnboardingLayout: React.FC<FemaleOnboardingLayoutProps> = ({
   canGoBack = true,
   children,
 }) => {
+  const { t } = useTranslation(['onboarding', 'common']);
+
   return (
     <div className="min-h-screen bg-[#F5FBFD] text-[#073B72] flex flex-col justify-between p-2 sm:p-4 lg:p-5 xl:p-6 select-none relative font-sans overflow-x-hidden">
       {/* ── Background Luminous Ambient Glows ── */}
@@ -50,21 +53,20 @@ export const FemaleOnboardingLayout: React.FC<FemaleOnboardingLayoutProps> = ({
               className="inline-flex items-center gap-2 text-sm font-semibold text-[#55718F] hover:text-[#073B72] transition-colors group cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1 text-[#55718F] group-hover:text-[#073B72]" aria-hidden="true" />
-              <span>Back to Home</span>
+              <span>{t('common:actions.backToHome', 'Back to Home')}</span>
             </Link>
 
             <div className="space-y-2 pt-0.5">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E0F2FE] border border-[#BAE6FD] text-[12px] font-bold text-[#0288D1] tracking-wider uppercase shadow-2xs font-sans">
-                <span>FOR WOMEN</span>
+                <span>{t('onboarding:layout.forWomen', 'FOR WOMEN')}</span>
               </div>
 
               <h1 className="text-2xl sm:text-3xl xl:text-[2.1rem] font-bold font-display leading-[1.14] tracking-tight">
-                <span className="text-[#073B72] block">Your Health</span>
-                <span className="text-[#0288D1] block">Your Future</span>
+                <span className="text-[#073B72] block">{t('onboarding:layout.womenTitle', 'Your Health, Your Future')}</span>
               </h1>
 
               <p className="text-[14px] sm:text-[15px] text-[#55718F] font-sans leading-relaxed">
-                A few simple steps help us understand your health and personalize your PCOS screening and guidance.
+                {t('onboarding:layout.womenSubtitle', 'A few simple steps help us understand your health and personalize your PCOS screening and guidance.')}
               </p>
             </div>
           </div>
@@ -140,10 +142,10 @@ export const FemaleOnboardingLayout: React.FC<FemaleOnboardingLayoutProps> = ({
             <div className="shrink-0 mb-2">
               <div className="flex items-center justify-between pb-2.5 border-b border-[#E8F1F5] mb-2">
                 <span className="text-[13px] sm:text-sm font-bold font-sans text-[#0288D1] uppercase tracking-wider">
-                  PCOS ONBOARDING
+                  {t('onboarding:layout.pcosOnboarding', 'PCOS ONBOARDING')}
                 </span>
                 <span className="text-[13px] sm:text-sm font-semibold font-sans text-[#55718F]">
-                  Step {currentStep} of {totalSteps}
+                  {t('onboarding:layout.stepProgress', 'Step {{current}} of {{total}}', { current: currentStep, total: totalSteps })}
                 </span>
               </div>
 
@@ -171,7 +173,7 @@ export const FemaleOnboardingLayout: React.FC<FemaleOnboardingLayoutProps> = ({
                   className="min-h-[44px] sm:min-h-[50px] px-4 sm:px-7 py-2.5 sm:py-3 rounded-full text-xs sm:text-[15px] font-semibold font-sans uppercase tracking-wider flex items-center gap-1.5 sm:gap-2.5 transition-all cursor-pointer bg-[#F5FBFD] hover:bg-[#E8F4F8] border border-[#D7EAF2] text-[#55718F] hover:text-[#073B72]"
                 >
                   <ArrowLeft className="w-4 h-4 sm:w-4.5 sm:h-4.5" aria-hidden="true" />
-                  <span>Back</span>
+                  <span>{t('onboarding:layout.back', 'Back')}</span>
                 </button>
               )}
 
@@ -185,16 +187,16 @@ export const FemaleOnboardingLayout: React.FC<FemaleOnboardingLayoutProps> = ({
                 {isSubmitting ? (
                   <>
                     <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                    <span>Saving...</span>
+                    <span>{t('onboarding:layout.saving', 'Saving...')}</span>
                   </>
                 ) : (
                   <>
                     <span>
                       {currentStep === totalSteps
-                        ? 'Complete Setup'
+                        ? t('onboarding:layout.completeSetup', 'Complete Setup')
                         : currentStep === totalSteps - 1
-                        ? 'Review Profile'
-                        : 'Continue'}
+                        ? t('onboarding:layout.reviewProfile', 'Review Profile')
+                        : t('onboarding:layout.continue', 'Continue')}
                     </span>
                     <ArrowRight className="w-4 h-4 sm:w-4.5 sm:h-4.5" aria-hidden="true" />
                   </>
@@ -207,10 +209,10 @@ export const FemaleOnboardingLayout: React.FC<FemaleOnboardingLayoutProps> = ({
           <div className="w-full py-2.5 flex items-center justify-between text-[13px] sm:text-sm text-[#55718F] font-sans px-3 shrink-0">
             <div className="flex items-center gap-2 mx-auto">
               <Lock01 className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
-              <span>Your information is secure and private.</span>
+              <span>{t('onboarding:layout.secureNotice', 'Your information is secure and private.')}</span>
             </div>
             <span className="hidden sm:block text-[13px] font-sans text-[#8FA3B8]">
-              Step {currentStep} of {totalSteps}
+              {t('onboarding:layout.stepProgress', 'Step {{current}} of {{total}}', { current: currentStep, total: totalSteps })}
             </span>
           </div>
         </main>

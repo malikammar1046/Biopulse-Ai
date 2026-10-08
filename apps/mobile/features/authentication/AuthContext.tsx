@@ -13,6 +13,7 @@ import {
 } from './authService';
 import { subscribeToAuthChanges, mobileSupabaseAuth } from '../../lib/supabase';
 import { fetchUserProfileFromDb, updateUserPathwayInDb } from '../../services/userService';
+import { registerAuthFailureListener, setAuthExpired } from '../../services/api';
 
 interface AuthContextValue extends AuthState {
   login: (email: string, password: string) => Promise<LoginResult>;
@@ -90,9 +91,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     });
 
+    // 3. Listen for global API 401 auth failures (session expiration)
+    const unsubscribeAuthFailure = registerAuthFailureListener(async () => {
+      console.warn('[BioPulse AuthContext] Global 401 Authentication Failure detected. Expiring session safely.');
+      try {
+        await logoutUser();
+      } catch (e) {
+        console.warn('[BioPulse AuthContext] Logout on 401 error:', e);
+      }
+      if (isMounted) {
+        setUser(null);
+        setPathwayState(null);
+      }
+    });
+
     return () => {
       isMounted = false;
       unsubscribe();
+      unsubscribeAuthFailure();
     };
   }, []);
 
@@ -101,6 +117,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       const res = await loginWithEmailAndPassword(email, password);
       if (res.success && res.user) {
+        setAuthExpired(false);
         const loadedUser = { ...res.user };
         if (res.user.accessToken) {
           try {
@@ -130,6 +147,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       const res = await registerWithEmailAndPassword(payload);
       if (res.success && res.user) {
+        setAuthExpired(false);
         setUser(res.user);
         if (res.user.pathway) {
           setPathwayState(res.user.pathway);
@@ -144,6 +162,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = useCallback(async (): Promise<void> => {
     setIsLoading(true);
     try {
+      setAuthExpired(true);
       await logoutUser();
       setUser(null);
       setPathwayState(null);

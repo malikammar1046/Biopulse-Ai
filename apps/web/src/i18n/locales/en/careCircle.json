@@ -1,0 +1,37 @@
+{
+  "title": "Care Circle & Family Support",
+  "subtitle": "Securely share screening trends and appointment summaries with trusted family members or caregivers",
+  "inviteMember": "Invite New Member",
+  "membersList": "Active Care Circle Members",
+  "relationship": "Relationship",
+  "relationships": {
+    "spouse": "Spouse / Partner",
+    "parent": "Parent",
+    "sibling": "Sibling",
+    "child": "Son / Daughter",
+    "caregiver": "Caregiver",
+    "other": "Trusted Family"
+  },
+  "permissions": {
+    "title": "Access Level",
+    "viewOnly": "View Summaries Only",
+    "fullAccess": "Full Access (Reports & Notes)",
+    "emergencyOnly": "Emergency Contact Only"
+  },
+  "inviteModal": {
+    "title": "Invite to Your Care Circle",
+    "nameLabel": "Member Full Name",
+    "emailLabel": "Email Address",
+    "phoneLabel": "Phone Number",
+    "sendInvite": "Send Invitation",
+    "inviteSent": "Invitation sent successfully."
+  },
+  "status": {
+    "accepted": "Active",
+    "pending": "Invitation Pending",
+    "revoked": "Access Revoked"
+  },
+  "removeMember": "Remove Member",
+  "removeConfirm": "Are you sure you want to revoke access for this member?",
+  "emptyCircle": "No members in your Care Circle yet. Invite a trusted family member to stay connected."
+}

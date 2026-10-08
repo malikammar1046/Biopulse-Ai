@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowRight,
   ShieldCheck,
@@ -101,6 +102,8 @@ const BlueBotanicalFoliage: React.FC<{ className?: string }> = ({ className }) =
 );
 
 export const HeroSection: React.FC = () => {
+  const { t } = useTranslation('public');
+
   return (
     <section className="relative min-h-[92vh] bg-transparent text-[#162A45] pt-24 sm:pt-32 pb-12 sm:pb-16 overflow-hidden flex flex-col justify-between selection:bg-[#0891B2] selection:text-white">
       {/* ── Soft Ambient Glows ── */}
@@ -143,21 +146,21 @@ export const HeroSection: React.FC = () => {
           >
             {/* Top Eyebrow Tag */}
             <p className="text-[11px] sm:text-xs font-extrabold tracking-[0.22em] text-[#0891B2] uppercase select-none">
-              SCIENCE TODAY. HEALTHIER TOMORROWS.
+              {t('hero.eyebrow')}
             </p>
 
             {/* Main Display Headline Matching Concept Image */}
             <h1 className="text-4xl sm:text-5xl lg:text-[3.8rem] font-extrabold tracking-tight leading-[1.08] font-display">
-              <span className="text-[#00838F]">Stronger</span>
+              <span className="text-[#00838F]">{t('hero.headlineStronger')}</span>
               <br />
-              <span className="text-[#0F254B]">Hormones</span>
+              <span className="text-[#0F254B]">{t('hero.headlineHormones')}</span>
               <br />
-              <span className="text-[#00A8B5]">Brighter Lives</span>
+              <span className="text-[#00A8B5]">{t('hero.headlineBrighter')}</span>
             </h1>
 
             {/* Sub-headline Copy */}
             <p className="text-slate-600 font-medium text-sm sm:text-base lg:text-lg leading-relaxed max-w-lg">
-              AI-powered screening and guidance for PCOS (female) and Hypogonadism (male) with personalized insights.
+              {t('hero.subheadline')}
             </p>
 
             {/* 4 Feature Items with Light-Cyan Circular Badges */}
@@ -168,7 +171,7 @@ export const HeroSection: React.FC = () => {
                   <ShieldCheck className="w-4 h-4" />
                 </div>
                 <span className="text-xs sm:text-sm font-semibold text-[#162A45]">
-                  Early risk assessment
+                  {t('hero.feature1')}
                 </span>
               </div>
 
@@ -178,7 +181,7 @@ export const HeroSection: React.FC = () => {
                   <Sparkles className="w-4 h-4" />
                 </div>
                 <span className="text-xs sm:text-sm font-semibold text-[#162A45]">
-                  Explainable AI results
+                  {t('hero.feature2')}
                 </span>
               </div>
 
@@ -188,7 +191,7 @@ export const HeroSection: React.FC = () => {
                   <UserCheck className="w-4 h-4" />
                 </div>
                 <span className="text-xs sm:text-sm font-semibold text-[#162A45]">
-                  Personalized recommendations
+                  {t('hero.feature3')}
                 </span>
               </div>
 
@@ -198,7 +201,7 @@ export const HeroSection: React.FC = () => {
                   <Layers className="w-4 h-4" />
                 </div>
                 <span className="text-xs sm:text-sm font-semibold text-[#162A45]">
-                  Progressive &amp; cost-aware screening
+                  {t('hero.feature4')}
                 </span>
               </div>
             </div>
@@ -211,7 +214,7 @@ export const HeroSection: React.FC = () => {
                   whileTap={{ scale: 0.98 }}
                   className="inline-flex items-center gap-2 px-7 py-3 rounded-full font-bold text-white text-sm sm:text-base bg-[#008CA5] hover:bg-[#007A90] shadow-md shadow-cyan-900/15 transition-all cursor-pointer"
                 >
-                  <span>Get Started</span>
+                  <span>{t('hero.getStarted')}</span>
                   <ArrowRight className="w-4 h-4" />
                 </motion.button>
               </Link>
@@ -222,7 +225,7 @@ export const HeroSection: React.FC = () => {
                   whileTap={{ scale: 0.98 }}
                   className="inline-flex items-center gap-2 px-7 py-3 rounded-full font-bold text-[#008CA5] hover:text-[#007A90] bg-white hover:bg-sky-50/60 border-[1.5px] border-[#008CA5] transition-all cursor-pointer shadow-xs text-sm sm:text-base"
                 >
-                  <span>Learn More</span>
+                  <span>{t('hero.learnMore')}</span>
                 </motion.button>
               </a>
             </div>
@@ -265,9 +268,7 @@ export const HeroSection: React.FC = () => {
                     className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#D946EF] sm:text-[#BE185D] block leading-tight"
                     style={{ fontFamily: "'Caveat', cursive" }}
                   >
-                    Healthier
-                    <br />
-                    Her
+                    {t('hero.healthierHer')}
                   </span>
                 </div>
 
@@ -277,9 +278,7 @@ export const HeroSection: React.FC = () => {
                     className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#0284C7] sm:text-[#1D4ED8] block leading-tight"
                     style={{ fontFamily: "'Caveat', cursive" }}
                   >
-                    Stronger
-                    <br />
-                    Him
+                    {t('hero.strongerHim')}
                   </span>
                 </div>
               </div>
@@ -295,7 +294,7 @@ export const HeroSection: React.FC = () => {
                   <Leaf className="w-3.5 h-3.5 fill-[#22D3EE] text-[#00838F]" />
                 </div>
                 <span className="text-xs sm:text-[13px] font-semibold text-slate-700 leading-snug">
-                  &ldquo;Small steps today, a healthier tomorrow.&rdquo;
+                  &ldquo;{t('hero.quote')}&rdquo;
                 </span>
               </motion.div>
             </div>
@@ -304,9 +303,6 @@ export const HeroSection: React.FC = () => {
 
         {/* ══════════════════════════════════════════════
             BOTTOM METRICS RIBBON / ATTRIBUTES BAR
-            Color matched to image: Soft light-cyan gradient card
-            Content preserved: 2 Health Pathways, Explainable AI,
-            Cost-Aware, Pakistani Nutrition & guidance
            ══════════════════════════════════════════════ */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -318,40 +314,40 @@ export const HeroSection: React.FC = () => {
             {/* Attribute 1: 2 Health Pathways */}
             <div className="text-left md:text-center px-3 pt-2 md:pt-0">
               <div className="text-2xl sm:text-3xl font-extrabold text-[#00838F] tracking-tight font-display">
-                2
+                {t('hero.pathwaysCount', '2')}
               </div>
               <div className="text-xs sm:text-sm font-semibold text-slate-700 mt-0.5">
-                Health Pathways
+                {t('hero.pathwaysLabel', 'Health Pathways')}
               </div>
             </div>
 
             {/* Attribute 2: Explainable AI / Clear factor attribution */}
             <div className="text-left md:text-center px-3 pt-4 md:pt-0">
               <div className="text-xl sm:text-2xl font-extrabold text-[#0F254B] tracking-tight font-display">
-                Explainable AI
+                {t('hero.explainableTitle', 'Explainable AI')}
               </div>
               <div className="text-xs sm:text-sm font-semibold text-slate-700 mt-0.5">
-                Clear factor attribution
+                {t('hero.explainableDesc', 'Clear factor attribution')}
               </div>
             </div>
 
             {/* Attribute 3: Cost-Aware / Progressive next steps */}
             <div className="text-left md:text-center px-3 pt-4 md:pt-0">
               <div className="text-xl sm:text-2xl font-extrabold text-[#0F254B] tracking-tight font-display">
-                Cost-Aware
+                {t('hero.costAwareTitle', 'Cost-Aware')}
               </div>
               <div className="text-xs sm:text-sm font-semibold text-slate-700 mt-0.5">
-                Progressive next steps
+                {t('hero.costAwareDesc', 'Progressive next steps')}
               </div>
             </div>
 
             {/* Attribute 4: Pakistani / Nutrition & guidance */}
             <div className="text-left md:text-center px-3 pt-4 md:pt-0">
               <div className="text-xl sm:text-2xl font-extrabold text-[#00838F] tracking-tight font-display">
-                Pakistani
+                {t('hero.pakistaniLabel', 'Pakistani')}
               </div>
               <div className="text-xs sm:text-sm font-semibold text-slate-700 mt-0.5">
-                Nutrition &amp; guidance
+                {t('hero.pakistaniDesc', 'Nutrition & guidance')}
               </div>
             </div>
           </div>

@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { ROUTES } from '../../constants/routes';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { APPLE_SPRINGS } from './MaleDesignPrimitives';
@@ -23,6 +24,7 @@ import { logDashboardRenderTrace } from '../../utils/probabilityTrace';
 
 export const MaleDashboardOverview: React.FC = () => {
   const navigate = useNavigate();
+  const { i18n, t } = useTranslation(['dashboard', 'chat', 'common']);
   const {
     userProfile,
     activeAssessment,
@@ -87,12 +89,13 @@ export const MaleDashboardOverview: React.FC = () => {
   const lastAssessmentDateFormatted = useMemo(() => {
     const rawDate = authoritativeAssessment?.created_at;
     if (!rawDate) return null;
-    return new Date(rawDate).toLocaleDateString('en-US', {
+    const locale = i18n.language === 'ur' ? 'ur-PK' : 'en-US';
+    return new Date(rawDate).toLocaleDateString(locale, {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
     });
-  }, [authoritativeAssessment?.created_at]);
+  }, [authoritativeAssessment?.created_at, i18n.language]);
 
   // Unverified reports count
   const unverifiedReportsCount = useMemo(() => {
@@ -256,7 +259,13 @@ export const MaleDashboardOverview: React.FC = () => {
           hasLoggedWaterToday={waterLog.glasses > 0}
           pathway="male"
           onAction={handleAction}
-          onOpenAiTwin={() => openAiChatWithPrompt('What is my recommended next clinical step for male health?')}
+          onOpenAiTwin={() =>
+            openAiChatWithPrompt(
+              t('chat:suggestedPrompts.prompt1', {
+                defaultValue: 'What is my recommended next clinical step for male health?',
+              })
+            )
+          }
         />
       </div>
 

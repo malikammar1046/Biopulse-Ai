@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   FileText,
   ArrowRight,
@@ -37,10 +38,11 @@ export const ScreeningModuleCard: React.FC<ScreeningModuleCardProps> = ({
   onStartScreening,
   onViewAssessment,
 }) => {
+  const { t } = useTranslation(['dashboard', 'screening']);
   const isFemale = pathway === 'female';
-  const title = isFemale ? 'PCOS Screening' : 'Hypogonadism Screening';
-  const subtitle = 'Based on your latest assessment and health data';
-  const riskTypeLabel = isFemale ? 'PCOS Risk' : 'Male Risk';
+  const title = isFemale ? t('dashboard:pcosScreeningTitle') : t('dashboard:hypogonadismScreeningTitle');
+  const subtitle = t('dashboard:screeningSubtitleText');
+  const riskTypeLabel = isFemale ? t('dashboard:pcosRiskType') : t('dashboard:maleRiskType');
 
   // Authoritative clinical risk classification matching policy v2 cutoffs
   const highCutoff = isFemale ? 25 : 18.08;
@@ -72,8 +74,8 @@ export const ScreeningModuleCard: React.FC<ScreeningModuleCardProps> = ({
     : '#10B981';
 
   const riskDisplayName = riskLabel || (isFemale
-    ? (isHigh ? 'Higher likelihood' : isIntermediate ? 'Intermediate likelihood' : 'Lower likelihood')
-    : (isHigh ? 'Higher Screening Risk' : isIntermediate ? 'Intermediate Screening Risk' : 'Lower Screening Risk'));
+    ? (isHigh ? t('dashboard:higherLikelihood') : isIntermediate ? t('dashboard:intermediateLikelihood') : t('dashboard:lowerLikelihood'))
+    : (isHigh ? t('dashboard:higherScreeningRisk') : isIntermediate ? t('dashboard:intermediateScreeningRisk') : t('dashboard:lowerScreeningRisk')));
 
   const RiskIcon = isHigh
     ? AlertCircle
@@ -89,24 +91,24 @@ export const ScreeningModuleCard: React.FC<ScreeningModuleCardProps> = ({
   // Friendly clinical summary
   const summaryText = isFemale
     ? isHigh
-      ? 'Several of your current screening factors are associated with PCOS. Review detailed biomarker factors.'
+      ? t('dashboard:femaleHighSummary')
       : isIntermediate
-      ? 'Some of your current health patterns are associated with PCOS, but the result is not conclusive. Adding laboratory results may provide a more informed assessment.'
-      : 'Your current screening pattern shows fewer features associated with PCOS.'
+      ? t('dashboard:femaleIntermediateSummary')
+      : t('dashboard:femaleLowerSummary')
     : isHigh
-    ? 'Your screening suggests elevated indicators of hypogonadism. Consider confirming with morning testosterone testing.'
+    ? t('dashboard:maleHighSummary')
     : isIntermediate
-    ? 'Your screening indicates borderline hormonal markers. Tracking daily vitality and adding lab values is recommended.'
-    : 'Your screening suggests lower indicators of hypogonadism based on self-reported inputs.';
+    ? t('dashboard:maleIntermediateSummary')
+    : t('dashboard:maleLowerSummary');
 
   const menuItems = [
     {
-      label: 'View Full Assessment',
+      label: t('screening:viewFullAssessmentCTA', 'View Full Assessment'),
       onClick: onViewAssessment,
       icon: FileText,
     },
     {
-      label: 'Start Reassessment',
+      label: t('screening:startReassessmentCTA', 'Start Reassessment'),
       onClick: onStartScreening,
       icon: RefreshCw,
     },
@@ -124,9 +126,9 @@ export const ScreeningModuleCard: React.FC<ScreeningModuleCardProps> = ({
         loading={loading}
       >
         <DashboardEmptyState
-          title={isFemale ? 'No PCOS screening result yet' : 'No male hormonal screening result yet'}
-          description="Complete your clinical questionnaire to calculate your baseline statistical risk."
-          actionLabel="Start Screening"
+          title={isFemale ? t('screening:noFemaleScreeningTitle') : t('screening:noMaleScreeningTitle')}
+          description={t('screening:screeningEmptyDesc')}
+          actionLabel={t('screening:startScreeningCTA')}
           onAction={onStartScreening}
           icon={FileText}
           accentColor={isFemale ? 'pink' : 'blue'}
@@ -154,9 +156,9 @@ export const ScreeningModuleCard: React.FC<ScreeningModuleCardProps> = ({
           <div className="flex items-center gap-1.5 shrink-0">
             <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <span>
-              Last assessed:{' '}
+              {t('dashboard:lastSynced', 'Last assessed')}:{' '}
               <strong className="text-slate-700 font-medium">
-                {lastAssessmentDate || 'Recently'}
+                {lastAssessmentDate || t('screening:recently', 'Recently')}
               </strong>
             </span>
           </div>
@@ -164,14 +166,14 @@ export const ScreeningModuleCard: React.FC<ScreeningModuleCardProps> = ({
           <div className="flex items-center gap-1.5 shrink-0">
             <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <span>
-              Next recommended:{' '}
-              <strong className="text-slate-700 font-medium">In 3 months</strong>
+              {t('screening:nextRecommended')}:{' '}
+              <strong className="text-slate-700 font-medium">{t('screening:in3Months')}</strong>
             </span>
           </div>
 
           <div className="flex items-center gap-1 text-[#10B981] font-medium shrink-0 ml-auto sm:ml-0">
             <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
-            <span>Synced</span>
+            <span>{t('screening:synced')}</span>
           </div>
         </div>
       }
@@ -239,7 +241,7 @@ export const ScreeningModuleCard: React.FC<ScreeningModuleCardProps> = ({
                   : 'bg-[#0284C7] hover:bg-[#0369A1]'
               }`}
             >
-              <span>View Full Assessment</span>
+              <span>{t('screening:viewFullAssessmentCTA')}</span>
               <ArrowRight className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
             </button>
           </div>

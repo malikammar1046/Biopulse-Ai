@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   Alert,
   Modal,
   TextInput,
+  ActivityIndicator,
+  RefreshControl,
   useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -32,17 +34,6 @@ interface CirclePerson {
 
 /**
  * SCREEN 41: CARE CIRCLE
- *
- * Strict visual match to Screenshot 41:
- * - Top Header: Back chevron (<), "Care Circle ⓘ", "+ Invite someone" CTA button
- * - Subtitle: "Add trusted people to support your health journey. You can control what they can see."
- * - Category filter pills: [ All (3) ] (active solid pink), [ Doctors (1) ], [ Family (1) ], [ Others (1) ]
- * - Member Cards:
- *   1. Dr. Ayesha Malik (Doctor, Endocrinologist, "Access: Medical reports, screening results", Manage + ⋮)
- *   2. Sarah Khan (Family Member, Sister, "Access: Basic health summary, reminders", Manage + ⋮)
- *   3. Ali Ahmed (Trusted Contact, Friend, "Access: Emergency contact only", Manage + ⋮)
- * - Bottom Privacy Guarantee Box:
- *   - Shield icon, "Your data stays private. You control what each person can see and can remove access at any time."
  */
 export default function CareCircleScreen() {
   const router = useRouter();
@@ -53,11 +44,22 @@ export default function CareCircleScreen() {
   const { pathway } = useAuth();
   const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
 
-  const { careCircle, removeFromCareCircle, addToCareCircle } = useHealthStore();
+  const {
+    careCircle,
+    isLoadingCareCircle,
+    careCircleError,
+    loadCareCircle,
+    removeFromCareCircle,
+    addToCareCircle,
+  } = useHealthStore();
 
   const [activeTab, setActiveTab] = useState<'All' | 'Doctors' | 'Family' | 'Others'>('All');
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteName, setInviteName] = useState('');
+
+  useEffect(() => {
+    loadCareCircle?.();
+  }, [loadCareCircle]);
   const [inviteRole, setInviteRole] = useState('Family');
 
   const members: CirclePerson[] = useMemo(() => {
@@ -156,7 +158,46 @@ export default function CareCircleScreen() {
           { paddingBottom: insets.bottom + 40 },
         ]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoadingCareCircle}
+            onRefresh={() => loadCareCircle?.()}
+            tintColor={isFemale ? '#F43F7D' : '#0284C7'}
+          />
+        }
       >
+        {/* Error Banner with Retry */}
+        {Boolean(careCircleError) && (
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: '#FEF2F2',
+            borderWidth: 1,
+            borderColor: '#FCA5A5',
+            borderRadius: 10,
+            padding: 12,
+            marginBottom: 14,
+            gap: 8,
+          }}>
+            <Ionicons name="alert-circle-outline" size={18} color="#EF4444" />
+            <Text style={{ flex: 1, fontSize: 13, color: '#B91C1C' }}>{careCircleError}</Text>
+            <Pressable
+              onPress={() => loadCareCircle?.()}
+              style={{ backgroundColor: '#EF4444', paddingVertical: 4, paddingHorizontal: 10, borderRadius: 6 }}
+            >
+              <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '700' }}>Retry</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {/* Initial Loading Indicator */}
+        {isLoadingCareCircle && careCircle.length === 0 && (
+          <View style={{ paddingVertical: 32, alignItems: 'center' }}>
+            <ActivityIndicator size="small" color={isFemale ? '#F43F7D' : '#0284C7'} />
+            <Text style={{ marginTop: 8, color: '#64748B', fontSize: 13 }}>Loading Care Circle...</Text>
+          </View>
+        )}
+
         {/* Subtitle */}
         <Text style={styles.subText}>
           Add trusted people to support your health journey.{'\n'}You can control what they can see.

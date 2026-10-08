@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { RefreshCw01 } from '@untitledui/icons';
+import { useTranslation } from 'react-i18next';
 
 export interface GoogleAuthButtonProps {
   onClick: () => void;
@@ -14,9 +15,12 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({
   onClick,
   loading = false,
   disabled = false,
-  text = 'Continue with Google',
-  loadingText = 'Connecting to Google...',
+  text,
+  loadingText,
 }) => {
+  const { t } = useTranslation('auth');
+  const displayText = text || t('googleSignIn', 'Continue with Google');
+  const displayLoading = loadingText || t('googleLoading', 'Connecting to Google...');
   const isDisabled = disabled || loading;
 
   return (
@@ -27,7 +31,7 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({
       disabled={isDisabled}
       whileHover={!isDisabled ? { y: -1, scale: 1.005 } : undefined}
       whileTap={!isDisabled ? { scale: 0.985 } : undefined}
-      aria-label={loading ? loadingText : text}
+      aria-label={loading ? displayLoading : displayText}
       className={`
         w-full min-h-[48px] px-6 py-3 rounded-2xl
         font-sans font-semibold text-sm
@@ -44,7 +48,7 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({
       {loading ? (
         <>
           <RefreshCw01 className="w-4 h-4 animate-spin text-[#D8B4FE]" aria-hidden="true" />
-          <span className="text-[#D8B4FE]">{loadingText}</span>
+          <span className="text-[#D8B4FE]">{displayLoading}</span>
         </>
       ) : (
         <>
@@ -72,7 +76,7 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({
               fill="#EA4335"
             />
           </svg>
-          <span>{text}</span>
+          <span>{displayText}</span>
         </>
       )}
     </motion.button>

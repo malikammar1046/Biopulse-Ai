@@ -1,0 +1,38 @@
+{
+  "title": "Symptom Logging & Daily Patterns",
+  "subtitle": "Record daily physical and hormonal sensations to detect cyclic patterns and treatment response",
+  "logButton": "Log Today's Symptoms",
+  "severityLevels": {
+    "mild": "Mild",
+    "moderate": "Moderate",
+    "severe": "Severe"
+  },
+  "categories": {
+    "hormonal": "Hormonal & Skin",
+    "energy": "Energy & Mood",
+    "physical": "Physical & Pain",
+    "digestive": "Digestive & Metabolic"
+  },
+  "symptomList": {
+    "acne": "Acne Flare-up",
+    "hirsutism": "Facial Hair Sensitivity",
+    "fatigue": "Low Energy / Fatigue",
+    "cramps": "Pelvic Cramping",
+    "bloating": "Bloating / Fluid Retention",
+    "headache": "Headache / Migraine",
+    "moodSwings": "Mood Swings / Irritability",
+    "brainFog": "Brain Fog",
+    "hotFlashes": "Hot Flashes",
+    "insomnia": "Difficulty Sleeping"
+  },
+  "notes": "Personal Observations / Notes",
+  "notesPlaceholder": "Add any notes about sleep, diet, or stressors...",
+  "history": "Recent Symptom History",
+  "emptySymptoms": "No symptoms logged recently. Daily logging helps your AI companion understand your cycle rhythms.",
+  "logSymptomCTA": "Log a Symptom",
+  "refreshSymptomsTitle": "Refresh symptom logs",
+  "todayCheckInTitle": "Daily Symptom Check-In",
+  "patternObservationsTitle": "Observed Symptom Patterns",
+  "recentHistoryTitle": "Recent Symptom History",
+  "noSymptomsLogged": "No symptoms logged yet"
+}

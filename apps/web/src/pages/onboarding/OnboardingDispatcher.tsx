@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { ROUTES, getPathwayDashboardRoute } from '../../constants/routes';
 import type { UserGender } from '../../types/onboarding';
@@ -8,6 +9,7 @@ import { BioPulseLoadingScreen } from '../../components/brand/BioPulseLoadingScr
 import { preloadOnboardingRoutes } from '../../utils/routePreloaders';
 
 export const OnboardingDispatcher: React.FC = () => {
+  const { t } = useTranslation(['onboarding']);
   const navigate = useNavigate();
   const location = useLocation();
   const { userProfile, updateUserProfile } = useUserHealth();
@@ -38,8 +40,8 @@ export const OnboardingDispatcher: React.FC = () => {
       <BioPulseLoadingScreen
         message={
           transitionPathway === 'male'
-            ? 'Preparing your Men’s Health pathway...'
-            : 'Preparing your Women’s Health pathway...'
+            ? t('onboarding:pathwaySelection.maleLoading', 'Preparing your Men’s Health pathway...')
+            : t('onboarding:pathwaySelection.femaleLoading', 'Preparing your Women’s Health pathway...')
         }
         fullScreen={true}
       />

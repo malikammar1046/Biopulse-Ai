@@ -18,52 +18,29 @@ import { BioPulseButton } from '../components/common/BioPulseButton';
 import { Logo } from '../components/brand/Logo';
 import { useFemaleOnboarding } from '../features/onboarding';
 import { useHealthStore } from '../store';
-import { getFeatureLabel, getFeatureIconName } from '../services/assessmentService';
+import {
+  getFeatureLabel,
+  getFeatureIconName,
+  resolveRiskBand,
+  formatShapFactorForPatient,
+  formatAssessmentDate,
+} from '../services/assessmentService';
 
 interface FactorItem {
   id: number;
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
   description: string;
+  direction?: 'increases_risk' | 'decreases_risk' | 'positive' | 'negative' | 'higher' | 'lower' | 'neutral';
+  patientLabel?: string;
+  impactPercent?: number;
 }
-
-const DEFAULT_FACTORS: FactorItem[] = [
-  {
-    id: 1,
-    icon: 'calendar',
-    title: 'Cycle Variability',
-    description: 'Menstrual interval irregularities correlate with ovulatory function.',
-  },
-  {
-    id: 2,
-    icon: 'cut-outline',
-    title: 'Hirsutism Indicator',
-    description: 'Elevated peripheral androgens modulate hair follicle cycle.',
-  },
-  {
-    id: 3,
-    icon: 'speedometer-outline',
-    title: 'Metabolic / BMI Profile',
-    description: 'Body mass index and adiposity correlate with metabolic insulin resistance.',
-  },
-];
 
 /**
  * SCREEN 11: FEMALE SCREENING RESULT
  *
- * Matches Screenshot 11:
- * - Top header with Back arrow and BioPulse AI logo
- * - Title: "Your PCOS Screening Result"
- * - Risk Summary Card:
- *   - Circular probability ring with pink arc
- *   - Risk label: [ ⚠️ Higher Risk ]
- *   - Tier badge: Tier 1 • Initial Screening
- *   - Assessment explanation
- * - Top Contributing Factors (Numbered 1, 2, 3 with clinical descriptions)
- * - Non-diagnostic medical safety disclaimer banner
- * - Next Best Action card: "Add clinical hormone labs"
- * - Primary CTA: "Continue to Next Tier →"
- * - Secondary actions: Download Report & Book Consultation
+ * Connected directly to real assessment pipeline:
+ * Assessment -> Probability -> Risk Category -> SHAP Values -> Top Contributing Factors -> Patient-Friendly Explanation
  */
 export default function FemaleScreeningResultScreen() {
   const router = useRouter();
@@ -75,26 +52,52 @@ export default function FemaleScreeningResultScreen() {
   const topPad = Math.max(insets.top, 12);
   const bottomPad = Math.max(insets.bottom, 20);
 
-  const hasAssessment = Boolean(activeAssessment || (screening.tierStatus && screening.tierStatus !== 'Not Assessed'));
+  const hasAssessment = Boolean(
+    activeAssessment || (screening.tierStatus && screening.tierStatus !== 'Not Assessed' && screening.probabilityPercent > 0)
+  );
 
   // Extract probability and category from authentic model assessment
+  const probability = activeAssessment?.probability ?? (screening.probability ?? (screening.probabilityPercent > 0 ? screening.probabilityPercent / 100 : 0));
   const probabilityPercent = activeAssessment?.probability_percent ??
     (activeAssessment ? Math.round((activeAssessment.probability ?? 0) * 100) : screening.probabilityPercent);
 
-  const riskLabel = activeAssessment?.risk_label ||
-    (activeAssessment?.risk_category ? (activeAssessment.risk_category === 'higher' ? 'Higher Risk' : activeAssessment.risk_category === 'intermediate' ? 'Intermediate Risk' : 'Lower Risk') : screening.riskBand);
+  const band = resolveRiskBand(
+    probability,
+    activeAssessment?.risk_category || screening.riskCategory,
+    activeAssessment?.threshold || 0.25
+  );
+
+  const riskLabel = activeAssessment?.risk_label || band.label;
+  const assessmentDate = formatAssessmentDate(activeAssessment?.created_at || screening.createdAt);
+  const assessmentId = activeAssessment?.assessment_id || activeAssessment?.id || screening.assessmentId;
+  const disclaimerText =
+    activeAssessment?.disclaimer ||
+    screening.disclaimer ||
+    'This is not a medical diagnosis. Results are an AI-based risk assessment. Please consult a healthcare professional for a confirmed diagnosis.';
 
   const displayFactors: FactorItem[] = useMemo(() => {
-    const rawFactors = activeAssessment?.explanations || screening.topFactors || [];
+    const rawFactors =
+      (activeAssessment?.explanations && activeAssessment.explanations.length > 0)
+        ? activeAssessment.explanations
+        : (activeAssessment?.shap_explanation?.factors && activeAssessment.shap_explanation.factors.length > 0)
+        ? activeAssessment.shap_explanation.factors
+        : screening.topFactors || [];
+
     if (rawFactors.length > 0) {
-      return rawFactors.slice(0, 3).map((f: any, idx: number) => ({
-        id: idx + 1,
-        icon: (f.iconName || getFeatureIconName(f.feature_key || f.id || '')) as any,
-        title: f.feature_name || f.name || getFeatureLabel(f.feature_key || f.id || ''),
-        description: f.description || f.patient_explanation || f.explanation || 'Contributing clinical indicator identified during AI screening.',
-      }));
+      return rawFactors.slice(0, 3).map((f: any, idx: number) => {
+        const pf = formatShapFactorForPatient(f, idx);
+        return {
+          id: idx + 1,
+          icon: (pf.iconName || getFeatureIconName(pf.feature_key)) as any,
+          title: pf.feature_name,
+          description: pf.patient_explanation || 'Contributing clinical indicator identified during AI screening.',
+          direction: pf.direction,
+          patientLabel: pf.patient_label,
+          impactPercent: pf.explanation_share_percent,
+        };
+      });
     }
-    return DEFAULT_FACTORS;
+    return [];
   }, [activeAssessment, screening]);
 
   const handleContinueNextTier = () => {
@@ -110,6 +113,40 @@ export default function FemaleScreeningResultScreen() {
   const handleBookConsultation = () => {
     Alert.alert('Book Consultation', 'Connecting you with certified reproductive endocrinologists and gynecologists.', [{ text: 'OK' }]);
   };
+
+  if (!hasAssessment) {
+    return (
+      <BioPulseBackground style={styles.container}>
+        <StatusBar style="dark" backgroundColor="transparent" translucent />
+        <View style={[styles.topBar, { paddingTop: topPad }]}>
+          <Pressable onPress={() => router.back()} style={styles.backButton} hitSlop={12}>
+            <Ionicons name="chevron-back" size={24} color={BioPulseColors.textPrimary} />
+          </Pressable>
+          <View style={styles.logoCenter}>
+            <Logo size="sm" layout="horizontal" showTagline={false} />
+          </View>
+          <View style={{ width: 38 }} />
+        </View>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 28 }}>
+          <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: '#FDF2F8', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+            <Ionicons name="clipboard-outline" size={36} color="#F43F7D" />
+          </View>
+          <Text style={{ fontSize: 20, fontWeight: '700', color: '#073B72', marginBottom: 8, textAlign: 'center' }}>
+            No Screening Result Found
+          </Text>
+          <Text style={{ fontSize: 14, color: '#64748B', textAlign: 'center', lineHeight: 20, marginBottom: 24, maxWidth: 320 }}>
+            You have not completed an active PCOS screening assessment yet. Start your questionnaire to receive your personalized clinical evaluation.
+          </Text>
+          <Pressable
+            onPress={() => router.push('/female-review')}
+            style={{ backgroundColor: '#F43F7D', paddingVertical: 14, paddingHorizontal: 24, borderRadius: 25 }}
+          >
+            <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 15 }}>Start Screening Assessment →</Text>
+          </Pressable>
+        </View>
+      </BioPulseBackground>
+    );
+  }
 
   return (
     <BioPulseBackground style={styles.container}>
@@ -137,7 +174,7 @@ export default function FemaleScreeningResultScreen() {
           <View style={styles.titleSection}>
             <Text style={styles.screenTitle}>Your PCOS Screening Result</Text>
             <Text style={styles.screenSubtitle}>
-              Based on your information, our AI has assessed your likelihood of PCOS.
+              Based on your clinical screening information, our AI model has evaluated your likelihood of PCOS.
             </Text>
           </View>
 
@@ -154,9 +191,14 @@ export default function FemaleScreeningResultScreen() {
 
               {/* Right Side: Risk Badge & Tier */}
               <View style={styles.riskInfoCol}>
-                <View style={styles.riskBadge}>
-                  <Ionicons name="warning-outline" size={15} color="#EF4444" style={{ marginRight: 5 }} />
-                  <Text style={styles.riskBadgeText}>{riskLabel}</Text>
+                <View style={[styles.riskBadge, { backgroundColor: band.badgeBg, borderColor: band.badgeBorder }]}>
+                  <Ionicons
+                    name={band.category === 'higher' ? 'warning-outline' : 'shield-checkmark-outline'}
+                    size={15}
+                    color={band.color}
+                    style={{ marginRight: 5 }}
+                  />
+                  <Text style={[styles.riskBadgeText, { color: band.color }]}>{riskLabel}</Text>
                 </View>
 
                 <View style={styles.tierStatusRow}>
@@ -165,45 +207,82 @@ export default function FemaleScreeningResultScreen() {
                   </View>
                   <View>
                     <Text style={styles.tierTitle}>Tier 1</Text>
-                    <Text style={styles.tierSubtitle}>Initial Screening</Text>
+                    <Text style={styles.tierSubtitle}>{assessmentDate}</Text>
+                    {assessmentId ? (
+                      <Text style={{ fontSize: 10, color: '#94A3B8', marginTop: 1 }}>
+                        Ref #{assessmentId.slice(0, 8)}
+                      </Text>
+                    ) : null}
                   </View>
                 </View>
               </View>
             </View>
 
             <Text style={styles.riskSummaryText}>
-              This suggests a higher likelihood of PCOS based on your current information.
+              {band.summaryText}
             </Text>
           </View>
 
           {/* TOP CONTRIBUTING FACTORS */}
           <View style={styles.factorsSection}>
             <View style={styles.sectionTitleRow}>
-              <Text style={styles.sectionTitle}>Top Contributing Factors</Text>
+              <Text style={styles.sectionTitle}>What influenced your result?</Text>
               <Ionicons name="information-circle-outline" size={16} color={BioPulseColors.textSecondary} />
             </View>
 
-            <View style={styles.factorsList}>
-              {displayFactors.map((factor) => (
-                <View key={factor.id} style={styles.factorCard}>
-                  {/* Number Badge */}
-                  <View style={styles.numberBadge}>
-                    <Text style={styles.numberText}>{factor.id}</Text>
-                  </View>
+            {displayFactors.length > 0 ? (
+              <View style={styles.factorsList}>
+                {displayFactors.map((factor) => {
+                  const isHigher = factor.direction === 'increases_risk';
+                  const isLower = factor.direction === 'decreases_risk';
+                  return (
+                    <View key={factor.id} style={styles.factorCard}>
+                      {/* Number Badge */}
+                      <View style={styles.numberBadge}>
+                        <Text style={styles.numberText}>{factor.id}</Text>
+                      </View>
 
-                  {/* Icon */}
-                  <View style={styles.factorIconBox}>
-                    <Ionicons name={factor.icon} size={18} color="#F43F7D" />
-                  </View>
+                      {/* Icon */}
+                      <View style={styles.factorIconBox}>
+                        <Ionicons name={factor.icon} size={18} color="#F43F7D" />
+                      </View>
 
-                  {/* Text Details */}
-                  <View style={styles.factorTextCol}>
-                    <Text style={styles.factorTitle}>{factor.title}</Text>
-                    <Text style={styles.factorDesc}>{factor.description}</Text>
-                  </View>
-                </View>
-              ))}
-            </View>
+                      {/* Text Details */}
+                      <View style={styles.factorTextCol}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+                          <Text style={styles.factorTitle}>{factor.title}</Text>
+                          <View
+                            style={{
+                              paddingHorizontal: 6,
+                              paddingVertical: 2,
+                              borderRadius: 4,
+                              backgroundColor: isHigher ? '#FEE2E2' : isLower ? '#DCFCE7' : '#F1F5F9',
+                            }}
+                          >
+                            <Text
+                              style={{
+                                fontSize: 10,
+                                fontWeight: '600',
+                                color: isHigher ? '#DC2626' : isLower ? '#15803D' : '#64748B',
+                              }}
+                            >
+                              {isHigher ? '↑ Increased Risk' : isLower ? '↓ Favorable Factor' : 'Neutral'}
+                            </Text>
+                          </View>
+                        </View>
+                        <Text style={styles.factorDesc}>{factor.description}</Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            ) : (
+              <View style={{ padding: 16, backgroundColor: '#F8FAFC', borderRadius: 12, alignItems: 'center' }}>
+                <Text style={{ fontSize: 13, color: '#64748B', textAlign: 'center' }}>
+                  Top clinical factors are being processed for this assessment.
+                </Text>
+              </View>
+            )}
           </View>
 
           {/* Non-Diagnostic Disclaimer */}
@@ -215,7 +294,7 @@ export default function FemaleScreeningResultScreen() {
               style={{ marginRight: 8, marginTop: 1 }}
             />
             <Text style={styles.infoBannerText}>
-              This is not a medical diagnosis. Results are an AI-based risk assessment. Please consult a healthcare professional for a confirmed diagnosis.
+              {disclaimerText}
             </Text>
           </View>
 

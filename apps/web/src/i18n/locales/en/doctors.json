@@ -1,0 +1,28 @@
+{
+  "title": "Find an Endocrine & Reproductive Specialist",
+  "subtitle": "Board-certified specialists matched to your clinical profile and location",
+  "searchPlaceholder": "Search by doctor name, hospital, or specialty...",
+  "specialties": {
+    "all": "All Specialties",
+    "endocrinology": "Endocrinology",
+    "gynecology": "Gynecology & Obstetrics",
+    "urology": "Urology & Andrology",
+    "reproductiveEndo": "Reproductive Endocrinology",
+    "nutrition": "Clinical Dietetics & Nutrition"
+  },
+  "card": {
+    "experience": "Experience",
+    "years": "years",
+    "hospital": "Hospital / Clinic",
+    "consultationFee": "Consultation Fee",
+    "pkr": "PKR",
+    "bookVisit": "Book Consultation",
+    "viewProfile": "View Full Profile",
+    "verifiedSpecialist": "Verified Specialist",
+    "nextAvailable": "Next available"
+  },
+  "isolationNotice": {
+    "female": "Showing specialists focused on PCOS, gynecological endocrinology, and fertility.",
+    "male": "Showing specialists focused on male hypogonadism, andrology, and urological endocrinology."
+  }
+}

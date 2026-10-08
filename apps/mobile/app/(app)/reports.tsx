@@ -1,10 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   Pressable,
+  ActivityIndicator,
+  RefreshControl,
   useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -15,6 +17,7 @@ import { BioPulseColors } from '../../constants/Colors';
 import { BioPulseBackground } from '../../components/common/BioPulseBackground';
 import { useAuth } from '../../features/authentication';
 import { useHealthStore } from '../../store';
+import { formatAssessmentDate } from '../../services/assessmentService';
 
 interface ReportCardItem {
   id: string;
@@ -52,17 +55,28 @@ export default function ReportsScreen() {
   const { pathway } = useAuth();
   const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
 
-  const { reports, screening } = useHealthStore();
+  const {
+    reports,
+    screening,
+    assessmentHistory,
+    isLoadingReports,
+    reportError,
+    loadReports,
+  } = useHealthStore();
+
+  useEffect(() => {
+    loadReports?.();
+  }, [loadReports]);
 
   const [activeTab, setActiveTab] = useState<'All' | 'Screening' | 'Lab Reports' | 'Summaries'>('All');
 
   const allReports: ReportCardItem[] = useMemo(() => {
     const list: ReportCardItem[] = [];
 
-    // Verified persistent screening assessment
+    // Verified persistent screening assessment (latest active)
     if (screening.tierStatus && screening.tierStatus !== 'Not Assessed') {
       list.push({
-        id: 'rep-screening',
+        id: screening.assessmentId || 'rep-screening',
         category: 'Screening',
         title: isFemale ? 'PCOS Screening Report' : 'Hypogonadism Screening Report',
         subtitle: `${screening.tierStatus} (${screening.riskBand})`,
@@ -71,7 +85,45 @@ export default function ReportsScreen() {
         icon: 'document-text',
         iconBg: '#FFE4E6',
         iconColor: '#E11D48',
-        route: '/(app)/screening-explanation',
+        route: screening.assessmentId
+          ? `/(app)/screening-explanation?id=${screening.assessmentId}`
+          : '/(app)/screening-explanation',
+      });
+    }
+
+    // Historical assessments from persistent store
+    if (assessmentHistory && assessmentHistory.length > 0) {
+      assessmentHistory.forEach((item, index) => {
+        const itemAssessmentId = item.assessment_id || item.id;
+        // Avoid duplicate of current active if already added
+        if (itemAssessmentId && itemAssessmentId === screening.assessmentId) {
+          return;
+        }
+        const histDate = item.created_at
+          ? formatAssessmentDate(item.created_at)
+          : `Historical #${index + 1}`;
+        const isItemFemale = item.module
+          ? item.module === 'female_pcos' || item.module === 'female'
+          : isFemale;
+        const prob = Math.round(
+          Number(item.probability_percent || (item.probability ? item.probability * 100 : 0))
+        );
+        const risk = item.risk_label || item.risk_category || 'Assessed';
+
+        list.push({
+          id: itemAssessmentId || `rep-hist-${index}`,
+          category: 'Screening',
+          title: `${isItemFemale ? 'PCOS Screening' : 'Hypogonadism Screening'} (${histDate})`,
+          subtitle: `Tier ${item.assessment_level || 1} • ${risk} (${prob}%)`,
+          date: histDate,
+          status: 'Completed',
+          icon: 'document-text',
+          iconBg: isItemFemale ? '#FFE4E6' : '#EFF6FF',
+          iconColor: isItemFemale ? '#E11D48' : '#0284C7',
+          route: itemAssessmentId
+            ? `/(app)/screening-explanation?id=${itemAssessmentId}`
+            : '/(app)/screening-explanation',
+        });
       });
     }
 
@@ -102,7 +154,7 @@ export default function ReportsScreen() {
     }
 
     return list;
-  }, [screening, reports, isFemale]);
+  }, [screening, assessmentHistory, reports, isFemale]);
 
   const displayedReports = useMemo(() => {
     if (activeTab === 'All') return allReports;
@@ -138,6 +190,13 @@ export default function ReportsScreen() {
           { paddingBottom: insets.bottom + 40 },
         ]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoadingReports}
+            onRefresh={() => loadReports?.()}
+            tintColor={isFemale ? '#F43F7D' : '#0284C7'}
+          />
+        }
       >
         {/* Category Filter Pills */}
         <View style={styles.pillsRow}>
@@ -159,7 +218,27 @@ export default function ReportsScreen() {
 
         {/* Reports List */}
         <View style={styles.reportsList}>
-          {displayedReports.length === 0 ? (
+          {isLoadingReports && displayedReports.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <ActivityIndicator size="large" color={isFemale ? '#F43F7D' : '#0284C7'} style={{ marginBottom: 12 }} />
+              <Text style={styles.emptyTitle}>Loading Health Reports</Text>
+              <Text style={styles.emptySub}>
+                Retrieving your verified lab reports and assessment records...
+              </Text>
+            </View>
+          ) : reportError && displayedReports.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <Ionicons name="alert-circle-outline" size={42} color="#E11D48" style={{ marginBottom: 8 }} />
+              <Text style={styles.emptyTitle}>Unable to Load Reports</Text>
+              <Text style={styles.emptySub}>{reportError}</Text>
+              <Pressable
+                onPress={() => loadReports?.()}
+                style={[styles.emptyBtn, { backgroundColor: isFemale ? '#F43F7D' : '#0284C7' }]}
+              >
+                <Text style={styles.emptyBtnText}>Retry</Text>
+              </Pressable>
+            </View>
+          ) : displayedReports.length === 0 ? (
             <View style={styles.emptyCard}>
               <Ionicons name="document-text-outline" size={42} color="#94A3B8" style={{ marginBottom: 8 }} />
               <Text style={styles.emptyTitle}>No Reports Available</Text>

@@ -121,12 +121,14 @@ export default function DoctorProfileScreen() {
   ];
 
   const handleBook = () => {
+    const docId = matchedSpecialist?.id || (id as string) || (isFemale ? 'doc-ayesha' : 'doc-ahmed');
+    const bookingDate = '16 Mar 2026';
     bookAppointment({
-      doctorId: 'doc-ayesha',
+      doctorId: docId,
       doctorName: doctor.name,
       specialty: doctor.specialty,
       clinicOrHospital: doctor.hospitalName.replace('\n', ' '),
-      date: '16 Mar 2026',
+      date: bookingDate,
       time: '10:00 AM',
       location: `${doctor.hospitalName.replace('\n', ' ')}, ${doctor.hospitalCity}`,
       visitType: 'In-person',
@@ -134,7 +136,7 @@ export default function DoctorProfileScreen() {
 
     Alert.alert(
       'Appointment Booked',
-      `Your consultation with ${doctor.name} has been scheduled for 16 Mar 2026.`,
+      `Your consultation with ${doctor.name} has been scheduled for ${bookingDate}.`,
       [
         {
           text: 'View Appointments',

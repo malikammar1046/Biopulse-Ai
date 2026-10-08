@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
   Mail01,
   Lock01,
@@ -25,6 +26,7 @@ interface FormErrors {
 }
 
 export const Login: React.FC = () => {
+  const { t } = useTranslation('auth');
   const navigate = useNavigate();
   const location = useLocation();
   const { login, loginWithGoogle, userProfile } = useAuth();
@@ -171,14 +173,14 @@ export const Login: React.FC = () => {
         {/* Auth Switcher */}
         <div className="flex items-center gap-3">
           <span className="text-xs sm:text-sm font-medium text-slate-500 hidden sm:inline">
-            Don&apos;t have an account?
+            {t('dontHaveAccount')}
           </span>
           <Link to={ROUTES.REGISTER}>
             <button
               type="button"
               className="px-4 sm:px-5 py-1.5 rounded-full border border-[#008CA5]/40 text-[#008CA5] hover:bg-cyan-50/70 text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-2xs"
             >
-              Sign Up
+              {t('signUpButton')}
             </button>
           </Link>
         </div>
@@ -198,9 +200,12 @@ export const Login: React.FC = () => {
                   className="text-2xl sm:text-3xl font-bold text-[#008CA5] block leading-tight"
                   style={{ fontFamily: "'Caveat', cursive" }}
                 >
-                  Small Steps
-                  <br />
-                  Healthier Tomorrows
+                  {t('smallStepsTag').split('\n').map((line, i) => (
+                    <React.Fragment key={i}>
+                      {line}
+                      {i === 0 && <br />}
+                    </React.Fragment>
+                  ))}
                 </span>
                 <div className="w-24 h-1 bg-gradient-to-r from-pink-400 to-rose-400 rounded-full mt-0.5 opacity-80" />
               </div>
@@ -222,10 +227,10 @@ export const Login: React.FC = () => {
                   </div>
                   <div>
                     <div className="text-xs sm:text-sm font-bold text-[#0F254B]">
-                      Better Insights
+                      {t('betterInsights')}
                     </div>
                     <div className="text-[11px] text-slate-500 font-medium">
-                      Brighter Tomorrows
+                      {t('brighterTomorrows')}
                     </div>
                   </div>
                 </div>
@@ -246,7 +251,7 @@ export const Login: React.FC = () => {
                   <ShieldTick className="w-3.5 h-3.5" aria-hidden="true" />
                 </div>
                 <span className="text-[11px] font-semibold text-slate-600 leading-tight">
-                  Your data stays private
+                  {t('trustSignal1')}
                 </span>
               </div>
 
@@ -255,7 +260,7 @@ export const Login: React.FC = () => {
                   <Users01 className="w-3.5 h-3.5" aria-hidden="true" />
                 </div>
                 <span className="text-[11px] font-semibold text-slate-600 leading-tight">
-                  Trusted by clinicians
+                  {t('trustSignal2')}
                 </span>
               </div>
 
@@ -264,7 +269,7 @@ export const Login: React.FC = () => {
                   <ActivityHeart className="w-3.5 h-3.5" aria-hidden="true" />
                 </div>
                 <span className="text-[11px] font-semibold text-slate-600 leading-tight">
-                  Evidence-based &amp; AI
+                  {t('trustSignal3')}
                 </span>
               </div>
             </div>
@@ -283,13 +288,13 @@ export const Login: React.FC = () => {
               {/* Card Header */}
               <div className="space-y-1.5">
                 <p className="text-[11px] font-extrabold tracking-[0.2em] text-[#008CA5] uppercase select-none">
-                  WELCOME BACK
+                  {t('welcomeBackTag')}
                 </p>
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F254B] font-display tracking-tight">
-                  Login to <span className="text-[#008CA5]">BioPulse AI</span>
+                  {t('loginTitle')}
                 </h1>
                 <p className="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed">
-                  Continue your journey towards better reproductive and hormonal health.
+                  {t('loginBrandSubtitle')}
                 </p>
               </div>
 
@@ -318,7 +323,7 @@ export const Login: React.FC = () => {
                       id="login-email"
                       autoComplete="email"
                       inputMode="email"
-                      placeholder="Email address"
+                      placeholder={t('emailPlaceholder')}
                       value={email}
                       onChange={(e) => {
                         setEmail(e.target.value);
@@ -345,7 +350,7 @@ export const Login: React.FC = () => {
                       type={showPassword ? 'text' : 'password'}
                       id="login-password"
                       autoComplete="current-password"
-                      placeholder="Password"
+                      placeholder={t('passwordPlaceholder')}
                       value={password}
                       onChange={(e) => {
                         setPassword(e.target.value);
@@ -381,7 +386,7 @@ export const Login: React.FC = () => {
                       onChange={(e) => setRememberMe(e.target.checked)}
                       className="w-4 h-4 rounded border-slate-300 text-[#008CA5] focus:ring-[#008CA5] accent-[#008CA5] cursor-pointer"
                     />
-                    <span>Remember me</span>
+                    <span>{t('rememberMe')}</span>
                   </label>
 
                   <a
@@ -389,12 +394,12 @@ export const Login: React.FC = () => {
                     onClick={(e) => {
                       e.preventDefault();
                       setErrors({
-                        general: 'Password recovery is enabled. Please enter your email above and contact support if you need immediate assistance.',
+                        general: t('forgotPasswordNotice'),
                       });
                     }}
                     className="text-xs font-semibold text-[#008CA5] hover:underline"
                   >
-                    Forgot password?
+                    {t('forgotPasswordLink')}
                   </a>
                 </div>
 
@@ -410,11 +415,11 @@ export const Login: React.FC = () => {
                     {loading ? (
                       <>
                         <RefreshCw01 className="w-4 h-4 animate-spin text-white" aria-hidden="true" />
-                        <span>Signing in...</span>
+                        <span>{t('signingIn')}</span>
                       </>
                     ) : (
                       <>
-                        <span>Login</span>
+                        <span>{t('signInButton')}</span>
                         <ArrowRight className="w-4 h-4" aria-hidden="true" />
                       </>
                     )}
@@ -426,7 +431,7 @@ export const Login: React.FC = () => {
               <div className="relative flex items-center justify-center my-4">
                 <div className="w-full border-t border-slate-200" />
                 <span className="absolute bg-white px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                  or continue with
+                  {t('orContinueWith')}
                 </span>
               </div>
 
@@ -437,19 +442,19 @@ export const Login: React.FC = () => {
                   onClick={handleGoogleSignIn}
                   loading={googleLoading}
                   disabled={loading}
-                  text="Continue with Google"
+                  text={t('googleSignIn')}
                 />
               </div>
 
               {/* Terms & Privacy */}
               <p className="text-[11px] text-slate-400 text-center leading-relaxed pt-2">
-                By logging in, you agree to our{' '}
+                {t('agreeTerms')}{' '}
                 <Link to={ROUTES.TRUST_PRIVACY} className="underline hover:text-slate-600">
-                  Terms of Service
+                  {t('termsOfService')}
                 </Link>{' '}
-                and{' '}
+                {t('and')}{' '}
                 <Link to={ROUTES.TRUST_PRIVACY} className="underline hover:text-slate-600">
-                  Privacy Policy
+                  {t('privacyPolicy')}
                 </Link>
                 .
               </p>
@@ -465,7 +470,7 @@ export const Login: React.FC = () => {
             className="text-xs sm:text-sm font-semibold text-slate-500"
             style={{ fontFamily: "'Caveat', cursive" }}
           >
-            &ldquo;Healthier individuals, Stronger tomorrows.&rdquo;
+            {t('quoteHealthierIndividuals', '“Healthier individuals, Stronger tomorrows.”')}
           </span>
           <div className="w-12 h-0.5 bg-gradient-to-r from-[#22D3EE] to-[#008CA5] rounded-full mt-1 opacity-70" />
         </div>

@@ -14,6 +14,7 @@ import { getPathwayDashboardRoute } from './constants/routes';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { BioPulseLoadingScreen } from './components/brand/BioPulseLoadingScreen';
 import { RouteLoadingFallback } from './components/common/RouteLoadingFallback';
+import { LanguageSelectModal } from './components/i18n/LanguageSelectModal';
 
 // Dynamic redirection to user's authorized pathway dashboard
 const DashboardRedirect: React.FC = () => {
@@ -114,6 +115,8 @@ const AppContent: React.FC = () => {
           <BioPulseLoadingScreen message="Preparing your health experience" fullScreen={true} />
         )}
       </AnimatePresence>
+
+      <LanguageSelectModal />
 
       <Suspense fallback={<PageLoadingFallback />}>
         <Routes>

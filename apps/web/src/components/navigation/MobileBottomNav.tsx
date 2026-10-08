@@ -1,5 +1,6 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   LayoutGrid01,
   Calendar,
@@ -13,20 +14,21 @@ import { useUserHealth } from '../../context/UserHealthContext';
 import { resolvePathway } from '../../types/onboarding';
 
 export const MobileBottomNav: React.FC = () => {
+  const { t } = useTranslation('navigation');
   const location = useLocation();
   const { userProfile } = useUserHealth();
   const overviewPath = getPathwayDashboardRoute(userProfile);
   const pathway = resolvePathway(userProfile.gender, userProfile.pathway);
 
   const navItems = [
-    { label: 'Home', path: overviewPath, icon: LayoutGrid01 },
-    { label: 'Lifestyle', path: ROUTES.APP.LIFESTYLE, icon: Scales01 },
+    { label: t('overview'), path: overviewPath, icon: LayoutGrid01 },
+    { label: t('lifestyle'), path: ROUTES.APP.LIFESTYLE, icon: Scales01 },
     ...(pathway === 'female'
-      ? [{ label: 'Cycle', path: ROUTES.APP.CYCLE, icon: Calendar }]
-      : [{ label: 'Hub', path: ROUTES.APP.HUB, icon: LayoutGrid01 }]),
-    { label: 'Symptoms', path: ROUTES.APP.SYMPTOMS, icon: ActivityHeart },
-    { label: 'Reports', path: ROUTES.APP.REPORTS, icon: File06 },
-    { label: 'Profile', path: ROUTES.APP.SETTINGS, icon: User01 },
+      ? [{ label: t('cycle'), path: ROUTES.APP.CYCLE, icon: Calendar }]
+      : [{ label: t('dashboard'), path: ROUTES.APP.HUB, icon: LayoutGrid01 }]),
+    { label: t('symptoms'), path: ROUTES.APP.SYMPTOMS, icon: ActivityHeart },
+    { label: t('reports'), path: ROUTES.APP.REPORTS, icon: File06 },
+    { label: t('profile'), path: ROUTES.APP.SETTINGS, icon: User01 },
   ];
 
   const isActive = (path: string) => {

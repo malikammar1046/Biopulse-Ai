@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -18,6 +19,7 @@ import { Container } from '../../../components/ui/Container';
 import { ROUTES } from '../../../constants/routes';
 
 export const FeaturesSection: React.FC = () => {
+  const { t } = useTranslation('public');
   return (
     <section
       id="features-section"
@@ -46,7 +48,7 @@ export const FeaturesSection: React.FC = () => {
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E0F7FA] border border-[#B2EBF2] text-xs font-semibold text-[#00838F] shadow-2xs">
             <span className="w-1.5 h-1.5 rounded-full bg-[#00838F]" />
             <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.18em]">
-              Core Differentiators
+              {t('features.eyebrow')}
             </span>
           </div>
 
@@ -59,7 +61,7 @@ export const FeaturesSection: React.FC = () => {
           </h2>
 
           <p className="text-xs sm:text-sm lg:text-base text-slate-600 max-w-xl mx-auto leading-relaxed font-sans">
-            Non-diagnostic decision support designed around clarity, attribution, and practical next steps.
+            {t('features.subtitle')}
           </p>
         </div>
 
@@ -83,11 +85,11 @@ export const FeaturesSection: React.FC = () => {
                 </div>
 
                 <h3 className="text-lg sm:text-xl font-bold font-display text-[#0F254B] leading-snug">
-                  Progressive Screening
+                  {t('features.card1Title')}
                 </h3>
 
                 <p className="text-xs sm:text-[13px] text-slate-600 leading-relaxed font-sans">
-                  Start simple and add health information when needed. Our tiered approach keeps it accessible, affordable, and scalable.
+                  {t('features.card1Desc')}
                 </p>
               </div>
 

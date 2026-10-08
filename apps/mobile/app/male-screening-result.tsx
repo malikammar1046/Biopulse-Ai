@@ -15,7 +15,12 @@ import { AuthBackgroundFoliage } from '../components/auth/AuthBackgroundFoliage'
 import { PathwayHeader } from '../components/onboarding';
 import { useMaleOnboarding } from '../features/onboarding';
 import { useHealthStore } from '../store';
-import { resolveRiskBand } from '../services/assessmentService';
+import {
+  resolveRiskBand,
+  formatShapFactorForPatient,
+  formatAssessmentDate,
+  getFeatureIconName,
+} from '../services/assessmentService';
 import { BioPulseBottomNav, BOTTOM_NAV_HEIGHT } from '../components/navigation';
 
 export default function MaleScreeningResultScreen() {
@@ -28,14 +33,22 @@ export default function MaleScreeningResultScreen() {
   const { updateProfile, screening } = useHealthStore();
   const adamSummary = calculateAdamScore();
 
-  const hasAssessment = Boolean(activeAssessment || (screening.tierStatus && screening.tierStatus !== 'Not Assessed'));
+  const hasAssessment = Boolean(
+    activeAssessment || (screening.tierStatus && screening.tierStatus !== 'Not Assessed' && screening.probabilityPercent > 0)
+  );
 
-  const probability = activeAssessment?.probability ?? (screening.probabilityPercent ? screening.probabilityPercent / 100 : 0);
+  const probability = activeAssessment?.probability ?? (screening.probability ?? (screening.probabilityPercent > 0 ? screening.probabilityPercent / 100 : 0));
   const probPercent = activeAssessment?.probability_percent ??
     (activeAssessment ? Math.round((activeAssessment.probability ?? 0) * 100) : screening.probabilityPercent);
 
   const band = resolveRiskBand(probability, activeAssessment?.risk_category || screening.riskCategory, activeAssessment?.threshold || 0.45);
   const riskCategory = band.category;
+  const assessmentDate = formatAssessmentDate(activeAssessment?.created_at || screening.createdAt);
+  const assessmentId = activeAssessment?.assessment_id || activeAssessment?.id || screening.assessmentId;
+  const disclaimerText =
+    activeAssessment?.disclaimer ||
+    screening.disclaimer ||
+    'BioPulse AI provides algorithmic screening risk stratification based on clinical guidelines. This is not a formal medical diagnosis.';
 
   const riskBadgeConfig = useMemo(() => {
     switch (riskCategory) {
@@ -67,30 +80,27 @@ export default function MaleScreeningResultScreen() {
   }, [riskCategory]);
 
   const factors = useMemo(() => {
-    if (activeAssessment?.explanations && activeAssessment.explanations.length > 0) {
-      return activeAssessment.explanations.slice(0, 3);
+    const rawFactors =
+      (activeAssessment?.explanations && activeAssessment.explanations.length > 0)
+        ? activeAssessment.explanations
+        : (activeAssessment?.shap_explanation?.factors && activeAssessment.shap_explanation.factors.length > 0)
+        ? activeAssessment.shap_explanation.factors
+        : screening.topFactors || [];
+
+    if (rawFactors.length > 0) {
+      return rawFactors.slice(0, 3).map((f: any, idx: number) => {
+        const pf = formatShapFactorForPatient(f, idx);
+        return {
+          feature_name: pf.feature_name,
+          patient_label: pf.patient_label,
+          direction: pf.direction,
+          description: pf.patient_explanation || 'Clinical screening indicator evaluated by model.',
+          icon: pf.iconName || getFeatureIconName(pf.feature_key),
+        };
+      });
     }
-    return [
-      {
-        feature_name: 'ADAM Symptom Profile',
-        patient_label: `${adamSummary.score}/10 affirmative`,
-        direction: adamSummary.isPositive ? 'increases_risk' : 'decreases_risk',
-        description: 'Meets clinical screening threshold for late-onset androgen deficiency symptoms.',
-      },
-      {
-        feature_name: 'Metabolic & BMI Factor',
-        patient_label: 'Visceral index',
-        direction: 'neutral',
-        description: 'Visceral adiposity modulates peripheral aromatase and sex hormone-binding globulin.',
-      },
-      {
-        feature_name: 'REM Sleep & Rest Pattern',
-        patient_label: 'Circadian cycle',
-        direction: 'decreases_risk',
-        description: 'Adequate sleep preserves nocturnal LH pulsatility and morning testosterone surge.',
-      },
-    ];
-  }, [activeAssessment, adamSummary]);
+    return [];
+  }, [activeAssessment, screening]);
 
   const handleGoHome = useCallback(() => {
     updateProfile({ isOnboarded: true });
@@ -100,6 +110,35 @@ export default function MaleScreeningResultScreen() {
   const handleViewExplanation = useCallback(() => {
     router.push('/(app)/screening-explanation');
   }, [router]);
+
+  if (!hasAssessment) {
+    return (
+      <View style={styles.root}>
+        <AuthBackgroundFoliage />
+        <View style={{ paddingTop: Math.max(insets.top, 10) }}>
+          <PathwayHeader onBack={handleGoHome} subtitle="MEN'S HEALTH INTELLIGENCE" />
+        </View>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 28 }}>
+          <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+            <Ionicons name="clipboard-outline" size={36} color="#0284C7" />
+          </View>
+          <Text style={{ fontSize: 20, fontWeight: '700', color: '#073B72', marginBottom: 8, textAlign: 'center' }}>
+            No Screening Result Found
+          </Text>
+          <Text style={{ fontSize: 14, color: '#64748B', textAlign: 'center', lineHeight: 20, marginBottom: 24, maxWidth: 320 }}>
+            You have not completed an active hypogonadism screening assessment yet. Start your questionnaire to view your clinical evaluation.
+          </Text>
+          <Pressable
+            onPress={() => router.push('/male-review')}
+            style={{ backgroundColor: '#0284C7', paddingVertical: 14, paddingHorizontal: 24, borderRadius: 25 }}
+          >
+            <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 15 }}>Start Screening Assessment →</Text>
+          </Pressable>
+        </View>
+        <BioPulseBottomNav activeTab="screening" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.root}>
@@ -133,6 +172,9 @@ export default function MaleScreeningResultScreen() {
           <View style={styles.gaugeContainer}>
             <Text style={styles.probPercentText}>{probPercent}%</Text>
             <Text style={styles.probSubtext}>Estimated Screening Likelihood</Text>
+            <Text style={{ fontSize: 12, color: '#64748B', marginTop: 4 }}>
+              Tier 1 • {assessmentDate} {assessmentId ? `(Ref #${assessmentId.slice(0, 8)})` : ''}
+            </Text>
           </View>
 
           {/* Progress Bar Gauge */}
@@ -149,7 +191,7 @@ export default function MaleScreeningResultScreen() {
           </View>
 
           <Text style={styles.disclaimerText}>
-            BioPulse AI provides algorithmic screening risk stratification based on clinical guidelines. This is not a formal medical diagnosis.
+            {disclaimerText}
           </Text>
         </View>
 
@@ -162,43 +204,51 @@ export default function MaleScreeningResultScreen() {
           <Text style={styles.sectionSub}>Top clinical drivers evaluated by the model:</Text>
 
           <View style={styles.factorsList}>
-            {factors.map((f, i) => (
-              <View key={i} style={styles.factorItem}>
-                <View style={styles.factorHeaderRow}>
-                  <Text style={styles.factorName}>{f.feature_name}</Text>
-                  <View
-                    style={[
-                      styles.directionTag,
-                      {
-                        backgroundColor:
-                          f.direction === 'increases_risk'
-                            ? '#FEF2F2'
-                            : f.direction === 'decreases_risk'
-                            ? '#F0FDF4'
-                            : '#F1F5F9',
-                      },
-                    ]}
-                  >
-                    <Text
+            {factors.length > 0 ? (
+              factors.map((f, i) => (
+                <View key={i} style={styles.factorItem}>
+                  <View style={styles.factorHeaderRow}>
+                    <Text style={styles.factorName}>{f.feature_name}</Text>
+                    <View
                       style={[
-                        styles.directionText,
+                        styles.directionTag,
                         {
-                          color:
+                          backgroundColor:
                             f.direction === 'increases_risk'
-                              ? '#B91C1C'
+                              ? '#FEF2F2'
                               : f.direction === 'decreases_risk'
-                              ? '#15803D'
-                              : '#64748B',
+                              ? '#F0FDF4'
+                              : '#F1F5F9',
                         },
                       ]}
                     >
-                      {f.direction === 'increases_risk' ? '↑ Higher impact' : '↓ Protective'}
-                    </Text>
+                      <Text
+                        style={[
+                          styles.directionText,
+                          {
+                            color:
+                              f.direction === 'increases_risk'
+                                ? '#B91C1C'
+                                : f.direction === 'decreases_risk'
+                                ? '#15803D'
+                                : '#64748B',
+                          },
+                        ]}
+                      >
+                        {f.direction === 'increases_risk' ? '↑ Higher impact' : f.direction === 'decreases_risk' ? '↓ Protective' : 'Contextual'}
+                      </Text>
+                    </View>
                   </View>
+                  <Text style={styles.factorDesc}>{f.description}</Text>
                 </View>
-                <Text style={styles.factorDesc}>{f.description}</Text>
+              ))
+            ) : (
+              <View style={{ padding: 14, backgroundColor: '#F8FAFC', borderRadius: 10, alignItems: 'center' }}>
+                <Text style={{ fontSize: 13, color: '#64748B', textAlign: 'center' }}>
+                  Clinical factors are evaluated directly from your validated assessment responses.
+                </Text>
               </View>
-            ))}
+            )}
           </View>
 
           <Pressable onPress={handleViewExplanation} style={styles.seeAllBtn}>

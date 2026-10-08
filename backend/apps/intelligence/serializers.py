@@ -111,6 +111,7 @@ class ChatMessageRequestSerializer(serializers.Serializer):
     message = serializers.CharField(max_length=2000, required=True, trim_whitespace=True, allow_blank=False)
     conversation_id = serializers.CharField(max_length=128, required=False, allow_blank=True, default="")
     pathway = serializers.CharField(max_length=50, required=False, allow_blank=True, default="")
+    locale = serializers.CharField(max_length=10, required=False, default="en")
     conversation_history = serializers.ListField(
         child=serializers.DictField(),
         required=False,
@@ -141,6 +142,7 @@ class PublicChatMessageRequestSerializer(serializers.Serializer):
     Explicitly prohibits user IDs, patient UUIDs, and credentials to enforce privacy boundaries.
     """
     message = serializers.CharField(max_length=1500, required=True, trim_whitespace=True, allow_blank=False)
+    locale = serializers.CharField(max_length=10, required=False, default="en")
     conversation_history = serializers.ListField(
         child=serializers.DictField(),
         required=False,

@@ -103,6 +103,7 @@ export interface UserProfile {
   dateOfBirth: string; // YYYY-MM-DD
   gender?: UserGender;
   pathway?: HealthPathway;
+  preferredLanguage?: 'en' | 'ur';
 
   // Optional Personal & Biometric Attributes
   avatarUrl?: string;

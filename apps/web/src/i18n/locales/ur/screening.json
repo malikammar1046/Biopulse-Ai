@@ -1,0 +1,69 @@
+{
+  "title": "تولیدی و ہارمونل صحت کی اسکریننگ اسیسمنٹ",
+  "subtitle": "آپ کے متعلقہ پاتھ وے کے مطابق مرحلہ وار اور غیر تشخیصی پیٹرن کا تجزیہ",
+  "nonDiagnosticNotice": "یہ جائزہ شماریاتی ماڈلز پر مبنی امکانی تخمینہ اور تعلیمی معلومات فراہم کرتا ہے۔ یہ قطعی طور پر کوئی حتمی کلینیکل تشخیص نہیں ہے۔",
+  "tierSelection": {
+    "title": "اسیسمنٹ ٹائر (Tier) منتخب کریں",
+    "tier1Label": "Tier 1: علامات اور سوالنامہ",
+    "tier1Desc": "ابتدائی طبی تاریخ، ماہواری یا توانائی کے اشارے اور طرزِ زندگی کے عوامل۔",
+    "tier2Label": "Tier 2: لیبارٹری بائیو مارکرز",
+    "tier2Desc": "ہارمونل ٹیسٹ رزلٹس (LH, FSH, Testosterone, Glucose) برائے بہتر درستی۔",
+    "tier3Label": "Tier 3: پیلوک الٹراساؤنڈ امیجنگ",
+    "tier3Desc": "پیلوک الٹراساؤنڈ کے معائنے میں فولیکلز کی تعداد اور اووری کا والیم۔"
+  },
+  "results": {
+    "title": "اسکریننگ کے نتائج کا خلاصہ",
+    "likelihoodLabel": "اسکریننگ کا امکان (Likelihood)",
+    "modelConfidence": "ماڈل کا اعتماد",
+    "calibratedCutoff": "اسکریننگ کٹ آف",
+    "categoryLabel": "رسک پیٹرن (Risk Pattern)",
+    "lowerRisk": "کم امکان کا پیٹرن (Lower Risk)",
+    "moderateLikelihood": "درمیانہ امکان کا پیٹرن (Moderate Likelihood)",
+    "highLikelihood": "زیادہ امکان کا پیٹرن (High Likelihood)",
+    "elevatedLikelihood": "نمایاں پیٹرن (Elevated Pattern)",
+    "shapTitle": "اہم اثر انداز ہونے والے عوامل (Explainable AI)",
+    "shapSubtitle": "ان عوامل نے آپ کے حسابی اسکریننگ کے امکان پر سب سے زیادہ اثر ڈالا",
+    "increasesLikelihood": "امکان میں اضافہ",
+    "decreasesLikelihood": "امکان میں کمی",
+    "nextStepsTitle": "تجویز کردہ کلینیکل اقدامات",
+    "consultDoctor": "اس رپورٹ کو اپنے اینڈوکرائنولوجسٹ یا گائناکالوجسٹ کے ساتھ زیرِ بحث لائیں",
+    "retakeScreening": "نئے لیب ڈیٹا کے ساتھ اسیسمنٹ اپ ڈیٹ کریں"
+  },
+  "femaleTier1": {
+    "title": "Tier 1 سوالنامہ — خواتین کی صحت (PCOS)",
+    "cycleRegularity": "ماہواری کے سائیکل کی باقاعدگی",
+    "hyperandrogenism": "اینڈروجن کی حساسیت کے اشارے",
+    "metabolicHistory": "میٹابولزم اور وزن کی صورتحال"
+  },
+  "maleTier1": {
+    "title": "Tier 1 سوالنامہ — مردانہ صحت (ہائپوگوناڈزم)",
+    "adamQuestionnaire": "ADAM سوالنامہ",
+    "energyPatterns": "توانائی اور اسٹیمینا کے پیٹرن",
+    "metabolicContext": "جسمانی ساخت اور میٹابولک صحت"
+  },
+  "tier2Form": {
+    "title": "Tier 2 بائیو مارکرز کا اندراج",
+    "subtitle": "اپنے مصدقہ لیب رزلٹس خود درج کریں یا خودکار طریقے سے نکالنے کے لیے پی ڈی ایف اپ لوڈ کریں",
+    "lh": "لیوٹینائزنگ ہارمون (LH)",
+    "fsh": "فولیکل اسٹیمولیٹنگ ہارمون (FSH)",
+    "totalTestosterone": "ٹوٹل ٹیسٹوسٹیرون (Total Testosterone)",
+    "freeTestosterone": "فری ٹیسٹوسٹیرون (Free Testosterone)",
+    "fastingGlucose": "فاسٹنگ بلڈ گلوکوز (Fasting Glucose)",
+    "fastingInsulin": "فاسٹنگ انسولین (Fasting Insulin)",
+    "amh": "اینٹی مولیرین ہارمون (AMH)",
+    "tsh": "تھائیرائیڈ اسٹیمولیٹنگ ہارمون (TSH)",
+    "hba1c": "ایچ بی اے ون سی (HbA1c)",
+    "units": "یونٹس",
+    "submitTier2": "Tier 2 اسیسمنٹ کا حساب لگائیں"
+  },
+  "viewFullAssessmentCTA": "مکمل تشخیصی رپورٹ دیکھیں",
+  "startReassessmentCTA": "دوبارہ اسکریننگ شروع کریں",
+  "noFemaleScreeningTitle": "ابھی PCOS اسکریننگ کا کوئی نتیجہ نہیں",
+  "noMaleScreeningTitle": "ابھی مردانہ ہارمونل اسکریننگ کا کوئی نتیجہ نہیں",
+  "screeningEmptyDesc": "بنیادی امکانات جانچنے کے لیے اپنا تشخیصی سوالنامہ مکمل کریں۔",
+  "startScreeningCTA": "اسکریننگ شروع کریں",
+  "recently": "حال ہی میں",
+  "nextRecommended": "اگلی تجویز",
+  "in3Months": "3 ماہ بعد",
+  "synced": "ہم آہنگ (Synced)"
+}
