@@ -59,7 +59,7 @@ const generateConversationId = (): string => {
 
 export const AIChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navigate = useNavigate();
-  const { userProfile, snapshotMetrics, activeAiPrompt } = useUserHealth();
+  const { userProfile, activeAiPrompt } = useUserHealth();
 
   const pathway = resolvePathway(userProfile?.gender, userProfile?.pathway);
   const isFemale = pathway === 'female';
@@ -73,15 +73,11 @@ export const AIChatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const getInitialGreeting = useCallback((): AIChatMessage => {
     let greetingText = '';
     if (pathway === 'female') {
-      const cycleInfo =
-        snapshotMetrics && snapshotMetrics.cycleDay > 0
-          ? ` (Recorded cycle: Day ${snapshotMetrics.cycleDay}, ${snapshotMetrics.phaseName})`
-          : '';
-      greetingText = `Hello! I am BioPulse AI Companion, your health literacy and pattern explanation companion${cycleInfo}. I am here to help you explore your baseline health patterns, verified lab markers, and lifestyle insights. What would you like to explore today?`;
+      greetingText = 'Hi! I’m BioPulse AI. Ask me about your screening, labs, symptoms, or next steps.';
     } else if (pathway === 'male') {
-      greetingText = `Hello! I am BioPulse AI Assistant, your hormonal health and screening explanation companion. I am here to help you explore hormonal vitality, male health screening patterns, and verified lab markers. What would you like to explore today?`;
+      greetingText = 'Hi! I’m BioPulse AI. Ask me about your screening, hormones, symptoms, or next steps.';
     } else {
-      greetingText = `Hello! I am BioPulse AI Companion, your health literacy and screening explanation companion. I am here to help you explore your baseline health patterns, verified lab markers, and lifestyle insights. What would you like to explore today?`;
+      greetingText = 'Hi! I’m BioPulse AI. What would you like help understanding?';
     }
 
     return {
@@ -91,7 +87,7 @@ export const AIChatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       timestamp: 'Just now',
       safetyLevel: 'normal',
     };
-  }, [pathway, snapshotMetrics]);
+  }, [pathway]);
 
   // Hydrate or initialize state
   const [conversationId, setConversationId] = useState<string>(() => {
@@ -108,23 +104,54 @@ export const AIChatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   });
 
   const [messages, setMessages] = useState<AIChatMessage[]>(() => {
+    const initialGreeting = getInitialGreeting();
     try {
       const saved = sessionStorage.getItem(SESSION_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed.messages) && parsed.messages.length > 0) {
-          return parsed.messages;
+          // Safely migrate the initial system greeting bubble if present, preserving genuine user conversation
+          return parsed.messages.map((m: AIChatMessage, idx: number) => {
+            if (
+              idx === 0 &&
+              (m.id === 'initial_greeting' ||
+                m.text?.includes('health literacy and pattern explanation companion') ||
+                m.text?.includes('baseline health patterns') ||
+                m.text?.includes('hormonal vitality, male health screening'))
+            ) {
+              return {
+                ...m,
+                id: 'initial_greeting',
+                text: initialGreeting.text,
+              };
+            }
+            return m;
+          });
         }
       }
     } catch {
       // ignore
     }
-    return [getInitialGreeting()];
+    return [initialGreeting];
   });
+
+  // Automatically update initial greeting if pathway changes while no user messages exist
+  useEffect(() => {
+    setMessages((prev) => {
+      if (prev.length === 1 && prev[0].id === 'initial_greeting') {
+        const fresh = getInitialGreeting();
+        if (prev[0].text !== fresh.text) {
+          return [fresh];
+        }
+      }
+      return prev;
+    });
+  }, [getInitialGreeting]);
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [compactOpen, setCompactOpen] = useState<boolean>(false);
   const lastProcessedPrompt = useRef<string | undefined>(undefined);
+  const isSendingRef = useRef<boolean>(false);
 
   // Sync to session storage whenever messages or conversationId changes
   useEffect(() => {
@@ -185,8 +212,9 @@ export const AIChatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const sendMessage = useCallback(
     async (textToSend?: string) => {
       const trimmed = textToSend?.trim();
-      if (!trimmed || isLoading) return;
+      if (!trimmed || isLoading || isSendingRef.current) return;
 
+      isSendingRef.current = true;
       const userMsg: AIChatMessage = {
         id: `user_${Date.now()}`,
         sender: 'user',
@@ -194,12 +222,13 @@ export const AIChatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
 
-      const nextMessages = [...messages, userMsg];
+      // Set user message immediately so it renders with zero delay
       setMessages((prev) => [...prev, userMsg]);
       setIsLoading(true);
 
       try {
-        const historyPayload = nextMessages
+        // Send previous conversation history (excluding initial greeting and the current message)
+        const historyPayload = messages
           .filter((m) => m.id !== 'initial_greeting')
           .slice(-6)
           .map((m) => ({ sender: m.sender, text: m.text }));
@@ -235,8 +264,15 @@ export const AIChatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           };
           setMessages((prev) => [...prev, warningMsg]);
         } else {
-          const fallbackText =
+          let fallbackText =
             'The BioPulse AI service is momentarily unreachable. Please ensure your connection is active and try again shortly.';
+          if (resp?.error_type === 'SESSION') {
+            fallbackText = 'Your session has expired. Please sign in again to continue your conversation.';
+          } else if (resp?.error_type === 'PROVIDER_UNAVAILABLE') {
+            fallbackText = 'The AI companion is currently busy or experiencing high demand. Please try again shortly.';
+          } else if (resp?.error_type === 'BACKEND') {
+            fallbackText = 'The server encountered an error processing your query. Please try again.';
+          }
           const errorMsg: AIChatMessage = {
             id: `err_${Date.now()}`,
             sender: 'ai',
@@ -261,6 +297,7 @@ export const AIChatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setMessages((prev) => [...prev, errorMsg]);
       } finally {
         setIsLoading(false);
+        isSendingRef.current = false;
       }
     },
     [conversationId, isFemale, isLoading, messages]

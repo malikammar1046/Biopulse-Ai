@@ -961,10 +961,21 @@ export async function sendChatMessage(
   conversationHistory?: Array<{ sender: 'user' | 'ai'; text: string }>,
   clientTelemetry?: Record<string, any>
 ): Promise<import('../types/intelligence').ChatResponsePayload | null> {
+  const tStart = performance.now();
   const token = await getAccessToken();
+  const tAuth = performance.now() - tStart;
+
   if (!token) {
     console.warn('sendChatMessage: No access token available (user not authenticated).');
-    return null;
+    return {
+      success: false,
+      message: 'Your session has expired. Please sign in again to continue your conversation.',
+      error_type: 'SESSION',
+      conversation_id: conversationId || '',
+      context_used: {} as any,
+      safety_level: 'normal',
+      needs_clinician: false,
+    };
   }
 
   const pathway = clientTelemetry?.pathway || '';
@@ -977,6 +988,7 @@ export async function sendChatMessage(
   };
 
   try {
+    const tFetchStart = performance.now();
     const response = await fetchWithTimeout(
       CHAT_ENDPOINT,
       {
@@ -989,25 +1001,75 @@ export async function sendChatMessage(
       },
       REQUEST_TIMEOUT_MS
     );
+    const tNetwork = performance.now() - tFetchStart;
 
     // If 200 OK or 503 Service Unavailable with a structured payload, parse JSON
     if (response.ok || response.status === 503) {
+      const tJsonStart = performance.now();
       try {
         const data = await response.json();
+        const tJson = performance.now() - tJsonStart;
+        const tTotal = performance.now() - tStart;
+
+        // Structured performance telemetry (timing and metadata only)
+        if (typeof console !== 'undefined' && console.info) {
+          console.info('[BioPulse AI Chat Client Timing]', {
+            authDurationMs: Math.round(tAuth),
+            networkToBackendMs: Math.round(tNetwork),
+            jsonParseMs: Math.round(tJson),
+            totalClientMs: Math.round(tTotal),
+            backendTimings: data?.timings,
+          });
+        }
+
+        const is503 = response.status === 503;
         return {
           ...data,
           message: data.reply || data.message || '',
+          error_type: is503 ? 'PROVIDER_UNAVAILABLE' : undefined,
         } as import('../types/intelligence').ChatResponsePayload;
       } catch {
-        // Continue to fallback
+        // Fall through to generic error
       }
+    }
+
+    if (response.status === 401) {
+      return {
+        success: false,
+        message: 'Your session has expired. Please sign in again.',
+        error_type: 'SESSION',
+        conversation_id: conversationId || '',
+        context_used: {} as any,
+        safety_level: 'normal',
+        needs_clinician: false,
+      };
+    }
+
+    if (response.status >= 500) {
+      return {
+        success: false,
+        message: 'The BioPulse server encountered an internal issue processing your request. Please try again shortly.',
+        error_type: 'BACKEND',
+        conversation_id: conversationId || '',
+        context_used: {} as any,
+        safety_level: 'caution',
+        needs_clinician: false,
+      };
     }
 
     console.warn(`sendChatMessage failed with status ${response.status}`);
     return null;
-  } catch (err) {
+  } catch (err: any) {
     console.error('sendChatMessage network error:', err);
-    return null;
+    return {
+      success: false,
+      message: 'Unable to reach the BioPulse service. Please verify your connection and try again.',
+      error_type: 'NETWORK',
+      conversation_id: conversationId || '',
+      context_used: {} as any,
+      safety_level: 'caution',
+      needs_clinician: false,
+    };
   }
 }
 
@@ -1032,15 +1094,54 @@ export async function checkCompanionHealth(): Promise<{
   }
 }
 
-// ── Longitudinal Health In-Memory Cache & Shared Promise Deduplication ──
+// ── Longitudinal Health In-Memory & Session Cache & Shared Promise Deduplication ──
 interface CachedLongitudinalEntry {
   data: LongitudinalHealthResponse;
   timestamp: number;
 }
 
-const LONGITUDINAL_CACHE_TTL_MS = 30000; // 30s TTL to prevent duplicate fetches across prewarm & page mount
+const LONGITUDINAL_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minute TTL for instant back/return navigation
 const longitudinalCache = new Map<string, CachedLongitudinalEntry>();
 const inFlightLongitudinalPromises = new Map<string, Promise<LongitudinalHealthResponse | null>>();
+
+const SESSION_STORAGE_LONGITUDINAL_PREFIX = 'biopulse_longitudinal_';
+
+/**
+ * Synchronously retrieves cached longitudinal data for instantaneous render.
+ */
+export function getCachedLongitudinalHealth(
+  period: MonitoringPeriodFilter = '90d',
+  module = 'female_pcos',
+  userId?: string
+): LongitudinalHealthResponse | null {
+  const activeUserId = userId || 'active_user';
+  const cacheKey = `${activeUserId}:${module}:${period}`;
+
+  // 1. Check in-memory map
+  const memEntry = longitudinalCache.get(cacheKey);
+  if (memEntry && Date.now() - memEntry.timestamp < LONGITUDINAL_CACHE_TTL_MS) {
+    return memEntry.data;
+  }
+
+  // 2. Check sessionStorage fallback
+  if (typeof window !== 'undefined' && window.sessionStorage) {
+    try {
+      const raw = sessionStorage.getItem(`${SESSION_STORAGE_LONGITUDINAL_PREFIX}${cacheKey}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.data && Date.now() - (parsed.timestamp || 0) < LONGITUDINAL_CACHE_TTL_MS) {
+          // Warm memory cache
+          longitudinalCache.set(cacheKey, { data: parsed.data, timestamp: parsed.timestamp || Date.now() });
+          return parsed.data;
+        }
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }
+
+  return null;
+}
 
 /**
  * Invalidates cached longitudinal health responses when mutations occur.
@@ -1057,9 +1158,34 @@ export function invalidateLongitudinalCache(userId?: string): void {
         inFlightLongitudinalPromises.delete(key);
       }
     }
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      try {
+        const prefix = `${SESSION_STORAGE_LONGITUDINAL_PREFIX}${userId}:`;
+        for (let i = sessionStorage.length - 1; i >= 0; i--) {
+          const k = sessionStorage.key(i);
+          if (k && k.startsWith(prefix)) {
+            sessionStorage.removeItem(k);
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
   } else {
     longitudinalCache.clear();
     inFlightLongitudinalPromises.clear();
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      try {
+        for (let i = sessionStorage.length - 1; i >= 0; i--) {
+          const k = sessionStorage.key(i);
+          if (k && k.startsWith(SESSION_STORAGE_LONGITUDINAL_PREFIX)) {
+            sessionStorage.removeItem(k);
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
   }
 }
 
@@ -1074,7 +1200,7 @@ if (typeof window !== 'undefined') {
 /**
  * Fetches authoritative longitudinal health summary and historical trends.
  * Supports period filtering ('30d' | '90d' | '180d' | '1y' | 'all') and pathway scoping.
- * Implements shared promise deduplication and in-memory caching to eliminate redundant round-trips.
+ * Implements shared promise deduplication, in-memory caching, and resilient Stale-While-Revalidate.
  */
 export async function getLongitudinalHealth(
   period: MonitoringPeriodFilter = '90d',
@@ -1093,13 +1219,14 @@ export async function getLongitudinalHealth(
     // ignore
   }
 
-  const cacheKey = `${activeUserId}:${module || 'default'}:${period}`;
+  const effectiveModule = module || 'female_pcos';
+  const cacheKey = `${activeUserId}:${effectiveModule}:${period}`;
 
-  // 1. Check in-memory cache if not forced refresh
+  // 1. Check in-memory / session cache if not forced refresh
   if (!forceRefresh) {
-    const cached = longitudinalCache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < LONGITUDINAL_CACHE_TTL_MS) {
-      return cached.data;
+    const cached = getCachedLongitudinalHealth(period, effectiveModule, activeUserId);
+    if (cached) {
+      return cached;
     }
 
     // 2. Reuse in-flight request to eliminate duplicate prewarm / page mount contention
@@ -1109,7 +1236,7 @@ export async function getLongitudinalHealth(
   }
 
   const fetchTask = (async (): Promise<LongitudinalHealthResponse | null> => {
-    const retryDelays = [0, 250];
+    const retryDelays = [0, 300];
 
     for (let attempt = 0; attempt < retryDelays.length; attempt++) {
       if (attempt > 0) {
@@ -1130,6 +1257,9 @@ export async function getLongitudinalHealth(
 
         if (!token) {
           console.warn('[Intelligence API] getLongitudinalHealth: No active auth token available.');
+          // Check stale cache fallback before failing
+          const stale = longitudinalCache.get(cacheKey)?.data;
+          if (stale) return stale;
           return null;
         }
 
@@ -1139,10 +1269,10 @@ export async function getLongitudinalHealth(
 
         const params = new URLSearchParams();
         if (period) params.set('period', period);
-        if (module) params.set('module', module);
+        if (effectiveModule) params.set('module', effectiveModule);
 
         const url = `${LONGITUDINAL_HEALTH_ENDPOINT}?${params.toString()}`;
-        const response = await fetchWithTimeout(url, { method: 'GET', headers, signal }, 8000);
+        const response = await fetchWithTimeout(url, { method: 'GET', headers, signal }, 12000);
 
         if (!response.ok) {
           let errorBody = '';
@@ -1162,11 +1292,24 @@ export async function getLongitudinalHealth(
           if (attempt < retryDelays.length - 1) {
             continue;
           }
+          // Return stale cache if available
+          const stale = longitudinalCache.get(cacheKey)?.data;
+          if (stale) return stale;
           return null;
         }
 
         const data = (await response.json()) as LongitudinalHealthResponse;
         longitudinalCache.set(cacheKey, { data, timestamp: Date.now() });
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          try {
+            sessionStorage.setItem(
+              `${SESSION_STORAGE_LONGITUDINAL_PREFIX}${cacheKey}`,
+              JSON.stringify({ data, timestamp: Date.now() })
+            );
+          } catch {
+            // ignore storage full
+          }
+        }
         return data;
       } catch (err: any) {
         if (err?.name === 'AbortError' || signal?.aborted) {
@@ -1174,6 +1317,9 @@ export async function getLongitudinalHealth(
         }
         console.error(`[Intelligence API] getLongitudinalHealth network error attempt ${attempt + 1}:`, err);
         if (attempt === retryDelays.length - 1) {
+          // Return stale cache if available
+          const stale = longitudinalCache.get(cacheKey)?.data;
+          if (stale) return stale;
           return null;
         }
       }

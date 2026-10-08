@@ -658,9 +658,13 @@ class IntelligenceChatView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        t_view_start = time.perf_counter()
+
+        t0 = time.perf_counter()
         serializer = ChatMessageRequestSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer_ms = (time.perf_counter() - t0) * 1000
 
         patient_uuid = str(request.user.id)
         user_msg = serializer.validated_data["message"]
@@ -670,6 +674,7 @@ class IntelligenceChatView(APIView):
         telemetry = serializer.validated_data.get("client_telemetry") or {}
 
         # 1. Check safety guardrails (emergency escalation & safety filters)
+        t0 = time.perf_counter()
         emergency_advisory = SafetyGuardrails.check_emergency(user_msg)
         if emergency_advisory:
             return Response({
@@ -695,8 +700,10 @@ class IntelligenceChatView(APIView):
                 "needs_clinician": False,
                 "model": "safety_guardrail",
             }, status=status.HTTP_200_OK)
+        safety_check_ms = (time.perf_counter() - t0) * 1000
 
         # 2. Build privacy-preserving, structured authoritative clinical context
+        t0 = time.perf_counter()
         try:
             auth_token = getattr(request.user, "raw_token", None)
             sys_prompt, ctx, used_context = HealthContextBuilder.build_context(
@@ -711,8 +718,10 @@ class IntelligenceChatView(APIView):
             sys_prompt = "You are the BioPulse AI Companion, an empathetic non-diagnostic health literacy assistant."
             ctx = ""
             used_context = {}
+        context_build_ms = (time.perf_counter() - t0) * 1000
 
         # 3. Enforce deterministic privacy sanitization boundary
+        t0 = time.perf_counter()
         patient_email = getattr(request.user, "email", "") or ""
         patient_name = ""
         if hasattr(request.user, "raw_token") and request.user.raw_token:
@@ -736,9 +745,10 @@ class IntelligenceChatView(APIView):
         clean_user_msg = LLMContextSanitizer.sanitize_user_message(
             user_msg, patient_uuid=patient_uuid, patient_name=patient_name, patient_email=patient_email
         )
+        sanitization_ms = (time.perf_counter() - t0) * 1000
 
         # 4. Generate response using configured LLM Provider (defaults to Qwen3 1.7B)
-        start_time = time.perf_counter()
+        t0 = time.perf_counter()
         try:
             provider = get_llm_provider()
             llm_res = provider.generate_chat_response(
@@ -750,6 +760,9 @@ class IntelligenceChatView(APIView):
                 patient_name=patient_name,
                 patient_email=patient_email,
             )
+            provider_ms = (time.perf_counter() - t0) * 1000
+
+            t0 = time.perf_counter()
             sanitized_answer, safety_level = SafetyGuardrails.sanitize_llm_response(llm_res.answer)
             excluded_cats = used_context.get("excluded_food_categories") or []
             sanitized_answer = SafetyGuardrails.validate_dietary_safety(
@@ -758,16 +771,32 @@ class IntelligenceChatView(APIView):
                 user_message=clean_user_msg,
             )
             final_safety = "caution" if safety_level == "caution" else llm_res.safety_level
-            latency_ms = (time.perf_counter() - start_time) * 1000
+            post_processing_ms = (time.perf_counter() - t0) * 1000
+
+            total_backend_ms = (time.perf_counter() - t_view_start) * 1000
 
             # Safe operational logging (Never log patient queries, prompts, or clinical context)
             logger.info(
-                "BioPulse AI Companion chat completed: model=%s status=success safety_level=%s needs_clinician=%s latency_ms=%.1f",
+                "BioPulse AI Companion timing: serializer=%.1fms safety=%.1fms context=%.1fms sanitization=%.1fms provider=%.1fms post=%.1fms total=%.1fms model=%s",
+                serializer_ms,
+                safety_check_ms,
+                context_build_ms,
+                sanitization_ms,
+                provider_ms,
+                post_processing_ms,
+                total_backend_ms,
                 llm_res.model_name,
-                final_safety,
-                llm_res.needs_clinician,
-                latency_ms,
             )
+
+            timings = {
+                "serializer_ms": round(serializer_ms, 1),
+                "safety_check_ms": round(safety_check_ms, 1),
+                "context_build_ms": round(context_build_ms, 1),
+                "sanitization_ms": round(sanitization_ms, 1),
+                "provider_ms": round(provider_ms, 1),
+                "post_processing_ms": round(post_processing_ms, 1),
+                "total_backend_ms": round(total_backend_ms, 1),
+            }
 
             return Response({
                 "success": True,
@@ -778,9 +807,10 @@ class IntelligenceChatView(APIView):
                 "safety_level": final_safety,
                 "needs_clinician": llm_res.needs_clinician,
                 "model": llm_res.model_name,
+                "timings": timings,
             }, status=status.HTTP_200_OK)
         except LLMProviderError as l_err:
-            latency_ms = (time.perf_counter() - start_time) * 1000
+            latency_ms = (time.perf_counter() - t_view_start) * 1000
             model_name = getattr(provider, "model_name", "qwen3:1.7b") if "provider" in locals() else "qwen3:1.7b"
             logger.warning(
                 "BioPulse AI Companion LLM provider failed: model=%s status=failure error_type=%s latency_ms=%.1f",
@@ -803,7 +833,7 @@ class IntelligenceChatView(APIView):
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
         except Exception as exc:
-            latency_ms = (time.perf_counter() - start_time) * 1000
+            latency_ms = (time.perf_counter() - t_view_start) * 1000
             logger.error("Unexpected chat error: %s latency_ms=%.1f", type(exc).__name__, latency_ms)
             fallback_text = (
                 "The BioPulse AI Companion is temporarily unavailable. "

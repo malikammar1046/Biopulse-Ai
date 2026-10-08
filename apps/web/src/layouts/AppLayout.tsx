@@ -1,10 +1,12 @@
 import React from 'react';
-import { Outlet, Link } from 'react-router-dom';
+import { Outlet, Link, useLocation } from 'react-router-dom';
 import { AppSidebar } from '../components/navigation/AppSidebar';
 import { MobileBottomNav } from '../components/navigation/MobileBottomNav';
 import { ScrollToTop } from '../components/common/ScrollToTop';
 import { FloatingOvaSenseAI } from '../components/dashboard/FloatingOvaSenseAI';
 import { Logo } from '../components/brand/Logo';
+import { PageAtmosphere } from '../components/brand/PageAtmosphere';
+import { isDashboardRoute } from '../components/brand/atmosphereTokens';
 import { ROUTES, getPathwayDashboardRoute } from '../constants/routes';
 import { useUserHealth } from '../context/UserHealthContext';
 import { ArrowLeft } from '@untitledui/icons';
@@ -12,12 +14,21 @@ import { ArrowLeft } from '@untitledui/icons';
 import { AppDashboardHeader } from '../components/navigation/AppDashboardHeader';
 
 export const AppLayout: React.FC = () => {
+  const location = useLocation();
   const { userProfile } = useUserHealth();
   const overviewRoute = getPathwayDashboardRoute(userProfile);
   const isFemale = userProfile?.pathway === 'female' || userProfile?.gender === 'female';
+  const isDashboard = isDashboardRoute(location.pathname);
 
   return (
-    <div className="flex min-h-screen antialiased relative bg-[#F8FAFC] text-[#0F172A]">
+    <div
+      className={`flex min-h-screen antialiased relative text-[#0F172A] ${
+        isDashboard ? 'bg-[#F8FAFC]' : 'bg-transparent'
+      }`}
+    >
+      {/* ── Route-Aware Ambient Botanical / Biological Atmosphere (Disabled on Dashboards) ── */}
+      <PageAtmosphere />
+
       <ScrollToTop />
 
       {/* Desktop Medical Sidebar */}

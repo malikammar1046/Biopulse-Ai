@@ -4,11 +4,13 @@ import { Navbar } from '../components/navigation/Navbar';
 import { Footer } from '../components/navigation/Footer';
 import { ScrollToTop } from '../components/common/ScrollToTop';
 import { GlobalBotanicalBackground } from '../components/brand/GlobalBotanicalBackground';
+import { PageAtmosphere } from '../components/brand/PageAtmosphere';
 import { PublicFloatingChatbot } from '../components/chat/PublicFloatingChatbot';
 import { ROUTES } from '../constants/routes';
 
 export const PublicLayout: React.FC = () => {
   const location = useLocation();
+  const isHome = location.pathname === ROUTES.HOME || location.pathname === '/';
   const isAuthPage = location.pathname === ROUTES.LOGIN || location.pathname === ROUTES.REGISTER;
   const hasDedicatedHero =
     isAuthPage ||
@@ -27,8 +29,8 @@ export const PublicLayout: React.FC = () => {
 
   return (
     <div className="relative flex flex-col min-h-screen bg-[#FAFCFF] text-[#162A45] overflow-x-hidden">
-      {/* ── Global Botanical Foliage & Dual-Tint Atmosphere (Excluding Dashboard) ── */}
-      <GlobalBotanicalBackground />
+      {/* ── Background: Original Botanical Atmosphere on Home, New PageAtmosphere on other public pages ── */}
+      {isHome ? <GlobalBotanicalBackground /> : <PageAtmosphere />}
 
       <ScrollToTop />
       {!isAuthPage && <Navbar />}
