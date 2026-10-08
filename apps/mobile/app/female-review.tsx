@@ -25,6 +25,7 @@ import {
   buildFemaleTier1Inputs,
   validateFemaleReviewInputs,
   resolveRiskBand,
+  FEMALE_DEFAULT_THRESHOLD,
 } from '../services/assessmentService';
 
 const SYMPTOM_LABELS: Record<string, string> = {
@@ -163,7 +164,14 @@ export default function FemaleReviewScreen() {
       }
 
       const assess = result.data;
-      const band = resolveRiskBand(assess.probability, assess.risk_category, assess.threshold);
+      const band = resolveRiskBand(
+        assess.probability,
+        assess.risk_category,
+        assess.threshold ?? FEMALE_DEFAULT_THRESHOLD,
+        0.18,
+        'female_pcos',
+        assess.summary_text
+      );
 
       setActiveAssessment(assess);
       updateScreeningAssessment({

@@ -172,7 +172,7 @@ export async function fetchTodayFoodLogsFromDb(
 
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/food_logs?user_id=eq.${userId}&logged_at=eq.${todayStr}&select=*`,
+      `${SUPABASE_URL}/rest/v1/nutrition_food_logs?user_id=eq.${userId}&logged_at=gte.${todayStr}T00:00:00Z&logged_at=lte.${todayStr}T23:59:59Z&order=logged_at.desc&select=*`,
       {
         method: 'GET',
         headers: getSupabaseHeaders(token),

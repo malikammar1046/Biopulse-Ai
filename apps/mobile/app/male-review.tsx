@@ -24,6 +24,7 @@ import {
   buildMaleTier1Inputs,
   validateMaleReviewInputs,
   resolveRiskBand,
+  MALE_DEFAULT_THRESHOLD,
 } from '../services/assessmentService';
 
 /**
@@ -160,7 +161,14 @@ export default function MaleReviewScreen() {
       }
 
       const assess = res.data;
-      const band = resolveRiskBand(assess.probability, assess.risk_category, assess.threshold || 0.45);
+      const band = resolveRiskBand(
+        assess.probability,
+        assess.risk_category,
+        assess.threshold ?? MALE_DEFAULT_THRESHOLD,
+        0.1808,
+        'male_hypogonadism',
+        assess.summary_text
+      );
 
       setActiveAssessment(assess);
       updateScreeningAssessment({
