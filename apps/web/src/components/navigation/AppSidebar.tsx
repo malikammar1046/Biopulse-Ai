@@ -16,6 +16,7 @@ import {
   LineChartUp01,
   ChevronDown,
   Calendar,
+  Users01,
 } from '../icons';
 import { ROUTES, getPathwayDashboardRoute } from '../../constants/routes';
 import { resolvePathway } from '../../types/onboarding';
@@ -79,6 +80,7 @@ export const AppSidebar: React.FC = () => {
 
   const femaleMainItems: NavItem[] = [
     { label: 'Overview', path: overviewPath, icon: LayoutGrid01 },
+    { label: 'Lifestyle & Nutrition', path: ROUTES.APP.LIFESTYLE, icon: Scales01 },
     { label: 'Screening', path: ROUTES.APP.ASSESSMENT, icon: ClipboardCheck },
     { label: 'Progress', path: ROUTES.APP.PROGRESS, icon: LineChartUp01 },
   ];
@@ -89,13 +91,14 @@ export const AppSidebar: React.FC = () => {
   const maleHealthItems: NavItem[] = [
     { label: 'Reports', path: ROUTES.APP.REPORTS, icon: File06 },
     { label: 'Appointments', path: ROUTES.APP.APPOINTMENTS, icon: CalendarCheck01 },
+    { label: 'Care Circle', path: ROUTES.APP.CARE_CIRCLE, icon: Users01 },
   ];
 
   const femaleHealthItems: NavItem[] = [
-    { label: 'Lifestyle & Nutrition', path: ROUTES.APP.LIFESTYLE, icon: Scales01 },
     { label: 'Fitness / Movement', path: ROUTES.APP.FITNESS, icon: Activity },
     { label: 'Reports', path: ROUTES.APP.REPORTS, icon: File06 },
     { label: 'Appointments', path: ROUTES.APP.APPOINTMENTS, icon: CalendarCheck01 },
+    { label: 'Care Circle', path: ROUTES.APP.CARE_CIRCLE, icon: Users01 },
   ];
 
   const healthItems = pathway === 'female' ? femaleHealthItems : maleHealthItems;

@@ -2,9 +2,10 @@ name: PMOSense CI
 
 on:
   push:
-    branches: [ main, master, develop ]
+    branches: [ main, master, develop, hamza ]
   pull_request:
-    branches: [ main, master, develop ]
+    branches: [ main, master, develop, hamza ]
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

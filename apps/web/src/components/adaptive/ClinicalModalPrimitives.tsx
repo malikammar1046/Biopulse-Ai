@@ -8,7 +8,6 @@ import {
   Loading01,
   Trash01,
   ChevronDown,
-  ChevronUp,
 } from '@untitledui/icons';
 
 /**
@@ -239,6 +238,8 @@ interface ClinicalFieldProps {
   max: number;
   step?: string;
   isOcrExtracted?: boolean;
+  sourceProvenance?: string;
+  originStatus?: 'extracted' | 'manual';
   accentColor?: 'pink' | 'blue';
   onChange: (value: string) => void;
   onClear: () => void;
@@ -254,6 +255,8 @@ export const ClinicalField: React.FC<ClinicalFieldProps> = ({
   max,
   step = 'any',
   isOcrExtracted = false,
+  sourceProvenance,
+  originStatus,
   accentColor = 'pink',
   onChange,
   onClear,
@@ -329,6 +332,19 @@ export const ClinicalField: React.FC<ClinicalFieldProps> = ({
           {errorMessage}
         </p>
       ) : null}
+
+      {sourceProvenance && isFilled && (
+        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-sans pt-0.5">
+          <span className="text-slate-400">Source:</span>
+          <span className="font-semibold text-slate-700 truncate max-w-[200px]">{sourceProvenance}</span>
+          {originStatus === 'extracted' && (
+            <span className="text-emerald-700 font-semibold">• Extracted</span>
+          )}
+          {originStatus === 'manual' && (
+            <span className="text-slate-500 font-medium">• Manual entry</span>
+          )}
+        </div>
+      )}
     </div>
   );
 };
@@ -339,10 +355,15 @@ export const ClinicalField: React.FC<ClinicalFieldProps> = ({
  */
 interface ClinicalSectionProps {
   title: string;
-  description: string;
-  addedCount: number;
+  description?: string;
+  addedCount?: number;
+  totalCount?: number;
+  completionText?: string;
   collapsible?: boolean;
   defaultExpanded?: boolean;
+  isExpanded?: boolean;
+  onToggle?: () => void;
+  icon?: React.ReactNode;
   children: React.ReactNode;
   accentColor?: 'pink' | 'blue';
 }
@@ -350,73 +371,141 @@ interface ClinicalSectionProps {
 export const ClinicalSection: React.FC<ClinicalSectionProps> = ({
   title,
   description,
-  addedCount,
-  collapsible = false,
+  addedCount = 0,
+  totalCount,
+  completionText,
+  collapsible = true,
   defaultExpanded = true,
+  isExpanded: controlledExpanded,
+  onToggle,
+  icon,
   children,
   accentColor = 'pink',
 }) => {
-  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+  const isControlled = controlledExpanded !== undefined;
+  const [internalExpanded, setInternalExpanded] = useState(defaultExpanded);
 
-  // If new values were added to a collapsed section, expand it automatically
-  useEffect(() => {
-    if (addedCount > 0 && !isExpanded && collapsible) {
-      setIsExpanded(true);
+  const isExpanded = isControlled ? controlledExpanded : internalExpanded;
+
+  const handleToggle = () => {
+    if (!collapsible) return;
+    if (isControlled) {
+      onToggle?.();
+    } else {
+      setInternalExpanded((prev) => !prev);
     }
-  }, [addedCount, collapsible]);
+  };
 
   const badgeClass =
     accentColor === 'pink'
-      ? 'bg-pink-50 text-pink-700 border-pink-200/60'
-      : 'bg-sky-50 text-[#0288D1] border-sky-200/60';
+      ? 'bg-pink-50 text-pink-700 border-pink-200/70'
+      : 'bg-sky-50 dark:bg-sky-950/40 text-[#0288D1] dark:text-sky-300 border-sky-200/70 dark:border-sky-800';
+
+  const iconBgClass =
+    accentColor === 'pink'
+      ? 'bg-pink-50 text-[#F43F7D]'
+      : 'bg-sky-50 dark:bg-sky-950/50 text-[#0288D1] dark:text-sky-300';
+
+  const activeBorderClass =
+    isExpanded
+      ? accentColor === 'pink'
+        ? 'border-pink-200/80 shadow-xs'
+        : 'border-sky-200/80 dark:border-sky-900/60 shadow-xs'
+      : 'border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700';
+
+  const displayCompletion =
+    completionText ??
+    (totalCount !== undefined
+      ? `${addedCount} of ${totalCount} entered`
+      : addedCount > 0
+      ? `${addedCount} added`
+      : undefined);
+
+  const sectionSlug = title.toLowerCase().replace(/[^a-z0-9]/g, '-');
+  const sectionId = `clinical-section-${sectionSlug}`;
 
   return (
-    <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-0.5">
-          <div className="flex items-center gap-2">
-            <h4 className="text-sm font-semibold text-slate-900">
+    <div
+      className={`rounded-2xl bg-white dark:bg-slate-900/60 border transition-all duration-200 overflow-hidden ${activeBorderClass}`}
+    >
+      {/* Accordion Header Button */}
+      <button
+        type="button"
+        onClick={handleToggle}
+        disabled={!collapsible}
+        aria-expanded={isExpanded}
+        aria-controls={`${sectionId}-content`}
+        id={`${sectionId}-header`}
+        className={`w-full p-4 sm:p-4.5 flex items-center justify-between gap-3 text-left transition-colors select-none ${
+          collapsible
+            ? 'cursor-pointer hover:bg-slate-50/70 dark:hover:bg-slate-800/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400'
+            : 'cursor-default'
+        } ${isExpanded ? 'bg-slate-50/40 dark:bg-slate-800/30' : 'bg-white dark:bg-slate-900/40'}`}
+      >
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          {icon && (
+            <div
+              className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border border-slate-100 dark:border-slate-800 ${iconBgClass}`}
+              aria-hidden="true"
+            >
+              {icon}
+            </div>
+          )}
+          <div className="min-w-0 flex-1 space-y-0.5">
+            <h4 className="text-sm font-semibold text-slate-900 dark:text-white truncate">
               {title}
             </h4>
-            {addedCount > 0 && (
-              <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${badgeClass}`}>
-                {addedCount} added
-              </span>
+            {description && (
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-normal line-clamp-1 sm:line-clamp-none">
+                {description}
+              </p>
             )}
           </div>
-          <p className="text-xs text-slate-500">
-            {description}
-          </p>
         </div>
 
-        {collapsible && (
-          <button
-            type="button"
-            onClick={() => setIsExpanded((prev) => !prev)}
-            className="px-2.5 py-1 text-xs font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors flex items-center gap-1 cursor-pointer shrink-0"
-            aria-expanded={isExpanded}
-          >
-            <span>{isExpanded ? 'Hide' : 'Show tests'}</span>
-            {isExpanded ? (
-              <ChevronUp className="w-3.5 h-3.5" aria-hidden="true" />
-            ) : (
-              <ChevronDown className="w-3.5 h-3.5" aria-hidden="true" />
-            )}
-          </button>
-        )}
-      </div>
+        <div className="flex items-center gap-2.5 shrink-0">
+          {displayCompletion && (
+            <span
+              className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium border transition-colors ${
+                addedCount > 0
+                  ? badgeClass
+                  : 'bg-slate-50 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 border-slate-200/60 dark:border-slate-700/60'
+              }`}
+            >
+              {displayCompletion}
+            </span>
+          )}
 
+          {collapsible && (
+            <div
+              className={`w-6 h-6 rounded-lg flex items-center justify-center text-slate-400 dark:text-slate-500 transition-transform duration-200 ${
+                isExpanded ? 'rotate-180 text-slate-600 dark:text-slate-300' : 'rotate-0'
+              }`}
+              aria-hidden="true"
+            >
+              <ChevronDown className="w-4 h-4" />
+            </div>
+          )}
+        </div>
+      </button>
+
+      {/* Accordion Content */}
       <AnimatePresence initial={false}>
         {(!collapsible || isExpanded) && (
           <motion.div
+            id={`${sectionId}-content`}
+            role="region"
+            aria-labelledby={`${sectionId}-header`}
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-              {children}
+            <div className="px-4 pb-4 pt-1 sm:px-5 sm:pb-5 border-t border-slate-100 dark:border-slate-800/80">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3">
+                {children}
+              </div>
             </div>
           </motion.div>
         )}
@@ -674,7 +763,7 @@ export const ClinicalModalLayout: React.FC<ClinicalModalLayoutProps> = ({
   return (
     <AnimatePresence>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto"
+        className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto"
         role="dialog"
         aria-modal="true"
         aria-labelledby="clinical-modal-title"
@@ -684,21 +773,21 @@ export const ClinicalModalLayout: React.FC<ClinicalModalLayoutProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.97, y: 8 }}
           transition={{ duration: 0.2 }}
-          className="relative w-full max-w-[820px] max-h-[88vh] flex flex-col rounded-3xl bg-white border border-slate-200/90 shadow-2xl overflow-hidden my-auto text-slate-900"
+          className="relative w-full max-w-[820px] max-h-[90dvh] flex flex-col rounded-2xl sm:rounded-3xl bg-white border border-slate-200/90 shadow-2xl overflow-hidden my-auto text-slate-900"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Fixed Sticky Header */}
-          <div className="flex items-start justify-between gap-4 px-6 py-5 border-b border-slate-100 shrink-0 bg-white">
-            <div className="space-y-1">
+          <div className="flex items-start justify-between gap-3 sm:gap-4 px-4 sm:px-6 py-3.5 sm:py-5 border-b border-slate-100 shrink-0 bg-white">
+            <div className="space-y-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${badgeClass}`}>
                   {badgeText}
                 </span>
               </div>
-              <h2 id="clinical-modal-title" className="text-xl sm:text-2xl font-bold font-display text-slate-900">
+              <h2 id="clinical-modal-title" className="text-lg sm:text-2xl font-bold font-display text-slate-900 truncate">
                 {title}
               </h2>
-              <p className="text-xs text-slate-500 font-sans max-w-xl">
+              <p className="text-xs text-slate-500 font-sans max-w-xl line-clamp-2 sm:line-clamp-none">
                 {description}
               </p>
             </div>
@@ -706,7 +795,7 @@ export const ClinicalModalLayout: React.FC<ClinicalModalLayoutProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
+              className="p-1.5 sm:p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
               aria-label="Close modal"
             >
               <XClose className="w-5 h-5" aria-hidden="true" />
@@ -716,12 +805,12 @@ export const ClinicalModalLayout: React.FC<ClinicalModalLayoutProps> = ({
           {/* Form wrapper for entire body + footer */}
           <form onSubmit={onSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden bg-white text-slate-900">
             {/* Scrollable Body Only */}
-            <div className="flex-1 overflow-y-auto p-5 sm:p-7 space-y-6 bg-white text-slate-900">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-7 space-y-5 sm:space-y-6 bg-white text-slate-900">
               {children}
             </div>
 
             {/* Sticky Fixed Footer */}
-            <div className="px-6 py-4 border-t border-slate-100 bg-white flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shrink-0">
+            <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-t border-slate-100 bg-white flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3 shrink-0">
               <div className="flex items-center gap-3">
                 {footerLeft}
               </div>

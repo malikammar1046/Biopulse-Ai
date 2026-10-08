@@ -44,7 +44,7 @@ export const MaleOnboarding: React.FC = () => {
   const [draftProfile, setDraftProfile] = useState<UserProfile>(() => {
     const defaultHeight = userProfile.heightCm || 178;
     const defaultWeight = userProfile.weightKg || 80;
-    const defaultWaist = userProfile.waistCm || 88;
+    const defaultWaist = (userProfile.waistCm && userProfile.waistCm > 0) ? userProfile.waistCm : null;
 
     return {
       ...userProfile,
@@ -187,10 +187,6 @@ export const MaleOnboarding: React.FC = () => {
       if (!phoneCheck.isValid) errs.phone = phoneCheck.error!;
 
       if (!draftProfile.email.trim()) errs.email = 'Email address is required.';
-
-      if (!draftProfile.avatarUrl?.trim()) {
-        errs.avatarUrl = 'Choose an avatar or upload a photo to continue.';
-      }
     }
 
     setErrors(errs);

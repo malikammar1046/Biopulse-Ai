@@ -241,6 +241,11 @@ class NutritionReadinessResult:
     Distinguishes BLOCKING issues (prevent plan generation) from WARNINGS and OPTIONAL items.
     """
     ready: bool
+    personalization_level: str = "LEVEL_1_PROFILE"
+    available: List[str] = field(default_factory=list)
+    missing_required: List[str] = field(default_factory=list)
+    missing_optional: List[str] = field(default_factory=list)
+    recommendations: List[str] = field(default_factory=list)
     blocking_issues: List[str] = field(default_factory=list)
     warning_issues: List[str] = field(default_factory=list)
     optional_issues: List[str] = field(default_factory=list)
@@ -260,6 +265,11 @@ class NutritionReadinessResult:
         return {
             "ready": self.ready,
             "overall_status": self.overall_status,
+            "personalization_level": self.personalization_level,
+            "available": self.available,
+            "missing_required": self.missing_required,
+            "missing_optional": self.missing_optional,
+            "recommendations": self.recommendations,
             "blocking_issues": self.blocking_issues,
             "warning_issues": self.warning_issues,
             "optional_issues": self.optional_issues,
@@ -293,9 +303,11 @@ class MealProfileBuilder:
     def check_nutrition_readiness(
         raw_user_meta_data: Optional[Dict[str, Any]],
         profile_data: Optional[Dict[str, Any]],
+        active_assessment_module: Optional[str] = None,
     ) -> NutritionReadinessResult:
         """
         Evaluates readiness classifying issues into BLOCKING, WARNING, and OPTIONAL.
+        Returns structured personalization level, available, missing_required, and missing_optional.
         """
         raw_meta = raw_user_meta_data or {}
         profile = profile_data or {}
@@ -477,8 +489,87 @@ class MealProfileBuilder:
         if len(blocking_issues) > 0:
             all_warnings.extend(blocking_issues)
 
+        # Structured tracking for complete readiness transparency
+        available: List[str] = []
+        if dob_val and int_age is not None and int_age >= 12:
+            available.append("date_of_birth")
+            available.append("age")
+        if height_cm is not None:
+            try:
+                if float(height_cm) > 0:
+                    available.append("height_cm")
+            except (ValueError, TypeError):
+                pass
+        if weight_kg is not None:
+            try:
+                if float(weight_kg) > 0:
+                    available.append("weight_kg")
+            except (ValueError, TypeError):
+                pass
+        if "height_cm" in available and "weight_kg" in available:
+            available.append("bmi")
+        if gender_raw and str(gender_raw).strip().lower() in ("female", "male"):
+            available.append("biological_sex")
+        if allergy_input_present and not missing_safety:
+            available.append("allergies")
+        if dietary_raw and normalize_dietary_pattern(dietary_raw) is not None:
+            available.append("dietary_pattern")
+        if activity_status == "CONFIRMED":
+            available.append("activity_level")
+        if favorite_ingredients:
+            available.append("favorite_ingredients")
+        if disliked_ingredients:
+            available.append("disliked_ingredients")
+        if preferred_cuisines:
+            available.append("preferred_cuisines")
+        if budget_tier:
+            available.append("budget_tier")
+        if cooking_time:
+            available.append("cooking_time_preference")
+
+        missing_required = list(missing_biometrics + missing_safety + missing_planning)
+
+        missing_optional: List[str] = []
+        if not preferred_cuisines:
+            missing_optional.append("preferred_cuisines")
+        if not cooking_time:
+            missing_optional.append("cooking_time_preference")
+        if not favorite_ingredients:
+            missing_optional.append("favorite_ingredients")
+        if not disliked_ingredients:
+            missing_optional.append("disliked_ingredients")
+
+        # Determine personalization level
+        if active_assessment_module:
+            available.append("screening_assessment")
+            available.append("shap_factors")
+            if profile.get("fasting_glucose") or profile.get("hba1c") or profile.get("total_testosterone"):
+                personalization_level = "LEVEL_3_CLINICAL"
+                available.append("clinical_biomarkers")
+            else:
+                personalization_level = "LEVEL_2_SCREENING"
+        else:
+            personalization_level = "LEVEL_1_PROFILE"
+            missing_optional.append("screening_assessment")
+
+        recommendations: List[str] = []
+        if missing_required:
+            recommendations.append("Complete required biometrics and dietary safety confirmations to unlock calibrated meal planning.")
+        else:
+            if personalization_level == "LEVEL_1_PROFILE":
+                recommendations.append("Complete screening to make hormonal and metabolic recommendations even more personalized.")
+            if not preferred_cuisines:
+                recommendations.append("Add your preferred cuisines in preferences to make meals familiar and practical.")
+            if not cooking_time:
+                recommendations.append("Set your cooking time preference to adapt recipe complexity to your schedule.")
+
         return NutritionReadinessResult(
             ready=ready,
+            personalization_level=personalization_level,
+            available=available,
+            missing_required=missing_required,
+            missing_optional=missing_optional,
+            recommendations=recommendations,
             blocking_issues=blocking_issues,
             warning_issues=warning_issues,
             optional_issues=optional_issues,

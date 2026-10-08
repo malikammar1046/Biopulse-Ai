@@ -111,7 +111,7 @@ export const PersonalizedFitnessHeader: React.FC<PersonalizedFitnessHeaderProps>
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = accentColor)}
           >
             <Plus className="w-4 h-4 text-white" aria-hidden="true" />
-            <span>+ Log Activity</span>
+            <span>Log Activity</span>
           </button>
 
           <button

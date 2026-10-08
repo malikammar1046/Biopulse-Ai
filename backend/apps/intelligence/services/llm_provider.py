@@ -69,6 +69,28 @@ class LLMProvider(ABC):
         """Generates a conversational response adhering to medical safety instructions."""
         raise NotImplementedError
 
+    def stream_chat_response(
+        self,
+        system_instruction: str,
+        user_message: str,
+        conversation_history: Optional[List[dict[str, str]]] = None,
+        **kwargs: Any,
+    ):
+        """
+        Yields tokens for streaming chat responses.
+        Default implementation falls back to generate_chat_response and yields in token chunks.
+        """
+        response = self.generate_chat_response(
+            system_instruction=system_instruction,
+            user_message=user_message,
+            health_context=kwargs.get("health_context", ""),
+            conversation_history=conversation_history,
+            **kwargs,
+        )
+        words = response.answer.split(" ")
+        for i, word in enumerate(words):
+            yield word + (" " if i < len(words) - 1 else "")
+
 
 class MedGemmaProvider(LLMProvider):
     """
@@ -232,8 +254,77 @@ class OfflineDeterministicProvider(LLMProvider):
         conversation_history: Optional[List[dict[str, str]]] = None,
         **kwargs: Any,
     ) -> LLMResponse:
-        msg_lower = user_message.lower()
+        msg_lower = user_message.lower().strip()
         used: List[str] = []
+
+        # 0. Public BioPulse Platform & General Health Questions
+        if any(w in msg_lower for w in ["what is biopulse", "about biopulse", "biopulse ai", "how does biopulse work", "how biopulse works"]):
+            answer = (
+                "**BioPulse AI** is an advanced reproductive-endocrine screening and clinical decision support platform.\n\n"
+                "• **Dual Health Pathways**: Offers specialized screening for Polycystic Ovary Syndrome (PCOS) in females and Hypogonadism in males.\n"
+                "• **Multi-Tier AI Screening**: Combines clinical symptoms (Tier 1), laboratory biomarkers (Tier 2), and ultrasound image AI (Tier 3) for progressive risk evaluation.\n"
+                "• **Actionable Explainability**: Uses TreeSHAP factor importance to explain the primary contributors to risk.\n"
+                "• **Privacy & Clinical Boundaries**: BioPulse provides educational health literacy and clinical preparation, not a formal medical diagnosis."
+            )
+            return LLMResponse(
+                answer=answer,
+                confidence="high",
+                used_context=["platform_guide"],
+                needs_clinician=False,
+                safety_level="normal",
+                model_name="offline-deterministic-testing",
+            )
+
+        if any(w in msg_lower for w in ["what conditions", "conditions does biopulse", "supported conditions", "health conditions does biopulse support"]):
+            answer = (
+                "BioPulse AI currently specializes in two core endocrine and reproductive conditions:\n\n"
+                "1. **PCOS (Polycystic Ovary Syndrome)**: Comprehensive multi-tier screening for females, evaluating menstrual cycle regularity, hyperandrogenism markers, metabolic indicators, and ultrasound ovarian follicle patterns.\n"
+                "2. **Male Hypogonadism**: Hormonal vitality and endocrine balance screening for males, evaluating ADAM clinical questionnaires, total/free testosterone, LH, FSH, SHBG, and metabolic parameters.\n\n"
+                "Both pathways provide structured clinician summary reports to assist your healthcare provider."
+            )
+            return LLMResponse(
+                answer=answer,
+                confidence="high",
+                used_context=["supported_conditions"],
+                needs_clinician=False,
+                safety_level="normal",
+                model_name="offline-deterministic-testing",
+            )
+
+        if "what is pcos" in msg_lower or (("pcos" in msg_lower or "polycystic" in msg_lower) and any(w in msg_lower for w in ["what", "explain", "mean", "define"])):
+            answer = (
+                "**Polycystic Ovary Syndrome (PCOS)** is a common hormonal condition affecting individuals of reproductive age.\n\n"
+                "Key characteristics include:\n"
+                "• **Irregular Menstrual Cycles**: Infrequent, irregular, or prolonged periods.\n"
+                "• **Elevated Androgens**: Higher levels of male hormones that can cause symptoms like acne, hirsutism (excess body/facial hair), or thinning hair.\n"
+                "• **Polycystic Ovaries**: Ovaries enlarged with fluid-filled follicle sacs visible on pelvic ultrasound.\n\n"
+                "While manageable through tailored nutrition, movement, and medical therapy, early screening provides vital guidance for long-term endocrine wellness."
+            )
+            return LLMResponse(
+                answer=answer,
+                confidence="high",
+                used_context=["pcos_definition"],
+                needs_clinician=False,
+                safety_level="normal",
+                model_name="offline-deterministic-testing",
+            )
+
+        if any(w in msg_lower for w in ["get started", "how to start", "how can i get started", "sign up", "register", "join", "onboarding"]):
+            answer = (
+                "Getting started with BioPulse AI is quick and simple:\n\n"
+                "1. **Create an Account**: Visit the [Registration Page](/register) to get started.\n"
+                "2. **Select Your Pathway**: Choose either the Female PCOS pathway or the Male Hormonal Vitality pathway.\n"
+                "3. **Complete Baseline Screening**: Answer a quick 3-minute questionnaire to receive your immediate Tier 1 risk assessment and personalized wellness dashboard.\n"
+                "4. **Add Lab Biomarkers (Optional)**: Connect laboratory blood tests or pelvic ultrasound scans whenever available to unlock higher precision."
+            )
+            return LLMResponse(
+                answer=answer,
+                confidence="high",
+                used_context=["onboarding_guide"],
+                needs_clinician=False,
+                safety_level="normal",
+                model_name="offline-deterministic-testing",
+            )
 
         # 1. Doctor consultation / prep questions
         if any(w in msg_lower for w in ["doctor", "physician", "ask", "appointment", "consultation"]):
@@ -686,6 +777,123 @@ class GeminiProvider(LLMProvider):
             safety_level=safety_level,
             model_name=actual_model_used,
         )
+
+    def stream_chat_response(
+        self,
+        system_instruction: str,
+        user_message: str,
+        conversation_history: Optional[List[dict[str, str]]] = None,
+        **kwargs: Any,
+    ):
+        """
+        Streams response tokens directly from Gemini using streamGenerateContent?alt=sse.
+        Prioritizes fast models (gemini-3.5-flash-lite) for public responsiveness and low latency.
+        """
+        import requests
+        from apps.intelligence.services.context_sanitizer import LLMContextSanitizer
+
+        patient_uuid = kwargs.get("patient_uuid")
+        patient_name = kwargs.get("patient_name")
+        patient_email = kwargs.get("patient_email")
+
+        clean_system_instruction = LLMContextSanitizer.sanitize_system_instruction(
+            system_instruction,
+            patient_uuid=patient_uuid,
+            patient_name=patient_name,
+            patient_email=patient_email,
+        )
+        clean_user_message = LLMContextSanitizer.sanitize_user_message(
+            user_message,
+            patient_uuid=patient_uuid,
+            patient_name=patient_name,
+            patient_email=patient_email,
+        )
+        clean_history = LLMContextSanitizer.sanitize_conversation_history(
+            conversation_history,
+            patient_uuid=patient_uuid,
+            patient_name=patient_name,
+            patient_email=patient_email,
+        )
+
+        contents: List[dict[str, Any]] = []
+        if clean_history:
+            for item in clean_history[-6:]:
+                role = "user" if item.get("sender") in ("user", "human") else "model"
+                text = item.get("text", "")
+                if text:
+                    contents.append({"role": role, "parts": [{"text": text}]})
+
+        contents.append({"role": "user", "parts": [{"text": clean_user_message}]})
+
+        # Try fast/lite model first for public chat if available, else primary model
+        candidate_models = []
+        if self.fallback_model:
+            candidate_models.append(self.fallback_model)
+        if self.model_name not in candidate_models:
+            candidate_models.append(self.model_name)
+        if "gemini-3.5-flash-lite" not in candidate_models:
+            candidate_models.append("gemini-3.5-flash-lite")
+
+        headers = {
+            "Content-Type": "application/json",
+            "x-goog-api-key": self.api_key,
+        }
+
+        streamed_any = False
+        for model in candidate_models:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:streamGenerateContent?alt=sse"
+            req_body: dict[str, Any] = {
+                "system_instruction": {"parts": [{"text": clean_system_instruction}]},
+                "contents": contents,
+                "generationConfig": {
+                    "temperature": 0.2,
+                    "maxOutputTokens": kwargs.get("max_output_tokens", 600),
+                },
+            }
+            if "gemini-3.5-flash-lite" not in model.lower():
+                req_body["generationConfig"]["thinkingConfig"] = {"thinkingBudget": 0}
+
+            try:
+                resp = requests.post(url, headers=headers, json=req_body, stream=True, timeout=12)
+                if resp.status_code != 200:
+                    logger.warning("Gemini stream request to %s returned HTTP %s", model, resp.status_code)
+                    continue
+
+                for line in resp.iter_lines():
+                    if not line:
+                        continue
+                    decoded = line.decode("utf-8")
+                    if decoded.startswith("data: "):
+                        try:
+                            payload = json.loads(decoded[6:])
+                            parts = payload.get("candidates", [{}])[0].get("content", {}).get("parts", [])
+                            for p in parts:
+                                text_chunk = p.get("text", "")
+                                if text_chunk:
+                                    streamed_any = True
+                                    yield text_chunk
+                        except Exception:
+                            continue
+
+                if streamed_any:
+                    return
+            except Exception as stream_err:
+                logger.warning("Gemini stream error on model %s: %s", model, stream_err)
+                continue
+
+        # If streaming attempts failed, fallback to normal non-streaming generation
+        if not streamed_any:
+            logger.info("Streaming failed or empty; falling back to non-streaming generate_chat_response")
+            fallback_res = self.generate_chat_response(
+                system_instruction=system_instruction,
+                user_message=user_message,
+                health_context="",
+                conversation_history=conversation_history,
+                **kwargs,
+            )
+            words = fallback_res.answer.split(" ")
+            for i, w in enumerate(words):
+                yield w + (" " if i < len(words) - 1 else "")
 
 
 class GroqProvider(LLMProvider):

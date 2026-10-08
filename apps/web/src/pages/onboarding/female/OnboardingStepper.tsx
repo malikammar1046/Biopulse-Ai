@@ -63,7 +63,7 @@ export const OnboardingStepper: React.FC<OnboardingStepperProps> = ({
 
               {/* Step Label */}
               <span
-                className={`mt-2 text-[13px] sm:text-[14px] tracking-tight transition-colors duration-200 text-center whitespace-nowrap ${
+                className={`hidden sm:block mt-2 text-[13px] sm:text-[14px] tracking-tight transition-colors duration-200 text-center whitespace-nowrap ${
                   isActive
                     ? 'text-[#073B72] font-bold'
                     : isCompleted
@@ -76,6 +76,16 @@ export const OnboardingStepper: React.FC<OnboardingStepperProps> = ({
             </div>
           );
         })}
+      </div>
+
+      {/* Mobile Active Step Indicator */}
+      <div className="sm:hidden text-center mt-2 px-3">
+        <span className="text-xs font-bold text-[#073B72]">
+          Step {currentStep} of {steps.length}:{' '}
+          <span className="font-semibold text-slate-600">
+            {steps[currentStep - 1]?.label || ''}
+          </span>
+        </span>
       </div>
     </div>
   );

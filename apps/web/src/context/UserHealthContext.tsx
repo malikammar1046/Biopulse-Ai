@@ -2049,6 +2049,16 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             })
             .catch(() => {});
 
+          fetchActiveAssessment(true, 'male_hypogonadism', authoritativeUserId)
+            .then((verified) => {
+              if (verified && verified.id === res.id) {
+                if (import.meta.env.DEV) {
+                  console.log(`[TIER2_TRACE] event=active_readback_verified id=${verified.id} level=${verified.assessment_level}`);
+                }
+              }
+            })
+            .catch(() => {});
+
           triggerAssessmentNotification(
             'Updated Result: Your hypogonadism screening assessment has been updated with clinical evidence.',
             'success'
@@ -2195,6 +2205,16 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             })
             .catch(() => {});
 
+          fetchActiveAssessment(true, 'female_pcos', authoritativeUserId)
+            .then((verified) => {
+              if (verified && verified.id === res.id) {
+                if (import.meta.env.DEV) {
+                  console.log(`[TIER2_TRACE] event=active_readback_verified id=${verified.id} level=${verified.assessment_level}`);
+                }
+              }
+            })
+            .catch(() => {});
+
           triggerAssessmentNotification(
             'Updated Result: Your assessment has been updated using additional clinical evidence.',
             'success'
@@ -2265,9 +2285,11 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             })
             .catch(() => {});
 
-          if (res.is_active && (res.assessment_level === 'tier_1_2' || res.assessment_level === 'tier_1_2_3')) {
+          if (res.is_active && (res.assessment_level === 'tier_1_2' || res.assessment_level === 'tier_1_2_3' || res.assessment_level === 'tier_1_3')) {
             triggerAssessmentNotification(
-              'Updated Result: Your assessment has been updated using additional clinical evidence.',
+              res.assessment_level === 'tier_1_3'
+                ? 'Ultrasound Analyzed: Ovarian morphology evaluated and recorded.'
+                : 'Updated Result: Your assessment has been updated using multimodal clinical and ultrasound evidence.',
               'success'
             );
           }

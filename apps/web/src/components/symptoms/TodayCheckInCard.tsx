@@ -109,7 +109,7 @@ export const TodayCheckInCard: React.FC<TodayCheckInCardProps> = ({
                 <span className={`text-[10px] font-mono text-[#64748B] transition-colors ${
                   isMale ? 'group-hover:text-[#0288D1]' : 'group-hover:text-[#DC326C]'
                 }`}>
-                  + Add
+                  Add
                 </span>
               </div>
               <div>

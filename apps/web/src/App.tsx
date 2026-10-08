@@ -13,6 +13,7 @@ import { useUserHealth } from './context/UserHealthContext';
 import { getPathwayDashboardRoute } from './constants/routes';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { BioPulseLoadingScreen } from './components/brand/BioPulseLoadingScreen';
+import { RouteLoadingFallback } from './components/common/RouteLoadingFallback';
 
 // Dynamic redirection to user's authorized pathway dashboard
 const DashboardRedirect: React.FC = () => {
@@ -21,10 +22,8 @@ const DashboardRedirect: React.FC = () => {
   return <Navigate to={destination} replace />;
 };
 
-// Clinical Page Loading Fallback (BioPulse Splash Screen)
-const PageLoadingFallback: React.FC = () => (
-  <BioPulseLoadingScreen message="Preparing your health experience" fullScreen={true} />
-);
+// Sleek, non-intrusive fallback for lazy-loaded route transitions (React Suspense)
+const PageLoadingFallback: React.FC = () => <RouteLoadingFallback message="Loading page..." />;
 
 // Route-Level Lazy Loading (Code Splitting)
 const Home = lazy(() => import('./pages/public/Home').then((m) => ({ default: m.Home })));
@@ -59,6 +58,9 @@ const Doctors = lazy(() =>
 const CareCircle = lazy(() =>
   import('./pages/public/CareCircle').then((m) => ({ default: m.CareCircle }))
 );
+const AppDownloadPage = lazy(() =>
+  import('./pages/public/AppDownloadPage').then((m) => ({ default: m.AppDownloadPage }))
+);
 
 // Auth & Onboarding Pages (Lazy-Loaded)
 const Login = lazy(() => import('./pages/auth/Login').then((m) => ({ default: m.Login })));
@@ -89,17 +91,32 @@ const AssessmentPage = lazy(() => import('./pages/app/AssessmentPage').then((m) 
 const ProgressPage = lazy(() => import('./pages/app/ProgressPage').then((m) => ({ default: m.ProgressPage })));
 
 import { AIChatProvider } from './context/AIChatContext';
+import { AnimatePresence } from 'framer-motion';
 
 const AppContent: React.FC = () => {
   const { loading: authLoading } = useAuth();
+  const [showInitialSplash, setShowInitialSplash] = React.useState(true);
 
-  if (authLoading) {
-    return <BioPulseLoadingScreen message="Preparing your health experience" fullScreen={true} />;
-  }
+  React.useEffect(() => {
+    // Keep botanical splash smoothly visible on cold start, then gracefully fade out
+    if (!authLoading) {
+      const timer = setTimeout(() => {
+        setShowInitialSplash(false);
+      }, 650);
+      return () => clearTimeout(timer);
+    }
+  }, [authLoading]);
 
   return (
-    <Suspense fallback={<PageLoadingFallback />}>
-      <Routes>
+    <>
+      <AnimatePresence mode="wait">
+        {showInitialSplash && (
+          <BioPulseLoadingScreen message="Preparing your health experience" fullScreen={true} />
+        )}
+      </AnimatePresence>
+
+      <Suspense fallback={<PageLoadingFallback />}>
+        <Routes>
               {/* Public Marketing Website */}
               <Route element={<PublicLayout />}>
                 <Route path={ROUTES.HOME} element={<Home />} />
@@ -124,6 +141,10 @@ const AppContent: React.FC = () => {
                 <Route path={ROUTES.FEATURES} element={<Features />} />
                 <Route path={ROUTES.DOCTORS} element={<Doctors />} />
                 <Route path={ROUTES.CONTACT} element={<Contact />} />
+                <Route path={ROUTES.APP_DOWNLOAD} element={<AppDownloadPage />} />
+                <Route path={ROUTES.DOWNLOAD} element={<AppDownloadPage />} />
+                <Route path="/download-app" element={<Navigate to={ROUTES.APP_DOWNLOAD} replace />} />
+                <Route path="/apk" element={<Navigate to={ROUTES.APP_DOWNLOAD} replace />} />
 
                 {/* Public Only Auth Pages */}
                 <Route element={<PublicOnlyRoute />}>
@@ -195,8 +216,9 @@ const AppContent: React.FC = () => {
                   <Route path="assistant" element={<ChatPage />} />
                   <Route path="symptoms" element={<SymptomsPage />} />
                   <Route path="lifestyle" element={<LifestyleRecommendationsPage />} />
-                  <Route path="diet" element={<LifestyleRecommendationsPage />} />
-                  <Route path="diet/week" element={<LifestyleRecommendationsPage />} />
+                  <Route path="nutrition" element={<Navigate to={ROUTES.APP.LIFESTYLE} replace />} />
+                  <Route path="diet" element={<Navigate to={ROUTES.APP.LIFESTYLE} replace />} />
+                  <Route path="diet/week" element={<Navigate to={ROUTES.APP.LIFESTYLE} replace />} />
                   <Route path="fitness" element={<FitnessPage />} />
                   <Route path="reports" element={<ReportsPage />} />
                   <Route path="medications" element={<MedicationsPage />} />
@@ -217,6 +239,7 @@ const AppContent: React.FC = () => {
               <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
             </Routes>
           </Suspense>
+    </>
   );
 };
 

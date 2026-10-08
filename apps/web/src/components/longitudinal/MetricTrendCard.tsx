@@ -7,6 +7,7 @@ import {
 } from '@untitledui/icons';
 import type { HealthPathway } from '../../types/onboarding';
 import type { MetricSeries, MetricDataPoint } from '../../types/longitudinalHealth';
+import { calculateMetricDelta, getTrendExplanation } from '../../utils/longitudinalCalculations';
 
 interface MetricTrendCardProps {
   pathway: HealthPathway;
@@ -338,6 +339,44 @@ export const MetricTrendCard: React.FC<MetricTrendCardProps> = ({
               </div>
             )}
           </div>
+
+          {/* ── Plain-Language Clinical Trend Summary (Constraint 19 & 26) ── */}
+          {(() => {
+            const values = sortedPoints.map((p) => p.value);
+            const prev = values.length >= 2 ? values[values.length - 2] : null;
+            const curr = values[values.length - 1];
+            const delta = calculateMetricDelta(prev, curr, activeSeries.unit);
+            const explanation = getTrendExplanation(
+              activeSeries.label,
+              values,
+              sortedPoints.map((p) => p.observed_at || p.timestamp),
+              activeSeries.unit
+            );
+
+            return (
+              <div className="p-3.5 rounded-xl bg-white border border-[#EAECF0] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div className="flex items-start sm:items-center gap-2.5">
+                  <span
+                    className={`inline-flex items-center gap-1 font-mono font-semibold px-2.5 py-0.5 rounded-full border text-[11px] shrink-0 ${
+                      delta.isStable
+                        ? 'bg-[#F2F4F7] text-[#344054] border-[#EAECF0]'
+                        : isMale
+                        ? 'bg-[#F0F9FF] text-[#0288D1] border-[#BAE6FD]'
+                        : 'bg-[#FDE6EF] text-[#DC326C] border-[rgba(244,63,125,0.2)]'
+                    }`}
+                  >
+                    {delta.displayChange}
+                  </span>
+                  <p className="text-[#475467] font-medium leading-relaxed">
+                    {explanation}
+                  </p>
+                </div>
+                <span className="text-[11px] font-mono text-[#98A2B3] shrink-0 self-end sm:self-center">
+                  {sortedPoints.length} observation{sortedPoints.length > 1 ? 's' : ''}
+                </span>
+              </div>
+            );
+          })()}
         </div>
       )}
 

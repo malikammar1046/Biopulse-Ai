@@ -34,6 +34,7 @@ import type { Doctor } from '../../types/doctor';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { resolvePathway } from '../../types/onboarding';
+import { getDoctorPathway, type PathwayClinicalBranch } from '../../utils/doctorPathway';
 
 type HealthBranch = 'all' | 'female' | 'male' | 'both';
 
@@ -100,32 +101,9 @@ export const Doctors: React.FC = () => {
     return match ? parseInt(match[1], 10) : 999999;
   };
 
-  // Helper to determine clinical branch (female, male, or both genders)
-  const getDoctorBranch = (doc: Doctor): 'female' | 'male' | 'both' => {
-    if (doc.pathway === 'female_pcos') return 'female';
-    if (doc.pathway === 'male_hypogonadism') return 'male';
-    if (doc.pathway === 'both') return 'both';
-
-    const s = `${doc.specialty || ''} ${doc.services_offered || ''} ${doc.short_bio || ''} ${doc.qualifications || ''}`.toLowerCase();
-
-    // Dual-gender Sexologists, Reproductive Medicine & Endocrine Specialists
-    if (
-      s.includes('sexolog') ||
-      s.includes('both') ||
-      s.includes('males & females') ||
-      s.includes('male & female') ||
-      s.includes('male-female') ||
-      (s.includes('androlog') && s.includes('endocrinolog')) ||
-      (s.includes('androlog') && s.includes('fertility consultant') && doc.name.includes('Ayesha'))
-    ) {
-      return 'both';
-    }
-
-    if (s.includes('urolog') || s.includes('androlog') || s.includes('hypogonadism') || s.includes('male')) {
-      return 'male';
-    }
-
-    return 'female';
+  // Helper to determine clinical branch (female, male, both, or unassigned)
+  const getDoctorBranch = (doc: Doctor): PathwayClinicalBranch => {
+    return getDoctorPathway(doc);
   };
 
   // Filtered & Sorted Doctors
@@ -684,7 +662,7 @@ export const Doctors: React.FC = () => {
  */
 const DoctorCard: React.FC<{
   doctor: Doctor;
-  branch: 'female' | 'male' | 'both';
+  branch: PathwayClinicalBranch;
   onSelectDoctor: () => void;
 }> = ({ doctor, branch, onSelectDoctor }) => {
   const [imgError, setImgError] = useState(false);
@@ -980,7 +958,7 @@ const DoctorCard: React.FC<{
  */
 const ConsultationModal: React.FC<{
   doctor: Doctor;
-  branch: 'female' | 'male' | 'both';
+  branch: PathwayClinicalBranch;
   onClose: () => void;
 }> = ({ doctor, branch, onClose }) => {
   const navigate = useNavigate();

@@ -12,9 +12,13 @@ import {
   LogIn,
   ClipboardCheck,
   ArrowRight,
+  BookOpen,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { useUserHealth } from '../../context/UserHealthContext';
-import { lifestyleService } from '../../services/lifestyleService';
+import { useAuth } from '../../context/AuthContext';
+import { lifestyleService, SessionError } from '../../services/lifestyleService';
 import type {
   LifestyleRecommendationsResult,
   LifestyleSimulationOverride,
@@ -23,13 +27,11 @@ import type {
 
 import { LifestyleSkeleton } from '../../components/lifestyle/LifestyleSkeleton';
 import { TodayPriorityCard } from '../../components/lifestyle/TodayPriorityCard';
-import { StatusSummaryRow } from '../../components/lifestyle/StatusSummaryRow';
 import { NutritionPillarView } from '../../components/lifestyle/NutritionPillarView';
 import { FitnessPillarView } from '../../components/lifestyle/FitnessPillarView';
 import { LifestylePillarView } from '../../components/lifestyle/LifestylePillarView';
 import { EvidenceSourcesSection } from '../../components/lifestyle/EvidenceSourcesSection';
 import { ClinicianReviewBanner } from '../../components/lifestyle/ClinicianReviewBanner';
-import { MissingDataBanner } from '../../components/lifestyle/MissingDataBanner';
 import { RecommendationDetailModal } from '../../components/lifestyle/RecommendationDetailModal';
 import { LifestyleEmptyState } from '../../components/lifestyle/LifestyleEmptyState';
 
@@ -39,87 +41,167 @@ type ErrorClassification = 'NETWORK' | 'SESSION' | 'NO_ASSESSMENT' | 'SERVER';
 export const LifestyleRecommendationsPage: React.FC = () => {
   const navigate = useNavigate();
   const { userProfile, postOnboardingReadiness } = useUserHealth();
+  const { user, loading: authLoading } = useAuth();
+  const activeUserId = user?.id || userProfile?.id;
   const isMale = userProfile?.pathway === 'male' || userProfile?.gender === 'male';
   const defaultPathway = isMale ? 'androsense' : 'ovasense';
 
   const [activeTab, setActiveTab] = useState<PillarTab>('nutrition');
-  const [data, setData] = useState<LifestyleRecommendationsResult | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+
+  // Synchronous cache lookup for instantaneous return visits (< 1ms)
+  const initialCached = useMemo(() => {
+    return lifestyleService.getCachedRecommendations(defaultPathway, activeUserId);
+  }, [defaultPathway, activeUserId]);
+
+  const [data, setData] = useState<LifestyleRecommendationsResult | null>(() => initialCached);
+  const [loading, setLoading] = useState<boolean>(() => !initialCached);
   const [simulating, setSimulating] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [errorType, setErrorType] = useState<ErrorClassification | null>(null);
+  const [nonBlockingNotice, setNonBlockingNotice] = useState<string | null>(null);
 
-  // Selected recommendation for the detail modal/drawer
+  // Selected recommendation for the detail modal
   const [selectedRecommendation, setSelectedRecommendation] = useState<RecommendationItem | null>(null);
 
   // Interactive preference simulation state
   const [dietaryPref, setDietaryPref] = useState<string>('standard');
   const [activityLevel, setActivityLevel] = useState<string>('moderate');
 
+  // Toggle for collapsible evidence sources drawer
+  const [showEvidenceDrawer, setShowEvidenceDrawer] = useState<boolean>(false);
+
+  // In-flight abort controller
+  const inFlightAbortRef = React.useRef<AbortController | null>(null);
+
   const fetchRecommendations = async (override?: LifestyleSimulationOverride, refresh = false) => {
+    if (inFlightAbortRef.current) {
+      inFlightAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    inFlightAbortRef.current = controller;
+
     try {
-      setError(null);
-      setErrorType(null);
       if (override) {
         setSimulating(true);
+        setError(null);
+        setErrorType(null);
         const result = await lifestyleService.simulateRecommendations(override);
+        if (controller.signal.aborted) return;
         setData(result);
+        setSimulating(false);
       } else {
-        setLoading(true);
-        const result = await lifestyleService.getRecommendations(defaultPathway, refresh);
+        // Only trigger skeleton if we don't have any cached data to show
+        if (!data) {
+          setLoading(true);
+          setError(null);
+          setErrorType(null);
+        }
+        setNonBlockingNotice(null);
+
+        const result = await lifestyleService.getRecommendations(
+          defaultPathway,
+          refresh,
+          controller.signal,
+          activeUserId
+        );
+
+        if (controller.signal.aborted) return;
         setData(result);
+        setLoading(false);
+        setError(null);
+        setErrorType(null);
+        setNonBlockingNotice(null);
       }
-      setError(null);
-      setErrorType(null);
     } catch (err: any) {
-      console.error('Failed to load lifestyle recommendations:', err);
+      if (controller.signal.aborted || err?.name === 'AbortError') {
+        return;
+      }
+      console.warn('Lifestyle recommendation fetch notice:', err);
       const msg = String(err?.message || '');
       const statusCode = err?.status || (err?.response && err.response.status);
 
+      let classifiedType: ErrorClassification = 'SERVER';
+      let errorMsg = "We couldn't prepare your recommendations right now.";
+
       if (
+        err instanceof SessionError ||
+        err?.code === 'SESSION_UNAVAILABLE' ||
         statusCode === 401 ||
         msg.includes('401') ||
         msg.toLowerCase().includes('session') ||
         msg.toLowerCase().includes('unauthorized') ||
         msg.toLowerCase().includes('log in')
       ) {
-        setErrorType('SESSION');
-        setError('Your session has expired.');
+        classifiedType = 'SESSION';
+        errorMsg = 'Your session has expired. Please sign in again.';
       } else if (
         statusCode === 404 ||
         msg.includes('404') ||
         msg.toLowerCase().includes('no active assessment') ||
         msg.toLowerCase().includes('screening assessment')
       ) {
-        setErrorType('NO_ASSESSMENT');
-        setError('Complete your screening to unlock personalized recommendations.');
+        classifiedType = 'NO_ASSESSMENT';
+        errorMsg = 'Complete your screening to unlock personalized recommendations.';
       } else if (
-        err?.name === 'TypeError' ||
-        msg.includes('Failed to fetch') ||
+        (err?.name === 'TypeError' && msg.includes('Failed to fetch')) ||
         msg.includes('NetworkError') ||
         (typeof navigator !== 'undefined' && !navigator.onLine)
       ) {
-        setErrorType('NETWORK');
-        setError("We couldn't connect to BioPulse.");
+        classifiedType = 'NETWORK';
+        errorMsg = "We couldn't connect to BioPulse. Please check your internet connection.";
+      } else if (
+        statusCode >= 500 ||
+        msg.includes('500') ||
+        msg.includes('502') ||
+        msg.includes('503') ||
+        msg.includes('504') ||
+        msg.includes('Internal Server Error')
+      ) {
+        classifiedType = 'SERVER';
+        errorMsg = "We couldn't prepare your recommendations right now. Please try again.";
+      }
+
+      // If we already have cached data, preserve it and display non-blocking update warning
+      if (data && !override) {
+        setNonBlockingNotice('Unable to update with latest health data. Showing recent cached protocol.');
       } else {
-        setErrorType('SERVER');
-        setError("We couldn't prepare your recommendations right now.");
+        setErrorType(classifiedType);
+        setError(errorMsg);
       }
     } finally {
-      setLoading(false);
-      setSimulating(false);
+      if (!controller.signal.aborted) {
+        setLoading(false);
+        setSimulating(false);
+      }
     }
   };
 
   useEffect(() => {
-    fetchRecommendations();
-  }, [defaultPathway]);
-
-  useEffect(() => {
-    if (postOnboardingReadiness === 'ready') {
-      fetchRecommendations();
+    // 1. Wait if auth is still hydrating from cold boot
+    if (authLoading) {
+      return;
     }
-  }, [postOnboardingReadiness]);
+
+    // 2. Wait if onboarding is currently in flight
+    if (postOnboardingReadiness === 'initializing') {
+      return;
+    }
+
+    // 3. Sync from cache if pathway switched
+    const cached = lifestyleService.getCachedRecommendations(defaultPathway, activeUserId);
+    if (cached) {
+      setData(cached);
+      setLoading(false);
+    }
+
+    fetchRecommendations();
+
+    return () => {
+      if (inFlightAbortRef.current) {
+        inFlightAbortRef.current.abort();
+      }
+    };
+  }, [defaultPathway, postOnboardingReadiness, authLoading, activeUserId]);
 
   const handleDietaryChange = (newPref: string) => {
     setDietaryPref(newPref);
@@ -139,7 +221,6 @@ export const LifestyleRecommendationsPage: React.FC = () => {
     });
   };
 
-  // Adherence tracking: Optimistic update with persistent backend mutation
   const handleUpdateStatus = async (
     recommendationId: string,
     newStatus: 'NEW' | 'ACTIVE' | 'IMPROVING' | 'MAINTAIN' | 'REASSESS' | 'COMPLETED' | 'SKIPPED'
@@ -150,7 +231,6 @@ export const LifestyleRecommendationsPage: React.FC = () => {
       rec.id === recommendationId ? { ...rec, status: newStatus } : rec
     );
 
-    // Optimistic UI update
     setData({
       ...data,
       recommendations: updatedRecommendations,
@@ -168,15 +248,15 @@ export const LifestyleRecommendationsPage: React.FC = () => {
         recommendation_id: recommendationId,
         status: newStatus,
         module: data.pathway || defaultPathway,
+        userId: activeUserId,
       });
     } catch (err) {
       console.error('Failed to persist recommendation status:', err);
-      // Revert optimistic update on backend failure
       setData((prev) => (prev ? { ...prev, recommendations: oldRecommendations } : null));
     }
   };
 
-  // Find Today's Priority recommendation (highest priority item)
+  // Top Priority Recommendation
   const topPriorityRecommendation = useMemo(() => {
     if (!data?.recommendations || data.recommendations.length === 0) return null;
     return (
@@ -185,42 +265,41 @@ export const LifestyleRecommendationsPage: React.FC = () => {
     );
   }, [data]);
 
-  // Format updated date cleanly
+  // Formatted date
   const formattedUpdatedDate = useMemo(() => {
     if (!data?.generated_at) return null;
     try {
       return new Date(data.generated_at).toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
-        year: 'numeric',
       });
     } catch {
       return null;
     }
   }, [data?.generated_at]);
 
-  // 1. Loading State (High-Fidelity Skeleton) - also during post-onboarding initialization
+  // Loading State
   const isInitializing = postOnboardingReadiness === 'initializing';
-  if ((loading && !data) || isInitializing) {
+  if (isInitializing || (loading && !data)) {
     return <LifestyleSkeleton />;
   }
 
-  // 2. Error State (Calm, professional, differentiated, with retry)
+  // Error States
   if (error && !data && !isInitializing) {
     if (errorType === 'SESSION') {
       return (
-        <div className="max-w-2xl mx-auto py-16 px-4 text-center space-y-4">
-          <div className="w-12 h-12 mx-auto rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
+        <div className="max-w-2xl mx-auto py-20 px-4 text-center space-y-4">
+          <div className="w-14 h-14 mx-auto rounded-3xl bg-amber-50 text-amber-600 flex items-center justify-center">
             <LogIn className="w-6 h-6" />
           </div>
-          <h2 className="text-xl font-bold text-[#073B72]">Your session has expired.</h2>
+          <h2 className="text-2xl font-bold text-[#073B72]">Your session has expired.</h2>
           <p className="text-sm text-slate-600 max-w-md mx-auto">
             Please sign in again to access your personalized recommendations.
           </p>
           <button
             type="button"
             onClick={() => navigate('/login')}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#073B72] hover:bg-[#0B4A8B] text-white text-sm font-semibold transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#073B72] hover:bg-[#0B4A8B] text-white text-sm font-semibold transition cursor-pointer"
           >
             <LogIn className="w-4 h-4" />
             <span>Sign In Again</span>
@@ -231,20 +310,20 @@ export const LifestyleRecommendationsPage: React.FC = () => {
 
     if (errorType === 'NO_ASSESSMENT') {
       return (
-        <div className="max-w-2xl mx-auto py-16 px-4 text-center space-y-4">
-          <div className="w-12 h-12 mx-auto rounded-2xl bg-pink-50 text-[#F43F7D] flex items-center justify-center">
+        <div className="max-w-2xl mx-auto py-20 px-4 text-center space-y-4">
+          <div className="w-14 h-14 mx-auto rounded-3xl bg-pink-50 text-[#F43F7D] flex items-center justify-center">
             <ClipboardCheck className="w-6 h-6" />
           </div>
-          <h2 className="text-xl font-bold text-[#073B72]">
-            Complete your screening to unlock personalized recommendations.
+          <h2 className="text-2xl font-bold text-[#073B72]">
+            Complete your screening to unlock your protocol.
           </h2>
           <p className="text-sm text-slate-600 max-w-md mx-auto">
-            Your recommendations are dynamically tailored to your screening results, symptoms, and biomarkers.
+            Your lifestyle recommendations are dynamically tuned to your hormonal, metabolic, and clinical screening results.
           </p>
           <button
             type="button"
             onClick={() => navigate('/app/assessment')}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#F43F7D] hover:bg-[#DC326C] text-white text-sm font-semibold transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#F43F7D] hover:bg-[#DC326C] text-white text-sm font-semibold transition cursor-pointer"
           >
             <span>Go to Screening</span>
             <ArrowRight className="w-4 h-4" />
@@ -255,18 +334,18 @@ export const LifestyleRecommendationsPage: React.FC = () => {
 
     if (errorType === 'NETWORK') {
       return (
-        <div className="max-w-2xl mx-auto py-16 px-4 text-center space-y-4">
-          <div className="w-12 h-12 mx-auto rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
+        <div className="max-w-2xl mx-auto py-20 px-4 text-center space-y-4">
+          <div className="w-14 h-14 mx-auto rounded-3xl bg-amber-50 text-amber-600 flex items-center justify-center">
             <WifiOff className="w-6 h-6" />
           </div>
-          <h2 className="text-xl font-bold text-[#073B72]">We couldn&apos;t connect to BioPulse.</h2>
+          <h2 className="text-2xl font-bold text-[#073B72]">We couldn&apos;t connect to BioPulse.</h2>
           <p className="text-sm text-slate-600 max-w-md mx-auto">
             Please check your internet connection and try again.
           </p>
           <button
             type="button"
-            onClick={() => fetchRecommendations()}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#073B72] hover:bg-[#0B4A8B] text-white text-sm font-semibold transition-colors cursor-pointer"
+            onClick={() => fetchRecommendations(undefined, true)}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#073B72] hover:bg-[#0B4A8B] text-white text-sm font-semibold transition cursor-pointer"
           >
             <RefreshCw className="w-4 h-4" />
             <span>Try Again</span>
@@ -275,22 +354,21 @@ export const LifestyleRecommendationsPage: React.FC = () => {
       );
     }
 
-    // Default: SERVER error
     return (
-      <div className="max-w-2xl mx-auto py-16 px-4 text-center space-y-4">
-        <div className="w-12 h-12 mx-auto rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
+      <div className="max-w-2xl mx-auto py-20 px-4 text-center space-y-4">
+        <div className="w-14 h-14 mx-auto rounded-3xl bg-amber-50 text-amber-600 flex items-center justify-center">
           <AlertTriangle className="w-6 h-6" />
         </div>
-        <h2 className="text-xl font-bold text-[#073B72]">
-          We couldn&apos;t prepare your recommendations right now.
+        <h2 className="text-2xl font-bold text-[#073B72]">
+          We couldn&apos;t prepare your protocol right now.
         </h2>
         <p className="text-sm text-slate-600 max-w-md mx-auto">
           Our recommendation service encountered an issue. Please try again in a few moments.
         </p>
         <button
           type="button"
-          onClick={() => fetchRecommendations()}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#073B72] hover:bg-[#0B4A8B] text-white text-sm font-semibold transition-colors cursor-pointer"
+          onClick={() => fetchRecommendations(undefined, true)}
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#073B72] hover:bg-[#0B4A8B] text-white text-sm font-semibold transition cursor-pointer"
         >
           <RefreshCw className="w-4 h-4" />
           <span>Try Again</span>
@@ -299,7 +377,7 @@ export const LifestyleRecommendationsPage: React.FC = () => {
     );
   }
 
-  // 3. Baseline / Empty State (If no recommendations exist)
+  // Baseline / Empty State
   if (!data || !data.recommendations || data.recommendations.length === 0) {
     return <LifestyleEmptyState isMale={isMale} />;
   }
@@ -307,55 +385,81 @@ export const LifestyleRecommendationsPage: React.FC = () => {
   const { nutrition, fitness, lifestyle, evidence_rationale, evidence_registry } = data;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-5 sm:space-y-6 pb-16 text-left">
-      {/* A. Clean Compact Toolbar */}
-      <div className="rounded-2xl bg-white border border-[#D7EAF2] p-4 sm:p-5 shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1.5 max-w-2xl">
-            {/* Metadata Tags: Pathway, Tier, Date */}
+    <div className="max-w-6xl mx-auto space-y-8 pb-20 text-left">
+      {/* Subtle non-blocking banner if fresh background sync failed while showing cached data */}
+      {nonBlockingNotice && (
+        <div className="rounded-2xl bg-amber-50 border border-amber-200/70 p-3.5 flex items-center justify-between gap-3 text-xs text-amber-800 shadow-xs">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>{nonBlockingNotice}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setNonBlockingNotice(null);
+              fetchRecommendations(undefined, true);
+            }}
+            className="font-semibold text-amber-900 underline hover:no-underline shrink-0 cursor-pointer"
+          >
+            Retry Refresh
+          </button>
+        </div>
+      )}
+
+      {/* ── A. AIRY LIFESTYLE SANCTUARY HEADER ── */}
+      <header className="rounded-3xl bg-white border border-[#E2EEF4] p-6 sm:p-8 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
               <span
-                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
                   isMale
                     ? 'bg-sky-50 text-[#0868B9] border-sky-200'
                     : 'bg-teal-50 text-[#0E9EAA] border-teal-200'
                 }`}
               >
                 {data.pathway === 'androsense'
-                  ? 'Male Hypogonadism Pathway'
-                  : 'Female PCOS Metabolic Pathway'}
+                  ? 'Male Androgen & Vitality Support'
+                  : 'Female PCOS Metabolic Rhythm'}
               </span>
 
               {data.risk_category && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 capitalize">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 capitalize">
                   {data.risk_category.replace(/_/g, ' ')} Tier
                 </span>
               )}
 
               {formattedUpdatedDate && (
-                <span className="inline-flex items-center gap-1 text-xs text-[#55718F]">
+                <span className="inline-flex items-center gap-1.5 text-xs text-slate-500 font-medium">
                   <Calendar className="w-3.5 h-3.5 text-slate-400" />
                   <span>Updated {formattedUpdatedDate}</span>
                 </span>
               )}
             </div>
+
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#073B72] tracking-tight">
+              Daily Lifestyle Protocol
+            </h1>
+            <p className="text-sm text-slate-600 max-w-xl leading-relaxed">
+              Personalized nutritional fuel, functional movement, and circadian recovery tailored to your metabolic blueprint.
+            </p>
           </div>
 
-          {/* Interactive Customization Controls */}
-          <div className="p-3.5 rounded-xl bg-[#F5FBFD] border border-[#D7EAF2] flex flex-wrap items-center gap-3 shrink-0">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#073B72]">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-[#16B8C4]" />
+          {/* Clean Interactive Preference Pills */}
+          <div className="p-3.5 rounded-2xl bg-[#F7FBFC] border border-[#E2EEF4] flex flex-wrap items-center gap-3 shrink-0">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-[#073B72]">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-[#0E9EAA]" />
               <span className="hidden sm:inline">Preferences:</span>
             </div>
 
             <div className="flex items-center gap-1.5">
-              <label htmlFor="pref-diet" className="text-xs text-slate-600">Diet</label>
               <select
                 id="pref-diet"
                 value={dietaryPref}
                 onChange={(e) => handleDietaryChange(e.target.value)}
                 disabled={simulating}
-                className="text-xs font-medium bg-white border border-[#D7EAF2] rounded-lg px-2.5 py-1 text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#16B8C4] cursor-pointer"
+                className="text-xs font-semibold bg-white border border-[#E2EEF4] rounded-xl px-3 py-1.5 text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0E9EAA] cursor-pointer shadow-xs"
+                title="Dietary Preference"
               >
                 <option value="standard">Standard</option>
                 <option value="vegetarian">Vegetarian</option>
@@ -365,13 +469,13 @@ export const LifestyleRecommendationsPage: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-1.5">
-              <label htmlFor="pref-activity" className="text-xs text-slate-600">Activity</label>
               <select
                 id="pref-activity"
                 value={activityLevel}
                 onChange={(e) => handleActivityChange(e.target.value)}
                 disabled={simulating}
-                className="text-xs font-medium bg-white border border-[#D7EAF2] rounded-lg px-2.5 py-1 text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#16B8C4] cursor-pointer"
+                className="text-xs font-semibold bg-white border border-[#E2EEF4] rounded-xl px-3 py-1.5 text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0E9EAA] cursor-pointer shadow-xs"
+                title="Activity Level"
               >
                 <option value="sedentary">Sedentary</option>
                 <option value="light">Light</option>
@@ -381,36 +485,30 @@ export const LifestyleRecommendationsPage: React.FC = () => {
             </div>
 
             {simulating ? (
-              <span className="text-xs font-medium text-[#16B8C4] flex items-center gap-1">
-                <RefreshCw className="w-3 h-3 animate-spin" />
+              <span className="text-xs font-semibold text-[#0E9EAA] flex items-center gap-1.5 px-2">
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                 <span>Updating...</span>
               </span>
             ) : (
               <button
                 type="button"
                 onClick={() => fetchRecommendations(undefined, true)}
-                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg text-slate-600 hover:text-[#073B72] hover:bg-white border border-transparent hover:border-[#D7EAF2] transition-colors cursor-pointer"
-                title="Recalculate recommendations from current health data"
+                className="p-1.5 rounded-xl text-slate-500 hover:text-[#073B72] hover:bg-white border border-transparent hover:border-[#E2EEF4] transition cursor-pointer"
+                title="Recalculate protocol"
               >
-                <RefreshCw className="w-3 h-3" />
-                <span className="hidden sm:inline">Refresh</span>
+                <RefreshCw className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Clinician Review Banner if recommended (Calm, non-alarming) */}
+      {/* Clinician Review Banner if medically indicated */}
       {data.clinician_review?.recommended && (
         <ClinicianReviewBanner clinicianReview={data.clinician_review} />
       )}
 
-      {/* Missing Data Notification Banner (Single compact banner) */}
-      {data.missing_data && data.missing_data.length > 0 && (
-        <MissingDataBanner missingData={data.missing_data} />
-      )}
-
-      {/* B. Today's Priority Featured Card */}
+      {/* ── B. TODAY'S PRIME ANCHOR HERO CARD ── */}
       {topPriorityRecommendation && (
         <TodayPriorityCard
           priorityRecommendation={topPriorityRecommendation}
@@ -420,16 +518,10 @@ export const LifestyleRecommendationsPage: React.FC = () => {
         />
       )}
 
-      {/* C. Recommendation Status Summary */}
-      <StatusSummaryRow
-        recommendations={data.recommendations}
-        isMale={isMale}
-      />
-
-      {/* D. Main Three Pillar Tabs Navigation */}
+      {/* ── C. REFINED THREE PILLAR SEGMENTED NAVIGATION ── */}
       <nav
         aria-label="Lifestyle Pillars"
-        className="flex items-center gap-2 border-b border-[#D7EAF2] pb-2 overflow-x-auto scrollbar-none"
+        className="w-full sm:w-auto overflow-x-auto no-scrollbar flex items-center justify-start gap-1.5 sm:gap-2 bg-[#F7FBFC] p-1.5 rounded-2xl border border-[#E2EEF4] max-w-full sm:max-w-fit mx-auto sm:mx-0"
         role="tablist"
       >
         <button
@@ -439,16 +531,18 @@ export const LifestyleRecommendationsPage: React.FC = () => {
           aria-selected={activeTab === 'nutrition'}
           aria-controls="panel-nutrition"
           onClick={() => setActiveTab('nutrition')}
-          className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+          className={`shrink-0 inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
             activeTab === 'nutrition'
               ? isMale
-                ? 'bg-[#0868B9] text-white shadow-xs'
-                : 'bg-[#0E9EAA] text-white shadow-xs'
-              : 'text-[#55718F] hover:text-[#073B72] hover:bg-slate-100'
+                ? 'bg-[#0868B9] text-white shadow-sm'
+                : 'bg-[#0E9EAA] text-white shadow-sm'
+              : 'text-slate-600 hover:text-[#073B72] hover:bg-white/80'
           }`}
         >
-          <Apple className="w-4 h-4" />
-          <span>Nutrition</span>
+          <Apple className="w-4 h-4 shrink-0" />
+          <span>
+            <span className="hidden xs:inline">Nutritional </span>Fuel
+          </span>
         </button>
 
         <button
@@ -458,16 +552,18 @@ export const LifestyleRecommendationsPage: React.FC = () => {
           aria-selected={activeTab === 'fitness'}
           aria-controls="panel-fitness"
           onClick={() => setActiveTab('fitness')}
-          className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+          className={`shrink-0 inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
             activeTab === 'fitness'
               ? isMale
-                ? 'bg-[#0868B9] text-white shadow-xs'
-                : 'bg-[#0E9EAA] text-white shadow-xs'
-              : 'text-[#55718F] hover:text-[#073B72] hover:bg-slate-100'
+                ? 'bg-[#0868B9] text-white shadow-sm'
+                : 'bg-[#0E9EAA] text-white shadow-sm'
+              : 'text-slate-600 hover:text-[#073B72] hover:bg-white/80'
           }`}
         >
-          <Dumbbell className="w-4 h-4" />
-          <span>Fitness</span>
+          <Dumbbell className="w-4 h-4 shrink-0" />
+          <span>
+            Movement<span className="hidden xs:inline"> & Strength</span>
+          </span>
         </button>
 
         <button
@@ -477,20 +573,22 @@ export const LifestyleRecommendationsPage: React.FC = () => {
           aria-selected={activeTab === 'lifestyle'}
           aria-controls="panel-lifestyle"
           onClick={() => setActiveTab('lifestyle')}
-          className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+          className={`shrink-0 inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
             activeTab === 'lifestyle'
               ? isMale
-                ? 'bg-[#0868B9] text-white shadow-xs'
-                : 'bg-[#0E9EAA] text-white shadow-xs'
-              : 'text-[#55718F] hover:text-[#073B72] hover:bg-slate-100'
+                ? 'bg-[#0868B9] text-white shadow-sm'
+                : 'bg-[#0E9EAA] text-white shadow-sm'
+              : 'text-slate-600 hover:text-[#073B72] hover:bg-white/80'
           }`}
         >
-          <HeartPulse className="w-4 h-4" />
-          <span>Lifestyle & Recovery</span>
+          <HeartPulse className="w-4 h-4 shrink-0" />
+          <span>
+            Rest<span className="hidden xs:inline"> & Circadian</span>
+          </span>
         </button>
       </nav>
 
-      {/* E. Active Pillar Tab View */}
+      {/* ── D. ACTIVE PILLAR CONTENT ── */}
       <main id="pillar-content-panels">
         {activeTab === 'nutrition' && (
           <div id="panel-nutrition" role="tabpanel" aria-labelledby="tab-nutrition">
@@ -529,22 +627,49 @@ export const LifestyleRecommendationsPage: React.FC = () => {
         )}
       </main>
 
-      {/* G. Evidence & Clinical Sources (Collapsed by default) */}
-      <EvidenceSourcesSection
-        evidenceRegistry={evidence_registry}
-        evidenceRationale={evidence_rationale}
-        recommendations={data.recommendations}
-        disclaimer={data.disclaimer}
-        isMale={isMale}
-      />
+      {/* ── E. QUIET COLLAPSIBLE CLINICAL EVIDENCE FOOTER ── */}
+      <section className="rounded-3xl bg-white border border-[#E2EEF4] p-5 sm:p-6 shadow-sm space-y-3">
+        <button
+          type="button"
+          onClick={() => setShowEvidenceDrawer(!showEvidenceDrawer)}
+          className="w-full flex items-center justify-between text-left cursor-pointer focus:outline-none"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-slate-100 text-[#073B72] flex items-center justify-center">
+              <BookOpen className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-[#073B72]">
+                Clinical Foundations & Research Sources
+              </h4>
+              <p className="text-xs text-slate-500">
+                Explore peer-reviewed clinical guidelines, biomarker attributions, and evidence registries
+              </p>
+            </div>
+          </div>
+          {showEvidenceDrawer ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+        </button>
 
-      {/* H. Small Non-Diagnostic Medical Disclaimer */}
-      <footer className="text-center py-4 border-t border-[#D7EAF2]/60 text-xs text-[#55718F] leading-relaxed max-w-3xl mx-auto">
+        {showEvidenceDrawer && (
+          <div className="pt-4 border-t border-slate-100 animate-fadeIn">
+            <EvidenceSourcesSection
+              evidenceRegistry={evidence_registry}
+              evidenceRationale={evidence_rationale}
+              recommendations={data.recommendations}
+              disclaimer={data.disclaimer}
+              isMale={isMale}
+            />
+          </div>
+        )}
+      </section>
+
+      {/* ── F. MEDICAL DISCLAIMER ── */}
+      <footer className="text-center pt-2 pb-4 text-xs text-slate-400 leading-relaxed max-w-3xl mx-auto">
         {data.disclaimer ||
           'BioPulse AI lifestyle recommendations provide educational health guidance based on clinical consensus. This protocol is not a medical diagnosis or treatment plan. Always consult your physician before making substantial changes to your diet, exercise, or medical regimen.'}
       </footer>
 
-      {/* Polished Recommendation Detail Modal / Drawer */}
+      {/* Recommendation Detail Modal */}
       <RecommendationDetailModal
         recommendation={selectedRecommendation}
         onClose={() => setSelectedRecommendation(null)}

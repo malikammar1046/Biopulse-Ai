@@ -105,6 +105,55 @@ DISCLAIMER_TEXT = (
 )
 
 
+def normalize_binary_input(val: Any) -> Optional[float]:
+    """
+    Safely normalizes binary model inputs into 1.0, 0.0, or None (if missing).
+    Safely handles:
+      - booleans: True -> 1.0, False -> 0.0
+      - numbers: >0 -> 1.0, <=0 -> 0.0
+      - strings: 'true', 'yes', '1', 'y', 't', 'positive' -> 1.0
+                 'false', 'no', '0', 'n', 'f', 'negative' -> 0.0
+      - missing: None, '', 'unknown', 'null', 'nan', 'undefined' -> None
+    """
+    if val is None:
+        return None
+    if isinstance(val, bool):
+        return 1.0 if val else 0.0
+    if isinstance(val, (int, float)):
+        if np.isnan(val):
+            return None
+        return 1.0 if val > 0 else 0.0
+    s = str(val).strip().lower()
+    if s in ("", "none", "null", "nan", "unknown", "undefined"):
+        return None
+    if s in ("1", "1.0", "true", "yes", "y", "t", "positive"):
+        return 1.0
+    if s in ("0", "0.0", "false", "no", "n", "f", "negative"):
+        return 0.0
+    try:
+        num = float(s)
+        return 1.0 if num > 0 else 0.0
+    except (ValueError, TypeError):
+        return None
+
+
+def normalize_continuous_input(val: Any) -> Optional[float]:
+    """
+    Safely parses continuous biometric inputs into float or None.
+    """
+    if val is None:
+        return None
+    if isinstance(val, (int, float)):
+        return float(val) if not np.isnan(val) else None
+    s = str(val).strip().lower()
+    if s in ("", "none", "null", "nan", "unknown", "undefined"):
+        return None
+    try:
+        return float(s)
+    except (ValueError, TypeError):
+        return None
+
+
 class MaleMLService:
     """
     Thread-safe service for male hypogonadism screening model inference.
@@ -241,20 +290,26 @@ class MaleMLService:
         bmi_raw = raw_inputs.get("bmi")
 
         # Auto-compute BMI if height and weight are provided
-        if bmi_raw is not None and str(bmi_raw).strip() != "":
-            try:
-                bmi_val = float(bmi_raw)
-            except (ValueError, TypeError):
-                bmi_val = np.nan
-        elif height_raw and weight_raw:
-            try:
-                h_m = float(height_raw) / 100.0
-                w_kg = float(weight_raw)
-                bmi_val = w_kg / (h_m ** 2) if h_m > 0 else np.nan
-            except (ValueError, TypeError, ZeroDivisionError):
-                bmi_val = np.nan
+        bmi_parsed = normalize_continuous_input(bmi_raw)
+        if bmi_parsed is not None:
+            bmi_val = bmi_parsed
         else:
-            bmi_val = np.nan
+            h_val = normalize_continuous_input(height_raw)
+            w_val = normalize_continuous_input(weight_raw)
+            if h_val and w_val and h_val > 0:
+                h_m = h_val / 100.0
+                bmi_val = round(w_val / (h_m ** 2), 2)
+            else:
+                bmi_val = np.nan
+
+        BINARY_FEATURES = {
+            "low_energy",
+            "sleep_trouble",
+            "low_mood",
+            "low_interest",
+            "high_blood_pressure",
+            "diabetes",
+        }
 
         for feat in MALE_TIER1_FEATURE_NAMES:
             if feat == "bmi":
@@ -267,18 +322,20 @@ class MaleMLService:
                 continue
 
             val = raw_inputs.get(feat)
-            if val is None or str(val).strip() == "":
-                row[feat] = np.nan
-                missing_features.append(feat)
-            else:
-                try:
-                    num_val = float(val)
-                    # For binary flags, normalize to 0.0 or 1.0
-                    if feat in ["low_energy", "sleep_trouble", "low_mood", "low_interest", "high_blood_pressure", "diabetes"]:
-                        num_val = 1.0 if num_val > 0 else 0.0
-                    row[feat] = num_val
+            if feat in BINARY_FEATURES:
+                b_val = normalize_binary_input(val)
+                if b_val is not None:
+                    row[feat] = b_val
                     available_features.append(feat)
-                except (ValueError, TypeError):
+                else:
+                    row[feat] = np.nan
+                    missing_features.append(feat)
+            else:
+                c_val = normalize_continuous_input(val)
+                if c_val is not None:
+                    row[feat] = c_val
+                    available_features.append(feat)
+                else:
                     row[feat] = np.nan
                     missing_features.append(feat)
 
@@ -572,7 +629,7 @@ class MaleMLService:
                 pattern_name = "Elevated Pituitary Signal Pattern (Primary)"
                 pattern_description = (
                     "Total testosterone is below standard reference range with elevated LH or FSH. "
-                    "This pattern suggests the brain is sending strong signals to stimulate testosterone production."
+                    "This pattern reflects elevated gonadotropin signaling in the presence of lower circulating testosterone."
                 )
                 pattern_code = "primary_pattern"
             elif lh is not None or fsh is not None:

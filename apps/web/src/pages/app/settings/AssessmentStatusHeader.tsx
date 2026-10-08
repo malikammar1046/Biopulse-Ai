@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Activity,
+  AlertCircle,
   AlertTriangle,
   CheckCircle,
   RefreshCw01,
@@ -20,7 +21,7 @@ export const AssessmentStatusHeader: React.FC<AssessmentStatusHeaderProps> = ({
 }) => {
   const { activeAssessment, assessmentLoading, submitTier1, userProfile } = useUserHealth();
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [refreshNotice, setRefreshNotice] = useState<string | null>(null);
+  const [refreshNotice, setRefreshNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Check if profile was updated after the last assessment
   const isStale = React.useMemo(() => {
@@ -43,14 +44,17 @@ export const AssessmentStatusHeader: React.FC<AssessmentStatusHeaderProps> = ({
     try {
       const res = await submitTier1();
       if (res) {
-        setRefreshNotice('Screening result refreshed successfully.');
+        setRefreshNotice({ type: 'success', message: 'Screening result refreshed successfully.' });
         if (onRefreshSuccess) onRefreshSuccess();
         setTimeout(() => setRefreshNotice(null), 4000);
       } else {
-        setRefreshNotice('Could not refresh assessment. Please verify your connection.');
+        setRefreshNotice({
+          type: 'error',
+          message: 'Could not refresh assessment. Please ensure the intelligence server is running.',
+        });
       }
     } catch (err: any) {
-      setRefreshNotice(err?.message || 'Error triggering reassessment.');
+      setRefreshNotice({ type: 'error', message: err?.message || 'Error triggering reassessment.' });
     } finally {
       setIsRefreshing(false);
     }
@@ -190,10 +194,18 @@ export const AssessmentStatusHeader: React.FC<AssessmentStatusHeaderProps> = ({
         <motion.div
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-3 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg flex items-center gap-2"
+          className={`mt-3 text-xs font-medium px-3 py-1.5 rounded-lg flex items-center gap-2 ${
+            refreshNotice.type === 'error'
+              ? 'text-rose-700 bg-rose-50 border border-rose-200'
+              : 'text-emerald-700 bg-emerald-50 border border-emerald-200'
+          }`}
         >
-          <CheckCircle className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
-          <span>{refreshNotice}</span>
+          {refreshNotice.type === 'error' ? (
+            <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" aria-hidden="true" />
+          ) : (
+            <CheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" aria-hidden="true" />
+          )}
+          <span>{refreshNotice.message}</span>
         </motion.div>
       )}
     </div>

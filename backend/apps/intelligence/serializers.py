@@ -37,7 +37,12 @@ class ProgressiveAssessmentSerializer(serializers.Serializer):
     model_name = serializers.CharField(required=False, default="PCOS-ML Extra Trees")
     probability = serializers.FloatField(allow_null=True, required=False)
     probability_percent = serializers.FloatField(allow_null=True, required=False)
-    threshold = serializers.FloatField(required=False, default=0.38)
+    threshold = serializers.FloatField(required=False, default=0.25)
+    screening_policy_version = serializers.CharField(required=False, default="legacy_v1")
+    original_risk_category = serializers.CharField(required=False, allow_null=True)
+    original_threshold = serializers.FloatField(required=False, allow_null=True)
+    original_probability = serializers.FloatField(required=False, allow_null=True)
+    is_diagnostic = serializers.BooleanField(required=False, default=False)
     risk_category = serializers.CharField(required=False, default="lower")
     replaced_assessment_id = serializers.CharField(allow_null=True, required=False)
     explanations = serializers.ListField(child=serializers.DictField(), required=False, default=list)
@@ -49,6 +54,7 @@ class ProgressiveAssessmentSerializer(serializers.Serializer):
     pcom_probability = serializers.FloatField(allow_null=True, required=False)
     gradcam_b64 = serializers.CharField(allow_null=True, required=False)
     gradcam_url = serializers.CharField(allow_null=True, required=False)
+    fusion_details = serializers.DictField(required=False, allow_null=True)
     is_active = serializers.BooleanField(required=False, default=True)
     disclaimer = serializers.CharField(required=False)
     created_at = serializers.CharField(required=False, allow_blank=True)
@@ -74,6 +80,7 @@ class ProgressiveAssessmentSerializer(serializers.Serializer):
     tier_2_inputs = serializers.DictField(required=False, default=dict)
     authoritative_tier_2_inputs = serializers.DictField(required=False, default=dict)
     input_features = serializers.DictField(required=False, default=dict)
+    tier_1_inputs = serializers.DictField(required=False, default=dict)
     authoritative_tier_1_inputs = serializers.DictField(required=False, default=dict)
     hormone_pattern_interpretation = serializers.DictField(required=False, allow_null=True)
     direct_laboratory_values = serializers.ListField(child=serializers.DictField(), required=False, default=list)
@@ -124,6 +131,31 @@ class ChatMessageResponseSerializer(serializers.Serializer):
     conversation_id = serializers.CharField()
     context_used = serializers.DictField(child=serializers.BooleanField())
     safety_level = serializers.CharField()
+    needs_clinician = serializers.BooleanField(default=False)
+    model = serializers.CharField(required=False, default="")
+
+
+class PublicChatMessageRequestSerializer(serializers.Serializer):
+    """
+    Validates anonymous public chat queries from the BioPulse homepage.
+    Explicitly prohibits user IDs, patient UUIDs, and credentials to enforce privacy boundaries.
+    """
+    message = serializers.CharField(max_length=1500, required=True, trim_whitespace=True, allow_blank=False)
+    conversation_history = serializers.ListField(
+        child=serializers.DictField(),
+        required=False,
+        default=list,
+        allow_empty=True,
+    )
+    stream = serializers.BooleanField(required=False, default=False)
+
+
+class PublicChatMessageResponseSerializer(serializers.Serializer):
+    """Formats the public conversational response."""
+    success = serializers.BooleanField(default=True)
+    reply = serializers.CharField(required=True)
+    message = serializers.CharField(required=True)
+    safety_level = serializers.CharField(default="normal")
     needs_clinician = serializers.BooleanField(default=False)
     model = serializers.CharField(required=False, default="")
 

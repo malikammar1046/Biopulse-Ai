@@ -316,7 +316,7 @@ export const ReportUploadModal: React.FC<ReportUploadModalProps> = ({
           transition={{ duration: 0.2 }}
           className={`relative w-full ${
             currentStep === 4 ? 'max-w-6xl' : 'max-w-2xl'
-          } rounded-[32px] bg-white border border-[#BAE6FD] shadow-2xl p-5 sm:p-8 text-left space-y-5 z-10 select-none my-6 max-h-[92vh] overflow-y-auto transition-all duration-300`}
+          } rounded-2xl sm:rounded-[32px] bg-white border border-[#BAE6FD] shadow-2xl p-4 sm:p-8 text-left space-y-4 sm:space-y-5 z-10 select-none my-auto max-h-[90dvh] overflow-y-auto transition-all duration-300`}
         >
           {/* Header Bar */}
           <div className="flex items-center justify-between pb-3.5 border-b border-[#E2E8F0]">

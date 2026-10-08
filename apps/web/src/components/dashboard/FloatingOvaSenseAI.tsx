@@ -90,7 +90,7 @@ export const FloatingOvaSenseAI: React.FC = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 18, scale: 0.96 }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
-            className="fixed bottom-20 md:bottom-24 right-3 sm:right-6 w-[calc(100vw-1.5rem)] sm:w-[410px] h-[78vh] sm:h-[580px] max-h-[620px] rounded-[24px] bg-white border border-[#E2E8F0] shadow-2xl z-50 flex flex-col overflow-hidden text-[#0F172A] select-none"
+            className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:bottom-24 right-2 sm:right-6 w-[calc(100vw-1rem)] sm:w-[410px] h-[75dvh] sm:h-[580px] max-h-[620px] rounded-[24px] bg-white border border-[#E2E8F0] shadow-2xl z-50 flex flex-col overflow-hidden text-[#0F172A] select-none"
             role="dialog"
             aria-label={aiBrandName}
           >
@@ -312,7 +312,7 @@ export const FloatingOvaSenseAI: React.FC = () => {
       </AnimatePresence>
 
       {/* ── Floating Trigger Button (Bottom-Right) ── */}
-      <div className="fixed bottom-20 md:bottom-8 right-5 sm:right-8 z-40 select-none">
+      <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:bottom-8 right-4 sm:right-8 z-40 select-none">
         <motion.button
           type="button"
           onClick={toggleCompact}

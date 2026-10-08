@@ -155,7 +155,7 @@ Executes the audited 22-section Tier 2 model training workflow:
 - Combines 16 Tier 1 self-reported features with 16 Tier 2 clinical/laboratory features (32 combined features as a single feature vector).
 - Exact same frozen holdout protocol (20%, $N=109$, `seed=42`) and 15-fold RSKF on development set ($N=432$, `seed=42`).
 - Restrained candidate model comparison across Logistic Regression, Random Forest, Extra Trees, and XGBoost.
-- Probability calibration (Platt Sigmoid) and clinical screening threshold selection ($\tau^* = 0.29$ targeting $\ge 85\%$ sensitivity).
+- Probability calibration (Platt Sigmoid) and clinical screening threshold selection (historical exploration: $\tau^* = 0.29$; production policy v2: $\tau = 0.25$ targeting sensitivity and false-negative reduction).
 - Single holdout evaluation on frozen untouched holdout ($N=109$).
 - Comprehensive Tier 1 vs Tier 2 head-to-head comparison and clinical interpretation.
 - Low-circularity (27 features, non-Rotterdam) and contiguous row-order blocked CV sensitivity analyses.
@@ -174,3 +174,38 @@ Executes the supervisor-facing 22-section comparative evaluation:
 - In-depth scientific analysis of phenotypic saturation, events-per-variable halving, and tree subsampling resilience.
 - Analysis of dataset limitations, including the empirical Beta-HCG / pregnancy anomaly (103 non-pregnant patients with Beta-HCG > 10).
 - Product and architectural implications for OvaSense's progressive multi-tier screening and clinical workflow.
+
+---
+
+## 8. Authoritative Screening Policy (v2) & Governance
+
+BioPulse AI operates under the **PCOS Screening Policy v2**, centrally configured in `backend/apps/intelligence/services/pcos_ml_service.py` and strictly synchronized with frontend/mobile client interfaces.
+
+### Cross-Validation Methodology & Calibration
+- **Policy v2 Validation Protocol**: Decision cutoffs and likelihood bands were established and validated via **calibrated 5-fold Stratified Cross-Validation Out-Of-Fold (OOF) predictions** on the development cohort ($N = 432$, `seed=42`) using fold-contained Platt sigmoid calibration (`CalibratedClassifierCV(method='sigmoid', cv=3)`), and confirmed on the untouched frozen holdout ($N = 109$).
+- **Historical Analysis Distinction**: Historical model architecture exploration in `03_Tier2_Model_Training.ipynb` and `04_Tier1_vs_Tier2_Comparative_Analysis.ipynb` utilized **15-fold Repeated Stratified K-Fold (RSKF)** on uncalibrated candidate models across 120 fold fits to select Extra Trees. Final Policy v2 operating metrics and likelihood band empirical distributions derive strictly from the Platt-calibrated 5-fold Stratified OOF validation.
+
+### Validated Operating Cutoff ($\tau = 0.25$)
+- **Operating Cutoff**: $\mathbf{\tau = 0.25}$ for both Tier 1 and cumulative Tier 2 models.
+- **Statistical Rationale**: Priority is placed on **screening sensitivity and false-negative reduction** on labelled evaluation records:
+  - **Tier 1 @ 0.25**: Sensitivity reaches $83.69\%$ on Development OOF ($N=432$) and $80.56\%$ on Holdout ($N=109$), significantly reducing missed screening cases compared to the previous deployed threshold ($0.38$, which had missed 8 cases on holdout).
+  - **Cumulative Tier 2 @ 0.25**: Gains $+2.13$ percentage points sensitivity on Dev OOF ($83.69\%$ vs $81.56\%$ at $0.29$), reducing false negatives on labelled evaluation cohorts from 26 to 23 (Dev) and from 8 to 6 (Holdout: $83.33\%$ vs $77.78\%$).
+- **Important Governance Definition**: **0.25 is the internally validated operating threshold used by the BioPulse screening model.** It is **not** a clinical or biological PCOS threshold, nor does it represent a clinical diagnosis.
+
+### Likelihood Bands
+Screening likelihood is classified using unrounded calibrated output probabilities into three qualitative categories:
+- **Lower Likelihood**: $p < 0.18$ (Observed prevalence: $7.8\%$ on Dev OOF, $7.3\%$ on Holdout)
+- **Intermediate Likelihood**: $0.18 \le p < 0.25$ (Observed prevalence: $20.0\%$ on Dev OOF, $20.0\%$ on Holdout)
+- **Higher Likelihood**: $p \ge 0.25$ (Observed prevalence: $64.5\%$ on Dev OOF, $68.2\%$ on Holdout)
+
+Empirical validation demonstrates strict monotonic separation ($7.3\% \to 20.0\% \to 68.2\%$), confirming that these bands reflect genuine prevalence gradients across both tiers.
+
+### Multimodal (Tier 3) Operating Status
+- **Morphological PCOM (Vision)**: Deep learning classification of Polycystic Ovarian Morphology (EfficientNet-B0) operates at independently validated $\mathbf{\tau = 0.50}$ (Holdout ROC-AUC: $0.9199$, Sensitivity: $98.3\%$, Specificity: $84.3\%$).
+- **Multimodal Fusion**: The 95% clinical + 5% ultrasound probability fusion retains the historical $\mathbf{\tau = 0.29}$ baseline and is marked as `exploratory_v1` (`exploratory_pending_clinical_validation`). There is **no independent threshold sweep** supporting $\tau = 0.25$ for multimodal fusion, and operating point equivalence with Tier 1/2 is not assumed.
+
+### Clinical & Dataset Limitations
+- **Single Cohort**: Model development and validation derive from a single hospital cohort ($N = 541$, Kottayam, Kerala).
+- **Internal Validation Only**: While evaluated on a frozen, stratified holdout set ($N = 109$) and out-of-fold cross-validation, no prospective clinical trials or external multicenter validations have yet been performed.
+- **Screening, Not Diagnosis**: The system estimates screening likelihood to inform further medical evaluation; it does not diagnose or rule out PCOS.
+- **Terminology Governance**: The term "false negative" is strictly reserved for labelled validation cohorts where actual ground-truth PCOS is positive and prediction is negative. Unlabelled user predictions below threshold are accurately phrased as having "previously fell below the deployed screening operating threshold."

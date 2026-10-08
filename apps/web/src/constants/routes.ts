@@ -18,6 +18,8 @@ export const ROUTES = {
   DOCTORS: '/doctors',
   CARE_CIRCLE: '/care-circle',
   CARE_PROVIDER_PORTAL: '/care-provider/:token',
+  APP_DOWNLOAD: '/mobile-app',
+  DOWNLOAD: '/download',
   CONTACT: '/contact',
 
   // Authentication & Onboarding Routes
@@ -43,6 +45,7 @@ export const ROUTES = {
     SYMPTOMS: '/app/symptoms',
     DIET: '/app/diet',
     DIET_WEEK: '/app/diet/week',
+    NUTRITION: '/app/nutrition',
     FITNESS: '/app/fitness',
     REPORTS: '/app/reports',
     MEDICATIONS: '/app/medications',
@@ -54,6 +57,7 @@ export const ROUTES = {
     TIMELINE: '/app/timeline',
     SETTINGS: '/app/settings',
   },
+
 } as const;
 
 /**

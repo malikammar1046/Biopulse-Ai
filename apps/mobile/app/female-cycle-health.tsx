@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,18 +7,18 @@ import {
   ScrollView,
   TextInput,
   useWindowDimensions,
+  Platform,
   Alert,
 } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../constants/Colors';
-import { AuthBackgroundFoliage } from '../components/auth/AuthBackgroundFoliage';
-import {
-  OnboardingStepper,
-  PathwayHeader,
-  FemaleCycleCalendarCard,
-} from '../components/onboarding';
+import { BioPulseBackground } from '../components/common/BioPulseBackground';
+import { BioPulseButton } from '../components/common/BioPulseButton';
+import { FemaleOnboardingHeader } from '../components/onboarding/FemaleOnboardingHeader';
+import { DatePickerModal } from '../components/onboarding/DatePickerModal';
 import {
   useFemaleOnboarding,
   CycleRegularity,
@@ -26,750 +26,638 @@ import {
   FlowIntensity,
 } from '../features/onboarding';
 
-const FEMALE_ONBOARDING_STEPS = [
-  { id: 1, label: 'Basic Info' },
-  { id: 2, label: 'Cycle Health' },
-  { id: 3, label: 'Symptoms' },
-  { id: 4, label: 'Lifestyle' },
-  { id: 5, label: 'Review' },
-];
+const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+function formatReadableDate(dateIso: string): string {
+  if (!dateIso) return '12 Mar 2025';
+  const parts = dateIso.split('-').map(Number);
+  if (parts.length !== 3) return dateIso;
+  const d = new Date(parts[0], parts[1] - 1, parts[2]);
+  return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+}
 
 /**
- * Screen 6: FEMALE "Your Cycle Health"
+ * SCREEN 7: FEMALE CYCLE HEALTH (Step 2 of 5)
  *
- * Implements:
- * - Step 2 of 5 in Female / PCOS Screening Pathway
- * - Screen 5 header architecture with "PERSONALIZED HEALTH INTELLIGENCE"
- * - Safe Skip navigation with baseline data integrity guards
- * - Cycle regularity single-select control
- * - Average cycle length stepper / picker (realistic 21-45 days)
- * - Platform date selection & interactive Cycle Calendar
- * - Average missed periods selector (0, 1-2, 3+)
- * - Flow pattern cards with droplet indicators (Light, Moderate, Heavy)
- * - Additional notes multiline field with 200-char limit counter
- * - State preservation via FemaleOnboardingContext
+ * Matches Screenshot 7:
+ * - Header: Step 2 of 5 with 5 segmented progress pills
+ * - Title: "Cycle Health" with pink calendar icon
+ * - Cycle regularity: Regular | Irregular | Not sure
+ * - Average cycle length stepper (days)
+ * - Last period start date card & inline interactive calendar
+ * - Missed periods (last 6 months): 0 | 1–2 | 3+
+ * - Typical flow: Light | Moderate | Heavy
+ * - Additional notes (optional) with 0/200 counter
+ * - Primary "Continue →" pink CTA
  */
 export default function FemaleCycleHealthScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const isTablet = width >= 768;
-  const isNarrow = width < 360;
-
-  // Retrieve persistent state from FemaleOnboardingContext
   const { cycleHealth, updateCycleHealth } = useFemaleOnboarding();
 
-  // Local form state initialized from persistent context
-  const [regularity, setRegularity] = useState<CycleRegularity>(cycleHealth.regularity);
-  const [cycleLength, setCycleLength] = useState<number>(cycleHealth.cycleLength);
-  const [lastPeriodDate, setLastPeriodDate] = useState<string>(cycleHealth.lastPeriodDate);
-  const [missedPeriods, setMissedPeriods] = useState<MissedPeriodsRange>(cycleHealth.missedPeriodsYear);
-  const [flow, setFlow] = useState<FlowIntensity>(cycleHealth.flowPattern);
-  const [notes, setNotes] = useState<string>(cycleHealth.additionalNotes);
-
-  // Sync state changes to context
-  const saveState = useCallback(
-    (overrides?: Partial<typeof cycleHealth>) => {
-      updateCycleHealth({
-        regularity,
-        cycleLength,
-        lastPeriodDate,
-        missedPeriodsYear: missedPeriods,
-        flowPattern: flow,
-        additionalNotes: notes,
-        ...overrides,
-      });
-    },
-    [regularity, cycleLength, lastPeriodDate, missedPeriods, flow, notes, updateCycleHealth]
+  // Local form state
+  const [regularity, setRegularity] = useState<CycleRegularity>(
+    cycleHealth.regularity || 'irregular'
   );
+  const [cycleLength, setCycleLength] = useState<number>(cycleHealth.cycleLength || 32);
+  const [lastPeriodDate, setLastPeriodDate] = useState<string>(
+    cycleHealth.lastPeriodDate || '2025-03-12'
+  );
+  const [missedPeriods, setMissedPeriods] = useState<MissedPeriodsRange>(
+    cycleHealth.missedPeriodsYear || '0'
+  );
+  const [flow, setFlow] = useState<FlowIntensity>(cycleHealth.flowPattern || 'moderate');
+  const [notes, setNotes] = useState<string>(cycleHealth.additionalNotes || '');
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
-  const params = useLocalSearchParams<{ returnTo?: string }>();
-  const isFromReview = params.returnTo === 'review';
+  // Calendar month state
+  const [calendarYear, setCalendarYear] = useState<number>(2025);
+  const [calendarMonth, setCalendarMonth] = useState<number>(2); // 0-indexed, 2 = March
 
-  // Back Navigation: save current progress and return
-  const handleBack = useCallback(() => {
-    saveState();
-    if (isFromReview) {
-      router.push('/female-review');
-    } else if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace('/pathway-selection');
-    }
-  }, [saveState, isFromReview, router]);
+  const bottomPad = Math.max(insets.bottom, 20);
 
-  // Safe Skip Navigation: ensures screening data is not corrupted
-  const handleSkip = useCallback(() => {
-    Alert.alert(
-      'Skip Cycle Details?',
-      'Cycle rhythm is a key indicator for PCOS risk evaluation. We will register standard baseline parameters (28 days, Not Sure) so your screening remains clinically valid.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Skip to Symptoms',
-          style: 'destructive',
-          onPress: () => {
-            saveState({
-              regularity: 'not_sure',
-              cycleLength: 28,
-            });
-            if (isFromReview) {
-              router.push('/female-review');
-            } else {
-              router.push('/female-symptoms');
-            }
-          },
-        },
-      ]
-    );
-  }, [saveState, isFromReview, router]);
-
-  // Continue CTA: validate required inputs and transition to next step
-  const handleContinue = useCallback(() => {
-    saveState();
-    if (isFromReview) {
-      router.push('/female-review');
-    } else {
-      router.push('/female-symptoms');
-    }
-  }, [saveState, isFromReview, router]);
-
-  // Cycle Length adjustments
-  const decrementCycle = () => {
-    if (cycleLength > 21) setCycleLength((prev) => prev - 1);
-  };
-  const incrementCycle = () => {
-    if (cycleLength < 45) setCycleLength((prev) => prev + 1);
-  };
-
-  // Format readable date
-  const readableDate = (() => {
+  // Selected date components
+  const selectedPeriodDay = useMemo(() => {
+    if (!lastPeriodDate) return 12;
     const parts = lastPeriodDate.split('-').map(Number);
-    if (parts.length === 3) {
-      const d = new Date(parts[0], parts[1] - 1, parts[2]);
-      return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+    if (parts.length === 3 && parts[0] === calendarYear && parts[1] - 1 === calendarMonth) {
+      return parts[2];
     }
-    return lastPeriodDate;
-  })();
+    return null;
+  }, [lastPeriodDate, calendarYear, calendarMonth]);
+
+  // Calendar grid generator
+  const calendarGrid = useMemo(() => {
+    const firstDayIndex = new Date(calendarYear, calendarMonth, 1).getDay();
+    const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+    const daysInPrevMonth = new Date(calendarYear, calendarMonth, 0).getDate();
+
+    const cells: { day: number; isCurrentMonth: boolean }[] = [];
+
+    // Prev month padding
+    for (let i = firstDayIndex - 1; i >= 0; i--) {
+      cells.push({ day: daysInPrevMonth - i, isCurrentMonth: false });
+    }
+    // Current month
+    for (let d = 1; d <= daysInMonth; d++) {
+      cells.push({ day: d, isCurrentMonth: true });
+    }
+    // Next month padding to fill rows
+    const remaining = (7 - (cells.length % 7)) % 7;
+    for (let d = 1; d <= remaining; d++) {
+      cells.push({ day: d, isCurrentMonth: false });
+    }
+
+    return cells;
+  }, [calendarYear, calendarMonth]);
+
+  const monthName = useMemo(() => {
+    const d = new Date(calendarYear, calendarMonth, 1);
+    return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  }, [calendarYear, calendarMonth]);
+
+  const handlePrevMonth = () => {
+    if (calendarMonth === 0) {
+      setCalendarMonth(11);
+      setCalendarYear((y) => y - 1);
+    } else {
+      setCalendarMonth((m) => m - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (calendarMonth === 11) {
+      setCalendarMonth(0);
+      setCalendarYear((y) => y + 1);
+    } else {
+      setCalendarMonth((m) => m + 1);
+    }
+  };
+
+  const handleSelectDay = (day: number) => {
+    const mStr = String(calendarMonth + 1).padStart(2, '0');
+    const dStr = String(day).padStart(2, '0');
+    setLastPeriodDate(`${calendarYear}-${mStr}-${dStr}`);
+  };
+
+  const handleContinue = useCallback(() => {
+    if (cycleLength < 15 || cycleLength > 120) {
+      Alert.alert('Invalid Cycle Length', 'Please enter a typical cycle length between 15 and 120 days.');
+      return;
+    }
+    updateCycleHealth({
+      regularity,
+      cycleLength,
+      lastPeriodDate,
+      missedPeriodsYear: missedPeriods,
+      flowPattern: flow,
+      additionalNotes: notes,
+    });
+    router.push('/female-symptoms');
+  }, [regularity, cycleLength, lastPeriodDate, missedPeriods, flow, notes, updateCycleHealth, router]);
 
   return (
-    <View
-      style={[
-        styles.root,
-        {
-          paddingTop: Math.max(insets.top, 10),
-          paddingBottom: Math.max(insets.bottom, 16),
-        },
-      ]}
-    >
-      <AuthBackgroundFoliage />
+    <BioPulseBackground style={styles.container}>
+      <StatusBar style="dark" backgroundColor="transparent" translucent />
+
+      {/* Top Navigation Bar with Step 2 of 5 */}
+      <FemaleOnboardingHeader
+        step={2}
+        totalSteps={5}
+        onBack={() => router.back()}
+        accentColor="#F43F7D"
+      />
 
       <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          isTablet && styles.tabletScrollContent,
-        ]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPad + 24 }]}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
       >
-        <View style={[styles.container, isTablet && styles.tabletContainer]}>
-          {/* 1. Header (Screen 5 Architecture with Skip on Right) */}
-          <View style={styles.headerWrapper}>
-            <PathwayHeader onBack={handleBack} />
+        <View style={[styles.mainWrapper, { maxWidth: Math.min(width, 460) }]}>
+          {/* Header Title with Pink Icon */}
+          <View style={styles.headerTitleRow}>
+            <View style={styles.headerIconBox}>
+              <Ionicons name="calendar" size={24} color="#F43F7D" />
+            </View>
+            <View style={styles.headerTitleTextCol}>
+              <Text style={styles.screenTitle}>Cycle Health</Text>
+              <Text style={styles.screenSubtitle}>
+                Help us understand your menstrual cycle. This helps assess PCOS risk.
+              </Text>
+            </View>
+          </View>
+
+          {/* 1. Cycle Regularity */}
+          <View style={styles.sectionBox}>
+            <View style={styles.labelWithInfo}>
+              <Text style={styles.sectionLabel}>Cycle regularity</Text>
+              <Ionicons name="information-circle-outline" size={16} color={BioPulseColors.textSecondary} />
+            </View>
+
+            <View style={styles.pillRow}>
+              {(['regular', 'irregular', 'not_sure'] as CycleRegularity[]).map((val) => {
+                const label = val === 'regular' ? 'Regular' : val === 'irregular' ? 'Irregular' : 'Not sure';
+                const isSelected = regularity === val;
+                return (
+                  <Pressable
+                    key={val}
+                    onPress={() => setRegularity(val)}
+                    style={[styles.optionPill, isSelected && styles.optionPillSelected]}
+                  >
+                    <Text style={[styles.optionPillText, isSelected && styles.optionPillTextSelected]}>
+                      {label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* 2. Average Cycle Length (Days) */}
+          <View style={styles.sectionBox}>
+            <View style={styles.stepperRow}>
+              <Text style={styles.sectionLabel}>Average cycle length (days)</Text>
+              <View style={styles.stepperControls}>
+                <Pressable
+                  onPress={() => setCycleLength((c) => Math.max(20, c - 1))}
+                  style={styles.stepperBtn}
+                  hitSlop={8}
+                >
+                  <Ionicons name="remove" size={16} color={BioPulseColors.textPrimary} />
+                </Pressable>
+                <Text style={styles.stepperValue}>{cycleLength}</Text>
+                <Pressable
+                  onPress={() => setCycleLength((c) => Math.min(60, c + 1))}
+                  style={styles.stepperBtn}
+                  hitSlop={8}
+                >
+                  <Ionicons name="add" size={16} color={BioPulseColors.textPrimary} />
+                </Pressable>
+              </View>
+            </View>
+          </View>
+
+          {/* 3. Last Period Start Date Card */}
+          <View style={styles.sectionBox}>
+            <Text style={styles.sectionLabel}>Last period start date</Text>
             <Pressable
-              onPress={handleSkip}
-              hitSlop={8}
-              style={({ pressed }) => [styles.skipBtn, pressed && styles.skipBtnPressed]}
-              accessibilityRole="button"
-              accessibilityLabel="Skip cycle health step"
+              onPress={() => setIsDatePickerOpen(true)}
+              style={styles.dateSelectorCard}
             >
-              <Text style={styles.skipText}>Skip </Text>
-              <Ionicons name="chevron-forward" size={14} color={BioPulseColors.femaleAccent} />
+              <View style={styles.dateSelectorLeft}>
+                <Ionicons name="calendar-outline" size={18} color="#F43F7D" style={{ marginRight: 8 }} />
+                <Text style={styles.dateSelectorText}>{formatReadableDate(lastPeriodDate)}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={BioPulseColors.textMuted} />
             </Pressable>
           </View>
 
-          {/* 2. Onboarding Stepper (Step 2 Active: Cycle Health) */}
-          <OnboardingStepper
-            currentStep={2}
-            steps={FEMALE_ONBOARDING_STEPS}
-            accentColor={BioPulseColors.femaleAccent}
-          />
-
-          {/* 3. Title & Subtitle */}
-          <View style={styles.titleBlock}>
-            <Text style={styles.screenTitle}>Your Cycle Health</Text>
-            <Text style={styles.screenDescription}>
-              Help us understand your menstrual cycle{'\n'}better for more accurate insights.
-            </Text>
-          </View>
-
-          {/* 4. Question: Is your menstrual cycle regular? */}
-          <View style={styles.sectionCard}>
-            <Text style={styles.questionLabel}>Is your menstrual cycle regular?</Text>
-            <View style={styles.segmentedRow}>
-              {(['regular', 'irregular', 'not_sure'] as CycleRegularity[]).map((opt) => {
-                const isSelected = regularity === opt;
-                const optLabel =
-                  opt === 'regular' ? 'Regular' : opt === 'irregular' ? 'Irregular' : 'Not sure';
-                return (
-                  <Pressable
-                    key={`reg-${opt}`}
-                    onPress={() => setRegularity(opt)}
-                    style={[
-                      styles.segmentBtn,
-                      isSelected ? styles.segmentBtnActive : styles.segmentBtnInactive,
-                    ]}
-                    accessibilityRole="radio"
-                    accessibilityState={{ selected: isSelected }}
-                  >
-                    <Text
-                      style={[
-                        styles.segmentText,
-                        isSelected ? styles.segmentTextActive : styles.segmentTextInactive,
-                      ]}
-                    >
-                      {optLabel}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* 5. Average Cycle Length & Last Period Date (Paired Cards) */}
-          <View style={[styles.pairedCardsWrapper, isNarrow && styles.pairedCardsStacked]}>
-            {/* Cycle Length Card */}
-            <View style={[styles.smallCard, !isNarrow && styles.halfCard]}>
-              <View style={styles.cardHeaderSmall}>
-                <View style={styles.iconCircleSmall}>
-                  <Ionicons name="time-outline" size={14} color={BioPulseColors.femaleAccent} />
-                </View>
-                <Text style={styles.cardTitleSmall}>Average cycle length</Text>
-              </View>
-
-              <View style={styles.stepperRow}>
-                <Pressable
-                  onPress={decrementCycle}
-                  disabled={cycleLength <= 21}
-                  style={({ pressed }) => [
-                    styles.stepperActionBtn,
-                    cycleLength <= 21 && styles.stepperBtnDisabled,
-                    pressed && styles.stepperBtnPressed,
-                  ]}
-                  accessibilityLabel="Decrease cycle length"
-                >
-                  <Ionicons name="remove" size={16} color="#073B72" />
+          {/* 4. Interactive Cycle Calendar */}
+          <View style={[styles.sectionBox, styles.calendarCard]}>
+            <View style={styles.calendarHeader}>
+              <Text style={styles.calendarTitle}>Cycle calendar</Text>
+              <View style={styles.monthNavRow}>
+                <Pressable onPress={handlePrevMonth} hitSlop={10} style={styles.monthNavBtn}>
+                  <Ionicons name="chevron-back" size={16} color={BioPulseColors.textPrimary} />
                 </Pressable>
-
-                <View style={styles.cycleValueBox}>
-                  <Text style={styles.cycleValueNum}>{cycleLength}</Text>
-                  <Text style={styles.cycleValueUnit}>days</Text>
-                </View>
-
-                <Pressable
-                  onPress={incrementCycle}
-                  disabled={cycleLength >= 45}
-                  style={({ pressed }) => [
-                    styles.stepperActionBtn,
-                    cycleLength >= 45 && styles.stepperBtnDisabled,
-                    pressed && styles.stepperBtnPressed,
-                  ]}
-                  accessibilityLabel="Increase cycle length"
-                >
-                  <Ionicons name="add" size={16} color="#073B72" />
+                <Text style={styles.monthNavLabel}>{monthName}</Text>
+                <Pressable onPress={handleNextMonth} hitSlop={10} style={styles.monthNavBtn}>
+                  <Ionicons name="chevron-forward" size={16} color={BioPulseColors.textPrimary} />
                 </Pressable>
               </View>
             </View>
 
-            {/* Last Period Start Date Card */}
-            <View style={[styles.smallCard, !isNarrow && styles.halfCard]}>
-              <View style={styles.cardHeaderSmall}>
-                <View style={styles.iconCircleSmall}>
-                  <Ionicons name="calendar-outline" size={14} color={BioPulseColors.femaleAccent} />
-                </View>
-                <Text style={styles.cardTitleSmall}>Last period start date</Text>
-              </View>
-
-              <View style={styles.dateDisplayRow}>
-                <Text style={styles.dateDisplayText}>{readableDate}</Text>
-                <Ionicons name="create-outline" size={16} color={BioPulseColors.femaleAccent} />
-              </View>
-              <Text style={styles.dateHelper}>Tap on calendar below to edit</Text>
+            {/* Day of Week Row */}
+            <View style={styles.weekDaysRow}>
+              {DAYS_OF_WEEK.map((d) => (
+                <Text key={d} style={styles.weekDayText}>
+                  {d}
+                </Text>
+              ))}
             </View>
-          </View>
 
-          {/* 6. Cycle Calendar Card */}
-          <FemaleCycleCalendarCard
-            lastPeriodDate={lastPeriodDate}
-            periodDuration={cycleHealth.periodDuration || 5}
-            cycleLength={cycleLength}
-            onSelectStartDate={(dateIso) => setLastPeriodDate(dateIso)}
-            showEstimatedOverlay={false}
-          />
-
-          {/* 7. Question: How many periods do you miss in a year? */}
-          <View style={styles.sectionCard}>
-            <Text style={styles.questionLabel}>
-              How many periods do you miss in a year (on average)?
-            </Text>
-            <View style={styles.segmentedRow}>
-              {(['0', '1-2', '3+'] as MissedPeriodsRange[]).map((opt) => {
-                const isSelected = missedPeriods === opt;
+            {/* Calendar Grid */}
+            <View style={styles.daysGrid}>
+              {calendarGrid.map((item, idx) => {
+                const isSelected = item.isCurrentMonth && item.day === selectedPeriodDay;
                 return (
                   <Pressable
-                    key={`missed-${opt}`}
-                    onPress={() => setMissedPeriods(opt)}
-                    style={[
-                      styles.segmentBtn,
-                      isSelected ? styles.segmentBtnActive : styles.segmentBtnInactive,
-                    ]}
-                    accessibilityRole="radio"
-                    accessibilityState={{ selected: isSelected }}
+                    key={`day-${idx}`}
+                    onPress={() => item.isCurrentMonth && handleSelectDay(item.day)}
+                    style={styles.dayCell}
+                    disabled={!item.isCurrentMonth}
                   >
-                    <Text
-                      style={[
-                        styles.segmentText,
-                        isSelected ? styles.segmentTextActive : styles.segmentTextInactive,
-                      ]}
-                    >
-                      {opt}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* 8. Flow Pattern Cards */}
-          <View style={styles.sectionCard}>
-            <Text style={styles.questionLabel}>Flow pattern</Text>
-            <View style={styles.flowCardsRow}>
-              {(
-                [
-                  { id: 'light', label: 'Light', drops: 1, desc: 'Minimal flow' },
-                  { id: 'moderate', label: 'Moderate', drops: 2, desc: 'Normal flow' },
-                  { id: 'heavy', label: 'Heavy', drops: 3, desc: 'Heavy flow' },
-                ] as const
-              ).map((item) => {
-                const isSelected = flow === item.id;
-                return (
-                  <Pressable
-                    key={`flow-${item.id}`}
-                    onPress={() => setFlow(item.id)}
-                    style={[
-                      styles.flowCard,
-                      isSelected ? styles.flowCardSelected : styles.flowCardUnselected,
-                    ]}
-                    accessibilityRole="radio"
-                    accessibilityState={{ selected: isSelected }}
-                  >
-                    <View style={styles.dropsRow}>
-                      {Array.from({ length: item.drops }).map((_, i) => (
-                        <Ionicons
-                          key={`drop-${i}`}
-                          name="water"
-                          size={14}
-                          color={isSelected ? BioPulseColors.femaleAccent : '#94A3B8'}
-                          style={{ marginHorizontal: 1 }}
-                        />
-                      ))}
+                    <View style={[styles.dayCircle, isSelected && styles.dayCircleSelected]}>
+                      <Text
+                        style={[
+                          styles.dayText,
+                          !item.isCurrentMonth && styles.dayTextDisabled,
+                          isSelected && styles.dayTextSelected,
+                        ]}
+                      >
+                        {item.day}
+                      </Text>
                     </View>
-                    <Text
-                      style={[
-                        styles.flowTitle,
-                        isSelected && { color: BioPulseColors.femaleAccent },
-                      ]}
-                    >
-                      {item.label}
-                    </Text>
-                    <Text style={styles.flowDesc}>{item.desc}</Text>
                   </Pressable>
                 );
               })}
             </View>
           </View>
 
-          {/* 9. Additional Notes (Optional) */}
-          <View style={styles.sectionCard}>
-            <View style={styles.notesHeaderRow}>
-              <Text style={styles.questionLabel}>Additional Notes (Optional)</Text>
+          {/* 5. Missed Periods */}
+          <View style={styles.sectionBox}>
+            <Text style={styles.sectionLabel}>Missed periods (in last 6 months)</Text>
+            <View style={styles.pillRow}>
+              {(['0', '1-2', '3+'] as MissedPeriodsRange[]).map((val) => {
+                const isSelected = missedPeriods === val;
+                return (
+                  <Pressable
+                    key={val}
+                    onPress={() => setMissedPeriods(val)}
+                    style={[styles.optionPill, isSelected && styles.optionPillSelected]}
+                  >
+                    <Text style={[styles.optionPillText, isSelected && styles.optionPillTextSelected]}>
+                      {val}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* 6. Typical Flow */}
+          <View style={styles.sectionBox}>
+            <Text style={styles.sectionLabel}>Typical flow</Text>
+            <View style={styles.flowRow}>
+              {(['light', 'moderate', 'heavy'] as FlowIntensity[]).map((val) => {
+                const label = val.charAt(0).toUpperCase() + val.slice(1);
+                const isSelected = flow === val;
+                return (
+                  <Pressable
+                    key={val}
+                    onPress={() => setFlow(val)}
+                    style={[styles.flowPill, isSelected && styles.flowPillSelected]}
+                  >
+                    <Ionicons
+                      name="water"
+                      size={14}
+                      color={isSelected ? '#F43F7D' : '#F472B6'}
+                      style={{ marginRight: 4 }}
+                    />
+                    <Text style={[styles.flowPillText, isSelected && styles.flowPillTextSelected]}>
+                      {label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* 7. Additional Notes */}
+          <View style={styles.sectionBox}>
+            <Text style={styles.sectionLabel}>Additional notes (optional)</Text>
+            <View style={styles.notesContainer}>
+              <TextInput
+                style={styles.notesInput}
+                placeholder="E.g. painful periods, clotting, etc."
+                placeholderTextColor={BioPulseColors.textMuted}
+                value={notes}
+                onChangeText={(t) => setNotes(t.slice(0, 200))}
+                multiline
+                maxLength={200}
+              />
               <Text style={styles.charCount}>{notes.length}/200</Text>
             </View>
-            <TextInput
-              style={styles.notesInput}
-              value={notes}
-              onChangeText={(text) => text.length <= 200 && setNotes(text)}
-              placeholder="E.g. pain, mood changes, or anything else..."
-              placeholderTextColor="#94A3B8"
-              multiline
-              numberOfLines={3}
-              maxLength={200}
-              textAlignVertical="top"
-            />
           </View>
 
-          {/* 10. Information Banner */}
-          <View style={styles.infoBanner}>
-            <Ionicons
-              name="information-circle"
-              size={20}
-              color="#64748B"
-              style={styles.infoIcon}
+          {/* Continue CTA */}
+          <View style={styles.ctaWrapper}>
+            <BioPulseButton
+              title="Continue"
+              variant="female"
+              showArrow
+              onPress={handleContinue}
+              style={{ backgroundColor: '#F43F7D', borderColor: '#E11D48' }}
             />
-            <Text style={styles.infoText}>
-              Accurate cycle logging assists BioPulse AI in distinguishing ovulatory from anovulatory patterns under Rotterdam consensus criteria.
-            </Text>
           </View>
-
-          {/* 11. Continue CTA Button */}
-          <Pressable
-            onPress={handleContinue}
-            style={({ pressed }) => [
-              styles.continueButton,
-              pressed && styles.continueButtonPressed,
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel="Continue to Symptoms"
-          >
-            <View style={styles.buttonInnerRow}>
-              <Text style={styles.continueButtonText}>Continue</Text>
-              <Ionicons
-                name="arrow-forward"
-                size={18}
-                color="#FFFFFF"
-                style={styles.arrowIcon}
-              />
-            </View>
-          </Pressable>
         </View>
       </ScrollView>
-    </View>
+
+      {/* Date Picker Modal */}
+      <DatePickerModal
+        visible={isDatePickerOpen}
+        initialDateIso={lastPeriodDate}
+        onConfirm={(newIsoDate) => {
+          setLastPeriodDate(newIsoDate);
+          setIsDatePickerOpen(false);
+        }}
+        onClose={() => setIsDatePickerOpen(false)}
+      />
+    </BioPulseBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
+  container: {
     flex: 1,
-    backgroundColor: '#FEF8FA',
   },
   scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: 16,
-    paddingBottom: 28,
+    paddingHorizontal: 18,
+    paddingTop: 8,
   },
-  tabletScrollContent: {
-    alignItems: 'center',
-    paddingHorizontal: 24,
-  },
-  container: {
+  mainWrapper: {
     width: '100%',
   },
-  tabletContainer: {
-    maxWidth: 640,
-  },
-  headerWrapper: {
-    position: 'relative',
-    width: '100%',
-  },
-  skipBtn: {
-    position: 'absolute',
-    right: 8,
-    top: 14,
+  headerTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    zIndex: 10,
-  },
-  skipBtnPressed: {
-    opacity: 0.6,
-  },
-  skipText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: BioPulseColors.femaleAccent,
-  },
-  titleBlock: {
-    alignItems: 'center',
+    marginBottom: 20,
     marginTop: 4,
-    marginBottom: 16,
+  },
+  headerIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: '#FDECF2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  headerTitleTextCol: {
+    flex: 1,
   },
   screenTitle: {
     fontSize: 24,
     fontWeight: '800',
-    color: BioPulseColors.navy,
-    textAlign: 'center',
-    letterSpacing: -0.3,
-    marginBottom: 6,
+    color: BioPulseColors.textPrimary,
+    letterSpacing: -0.4,
   },
-  screenDescription: {
-    fontSize: 13.5,
-    lineHeight: 19,
-    color: '#64748B',
-    textAlign: 'center',
-    fontWeight: '400',
-  },
-  sectionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: '#F8DCE5',
-    padding: 14,
-    marginBottom: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
-  },
-  questionLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: BioPulseColors.navy,
-    marginBottom: 10,
-  },
-  segmentedRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  segmentBtn: {
-    flex: 1,
-    paddingVertical: 11,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-  },
-  segmentBtnActive: {
-    backgroundColor: '#FFF0F5',
-    borderColor: BioPulseColors.femaleAccent,
-  },
-  segmentBtnInactive: {
-    backgroundColor: '#FAFCFF',
-    borderColor: '#E2E8F0',
-  },
-  segmentText: {
+  screenSubtitle: {
     fontSize: 13,
-    fontWeight: '600',
+    color: BioPulseColors.textSecondary,
+    marginTop: 2,
+    lineHeight: 18,
   },
-  segmentTextActive: {
-    color: BioPulseColors.femaleAccent,
-    fontWeight: '700',
+  sectionBox: {
+    marginBottom: 16,
   },
-  segmentTextInactive: {
-    color: '#64748B',
-  },
-  pairedCardsWrapper: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 14,
-  },
-  pairedCardsStacked: {
-    flexDirection: 'column',
-  },
-  halfCard: {
-    flex: 1,
-  },
-  smallCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: '#F8DCE5',
-    padding: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
-  },
-  cardHeaderSmall: {
+  labelWithInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 10,
+    marginBottom: 8,
   },
-  iconCircleSmall: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#FDF0F4',
+  sectionLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: BioPulseColors.textPrimary,
+    marginBottom: 8,
+  },
+  pillRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  optionPill: {
+    flex: 1,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: BioPulseColors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cardTitleSmall: {
-    fontSize: 12.5,
+  optionPillSelected: {
+    backgroundColor: '#F43F7D',
+    borderColor: '#F43F7D',
+  },
+  optionPillText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: BioPulseColors.textPrimary,
+  },
+  optionPillTextSelected: {
+    color: '#FFFFFF',
     fontWeight: '700',
-    color: BioPulseColors.navy,
   },
   stepperRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FAFCFF',
-    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 4,
+    borderColor: BioPulseColors.border,
   },
-  stepperActionBtn: {
+  stepperControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  stepperBtn: {
     width: 32,
     height: 32,
     borderRadius: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FBFC',
+    borderWidth: 1,
+    borderColor: BioPulseColors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
   },
-  stepperBtnPressed: {
-    backgroundColor: '#F1F5F9',
-  },
-  stepperBtnDisabled: {
-    opacity: 0.35,
-  },
-  cycleValueBox: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 4,
-  },
-  cycleValueNum: {
-    fontSize: 18,
+  stepperValue: {
+    fontSize: 17,
     fontWeight: '800',
-    color: BioPulseColors.navy,
-  },
-  cycleValueUnit: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  dateDisplayRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#FFF0F5',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#F8DCE5',
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    marginBottom: 4,
-  },
-  dateDisplayText: {
-    fontSize: 13.5,
-    fontWeight: '700',
-    color: BioPulseColors.femaleAccent,
-  },
-  dateHelper: {
-    fontSize: 10,
-    color: '#8BA1B7',
-    fontStyle: 'italic',
-  },
-  flowCardsRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  flowCard: {
-    flex: 1,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    paddingVertical: 10,
-    paddingHorizontal: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  flowCardSelected: {
-    backgroundColor: '#FFF0F5',
-    borderColor: BioPulseColors.femaleAccent,
-  },
-  flowCardUnselected: {
-    backgroundColor: '#FAFCFF',
-    borderColor: '#E2E8F0',
-  },
-  dropsRow: {
-    flexDirection: 'row',
-    marginBottom: 4,
-  },
-  flowTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: BioPulseColors.navy,
-  },
-  flowDesc: {
-    fontSize: 9.5,
-    color: '#64748B',
-    marginTop: 2,
+    color: BioPulseColors.textPrimary,
+    minWidth: 24,
     textAlign: 'center',
   },
-  notesHeaderRow: {
+  dateSelectorCard: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  charCount: {
-    fontSize: 11,
-    color: '#8BA1B7',
-  },
-  notesInput: {
-    backgroundColor: '#FAFCFF',
-    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 10,
-    fontSize: 13,
-    color: '#1E293B',
-    minHeight: 70,
+    borderColor: BioPulseColors.border,
   },
-  infoBanner: {
+  dateSelectorLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
-    borderRadius: 14,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
+  },
+  dateSelectorText: {
+    fontSize: 14.5,
+    fontWeight: '600',
+    color: BioPulseColors.textPrimary,
+  },
+  calendarCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    marginBottom: 16,
+    borderColor: BioPulseColors.border,
+  },
+  calendarHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  calendarTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: BioPulseColors.textPrimary,
+  },
+  monthNavRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 10,
   },
-  infoIcon: {
-    flexShrink: 0,
+  monthNavBtn: {
+    padding: 4,
   },
-  infoText: {
-    flex: 1,
-    fontSize: 12,
-    lineHeight: 16,
-    color: '#475569',
-    fontWeight: '500',
-  },
-  continueButton: {
-    width: '100%',
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: BioPulseColors.femaleAccent,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: BioPulseColors.femaleAccent,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.28,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  continueButtonPressed: {
-    transform: [{ scale: 0.985 }],
-    opacity: 0.92,
-  },
-  buttonInnerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  continueButtonText: {
-    fontSize: 16,
+  monthNavLabel: {
+    fontSize: 13.5,
     fontWeight: '700',
-    color: '#FFFFFF',
-    letterSpacing: -0.2,
+    color: BioPulseColors.textPrimary,
   },
-  arrowIcon: {
-    marginLeft: 8,
+  weekDaysRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 8,
+  },
+  weekDayText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: BioPulseColors.textMuted,
+    width: 36,
+    textAlign: 'center',
+  },
+  daysGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-around',
+  },
+  dayCell: {
+    width: '14.28%',
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 2,
+  },
+  dayCircle: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayCircleSelected: {
+    backgroundColor: '#F43F7D',
+  },
+  dayText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: BioPulseColors.textPrimary,
+  },
+  dayTextDisabled: {
+    color: '#CBD5E1',
+  },
+  dayTextSelected: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  flowRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  flowPill: {
+    flex: 1,
+    flexDirection: 'row',
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: BioPulseColors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  flowPillSelected: {
+    backgroundColor: '#FDF2F6',
+    borderColor: '#F43F7D',
+  },
+  flowPillText: {
+    fontSize: 13.5,
+    fontWeight: '600',
+    color: BioPulseColors.textPrimary,
+  },
+  flowPillTextSelected: {
+    color: '#F43F7D',
+    fontWeight: '700',
+  },
+  notesContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: BioPulseColors.border,
+    padding: 12,
+  },
+  notesInput: {
+    minHeight: 60,
+    fontSize: 14,
+    color: BioPulseColors.textPrimary,
+    textAlignVertical: 'top',
+  },
+  charCount: {
+    alignSelf: 'flex-end',
+    fontSize: 11,
+    color: BioPulseColors.textMuted,
+    marginTop: 4,
+  },
+  ctaWrapper: {
+    marginTop: 8,
   },
 });

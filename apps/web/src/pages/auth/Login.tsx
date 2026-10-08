@@ -16,6 +16,7 @@ import { GoogleAuthButton } from '../../components/auth/GoogleAuthButton';
 import { Logo } from '../../components/brand/Logo';
 import { useAuth } from '../../context/AuthContext';
 import { ROUTES, getPathwayDashboardRoute, getPathwayOnboardingRoute } from '../../constants/routes';
+import { validateEmail } from '../../utils/profileValidation';
 
 interface FormErrors {
   email?: string;
@@ -65,10 +66,9 @@ export const Login: React.FC = () => {
   const validateForm = (): boolean => {
     const nextErrors: FormErrors = {};
 
-    if (!email.trim()) {
-      nextErrors.email = 'Please enter your email address.';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      nextErrors.email = 'Please enter a valid email address.';
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      nextErrors.email = emailValidation.error;
     }
 
     if (!password) {

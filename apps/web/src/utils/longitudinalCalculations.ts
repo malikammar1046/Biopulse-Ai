@@ -862,3 +862,419 @@ export function synthesizeProgressOverview(
     whatIsLimited,
   };
 }
+
+// ---------------------------------------------------------------------------
+// 10. Apple Health Clinical Utilities & Baseline Synthesis
+// ---------------------------------------------------------------------------
+
+export type DirectionType = 'stable' | 'increased' | 'decreased' | 'baseline' | 'no_data';
+
+export interface MetricDeltaResult {
+  previousValue: number | null;
+  currentValue: number | null;
+  absoluteChange: number | null;
+  percentageChange: number | null;
+  direction: DirectionType;
+  displayChange: string;
+  isStable: boolean;
+  unit: string;
+}
+
+export interface LongitudinalRecordLike {
+  timestamp?: string | number | Date | null;
+  observed_at?: string | null;
+  created_at?: string | null;
+  date?: string | null;
+  [key: string]: any;
+}
+
+export function extractRecordTimestamp(record: LongitudinalRecordLike | null | undefined): number {
+  if (!record) return 0;
+  const raw =
+    record.timestamp ||
+    record.observed_at ||
+    record.created_at ||
+    record.date;
+
+  if (!raw) return 0;
+  if (typeof raw === 'number') return raw;
+  const parsed = new Date(raw).getTime();
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+export function sortRecordsChronologically<T extends LongitudinalRecordLike>(
+  records: T[] | null | undefined,
+  ascending = true
+): T[] {
+  if (!records || !Array.isArray(records)) return [];
+  const copy = [...records];
+  return copy.sort((a, b) => {
+    const tA = extractRecordTimestamp(a);
+    const tB = extractRecordTimestamp(b);
+    return ascending ? tA - tB : tB - tA;
+  });
+}
+
+export function calculateMetricDelta(
+  previousValue: number | null | undefined,
+  currentValue: number | null | undefined,
+  unit = ''
+): MetricDeltaResult {
+  const prev = typeof previousValue === 'number' && !Number.isNaN(previousValue) ? previousValue : null;
+  const curr = typeof currentValue === 'number' && !Number.isNaN(currentValue) ? currentValue : null;
+
+  if (curr === null) {
+    return {
+      previousValue: prev,
+      currentValue: null,
+      absoluteChange: null,
+      percentageChange: null,
+      direction: 'no_data',
+      displayChange: 'No data',
+      isStable: false,
+      unit,
+    };
+  }
+
+  if (prev === null) {
+    return {
+      previousValue: null,
+      currentValue: curr,
+      absoluteChange: null,
+      percentageChange: null,
+      direction: 'baseline',
+      displayChange: 'Baseline recorded',
+      isStable: false,
+      unit,
+    };
+  }
+
+  const rawAbs = curr - prev;
+  const absChange = Math.round(rawAbs * 100) / 100;
+  const isStable = Math.abs(absChange) < 0.05;
+
+  let pctChange: number | null = null;
+  if (prev !== 0) {
+    pctChange = Math.round(((curr - prev) / Math.abs(prev)) * 1000) / 10;
+  }
+
+  let direction: DirectionType = 'stable';
+  if (!isStable) {
+    direction = absChange > 0 ? 'increased' : 'decreased';
+  }
+
+  const sign = absChange > 0 ? '+' : '';
+  const displayChange = isStable
+    ? 'Stable'
+    : `${sign}${absChange}${unit ? ` ${unit}` : ''}${pctChange !== null ? ` (${sign}${pctChange}%)` : ''}`;
+
+  return {
+    previousValue: prev,
+    currentValue: curr,
+    absoluteChange: absChange,
+    percentageChange: pctChange,
+    direction,
+    displayChange,
+    isStable,
+    unit,
+  };
+}
+
+export function getTrendExplanation(
+  metricLabel: string,
+  values: number[] | null | undefined,
+  _dates?: (string | null | undefined)[],
+  unit = ''
+): string {
+  if (!values || values.length === 0) {
+    return `No ${metricLabel.toLowerCase()} entries have been recorded yet.`;
+  }
+
+  const cleanUnit = unit ? ` ${unit}` : '';
+
+  if (values.length === 1) {
+    return `One measurement recorded (${values[0]}${cleanUnit}). Trend analysis will become available after another measurement.`;
+  }
+
+  const n = values.length;
+  const first = values[0];
+  const latest = values[n - 1];
+  const delta = Math.round((latest - first) * 100) / 100;
+
+  const allIdentical = values.every((v) => Math.abs(v - first) < 0.01);
+  if (allIdentical) {
+    return `Your recorded ${metricLabel.toLowerCase()} has remained stable at ${first}${cleanUnit} across ${n} measurements.`;
+  }
+
+  const prev = values[n - 2];
+  const recentDelta = Math.round((latest - prev) * 100) / 100;
+  const recentSign = recentDelta > 0 ? '+' : '';
+
+  if (n === 2) {
+    return `Your ${metricLabel.toLowerCase()} changed from ${first}${cleanUnit} to ${latest}${cleanUnit} since the previous measurement (${recentSign}${recentDelta}${cleanUnit}).`;
+  }
+
+  const overallSign = delta > 0 ? '+' : '';
+  return `Your ${metricLabel.toLowerCase()} has changed from ${first} to ${latest}${cleanUnit} across ${n} recorded measurements (${overallSign}${delta}${cleanUnit} overall).`;
+}
+
+export function formatClinicalDate(dateInput: string | number | Date | null | undefined): string {
+  if (!dateInput) return 'Not recorded';
+  try {
+    const d = new Date(dateInput);
+    if (Number.isNaN(d.getTime())) return 'Not recorded';
+    return d.toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  } catch {
+    return 'Not recorded';
+  }
+}
+
+export interface BaselineContextParams {
+  userProfile?: any;
+  activeAssessment?: any;
+  cycleRecords?: any[];
+  symptomRecords?: any[];
+  reports?: any[];
+  pathway?: 'female' | 'male' | 'general';
+  period?: '30d' | '90d' | '180d' | '1y' | 'all';
+}
+
+export function deriveBaselineFromContext(params: BaselineContextParams): any {
+  const {
+    userProfile,
+    activeAssessment,
+    cycleRecords = [],
+    symptomRecords = [],
+    reports = [],
+    pathway = 'female',
+    period = '90d',
+  } = params;
+
+  const isMale = pathway === 'male';
+  const moduleName = isMale ? 'male_hypogonadism' : 'female_pcos';
+  const hasAssessment = Boolean(activeAssessment && (activeAssessment.has_assessment || activeAssessment.probability !== undefined));
+
+  const weightKg = typeof userProfile?.weightKg === 'number' && userProfile.weightKg > 0 ? userProfile.weightKg : null;
+  const heightCm = typeof userProfile?.heightCm === 'number' && userProfile.heightCm > 0 ? userProfile.heightCm : null;
+  const calculatedBmi =
+    weightKg && heightCm
+      ? Math.round((weightKg / Math.pow(heightCm / 100, 2)) * 10) / 10
+      : null;
+
+  const createdAt = userProfile?.created_at || new Date().toISOString();
+  const createdFormatted = formatClinicalDate(createdAt);
+
+  const metricSeries: Record<string, any> = {};
+
+  if (weightKg !== null) {
+    metricSeries.weight_kg = {
+      metric_key: 'weight_kg',
+      label: 'Body Weight',
+      unit: 'kg',
+      category: 'anthropometric',
+      value_type: 'numeric',
+      comparison_type: 'continuous',
+      clinical_directionality: 'neutral',
+      is_graphable: true,
+      data_points: [
+        {
+          id: 'baseline_weight',
+          timestamp: createdAt,
+          observed_at: createdFormatted,
+          value: weightKg,
+          source: 'screening_assessment',
+          date_source: 'assessment',
+          is_verified: true,
+        },
+      ],
+    };
+  }
+
+  if (calculatedBmi !== null) {
+    metricSeries.bmi = {
+      metric_key: 'bmi',
+      label: 'Body Mass Index',
+      unit: 'kg/m²',
+      category: 'anthropometric',
+      value_type: 'numeric',
+      comparison_type: 'continuous',
+      clinical_directionality: 'neutral',
+      is_graphable: true,
+      data_points: [
+        {
+          id: 'baseline_bmi',
+          timestamp: createdAt,
+          observed_at: createdFormatted,
+          value: calculatedBmi,
+          source: 'screening_assessment',
+          date_source: 'assessment',
+          is_verified: true,
+        },
+      ],
+    };
+  }
+
+  for (const report of reports) {
+    const reportDate = report.reportDate || report.report_date || report.created_at;
+    const results = report.results || [];
+    for (const res of results) {
+      if (res.userVerified && typeof res.resultNumeric === 'number') {
+        const key = (res.testName || 'test').toLowerCase().replace(/\s+/g, '_');
+        if (!metricSeries[key]) {
+          metricSeries[key] = {
+            metric_key: key,
+            label: res.testName || 'Lab Marker',
+            unit: res.unit || '',
+            category: 'laboratory',
+            value_type: 'numeric',
+            comparison_type: 'continuous',
+            clinical_directionality: 'neutral',
+            is_graphable: true,
+            data_points: [],
+          };
+        }
+        metricSeries[key].data_points.push({
+          id: `lab_${res.id || Math.random()}`,
+          timestamp: reportDate,
+          observed_at: formatClinicalDate(reportDate),
+          value: res.resultNumeric,
+          source: 'verified_lab_report',
+          date_source: 'specimen',
+          is_verified: true,
+        });
+      }
+    }
+  }
+
+  const timelineEvents: any[] = [];
+  if (hasAssessment) {
+    const assDate = activeAssessment.created_at || createdAt;
+    timelineEvents.push({
+      id: 'event_ass_1',
+      event_type: 'screening_assessment',
+      title: isMale ? 'Initial Hypogonadism Screening Completed' : 'Initial PCOS Clinical Screening Completed',
+      description: `Calculated probability: ${Math.round((activeAssessment.probability ?? 0.2) * 100)}% (${activeAssessment.risk_label || 'Assessment Baseline'})`,
+      timestamp: assDate,
+      observed_at: formatClinicalDate(assDate),
+      date_source: 'assessment',
+    });
+  }
+
+  for (const rep of reports.slice(0, 5)) {
+    const repDate = rep.reportDate || rep.report_date || rep.created_at;
+    timelineEvents.push({
+      id: `event_rep_${rep.id}`,
+      event_type: 'verified_lab_report',
+      title: `Medical Lab Report: ${rep.title || 'Laboratory Results'}`,
+      description: `${(rep.results || []).length} biomarkers recorded`,
+      timestamp: repDate,
+      observed_at: formatClinicalDate(repDate),
+      date_source: 'report',
+    });
+  }
+
+  const screeningHistory: any[] = [];
+  if (hasAssessment) {
+    const prob = Number(activeAssessment.probability ?? 0);
+    const probPct = Math.round(prob * 1000) / 10;
+    screeningHistory.push({
+      id: activeAssessment.id || 'baseline_ass',
+      assessment_level: activeAssessment.assessment_level || 'tier_1',
+      tier_label: isMale
+        ? activeAssessment.assessment_level === 'tier_2'
+          ? 'Tier 2: Hormonal & Clinical Labs'
+          : 'Tier 1: Symptoms & Biometrics'
+        : activeAssessment.assessment_level === 'tier_2'
+          ? 'Tier 2: Clinical Laboratory Biomarkers'
+          : 'Tier 1: Questionnaire & Phenotype',
+      tiers_included: [1],
+      probability: prob,
+      probability_percent: probPct,
+      threshold: isMale ? 0.1808 : 0.25,
+      risk_category: activeAssessment.risk_category || 'lower',
+      risk_label: activeAssessment.risk_label || 'Lower Screening Risk',
+      model_name: 'BioPulse AI Model',
+      model_version: '1.0.0',
+      created_at: activeAssessment.created_at || createdAt,
+      observed_at: formatClinicalDate(activeAssessment.created_at || createdAt),
+      date_source: 'assessment',
+      is_active: true,
+    });
+  }
+
+  return {
+    patient_id: userProfile?.id || 'active_user',
+    module: moduleName,
+    period: period,
+    generated_at: new Date().toISOString(),
+    tracking_period_display: createdFormatted ? `Tracking since ${createdFormatted}` : 'Baseline period',
+    tracking_period_days: 1,
+    total_assessments_recorded: hasAssessment ? 1 : 0,
+    has_single_assessment_baseline: hasAssessment,
+    has_no_assessments: !hasAssessment,
+    disclaimer:
+      'BioPulse AI provides longitudinal clinical decision support and health trend visualization. Longitudinal indicators reflect mathematical comparisons between recorded clinical assessments and do not constitute a definitive medical diagnosis. Always consult with a qualified healthcare practitioner.',
+    screening_comparability: hasAssessment
+      ? {
+          state: 'baseline',
+          is_comparable: false,
+          message: `Baseline established on ${formatClinicalDate(activeAssessment.created_at || createdAt)}. Complete another assessment later to begin comparison.`,
+          current_tier: activeAssessment.assessment_level || 'tier_1',
+          current_model_version: '1.0.0',
+          delta_percentage_points: null,
+        }
+      : {
+          state: 'no_assessments',
+          is_comparable: false,
+          message: 'No assessments recorded yet. Complete your first screening to begin tracking.',
+          delta_percentage_points: null,
+        },
+    current_summary: {
+      active_assessment_id: activeAssessment?.id || null,
+      assessment_level: activeAssessment?.assessment_level || null,
+      tier_label: hasAssessment
+        ? isMale
+          ? 'Tier 1: Symptoms & Biometrics'
+          : 'Tier 1: Questionnaire & Phenotype'
+        : 'Not yet assessed',
+      screening_probability: hasAssessment ? Number(activeAssessment.probability ?? 0) : null,
+      screening_probability_percent: hasAssessment ? Math.round(Number(activeAssessment.probability ?? 0) * 1000) / 10 : null,
+      risk_category: hasAssessment ? activeAssessment.risk_category : null,
+      risk_label: hasAssessment ? activeAssessment.risk_label : null,
+      last_assessed_at: hasAssessment ? activeAssessment.created_at || createdAt : null,
+      last_assessed_display: hasAssessment ? formatClinicalDate(activeAssessment.created_at || createdAt) : 'Not yet assessed',
+      key_metrics: {
+        weight_kg: weightKg,
+        bmi: calculatedBmi,
+        waist_circumference: userProfile?.waistCm || null,
+      },
+      metric_deltas: {
+        weight_kg: calculateMetricDelta(null, weightKg, 'kg') as any,
+        bmi: calculateMetricDelta(null, calculatedBmi, 'kg/m²') as any,
+      },
+    },
+    screening_history: screeningHistory,
+    metric_series: metricSeries,
+    male_vitality_summary: null,
+    important_changes: [],
+    current_vs_previous: [],
+    tier_progression: [
+      {
+        tier: 'tier_1',
+        tier_number: 1,
+        label: isMale ? 'Tier 1: Symptoms & Biometrics' : 'Tier 1: Questionnaire & Phenotype',
+        is_completed: hasAssessment,
+        completed_at_display: hasAssessment ? formatClinicalDate(activeAssessment.created_at || createdAt) : null,
+        description: 'Baseline health history and phenotype screening.',
+      },
+    ],
+    symptom_history: symptomRecords,
+    cycle_history: isMale ? [] : cycleRecords,
+    timeline_events: timelineEvents,
+  };
+}
+

@@ -93,7 +93,7 @@ export interface IntelligenceAssessment {
   pcos_probability?: number | null;
   /** Estimated probability of Non-PCOS [0.0 - 1.0] */
   non_pcos_probability?: number | null;
-  /** Sensitivity-tuned screening cutoff (default: 0.38) */
+  /** Sensitivity-tuned screening cutoff (default: 0.25 under policy v2) */
   screening_threshold?: number;
   /** Boolean flag: true if pcos_probability >= screening_threshold */
   is_higher_risk?: boolean;
@@ -232,6 +232,8 @@ export interface ChatResponsePayload {
   safety_level: ChatSafetyLevel;
   needs_clinician: boolean;
   model?: string;
+  error_type?: 'NETWORK' | 'SESSION' | 'BACKEND' | 'PROVIDER_UNAVAILABLE';
+  timings?: Record<string, number>;
 }
 
 // ---------------------------------------------------------------------------
@@ -258,11 +260,13 @@ export interface AvailableHistoricalEvidence {
 
 export interface FusionDetails {
   clinical_probability: number;
-  ultrasound_pcom_probability: number;
+  ultrasound_pcom_probability?: number;
+  ultrasound_probability?: number;
   clinical_weight: number;
   ultrasound_weight: number;
   combined_score: number;
-  threshold: number;
+  threshold?: number;
+  fusion_method?: string;
 }
 
 export interface HormonePatternInterpretation {
@@ -303,6 +307,10 @@ export interface ProgressiveAssessment {
   threshold: number;
   risk_category: ProgressiveRiskCategory | string;
   risk_label?: string;
+  screening_policy_version?: string;
+  original_risk_category?: string;
+  original_threshold?: number;
+  original_probability?: number;
   summary_text?: string;
   is_active: boolean;
   replaced_assessment_id?: string | null;

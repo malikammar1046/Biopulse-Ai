@@ -162,3 +162,68 @@ export interface LifestyleSimulationOverride {
   activity_level?: string;
   allergens?: string[];
 }
+
+export interface AIMealSlot {
+  name: string;
+  description: string;
+  why: string;
+}
+
+export interface AIDailyMeals {
+  day: number;
+  day_name: string;
+  breakfast: AIMealSlot;
+  lunch: AIMealSlot;
+  snack: AIMealSlot;
+  dinner: AIMealSlot;
+}
+
+export interface AIPhysicalActivitySession {
+  day_name: string;
+  activity: string;
+  duration_mins: number;
+  intensity: 'low' | 'moderate';
+  coaching_cue: string;
+}
+
+export interface AILifestylePlan {
+  plan_duration_days: number;
+  summary: string;
+  engine_type: string;
+  pathway: string;
+  nutrition: {
+    goals: string[];
+    daily_meals: AIDailyMeals[];
+  };
+  hydration: {
+    guidance: string;
+    daily_target_liters: number | null;
+  };
+  physical_activity: {
+    weekly_goal: string;
+    schedule: AIPhysicalActivitySession[];
+  };
+  sleep_and_lifestyle: {
+    sleep_guidance: string;
+    stress_guidance: string;
+    daily_habits: string[];
+  };
+  personalization_reasons: string[];
+  safety_notices: string[];
+  disclaimer: string;
+  authoritative_daily_targets: {
+    daily_calories_kcal: number | null;
+    calorie_range_min: number | null;
+    calorie_range_max: number | null;
+    protein_g: number | null;
+    carbs_g: number | null;
+    fats_g: number | null;
+    fiber_g: number | null;
+    hydration_liters: number | null;
+    target_status?: string;
+    guidance_note?: string;
+  };
+  context_version?: string;
+  generated_at: string;
+}
+

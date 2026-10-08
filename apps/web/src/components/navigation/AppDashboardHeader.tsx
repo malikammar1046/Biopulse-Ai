@@ -12,6 +12,8 @@ import {
   Activity,
   Heart,
   Droplet,
+  Search,
+  Sparkles,
 } from 'lucide-react';
 import { ROUTES } from '../../constants/routes';
 import { useUserHealth } from '../../context/UserHealthContext';
@@ -319,14 +321,17 @@ function resolveRouteKey(pathname: string): RouteKey {
 export const AppDashboardHeader: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { userProfile, snapshotMetrics, reports, appointments } = useUserHealth();
+  const { userProfile, snapshotMetrics, reports, appointments, openAiChatWithPrompt } = useUserHealth();
   const { logout } = useAuth();
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const notificationDropdownRef = useRef<HTMLDivElement>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -348,10 +353,22 @@ export const AppDashboardHeader: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
 
+  // Close search suggestions on outside click
+  useEffect(() => {
+    const handleSearchOutside = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setIsSearchFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handleSearchOutside);
+    return () => document.removeEventListener('mousedown', handleSearchOutside);
+  }, []);
+
   // Close dropdowns on route changes
   useEffect(() => {
     setIsProfileOpen(false);
     setIsNotificationsOpen(false);
+    setIsSearchFocused(false);
   }, [location.pathname]);
 
   const pathway: HealthPathway = resolvePathway(
@@ -445,49 +462,140 @@ export const AppDashboardHeader: React.FC = () => {
 
   const hasUnread = notificationsList.some((n) => n.unread);
 
+  const quickDestinations = useMemo(() => {
+    const all = [
+      { label: 'Symptom Check-in', path: ROUTES.APP.SYMPTOMS, hint: 'Track feelings & pain' },
+      { label: 'Nutrition & Meals', path: ROUTES.APP.LIFESTYLE, hint: 'Meal log & targets' },
+      { label: 'Exercise & Movement', path: ROUTES.APP.FITNESS, hint: 'Workouts & activity' },
+      { label: 'Health Reports & Labs', path: ROUTES.APP.REPORTS, hint: 'Blood tests & OCR' },
+      { label: 'Medications & Reminders', path: ROUTES.APP.MEDICATIONS, hint: 'Doses & schedule' },
+      {
+        label: isFemale ? 'Period Cycle Tracking' : 'Vitality & Tracking',
+        path: isFemale ? ROUTES.APP.CYCLE : ROUTES.APP.SYMPTOMS,
+        hint: isFemale ? 'Cycle phases & calendar' : 'Hormonal check-in',
+      },
+    ];
+    if (!searchQuery.trim()) return all.slice(0, 4);
+    const q = searchQuery.toLowerCase();
+    return all.filter((d) => d.label.toLowerCase().includes(q) || d.hint.toLowerCase().includes(q));
+  }, [isFemale, searchQuery]);
+
   const handleLogout = async () => {
     await logout();
     navigate(ROUTES.LOGIN);
   };
 
+  const isOverview = routeKey === 'overview';
+
   return (
     <header className="w-full bg-white border-b border-[#E2E8F0] select-none text-left z-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* ── LEFT: Eyebrow Breadcrumb, Title & Subtitle ── */}
-        <div className="space-y-1 min-w-0">
-          {/* Eyebrow Breadcrumb */}
-          <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-mono font-bold uppercase tracking-wider text-slate-400">
-            <span>{config.eyebrow.split('/')[0]?.trim()}</span>
-            <span className="text-slate-300">/</span>
-            <span className={isFemale ? 'text-[#E11D48]' : 'text-[#0891B2]'}>
-              {config.eyebrow.split('/')[1]?.trim()}
-            </span>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 sm:py-4 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
+        {/* ── LEFT: Search field on Overview, Breadcrumbs/Title on other routes ── */}
+        {isOverview ? (
+          <div className="flex-1 max-w-xl w-full relative" ref={searchContainerRef}>
+            <div className="relative">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && searchQuery.trim()) {
+                    openAiChatWithPrompt?.(searchQuery.trim());
+                    setIsSearchFocused(false);
+                    setSearchQuery('');
+                  }
+                }}
+                placeholder="Search for symptoms, meals, workouts, or ask AI..."
+                className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-white border border-[#E2E8F0] shadow-xs text-xs sm:text-[13px] text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#F43F7D]/50 focus:ring-2 focus:ring-[#FDE6EF] transition-all"
+              />
+            </div>
+
+            {/* Live Search Suggestions Dropdown */}
+            <AnimatePresence>
+              {isSearchFocused && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 4 }}
+                  transition={{ duration: 0.12 }}
+                  className="absolute left-0 right-0 mt-2 rounded-2xl bg-white border border-slate-200 shadow-xl p-2 z-50 text-left space-y-1"
+                >
+                  <div className="px-3 py-1.5 text-[10.5px] font-mono uppercase text-slate-400 font-semibold tracking-wider">
+                    Quick Navigation
+                  </div>
+                  {quickDestinations.map((dest) => (
+                    <button
+                      key={dest.path}
+                      type="button"
+                      onClick={() => {
+                        navigate(dest.path);
+                        setIsSearchFocused(false);
+                        setSearchQuery('');
+                      }}
+                      className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors text-left cursor-pointer"
+                    >
+                      <span>{dest.label}</span>
+                      <span className="text-[10px] text-slate-400 font-mono">{dest.hint}</span>
+                    </button>
+                  ))}
+                  {searchQuery.trim() && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        openAiChatWithPrompt?.(searchQuery.trim());
+                        setIsSearchFocused(false);
+                        setSearchQuery('');
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-[#7E22CE] bg-[#FAF5FF] hover:bg-[#F3E8FF] transition-colors text-left cursor-pointer mt-1"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-[#7E22CE]" />
+                      <span>Ask BioPulse AI: &ldquo;{searchQuery}&rdquo;</span>
+                    </button>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
+        ) : (
+          <div className="space-y-1 min-w-0">
+            {/* Eyebrow Breadcrumb */}
+            <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-mono font-bold uppercase tracking-wider text-slate-400">
+              <span>{config.eyebrow.split('/')[0]?.trim()}</span>
+              <span className="text-slate-300">/</span>
+              <span className={isFemale ? 'text-[#E11D48]' : 'text-[#0891B2]'}>
+                {config.eyebrow.split('/')[1]?.trim()}
+              </span>
+            </div>
 
-          {/* Dynamic Page Title */}
-          <h1 className="text-2xl sm:text-[26px] lg:text-[28px] font-bold tracking-tight text-[#0F172A] font-display leading-tight truncate">
-            {resolvedTitle}
-          </h1>
+            {/* Dynamic Page Title */}
+            <h1 className="text-2xl sm:text-[26px] lg:text-[28px] font-bold tracking-tight text-[#0F172A] font-display leading-tight truncate">
+              {resolvedTitle}
+            </h1>
 
-          {/* Dynamic Short Description */}
-          <p className="text-xs sm:text-[13.5px] text-[#64748B] font-sans font-normal leading-relaxed max-w-2xl">
-            {config.subtitle}
-          </p>
-        </div>
+            {/* Dynamic Short Description */}
+            <p className="text-xs sm:text-[13.5px] text-[#64748B] font-sans font-normal leading-relaxed max-w-2xl">
+              {config.subtitle}
+            </p>
+          </div>
+        )}
 
-        {/* ── RIGHT: Pathway Badge, Notifications & Profile Control ── */}
+        {/* ── RIGHT: Pathway Badge (on other routes), Notifications & Profile Control ── */}
         <div className="flex items-center gap-2.5 sm:gap-3 shrink-0 self-start md:self-center">
-          {/* Subtle Pathway Badge */}
-          <div
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold border transition-colors select-none ${
-              isFemale
-                ? 'bg-[#FDE6EF] text-[#E11D48] border-[#F43F7D]/25'
-                : 'bg-[#E0F2FE] text-[#0284C7] border-[#BAE6FD]'
-            }`}
-          >
-            <Activity className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>{isFemale ? 'PCOS Pathway' : 'Hypogonadism Pathway'}</span>
-          </div>
+          {/* Subtle Pathway Badge (hidden on overview, and compact on mobile) */}
+          {!isOverview && (
+            <div
+              className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold border transition-colors select-none ${
+                isFemale
+                  ? 'bg-[#FDE6EF] text-[#E11D48] border-[#F43F7D]/25'
+                  : 'bg-[#E0F2FE] text-[#0284C7] border-[#BAE6FD]'
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>{isFemale ? 'PCOS Pathway' : 'Hypogonadism Pathway'}</span>
+            </div>
+          )}
 
           {/* Notification Bell Control */}
           <div className="relative" ref={notificationDropdownRef}>
@@ -587,10 +695,16 @@ export const AppDashboardHeader: React.FC = () => {
                 showBorder={false}
               />
 
-              {/* First Name & Chevron */}
-              <span className="text-xs font-semibold text-slate-800 hidden sm:inline-block max-w-[120px] truncate">
-                {firstName}
-              </span>
+              {/* Full Name & Pathway Label */}
+              <div className="flex flex-col text-left leading-tight hidden sm:block">
+                <span className="text-xs font-bold text-slate-800 max-w-[130px] truncate block">
+                  {displayName}
+                </span>
+                <span className="text-[10px] text-slate-500 font-sans block">
+                  {isFemale ? 'PCOS Pathway' : 'Hypogonadism Pathway'}
+                </span>
+              </div>
+
               <ChevronDown
                 className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
                   isProfileOpen ? 'rotate-180' : ''

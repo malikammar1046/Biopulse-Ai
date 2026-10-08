@@ -107,53 +107,110 @@ export const LabProgressionCard: React.FC<LabProgressionCardProps> = ({
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto border border-[#EAECF0] rounded-xl">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="bg-[#F8F9FC] border-b border-[#EAECF0] text-[#667085] font-mono uppercase text-[10px]">
-                <th className="py-2.5 px-4">Biomarker</th>
-                <th className="py-2.5 px-4">Previous Value</th>
-                <th className="py-2.5 px-4">Current Value</th>
-                <th className="py-2.5 px-4">Direction & Movement</th>
-                <th className="py-2.5 px-4">Source Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#F2F4F7]">
-              {labComparisons.map((lab) => (
-                <tr key={lab.factor_key} className="hover:bg-[#FAFAFC]">
-                  <td className="py-3 px-4">
-                    <span className="font-semibold text-[#111318] block">{lab.label}</span>
+        <>
+          {/* Mobile View: Stacked Cards (< md) */}
+          <div className="md:hidden space-y-2.5">
+            {labComparisons.map((lab) => (
+              <div
+                key={lab.factor_key}
+                className="p-3.5 rounded-xl border border-[#EAECF0] bg-[#FAFAFC] space-y-2 text-left"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <span className="font-bold text-xs text-[#111318] block truncate">{lab.label}</span>
                     {lab.unit && (
                       <span className="text-[10px] font-mono text-[#667085]">Unit: {lab.unit}</span>
                     )}
-                  </td>
-                  <td className="py-3 px-4 font-mono text-[#667085]">
-                    {hasSingleAssessment ? '—' : lab.previous_display}
-                  </td>
-                  <td className="py-3 px-4 font-mono font-bold text-[#111318]">
-                    {lab.current_display}
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="space-y-1">
-                      {getNeutralDeltaBadge(lab.direction)}
-                      {lab.delta !== null && !hasSingleAssessment && lab.direction !== 'unchanged' && (
-                        <span className="text-[11px] font-mono font-medium text-[#475569] block">
-                          {lab.delta > 0 ? `+${lab.delta}` : `${lab.delta}`} {lab.unit}
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className="inline-flex items-center gap-1 text-[10px] font-mono text-[#027A48] bg-[#ECFDF3] px-2 py-0.5 rounded-full border border-[#D1FADF]">
-                      <ShieldTick className="w-3 h-3 text-[#16A36A]" aria-hidden="true" />
-                      Clinically Verified
+                  </div>
+                  <span className="inline-flex items-center gap-1 text-[9px] font-mono text-[#027A48] bg-[#ECFDF3] px-1.5 py-0.5 rounded-full border border-[#D1FADF] shrink-0">
+                    <ShieldTick className="w-2.5 h-2.5 text-[#16A36A]" aria-hidden="true" />
+                    Verified
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs pt-1.5 border-t border-[#F2F4F7]">
+                  <div>
+                    <span className="text-[10px] text-[#667085] uppercase font-mono block">
+                      {hasSingleAssessment ? 'Status' : 'Previous'}
                     </span>
-                  </td>
+                    <span className="font-mono text-[#475569]">
+                      {hasSingleAssessment ? '—' : lab.previous_display}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-[#667085] uppercase font-mono block">
+                      {hasSingleAssessment ? 'Baseline Value' : 'Current Value'}
+                    </span>
+                    <span className="font-mono font-bold text-[#111318]">
+                      {lab.current_display}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-1.5 border-t border-[#F2F4F7] flex items-center justify-between">
+                  <span className="text-[10px] font-mono text-[#667085] uppercase">Movement</span>
+                  <div className="flex items-center gap-2">
+                    {getNeutralDeltaBadge(lab.direction)}
+                    {lab.delta !== null && !hasSingleAssessment && lab.direction !== 'unchanged' && (
+                      <span className="text-[10px] font-mono font-medium text-[#475569]">
+                        {lab.delta > 0 ? `+${lab.delta}` : `${lab.delta}`} {lab.unit}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop View: Full Table (>= md) */}
+          <div className="hidden md:block overflow-x-auto border border-[#EAECF0] rounded-xl">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-[#F8F9FC] border-b border-[#EAECF0] text-[#667085] font-mono uppercase text-[10px]">
+                  <th className="py-2.5 px-4">Biomarker</th>
+                  <th className="py-2.5 px-4">Previous Value</th>
+                  <th className="py-2.5 px-4">Current Value</th>
+                  <th className="py-2.5 px-4">Direction & Movement</th>
+                  <th className="py-2.5 px-4">Source Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-[#F2F4F7]">
+                {labComparisons.map((lab) => (
+                  <tr key={lab.factor_key} className="hover:bg-[#FAFAFC]">
+                    <td className="py-3 px-4">
+                      <span className="font-semibold text-[#111318] block">{lab.label}</span>
+                      {lab.unit && (
+                        <span className="text-[10px] font-mono text-[#667085]">Unit: {lab.unit}</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 font-mono text-[#667085]">
+                      {hasSingleAssessment ? '—' : lab.previous_display}
+                    </td>
+                    <td className="py-3 px-4 font-mono font-bold text-[#111318]">
+                      {lab.current_display}
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="space-y-1">
+                        {getNeutralDeltaBadge(lab.direction)}
+                        {lab.delta !== null && !hasSingleAssessment && lab.direction !== 'unchanged' && (
+                          <span className="text-[11px] font-mono font-medium text-[#475569] block">
+                            {lab.delta > 0 ? `+${lab.delta}` : `${lab.delta}`} {lab.unit}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-mono text-[#027A48] bg-[#ECFDF3] px-2 py-0.5 rounded-full border border-[#D1FADF]">
+                        <ShieldTick className="w-3 h-3 text-[#16A36A]" aria-hidden="true" />
+                        Clinically Verified
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

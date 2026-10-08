@@ -540,13 +540,25 @@ export async function submitTier2Assessment(inputs: Record<string, any>, userId?
     }, 60000);
 
     if (!response.ok) {
-      console.error('[PCOS-ML] Tier 2 submission failed:', response.status);
+      let errDetails = '';
+      try {
+        const errJson = await response.json();
+        errDetails = errJson.error || errJson.details || JSON.stringify(errJson);
+      } catch {
+        errDetails = response.statusText;
+      }
+      console.error('[PCOS-ML] Tier 2 submission failed:', response.status, errDetails);
       return null;
     }
 
     clearAssessmentCache();
     const data = (await response.json()) as ProgressiveAssessment;
     if (data) {
+      if (import.meta.env.DEV) {
+        console.log(
+          `[TIER2_TRACE] event=response_received assessment_id=${data.id || data.assessment_id} level=${data.assessment_level} probability=${data.probability}`
+        );
+      }
       saveLocalActiveAssessment(userId || data.patient_id, 'female_pcos', data);
     }
     return data;
@@ -617,13 +629,25 @@ export async function submitMaleTier2Assessment(inputs: Record<string, any>, use
     }, 60000);
 
     if (!response.ok) {
-      console.error('[Male-ML] Tier 2 submission failed:', response.status);
+      let errDetails = '';
+      try {
+        const errJson = await response.json();
+        errDetails = errJson.error || errJson.details || JSON.stringify(errJson);
+      } catch {
+        errDetails = response.statusText;
+      }
+      console.error('[Male-ML] Tier 2 submission failed:', response.status, errDetails);
       return null;
     }
 
     clearAssessmentCache();
     const data = (await response.json()) as ProgressiveAssessment;
     if (data) {
+      if (import.meta.env.DEV) {
+        console.log(
+          `[TIER2_TRACE] event=response_received assessment_id=${data.id || data.assessment_id} level=${data.assessment_level} probability=${data.probability}`
+        );
+      }
       saveLocalActiveAssessment(userId || data.patient_id, 'male_hypogonadism', data);
     }
     return data;
@@ -712,45 +736,45 @@ export async function uploadUltrasoundAssessment(
   reportId?: string,
   userId?: string
 ): Promise<ProgressiveAssessment | null> {
-  try {
-    const token = await getAccessToken();
-    if (!token) {
-      console.warn('[PCOS-ML] No access token available for ultrasound upload.');
-      return null;
-    }
-    const headers: Record<string, string> = {
-      'Authorization': `Bearer ${token}`,
-    };
-
-    const formData = new FormData();
-    formData.append('image', imageFile);
-    if (reportId) formData.append('report_id', reportId);
-
-    const response = await fetchWithTimeout(
-      ULTRASOUND_ASSESSMENT_ENDPOINT,
-      {
-        method: 'POST',
-        headers,
-        body: formData,
-      },
-      60000 // 60s timeout for deep vision model inference
-    );
-
-    if (!response.ok) {
-      console.error('[PCOS-ML] Ultrasound upload failed:', response.status);
-      return null;
-    }
-
-    clearAssessmentCache();
-    const data = (await response.json()) as ProgressiveAssessment;
-    if (data) {
-      saveLocalActiveAssessment(userId || data.patient_id, 'female_pcos', data);
-    }
-    return data;
-  } catch (err) {
-    console.error('[PCOS-ML] Ultrasound error:', err);
-    return null;
+  const token = await getAccessToken();
+  if (!token) {
+    throw new Error('Authentication session required for ultrasound upload. Please log in again.');
   }
+  const headers: Record<string, string> = {
+    'Authorization': `Bearer ${token}`,
+  };
+
+  const formData = new FormData();
+  formData.append('image', imageFile);
+  if (reportId) formData.append('report_id', reportId);
+
+  const response = await fetchWithTimeout(
+    ULTRASOUND_ASSESSMENT_ENDPOINT,
+    {
+      method: 'POST',
+      headers,
+      body: formData,
+    },
+    180000 // 180s timeout for deep vision model inference
+  );
+
+  if (!response.ok) {
+    let errMessage = `Ultrasound processing failed (HTTP ${response.status}).`;
+    try {
+      const errData = await response.json();
+      if (errData?.error) errMessage = errData.error;
+    } catch {
+      // ignore
+    }
+    throw new Error(errMessage);
+  }
+
+  clearAssessmentCache();
+  const data = (await response.json()) as ProgressiveAssessment;
+  if (data) {
+    saveLocalActiveAssessment(userId || data.patient_id, 'female_pcos', data);
+  }
+  return data;
 }
 
 // ---------------------------------------------------------------------------
@@ -937,10 +961,21 @@ export async function sendChatMessage(
   conversationHistory?: Array<{ sender: 'user' | 'ai'; text: string }>,
   clientTelemetry?: Record<string, any>
 ): Promise<import('../types/intelligence').ChatResponsePayload | null> {
+  const tStart = performance.now();
   const token = await getAccessToken();
+  const tAuth = performance.now() - tStart;
+
   if (!token) {
     console.warn('sendChatMessage: No access token available (user not authenticated).');
-    return null;
+    return {
+      success: false,
+      message: 'Your session has expired. Please sign in again to continue your conversation.',
+      error_type: 'SESSION',
+      conversation_id: conversationId || '',
+      context_used: {} as any,
+      safety_level: 'normal',
+      needs_clinician: false,
+    };
   }
 
   const pathway = clientTelemetry?.pathway || '';
@@ -953,6 +988,7 @@ export async function sendChatMessage(
   };
 
   try {
+    const tFetchStart = performance.now();
     const response = await fetchWithTimeout(
       CHAT_ENDPOINT,
       {
@@ -965,25 +1001,75 @@ export async function sendChatMessage(
       },
       REQUEST_TIMEOUT_MS
     );
+    const tNetwork = performance.now() - tFetchStart;
 
     // If 200 OK or 503 Service Unavailable with a structured payload, parse JSON
     if (response.ok || response.status === 503) {
+      const tJsonStart = performance.now();
       try {
         const data = await response.json();
+        const tJson = performance.now() - tJsonStart;
+        const tTotal = performance.now() - tStart;
+
+        // Structured performance telemetry (timing and metadata only)
+        if (typeof console !== 'undefined' && console.info) {
+          console.info('[BioPulse AI Chat Client Timing]', {
+            authDurationMs: Math.round(tAuth),
+            networkToBackendMs: Math.round(tNetwork),
+            jsonParseMs: Math.round(tJson),
+            totalClientMs: Math.round(tTotal),
+            backendTimings: data?.timings,
+          });
+        }
+
+        const is503 = response.status === 503;
         return {
           ...data,
           message: data.reply || data.message || '',
+          error_type: is503 ? 'PROVIDER_UNAVAILABLE' : undefined,
         } as import('../types/intelligence').ChatResponsePayload;
       } catch {
-        // Continue to fallback
+        // Fall through to generic error
       }
+    }
+
+    if (response.status === 401) {
+      return {
+        success: false,
+        message: 'Your session has expired. Please sign in again.',
+        error_type: 'SESSION',
+        conversation_id: conversationId || '',
+        context_used: {} as any,
+        safety_level: 'normal',
+        needs_clinician: false,
+      };
+    }
+
+    if (response.status >= 500) {
+      return {
+        success: false,
+        message: 'The BioPulse server encountered an internal issue processing your request. Please try again shortly.',
+        error_type: 'BACKEND',
+        conversation_id: conversationId || '',
+        context_used: {} as any,
+        safety_level: 'caution',
+        needs_clinician: false,
+      };
     }
 
     console.warn(`sendChatMessage failed with status ${response.status}`);
     return null;
-  } catch (err) {
+  } catch (err: any) {
     console.error('sendChatMessage network error:', err);
-    return null;
+    return {
+      success: false,
+      message: 'Unable to reach the BioPulse service. Please verify your connection and try again.',
+      error_type: 'NETWORK',
+      conversation_id: conversationId || '',
+      context_used: {} as any,
+      safety_level: 'caution',
+      needs_clinician: false,
+    };
   }
 }
 
@@ -1008,88 +1094,247 @@ export async function checkCompanionHealth(): Promise<{
   }
 }
 
+// ── Longitudinal Health In-Memory & Session Cache & Shared Promise Deduplication ──
+interface CachedLongitudinalEntry {
+  data: LongitudinalHealthResponse;
+  timestamp: number;
+}
+
+const LONGITUDINAL_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minute TTL for instant back/return navigation
+const longitudinalCache = new Map<string, CachedLongitudinalEntry>();
+const inFlightLongitudinalPromises = new Map<string, Promise<LongitudinalHealthResponse | null>>();
+
+const SESSION_STORAGE_LONGITUDINAL_PREFIX = 'biopulse_longitudinal_';
+
 /**
- * Fetches authoritative longitudinal health summary and historical trends.
- * Supports period filtering ('30d' | '90d' | '180d' | '1y' | 'all') and pathway scoping.
- * Implements bounded retries (0ms, 250ms, 500ms) with rich diagnostics.
+ * Synchronously retrieves cached longitudinal data for instantaneous render.
  */
-export async function getLongitudinalHealth(
+export function getCachedLongitudinalHealth(
   period: MonitoringPeriodFilter = '90d',
-  module?: string,
-  signal?: AbortSignal
-): Promise<LongitudinalHealthResponse | null> {
-  const retryDelays = [0, 250, 500];
+  module = 'female_pcos',
+  userId?: string
+): LongitudinalHealthResponse | null {
+  const activeUserId = userId || 'active_user';
+  const cacheKey = `${activeUserId}:${module}:${period}`;
 
-  for (let attempt = 0; attempt < retryDelays.length; attempt++) {
-    if (attempt > 0) {
-      if (signal?.aborted) return null;
-      await new Promise((resolve) => setTimeout(resolve, retryDelays[attempt]));
-    }
+  // 1. Check in-memory map
+  const memEntry = longitudinalCache.get(cacheKey);
+  if (memEntry && Date.now() - memEntry.timestamp < LONGITUDINAL_CACHE_TTL_MS) {
+    return memEntry.data;
+  }
 
+  // 2. Check sessionStorage fallback
+  if (typeof window !== 'undefined' && window.sessionStorage) {
     try {
-      let token = await getAccessToken();
-      if (!token) {
-        // Attempt a quick session refresh if token is initially missing
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          token = session?.access_token ?? null;
-        } catch {
-          // ignore
+      const raw = sessionStorage.getItem(`${SESSION_STORAGE_LONGITUDINAL_PREFIX}${cacheKey}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.data && Date.now() - (parsed.timestamp || 0) < LONGITUDINAL_CACHE_TTL_MS) {
+          // Warm memory cache
+          longitudinalCache.set(cacheKey, { data: parsed.data, timestamp: parsed.timestamp || Date.now() });
+          return parsed.data;
         }
       }
-
-      if (!token) {
-        console.warn('[Intelligence API] getLongitudinalHealth: No active auth token available.');
-        return null;
-      }
-
-      const headers: Record<string, string> = {
-        Authorization: `Bearer ${token}`,
-      };
-
-      const params = new URLSearchParams();
-      if (period) params.set('period', period);
-      if (module) params.set('module', module);
-
-      const url = `${LONGITUDINAL_HEALTH_ENDPOINT}?${params.toString()}`;
-      const response = await fetchWithTimeout(url, { method: 'GET', headers, signal }, 15000);
-
-      if (!response.ok) {
-        let errorBody = '';
-        try {
-          errorBody = await response.text();
-        } catch {
-          errorBody = '(could not parse response body)';
-        }
-        console.warn(
-          `[Intelligence API] getLongitudinalHealth attempt ${attempt + 1}/${retryDelays.length} failed: HTTP ${response.status} | body: ${errorBody}`
-        );
-
-        // Do not retry 401 Unauthorized or 403 Forbidden; session problem must be handled by auth
-        if (response.status === 401 || response.status === 403) {
-          return null;
-        }
-
-        // Retry on 422 (transient hydration race) or 500/503
-        if (attempt < retryDelays.length - 1) {
-          continue;
-        }
-        return null;
-      }
-
-      return (await response.json()) as LongitudinalHealthResponse;
-    } catch (err: any) {
-      if (err?.name === 'AbortError' || signal?.aborted) {
-        return null;
-      }
-      console.error(`[Intelligence API] getLongitudinalHealth network error attempt ${attempt + 1}:`, err);
-      if (attempt === retryDelays.length - 1) {
-        return null;
-      }
+    } catch {
+      // ignore storage errors
     }
   }
 
   return null;
+}
+
+/**
+ * Invalidates cached longitudinal health responses when mutations occur.
+ */
+export function invalidateLongitudinalCache(userId?: string): void {
+  if (userId) {
+    for (const key of Array.from(longitudinalCache.keys())) {
+      if (key.startsWith(`${userId}:`)) {
+        longitudinalCache.delete(key);
+      }
+    }
+    for (const key of Array.from(inFlightLongitudinalPromises.keys())) {
+      if (key.startsWith(`${userId}:`)) {
+        inFlightLongitudinalPromises.delete(key);
+      }
+    }
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      try {
+        const prefix = `${SESSION_STORAGE_LONGITUDINAL_PREFIX}${userId}:`;
+        for (let i = sessionStorage.length - 1; i >= 0; i--) {
+          const k = sessionStorage.key(i);
+          if (k && k.startsWith(prefix)) {
+            sessionStorage.removeItem(k);
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+  } else {
+    longitudinalCache.clear();
+    inFlightLongitudinalPromises.clear();
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      try {
+        for (let i = sessionStorage.length - 1; i >= 0; i--) {
+          const k = sessionStorage.key(i);
+          if (k && k.startsWith(SESSION_STORAGE_LONGITUDINAL_PREFIX)) {
+            sessionStorage.removeItem(k);
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }
+}
+
+// Invalidate in-memory cache whenever a longitudinal refresh event is dispatched
+if (typeof window !== 'undefined') {
+  window.addEventListener('biopulse:longitudinal-refresh', (e: any) => {
+    const detailUserId = e?.detail?.userId;
+    invalidateLongitudinalCache(detailUserId);
+  });
+}
+
+/**
+ * Fetches authoritative longitudinal health summary and historical trends.
+ * Supports period filtering ('30d' | '90d' | '180d' | '1y' | 'all') and pathway scoping.
+ * Implements shared promise deduplication, in-memory caching, and resilient Stale-While-Revalidate.
+ */
+export async function getLongitudinalHealth(
+  period: MonitoringPeriodFilter = '90d',
+  module?: string,
+  signal?: AbortSignal,
+  forceRefresh = false
+): Promise<LongitudinalHealthResponse | null> {
+  // Resolve active user id for cache key
+  let activeUserId = 'active_user';
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user?.id) {
+      activeUserId = session.user.id;
+    }
+  } catch {
+    // ignore
+  }
+
+  const effectiveModule = module || 'female_pcos';
+  const cacheKey = `${activeUserId}:${effectiveModule}:${period}`;
+
+  // 1. Check in-memory / session cache if not forced refresh
+  if (!forceRefresh) {
+    const cached = getCachedLongitudinalHealth(period, effectiveModule, activeUserId);
+    if (cached) {
+      return cached;
+    }
+
+    // 2. Reuse in-flight request to eliminate duplicate prewarm / page mount contention
+    if (inFlightLongitudinalPromises.has(cacheKey)) {
+      return inFlightLongitudinalPromises.get(cacheKey)!;
+    }
+  }
+
+  const fetchTask = (async (): Promise<LongitudinalHealthResponse | null> => {
+    const retryDelays = [0, 300];
+
+    for (let attempt = 0; attempt < retryDelays.length; attempt++) {
+      if (attempt > 0) {
+        if (signal?.aborted) return null;
+        await new Promise((resolve) => setTimeout(resolve, retryDelays[attempt]));
+      }
+
+      try {
+        let token = await getAccessToken();
+        if (!token) {
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            token = session?.access_token ?? null;
+          } catch {
+            // ignore
+          }
+        }
+
+        if (!token) {
+          console.warn('[Intelligence API] getLongitudinalHealth: No active auth token available.');
+          // Check stale cache fallback before failing
+          const stale = longitudinalCache.get(cacheKey)?.data;
+          if (stale) return stale;
+          return null;
+        }
+
+        const headers: Record<string, string> = {
+          Authorization: `Bearer ${token}`,
+        };
+
+        const params = new URLSearchParams();
+        if (period) params.set('period', period);
+        if (effectiveModule) params.set('module', effectiveModule);
+
+        const url = `${LONGITUDINAL_HEALTH_ENDPOINT}?${params.toString()}`;
+        const response = await fetchWithTimeout(url, { method: 'GET', headers, signal }, 12000);
+
+        if (!response.ok) {
+          let errorBody = '';
+          try {
+            errorBody = await response.text();
+          } catch {
+            errorBody = '(could not parse response body)';
+          }
+          console.warn(
+            `[Intelligence API] getLongitudinalHealth attempt ${attempt + 1}/${retryDelays.length} failed: HTTP ${response.status} | body: ${errorBody}`
+          );
+
+          if (response.status === 401 || response.status === 403) {
+            return null;
+          }
+
+          if (attempt < retryDelays.length - 1) {
+            continue;
+          }
+          // Return stale cache if available
+          const stale = longitudinalCache.get(cacheKey)?.data;
+          if (stale) return stale;
+          return null;
+        }
+
+        const data = (await response.json()) as LongitudinalHealthResponse;
+        longitudinalCache.set(cacheKey, { data, timestamp: Date.now() });
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          try {
+            sessionStorage.setItem(
+              `${SESSION_STORAGE_LONGITUDINAL_PREFIX}${cacheKey}`,
+              JSON.stringify({ data, timestamp: Date.now() })
+            );
+          } catch {
+            // ignore storage full
+          }
+        }
+        return data;
+      } catch (err: any) {
+        if (err?.name === 'AbortError' || signal?.aborted) {
+          return null;
+        }
+        console.error(`[Intelligence API] getLongitudinalHealth network error attempt ${attempt + 1}:`, err);
+        if (attempt === retryDelays.length - 1) {
+          // Return stale cache if available
+          const stale = longitudinalCache.get(cacheKey)?.data;
+          if (stale) return stale;
+          return null;
+        }
+      }
+    }
+
+    return null;
+  })();
+
+  inFlightLongitudinalPromises.set(cacheKey, fetchTask);
+
+  try {
+    return await fetchTask;
+  } finally {
+    inFlightLongitudinalPromises.delete(cacheKey);
+  }
 }
 
 

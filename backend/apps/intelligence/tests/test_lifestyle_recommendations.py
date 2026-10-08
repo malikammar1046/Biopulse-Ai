@@ -90,7 +90,7 @@ class LifestyleRecommendationsEngineTests(TestCase):
                 risk_label="Elevated Screening Risk",
                 probability=0.74,
                 probability_percent=74.0,
-                threshold=0.38,
+                threshold=0.25,
                 is_active=True,
             ),
             shap_drivers=[
@@ -835,8 +835,17 @@ class LifestyleRecommendationsApiTests(TestCase):
         self.assertIn("nutrition", data)
         self.assertIn("recommendations", data)
 
+    @patch("apps.intelligence.services.lifestyle_context_builder.health_service.fetch_profile")
     @patch("apps.intelligence.views_lifestyle.LifestyleContextBuilder.build_context")
-    def test_get_lifestyle_recommendations_caching(self, mock_build):
+    def test_get_lifestyle_recommendations_caching(self, mock_build, mock_profile):
+        mock_profile.return_value = PatientProfile(
+            user_id="778899",
+            id="778899",
+            gender="female",
+            pathway="female_pcos",
+            height_cm=160.0,
+            weight_kg=65.0,
+        )
         context = ComprehensiveLifestyleContext(
             user_id="778899",
             demographics=PatientDemographics(

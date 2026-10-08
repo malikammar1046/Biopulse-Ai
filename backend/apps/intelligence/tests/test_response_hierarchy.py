@@ -80,6 +80,8 @@ class ResponseHierarchyTests(TestCase):
             mock_res = MagicMock(
                 risk_category="higher_risk",
                 pcos_probability=0.58,
+                threshold=0.38,
+                screening_threshold=0.38,
                 explanations=[{"friendly_name": "Cycle Length Regularity", "direction": "increases_risk"}],
             )
             mock_run.return_value = mock_res

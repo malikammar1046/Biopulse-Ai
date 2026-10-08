@@ -3,8 +3,8 @@ backend/apps/intelligence/tests/test_intelligence.py
 PCOS-ML Progressive Assessment Automated Test Suite.
 
 Tests:
-1. Tier 1 model loading, 16 features, and threshold 0.38
-2. Cumulative Tier 2 model, 32 cumulative features, and threshold 0.29
+1. Tier 1 model loading, 16 features, and screening threshold 0.25
+2. Cumulative Tier 2 model, 32 cumulative features, and screening threshold 0.25
 3. Ultrasound image pipeline (EfficientNet-B0 + PCOM + Grad-CAM)
 4. Full Multimodal Fusion (Tier 1+2+3, 95/5 weighted probability fusion)
 5. Safe Tier 1+3 handling (returns tier_1_3_model_unavailable, preserves Tier 1 active)
@@ -147,7 +147,10 @@ class TestPCOSMLProgressiveService(TestCase):
         mm_res = pcos_ml_service.predict_tier1_2_3_multimodal(sample_t2, img)
         self.assertEqual(mm_res["assessment_level"], "tier_1_2_3")
         self.assertEqual(mm_res["tiers_included"], [1, 2, 3])
+        self.assertEqual(mm_res["threshold"], 0.29)
         self.assertEqual(mm_res["threshold"], MULTIMODAL_SCREENING_THRESHOLD)
+        self.assertEqual(mm_res["screening_policy_version"], "exploratory_v1")
+        self.assertEqual(mm_res["operating_point_status"], "exploratory_pending_clinical_validation")
         self.assertIn("fusion_details", mm_res)
         self.assertEqual(mm_res["fusion_details"]["clinical_weight"], 0.95)
         self.assertEqual(mm_res["fusion_details"]["ultrasound_weight"], 0.05)

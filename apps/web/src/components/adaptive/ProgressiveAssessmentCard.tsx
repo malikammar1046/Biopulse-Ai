@@ -19,6 +19,7 @@ import {
 import type { ProgressiveAssessment } from '../../types/intelligence';
 import { getRiskPatternDisplay } from '../../services/intelligenceService';
 import { useUserHealth } from '../../context/UserHealthContext';
+import { AssessmentChangeSummary } from './AssessmentChangeSummary';
 
 interface ProgressiveAssessmentCardProps {
   assessment: ProgressiveAssessment | null;
@@ -41,9 +42,24 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
   notification,
   onDismissNotification,
 }) => {
-  const { assessmentNotification, dismissAssessmentNotification } = useUserHealth();
+  const { assessmentNotification, dismissAssessmentNotification, assessmentHistory } = useUserHealth();
   const activeNotification = notification !== undefined ? notification : assessmentNotification;
   const handleDismiss = onDismissNotification || dismissAssessmentNotification;
+
+  const previousAssessment = React.useMemo(() => {
+    if (!assessment) return null;
+    if (assessment.replaced_assessment_id) {
+      const match = assessmentHistory.find(
+        (h) => h.id === assessment.replaced_assessment_id || h.assessment_id === assessment.replaced_assessment_id
+      );
+      if (match) return match;
+    }
+    return (
+      assessmentHistory.find(
+        (h) => h.id !== assessment.id && h.assessment_id !== assessment.assessment_id
+      ) || null
+    );
+  }, [assessment, assessmentHistory]);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -173,7 +189,6 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
   const currentCategory = assessment.risk_category || 'lower';
   const patternDisplay = getRiskPatternDisplay(currentCategory);
   const probPct = `${assessment.probability_percent?.toFixed(1) ?? (assessment.probability * 100).toFixed(1)}%`;
-  const thresholdPct = `${Math.round(assessment.threshold * 100)}%`;
 
   const badgeClass = isMale
     ? 'bg-sky-50 border-sky-200/80 text-[#0288D1]'
@@ -293,7 +308,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
 
           <div className="pt-2 flex flex-wrap items-center gap-4 text-xs font-mono text-slate-500">
             <span>
-              Calibrated Screening Cutoff: <strong className="text-slate-900">{thresholdPct}</strong>
+              Screening Policy: <strong className="text-slate-900">{assessment.screening_policy_version ? `Policy ${assessment.screening_policy_version.toUpperCase()}` : 'Policy v2'}</strong>
             </span>
             <span>·</span>
             <span>
@@ -350,7 +365,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
                 <div className="flex justify-between">
                   <span>Ultrasound Weight (5%):</span>
                   <strong className="text-slate-900">
-                    {(assessment.fusion_details.ultrasound_pcom_probability * 100).toFixed(1)}%
+                    {(((assessment.fusion_details.ultrasound_pcom_probability ?? assessment.fusion_details.ultrasound_probability ?? 0)) * 100).toFixed(1)}%
                   </strong>
                 </div>
               </div>
@@ -616,6 +631,14 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
           </div>
         )}
       </AnimatePresence>
+
+      {/* Reassessment Change Explanation */}
+      {assessment && previousAssessment && (
+        <AssessmentChangeSummary
+          currentAssessment={assessment}
+          previousAssessment={previousAssessment}
+        />
+      )}
     </div>
   );
 };

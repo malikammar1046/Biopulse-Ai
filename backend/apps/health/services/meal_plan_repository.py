@@ -223,6 +223,51 @@ class MealPlanRepository:
         self._memory_store[new_id] = record
         return record
 
+    def update_plan_payload(
+        self,
+        user_id: str,
+        plan_id: str,
+        plan_data: Dict[str, Any],
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        auth_token: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Updates the plan payload (e.g. for meal locking, safe swaps, status changes).
+        Strictly scopes to user_id and plan_id.
+        """
+        client = self._get_client(auth_token=auth_token)
+        update_fields: Dict[str, Any] = {"plan_data": plan_data}
+        if start_date:
+            update_fields["start_date"] = str(start_date)
+        if end_date:
+            update_fields["end_date"] = str(end_date)
+
+        if client is not None:
+            try:
+                res = (
+                    client.table("nutrition_plans")
+                    .update(update_fields)
+                    .eq("id", plan_id)
+                    .eq("user_id", user_id)
+                    .execute()
+                )
+                if res.data and len(res.data) > 0:
+                    return res.data[0]
+            except Exception as exc:
+                logger.error("Failed to update plan %s in Supabase: %s", plan_id, exc)
+
+        # In-memory update
+        if plan_id in self._memory_store and self._memory_store[plan_id].get("user_id") == user_id:
+            self._memory_store[plan_id]["plan_data"] = plan_data
+            if start_date:
+                self._memory_store[plan_id]["start_date"] = str(start_date)
+            if end_date:
+                self._memory_store[plan_id]["end_date"] = str(end_date)
+            return self._memory_store[plan_id]
+        return None
+
 
 # Global singleton instance
 meal_plan_repository = MealPlanRepository()
+

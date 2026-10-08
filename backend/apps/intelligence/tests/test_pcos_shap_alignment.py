@@ -119,7 +119,7 @@ class TestPCOSShapAlignment(unittest.TestCase):
         mock_assessment = {
             'assessment_level': 'tier_2',
             'probability': 0.81,
-            'screening_threshold': 0.29,
+            'screening_threshold': 0.25,
             'risk_category': 'high_risk',
             'explanations': [
                 {

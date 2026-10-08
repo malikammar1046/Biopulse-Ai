@@ -1,6 +1,7 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { User as SupabaseUser, Session as SupabaseSession } from '@supabase/supabase-js';
 import type { UserGender, HealthPathway } from '../types/onboarding';
+import { validateEmail } from '../utils/profileValidation';
 
 export interface LoginPayload {
   email: string;
@@ -41,6 +42,14 @@ class AuthService {
       return {
         success: false,
         error: 'Please provide both an email address and password.',
+      };
+    }
+
+    const emailValidation = validateEmail(payload.email);
+    if (!emailValidation.isValid) {
+      return {
+        success: false,
+        error: emailValidation.error || 'Please enter a valid email address.',
       };
     }
 
@@ -148,6 +157,14 @@ class AuthService {
       return {
         success: false,
         error: 'Please fill in all required fields.',
+      };
+    }
+
+    const emailValidation = validateEmail(payload.email);
+    if (!emailValidation.isValid) {
+      return {
+        success: false,
+        error: emailValidation.error || 'Please enter a valid email address.',
       };
     }
 

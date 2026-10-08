@@ -29,6 +29,7 @@ import { ClinicalLabsModal } from '../adaptive/ClinicalLabsModal';
 import { UltrasoundUploadModal } from '../adaptive/UltrasoundUploadModal';
 import { AssessmentHistoryModal } from '../adaptive/AssessmentHistoryModal';
 import { PatientShapExplanation } from '../explainability/PatientShapExplanation';
+import { AssessmentChangeSummary } from '../adaptive/AssessmentChangeSummary';
 
 
 export interface RiskRangeConfig {
@@ -41,15 +42,11 @@ export interface RiskRangeConfig {
 
 /**
  * Derives authoritative risk thresholds and range labels from the active assessment configuration.
- * Consumes real model threshold configuration (e.g. Tier 1: 20% low cutoff, 38% screening cutoff;
- * Tier 2/3: 18% low cutoff, 29% screening cutoff).
+ * Consumes Policy v2 screening configuration (18% lower cutoff, 25% primary operating cutoff).
  */
 export function getAuthoritativeRiskRanges(assessment: any): RiskRangeConfig {
-  const level = assessment?.assessment_level;
-  const isTier2Or3 = level === 'tier_1_2' || level === 'tier_1_2_3' || level === 'tier_1_3';
-
-  const defaultHigh = isTier2Or3 ? 29 : 38;
-  const defaultLow = isTier2Or3 ? 18 : 20;
+  const defaultHigh = 25;
+  const defaultLow = 18;
 
   const highCutoff =
     assessment?.threshold !== undefined && assessment?.threshold !== null
@@ -61,9 +58,9 @@ export function getAuthoritativeRiskRanges(assessment: any): RiskRangeConfig {
   return {
     lowCutoffPercent: lowCutoff,
     highCutoffPercent: highCutoff,
-    lowLabel: `0 – ${lowCutoff}%`,
-    intermediateLabel: `${lowCutoff} – ${highCutoff}%`,
-    highLabel: `${highCutoff}%+`,
+    lowLabel: 'Lower likelihood',
+    intermediateLabel: 'Intermediate likelihood',
+    highLabel: 'Higher likelihood',
   };
 }
 
@@ -217,9 +214,25 @@ export function extractNormalizedFactors(explanations: any[] | undefined | null)
 export const FemaleScreeningWorkspace: React.FC = () => {
   const {
     activeAssessment,
+    assessmentHistory,
     submitTier1,
   } = useUserHealth();
   const navigate = useNavigate();
+
+  const previousAssessment = React.useMemo(() => {
+    if (!activeAssessment) return null;
+    if (activeAssessment.replaced_assessment_id) {
+      const match = assessmentHistory.find(
+        (h) => h.id === activeAssessment.replaced_assessment_id || h.assessment_id === activeAssessment.replaced_assessment_id
+      );
+      if (match) return match;
+    }
+    return (
+      assessmentHistory.find(
+        (h) => h.id !== activeAssessment.id && h.assessment_id !== activeAssessment.assessment_id
+      ) || null
+    );
+  }, [activeAssessment, assessmentHistory]);
 
   const [isLabsModalOpen, setIsLabsModalOpen] = useState(false);
   const [isUltrasoundModalOpen, setIsUltrasoundModalOpen] = useState(false);
@@ -256,10 +269,15 @@ export const FemaleScreeningWorkspace: React.FC = () => {
     ? Math.min(Math.max(probabilityPercent, 4), 96)
     : null;
 
-  // Dynamic Risk Category
+  // Dynamic Risk Category - Authoritative based on calibrated cutoffs
   const categoryRaw = String(activeAssessment?.risk_category || '').toLowerCase();
-  const isLowerRisk = categoryRaw.includes('low') || (probabilityPercent !== null && probabilityPercent < riskRanges.lowCutoffPercent);
-  const isHigherRisk = categoryRaw.includes('high') || (probabilityPercent !== null && probabilityPercent >= riskRanges.highCutoffPercent);
+  const isHigherRisk = probabilityPercent !== null
+    ? probabilityPercent >= riskRanges.highCutoffPercent
+    : categoryRaw.includes('high') || categoryRaw.includes('elevated');
+
+  const isLowerRisk = probabilityPercent !== null
+    ? probabilityPercent < riskRanges.lowCutoffPercent
+    : categoryRaw.includes('low');
 
   // Dynamic Tier Label
   const getTierLabel = () => {
@@ -453,16 +471,16 @@ export const FemaleScreeningWorkspace: React.FC = () => {
             {/* Spectrum Range Labels */}
             <div className="flex justify-between items-start mt-2 text-xs select-none">
               <div className="text-left">
-                <span className="block font-semibold text-[#027A48]">Lower Risk</span>
-                <span className="text-[11px] text-[#667085]">{riskRanges.lowLabel}</span>
+                <span className="block font-semibold text-[#027A48]">Lower Likelihood</span>
+                <span className="text-[11px] text-[#667085]">General profile</span>
               </div>
               <div className="text-center">
-                <span className="block font-medium text-[#667085]">Intermediate Risk</span>
-                <span className="text-[11px] text-[#98A2B3]">{riskRanges.intermediateLabel}</span>
+                <span className="block font-medium text-[#667085]">Intermediate Likelihood</span>
+                <span className="text-[11px] text-[#98A2B3]">Monitoring zone</span>
               </div>
               <div className="text-right">
-                <span className="block font-semibold text-[#B42318]">Higher Risk</span>
-                <span className="text-[11px] text-[#98A2B3]">{riskRanges.highLabel}</span>
+                <span className="block font-semibold text-[#B42318]">Higher Likelihood</span>
+                <span className="text-[11px] text-[#98A2B3]">Clinical evaluation</span>
               </div>
             </div>
           </div>
@@ -598,6 +616,14 @@ export const FemaleScreeningWorkspace: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* ── Assessment Change Summary ("What Changed?") ───────────────────── */}
+      {hasAssessment && previousAssessment && activeAssessment && (
+        <AssessmentChangeSummary
+          currentAssessment={activeAssessment}
+          previousAssessment={previousAssessment}
+        />
+      )}
 
       {/* ── Patient-Centered SHAP Explainability Engine ────────────────────── */}
       {hasAssessment && activeAssessment?.shap_explanation ? (

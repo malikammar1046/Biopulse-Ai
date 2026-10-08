@@ -450,7 +450,7 @@ class LongitudinalHealthService:
                     "tiers_included": ass.get("tiers_included", [1]),
                     "probability": float(ass.get("probability", 0.0)),
                     "probability_percent": round(float(ass.get("probability_percent", 0.0)), 1),
-                    "threshold": float(ass.get("threshold", 0.38)),
+                    "threshold": float(ass.get("threshold", 0.1808 if normalized_module == "male_hypogonadism" else 0.25)),
                     "risk_category": ass.get("risk_category", "lower"),
                     "risk_label": ass.get("risk_label", "Lower Screening Risk"),
                     "model_name": ass.get("model_name", "BioPulse AI Model"),
@@ -783,6 +783,7 @@ class LongitudinalHealthService:
             "verified_labs: %.0f ms\n"
             "symptoms: %.0f ms\n"
             "cycle_records: %.0f ms\n"
+            "metric_observations: %.0f ms\n"
             "payload_build: %.0f ms\n"
             "total: %.2f s",
             timings.get("assessment_history", 0.0),
@@ -790,6 +791,7 @@ class LongitudinalHealthService:
             timings.get("verified_labs", 0.0),
             timings.get("symptoms", 0.0),
             timings.get("cycle_records", 0.0),
+            timings.get("metric_observations", 0.0),
             payload_build_ms,
             total_duration,
         )

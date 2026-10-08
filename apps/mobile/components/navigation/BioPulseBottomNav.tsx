@@ -46,20 +46,20 @@ const TABS: TabDefinition[] = [
   {
     id: 'track',
     label: 'Track',
-    iconActive: 'bar-chart',
-    iconInactive: 'bar-chart-outline',
+    iconActive: 'checkbox',
+    iconInactive: 'checkbox-outline',
   },
   {
     id: 'guidance',
     label: 'Guidance',
-    iconActive: 'sparkles',
-    iconInactive: 'sparkles-outline',
+    iconActive: 'person',
+    iconInactive: 'person-outline',
   },
   {
     id: 'more',
     label: 'More',
-    iconActive: 'grid',
-    iconInactive: 'grid-outline',
+    iconActive: 'reorder-three',
+    iconInactive: 'reorder-three-outline',
   },
 ];
 
@@ -112,7 +112,7 @@ export const BioPulseBottomNav: React.FC<BioPulseBottomNavProps> = ({
             const target = (lastActiveScreeningRoute || '/female-symptoms') as any;
             router.push(target);
           } else {
-            router.push('/(app)');
+            router.push('/(app)/screening');
           }
           break;
         case 'track':

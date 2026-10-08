@@ -201,7 +201,7 @@ export const TodayDosesList: React.FC<TodayDosesListProps> = ({
             }`}
           >
             <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>+ Add medicine</span>
+            <span>Add medicine</span>
           </button>
         </div>
       )}

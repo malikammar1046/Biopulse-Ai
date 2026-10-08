@@ -106,7 +106,7 @@ export const PersonalizedMedicationsHeader: React.FC<PersonalizedMedicationsHead
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = accentColor)}
           >
             <Plus className="w-4 h-4 text-white" aria-hidden="true" />
-            <span>+ Add medicine</span>
+            <span>Add medicine</span>
           </button>
 
           <button
