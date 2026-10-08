@@ -16,6 +16,7 @@ import { CareCircleModuleCard } from '../dashboard/overview/modules/CareCircleMo
 import { SymptomsModuleCard } from '../dashboard/overview/modules/SymptomsModuleCard';
 import { NextBestActionModuleCard } from '../dashboard/overview/modules/NextBestActionModuleCard';
 
+import { SpecialistCareModuleCard } from '../doctors/SpecialistCareModuleCard';
 import { getAuthoritativeAssessmentForPathway } from '../../utils/authoritativeAssessmentSelector';
 import { logDashboardRenderTrace } from '../../utils/probabilityTrace';
 
@@ -169,8 +170,8 @@ export const FemaleDashboardOverview: React.FC = () => {
           dailyTargets={dailyNutritionTargets}
           pathway="female"
           loading={dietLoading}
-          onViewMealPlan={() => navigate(ROUTES.APP.DIET)}
-          onLogMeal={() => navigate(ROUTES.APP.DIET)}
+          onViewMealPlan={() => navigate(ROUTES.APP.LIFESTYLE)}
+          onLogMeal={() => navigate(ROUTES.APP.LIFESTYLE)}
         />
 
         {/* ROW 2 */}
@@ -190,7 +191,7 @@ export const FemaleDashboardOverview: React.FC = () => {
           loading={dietLoading}
           onIncrement={incrementWater}
           onDecrement={decrementWater}
-          onOpenWaterLog={() => navigate(ROUTES.APP.DIET)}
+          onOpenWaterLog={() => navigate(ROUTES.APP.LIFESTYLE)}
         />
 
         {/* Card 6: Medication Reminders */}
@@ -235,6 +236,9 @@ export const FemaleDashboardOverview: React.FC = () => {
           onOpenAiTwin={() => openAiChatWithPrompt('What is my recommended next clinical step?')}
         />
       </div>
+
+      {/* ── 3. Clinical Specialist Care Pathway ───────────────────────────── */}
+      <SpecialistCareModuleCard pathway="female" />
     </motion.div>
   );
 };

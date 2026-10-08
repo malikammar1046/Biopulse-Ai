@@ -21,7 +21,6 @@ export const MobileBottomNav: React.FC = () => {
   const navItems = [
     { label: 'Home', path: overviewPath, icon: LayoutGrid01 },
     { label: 'Lifestyle', path: ROUTES.APP.LIFESTYLE, icon: Scales01 },
-    { label: 'Nutrition', path: ROUTES.APP.NUTRITION, icon: Scales01 },
     ...(pathway === 'female'
       ? [{ label: 'Cycle', path: ROUTES.APP.CYCLE, icon: Calendar }]
       : [{ label: 'Hub', path: ROUTES.APP.HUB, icon: LayoutGrid01 }]),

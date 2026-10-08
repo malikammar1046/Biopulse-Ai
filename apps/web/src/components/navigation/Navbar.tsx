@@ -103,7 +103,6 @@ export const Navbar: React.FC = () => {
   const isAboutActive = location.pathname === ROUTES.ABOUT;
   const isHowItWorksActive = location.pathname === ROUTES.HOW_IT_WORKS;
   const isCareCircleActive = location.pathname === ROUTES.CARE_CIRCLE;
-  const isDoctorsActive = location.pathname === ROUTES.DOCTORS;
   const isContactActive = location.pathname === ROUTES.CONTACT;
   const isAppActive =
     location.pathname === ROUTES.APP_DOWNLOAD ||
@@ -302,22 +301,6 @@ export const Navbar: React.FC = () => {
                 </AnimatePresence>
               </div>
 
-              {/* Doctors Directory */}
-              <Link
-                to={ROUTES.DOCTORS}
-                className={`relative py-1 transition-colors whitespace-nowrap ${
-                  isDoctorsActive ? 'text-[#0891B2] font-bold' : 'text-slate-600 hover:text-[#0891B2]'
-                }`}
-              >
-                Doctors
-                {isDoctorsActive && (
-                  <motion.div
-                    layoutId="navbar-active-indicator"
-                    className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-[#0891B2] rounded-full"
-                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                  />
-                )}
-              </Link>
 
               {/* Contact */}
               <Link
@@ -504,14 +487,6 @@ export const Navbar: React.FC = () => {
                       </Link>
                     </div>
                   </div>
-                  <Link
-                    to={ROUTES.DOCTORS}
-                    className={`p-2.5 rounded-xl transition-colors ${
-                      isDoctorsActive ? 'bg-sky-50 text-[#0891B2] font-bold' : 'hover:bg-slate-50'
-                    }`}
-                  >
-                    Doctors Directory
-                  </Link>
                   <Link
                     to={ROUTES.CONTACT}
                     className={`p-2.5 rounded-xl transition-colors ${
