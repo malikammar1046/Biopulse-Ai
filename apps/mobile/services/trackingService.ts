@@ -238,6 +238,37 @@ export class TrackingService {
     return { data: !res.error, error: res.error, status: res.status };
   }
 
+  static async updateCycleRecord(
+    recordId: string,
+    token: string,
+    input: Partial<LogCycleInput>
+  ): Promise<ApiResponse<boolean>> {
+    if (!recordId || !token) {
+      return { data: false, error: 'Record ID and token required.', status: 400 };
+    }
+
+    const payload: Record<string, any> = {
+      updated_at: new Date().toISOString(),
+    };
+    if (input.periodStartDate) payload.period_start_date = input.periodStartDate;
+    if (input.periodEndDate !== undefined) payload.period_end_date = input.periodEndDate;
+    if (input.cycleLength !== undefined) payload.cycle_length = input.cycleLength;
+    if (input.flow) payload.flow = input.flow.toLowerCase();
+    if (input.notes !== undefined) payload.notes = input.notes;
+
+    const url = `${SUPABASE_URL}/rest/v1/cycle_records?id=eq.${recordId}`;
+    const res = await safeRequest(url, {
+      method: 'PATCH',
+      headers: {
+        ...getSupabaseHeaders(token),
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    return { data: !res.error, error: res.error, status: res.status };
+  }
+
   // --------------------------------------------------------------------------
   // SYMPTOM RECORDS
   // --------------------------------------------------------------------------
@@ -320,6 +351,55 @@ export class TrackingService {
       error: null,
       status: 201,
     };
+  }
+
+  static async updateSymptom(
+    recordId: string,
+    token: string,
+    input: Partial<LogSymptomInput>
+  ): Promise<ApiResponse<boolean>> {
+    if (!recordId || !token) {
+      return { data: false, error: 'Record ID and token required.', status: 400 };
+    }
+
+    const payload: Record<string, any> = {
+      updated_at: new Date().toISOString(),
+    };
+    if (input.symptomType) payload.symptom_type = input.symptomType;
+    if (input.category) payload.category = input.category;
+    if (input.severity) payload.severity = input.severity.toLowerCase();
+    if (input.occurredAt) payload.occurred_at = input.occurredAt;
+    if (input.cycleDay !== undefined) payload.cycle_day = input.cycleDay;
+    if (input.notes !== undefined) payload.notes = input.notes;
+
+    const url = `${SUPABASE_URL}/rest/v1/symptom_records?id=eq.${recordId}`;
+    const res = await safeRequest(url, {
+      method: 'PATCH',
+      headers: {
+        ...getSupabaseHeaders(token),
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    return { data: !res.error, error: res.error, status: res.status };
+  }
+
+  static async deleteSymptom(
+    recordId: string,
+    token: string
+  ): Promise<ApiResponse<boolean>> {
+    if (!recordId || !token) {
+      return { data: false, error: 'Record ID and token required.', status: 400 };
+    }
+
+    const url = `${SUPABASE_URL}/rest/v1/symptom_records?id=eq.${recordId}`;
+    const res = await safeRequest(url, {
+      method: 'DELETE',
+      headers: getSupabaseHeaders(token),
+    });
+
+    return { data: !res.error, error: res.error, status: res.status };
   }
 
   // --------------------------------------------------------------------------
@@ -432,6 +512,40 @@ export class TrackingService {
     return { data: !res.error, error: res.error, status: res.status };
   }
 
+  static async getWaterHistory(
+    userId: string,
+    token: string,
+    days = 7
+  ): Promise<ApiResponse<WaterLog[]>> {
+    if (!userId || !token) {
+      return { data: null, error: 'User is not authenticated.', status: 401 };
+    }
+
+    const url = `${SUPABASE_URL}/rest/v1/water_logs?user_id=eq.${userId}&order=date.desc&limit=${days}&select=*`;
+    const res = await safeRequest<any[]>(url, {
+      method: 'GET',
+      headers: getSupabaseHeaders(token),
+    });
+
+    if (res.error) return { data: null, error: res.error, status: res.status };
+
+    const logs: WaterLog[] = (res.data || []).map((row: any) => {
+      const glasses = Number(row.glasses) || 0;
+      const target = Number(row.target_glasses) || 8;
+      return {
+        id: String(row.id),
+        userId,
+        date: row.date,
+        glasses,
+        targetGlasses: target,
+        consumedLiters: parseFloat((glasses * 0.25).toFixed(2)),
+        targetLiters: parseFloat((target * 0.25).toFixed(2)),
+      };
+    });
+
+    return { data: logs, error: null, status: 200 };
+  }
+
   // --------------------------------------------------------------------------
   // FITNESS & MOVEMENT LOGS
   // --------------------------------------------------------------------------
@@ -445,7 +559,7 @@ export class TrackingService {
     }
 
     const todayStr = new Date().toISOString().split('T')[0];
-    const url = `${SUPABASE_URL}/rest/v1/fitness_logs?user_id=eq.${userId}&occurred_at=eq.${todayStr}&select=*`;
+    const url = `${SUPABASE_URL}/rest/v1/fitness_logs?user_id=eq.${userId}&occurred_at=eq.${todayStr}&order=created_at.desc&select=*`;
     const res = await safeRequest<any[]>(url, {
       method: 'GET',
       headers: getSupabaseHeaders(token),
@@ -468,6 +582,38 @@ export class TrackingService {
     return { data: logs, error: null, status: 200 };
   }
 
+  static async getFitnessHistory(
+    userId: string,
+    token: string,
+    limit = 30
+  ): Promise<ApiResponse<FitnessLog[]>> {
+    if (!userId || !token) {
+      return { data: null, error: 'User is not authenticated.', status: 401 };
+    }
+
+    const url = `${SUPABASE_URL}/rest/v1/fitness_logs?user_id=eq.${userId}&order=occurred_at.desc,created_at.desc&limit=${limit}&select=*`;
+    const res = await safeRequest<any[]>(url, {
+      method: 'GET',
+      headers: getSupabaseHeaders(token),
+    });
+
+    if (res.error) return { data: null, error: res.error, status: res.status };
+
+    const logs: FitnessLog[] = (res.data || []).map((row: any) => ({
+      id: String(row.id),
+      userId,
+      activityType: row.activity_type || 'walking',
+      activityName: row.activity_name || 'Activity',
+      durationMinutes: Number(row.duration_minutes) || 0,
+      energyLevel: row.energy_level || 'Normal',
+      occurredAt: row.occurred_at,
+      notes: row.notes || '',
+      createdAt: row.created_at,
+    }));
+
+    return { data: logs, error: null, status: 200 };
+  }
+
   static async logFitness(
     userId: string,
     token: string,
@@ -477,12 +623,28 @@ export class TrackingService {
       return { data: null, error: 'User is not authenticated.', status: 401 };
     }
 
+    const allowedTypes = ['walking', 'strength', 'yoga', 'stretching', 'cycling', 'low_impact_cardio', 'mobility', 'rest_recovery', 'other'];
+    const rawType = (input.activityType || 'walking').toLowerCase().replace(/\s+/g, '_');
+    const matchedType = allowedTypes.includes(rawType)
+      ? rawType
+      : rawType.includes('walk') ? 'walking'
+      : rawType.includes('strength') ? 'strength'
+      : rawType.includes('yoga') ? 'yoga'
+      : rawType.includes('stretch') ? 'stretching'
+      : rawType.includes('cycl') ? 'cycling'
+      : rawType.includes('cardio') ? 'low_impact_cardio'
+      : 'other';
+
+    const allowedEnergy = ['low_energy', 'okay', 'good', 'great'];
+    const rawEnergy = input.energyLevel ? input.energyLevel.toLowerCase().replace(/\s+/g, '_') : null;
+    const matchedEnergy = rawEnergy && allowedEnergy.includes(rawEnergy) ? rawEnergy : null;
+
     const payload = {
       user_id: userId,
-      activity_type: input.activityType,
-      activity_name: input.activityName,
-      duration_minutes: input.durationMinutes,
-      energy_level: input.energyLevel || null,
+      activity_type: matchedType,
+      activity_name: input.activityName || 'Activity',
+      duration_minutes: Math.max(1, input.durationMinutes),
+      energy_level: matchedEnergy,
       occurred_at: input.occurredAt || new Date().toISOString().split('T')[0],
       notes: input.notes || null,
     };
@@ -506,7 +668,7 @@ export class TrackingService {
         userId,
         activityType: row.activity_type,
         activityName: row.activity_name,
-        durationMinutes: Number(row.duration_minutes) || 0,
+        durationMinutes: Number(row.duration_minutes) || payload.duration_minutes,
         energyLevel: row.energy_level,
         occurredAt: row.occurred_at,
         notes: row.notes,
@@ -514,6 +676,23 @@ export class TrackingService {
       error: null,
       status: 201,
     };
+  }
+
+  static async deleteFitnessLog(
+    logId: string,
+    token: string
+  ): Promise<ApiResponse<boolean>> {
+    if (!logId || !token) {
+      return { data: false, error: 'Log ID and token required.', status: 400 };
+    }
+
+    const url = `${SUPABASE_URL}/rest/v1/fitness_logs?id=eq.${logId}`;
+    const res = await safeRequest(url, {
+      method: 'DELETE',
+      headers: getSupabaseHeaders(token),
+    });
+
+    return { data: !res.error, error: res.error, status: res.status };
   }
 
   static logActivity = TrackingService.logFitness;

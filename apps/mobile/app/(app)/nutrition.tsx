@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   TextInput,
   Modal,
   Alert,
+  ActivityIndicator,
+  RefreshControl,
   useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -29,15 +31,20 @@ const NUTRITION_BOWL = require('../../assets/nutrition_healthy_bowl.jpg');
  * - Top Header: Back chevron (<), centered "Nutrition Log", right calendar icon
  * - Date Navigator: < Today, 14 Sep 2026 >
  * - Macro Ring Card:
- *   - Circular ring gauge with 1,320 of 1,800 kcal
- *   - Macro breakdown: Protein (62 / 90 g), Carbs (148 / 220 g), Fats (42 / 70 g)
- * - Section: "Meals Logged (2)" with [+ Add Meal] button
+ *   - Circular ring gauge with kcal consumed of target kcal
+ *   - Macro breakdown: Protein, Carbs, Fats
+ * - Section: "Meals Logged (N)" with [+ Add Meal] button
  * - Meal Cards:
- *   - Breakfast (8:30 AM, 320 kcal): Oats with Banana (12g protein, 48g carbs, 10g fats)
- *   - Lunch (1:15 PM, 420 kcal): Grilled Chicken Salad (35g protein, 18g carbs, 22g fats)
+ *   - Meal type tag, Time, Kcal
+ *   - Title & Portion description
+ *   - Protein macro chip & Delete action
  * - Dual Bottom CTAs:
  *   - [ 📖 View Meal Plan ] (outline button)
  *   - [ + Add Meal ] (solid pink button)
+ * - Persistent Backend Integration:
+ *   - Connects to public.nutrition_food_logs via useHealthStore
+ *   - Date navigation loads true stored logs
+ *   - Loading, Empty, Error, Retry, and Save Success handling
  */
 export default function NutritionScreen() {
   const router = useRouter();
@@ -45,15 +52,52 @@ export default function NutritionScreen() {
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
 
-  const { nutrition, addMeal } = useHealthStore();
+  const {
+    nutrition,
+    addMeal,
+    deleteMeal,
+    isLoadingNutrition,
+    nutritionError,
+    loadNutritionData,
+  } = useHealthStore();
 
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [modalVisible, setModalVisible] = useState(false);
   const [mealName, setMealName] = useState('');
+  const [mealPortion, setMealPortion] = useState('');
   const [mealKcal, setMealKcal] = useState('');
   const [mealProtein, setMealProtein] = useState('');
   const [mealCarbs, setMealCarbs] = useState('');
   const [mealFats, setMealFats] = useState('');
   const [mealType, setMealType] = useState<'Breakfast' | 'Lunch' | 'Dinner' | 'Snacks'>('Lunch');
+  const [isSaving, setIsSaving] = useState(false);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  const isToday = useMemo(() => {
+    const today = new Date();
+    return (
+      currentDate.getDate() === today.getDate() &&
+      currentDate.getMonth() === today.getMonth() &&
+      currentDate.getFullYear() === today.getFullYear()
+    );
+  }, [currentDate]);
+
+  const dateDisplayStr = useMemo(() => {
+    const formatted = currentDate.toLocaleDateString('en-US', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+    return isToday ? `Today, ${formatted}` : formatted;
+  }, [currentDate, isToday]);
+
+  const changeDate = useCallback((offsetDays: number) => {
+    const nextDate = new Date(currentDate);
+    nextDate.setDate(nextDate.getDate() + offsetDays);
+    setCurrentDate(nextDate);
+    const dateIso = nextDate.toISOString().split('T')[0];
+    loadNutritionData(dateIso);
+  }, [currentDate, loadNutritionData]);
 
   const consumedKcal = nutrition.caloriesConsumed ?? 0;
   const targetKcal = nutrition.calorieTarget || 1800;
@@ -67,28 +111,63 @@ export default function NutritionScreen() {
   const fatsG = nutrition.fatsConsumed ?? 0;
   const fatsTarget = nutrition.fatsTarget || 70;
 
-  const handleAddSubmit = useCallback(() => {
+  const handleAddSubmit = useCallback(async () => {
     if (!mealName.trim() || !mealKcal.trim()) {
       Alert.alert('Required', 'Please enter meal title and estimated calories.');
       return;
     }
 
-    addMeal({
+    const kcalNum = parseInt(mealKcal, 10) || 350;
+    const proteinNum = parseInt(mealProtein, 10) || Math.round((kcalNum * 0.2) / 4);
+
+    setIsSaving(true);
+    setSuccessMsg(null);
+
+    const success = await addMeal({
       mealType: mealType.toLowerCase() as any,
       name: mealName.trim(),
-      description: mealName.trim(),
-      calories: parseInt(mealKcal, 10) || 350,
-      proteinGrams: parseInt(mealProtein, 10) || 15,
+      description: mealPortion.trim() || mealName.trim(),
+      calories: kcalNum,
+      proteinGrams: proteinNum,
       time: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
     });
 
-    setMealName('');
-    setMealKcal('');
-    setMealProtein('');
-    setMealCarbs('');
-    setMealFats('');
-    setModalVisible(false);
-  }, [mealName, mealKcal, mealProtein, mealType, addMeal]);
+    setIsSaving(false);
+
+    if (success) {
+      setSuccessMsg(`Logged "${mealName.trim()}" (${kcalNum} kcal).`);
+      setTimeout(() => setSuccessMsg(null), 4000);
+      setMealName('');
+      setMealPortion('');
+      setMealKcal('');
+      setMealProtein('');
+      setMealCarbs('');
+      setMealFats('');
+      setModalVisible(false);
+    } else {
+      Alert.alert('Save Failed', 'Could not save meal log. Please try again.');
+    }
+  }, [mealName, mealPortion, mealKcal, mealProtein, mealType, addMeal]);
+
+  const handleDeleteMeal = useCallback((mealId: string, mealTitle: string) => {
+    Alert.alert(
+      'Delete Meal',
+      `Are you sure you want to delete "${mealTitle}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            const ok = await deleteMeal(mealId);
+            if (!ok) {
+              Alert.alert('Error', 'Failed to delete meal from server.');
+            }
+          },
+        },
+      ]
+    );
+  }, [deleteMeal]);
 
   const topPad = Math.max(insets.top, 12);
   const bottomPad = Math.max(insets.bottom, 20);
@@ -111,7 +190,12 @@ export default function NutritionScreen() {
 
         <Text style={styles.headerTitle}>Nutrition Log</Text>
 
-        <Pressable hitSlop={10} style={styles.headerRightBtn}>
+        <Pressable
+          onPress={() => changeDate(0)}
+          hitSlop={10}
+          style={styles.headerRightBtn}
+          accessibilityLabel="Reset to today"
+        >
           <Ionicons name="calendar-outline" size={22} color="#F43F7D" />
         </Pressable>
       </View>
@@ -119,20 +203,62 @@ export default function NutritionScreen() {
       <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPad + 30 }]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoadingNutrition}
+            onRefresh={() => loadNutritionData(currentDate.toISOString().split('T')[0])}
+            tintColor="#F43F7D"
+            colors={['#F43F7D']}
+          />
+        }
       >
         <View style={[styles.mainWrapper, isTablet && styles.tabletWrapper]}>
           {/* DATE NAVIGATOR */}
           <View style={styles.dateNavigatorRow}>
-            <Pressable hitSlop={8}>
+            <Pressable onPress={() => changeDate(-1)} hitSlop={12} accessibilityLabel="Previous day">
               <Ionicons name="chevron-back" size={18} color="#64748B" />
             </Pressable>
-            <Text style={styles.dateNavigatorText}>
-              Today, {new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
-            </Text>
-            <Pressable hitSlop={8}>
+            <Text style={styles.dateNavigatorText}>{dateDisplayStr}</Text>
+            <Pressable
+              onPress={() => changeDate(1)}
+              hitSlop={12}
+              accessibilityLabel="Next day"
+              disabled={isToday}
+              style={{ opacity: isToday ? 0.35 : 1 }}
+            >
               <Ionicons name="chevron-forward" size={18} color="#64748B" />
             </Pressable>
           </View>
+
+          {/* SUCCESS BANNER */}
+          {successMsg && (
+            <View style={styles.successBanner}>
+              <Ionicons name="checkmark-circle" size={18} color="#10B981" />
+              <Text style={styles.successBannerText}>{successMsg}</Text>
+            </View>
+          )}
+
+          {/* ERROR BANNER */}
+          {nutritionError && (
+            <View style={styles.errorBanner}>
+              <Ionicons name="alert-circle-outline" size={18} color="#EF4444" />
+              <Text style={styles.errorBannerText}>{nutritionError}</Text>
+              <Pressable
+                onPress={() => loadNutritionData(currentDate.toISOString().split('T')[0])}
+                style={styles.retryBtn}
+              >
+                <Text style={styles.retryBtnText}>Retry</Text>
+              </Pressable>
+            </View>
+          )}
+
+          {/* LOADING INDICATOR */}
+          {isLoadingNutrition && (!nutrition.meals || nutrition.meals.length === 0) && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#F43F7D" />
+              <Text style={styles.loadingText}>Syncing nutrition log...</Text>
+            </View>
+          )}
 
           {/* MACRO RING & BREAKDOWN CARD */}
           <View style={styles.macrosCard}>
@@ -179,9 +305,12 @@ export default function NutritionScreen() {
 
           {/* MEALS LOGGED HEADER */}
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>
-              Meals Logged ({nutrition.meals?.length || 0})
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={styles.sectionTitle}>
+                Meals Logged ({nutrition.meals?.length || 0})
+              </Text>
+              {isLoadingNutrition && <ActivityIndicator size="small" color="#F43F7D" />}
+            </View>
             <Pressable onPress={() => setModalVisible(true)} style={styles.addMealTextBtn}>
               <Ionicons name="add" size={16} color="#F43F7D" />
               <Text style={styles.addMealText}>Add Meal</Text>
@@ -192,7 +321,7 @@ export default function NutritionScreen() {
           {(!nutrition.meals || nutrition.meals.length === 0) ? (
             <View style={styles.mealsEmptyCard}>
               <SaladBowlIllustration size={150} />
-              <Text style={styles.emptyMealsTitle}>No meals logged today</Text>
+              <Text style={styles.emptyMealsTitle}>No meals logged {isToday ? 'today' : 'for this day'}</Text>
               <Text style={styles.emptyMealsDesc}>
                 Start logging meals to receive more relevant nutrition insights and personalized meal recommendations.
               </Text>
@@ -201,7 +330,7 @@ export default function NutritionScreen() {
                 style={styles.emptyLogMealBtn}
                 accessibilityRole="button"
               >
-                <Ionicons name="refresh-outline" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+                <Ionicons name="add-outline" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
                 <Text style={styles.emptyLogMealBtnText}>Log a Meal</Text>
               </Pressable>
               <Pressable
@@ -259,6 +388,15 @@ export default function NutritionScreen() {
                       <Text style={styles.macroChipText}>🌾 {meal.proteinGrams}g protein</Text>
                     </View>
                   </View>
+
+                  <Pressable
+                    onPress={() => handleDeleteMeal(meal.id, meal.name)}
+                    style={styles.deleteMealBtn}
+                    hitSlop={8}
+                    accessibilityLabel="Delete meal"
+                  >
+                    <Ionicons name="trash-outline" size={16} color="#94A3B8" />
+                  </Pressable>
                 </View>
               ))}
             </View>
@@ -307,18 +445,44 @@ export default function NutritionScreen() {
               </Pressable>
             </View>
 
+            {/* Meal Type Pill Selector */}
+            <View style={styles.mealTypePillsRow}>
+              {(['Breakfast', 'Lunch', 'Dinner', 'Snacks'] as const).map((t) => {
+                const isSelected = mealType === t;
+                return (
+                  <Pressable
+                    key={t}
+                    onPress={() => setMealType(t)}
+                    style={[styles.mealTypePill, isSelected && styles.mealTypePillActive]}
+                  >
+                    <Text style={[styles.mealTypePillText, isSelected && styles.mealTypePillTextActive]}>
+                      {t}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
             <TextInput
               style={styles.modalInput}
-              placeholder="Meal description (e.g. Greek yogurt with nuts)"
+              placeholder="Food name (e.g. Oatmeal with fruits, Lentil soup)"
               placeholderTextColor="#94A3B8"
               value={mealName}
               onChangeText={setMealName}
             />
 
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Portion / Quantity (e.g. 1 bowl, 2 roti, 1 cup)"
+              placeholderTextColor="#94A3B8"
+              value={mealPortion}
+              onChangeText={setMealPortion}
+            />
+
             <View style={styles.modalInputsRow}>
               <TextInput
                 style={[styles.modalInput, { flex: 1 }]}
-                placeholder="Calories (kcal)"
+                placeholder="Calories (kcal)*"
                 placeholderTextColor="#94A3B8"
                 keyboardType="numeric"
                 value={mealKcal}
@@ -334,8 +498,14 @@ export default function NutritionScreen() {
               />
             </View>
 
-            <Pressable onPress={handleAddSubmit} style={styles.modalSubmitBtn}>
-              <Text style={styles.modalSubmitBtnText}>Save Meal</Text>
+            <Pressable
+              onPress={handleAddSubmit}
+              disabled={isSaving}
+              style={[styles.modalSubmitBtn, isSaving && { opacity: 0.7 }]}
+            >
+              <Text style={styles.modalSubmitBtnText}>
+                {isSaving ? 'Saving to Cloud...' : 'Save Meal'}
+              </Text>
             </Pressable>
           </View>
         </View>
@@ -390,43 +560,91 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
-    marginBottom: 14,
+    marginBottom: 12,
   },
   dateNavigatorText: {
     fontSize: 14,
     fontWeight: '700',
     color: '#073B72',
   },
-  macrosCard: {
+  successBanner: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 12,
+    gap: 8,
+  },
+  successBannerText: {
+    fontSize: 13,
+    color: '#065F46',
+    fontWeight: '600',
+    flex: 1,
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 12,
+    gap: 8,
+  },
+  errorBannerText: {
+    fontSize: 13,
+    color: '#991B1B',
+    fontWeight: '500',
+    flex: 1,
+  },
+  retryBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: '#EF4444',
+    borderRadius: 6,
+  },
+  retryBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  macrosCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 16,
     borderWidth: 1,
     borderColor: '#F1F5F9',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
     shadowRadius: 8,
     elevation: 2,
-    marginBottom: 18,
-    gap: 16,
   },
   gaugeBox: {
+    width: 120,
     alignItems: 'center',
     justifyContent: 'center',
   },
   multiArcRing: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     borderWidth: 8,
-    borderColor: '#14B8A6',
-    borderTopColor: '#F43F7D',
-    borderRightColor: '#F59E0B',
+    borderColor: '#F43F7D',
+    borderLeftColor: '#0284C7',
+    borderBottomColor: '#F59E0B',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#F8FAFC',
   },
   ringInner: {
     alignItems: 'center',
@@ -438,13 +656,14 @@ const styles = StyleSheet.create({
     color: '#073B72',
   },
   kcalSubText: {
-    fontSize: 10,
+    fontSize: 9,
     color: '#64748B',
-    marginTop: 1,
+    fontWeight: '500',
   },
   macroListCol: {
     flex: 1,
-    gap: 8,
+    paddingLeft: 16,
+    gap: 10,
   },
   macroItemRow: {
     flexDirection: 'row',
@@ -458,10 +677,10 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   macroLabel: {
-    flex: 1,
     fontSize: 13,
     color: '#334155',
     fontWeight: '600',
+    flex: 1,
   },
   macroValue: {
     fontSize: 13,
@@ -471,13 +690,13 @@ const styles = StyleSheet.create({
   macroTarget: {
     fontSize: 11,
     color: '#94A3B8',
-    fontWeight: '400',
+    fontWeight: '500',
   },
   sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   sectionTitle: {
     fontSize: 15,
@@ -488,54 +707,149 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
-    padding: 4,
   },
   addMealText: {
     fontSize: 13,
     fontWeight: '700',
     color: '#F43F7D',
   },
+  mealsEmptyCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    marginBottom: 16,
+  },
+  emptyMealsTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#073B72',
+    marginTop: 12,
+    marginBottom: 6,
+  },
+  emptyMealsDesc: {
+    fontSize: 13,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 16,
+    paddingHorizontal: 8,
+  },
+  emptyLogMealBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F43F7D',
+    borderRadius: 12,
+    paddingVertical: 12,
+    width: '100%',
+    marginBottom: 10,
+  },
+  emptyLogMealBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  emptyViewPlanBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFF1F2',
+    borderRadius: 12,
+    paddingVertical: 12,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#FFE4E6',
+    marginBottom: 16,
+  },
+  emptyViewPlanBtnText: {
+    color: '#F43F7D',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  whyCard: {
+    width: '100%',
+    backgroundColor: '#FFFBEB',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#FEF3C7',
+  },
+  whyHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  whyIconCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#FDE68A',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  whyTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#92400E',
+  },
+  whyBulletsCol: {
+    gap: 6,
+  },
+  whyBulletRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  whyBulletText: {
+    fontSize: 12,
+    color: '#78350F',
+    flex: 1,
+  },
   mealsList: {
-    gap: 12,
-    marginBottom: 20,
+    gap: 10,
+    marginBottom: 16,
   },
   mealCard: {
-    flexDirection: 'row',
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    borderRadius: 16,
     padding: 12,
     borderWidth: 1,
     borderColor: '#F1F5F9',
+    flexDirection: 'row',
+    alignItems: 'center',
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03,
     shadowRadius: 4,
     elevation: 1,
-    gap: 12,
   },
   mealThumb: {
-    width: 76,
-    height: 76,
-    borderRadius: 14,
+    width: 64,
+    height: 64,
+    borderRadius: 12,
+    marginRight: 12,
   },
   mealInfoCol: {
     flex: 1,
-    gap: 2,
   },
   mealTagRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 2,
+    marginBottom: 3,
   },
   mealTagPill: {
     backgroundColor: '#FDF2F8',
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 8,
+    borderRadius: 6,
   },
   mealTagText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
     color: '#F43F7D',
   },
@@ -544,30 +858,38 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
   },
   mealKcalText: {
-    marginLeft: 'auto',
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '700',
     color: '#073B72',
+    marginLeft: 'auto',
   },
   mealTitle: {
     fontSize: 14,
     fontWeight: '700',
     color: '#073B72',
+    marginBottom: 2,
   },
   mealDesc: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#64748B',
     marginBottom: 4,
   },
   macroChipsRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+    gap: 6,
   },
   macroChipText: {
-    fontSize: 11,
-    color: '#475569',
-    fontWeight: '500',
+    fontSize: 10,
+    color: '#0284C7',
+    fontWeight: '600',
+    backgroundColor: '#F0F9FF',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  deleteMealBtn: {
+    padding: 8,
+    marginLeft: 4,
   },
   dualCtasRow: {
     flexDirection: 'row',
@@ -580,11 +902,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 48,
-    borderRadius: 14,
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: '#F43F7D',
+    borderColor: '#FCE7F3',
+    borderRadius: 14,
+    height: 50,
   },
   viewPlanBtnText: {
     fontSize: 14,
@@ -596,9 +918,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 48,
-    borderRadius: 14,
     backgroundColor: '#F43F7D',
+    borderRadius: 14,
+    height: 50,
   },
   addMealBtnText: {
     fontSize: 14,
@@ -607,26 +929,61 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
   },
   modalCard: {
+    width: '100%',
+    maxWidth: 420,
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderRadius: 20,
     padding: 20,
-    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 8,
   },
   modalHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    marginBottom: 14,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: '#073B72',
+  },
+  mealTypePillsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 14,
+  },
+  mealTypePill: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
+  },
+  mealTypePillActive: {
+    backgroundColor: '#FDF2F8',
+    borderColor: '#FCE7F3',
+  },
+  mealTypePillText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  mealTypePillTextActive: {
+    color: '#F43F7D',
+    fontWeight: '700',
   },
   modalInput: {
     backgroundColor: '#F8FAFC',
@@ -635,126 +992,40 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    fontSize: 14,
+    fontSize: 13,
     color: '#0F172A',
+    marginBottom: 12,
   },
   modalInputsRow: {
     flexDirection: 'row',
     gap: 10,
+    marginBottom: 6,
   },
   modalSubmitBtn: {
     backgroundColor: '#F43F7D',
-    height: 48,
-    borderRadius: 12,
+    borderRadius: 14,
+    paddingVertical: 13,
     alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 6,
+    marginTop: 8,
   },
   modalSubmitBtnText: {
-    fontSize: 15,
-    fontWeight: '700',
     color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
-  // In-Context Meals Empty State Styles (Screen 47 Bottom Middle)
-  mealsEmptyCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-    padding: 24,
+  loadingContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
-    elevation: 1,
-    marginBottom: 16,
-  },
-  emptyMealsTitle: {
-    fontSize: 19,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginTop: 14,
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
     marginBottom: 8,
-    textAlign: 'center',
-  },
-  emptyMealsDesc: {
-    fontSize: 12.5,
-    color: '#64748B',
-    textAlign: 'center',
-    lineHeight: 18,
-    maxWidth: 290,
-    marginBottom: 20,
-  },
-  emptyLogMealBtn: {
-    width: '100%',
-    height: 48,
+    backgroundColor: '#FFF1F2',
     borderRadius: 12,
-    backgroundColor: '#E11D48',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 10,
   },
-  emptyLogMealBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  emptyViewPlanBtn: {
-    width: '100%',
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#FECDD3',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-  },
-  emptyViewPlanBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#E11D48',
-  },
-  whyCard: {
-    width: '100%',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 16,
-  },
-  whyHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 12,
-  },
-  whyIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#FEF3C7',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  whyTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#0F172A',
-  },
-  whyBulletsCol: {
-    gap: 8,
-  },
-  whyBulletRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  whyBulletText: {
-    fontSize: 12,
-    color: '#475569',
+  loadingText: {
+    fontSize: 13,
+    color: '#F43F7D',
+    fontWeight: '500',
   },
 });

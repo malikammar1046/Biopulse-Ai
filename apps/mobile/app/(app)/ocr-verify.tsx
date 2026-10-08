@@ -57,40 +57,186 @@ export default function OcrVerifyScreen() {
   const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
   const themeAccent = isFemale ? '#F43F7D' : '#0284C7';
 
-  const { confirmVerifiedLabs } = useHealthStore();
+  const { pendingOcrReport, confirmVerifiedLabs } = useHealthStore();
 
-  const [hormoneValues, setHormoneValues] = useState<ExtractedLabField[]>([
-    { id: 'fsh', name: 'FSH', value: '6.2', unit: 'mIU/mL', refRange: '3.5 – 12.5' },
-    { id: 'lh', name: 'LH', value: '8.1', unit: 'mIU/mL', refRange: '2.4 – 12.6' },
-    { id: 'amh', name: 'AMH', value: '4.3', unit: 'ng/mL', refRange: '1.0 – 10.0' },
-    { id: 'prolactin', name: 'Prolactin', value: '18.5', unit: 'ng/mL', refRange: '4.8 – 23.3' },
-    { id: 'tsh', name: 'TSH', value: '2.1', unit: 'μIU/mL', refRange: '0.4 – 4.0' },
-    { id: 'progesterone', name: 'Progesterone', value: '0.6', unit: 'ng/mL', refRange: '0.2 – 1.4' },
-  ]);
+  // Populate from pending report if available, else standard baseline defaults
+  const [hormoneValues, setHormoneValues] = useState<ExtractedLabField[]>(() => {
+    const defaults = [
+      { id: 'fsh', name: 'FSH', value: '6.2', unit: 'mIU/mL', refRange: '3.5 – 12.5' },
+      { id: 'lh', name: 'LH', value: '8.1', unit: 'mIU/mL', refRange: '2.4 – 12.6' },
+      { id: 'amh', name: 'AMH', value: '4.3', unit: 'ng/mL', refRange: '1.0 – 10.0' },
+      { id: 'prolactin', name: 'Prolactin', value: '18.5', unit: 'ng/mL', refRange: '4.8 – 23.3' },
+      { id: 'tsh', name: 'TSH', value: '2.1', unit: 'μIU/mL', refRange: '0.4 – 4.0' },
+      { id: 'progesterone', name: 'Progesterone', value: '0.6', unit: 'ng/mL', refRange: '0.2 – 1.4' },
+    ];
+
+    if (!pendingOcrReport?.results) return defaults;
+
+    const matched = pendingOcrReport.results.filter(
+      (r) => r.category === 'Hormones' || (!r.category && defaults.some((d) => r.testName.toLowerCase().includes(d.id)))
+    );
+
+    if (matched.length === 0) return defaults;
+
+    return matched.map((m, idx) => ({
+      id: m.id || `h_${idx}`,
+      name: m.testName,
+      value: m.value,
+      unit: m.unit || 'mIU/mL',
+      refRange: m.referenceRange || 'Reference Lab Norm',
+    }));
+  });
+
+  const [metabolicValues, setMetabolicValues] = useState<ExtractedLabField[]>(() => {
+    const defaults = [
+      { id: 'glucose', name: 'Fasting Blood Glucose', value: '92.0', unit: 'mg/dL', refRange: '70 – 99' },
+      { id: 'hba1c', name: 'HbA1c', value: '5.3', unit: '%', refRange: '< 5.7' },
+      { id: 'cholesterol', name: 'Total Cholesterol', value: '178.0', unit: 'mg/dL', refRange: '< 200' },
+      { id: 'triglycerides', name: 'Triglycerides', value: '135.0', unit: 'mg/dL', refRange: '< 150' },
+    ];
+
+    if (!pendingOcrReport?.results) return defaults;
+
+    const matched = pendingOcrReport.results.filter((r) => r.category === 'Metabolic');
+    if (matched.length === 0) return defaults;
+
+    return matched.map((m, idx) => ({
+      id: m.id || `m_${idx}`,
+      name: m.testName,
+      value: m.value,
+      unit: m.unit || 'mg/dL',
+      refRange: m.referenceRange || 'Reference Lab Norm',
+    }));
+  });
+
+  const [nutritionalValues, setNutritionalValues] = useState<ExtractedLabField[]>(() => {
+    const defaults = [
+      { id: 'vit_d', name: 'Vitamin D3 (25-OH)', value: '28.4', unit: 'ng/mL', refRange: '30 – 100' },
+      { id: 'ferritin', name: 'Serum Ferritin', value: '45.0', unit: 'ng/mL', refRange: '13 – 150' },
+    ];
+
+    if (!pendingOcrReport?.results) return defaults;
+
+    const matched = pendingOcrReport.results.filter((r) => r.category === 'Nutritional');
+    if (matched.length === 0) return defaults;
+
+    return matched.map((m, idx) => ({
+      id: m.id || `n_${idx}`,
+      name: m.testName,
+      value: m.value,
+      unit: m.unit || 'ng/mL',
+      refRange: m.referenceRange || 'Reference Lab Norm',
+    }));
+  });
+
+  const [cbcValues, setCbcValues] = useState<ExtractedLabField[]>(() => {
+    const defaults = [
+      { id: 'hb', name: 'Hemoglobin (Hb)', value: '13.2', unit: 'g/dL', refRange: '12.0 – 15.5' },
+    ];
+
+    if (!pendingOcrReport?.results) return defaults;
+
+    const matched = pendingOcrReport.results.filter((r) => r.category === 'CBC');
+    if (matched.length === 0) return defaults;
+
+    return matched.map((m, idx) => ({
+      id: m.id || `cbc_${idx}`,
+      name: m.testName,
+      value: m.value,
+      unit: m.unit || 'g/dL',
+      refRange: m.referenceRange || 'Reference Lab Norm',
+    }));
+  });
 
   const [activeAccordion, setActiveAccordion] = useState<string | null>('hormones');
 
-  const handleUpdateField = (id: string, newVal: string) => {
+  const handleUpdateHormone = (id: string, newVal: string) => {
     setHormoneValues((prev) =>
       prev.map((f) => (f.id === id ? { ...f, value: newVal } : f))
     );
   };
 
-  const handleConfirmSave = useCallback(() => {
-    const mappedRows: ClinicalLabRow[] = hormoneValues.map((h) => ({
-      id: `ocr-verified-${h.id}-${Date.now()}`,
-      testName: h.name,
-      category: 'Hormones',
-      value: h.value,
-      unit: h.unit,
-      referenceRange: h.refRange,
-      status: 'Normal',
-    }));
+  const handleUpdateMetabolic = (id: string, newVal: string) => {
+    setMetabolicValues((prev) =>
+      prev.map((f) => (f.id === id ? { ...f, value: newVal } : f))
+    );
+  };
 
-    confirmVerifiedLabs(mappedRows);
+  const handleUpdateNutritional = (id: string, newVal: string) => {
+    setNutritionalValues((prev) =>
+      prev.map((f) => (f.id === id ? { ...f, value: newVal } : f))
+    );
+  };
+
+  const handleUpdateCbc = (id: string, newVal: string) => {
+    setCbcValues((prev) =>
+      prev.map((f) => (f.id === id ? { ...f, value: newVal } : f))
+    );
+  };
+
+  const handleConfirmSave = useCallback(async () => {
+    const allRows: ClinicalLabRow[] = [];
+
+    hormoneValues.forEach((h) => {
+      if (h.value.trim().length > 0) {
+        allRows.push({
+          id: `ocr-verified-${h.id}-${Date.now()}`,
+          testName: h.name,
+          category: 'Hormones',
+          value: h.value.trim(),
+          unit: h.unit,
+          referenceRange: h.refRange,
+          status: 'Normal',
+        });
+      }
+    });
+
+    metabolicValues.forEach((m) => {
+      if (m.value.trim().length > 0) {
+        allRows.push({
+          id: `ocr-verified-${m.id}-${Date.now()}`,
+          testName: m.name,
+          category: 'Metabolic',
+          value: m.value.trim(),
+          unit: m.unit,
+          referenceRange: m.refRange,
+          status: 'Normal',
+        });
+      }
+    });
+
+    nutritionalValues.forEach((n) => {
+      if (n.value.trim().length > 0) {
+        allRows.push({
+          id: `ocr-verified-${n.id}-${Date.now()}`,
+          testName: n.name,
+          category: 'Other',
+          value: n.value.trim(),
+          unit: n.unit,
+          referenceRange: n.refRange,
+          status: 'Normal',
+        });
+      }
+    });
+
+    cbcValues.forEach((c) => {
+      if (c.value.trim().length > 0) {
+        allRows.push({
+          id: `ocr-verified-${c.id}-${Date.now()}`,
+          testName: c.name,
+          category: 'Other',
+          value: c.value.trim(),
+          unit: c.unit,
+          referenceRange: c.refRange,
+          status: 'Normal',
+        });
+      }
+    });
+
+    await confirmVerifiedLabs(allRows, pendingOcrReport?.id);
     Alert.alert(
       'Labs Verified',
-      'Your extracted clinical lab values have been saved to your health profile.',
+      'Your extracted clinical lab values have been confirmed and saved to your health profile.',
       [
         {
           text: 'Continue',
@@ -98,7 +244,7 @@ export default function OcrVerifyScreen() {
         },
       ]
     );
-  }, [hormoneValues, confirmVerifiedLabs, router]);
+  }, [hormoneValues, metabolicValues, nutritionalValues, cbcValues, confirmVerifiedLabs, pendingOcrReport?.id, router]);
 
   const topPad = Math.max(insets.top, 12);
   const bottomPad = Math.max(insets.bottom, 20);
@@ -146,7 +292,7 @@ export default function OcrVerifyScreen() {
 
           {/* ACCORDION SECTIONS */}
           <View style={styles.accordionContainer}>
-            {/* 1. HORMONE TESTS (EXPANDED) */}
+            {/* 1. HORMONE TESTS */}
             <View style={styles.sectionCard}>
               <Pressable
                 onPress={() =>
@@ -182,7 +328,7 @@ export default function OcrVerifyScreen() {
                             style={styles.textInput}
                             keyboardType="numeric"
                             value={item.value}
-                            onChangeText={(val) => handleUpdateField(item.id, val)}
+                            onChangeText={(val) => handleUpdateHormone(item.id, val)}
                           />
                         </View>
                         <Text style={styles.testUnitText}>{item.unit}</Text>
@@ -196,7 +342,7 @@ export default function OcrVerifyScreen() {
               )}
             </View>
 
-            {/* 2. METABOLIC TESTS (COLLAPSED) */}
+            {/* 2. METABOLIC TESTS */}
             <View style={styles.sectionCard}>
               <Pressable
                 onPress={() =>
@@ -216,9 +362,37 @@ export default function OcrVerifyScreen() {
                   color="#94A3B8"
                 />
               </Pressable>
+
+              {activeAccordion === 'metabolic' && (
+                <View style={styles.sectionBody}>
+                  {metabolicValues.map((item) => (
+                    <View key={item.id} style={styles.testRow}>
+                      <View style={styles.testLabelCol}>
+                        <Text style={styles.testNameText}>{item.name}</Text>
+                        <Text style={styles.testRefRange}>{item.refRange}</Text>
+                      </View>
+
+                      <View style={styles.testInputRow}>
+                        <View style={styles.testInputWrapper}>
+                          <TextInput
+                            style={styles.textInput}
+                            keyboardType="numeric"
+                            value={item.value}
+                            onChangeText={(val) => handleUpdateMetabolic(item.id, val)}
+                          />
+                        </View>
+                        <Text style={styles.testUnitText}>{item.unit}</Text>
+                        <Pressable hitSlop={6} style={styles.editPencilBtn}>
+                          <Ionicons name="pencil-outline" size={16} color="#94A3B8" />
+                        </Pressable>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
 
-            {/* 3. NUTRITIONAL TESTS (COLLAPSED) */}
+            {/* 3. NUTRITIONAL TESTS */}
             <View style={styles.sectionCard}>
               <Pressable
                 onPress={() =>
@@ -238,9 +412,37 @@ export default function OcrVerifyScreen() {
                   color="#94A3B8"
                 />
               </Pressable>
+
+              {activeAccordion === 'nutritional' && (
+                <View style={styles.sectionBody}>
+                  {nutritionalValues.map((item) => (
+                    <View key={item.id} style={styles.testRow}>
+                      <View style={styles.testLabelCol}>
+                        <Text style={styles.testNameText}>{item.name}</Text>
+                        <Text style={styles.testRefRange}>{item.refRange}</Text>
+                      </View>
+
+                      <View style={styles.testInputRow}>
+                        <View style={styles.testInputWrapper}>
+                          <TextInput
+                            style={styles.textInput}
+                            keyboardType="numeric"
+                            value={item.value}
+                            onChangeText={(val) => handleUpdateNutritional(item.id, val)}
+                          />
+                        </View>
+                        <Text style={styles.testUnitText}>{item.unit}</Text>
+                        <Pressable hitSlop={6} style={styles.editPencilBtn}>
+                          <Ionicons name="pencil-outline" size={16} color="#94A3B8" />
+                        </Pressable>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
 
-            {/* 4. CBC (COLLAPSED) */}
+            {/* 4. CBC */}
             <View style={styles.sectionCard}>
               <Pressable
                 onPress={() =>
@@ -260,8 +462,37 @@ export default function OcrVerifyScreen() {
                   color="#94A3B8"
                 />
               </Pressable>
+
+              {activeAccordion === 'cbc' && (
+                <View style={styles.sectionBody}>
+                  {cbcValues.map((item) => (
+                    <View key={item.id} style={styles.testRow}>
+                      <View style={styles.testLabelCol}>
+                        <Text style={styles.testNameText}>{item.name}</Text>
+                        <Text style={styles.testRefRange}>{item.refRange}</Text>
+                      </View>
+
+                      <View style={styles.testInputRow}>
+                        <View style={styles.testInputWrapper}>
+                          <TextInput
+                            style={styles.textInput}
+                            keyboardType="numeric"
+                            value={item.value}
+                            onChangeText={(val) => handleUpdateCbc(item.id, val)}
+                          />
+                        </View>
+                        <Text style={styles.testUnitText}>{item.unit}</Text>
+                        <Pressable hitSlop={6} style={styles.editPencilBtn}>
+                          <Ionicons name="pencil-outline" size={16} color="#94A3B8" />
+                        </Pressable>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
           </View>
+
 
           {/* CONFIRM & SAVE CTA */}
           <View style={styles.ctaWrapper}>

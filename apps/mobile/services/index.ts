@@ -19,4 +19,6 @@ export * from './nutritionService';
 export * from './companionService';
 export * from './notificationService';
 export * from './dashboardService';
+export * from './measurementService';
 export * from './userService';
+export * from './longitudinalService';

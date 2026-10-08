@@ -7,6 +7,7 @@ import {
   Pressable,
   Alert,
   Image,
+  RefreshControl,
   useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -45,7 +46,13 @@ export default function ProfileScreen() {
   const { pathway, user } = useAuth();
   const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
 
-  const { profile, bmi, updateProfile } = useHealthStore();
+  const {
+    profile,
+    bmi,
+    updateProfile,
+    loadMeasurementObservations,
+    isLoadingMeasurements,
+  } = useHealthStore();
 
   const [emergencyContact, setEmergencyContact] = useState({
     name: profile.emergencyContactName || '',
@@ -215,6 +222,14 @@ export default function ProfileScreen() {
           { paddingBottom: BOTTOM_NAV_HEIGHT + insets.bottom + 20 },
         ]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoadingMeasurements}
+            onRefresh={loadMeasurementObservations}
+            tintColor="#0284C7"
+            colors={['#0284C7']}
+          />
+        }
       >
         {/* Identity & Avatar */}
         <View style={styles.avatarSection}>

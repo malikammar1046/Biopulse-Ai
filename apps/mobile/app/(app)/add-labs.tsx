@@ -159,7 +159,7 @@ export default function AddClinicalLabsScreen() {
     setExpandedSection((prev) => (prev === id ? null : id));
   };
 
-  const handleContinue = useCallback(() => {
+  const handleContinue = useCallback(async () => {
     const rows: ClinicalLabRow[] = [];
     sections.forEach((sec) => {
       sec.fields.forEach((field) => {
@@ -179,9 +179,9 @@ export default function AddClinicalLabsScreen() {
     });
 
     if (rows.length > 0) {
-      confirmVerifiedLabs(rows);
+      await confirmVerifiedLabs(rows);
     }
-    router.push('/(app)/ocr-verify');
+    router.push('/(app)/tier-progress');
   }, [sections, labValues, confirmVerifiedLabs, router]);
 
   const topPad = Math.max(insets.top, 12);
