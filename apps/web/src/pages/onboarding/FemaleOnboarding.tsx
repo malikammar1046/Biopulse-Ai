@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { ROUTES } from '../../constants/routes';
 import { useUserHealth } from '../../context/UserHealthContext';
 import type {
@@ -20,18 +21,19 @@ import { preloadDashboardRoutes } from '../../utils/routePreloaders';
 import { BioPulseLoadingScreen } from '../../components/brand/BioPulseLoadingScreen';
 import { deriveFemaleTier1InputsFromProfile } from '../../utils/tier1InputMappers';
 
-const FEMALE_STEPS = [
-  { number: '1', label: 'Basic Info' },
-  { number: '2', label: 'Medical History' },
-  { number: '3', label: 'Period & Cycle' },
-  { number: '4', label: 'Symptoms' },
-  { number: '5', label: 'Review & Ready' },
-];
-
 export const FemaleOnboarding: React.FC = () => {
+  const { t } = useTranslation(['onboarding', 'common']);
   const navigate = useNavigate();
   const { userProfile, finalizeOnboardingAndScreen } = useUserHealth();
   const shouldReduceMotion = useReducedMotion();
+
+  const femaleSteps = useMemo(() => [
+    { number: '1', label: t('onboarding:stepLabels.basicInfo', 'Basic Info') },
+    { number: '2', label: t('onboarding:stepLabels.medicalHistory', 'Medical History') },
+    { number: '3', label: t('onboarding:stepLabels.periodCycle', 'Period & Cycle') },
+    { number: '4', label: t('onboarding:stepLabels.symptoms', 'Symptoms') },
+    { number: '5', label: t('onboarding:stepLabels.reviewReady', 'Review & Ready') },
+  ], [t]);
 
   const [currentStep, setCurrentStep] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -127,7 +129,7 @@ export const FemaleOnboarding: React.FC = () => {
   };
 
   const handleNext = () => {
-    if (currentStep < FEMALE_STEPS.length) {
+    if (currentStep < femaleSteps.length) {
       if (!validateStep(currentStep)) return;
       setCurrentStep((prev) => prev + 1);
     } else {
@@ -206,8 +208,8 @@ export const FemaleOnboarding: React.FC = () => {
   return (
     <FemaleOnboardingLayout
       currentStep={currentStep}
-      totalSteps={FEMALE_STEPS.length}
-      steps={FEMALE_STEPS}
+      totalSteps={femaleSteps.length}
+      steps={femaleSteps}
       onStepClick={handleStepClick}
       onNext={handleNext}
       onBack={handleBack}

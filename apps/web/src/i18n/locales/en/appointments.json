@@ -1,0 +1,38 @@
+{
+  "title": "Appointments & Consultations",
+  "subtitle": "Connect with verified clinical specialists matched to your reproductive health pathway",
+  "tabs": {
+    "upcoming": "Upcoming Visits",
+    "history": "Past Consultations",
+    "bookNew": "Book New Appointment"
+  },
+  "bookModal": {
+    "title": "Schedule a Clinical Consultation",
+    "selectDoctor": "Select Specialist",
+    "selectDate": "Select Date",
+    "selectTime": "Select Time Slot",
+    "consultationType": "Consultation Type",
+    "inPerson": "In-Person Clinic Visit",
+    "telehealth": "Video / Telehealth Consultation",
+    "chiefComplaint": "Reason for Consultation / Notes",
+    "complaintPlaceholder": "Briefly describe your symptoms or discussion topics...",
+    "confirmBooking": "Confirm Appointment",
+    "bookingSuccess": "Appointment confirmed successfully."
+  },
+  "statusLabels": {
+    "confirmed": "Confirmed",
+    "pending": "Pending",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "emptyUpcoming": "No upcoming appointments scheduled. Search matched specialists to book a consultation.",
+  "emptyHistory": "No previous consultations recorded.",
+  "upcomingVisitsTab": "Upcoming Visits",
+  "findSpecialistTab": "Find a Specialist",
+  "visitHistoryTab": "Consultation History",
+  "scheduleVisitCTA": "Schedule Consultation",
+  "noUpcomingVisits": "No upcoming appointments scheduled",
+  "noUpcomingDesc": "Connect with verified reproductive endocrinologists, gynecologists, or urologists.",
+  "prepareConsultationCTA": "Prepare for Visit",
+  "viewDetailsCTA": "View Details"
+}

@@ -1,0 +1,28 @@
+{
+  "title": "Medications & Supplement Regimen",
+  "subtitle": "Track your prescribed medications, doses, and adherence schedule safely",
+  "addMedication": "Add Medication",
+  "schedule": "Today's Schedule",
+  "status": {
+    "take": "Take Now",
+    "taken": "Taken",
+    "missed": "Missed",
+    "upcoming": "Upcoming",
+    "skipped": "Skipped"
+  },
+  "fields": {
+    "name": "Medication Name",
+    "dosage": "Dose",
+    "frequency": "Frequency",
+    "timeOfDay": "Time of Day",
+    "instructions": "Doctor's Instructions"
+  },
+  "timeSlots": {
+    "morning": "Morning (Nashta)",
+    "afternoon": "Afternoon",
+    "evening": "Evening",
+    "bedtime": "Bedtime"
+  },
+  "adherence": "30-Day Adherence Rate",
+  "emptyMedications": "No medications currently scheduled. Add your prescribed routine or supplements to set reminders."
+}

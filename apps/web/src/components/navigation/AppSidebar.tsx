@@ -18,6 +18,7 @@ import {
   Calendar,
   Users01,
 } from '../icons';
+import { useTranslation } from 'react-i18next';
 import { ROUTES, getPathwayDashboardRoute } from '../../constants/routes';
 import { resolvePathway } from '../../types/onboarding';
 import { Logo } from '../brand/Logo';
@@ -39,6 +40,7 @@ interface NavGroup {
 }
 
 export const AppSidebar: React.FC = () => {
+  const { t } = useTranslation(['navigation', 'common']);
   const location = useLocation();
   const navigate = useNavigate();
   const { userProfile } = useUserHealth();
@@ -72,33 +74,33 @@ export const AppSidebar: React.FC = () => {
 
   // Section 1: MAIN
   const maleMainItems: NavItem[] = [
-    { label: 'Overview', path: overviewPath, icon: LayoutGrid01 },
-    { label: 'Lifestyle & Nutrition', path: ROUTES.APP.LIFESTYLE, icon: Scales01 },
-    { label: 'Screening', path: ROUTES.APP.ASSESSMENT, icon: ClipboardCheck },
-    { label: 'Progress', path: ROUTES.APP.PROGRESS, icon: LineChartUp01 },
+    { label: t('overview'), path: overviewPath, icon: LayoutGrid01 },
+    { label: t('lifestyle'), path: ROUTES.APP.LIFESTYLE, icon: Scales01 },
+    { label: t('screening'), path: ROUTES.APP.ASSESSMENT, icon: ClipboardCheck },
+    { label: t('longitudinal'), path: ROUTES.APP.PROGRESS, icon: LineChartUp01 },
   ];
 
   const femaleMainItems: NavItem[] = [
-    { label: 'Overview', path: overviewPath, icon: LayoutGrid01 },
-    { label: 'Lifestyle & Nutrition', path: ROUTES.APP.LIFESTYLE, icon: Scales01 },
-    { label: 'Screening', path: ROUTES.APP.ASSESSMENT, icon: ClipboardCheck },
-    { label: 'Progress', path: ROUTES.APP.PROGRESS, icon: LineChartUp01 },
+    { label: t('overview'), path: overviewPath, icon: LayoutGrid01 },
+    { label: t('lifestyle'), path: ROUTES.APP.LIFESTYLE, icon: Scales01 },
+    { label: t('screening'), path: ROUTES.APP.ASSESSMENT, icon: ClipboardCheck },
+    { label: t('longitudinal'), path: ROUTES.APP.PROGRESS, icon: LineChartUp01 },
   ];
 
   const mainItems = pathway === 'female' ? femaleMainItems : maleMainItems;
 
   // Section 2: HEALTH
   const maleHealthItems: NavItem[] = [
-    { label: 'Reports', path: ROUTES.APP.REPORTS, icon: File06 },
-    { label: 'Appointments', path: ROUTES.APP.APPOINTMENTS, icon: CalendarCheck01 },
-    { label: 'Care Circle', path: ROUTES.APP.CARE_CIRCLE, icon: Users01 },
+    { label: t('reports'), path: ROUTES.APP.REPORTS, icon: File06 },
+    { label: t('appointments'), path: ROUTES.APP.APPOINTMENTS, icon: CalendarCheck01 },
+    { label: t('careCircle'), path: ROUTES.APP.CARE_CIRCLE, icon: Users01 },
   ];
 
   const femaleHealthItems: NavItem[] = [
-    { label: 'Fitness / Movement', path: ROUTES.APP.FITNESS, icon: Activity },
-    { label: 'Reports', path: ROUTES.APP.REPORTS, icon: File06 },
-    { label: 'Appointments', path: ROUTES.APP.APPOINTMENTS, icon: CalendarCheck01 },
-    { label: 'Care Circle', path: ROUTES.APP.CARE_CIRCLE, icon: Users01 },
+    { label: t('lifestyle'), path: ROUTES.APP.FITNESS, icon: Activity },
+    { label: t('reports'), path: ROUTES.APP.REPORTS, icon: File06 },
+    { label: t('appointments'), path: ROUTES.APP.APPOINTMENTS, icon: CalendarCheck01 },
+    { label: t('careCircle'), path: ROUTES.APP.CARE_CIRCLE, icon: Users01 },
   ];
 
   const healthItems = pathway === 'female' ? femaleHealthItems : maleHealthItems;
@@ -106,28 +108,28 @@ export const AppSidebar: React.FC = () => {
   // Section 3: DAILY TRACKING (Collapsible, female gets Cycle, male never gets Cycle)
   const trackingGroup: NavGroup = {
     id: 'tracking',
-    title: 'Daily Tracking',
+    title: t('symptoms'),
     icon: ActivityHeart,
     items: [
       ...(pathway === 'female'
-        ? [{ label: 'Cycle', path: ROUTES.APP.CYCLE, icon: Calendar }]
+        ? [{ label: t('cycle'), path: ROUTES.APP.CYCLE, icon: Calendar }]
         : []),
-      { label: 'Symptoms', path: ROUTES.APP.SYMPTOMS, icon: ActivityHeart },
+      { label: t('symptoms'), path: ROUTES.APP.SYMPTOMS, icon: ActivityHeart },
       ...(pathway === 'male'
-        ? [{ label: 'Fitness', path: ROUTES.APP.FITNESS, icon: Activity }]
+        ? [{ label: t('lifestyle'), path: ROUTES.APP.FITNESS, icon: Activity }]
         : []),
-      { label: 'Medications', path: ROUTES.APP.MEDICATIONS, icon: MedicalCross },
+      { label: t('medications'), path: ROUTES.APP.MEDICATIONS, icon: MedicalCross },
     ],
   };
 
   // Section 4: TOOLS
   const toolItems: NavItem[] = [
-    { label: pathway === 'female' ? 'AI Companion' : 'AI Assistant', path: ROUTES.APP.CHAT, icon: MessageChatCircle },
+    { label: t('aiCompanion'), path: ROUTES.APP.CHAT, icon: MessageChatCircle },
   ];
 
   // Section 5: ACCOUNT
   const accountItems: NavItem[] = [
-    { label: 'Profile & Settings', path: ROUTES.APP.SETTINGS, icon: Settings01 },
+    { label: t('settings'), path: ROUTES.APP.SETTINGS, icon: Settings01 },
   ];
 
   // Collapsible tracking open/closed state (auto-opens if on a tracking page)
@@ -403,8 +405,8 @@ export const AppSidebar: React.FC = () => {
               <button
                 type="button"
                 onClick={handleLogout}
-                title="Sign Out"
-                aria-label="Sign Out"
+                title={t('logout')}
+                aria-label={t('logout')}
                 className="p-1.5 rounded-lg text-[#64748B] hover:text-[#DC2626] hover:bg-rose-50 transition-colors cursor-pointer shrink-0"
               >
                 <LogOut01 className="w-4 h-4" aria-hidden="true" />

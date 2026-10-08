@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { ReportHeroUpload } from '../../components/reports/ReportHeroUpload';
 import { ReportTimeline } from '../../components/reports/ReportTimeline';
@@ -10,6 +11,7 @@ import { ReportDeleteModal } from '../../components/reports/ReportDeleteModal';
 import type { MedicalReport, MedicalReportInput } from '../../types/report';
 
 export const ReportsPage: React.FC = () => {
+  const { t } = useTranslation(['reports', 'common']);
   const {
     reports,
     reportStats,
@@ -65,7 +67,7 @@ export const ReportsPage: React.FC = () => {
           <div className="w-3 h-3 rounded-full bg-white animate-ping" />
         </div>
         <p className="text-xs font-mono font-bold tracking-widest text-[#64748B] uppercase">
-          Loading Your Health Reports...
+          {t('reports:loadingReports', { defaultValue: 'Loading Your Health Reports...' })}
         </p>
       </div>
     );

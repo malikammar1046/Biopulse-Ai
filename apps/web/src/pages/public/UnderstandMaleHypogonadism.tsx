@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   ShieldAlert,
   Sparkles,
@@ -20,9 +21,11 @@ import { Button } from '../../components/ui/Button';
 import { ROUTES } from '../../constants/routes';
 
 export const UnderstandMaleHypogonadism: React.FC = () => {
+  const { t } = useTranslation(['public', 'common']);
+
   useEffect(() => {
-    document.title = 'Understand Male Hypogonadism | Clinical Screening Education | BioPulse AI';
-  }, []);
+    document.title = t('public:hypogonadismPage.title', 'Understand Male Hypogonadism | Clinical Screening Education | BioPulse AI');
+  }, [t]);
 
   return (
     <div className="relative w-full overflow-hidden bg-transparent text-[#162A45] select-none">
@@ -39,14 +42,11 @@ export const UnderstandMaleHypogonadism: React.FC = () => {
             </div>
 
             <h1 className="text-4xl sm:text-6xl font-extrabold font-display tracking-tight text-[#162A45] leading-[1.12]">
-              Understand Male{' '}
-              <span className="text-[#0891B2]">
-                Hypogonadism
-              </span>
+              {t('public:hypogonadismPage.title', 'Understand Male Hypogonadism')}
             </h1>
 
             <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto font-sans">
-              A comprehensive clinical overview of testosterone signaling, the HPT axis, morning diurnal rhythms, and how BioPulse AI screens for risk patterns.
+              {t('public:hypogonadismPage.subtitle', 'A comprehensive clinical overview of testosterone signaling, the HPT axis, morning diurnal rhythms, and how BioPulse AI screens for risk patterns.')}
             </p>
 
             <div className="pt-2 flex flex-wrap items-center justify-center gap-4">
@@ -57,7 +57,7 @@ export const UnderstandMaleHypogonadism: React.FC = () => {
                   className="bg-[#0891B2] hover:bg-[#0e7490] text-white shadow-lg shadow-cyan-900/10 cursor-pointer"
                   iconRight={<ArrowRight className="w-4 h-4" />}
                 >
-                  Start Male Screening
+                  {t('public:finalCta.button', 'Start Male Screening')}
                 </Button>
               </Link>
               <a href="#what-is-hypogonadism">

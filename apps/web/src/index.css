@@ -108,6 +108,36 @@
     font-family: var(--font-display);
     letter-spacing: -0.02em;
   }
+
+  /* ── Direction & Urdu Typography Support ── */
+  [dir="rtl"] {
+    font-family: 'Noto Sans Arabic', var(--font-sans);
+  }
+
+  [dir="rtl"] h1,
+  [dir="rtl"] h2,
+  [dir="rtl"] h3,
+  [dir="rtl"] h4,
+  [dir="rtl"] h5,
+  [dir="rtl"] h6 {
+    font-family: 'Noto Sans Arabic', var(--font-display);
+    letter-spacing: normal;
+    line-height: 1.4;
+  }
+
+  [dir="rtl"] body {
+    line-height: 1.65;
+  }
+
+  /* Explicit LTR protection for clinical charts, phone numbers, units, and email inputs */
+  [dir="rtl"] .force-ltr,
+  [dir="rtl"] [dir="ltr"],
+  [dir="rtl"] input[type="email"],
+  [dir="rtl"] input[type="tel"],
+  [dir="rtl"] input[type="password"] {
+    direction: ltr !important;
+    text-align: left !important;
+  }
 }
 
 /* ── Hardware-Accelerated Lightweight Keyframe Animations ── */
@@ -209,3 +239,49 @@
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background: rgba(142, 62, 175, 0.45);
 }
+
+/* ==========================================================================
+   BioPulse Bilingual RTL Architecture & Typography Safeguards
+   ========================================================================== */
+
+/* Urdu Font Family & Spacing */
+[lang='ur'],
+[dir='rtl'] {
+  font-family: 'Noto Sans Arabic', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  letter-spacing: 0 !important;
+}
+
+[lang='ur'] h1,
+[lang='ur'] h2,
+[lang='ur'] h3,
+[lang='ur'] h4,
+[lang='ur'] h5,
+[lang='ur'] h6 {
+  line-height: 1.5 !important;
+}
+
+[lang='ur'] p,
+[lang='ur'] span,
+[lang='ur'] button,
+[lang='ur'] a {
+  line-height: 1.6;
+}
+
+/* Enforce LTR on clinical measurements, numbers, emails, passwords, and chart containers */
+.force-ltr,
+[dir='rtl'] input[type='email'],
+[dir='rtl'] input[type='tel'],
+[dir='rtl'] input[type='password'],
+[dir='rtl'] input[type='number'],
+[dir='rtl'] .recharts-wrapper,
+[dir='rtl'] .recharts-surface,
+[dir='rtl'] .chart-container {
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+/* Direction-aware icon transforms */
+[dir='rtl'] .rtl-flip {
+  transform: scaleX(-1);
+}
+

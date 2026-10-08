@@ -672,10 +672,12 @@ class IntelligenceChatView(APIView):
         history = serializer.validated_data.get("conversation_history") or []
         pathway = serializer.validated_data.get("pathway") or None
         telemetry = serializer.validated_data.get("client_telemetry") or {}
+        locale_param = serializer.validated_data.get("locale") or request.headers.get("Accept-Language", "en")
+        locale = "ur" if str(locale_param).lower().startswith("ur") else "en"
 
         # 1. Check safety guardrails (emergency escalation & safety filters)
         t0 = time.perf_counter()
-        emergency_advisory = SafetyGuardrails.check_emergency(user_msg)
+        emergency_advisory = SafetyGuardrails.check_emergency(user_msg, locale=locale)
         if emergency_advisory:
             return Response({
                 "success": True,
@@ -688,7 +690,7 @@ class IntelligenceChatView(APIView):
                 "model": "safety_guardrail",
             }, status=status.HTTP_200_OK)
 
-        injection_advisory = SafetyGuardrails.check_prompt_injection(user_msg)
+        injection_advisory = SafetyGuardrails.check_prompt_injection(user_msg, locale=locale)
         if injection_advisory:
             return Response({
                 "success": True,
@@ -712,6 +714,7 @@ class IntelligenceChatView(APIView):
                 auth_token=auth_token,
                 client_telemetry=telemetry,
                 explicit_pathway=pathway,
+                locale=locale,
             )
         except Exception as ctx_err:
             logger.warning("Context builder notice: %s", ctx_err)
@@ -887,9 +890,11 @@ class PublicIntelligenceChatView(APIView):
         user_msg = serializer.validated_data["message"]
         history = serializer.validated_data.get("conversation_history") or []
         wants_stream = serializer.validated_data.get("stream", False) or "text/event-stream" in request.headers.get("Accept", "")
+        locale_param = serializer.validated_data.get("locale") or request.headers.get("Accept-Language", "en")
+        locale = "ur" if str(locale_param).lower().startswith("ur") else "en"
 
         # 1. Check clinical emergency escalation
-        emergency_advisory = SafetyGuardrails.check_emergency(user_msg)
+        emergency_advisory = SafetyGuardrails.check_emergency(user_msg, locale=locale)
         if emergency_advisory:
             if wants_stream:
                 def emergency_stream():
@@ -907,7 +912,7 @@ class PublicIntelligenceChatView(APIView):
             }, status=status.HTTP_200_OK)
 
         # 2. Check prompt injection
-        injection_advisory = SafetyGuardrails.check_prompt_injection(user_msg)
+        injection_advisory = SafetyGuardrails.check_prompt_injection(user_msg, locale=locale)
         if injection_advisory:
             if wants_stream:
                 def injection_stream():
@@ -925,7 +930,7 @@ class PublicIntelligenceChatView(APIView):
             }, status=status.HTTP_200_OK)
 
         # 3. Privacy boundary check: refuse queries for private personal health records / individual screening results
-        privacy_advisory = SafetyGuardrails.check_privacy_request(user_msg)
+        privacy_advisory = SafetyGuardrails.check_privacy_request(user_msg, locale=locale)
         if privacy_advisory:
             if wants_stream:
                 def privacy_stream():
@@ -951,12 +956,23 @@ class PublicIntelligenceChatView(APIView):
         clean_user_msg = LLMContextSanitizer.sanitize_user_message(user_msg)
         clean_history = LLMContextSanitizer.sanitize_conversation_history(history)
 
+        public_sys_instruction = self.PUBLIC_SYSTEM_INSTRUCTION
+        if locale == "ur":
+            public_sys_instruction += (
+                "\n\nLANGUAGE & LOCALIZATION DIRECTIVE:\n"
+                "The user is viewing the platform in Urdu (locale: ur).\n"
+                "- Respond in clear, professional Pakistani Urdu (پاکستانی اردو).\n"
+                "- Use familiar English medical terms and acronyms where they improve clarity (e.g., PCOS, BMI, LH, FSH, Screening, Lab Results).\n"
+                "- Avoid literal machine-style translation and overly literary or poetic Urdu.\n"
+                "- Maintain non-diagnostic boundaries: do NOT provide a medical diagnosis."
+            )
+
         if wants_stream:
             def event_stream():
                 accumulated = []
                 try:
                     for token in provider.stream_chat_response(
-                        system_instruction=self.PUBLIC_SYSTEM_INSTRUCTION,
+                        system_instruction=public_sys_instruction,
                         user_message=clean_user_msg,
                         conversation_history=clean_history,
                         max_output_tokens=500,
@@ -983,7 +999,7 @@ class PublicIntelligenceChatView(APIView):
         # Non-streaming JSON flow
         try:
             llm_res = provider.generate_chat_response(
-                system_instruction=self.PUBLIC_SYSTEM_INSTRUCTION,
+                system_instruction=public_sys_instruction,
                 user_message=clean_user_msg,
                 health_context="",
                 conversation_history=clean_history,

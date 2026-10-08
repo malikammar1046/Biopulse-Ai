@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Target, ArrowRight, Sparkles, HelpCircle } from 'lucide-react';
 import { DashboardModuleCard } from '../DashboardModuleCard';
 import { ROUTES } from '../../../../constants/routes';
@@ -24,77 +25,98 @@ export const NextBestActionModuleCard: React.FC<NextBestActionModuleCardProps> =
   onAction,
   onOpenAiTwin,
 }) => {
+  const { t } = useTranslation(['dashboard', 'reports', 'lifestyle', 'common']);
   const isFemale = pathway === 'female';
 
   // Derive genuine next action from real patient health state
   const actionContent = (() => {
     if (!hasAssessment) {
       return {
-        title: isFemale ? 'Complete Your PCOS Screening' : 'Complete Hypogonadism Screening',
-        rationale: isFemale
-          ? 'Establish your baseline PCOS risk estimate by answering lifestyle, symptom, and cycle questions.'
-          : 'Answer clinical ADAM and lifestyle questions to calculate your baseline hormonal status.',
-        buttonLabel: 'Start Screening',
+        title: t('dashboard:startScreeningTitle', {
+          defaultValue: isFemale ? 'Complete Your PCOS Screening' : 'Complete Hypogonadism Screening',
+        }),
+        rationale: t('dashboard:startScreeningDesc', {
+          defaultValue: isFemale
+            ? 'Establish your baseline PCOS risk estimate by answering lifestyle, symptom, and cycle questions.'
+            : 'Answer clinical ADAM and lifestyle questions to calculate your baseline hormonal status.',
+        }),
+        buttonLabel: t('dashboard:startTier1CTA', { defaultValue: 'Start Screening' }),
         targetRoute: '/app/assessment',
       };
     }
 
     if (unverifiedReportsCount > 0) {
       return {
-        title: `Verify ${unverifiedReportsCount} Lab Result${unverifiedReportsCount > 1 ? 's' : ''}`,
-        rationale: 'New clinical biomarkers extracted from your laboratory report are ready for confirmation.',
-        buttonLabel: 'Review Reports',
+        title: `${t('dashboard:verificationNeeded', { defaultValue: 'Verify' })} (${unverifiedReportsCount})`,
+        rationale: t('reports:unverifiedDesc', {
+          defaultValue: 'New clinical biomarkers extracted from your laboratory report are ready for confirmation.',
+        }),
+        buttonLabel: t('reports:reviewReports', { defaultValue: 'Review Reports' }),
         targetRoute: '/app/reports',
       };
     }
 
     if (assessmentLevel === 'tier_1') {
       return {
-        title: isFemale ? 'Add Clinical Hormone Labs' : 'Add Morning Testosterone Labs',
+        title: t('dashboard:refineScreening', {
+          defaultValue: isFemale ? 'Add Clinical Hormone Labs' : 'Add Morning Testosterone Labs',
+        }),
         rationale: isFemale
-          ? 'Adding fasting blood glucose, LH, and FSH values refines your statistical risk calculation.'
-          : 'Fasting morning serum testosterone (7:00 AM – 10:00 AM draw) unlocks refined clinical evaluation.',
-        buttonLabel: isFemale ? 'Add Lab Values' : 'Add Hormone Labs',
+          ? t('dashboard:femaleIntermediateSummary', {
+              defaultValue: 'Adding fasting blood glucose, LH, and FSH values refines your statistical risk calculation.',
+            })
+          : t('dashboard:maleIntermediateSummary', {
+              defaultValue: 'Fasting morning serum testosterone (7:00 AM – 10:00 AM draw) unlocks refined clinical evaluation.',
+            }),
+        buttonLabel: t('dashboard:updateScreeningCTA', {
+          defaultValue: isFemale ? 'Add Lab Values' : 'Add Hormone Labs',
+        }),
         targetRoute: '/app/assessment',
       };
     }
 
     if (!hasLoggedFoodToday) {
       return {
-        title: 'Focus on Balanced Meals Today',
-        rationale: 'No meal records logged for today yet. Logging meals helps track hormonal and metabolic response.',
-        buttonLabel: 'Log Your Meal',
+        title: t('dashboard:nextBestAction.checkNutrition', { defaultValue: 'Focus on Balanced Meals Today' }),
+        rationale: t('dashboard:nextBestAction.checkNutritionDesc', {
+          defaultValue: 'No meal records logged for today yet. Logging meals helps track hormonal and metabolic response.',
+        }),
+        buttonLabel: t('dashboard:logMeal', { defaultValue: 'Log Your Meal' }),
         targetRoute: ROUTES.APP.LIFESTYLE,
       };
     }
 
     if (!hasLoggedWaterToday) {
       return {
-        title: 'Maintain Daily Hydration Baseline',
-        rationale: 'Adequate hydration supports hormonal clearance and steady daily metabolic function.',
-        buttonLabel: 'Log Water Intake',
+        title: t('dashboard:hydrationTracker', { defaultValue: 'Maintain Daily Hydration Baseline' }),
+        rationale: t('dashboard:hydrationSubtitle', {
+          defaultValue: 'Adequate hydration supports hormonal clearance and steady daily metabolic function.',
+        }),
+        buttonLabel: t('dashboard:logWater', { defaultValue: 'Log Water Intake' }),
         targetRoute: ROUTES.APP.LIFESTYLE,
       };
     }
 
     return {
-      title: 'Review Health Progression',
-      rationale: 'Your clinical assessment and lifestyle logs are active. Track your weekly symptom stability.',
-      buttonLabel: 'Review Health Hub',
+      title: t('dashboard:screeningComplete', { defaultValue: 'Review Health Progression' }),
+      rationale: t('dashboard:longitudinalCard.stablePattern', {
+        defaultValue: 'Your clinical assessment and lifestyle logs are active. Track your weekly symptom stability.',
+      }),
+      buttonLabel: t('dashboard:longitudinalCard.viewFullTrends', { defaultValue: 'Review Health Hub' }),
       targetRoute: '/app/master-hub',
     };
   })();
 
   const menuItems = [
     {
-      label: 'View Action Details',
+      label: t('common:viewDetails', { defaultValue: 'View Action Details' }),
       onClick: () => onAction(actionContent.targetRoute),
       icon: Target,
     },
     ...(onOpenAiTwin
       ? [
           {
-            label: 'Ask AI Assistant',
+            label: t('common:askAI', { defaultValue: 'Ask AI Assistant' }),
             onClick: onOpenAiTwin,
             icon: HelpCircle,
           },
@@ -104,13 +126,13 @@ export const NextBestActionModuleCard: React.FC<NextBestActionModuleCardProps> =
 
   return (
     <DashboardModuleCard
-      title="Next Best Action"
-      subtitle="Based on your latest data"
+      title={t('dashboard:nextBestActionTitle', { defaultValue: 'Next Best Action' })}
+      subtitle={t('dashboard:nextBestActionSubtitle', { defaultValue: 'Based on your latest data' })}
       icon={Sparkles}
       accentColor={isFemale ? 'pink' : 'blue'}
       isLive={true}
       badgeType="ai"
-      badgeLabel="AI powered"
+      badgeLabel={t('common:aiPowered', { defaultValue: 'AI powered' })}
       syncedModule="BioPulse Intelligence"
       menuItems={menuItems}
     >

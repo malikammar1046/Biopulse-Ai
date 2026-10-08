@@ -101,8 +101,10 @@ export async function sendPublicChatMessage(
   safety_level: 'normal' | 'caution' | 'urgent';
   needs_clinician: boolean;
 } | null> {
+  const locale = (typeof window !== 'undefined' && localStorage.getItem('biopulse_locale')) || 'en';
   const payload = {
     message,
+    locale,
     conversation_history: conversationHistory?.slice(-6) || [],
     stream: false,
   };
@@ -112,6 +114,7 @@ export async function sendPublicChatMessage(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept-Language': locale,
       },
       body: JSON.stringify(payload),
       signal,
@@ -136,9 +139,11 @@ export async function sendPublicChatMessage(
  */
 export async function streamPublicChatMessage(options: StreamPublicChatOptions): Promise<void> {
   const { message, conversationHistory, onChunk, onDone, onError, signal } = options;
+  const locale = (typeof window !== 'undefined' && localStorage.getItem('biopulse_locale')) || 'en';
 
   const payload = {
     message,
+    locale,
     conversation_history: conversationHistory?.slice(-6) || [],
     stream: true,
   };
@@ -149,6 +154,7 @@ export async function streamPublicChatMessage(options: StreamPublicChatOptions):
       headers: {
         'Content-Type': 'application/json',
         Accept: 'text/event-stream',
+        'Accept-Language': locale,
       },
       body: JSON.stringify(payload),
       signal,

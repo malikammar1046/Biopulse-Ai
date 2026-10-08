@@ -979,10 +979,12 @@ export async function sendChatMessage(
   }
 
   const pathway = clientTelemetry?.pathway || '';
+  const locale = (typeof window !== 'undefined' && localStorage.getItem('biopulse_locale')) || 'en';
   const payload = {
     message,
     conversation_id: conversationId || '',
     pathway,
+    locale,
     conversation_history: conversationHistory || [],
     client_telemetry: clientTelemetry || {},
   };
@@ -996,6 +998,7 @@ export async function sendChatMessage(
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
+          'Accept-Language': locale,
         },
         body: JSON.stringify(payload),
       },

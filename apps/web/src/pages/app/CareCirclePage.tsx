@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
   Users01,
   Plus,
@@ -17,6 +18,7 @@ import { CareCircleMemberCard } from '../../components/care-circle/CareCircleMem
 import { CareCirclePendingInvites } from '../../components/care-circle/CareCirclePendingInvites';
 
 export const CareCirclePage: React.FC = () => {
+  const { t } = useTranslation(['careCircle', 'common']);
   const {
     userProfile,
     careCircleMembers,
@@ -67,20 +69,20 @@ export const CareCirclePage: React.FC = () => {
           <div className="space-y-2.5 max-w-2xl text-left">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F0F9FF] text-xs font-mono font-semibold text-[#0288D1] border border-[#BAE6FD]">
               <ShieldTick className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
-              <span>Zero-Compromise Patient Consent</span>
+              <span>{t('careCircle:title', { defaultValue: 'Zero-Compromise Patient Consent' })}</span>
             </div>
 
             {/* Quick Stat Badges */}
             <div className="flex flex-wrap items-center gap-2.5">
               <div className="px-3 py-1.5 rounded-xl bg-[#F8FAFC] border border-[#EAECF0] text-xs font-mono text-[#0F172A]">
-                <span className="text-[#0288D1] font-bold">{activeMembers.length}</span> Active Connections
+                <span className="text-[#0288D1] font-bold">{activeMembers.length}</span> {t('careCircle:status.accepted', { defaultValue: 'Active Connections' })}
               </div>
               <div className="px-3 py-1.5 rounded-xl bg-[#F8FAFC] border border-[#EAECF0] text-xs font-mono text-[#0F172A]">
-                <span className="text-[#F79009] font-bold">{careCircleInvitations.length || pendingMembers.length}</span> Pending
+                <span className="text-[#F79009] font-bold">{careCircleInvitations.length || pendingMembers.length}</span> {t('careCircle:status.pending', { defaultValue: 'Pending' })}
               </div>
               <div className="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-mono text-emerald-700 flex items-center gap-1.5 font-medium">
                 <Lock01 className="w-3 h-3 text-emerald-600" aria-hidden="true" />
-                <span>Instant Revocation Enabled</span>
+                <span>{t('careCircle:status.revoked', { defaultValue: 'Instant Revocation Enabled' })}</span>
               </div>
             </div>
           </div>
@@ -93,7 +95,7 @@ export const CareCirclePage: React.FC = () => {
               className="px-4 py-2.5 rounded-xl font-sans font-semibold text-xs sm:text-sm text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
             >
               <MedicalCircle className="w-4 h-4 text-white" aria-hidden="true" />
-              <span>Add Doctor / Clinician</span>
+              <span>{t('careCircle:inviteMember', { defaultValue: 'Add Doctor / Clinician' })}</span>
             </button>
 
             <button
@@ -102,7 +104,7 @@ export const CareCirclePage: React.FC = () => {
               className="px-4 py-2.5 rounded-xl font-sans font-semibold text-xs sm:text-sm text-[#344054] bg-[#FAFAFC] hover:bg-[#F2F4F7] border border-[#EAECF0] shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
             >
               <Heart className="w-4 h-4 text-[#F43F7D]" aria-hidden="true" />
-              <span>Add Family Member</span>
+              <span>{t('careCircle:inviteMember', { defaultValue: 'Add Family Member' })}</span>
             </button>
           </div>
         </div>

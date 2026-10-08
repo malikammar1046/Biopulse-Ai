@@ -1,0 +1,41 @@
+{
+  "title": "Medical Reports & Diagnostic Documents",
+  "subtitle": "Securely store, extract, and verify your clinical lab results and ultrasound scans",
+  "uploadButton": "Upload New Report",
+  "dragDropText": "Drag and drop your PDF or image report here, or click to browse",
+  "supportedFormats": "Supported formats: PDF, JPG, PNG (Max 10 MB)",
+  "processingStatus": {
+    "uploading": "Uploading document...",
+    "ocrProcessing": "Extracting lab biomarkers with OCR...",
+    "completed": "Extraction complete. Please verify values below.",
+    "failed": "Unable to parse report. You can manually enter values."
+  },
+  "table": {
+    "date": "Report Date",
+    "name": "Document Name",
+    "type": "Report Type",
+    "biomarkersExtracted": "Biomarkers Detected",
+    "status": "Verification Status",
+    "actions": "Actions"
+  },
+  "verificationPrompt": {
+    "title": "Verify Extracted Lab Values",
+    "subtitle": "Please cross-check extracted numbers against your original physical report before saving",
+    "marker": "Biomarker",
+    "extractedValue": "Extracted Value",
+    "referenceRange": "Lab Reference Range",
+    "unit": "Unit",
+    "confirmValues": "Confirm & Save to Health Profile"
+  },
+  "emptyReports": "No medical reports uploaded yet. Upload a laboratory report to unlock Tier 2 screening precision.",
+  "healthDocHub": "Health Document Hub",
+  "totalReportsCount": "Total Reports",
+  "needsCloserLook": "Needs a closer look",
+  "dragDropLabReports": "Drag & drop your lab reports here, or click to browse",
+  "browseFileCTA": "Browse File",
+  "uploadPDForImage": "Please upload a PDF document or an image (JPG, PNG).",
+  "fileSizeLimit": "File size exceeds the 10MB limit. Please upload a smaller document.",
+  "loadingReports": "Loading Your Health Reports...",
+  "testsLabel": "tests",
+  "testLabel": "test"
+}

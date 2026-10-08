@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   LogOut01,
   Trash01,
@@ -7,8 +8,10 @@ import {
   AlertTriangle,
   File01,
   CheckCircle,
+  Globe02,
 } from '@untitledui/icons';
 import type { UserProfile, EmergencyContact } from '../../../../types/onboarding';
+import { useAuth } from '../../../../context/AuthContext';
 import { downloadHealthSummaryPdf } from '../../../../services/healthSummaryPdfService';
 
 interface AccountTabProps {
@@ -26,9 +29,19 @@ export const AccountTab: React.FC<AccountTabProps> = ({
   onRestartOnboarding,
   onOpenDeleteModal,
 }) => {
+  const { updateUserLanguage } = useAuth();
+  const { i18n } = useTranslation(['settings', 'common']);
+  const isUrdu = i18n.language === 'ur';
+  const currentLocale = (i18n.language === 'ur' ? 'ur' : 'en') as 'en' | 'ur';
+
   const [downloadPdfLoading, setDownloadPdfLoading] = useState(false);
   const [downloadPdfSuccess, setDownloadPdfSuccess] = useState(false);
   const [downloadPdfError, setDownloadPdfError] = useState<string | null>(null);
+
+  const handleLanguageSelect = async (lang: 'en' | 'ur') => {
+    setDraft((prev) => ({ ...prev, preferredLanguage: lang }));
+    await updateUserLanguage(lang);
+  };
 
   const primaryContact: EmergencyContact = draft.emergencyContacts?.[0] || {
     name: '',
@@ -60,6 +73,64 @@ export const AccountTab: React.FC<AccountTabProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* 0. Language Preferences (Dedicated Section) */}
+      <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+              <Globe02 className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
+              <span>{isUrdu ? 'زبان کا انتخاب (Language Preferences)' : 'Language / زبان'}</span>
+            </h3>
+            <p className="text-xs text-slate-400 mt-0.5">
+              {isUrdu
+                ? 'ایپلیکیشن کی زبان منتخب کریں۔ ترجیح فوری طور پر لاگو ہوگی اور اکاؤنٹ میں محفوظ ہو جائے گی۔'
+                : 'Choose your interface language. Preference will sync across all sessions.'}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-w-lg">
+          <button
+            type="button"
+            onClick={() => handleLanguageSelect('en')}
+            className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer ${
+              currentLocale === 'en'
+                ? 'border-[#0288D1] bg-[#F0F9FF] shadow-xs ring-2 ring-[#0288D1]/20'
+                : 'border-slate-200 hover:border-slate-300 bg-white'
+            }`}
+          >
+            <div className="text-left">
+              <span className="text-sm font-bold text-slate-900 block">English</span>
+              <span className="text-[11px] text-slate-500 block mt-0.5">Reference clinical presentation</span>
+            </div>
+            {currentLocale === 'en' && (
+              <span className="w-5 h-5 rounded-full bg-[#0288D1] text-white flex items-center justify-center text-xs font-bold">
+                ✓
+              </span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleLanguageSelect('ur')}
+            className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer ${
+              currentLocale === 'ur'
+                ? 'border-[#0288D1] bg-[#F0F9FF] shadow-xs ring-2 ring-[#0288D1]/20'
+                : 'border-slate-200 hover:border-slate-300 bg-white'
+            }`}
+          >
+            <div className="text-right w-full pr-2">
+              <span className="text-sm font-bold text-slate-900 block">اردو (Urdu)</span>
+              <span className="text-[11px] text-slate-500 block mt-0.5">پاکستانی طبی رہنمائی کے معیارات</span>
+            </div>
+            {currentLocale === 'ur' && (
+              <span className="w-5 h-5 rounded-full bg-[#0288D1] text-white flex items-center justify-center text-xs font-bold">
+                ✓
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
       {/* 1. Account Credentials & Security */}
       <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs">
         <div className="flex items-center justify-between mb-5">

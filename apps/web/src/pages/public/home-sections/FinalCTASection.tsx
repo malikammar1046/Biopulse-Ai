@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -15,6 +16,7 @@ import { ROUTES } from '../../../constants/routes';
 import { Container } from '../../../components/ui/Container';
 
 export const FinalCTASection: React.FC = () => {
+  const { t } = useTranslation('public');
   return (
     <section className="py-16 sm:py-24 bg-[#FAFCFF] text-[#162A45] overflow-hidden border-t border-slate-200/70 select-none">
       {/* ── Soft Ambient Backing Glows ── */}
@@ -95,7 +97,7 @@ export const FinalCTASection: React.FC = () => {
 
               {/* Subheadline */}
               <p className="text-sm sm:text-base lg:text-lg text-slate-600 leading-relaxed font-sans max-w-lg">
-                BioPulse AI helps turn everyday health information into clearer insights and personalized next steps.
+                {t('finalCta.subtitle')}
               </p>
 
               {/* Dual Action Buttons */}

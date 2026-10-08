@@ -1,0 +1,21 @@
+{
+  "title": "BioPulse AI Companion",
+  "subtitle": "Clinical health literacy, pattern explanation, and appointment preparation",
+  "greetings": {
+    "female": "Hi! I’m BioPulse AI. Ask me about your screening, labs, symptoms, or next steps.",
+    "male": "Hi! I’m BioPulse AI. Ask me about your screening, hormones, symptoms, or next steps.",
+    "general": "Hi! I’m BioPulse AI. What would you like help understanding today?"
+  },
+  "suggestedPrompts": {
+    "title": "Suggested Discussion Topics",
+    "prompt1": "Explain my latest screening likelihood",
+    "prompt2": "What questions should I ask my doctor?",
+    "prompt3": "How can Pakistani nutrition help my hormones?",
+    "prompt4": "Explain the difference between LH and FSH"
+  },
+  "inputPlaceholder": "Ask a question about your screening, labs, or symptoms...",
+  "send": "Send Message",
+  "disclaimer": "BioPulse AI provides educational information and is not a medical doctor. In case of acute symptoms or severe pain, please seek emergency care.",
+  "emergencyBanner": "⚠️ Immediate medical attention recommended. Please contact emergency services or visit the nearest hospital.",
+  "typing": "BioPulse AI is reviewing your clinical context..."
+}

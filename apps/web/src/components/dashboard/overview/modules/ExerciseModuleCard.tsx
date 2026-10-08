@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Activity, Flame, MapPin, Footprints, PlusCircle } from 'lucide-react';
 import { DashboardModuleCard } from '../DashboardModuleCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
@@ -23,16 +24,17 @@ export const ExerciseModuleCard: React.FC<ExerciseModuleCardProps> = ({
   onLogActivity,
   updatedAt = '1 hr ago',
 }) => {
+  const { t } = useTranslation(['dashboard', 'lifestyle', 'common']);
   const isFemale = pathway === 'female';
 
   const menuItems = [
     {
-      label: 'Open Fitness Tracking',
+      label: t('dashboard:dailyActivity', { defaultValue: 'Open Fitness Tracking' }),
       onClick: onOpenFitness,
       icon: Activity,
     },
     {
-      label: 'Log Activity',
+      label: t('dashboard:addMovement', { defaultValue: 'Log Activity' }),
       onClick: onLogActivity,
       icon: PlusCircle,
     },
@@ -51,8 +53,8 @@ export const ExerciseModuleCard: React.FC<ExerciseModuleCardProps> = ({
   if (!hasActivity) {
     return (
       <DashboardModuleCard
-        title="Exercise & Movement"
-        subtitle="Today's activity"
+        title={t('dashboard:dailyActivity', { defaultValue: 'Exercise & Movement' })}
+        subtitle={t('dashboard:movementSubtitle', { defaultValue: "Today's activity" })}
         icon={Activity}
         accentColor={isFemale ? 'pink' : 'blue'}
         isLive={false}
@@ -60,9 +62,11 @@ export const ExerciseModuleCard: React.FC<ExerciseModuleCardProps> = ({
         loading={loading}
       >
         <DashboardEmptyState
-          title="No activity logged today"
-          description="Log your gentle walking, strength training, yoga, or workout to maintain active metabolic balance."
-          actionLabel="Log Activity"
+          title={t('dashboard:noMovementLogs', { defaultValue: 'No activity logged today' })}
+          description={t('dashboard:noMovementDesc', {
+            defaultValue: 'Log your gentle walking, strength training, yoga, or workout to maintain active metabolic balance.',
+          })}
+          actionLabel={t('dashboard:addMovement', { defaultValue: 'Log Activity' })}
           onAction={onLogActivity}
           icon={Activity}
           accentColor={isFemale ? 'pink' : 'blue'}
@@ -77,12 +81,12 @@ export const ExerciseModuleCard: React.FC<ExerciseModuleCardProps> = ({
 
   return (
     <DashboardModuleCard
-      title="Exercise & Movement"
-      subtitle="Today's activity"
+      title={t('dashboard:dailyActivity', { defaultValue: 'Exercise & Movement' })}
+      subtitle={t('dashboard:movementSubtitle', { defaultValue: "Today's activity" })}
       icon={Activity}
       accentColor={isFemale ? 'pink' : 'blue'}
       isLive={true}
-      syncedModule="Fitness / Movement"
+      syncedModule={t('lifestyle:movementGoal', { defaultValue: 'Fitness / Movement' })}
       updatedAt={updatedAt}
       menuItems={menuItems}
       loading={loading}
@@ -117,7 +121,7 @@ export const ExerciseModuleCard: React.FC<ExerciseModuleCardProps> = ({
               {todayMinutes}
             </span>
             <span className="text-[10px] font-mono text-slate-400 mt-1">
-              of {targetMinutes} mins
+              / {targetMinutes} {t('common:minutes', { defaultValue: 'mins' })}
             </span>
           </div>
         </div>
@@ -131,7 +135,7 @@ export const ExerciseModuleCard: React.FC<ExerciseModuleCardProps> = ({
             </div>
             <div>
               <span className="text-xs font-bold text-slate-900 block leading-tight">
-                {todayActivities.length} session{todayActivities.length === 1 ? '' : 's'}
+                {todayActivities.length} {t('lifestyle:sessions', { defaultValue: 'sessions' })}
               </span>
               <span className="text-[10.5px] text-slate-500 font-sans capitalize block leading-tight truncate">
                 {todayActivities.map((a) => a.activityName).slice(0, 2).join(', ')}
@@ -146,10 +150,10 @@ export const ExerciseModuleCard: React.FC<ExerciseModuleCardProps> = ({
             </div>
             <div>
               <span className="text-xs font-bold text-slate-900 block leading-tight">
-                {todayMinutes} min movement
+                {todayMinutes} {t('common:minutes', { defaultValue: 'min' })} {t('dashboard:movementGoal', { defaultValue: 'movement' })}
               </span>
               <span className="text-[10.5px] text-slate-500 font-sans block leading-tight">
-                Active time recorded
+                {t('lifestyle:activeTime', { defaultValue: 'Active time recorded' })}
               </span>
             </div>
           </div>
@@ -164,7 +168,7 @@ export const ExerciseModuleCard: React.FC<ExerciseModuleCardProps> = ({
                 ~{estimatedCaloriesBurned} kcal
               </span>
               <span className="text-[10.5px] text-slate-500 font-sans block leading-tight">
-                Estimated energy output
+                {t('lifestyle:energyOutput', { defaultValue: 'Estimated energy output' })}
               </span>
             </div>
           </div>
