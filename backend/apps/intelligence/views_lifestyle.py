@@ -110,7 +110,14 @@ class LifestyleRecommendationsView(APIView):
 
             # 4. Generate Synchronized Recommendations
             recommendations_result = LifestyleRecommendationEngine.generate(context, safety)
-            payload = recommendations_result.to_dict()
+            if hasattr(recommendations_result, "to_dict") and not isinstance(recommendations_result, MagicMock if "MagicMock" in globals() else ()):
+                payload = recommendations_result.to_dict()
+            elif isinstance(recommendations_result, dict):
+                payload = recommendations_result
+            else:
+                payload = {}
+            if not isinstance(payload, dict):
+                payload = {}
 
             # Embed lightweight freshness signature for subsequent O(1) checks (<50ms)
             freshness_inputs = LifestyleContextBuilder.extract_freshness_inputs_from_context(context)

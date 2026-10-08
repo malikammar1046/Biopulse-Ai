@@ -1010,10 +1010,10 @@ class LifestyleContextBuilder:
             "stress_level": str(demo.stress_level or "").lower().strip(),
             "profile_updated_at": getattr(demo, "profile_updated_at", "") or "",
             "has_assessment": screening.has_assessment,
-            "assessment_id": str(screening.assessment_id or ""),
-            "assessment_level": str(screening.assessment_level or "none"),
-            "risk_category": str(screening.risk_category or "unscreened"),
-            "assessment_updated_at": str(screening.created_at or ""),
+            "assessment_id": str(screening.assessment_id or "") if screening.has_assessment else "",
+            "assessment_level": str(screening.assessment_level or "none") if screening.has_assessment else "none",
+            "risk_category": str(screening.risk_category or "unscreened") if screening.has_assessment else "unscreened",
+            "assessment_updated_at": str(screening.created_at or "") if screening.has_assessment else "",
         }
 
     @classmethod

@@ -2,9 +2,10 @@ name: Security & Secret Scanning
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, hamza ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, develop, hamza ]
+  workflow_dispatch:
 
 concurrency:
   group: security-${{ github.workflow }}-${{ github.ref }}

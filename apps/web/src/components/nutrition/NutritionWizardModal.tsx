@@ -66,20 +66,6 @@ const POPULAR_CUISINES = [
   'western',
 ];
 
-const POPULAR_PAKISTANI_DISHES = [
-  'daal_masoor',
-  'chicken_karahi',
-  'chapati',
-  'chicken_tikka',
-  'chana_curry',
-  'pulao',
-  'biryani',
-  'sabzi',
-  'raita',
-  'haleem',
-  'machli',
-];
-
 const POPULAR_INGREDIENTS = [
   'chicken',
   'lentils',
@@ -107,7 +93,6 @@ const GOAL_OPTIONS: { id: MealGoal; label: string; desc: string }[] = [
 export const NutritionWizardModal: React.FC<NutritionWizardModalProps> = ({
   isOpen,
   onClose,
-  readiness,
   existingPreferences,
   onGeneratePlan,
   isMale,
@@ -144,7 +129,6 @@ export const NutritionWizardModal: React.FC<NutritionWizardModalProps> = ({
   const [budgetTier, setBudgetTier] = useState<BudgetTier>(
     (existingPreferences?.budget_tier as BudgetTier) || 'medium'
   );
-  const [cookingAccess, setCookingAccess] = useState<string>('full_kitchen');
   const [goal, setGoal] = useState<MealGoal>('metabolic_health');
 
   if (!isOpen) return null;

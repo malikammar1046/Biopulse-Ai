@@ -2,15 +2,16 @@ name: Backend CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, hamza ]
     paths:
       - 'backend/**'
       - '.github/workflows/backend-ci.yml'
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, develop, hamza ]
     paths:
       - 'backend/**'
       - '.github/workflows/backend-ci.yml'
+  workflow_dispatch:
 
 concurrency:
   group: backend-${{ github.workflow }}-${{ github.ref }}
@@ -41,16 +42,26 @@ jobs:
           cache: 'pip'
           cache-dependency-path: backend/requirements.txt
 
+      - name: Free disk space
+        run: |
+          sudo apt-get clean
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+
       - name: Install System Libraries
         run: |
           sudo apt-get update -y
           sudo apt-get install -y libgl1 tesseract-ocr
 
       - name: Install Dependencies
+        env:
+          PIP_NO_CACHE_DIR: "1"
         run: |
           cd backend
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install --index-url https://download.pytorch.org/whl/cpu torch torchvision
+          pip install --no-cache-dir -r requirements.txt
 
       - name: Run Django System Checks
         run: |

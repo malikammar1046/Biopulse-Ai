@@ -15,6 +15,7 @@ import { AuthBackgroundFoliage } from '../components/auth/AuthBackgroundFoliage'
 import { PathwayHeader } from '../components/onboarding';
 import { useMaleOnboarding } from '../features/onboarding';
 import { useHealthStore } from '../store';
+import { resolveRiskBand } from '../services/assessmentService';
 import { BioPulseBottomNav, BOTTOM_NAV_HEIGHT } from '../components/navigation';
 
 export default function MaleScreeningResultScreen() {
@@ -24,13 +25,17 @@ export default function MaleScreeningResultScreen() {
   const isTablet = width >= 768;
 
   const { activeAssessment, calculateAdamScore } = useMaleOnboarding();
-  const { updateProfile } = useHealthStore();
+  const { updateProfile, screening } = useHealthStore();
   const adamSummary = calculateAdamScore();
 
-  // Probability and risk category fallback
-  const probability = activeAssessment?.probability ?? (adamSummary.isPositive ? 0.72 : 0.24);
-  const probPercent = Math.round(probability * 100);
-  const riskCategory = activeAssessment?.risk_category || (probability >= 0.6 ? 'higher' : probability >= 0.35 ? 'intermediate' : 'lower');
+  const hasAssessment = Boolean(activeAssessment || (screening.tierStatus && screening.tierStatus !== 'Not Assessed'));
+
+  const probability = activeAssessment?.probability ?? (screening.probabilityPercent ? screening.probabilityPercent / 100 : 0);
+  const probPercent = activeAssessment?.probability_percent ??
+    (activeAssessment ? Math.round((activeAssessment.probability ?? 0) * 100) : screening.probabilityPercent);
+
+  const band = resolveRiskBand(probability, activeAssessment?.risk_category || screening.riskCategory, activeAssessment?.threshold || 0.45);
+  const riskCategory = band.category;
 
   const riskBadgeConfig = useMemo(() => {
     switch (riskCategory) {
