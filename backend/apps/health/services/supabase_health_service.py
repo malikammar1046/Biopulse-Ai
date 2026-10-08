@@ -273,7 +273,7 @@ class SupabaseHealthService:
             "daily_water_glasses,dietary_preference,conditions,medications,"
             "waist_cm,hip_cm,allergies,food_allergies,food_intolerances,"
             "marital_status,marriage_years,is_pregnant,abortions_count,"
-            "fast_food_intake,regular_exercise,stress_level,lifestyle,updated_at,created_at"
+            "fast_food_intake,regular_exercise,lifestyle,updated_at,created_at"
         )
         base_select = (
             "id,gender,pathway,height_cm,weight_kg,date_of_birth,cycle_length,"

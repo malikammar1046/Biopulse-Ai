@@ -232,6 +232,8 @@ export interface ChatResponsePayload {
   safety_level: ChatSafetyLevel;
   needs_clinician: boolean;
   model?: string;
+  error_type?: 'NETWORK' | 'SESSION' | 'BACKEND' | 'PROVIDER_UNAVAILABLE';
+  timings?: Record<string, number>;
 }
 
 // ---------------------------------------------------------------------------

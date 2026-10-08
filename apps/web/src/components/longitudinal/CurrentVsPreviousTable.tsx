@@ -120,47 +120,100 @@ export const CurrentVsPreviousTable: React.FC<CurrentVsPreviousTableProps> = ({
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto border border-[#EAECF0] rounded-xl">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="bg-[#F8F9FC] border-b border-[#EAECF0] text-[#667085] font-mono uppercase text-[10px]">
-                <th className="py-2.5 px-4">Clinical Factor</th>
-                <th className="py-2.5 px-4">Category</th>
-                <th className="py-2.5 px-4">{hasSingleAssessment ? 'Status' : 'Previous'}</th>
-                <th className="py-2.5 px-4">{hasSingleAssessment ? 'Baseline Value' : 'Current Value'}</th>
-                <th className="py-2.5 px-4">Change / State</th>
-                <th className="py-2.5 px-4 hidden md:table-cell">Objective Interpretation</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#F2F4F7]">
-              {displayedFactors.map((f) => (
-                <tr key={f.factor_key} className="hover:bg-[#FAFAFC]">
-                  <td className="py-3 px-4 font-semibold text-[#111318]">
-                    {f.label}
-                    {f.unit && (
-                      <span className="text-[10px] font-mono text-[#667085] ml-1">({f.unit})</span>
-                    )}
-                  </td>
-                  <td className="py-3 px-4 capitalize text-[#667085] text-[11px] font-mono">
-                    {f.category}
-                  </td>
-                  <td className="py-3 px-4 font-mono text-[#667085]">
-                    {hasSingleAssessment ? '—' : f.previous_display}
-                  </td>
-                  <td className="py-3 px-4 font-mono font-bold text-[#111318]">
-                    {f.current_display}
-                  </td>
-                  <td className="py-3 px-4">
-                    {getDirectionBadge(f)}
-                  </td>
-                  <td className="py-3 px-4 text-[#475569] text-xs max-w-xs hidden md:table-cell">
+        <>
+          {/* Mobile View: Stacked Cards (< md) */}
+          <div className="md:hidden space-y-2.5">
+            {displayedFactors.map((f) => (
+              <div
+                key={f.factor_key}
+                className="p-3.5 rounded-xl border border-[#EAECF0] bg-[#FAFAFC] space-y-2 text-left"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h4 className="text-xs font-bold text-[#111318] truncate">
+                      {f.label}
+                      {f.unit && (
+                        <span className="text-[10px] font-mono text-[#667085] ml-1">({f.unit})</span>
+                      )}
+                    </h4>
+                    <span className="text-[10px] font-mono capitalize text-[#667085]">
+                      {f.category}
+                    </span>
+                  </div>
+                  <div className="shrink-0">{getDirectionBadge(f)}</div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs pt-1.5 border-t border-[#F2F4F7]">
+                  <div>
+                    <span className="text-[10px] text-[#667085] uppercase font-mono block">
+                      {hasSingleAssessment ? 'Status' : 'Previous'}
+                    </span>
+                    <span className="font-mono text-[#475569]">
+                      {hasSingleAssessment ? '—' : f.previous_display}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-[#667085] uppercase font-mono block">
+                      {hasSingleAssessment ? 'Baseline Value' : 'Current Value'}
+                    </span>
+                    <span className="font-mono font-bold text-[#111318]">
+                      {f.current_display}
+                    </span>
+                  </div>
+                </div>
+
+                {f.explanation && (
+                  <p className="text-[11px] text-[#475569] leading-snug pt-1.5 border-t border-[#F2F4F7]">
                     {f.explanation}
-                  </td>
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop View: Full Table (>= md) */}
+          <div className="hidden md:block overflow-x-auto border border-[#EAECF0] rounded-xl">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-[#F8F9FC] border-b border-[#EAECF0] text-[#667085] font-mono uppercase text-[10px]">
+                  <th className="py-2.5 px-4">Clinical Factor</th>
+                  <th className="py-2.5 px-4">Category</th>
+                  <th className="py-2.5 px-4">{hasSingleAssessment ? 'Status' : 'Previous'}</th>
+                  <th className="py-2.5 px-4">{hasSingleAssessment ? 'Baseline Value' : 'Current Value'}</th>
+                  <th className="py-2.5 px-4">Change / State</th>
+                  <th className="py-2.5 px-4 hidden md:table-cell">Objective Interpretation</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-[#F2F4F7]">
+                {displayedFactors.map((f) => (
+                  <tr key={f.factor_key} className="hover:bg-[#FAFAFC]">
+                    <td className="py-3 px-4 font-semibold text-[#111318]">
+                      {f.label}
+                      {f.unit && (
+                        <span className="text-[10px] font-mono text-[#667085] ml-1">({f.unit})</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 capitalize text-[#667085] text-[11px] font-mono">
+                      {f.category}
+                    </td>
+                    <td className="py-3 px-4 font-mono text-[#667085]">
+                      {hasSingleAssessment ? '—' : f.previous_display}
+                    </td>
+                    <td className="py-3 px-4 font-mono font-bold text-[#111318]">
+                      {f.current_display}
+                    </td>
+                    <td className="py-3 px-4">
+                      {getDirectionBadge(f)}
+                    </td>
+                    <td className="py-3 px-4 text-[#475569] text-xs max-w-xs hidden md:table-cell">
+                      {f.explanation}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

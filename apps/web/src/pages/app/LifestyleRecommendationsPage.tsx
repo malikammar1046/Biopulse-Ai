@@ -521,7 +521,7 @@ export const LifestyleRecommendationsPage: React.FC = () => {
       {/* ── C. REFINED THREE PILLAR SEGMENTED NAVIGATION ── */}
       <nav
         aria-label="Lifestyle Pillars"
-        className="flex items-center justify-center sm:justify-start gap-2 bg-[#F7FBFC] p-1.5 rounded-2xl border border-[#E2EEF4] max-w-fit mx-auto sm:mx-0"
+        className="w-full sm:w-auto overflow-x-auto no-scrollbar flex items-center justify-start gap-1.5 sm:gap-2 bg-[#F7FBFC] p-1.5 rounded-2xl border border-[#E2EEF4] max-w-full sm:max-w-fit mx-auto sm:mx-0"
         role="tablist"
       >
         <button
@@ -531,7 +531,7 @@ export const LifestyleRecommendationsPage: React.FC = () => {
           aria-selected={activeTab === 'nutrition'}
           aria-controls="panel-nutrition"
           onClick={() => setActiveTab('nutrition')}
-          className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+          className={`shrink-0 inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
             activeTab === 'nutrition'
               ? isMale
                 ? 'bg-[#0868B9] text-white shadow-sm'
@@ -539,8 +539,10 @@ export const LifestyleRecommendationsPage: React.FC = () => {
               : 'text-slate-600 hover:text-[#073B72] hover:bg-white/80'
           }`}
         >
-          <Apple className="w-4 h-4" />
-          <span>Nutritional Fuel</span>
+          <Apple className="w-4 h-4 shrink-0" />
+          <span>
+            <span className="hidden xs:inline">Nutritional </span>Fuel
+          </span>
         </button>
 
         <button
@@ -550,7 +552,7 @@ export const LifestyleRecommendationsPage: React.FC = () => {
           aria-selected={activeTab === 'fitness'}
           aria-controls="panel-fitness"
           onClick={() => setActiveTab('fitness')}
-          className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+          className={`shrink-0 inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
             activeTab === 'fitness'
               ? isMale
                 ? 'bg-[#0868B9] text-white shadow-sm'
@@ -558,8 +560,10 @@ export const LifestyleRecommendationsPage: React.FC = () => {
               : 'text-slate-600 hover:text-[#073B72] hover:bg-white/80'
           }`}
         >
-          <Dumbbell className="w-4 h-4" />
-          <span>Movement & Strength</span>
+          <Dumbbell className="w-4 h-4 shrink-0" />
+          <span>
+            Movement<span className="hidden xs:inline"> & Strength</span>
+          </span>
         </button>
 
         <button
@@ -569,7 +573,7 @@ export const LifestyleRecommendationsPage: React.FC = () => {
           aria-selected={activeTab === 'lifestyle'}
           aria-controls="panel-lifestyle"
           onClick={() => setActiveTab('lifestyle')}
-          className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+          className={`shrink-0 inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
             activeTab === 'lifestyle'
               ? isMale
                 ? 'bg-[#0868B9] text-white shadow-sm'
@@ -577,8 +581,10 @@ export const LifestyleRecommendationsPage: React.FC = () => {
               : 'text-slate-600 hover:text-[#073B72] hover:bg-white/80'
           }`}
         >
-          <HeartPulse className="w-4 h-4" />
-          <span>Rest & Circadian Balance</span>
+          <HeartPulse className="w-4 h-4 shrink-0" />
+          <span>
+            Rest<span className="hidden xs:inline"> & Circadian</span>
+          </span>
         </button>
       </nav>
 

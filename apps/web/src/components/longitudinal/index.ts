@@ -15,3 +15,4 @@ export { TrendCard } from './TrendCard';
 export { ProgressComparisonCard } from './ProgressComparisonCard';
 export { BiomarkerLongitudinalSection } from './BiomarkerLongitudinalSection';
 export { HealthTimelineView } from './HealthTimelineView';
+export { CurrentHealthSnapshotCard } from './CurrentHealthSnapshotCard';

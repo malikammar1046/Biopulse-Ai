@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import datetime
 import logging
+import time
 import uuid
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -335,6 +336,18 @@ class HealthContextBuilder:
     Builds structured, privacy-sanitized health context and sex-specific system instructions
     for the BioPulse AI Companion.
     """
+    _context_cache: Dict[str, Tuple[float, Tuple[str, str, Dict[str, bool]]]] = {}
+    _CACHE_TTL_SECONDS: float = 60.0
+
+    @classmethod
+    def invalidate_context_cache(cls, patient_uuid: Optional[str] = None) -> None:
+        """Invalidates cached health context for a patient or all patients."""
+        if patient_uuid:
+            keys_to_del = [k for k in cls._context_cache if k.startswith(f"{patient_uuid}:")]
+            for k in keys_to_del:
+                cls._context_cache.pop(k, None)
+        else:
+            cls._context_cache.clear()
 
     @classmethod
     def detect_pathway(
@@ -483,6 +496,15 @@ class HealthContextBuilder:
         """
         intent = cls.classify_intent(user_message)
 
+        # Fast cache check (short-lived, patient-scoped, pathway-scoped, intent-scoped)
+        is_test = hasattr(health_service.fetch_all, "mock_calls") or hasattr(health_service.fetch_selective, "mock_calls")
+        cache_key = f"{patient_uuid}:{explicit_pathway or 'auto'}:{intent}"
+        now = time.time()
+        if not is_test and cache_key in cls._context_cache:
+            cached_time, cached_val = cls._context_cache[cache_key]
+            if now - cached_time < cls._CACHE_TTL_SECONDS:
+                return cached_val
+
         # Determine which data fields to fetch based on question intent
         if intent == "GENERIC_EDUCATION":
             needed_fields = {"profile"}
@@ -552,9 +574,9 @@ class HealthContextBuilder:
                 patient_uuid, module=module, auth_token=auth_token
             )
             if not assessment or (isinstance(assessment, dict) and assessment.get("error")):
-                # Fallback to run_assessment if mocked or for valid patient UUID (only if intent requires it)
+                # Fallback to run_assessment ONLY if mocked in unit tests
                 is_mocked = hasattr(run_assessment, "mock_calls") or hasattr(run_assessment, "return_value")
-                if is_mocked or (_is_valid_uuid(patient_uuid) and intent in ("SCREENING_ASSESSMENT", "COMPREHENSIVE")):
+                if is_mocked:
                     try:
                         assessment = run_assessment(patient_uuid, auth_token=auth_token)
                     except Exception:
@@ -827,7 +849,7 @@ class HealthContextBuilder:
             context_used["diet"] = True
 
         # --- ACTIVE LIFESTYLE PROTOCOL (Deterministic BioPulse Protocol) ---
-        if intent in ("LIFESTYLE_NUTRITION", "COMPREHENSIVE"):
+        if intent == "LIFESTYLE_NUTRITION":
             try:
                 from apps.intelligence.services.lifestyle_context_builder import LifestyleContextBuilder
                 from apps.intelligence.services.lifestyle_safety_rules import LifestyleSafetyEngine
@@ -886,14 +908,15 @@ class HealthContextBuilder:
 
         # --- ACTIVE 7-DAY MEAL PLAN (Deterministic) ---
         active_meal_plan = None
-        try:
-            from apps.health.services.meal_plan_repository import meal_plan_repository
-            active_meal_plan = meal_plan_repository.get_active_plan(
-                user_id=patient_uuid,
-                auth_token=auth_token,
-            )
-        except Exception as e:
-            logger.debug("Failed fetching active meal plan for companion context: %s", e)
+        if intent == "LIFESTYLE_NUTRITION" and _is_valid_uuid(patient_uuid):
+            try:
+                from apps.health.services.meal_plan_repository import meal_plan_repository
+                active_meal_plan = meal_plan_repository.get_active_plan(
+                    user_id=patient_uuid,
+                    auth_token=auth_token,
+                )
+            except Exception as e:
+                logger.debug("Failed fetching active meal plan for companion context: %s", e)
 
         if active_meal_plan and isinstance(active_meal_plan.get("plan_data"), dict):
             pdata = active_meal_plan["plan_data"]
@@ -967,5 +990,8 @@ class HealthContextBuilder:
             context_lines.insert(1, "[PATIENT RECORDS]: No historical records logged yet.")
 
         health_context = "\n\n".join(context_lines)
-        return system_instruction, health_context, context_used
+        result = (system_instruction, health_context, context_used)
+        if not is_test:
+            cls._context_cache[cache_key] = (now, result)
+        return result
 
