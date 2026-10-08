@@ -23,6 +23,8 @@ import { useHealthStore } from '../store';
 import {
   submitFemaleTier1AssessmentWithStatus,
   buildFemaleTier1Inputs,
+  validateFemaleReviewInputs,
+  resolveRiskBand,
 } from '../services/assessmentService';
 
 const SYMPTOM_LABELS: Record<string, string> = {
@@ -73,7 +75,7 @@ export default function FemaleReviewScreen() {
     setActiveAssessment,
     saveAndCompleteOnboarding,
   } = useFemaleOnboarding();
-  const { updateProfile, updateScreeningAssessment } = useHealthStore();
+  const { updateProfile, updateScreeningAssessment, refreshAssessment } = useHealthStore();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const bottomPad = Math.max(insets.bottom, 20);
@@ -129,6 +131,16 @@ export default function FemaleReviewScreen() {
 
   // Submit assessment to backend ML service
   const handleRunScreening = async () => {
+    // 1. Strict clinical validation
+    const validation = validateFemaleReviewInputs(basicInfo, cycleHealth);
+    if (!validation.isValid) {
+      Alert.alert(
+        'Required Clinical Information Missing',
+        validation.error || 'Please provide all required health measurements before continuing.'
+      );
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -141,18 +153,35 @@ export default function FemaleReviewScreen() {
 
       const result = await submitFemaleTier1AssessmentWithStatus(inputs);
 
-      if (result.data) {
-        const assess = result.data as any;
-        setActiveAssessment(result.data);
-        updateScreeningAssessment({
-          probabilityPercent: Math.round((assess.probability ?? 0.72) * 100),
-          riskBand: assess.risk_category === 'high' || (assess.probability ?? 0) >= 0.6 ? 'Higher Risk' : 'Lower Risk',
-          riskCategory: (assess.risk_category?.toLowerCase() as 'lower' | 'intermediate' | 'higher') || 'higher',
-          tier: 1,
-          tierStatus: 'Tier 1 Complete',
-          topFactors: assess.top_factors || [],
-        });
+      if (result.error || !result.data) {
+        setIsSubmitting(false);
+        Alert.alert(
+          'Screening Engine Unavailable',
+          result.error || 'Failed to connect to the BioPulse assessment pipeline. Please check your network connection and retry.'
+        );
+        return;
       }
+
+      const assess = result.data;
+      const band = resolveRiskBand(assess.probability, assess.risk_category, assess.threshold);
+
+      setActiveAssessment(assess);
+      updateScreeningAssessment({
+        probabilityPercent: assess.probability_percent ?? Math.round(assess.probability * 100),
+        riskBand: (band.label === 'Higher Likelihood' ? 'Higher Risk' : band.label === 'Intermediate Likelihood' ? 'Intermediate Risk' : 'Lower Risk') as any,
+        riskCategory: band.category,
+        tier: 1,
+        tierStatus: 'Tier 1 Complete',
+        lastAssessedDate: 'Today',
+        topFactors: (assess.explanations || []).map((exp, idx) => ({
+          id: `factor_${idx}`,
+          name: exp.feature_name || exp.feature_key,
+          impactPercent: exp.explanation_share_percent || Math.round(Math.abs(exp.impact_score || 0) * 100),
+          direction: (exp.direction === 'increases_risk' || exp.direction === 'positive' || exp.direction === 'higher' ? 'increases_risk' : 'decreases_risk') as any,
+          explanation: exp.description || exp.patient_explanation || '',
+          iconName: 'pulse',
+        })),
+      });
 
       await saveAndCompleteOnboarding({
         heightCm: basicInfo.heightCm,
@@ -170,13 +199,17 @@ export default function FemaleReviewScreen() {
         isOnboarded: true,
       });
 
+      refreshAssessment().catch(() => {});
+
       setIsSubmitting(false);
       // Advance to Screen 11: Screening Result
       router.push('/female-screening-result');
     } catch (err: any) {
       setIsSubmitting(false);
-      // Even if network fails, ensure user transitions gracefully
-      router.push('/female-screening-result');
+      Alert.alert(
+        'Assessment Error',
+        err?.message || 'An unexpected error occurred while communicating with the BioPulse assessment service. Please retry.'
+      );
     }
   };
 

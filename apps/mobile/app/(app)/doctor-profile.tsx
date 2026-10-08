@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -42,13 +42,19 @@ export default function DoctorProfileScreen() {
   const { pathway } = useAuth();
   const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
 
-  const { bookAppointment, addToCareCircle } = useHealthStore();
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { specialists, bookAppointment, addToCareCircle } = useHealthStore();
 
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedDay, setSelectedDay] = useState('Tue 16 Mar');
   const [inCareCircle, setInCareCircle] = useState(false);
 
-  const doctor = isFemale
+  const matchedSpecialist = useMemo(() => {
+    if (!id || !specialists) return null;
+    return specialists.find((s) => s.id === id);
+  }, [id, specialists]);
+
+  const defaultDoctor = isFemale
     ? {
         name: 'Dr. Ayesha Malik',
         specialty: 'Endocrinologist',
@@ -89,6 +95,22 @@ export default function DoctorProfileScreen() {
           'Andrology',
         ],
       };
+
+  const doctor = matchedSpecialist
+    ? {
+        name: matchedSpecialist.name,
+        specialty: matchedSpecialist.specialty,
+        degrees: (matchedSpecialist as any).degrees || 'MBBS, FCPS',
+        rating: matchedSpecialist.rating || 4.9,
+        reviewsCount: (matchedSpecialist as any).reviewsCount || (matchedSpecialist as any).reviewCount || matchedSpecialist.patientsCount || 120,
+        about: matchedSpecialist.about || (matchedSpecialist as any).bio || defaultDoctor.about,
+        experienceYears: `${matchedSpecialist.experienceYears || 10}+`,
+        patientsTreated: `${matchedSpecialist.patientsCount || 500}+`,
+        hospitalName: matchedSpecialist.hospital,
+        hospitalCity: (matchedSpecialist as any).city || 'Lahore',
+        expertise: matchedSpecialist.areasOfExpertise?.length ? matchedSpecialist.areasOfExpertise : defaultDoctor.expertise,
+      }
+    : defaultDoctor;
 
   const availabilityDays = [
     { day: 'Mon', date: '15 Mar', slots: '10 slots' },

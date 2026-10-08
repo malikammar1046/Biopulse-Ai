@@ -45,8 +45,9 @@ export default function ScreeningExplanationScreen() {
   const themeBgLight = isFemale ? '#FDF2F8' : '#EFF6FF';
   const themeBorder = isFemale ? '#FCE7F3' : '#DBEAFE';
 
-  const probPercent = screening.probabilityPercent || (isFemale ? 72 : 38);
-  const riskLabel = screening.riskBand || (isFemale ? 'Higher Risk' : 'Intermediate Risk');
+  const isAssessed = screening.tierStatus !== 'Not Assessed' && screening.probabilityPercent > 0;
+  const probPercent = screening.probabilityPercent;
+  const riskLabel = screening.riskBand;
 
   // Female curated factors matching reference screenshot
   const femaleCuratedTop3 = useMemo(() => [
@@ -144,6 +145,44 @@ export default function ScreeningExplanationScreen() {
 
   const topPad = Math.max(insets.top, 12);
   const bottomPad = Math.max(insets.bottom, 20);
+
+  if (!isAssessed) {
+    return (
+      <BioPulseBackground style={styles.root}>
+        <StatusBar style="dark" backgroundColor="transparent" translucent />
+        <View style={[styles.topHeader, { paddingTop: topPad }]}>
+          <Pressable
+            onPress={() => router.back()}
+            style={styles.backBtn}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+          >
+            <Ionicons name="chevron-back" size={24} color={BioPulseColors.textPrimary} />
+          </Pressable>
+          <Text style={styles.headerTitle}>Screening Explanation</Text>
+          <View style={{ width: 38 }} />
+        </View>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 28 }}>
+          <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: themeBgLight, justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+            <Ionicons name="analytics-outline" size={36} color={themeAccent} />
+          </View>
+          <Text style={{ fontSize: 20, fontWeight: '700', color: '#073B72', marginBottom: 8, textAlign: 'center' }}>
+            No Assessment Available
+          </Text>
+          <Text style={{ fontSize: 14, color: '#64748B', textAlign: 'center', lineHeight: 20, marginBottom: 24, maxWidth: 320 }}>
+            Complete your initial screening to view personalized clinical factors and understand how each feature influences your assessment.
+          </Text>
+          <Pressable
+            onPress={() => router.push(isFemale ? '/female-review' : '/male-review')}
+            style={{ backgroundColor: themeAccent, paddingVertical: 14, paddingHorizontal: 24, borderRadius: 25 }}
+          >
+            <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 15 }}>Start Screening Assessment →</Text>
+          </Pressable>
+        </View>
+      </BioPulseBackground>
+    );
+  }
 
   return (
     <BioPulseBackground style={styles.root}>

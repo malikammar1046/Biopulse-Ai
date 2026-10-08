@@ -18,6 +18,7 @@ import { BioPulseButton } from '../components/common/BioPulseButton';
 import { Logo } from '../components/brand/Logo';
 import { useFemaleOnboarding } from '../features/onboarding';
 import { useHealthStore } from '../store';
+import { getFeatureLabel, getFeatureIconName } from '../services/assessmentService';
 
 interface FactorItem {
   id: number;
@@ -30,20 +31,20 @@ const DEFAULT_FACTORS: FactorItem[] = [
   {
     id: 1,
     icon: 'calendar',
-    title: 'Irregular cycle',
-    description: 'Your cycle length varies, which is common in PCOS.',
+    title: 'Cycle Variability',
+    description: 'Menstrual interval irregularities correlate with ovulatory function.',
   },
   {
     id: 2,
     icon: 'cut-outline',
-    title: 'Excess hair growth',
-    description: 'Increased hair growth can be a sign of higher androgen levels.',
+    title: 'Hirsutism Indicator',
+    description: 'Elevated peripheral androgens modulate hair follicle cycle.',
   },
   {
     id: 3,
     icon: 'speedometer-outline',
-    title: 'Weight gain',
-    description: 'Higher body weight is associated with increased PCOS risk.',
+    title: 'Metabolic / BMI Profile',
+    description: 'Body mass index and adiposity correlate with metabolic insulin resistance.',
   },
 ];
 
@@ -54,7 +55,7 @@ const DEFAULT_FACTORS: FactorItem[] = [
  * - Top header with Back arrow and BioPulse AI logo
  * - Title: "Your PCOS Screening Result"
  * - Risk Summary Card:
- *   - Circular probability ring with pink arc ("72% Probability")
+ *   - Circular probability ring with pink arc
  *   - Risk label: [ ⚠️ Higher Risk ]
  *   - Tier badge: Tier 1 • Initial Screening
  *   - Assessment explanation
@@ -69,20 +70,32 @@ export default function FemaleScreeningResultScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { activeAssessment } = useFemaleOnboarding();
-  const { updateProfile } = useHealthStore();
+  const { updateProfile, screening } = useHealthStore();
 
   const topPad = Math.max(insets.top, 12);
   const bottomPad = Math.max(insets.bottom, 20);
 
-  // Extract probability and category or use default from visual reference
-  const probabilityPercent = activeAssessment
-    ? Math.round((activeAssessment.probability ?? 0.72) * 100)
-    : 72;
+  const hasAssessment = Boolean(activeAssessment || (screening.tierStatus && screening.tierStatus !== 'Not Assessed'));
 
-  const isHigherRisk = probabilityPercent >= 60;
-  const riskLabel = activeAssessment?.risk_category
-    ? activeAssessment.risk_category.replace('_', ' ')
-    : 'Higher Risk';
+  // Extract probability and category from authentic model assessment
+  const probabilityPercent = activeAssessment?.probability_percent ??
+    (activeAssessment ? Math.round((activeAssessment.probability ?? 0) * 100) : screening.probabilityPercent);
+
+  const riskLabel = activeAssessment?.risk_label ||
+    (activeAssessment?.risk_category ? (activeAssessment.risk_category === 'higher' ? 'Higher Risk' : activeAssessment.risk_category === 'intermediate' ? 'Intermediate Risk' : 'Lower Risk') : screening.riskBand);
+
+  const displayFactors: FactorItem[] = useMemo(() => {
+    const rawFactors = activeAssessment?.explanations || screening.topFactors || [];
+    if (rawFactors.length > 0) {
+      return rawFactors.slice(0, 3).map((f: any, idx: number) => ({
+        id: idx + 1,
+        icon: (f.iconName || getFeatureIconName(f.feature_key || f.id || '')) as any,
+        title: f.feature_name || f.name || getFeatureLabel(f.feature_key || f.id || ''),
+        description: f.description || f.patient_explanation || f.explanation || 'Contributing clinical indicator identified during AI screening.',
+      }));
+    }
+    return DEFAULT_FACTORS;
+  }, [activeAssessment, screening]);
 
   const handleContinueNextTier = () => {
     updateProfile({ isOnboarded: true });
@@ -171,7 +184,7 @@ export default function FemaleScreeningResultScreen() {
             </View>
 
             <View style={styles.factorsList}>
-              {DEFAULT_FACTORS.map((factor) => (
+              {displayFactors.map((factor) => (
                 <View key={factor.id} style={styles.factorCard}>
                   {/* Number Badge */}
                   <View style={styles.numberBadge}>

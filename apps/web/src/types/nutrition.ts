@@ -186,6 +186,7 @@ export interface WeeklyNutritionPlan {
   coverage: NutritionPlanCoverage;
   condition_guidance: string[];
   warnings: string[];
+  plan_data?: any;
 }
 
 export interface NutritionPlanSummary {

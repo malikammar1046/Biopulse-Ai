@@ -136,16 +136,9 @@ export default function AddClinicalLabsScreen() {
     },
   ];
 
-  // Initial values populated from existing store if any
+  // Initial values populated strictly from existing verified labs in store
   const [labValues, setLabValues] = useState<Record<string, string>>(() => {
-    const init: Record<string, string> = {
-      fsh: '6.2',
-      lh: '8.1',
-      amh: '4.3',
-      prolactin: '18.5',
-      tsh: '2.1',
-      progesterone: '0.6',
-    };
+    const init: Record<string, string> = {};
     verifiedLabs.forEach((v) => {
       const lower = v.testName.toLowerCase();
       if (lower.includes('fsh')) init.fsh = v.value;

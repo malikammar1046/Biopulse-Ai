@@ -37,11 +37,13 @@ export default function TierProgressScreen() {
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
 
-  const { isFemale } = useHealthStore();
+  const { isFemale, screening } = useHealthStore();
 
   const themeAccent = isFemale ? '#F43F7D' : '#0284C7';
   const topPad = Math.max(insets.top, 12);
   const bottomPad = Math.max(insets.bottom, 20);
+
+  const isTier1Complete = screening.tierStatus !== 'Not Assessed';
 
   return (
     <BioPulseBackground style={styles.root}>
@@ -83,9 +85,13 @@ export default function TierProgressScreen() {
               {/* Node Indicator Col */}
               <View style={styles.nodeColumn}>
                 <View style={[styles.nodeCircle, { backgroundColor: themeAccent }]}>
-                  <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                  {isTier1Complete ? (
+                    <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                  ) : (
+                    <Text style={styles.nodeNumberText}>1</Text>
+                  )}
                 </View>
-                <View style={[styles.connectingLine, { backgroundColor: themeAccent }]} />
+                <View style={[styles.connectingLine, { backgroundColor: isTier1Complete ? themeAccent : '#E2E8F0' }]} />
               </View>
 
               {/* Node Content Card */}
@@ -94,14 +100,18 @@ export default function TierProgressScreen() {
                   <Text style={styles.tierTitle}>
                     Tier 1{'\n'}Questionnaire & Symptoms
                   </Text>
-                  <View style={styles.completedBadge}>
-                    <Text style={styles.completedBadgeText}>Completed</Text>
+                  <View style={isTier1Complete ? styles.completedBadge : styles.recommendedBadge}>
+                    <Text style={isTier1Complete ? styles.completedBadgeText : styles.recommendedBadgeText}>
+                      {isTier1Complete ? 'Completed' : 'Pending'}
+                    </Text>
                   </View>
                 </View>
                 <Text style={styles.tierDescription}>
                   Your responses have been analyzed using our AI model.
                 </Text>
-                <Text style={styles.tierDateMeta}>12 Mar 2025</Text>
+                {isTier1Complete && (
+                  <Text style={styles.tierDateMeta}>{screening.lastAssessedDate || 'Recent Assessment'}</Text>
+                )}
               </View>
             </View>
 

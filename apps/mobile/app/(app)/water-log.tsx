@@ -39,33 +39,22 @@ export default function WaterLogScreen() {
 
   const { water, addWaterMl, deleteWaterLog } = useHealthStore();
 
-  const [historyItems, setHistoryItems] = useState([
-    { id: 'wh-1', time: '8:00 AM', amount: 250 },
-    { id: 'wh-2', time: '10:30 AM', amount: 250 },
-    { id: 'wh-3', time: '12:45 PM', amount: 500 },
-    { id: 'wh-4', time: '3:20 PM', amount: 250 },
-    { id: 'wh-5', time: '5:10 PM', amount: 350 },
-  ]);
-
-  const currentLiters = water.consumedLiters ? water.consumedLiters.toFixed(1) : '1.6';
-  const targetLiters = water.targetLiters ? water.targetLiters.toFixed(1) : '2.5';
+  const currentLiters = (water.consumedLiters || 0).toFixed(1);
+  const targetLiters = (water.targetLiters || 2.5).toFixed(1);
 
   const handleAdd = useCallback(
     (ml: number) => {
       addWaterMl(ml);
-      const newEntry = {
-        id: `wh-${Date.now()}`,
-        time: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-        amount: ml,
-      };
-      setHistoryItems((prev) => [newEntry, ...prev]);
     },
     [addWaterMl]
   );
 
-  const handleDelete = useCallback((id: string, amountMl: number) => {
-    setHistoryItems((prev) => prev.filter((item) => item.id !== id));
-  }, []);
+  const handleDelete = useCallback(
+    (id: string) => {
+      deleteWaterLog(id);
+    },
+    [deleteWaterLog]
+  );
 
   const topPad = Math.max(insets.top, 12);
   const bottomPad = Math.max(insets.bottom, 20);
@@ -101,7 +90,9 @@ export default function WaterLogScreen() {
             <Pressable hitSlop={8}>
               <Ionicons name="chevron-back" size={18} color="#64748B" />
             </Pressable>
-            <Text style={styles.dateNavigatorText}>Today, 14 Sep 2026</Text>
+            <Text style={styles.dateNavigatorText}>
+              Today, {new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+            </Text>
             <Pressable hitSlop={8}>
               <Ionicons name="chevron-forward" size={18} color="#64748B" />
             </Pressable>
@@ -132,9 +123,15 @@ export default function WaterLogScreen() {
               <View style={styles.encouragementBox}>
                 <View style={styles.encouragementHeaderRow}>
                   <Ionicons name="checkmark-circle" size={15} color="#10B981" />
-                  <Text style={styles.encouragementTitle}>You're doing great!</Text>
+                  <Text style={styles.encouragementTitle}>
+                    {Number(currentLiters) >= Number(targetLiters) ? 'Goal reached!' : 'Daily hydration'}
+                  </Text>
                 </View>
-                <Text style={styles.encouragementSub}>Keep going to stay hydrated.</Text>
+                <Text style={styles.encouragementSub}>
+                  {Number(currentLiters) >= Number(targetLiters)
+                    ? 'Excellent job staying hydrated today!'
+                    : 'Log each glass to reach your target.'}
+                </Text>
               </View>
             </View>
           </View>
@@ -170,22 +167,28 @@ export default function WaterLogScreen() {
             </View>
 
             <View style={styles.historyList}>
-              {historyItems.map((item) => (
-                <View key={item.id} style={styles.historyItemRow}>
-                  <View style={styles.glassIconBox}>
-                    <Ionicons name="water-outline" size={18} color="#0284C7" />
-                  </View>
-                  <Text style={styles.historyTime}>{item.time}</Text>
-                  <Text style={styles.historyAmount}>{item.amount} ml</Text>
-                  <Pressable
-                    onPress={() => handleDelete(item.id, item.amount)}
-                    hitSlop={8}
-                    style={styles.deleteBtn}
-                  >
-                    <Ionicons name="trash-outline" size={16} color="#94A3B8" />
-                  </Pressable>
+              {(!water.logs || water.logs.length === 0) ? (
+                <View style={{ paddingVertical: 18, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 13, color: '#94A3B8' }}>No water logged yet today.</Text>
                 </View>
-              ))}
+              ) : (
+                water.logs.map((item) => (
+                  <View key={item.id} style={styles.historyItemRow}>
+                    <View style={styles.glassIconBox}>
+                      <Ionicons name="water-outline" size={18} color="#0284C7" />
+                    </View>
+                    <Text style={styles.historyTime}>{item.time}</Text>
+                    <Text style={styles.historyAmount}>{item.amountMl} ml</Text>
+                    <Pressable
+                      onPress={() => handleDelete(item.id)}
+                      hitSlop={8}
+                      style={styles.deleteBtn}
+                    >
+                      <Ionicons name="trash-outline" size={16} color="#94A3B8" />
+                    </Pressable>
+                  </View>
+                ))
+              )}
             </View>
           </View>
         </View>

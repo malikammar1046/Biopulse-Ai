@@ -14,10 +14,9 @@ import {
   fetchMedicationsFromDb,
   fetchAppointmentsFromDb,
   fetchMedicalReportsFromDb,
-  getSupabaseHeaders,
-  SUPABASE_URL,
-  BACKEND_API_URL,
 } from './userService';
+import { getSupabaseHeaders, SUPABASE_URL, BACKEND_API_URL } from './api';
+
 import {
   HealthPathway,
   ScreeningAssessmentState,

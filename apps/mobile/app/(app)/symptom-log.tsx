@@ -49,8 +49,7 @@ export default function SymptomLogScreen() {
   const { symptoms, toggleSymptom, setSymptomIntensity, saveSymptomCheckIn } = useHealthStore();
 
   const [selectedIds, setSelectedIds] = useState<string[]>(() => {
-    const init = symptoms.symptoms.filter((s) => s.selected).map((s) => s.id);
-    return init.length > 0 ? init : ['acne', 'mood', 'fatigue'];
+    return symptoms.symptoms.filter((s) => s.selected).map((s) => s.id);
   });
 
   const [intensity, setIntensity] = useState<'Mild' | 'Moderate' | 'Severe'>(

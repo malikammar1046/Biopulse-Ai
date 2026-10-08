@@ -93,7 +93,6 @@ const GOAL_OPTIONS: { id: MealGoal; label: string; desc: string }[] = [
 export const NutritionWizardModal: React.FC<NutritionWizardModalProps> = ({
   isOpen,
   onClose,
-  readiness: _readiness,
   existingPreferences,
   onGeneratePlan,
   isMale,

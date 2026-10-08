@@ -184,16 +184,29 @@ class NutritionService {
   }
 
   /**
+   * Activate a specific weekly nutrition plan.
+   */
+  async activatePlan(planId: string): Promise<WeeklyNutritionPlan> {
+    return this.updatePlanStatus(planId, 'active');
+  }
+
+  /**
    * Lock or unlock a specific meal in a plan.
    */
-  async lockMeal(planId: string, dayName: string, mealType: string, isLocked: boolean): Promise<WeeklyNutritionPlan> {
+  async lockMeal(
+    planId: string,
+    dayIndexOrName: number | string,
+    mealType: string,
+    isLocked: boolean
+  ): Promise<WeeklyNutritionPlan> {
     const headers = await getAuthHeaders();
     const res = await fetch(`${NUTRITION_BASE_URL}/plan/lock-meal/`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
         plan_id: planId,
-        day_name: dayName,
+        day_index: typeof dayIndexOrName === 'number' ? dayIndexOrName : undefined,
+        day_name: typeof dayIndexOrName === 'string' ? dayIndexOrName : undefined,
         meal_type: mealType,
         is_locked: isLocked,
       }),
@@ -208,15 +221,22 @@ class NutritionService {
   /**
    * Swap a meal with a deterministic, safe alternative.
    */
-  async swapMeal(planId: string, dayName: string, mealType: string): Promise<WeeklyNutritionPlan> {
+  async swapMeal(
+    planId: string,
+    dayIndexOrName: number | string,
+    mealType: string,
+    customDish?: string
+  ): Promise<WeeklyNutritionPlan> {
     const headers = await getAuthHeaders();
     const res = await fetch(`${NUTRITION_BASE_URL}/plan/swap-meal/`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
         plan_id: planId,
-        day_name: dayName,
+        day_index: typeof dayIndexOrName === 'number' ? dayIndexOrName : undefined,
+        day_name: typeof dayIndexOrName === 'string' ? dayIndexOrName : undefined,
         meal_type: mealType,
+        custom_dish: customDish,
       }),
     });
     if (!res.ok) {
@@ -229,14 +249,15 @@ class NutritionService {
   /**
    * Regenerate unlocked meals for a single day.
    */
-  async regenerateDay(planId: string, dayName: string): Promise<WeeklyNutritionPlan> {
+  async regenerateDay(planId: string, dayIndexOrName: number | string): Promise<WeeklyNutritionPlan> {
     const headers = await getAuthHeaders();
     const res = await fetch(`${NUTRITION_BASE_URL}/plan/regenerate-day/`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
         plan_id: planId,
-        day_name: dayName,
+        day_index: typeof dayIndexOrName === 'number' ? dayIndexOrName : undefined,
+        day_name: typeof dayIndexOrName === 'string' ? dayIndexOrName : undefined,
       }),
     });
     if (!res.ok) {
@@ -267,6 +288,26 @@ class NutritionService {
   }
 
   /**
+   * Modify plan via natural language instructions using AI.
+   */
+  async modifyPlanByAI(
+    planId: string,
+    prompt: string
+  ): Promise<WeeklyNutritionPlan & { modifications?: string[]; message?: string }> {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${NUTRITION_BASE_URL}/plan/${planId}/modify-ai/`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ prompt }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to modify plan with AI (${res.status})`);
+    }
+    return res.json();
+  }
+
+  /**
    * Fetch historical or today's food logs.
    */
   async fetchFoodLogs(startDate?: string, endDate?: string): Promise<import('../types/nutrition').FoodLogItem[]> {
@@ -290,9 +331,17 @@ class NutritionService {
   }
 
   /**
+   * Get food logs wrapped in { entries }.
+   */
+  async getMealLogs(date?: string): Promise<{ entries: import('../types/nutrition').FoodLogEntry[] }> {
+    const logs = await this.fetchFoodLogs(date, date);
+    return { entries: logs as any };
+  }
+
+  /**
    * Log a meal (either from planned meal or custom entry).
    */
-  async logFood(foodData: Partial<import('../types/nutrition').FoodLogItem>): Promise<import('../types/nutrition').FoodLogItem> {
+  async logFood(foodData: Partial<import('../types/nutrition').FoodLogItem> | any): Promise<import('../types/nutrition').FoodLogItem> {
     const headers = await getAuthHeaders();
     const res = await fetch(`${NUTRITION_BASE_URL}/food-logs/`, {
       method: 'POST',
@@ -304,6 +353,20 @@ class NutritionService {
       throw new Error(err.error || `Failed to log meal (${res.status})`);
     }
     return res.json();
+  }
+
+  /**
+   * Alias for logFood used by NutritionPage.
+   */
+  async logMeal(foodData: any): Promise<import('../types/nutrition').FoodLogItem> {
+    return this.logFood(foodData);
+  }
+
+  /**
+   * Mark a planned meal as eaten.
+   */
+  async markMealAsEaten(foodData: any): Promise<import('../types/nutrition').FoodLogItem> {
+    return this.logFood(foodData);
   }
 
   /**
@@ -323,25 +386,79 @@ class NutritionService {
   }
 
   /**
+   * Fetch adherence summary for current user.
+   */
+  async getAdherence(): Promise<{
+    today: import('../types/nutrition').PlanAdherenceSummary;
+    week: import('../types/nutrition').PlanAdherenceSummary & { days_engaged: number; days_total: number };
+  }> {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${NUTRITION_BASE_URL}/adherence/`, {
+      method: 'GET',
+      headers,
+    });
+    if (!res.ok) {
+      return {
+        today: { period: 'today', planned_meals: 4, logged_meals: 0, adherence_pct: 0, days_engaged: 0, days_total: 1 },
+        week: { period: 'week', planned_meals: 28, logged_meals: 0, adherence_pct: 0, days_engaged: 0, days_total: 7 },
+      };
+    }
+    return res.json();
+  }
+
+  /**
    * Get user's meal reminder preferences.
    */
-  async getReminders(): Promise<import('../types/nutrition').MealReminderSettings> {
+  async getReminders(): Promise<any> {
     const headers = await getAuthHeaders();
     const res = await fetch(`${NUTRITION_BASE_URL}/reminders/`, {
       method: 'GET',
       headers,
     });
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || `Failed to fetch reminders (${res.status})`);
+      return {
+        enabled: true,
+        reminders: [
+          { meal_type: 'breakfast', enabled: true, time: '08:00' },
+          { meal_type: 'lunch', enabled: true, time: '13:00' },
+          { meal_type: 'dinner', enabled: true, time: '20:00' },
+          { meal_type: 'snack', enabled: false, time: '16:30' },
+        ],
+        breakfast_enabled: true,
+        breakfast_time: '08:00',
+        lunch_enabled: true,
+        lunch_time: '13:00',
+        dinner_enabled: true,
+        dinner_time: '20:00',
+        snack_enabled: false,
+        snack_time: '16:30',
+      };
     }
-    return res.json();
+    const data = await res.json();
+    return {
+      enabled: data.enabled ?? true,
+      reminders: data.reminders || [
+        { meal_type: 'breakfast', enabled: data.breakfast_enabled ?? true, time: data.breakfast_time || '08:00' },
+        { meal_type: 'lunch', enabled: data.lunch_enabled ?? true, time: data.lunch_time || '13:00' },
+        { meal_type: 'dinner', enabled: data.dinner_enabled ?? true, time: data.dinner_time || '20:00' },
+        { meal_type: 'snack', enabled: data.snack_enabled ?? false, time: data.snack_time || '16:30' },
+      ],
+      breakfast_enabled: data.breakfast_enabled ?? true,
+      breakfast_time: data.breakfast_time || '08:00',
+      lunch_enabled: data.lunch_enabled ?? true,
+      lunch_time: data.lunch_time || '13:00',
+      dinner_enabled: data.dinner_enabled ?? true,
+      dinner_time: data.dinner_time || '20:00',
+      snack_enabled: data.snack_enabled ?? false,
+      snack_time: data.snack_time || '16:30',
+      ...data,
+    };
   }
 
   /**
    * Update user's meal reminder preferences.
    */
-  async updateReminders(settings: import('../types/nutrition').MealReminderSettings): Promise<import('../types/nutrition').MealReminderSettings> {
+  async updateReminders(settings: any): Promise<any> {
     const headers = await getAuthHeaders();
     const res = await fetch(`${NUTRITION_BASE_URL}/reminders/`, {
       method: 'PUT',

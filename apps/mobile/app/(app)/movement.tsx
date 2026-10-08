@@ -98,27 +98,32 @@ export default function MovementScreen() {
   const [logMins, setLogMins] = useState('20');
   const [logSteps, setLogSteps] = useState('2000');
 
-  // Today's metrics (preserved from store, matching screenshot visual)
-  const todayMins = movement.todayActivityMinutes || 45;
-  const targetMins = 30; // BioPulse default daily movement target
-  const minsPercent = Math.round((todayMins / targetMins) * 100);
+  // Today's metrics connected to persistent health store
+  const todayMins = movement.todayActivityMinutes ?? 0;
+  const targetMins = movement.targetMinutes || 30; // BioPulse daily movement target
+  const minsPercent = targetMins > 0 ? Math.round((todayMins / targetMins) * 100) : 0;
 
-  const todaySteps = movement.todaySteps || 6230;
+  const todaySteps = movement.todaySteps ?? 0;
   const targetSteps = 8000;
-  const stepsPercent = Math.min(100, Math.round((todaySteps / targetSteps) * 100));
+  const stepsPercent = targetSteps > 0 ? Math.min(100, Math.round((todaySteps / targetSteps) * 100)) : 0;
 
-  // Weekly bar data matching screenshot
-  const weeklyData = useMemo(() => [
-    { day: 'Mon', mins: 25 },
-    { day: 'Tue', mins: 35 },
-    { day: 'Wed', mins: 20 },
-    { day: 'Thu', mins: 55 },
-    { day: 'Fri', mins: 28 },
-    { day: 'Sat', mins: 18 },
-    { day: 'Sun', mins: todayMins },
-  ], [todayMins]);
+  // Weekly bar data connected to health store
+  const weeklyData = useMemo(() => {
+    if (movement.weeklyMinutes && movement.weeklyMinutes.length > 0) {
+      return movement.weeklyMinutes.map((w) => ({
+        day: w.day,
+        mins: (w as any).mins ?? w.minutes ?? 0,
+      }));
+    }
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const currentDayIdx = (new Date().getDay() + 6) % 7; // 0 for Mon, 6 for Sun
+    return days.map((day, idx) => ({
+      day,
+      mins: idx === currentDayIdx ? todayMins : 0,
+    }));
+  }, [movement.weeklyMinutes, todayMins]);
 
-  const maxWeeklyMin = 60;
+  const maxWeeklyMin = Math.max(60, ...weeklyData.map((d) => d.mins));
 
   const handleSaveActivity = useCallback(() => {
     const minsNum = parseInt(logMins, 10);
