@@ -29,6 +29,7 @@ import { ClinicalLabsModal } from '../adaptive/ClinicalLabsModal';
 import { UltrasoundUploadModal } from '../adaptive/UltrasoundUploadModal';
 import { AssessmentHistoryModal } from '../adaptive/AssessmentHistoryModal';
 import { PatientShapExplanation } from '../explainability/PatientShapExplanation';
+import { AssessmentChangeSummary } from '../adaptive/AssessmentChangeSummary';
 
 
 export interface RiskRangeConfig {
@@ -213,9 +214,25 @@ export function extractNormalizedFactors(explanations: any[] | undefined | null)
 export const FemaleScreeningWorkspace: React.FC = () => {
   const {
     activeAssessment,
+    assessmentHistory,
     submitTier1,
   } = useUserHealth();
   const navigate = useNavigate();
+
+  const previousAssessment = React.useMemo(() => {
+    if (!activeAssessment) return null;
+    if (activeAssessment.replaced_assessment_id) {
+      const match = assessmentHistory.find(
+        (h) => h.id === activeAssessment.replaced_assessment_id || h.assessment_id === activeAssessment.replaced_assessment_id
+      );
+      if (match) return match;
+    }
+    return (
+      assessmentHistory.find(
+        (h) => h.id !== activeAssessment.id && h.assessment_id !== activeAssessment.assessment_id
+      ) || null
+    );
+  }, [activeAssessment, assessmentHistory]);
 
   const [isLabsModalOpen, setIsLabsModalOpen] = useState(false);
   const [isUltrasoundModalOpen, setIsUltrasoundModalOpen] = useState(false);
@@ -599,6 +616,14 @@ export const FemaleScreeningWorkspace: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* ── Assessment Change Summary ("What Changed?") ───────────────────── */}
+      {hasAssessment && previousAssessment && activeAssessment && (
+        <AssessmentChangeSummary
+          currentAssessment={activeAssessment}
+          previousAssessment={previousAssessment}
+        />
+      )}
 
       {/* ── Patient-Centered SHAP Explainability Engine ────────────────────── */}
       {hasAssessment && activeAssessment?.shap_explanation ? (

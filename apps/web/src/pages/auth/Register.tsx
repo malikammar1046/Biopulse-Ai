@@ -18,11 +18,8 @@ import {
 import { GoogleAuthButton } from '../../components/auth/GoogleAuthButton';
 import { Logo } from '../../components/brand/Logo';
 import { useAuth } from '../../context/AuthContext';
-import { ROUTES, getPathwayOnboardingRoute } from '../../constants/routes';
-import type { UserGender } from '../../types/onboarding';
-import { PathwaySelectionScreen } from '../../components/auth/PathwaySelectionScreen';
+import { ROUTES } from '../../constants/routes';
 import { SmallBotanicalSprig } from '../../components/brand/BotanicalFoliage';
-import { BioPulseLoadingScreen } from '../../components/brand/BioPulseLoadingScreen';
 import { preloadOnboardingRoutes } from '../../utils/routePreloaders';
 
 interface FormErrors {
@@ -36,10 +33,7 @@ export const Register: React.FC = () => {
   const navigate = useNavigate();
   const { register, loginWithGoogle } = useAuth();
 
-  // Step state: 'credentials' (Step 1 matching reference) | 'pathway' (Step 2)
-  const [step, setStep] = useState<'credentials' | 'pathway'>('credentials');
-
-  // Step 1: Account credentials
+  // Account credentials state
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -50,16 +44,11 @@ export const Register: React.FC = () => {
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSuccess, setIsSuccess] = useState(false);
   const [emailConfirmReq, setEmailConfirmReq] = useState(false);
-  const [loadingPathway, setLoadingPathway] = useState<'female' | 'male' | null>(null);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [transitionPathway, setTransitionPathway] = useState<'female' | 'male' | null>(null);
 
-  // Preload lazy onboarding route chunks as soon as pathway selection step opens
+  // Preload lazy onboarding route chunks
   useEffect(() => {
-    if (step === 'pathway') {
-      preloadOnboardingRoutes();
-    }
-  }, [step]);
+    preloadOnboardingRoutes();
+  }, []);
 
   const validateCredentials = (): boolean => {
     const nextErrors: FormErrors = {};
@@ -84,23 +73,11 @@ export const Register: React.FC = () => {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleContinueToPathway = (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateCredentials()) {
-      setErrors({});
-      setStep('pathway');
-    }
-  };
-
-  const handlePathwaySelectAndSubmit = async (pathway: 'female' | 'male') => {
-    // 1. Immediately transition UI to the botanical loader without waiting for network
-    setIsTransitioning(true);
-    setTransitionPathway(pathway);
-    setLoadingPathway(pathway);
+    if (!validateCredentials()) return;
     setLoading(true);
     setErrors({});
-
-    const derivedGender: UserGender = pathway === 'female' ? 'female' : 'male';
 
     try {
       const res = await register({
@@ -108,36 +85,25 @@ export const Register: React.FC = () => {
         email: email.trim(),
         password,
         consent: true,
-        pathway,
-        gender: derivedGender,
       });
 
       if (!res.success) {
         setErrors({ general: res.error || 'Registration failed. Please try again.' });
-        setIsTransitioning(false);
         setLoading(false);
-        setLoadingPathway(null);
         return;
       }
 
       if (res.emailConfirmationRequired) {
-        setIsTransitioning(false);
         setIsSuccess(true);
         setEmailConfirmReq(true);
       } else {
-        const targetOnboarding = getPathwayOnboardingRoute({
-          pathway,
-          gender: derivedGender,
-        });
-        navigate(targetOnboarding, { replace: true });
+        navigate(ROUTES.ONBOARDING, { replace: true });
       }
     } catch (err: any) {
       setErrors({
         general: err?.message || 'Registration could not be completed. Please try again.',
       });
-      setIsTransitioning(false);
       setLoading(false);
-      setLoadingPathway(null);
     }
   };
 
@@ -162,33 +128,6 @@ export const Register: React.FC = () => {
       setGoogleLoading(false);
     }
   };
-
-  // Immediate Botanical Loading Screen on Pathway Click (Replaces selection screen instantly)
-  if (isTransitioning) {
-    return (
-      <BioPulseLoadingScreen
-        message={
-          transitionPathway === 'male'
-            ? 'Preparing your Men’s Health pathway...'
-            : 'Preparing your Women’s Health pathway...'
-        }
-        fullScreen={true}
-      />
-    );
-  }
-
-  // If user completed Step 1 and is on Step 2: Dedicated Pathway Selection Screen
-  if (!isSuccess && step === 'pathway') {
-    return (
-      <PathwaySelectionScreen
-        onSelectPathway={handlePathwaySelectAndSubmit}
-        loading={loading}
-        loadingPathway={loadingPathway}
-        error={errors.general}
-        onBack={() => setStep('credentials')}
-      />
-    );
-  }
 
   // If email confirmation is required
   if (isSuccess && emailConfirmReq) {
@@ -386,7 +325,7 @@ export const Register: React.FC = () => {
               </AnimatePresence>
 
               {/* Form Controls */}
-              <form onSubmit={handleContinueToPathway} noValidate className="space-y-4">
+              <form onSubmit={handleRegisterSubmit} noValidate className="space-y-4">
                 {/* Full Name Input */}
                 <div className="space-y-1">
                   <div className="relative flex items-center">
@@ -481,12 +420,22 @@ export const Register: React.FC = () => {
                 <div className="pt-2">
                   <motion.button
                     type="submit"
+                    disabled={loading}
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
-                    className="w-full py-3.5 rounded-full font-bold text-white bg-[#008CA5] hover:bg-[#007A90] shadow-md shadow-cyan-900/15 flex items-center justify-center gap-2 text-sm sm:text-base transition-all cursor-pointer"
+                    className="w-full py-3.5 rounded-full font-bold text-white bg-[#008CA5] hover:bg-[#007A90] shadow-md shadow-cyan-900/15 flex items-center justify-center gap-2 text-sm sm:text-base transition-all cursor-pointer disabled:opacity-60"
                   >
-                    <span>Create Account</span>
-                    <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                    {loading ? (
+                      <span className="flex items-center gap-2">
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <span>Creating Account...</span>
+                      </span>
+                    ) : (
+                      <>
+                        <span>Create Account</span>
+                        <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                      </>
+                    )}
                   </motion.button>
                 </div>
               </form>

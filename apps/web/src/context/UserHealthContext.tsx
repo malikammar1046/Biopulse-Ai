@@ -2285,9 +2285,11 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             })
             .catch(() => {});
 
-          if (res.is_active && (res.assessment_level === 'tier_1_2' || res.assessment_level === 'tier_1_2_3')) {
+          if (res.is_active && (res.assessment_level === 'tier_1_2' || res.assessment_level === 'tier_1_2_3' || res.assessment_level === 'tier_1_3')) {
             triggerAssessmentNotification(
-              'Updated Result: Your assessment has been updated using additional clinical evidence.',
+              res.assessment_level === 'tier_1_3'
+                ? 'Ultrasound Analyzed: Ovarian morphology evaluated and recorded.'
+                : 'Updated Result: Your assessment has been updated using multimodal clinical and ultrasound evidence.',
               'success'
             );
           }

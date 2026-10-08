@@ -736,45 +736,45 @@ export async function uploadUltrasoundAssessment(
   reportId?: string,
   userId?: string
 ): Promise<ProgressiveAssessment | null> {
-  try {
-    const token = await getAccessToken();
-    if (!token) {
-      console.warn('[PCOS-ML] No access token available for ultrasound upload.');
-      return null;
-    }
-    const headers: Record<string, string> = {
-      'Authorization': `Bearer ${token}`,
-    };
-
-    const formData = new FormData();
-    formData.append('image', imageFile);
-    if (reportId) formData.append('report_id', reportId);
-
-    const response = await fetchWithTimeout(
-      ULTRASOUND_ASSESSMENT_ENDPOINT,
-      {
-        method: 'POST',
-        headers,
-        body: formData,
-      },
-      60000 // 60s timeout for deep vision model inference
-    );
-
-    if (!response.ok) {
-      console.error('[PCOS-ML] Ultrasound upload failed:', response.status);
-      return null;
-    }
-
-    clearAssessmentCache();
-    const data = (await response.json()) as ProgressiveAssessment;
-    if (data) {
-      saveLocalActiveAssessment(userId || data.patient_id, 'female_pcos', data);
-    }
-    return data;
-  } catch (err) {
-    console.error('[PCOS-ML] Ultrasound error:', err);
-    return null;
+  const token = await getAccessToken();
+  if (!token) {
+    throw new Error('Authentication session required for ultrasound upload. Please log in again.');
   }
+  const headers: Record<string, string> = {
+    'Authorization': `Bearer ${token}`,
+  };
+
+  const formData = new FormData();
+  formData.append('image', imageFile);
+  if (reportId) formData.append('report_id', reportId);
+
+  const response = await fetchWithTimeout(
+    ULTRASOUND_ASSESSMENT_ENDPOINT,
+    {
+      method: 'POST',
+      headers,
+      body: formData,
+    },
+    180000 // 180s timeout for deep vision model inference
+  );
+
+  if (!response.ok) {
+    let errMessage = `Ultrasound processing failed (HTTP ${response.status}).`;
+    try {
+      const errData = await response.json();
+      if (errData?.error) errMessage = errData.error;
+    } catch {
+      // ignore
+    }
+    throw new Error(errMessage);
+  }
+
+  clearAssessmentCache();
+  const data = (await response.json()) as ProgressiveAssessment;
+  if (data) {
+    saveLocalActiveAssessment(userId || data.patient_id, 'female_pcos', data);
+  }
+  return data;
 }
 
 // ---------------------------------------------------------------------------
@@ -1032,88 +1032,163 @@ export async function checkCompanionHealth(): Promise<{
   }
 }
 
+// ── Longitudinal Health In-Memory Cache & Shared Promise Deduplication ──
+interface CachedLongitudinalEntry {
+  data: LongitudinalHealthResponse;
+  timestamp: number;
+}
+
+const LONGITUDINAL_CACHE_TTL_MS = 30000; // 30s TTL to prevent duplicate fetches across prewarm & page mount
+const longitudinalCache = new Map<string, CachedLongitudinalEntry>();
+const inFlightLongitudinalPromises = new Map<string, Promise<LongitudinalHealthResponse | null>>();
+
+/**
+ * Invalidates cached longitudinal health responses when mutations occur.
+ */
+export function invalidateLongitudinalCache(userId?: string): void {
+  if (userId) {
+    for (const key of Array.from(longitudinalCache.keys())) {
+      if (key.startsWith(`${userId}:`)) {
+        longitudinalCache.delete(key);
+      }
+    }
+    for (const key of Array.from(inFlightLongitudinalPromises.keys())) {
+      if (key.startsWith(`${userId}:`)) {
+        inFlightLongitudinalPromises.delete(key);
+      }
+    }
+  } else {
+    longitudinalCache.clear();
+    inFlightLongitudinalPromises.clear();
+  }
+}
+
+// Invalidate in-memory cache whenever a longitudinal refresh event is dispatched
+if (typeof window !== 'undefined') {
+  window.addEventListener('biopulse:longitudinal-refresh', (e: any) => {
+    const detailUserId = e?.detail?.userId;
+    invalidateLongitudinalCache(detailUserId);
+  });
+}
+
 /**
  * Fetches authoritative longitudinal health summary and historical trends.
  * Supports period filtering ('30d' | '90d' | '180d' | '1y' | 'all') and pathway scoping.
- * Implements bounded retries (0ms, 250ms, 500ms) with rich diagnostics.
+ * Implements shared promise deduplication and in-memory caching to eliminate redundant round-trips.
  */
 export async function getLongitudinalHealth(
   period: MonitoringPeriodFilter = '90d',
   module?: string,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  forceRefresh = false
 ): Promise<LongitudinalHealthResponse | null> {
-  const retryDelays = [0, 250, 500];
+  // Resolve active user id for cache key
+  let activeUserId = 'active_user';
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user?.id) {
+      activeUserId = session.user.id;
+    }
+  } catch {
+    // ignore
+  }
 
-  for (let attempt = 0; attempt < retryDelays.length; attempt++) {
-    if (attempt > 0) {
-      if (signal?.aborted) return null;
-      await new Promise((resolve) => setTimeout(resolve, retryDelays[attempt]));
+  const cacheKey = `${activeUserId}:${module || 'default'}:${period}`;
+
+  // 1. Check in-memory cache if not forced refresh
+  if (!forceRefresh) {
+    const cached = longitudinalCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < LONGITUDINAL_CACHE_TTL_MS) {
+      return cached.data;
     }
 
-    try {
-      let token = await getAccessToken();
-      if (!token) {
-        // Attempt a quick session refresh if token is initially missing
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          token = session?.access_token ?? null;
-        } catch {
-          // ignore
-        }
-      }
-
-      if (!token) {
-        console.warn('[Intelligence API] getLongitudinalHealth: No active auth token available.');
-        return null;
-      }
-
-      const headers: Record<string, string> = {
-        Authorization: `Bearer ${token}`,
-      };
-
-      const params = new URLSearchParams();
-      if (period) params.set('period', period);
-      if (module) params.set('module', module);
-
-      const url = `${LONGITUDINAL_HEALTH_ENDPOINT}?${params.toString()}`;
-      const response = await fetchWithTimeout(url, { method: 'GET', headers, signal }, 15000);
-
-      if (!response.ok) {
-        let errorBody = '';
-        try {
-          errorBody = await response.text();
-        } catch {
-          errorBody = '(could not parse response body)';
-        }
-        console.warn(
-          `[Intelligence API] getLongitudinalHealth attempt ${attempt + 1}/${retryDelays.length} failed: HTTP ${response.status} | body: ${errorBody}`
-        );
-
-        // Do not retry 401 Unauthorized or 403 Forbidden; session problem must be handled by auth
-        if (response.status === 401 || response.status === 403) {
-          return null;
-        }
-
-        // Retry on 422 (transient hydration race) or 500/503
-        if (attempt < retryDelays.length - 1) {
-          continue;
-        }
-        return null;
-      }
-
-      return (await response.json()) as LongitudinalHealthResponse;
-    } catch (err: any) {
-      if (err?.name === 'AbortError' || signal?.aborted) {
-        return null;
-      }
-      console.error(`[Intelligence API] getLongitudinalHealth network error attempt ${attempt + 1}:`, err);
-      if (attempt === retryDelays.length - 1) {
-        return null;
-      }
+    // 2. Reuse in-flight request to eliminate duplicate prewarm / page mount contention
+    if (inFlightLongitudinalPromises.has(cacheKey)) {
+      return inFlightLongitudinalPromises.get(cacheKey)!;
     }
   }
 
-  return null;
+  const fetchTask = (async (): Promise<LongitudinalHealthResponse | null> => {
+    const retryDelays = [0, 250];
+
+    for (let attempt = 0; attempt < retryDelays.length; attempt++) {
+      if (attempt > 0) {
+        if (signal?.aborted) return null;
+        await new Promise((resolve) => setTimeout(resolve, retryDelays[attempt]));
+      }
+
+      try {
+        let token = await getAccessToken();
+        if (!token) {
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            token = session?.access_token ?? null;
+          } catch {
+            // ignore
+          }
+        }
+
+        if (!token) {
+          console.warn('[Intelligence API] getLongitudinalHealth: No active auth token available.');
+          return null;
+        }
+
+        const headers: Record<string, string> = {
+          Authorization: `Bearer ${token}`,
+        };
+
+        const params = new URLSearchParams();
+        if (period) params.set('period', period);
+        if (module) params.set('module', module);
+
+        const url = `${LONGITUDINAL_HEALTH_ENDPOINT}?${params.toString()}`;
+        const response = await fetchWithTimeout(url, { method: 'GET', headers, signal }, 8000);
+
+        if (!response.ok) {
+          let errorBody = '';
+          try {
+            errorBody = await response.text();
+          } catch {
+            errorBody = '(could not parse response body)';
+          }
+          console.warn(
+            `[Intelligence API] getLongitudinalHealth attempt ${attempt + 1}/${retryDelays.length} failed: HTTP ${response.status} | body: ${errorBody}`
+          );
+
+          if (response.status === 401 || response.status === 403) {
+            return null;
+          }
+
+          if (attempt < retryDelays.length - 1) {
+            continue;
+          }
+          return null;
+        }
+
+        const data = (await response.json()) as LongitudinalHealthResponse;
+        longitudinalCache.set(cacheKey, { data, timestamp: Date.now() });
+        return data;
+      } catch (err: any) {
+        if (err?.name === 'AbortError' || signal?.aborted) {
+          return null;
+        }
+        console.error(`[Intelligence API] getLongitudinalHealth network error attempt ${attempt + 1}:`, err);
+        if (attempt === retryDelays.length - 1) {
+          return null;
+        }
+      }
+    }
+
+    return null;
+  })();
+
+  inFlightLongitudinalPromises.set(cacheKey, fetchTask);
+
+  try {
+    return await fetchTask;
+  } finally {
+    inFlightLongitudinalPromises.delete(cacheKey);
+  }
 }
 
 

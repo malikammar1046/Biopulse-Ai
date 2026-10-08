@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   HeartPulse,
   Moon,
   Sun,
   Clock,
+  CheckCircle2,
 } from 'lucide-react';
 import type { LifestylePillar, RecommendationItem } from '../../types/lifestyle';
 import { RecommendationCard } from './RecommendationCard';
+import { LIFESTYLE_IMAGES } from '../../utils/lifestyleImages';
 
 interface LifestylePillarViewProps {
   lifestyle: LifestylePillar;
@@ -30,118 +32,191 @@ export const LifestylePillarView: React.FC<LifestylePillarViewProps> = ({
     (r) => r.category === 'lifestyle' || r.category === 'clinical'
   );
 
+  const [completedHabits, setCompletedHabits] = useState<Record<number, boolean>>({});
+
+  const toggleHabit = (idx: number) => {
+    setCompletedHabits((prev) => ({
+      ...prev,
+      [idx]: !prev[idx],
+    }));
+  };
+
   return (
-    <div className="space-y-8 animate-fadeIn">
-      {/* 1. Circadian & Sleep Hero Section */}
-      <section
-        aria-labelledby="circadian-headline-title"
-        className="rounded-2xl bg-white border border-[#D7EAF2] p-6 sm:p-8 space-y-4 shadow-xs"
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-              isMale ? 'bg-sky-50 text-[#0868B9]' : 'bg-teal-50 text-[#0E9EAA]'
-            }`}
-          >
-            <HeartPulse className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#55718F] block">
-              Circadian & Recovery Routine
-            </span>
-            <h2 id="circadian-headline-title" className="text-xl sm:text-2xl font-bold text-[#073B72]">
-              {lifestyle.circadian_headline}
+    <div className="space-y-8 animate-fadeIn text-left">
+      {/* ── 1. CIRCADIAN & SLEEP HERO SANCTUARY ── */}
+      <section className="rounded-3xl bg-white border border-[#E2EEF4] p-7 sm:p-9 shadow-sm space-y-6">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="space-y-3 max-w-2xl">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-100">
+                <Moon className="w-3.5 h-3.5" />
+                Circadian Architecture
+              </span>
+              <span className="text-xs text-slate-500 font-medium">
+                Autonomic & Cortisol Equilibrium
+              </span>
+            </div>
+
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#073B72] tracking-tight">
+              {lifestyle.circadian_headline || 'Circadian Alignment & Restorative Sleep'}
             </h2>
+
+            <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+              Nocturnal hormone synthesis, insulin sensitivity reset, and cellular repair depend on deep non-REM and REM cycles.
+            </p>
+          </div>
+
+          {/* Sleep Target Glass Metric */}
+          <div className="p-5 rounded-2xl bg-[#F7FBFC] border border-[#E2EEF4] text-center lg:text-left space-y-1 shrink-0 min-w-[200px]">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center justify-center lg:justify-start gap-1.5">
+              <Moon className="w-3.5 h-3.5 text-[#0E9EAA]" /> Optimal Sleep Target
+            </span>
+            <div className="text-2xl sm:text-3xl font-black text-[#073B72] font-mono">
+              {lifestyle.sleep_target_hours || '7.5 – 8.5'} <span className="text-xs font-normal text-slate-500">hrs/night</span>
+            </div>
+            <p className="text-[11px] text-slate-500">
+              Aligns melatonin production & blunts morning cortisol surge
+            </p>
           </div>
         </div>
 
-        {/* Core Pillars: Sleep Target & Stress Management */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-          {/* Target Sleep Architecture */}
-          <div className="p-5 rounded-2xl bg-[#F5FBFD] border border-[#D7EAF2] space-y-2">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#073B72]">
-              <Moon className="w-4 h-4 text-[#16B8C4]" />
-              <span>Target Sleep Duration</span>
+        {/* Visual Dual Cards: Sleep Sanctuary & Stress Reset */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+          {/* Card 1: Serene Sleep Sanctuary */}
+          <div className="rounded-3xl border border-[#E2EEF4] overflow-hidden bg-white shadow-xs flex flex-col justify-between">
+            <div className="relative h-44 w-full overflow-hidden bg-slate-100 group">
+              <img
+                src={LIFESTYLE_IMAGES.recovery.sleep.url}
+                alt={LIFESTYLE_IMAGES.recovery.sleep.alt}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                loading="lazy"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.opacity = '0';
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent" />
+              <div className="absolute bottom-3.5 left-4 flex items-center gap-1.5 text-white font-bold text-xs">
+                <Sun className="w-4 h-4 text-amber-300" />
+                <span>Morning Light Exposure Protocol</span>
+              </div>
             </div>
-            <div className="text-2xl font-bold font-mono text-[#073B72]">
-              {lifestyle.sleep_target_hours}
+            <div className="p-5 space-y-2">
+              <h4 className="text-base font-bold text-[#073B72]">Natural Dawn Entrainment</h4>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Step outside within 30 minutes of waking for 10–15 minutes of natural sunlight. This triggers serotonin synthesis and sets the internal timer for evening melatonin release.
+              </p>
             </div>
-            <p className="text-xs text-[#55718F] leading-relaxed">
-              Supports nocturnal hormone synthesis, nervous system balance, and glucose regulation.
-            </p>
           </div>
 
-          {/* Autonomic Stress Protocol */}
-          <div className="p-5 rounded-2xl bg-[#F5FBFD] border border-[#D7EAF2] space-y-2">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#073B72]">
-              <Sun className="w-4 h-4 text-amber-500" />
-              <span>Daily Stress Reset Protocol</span>
+          {/* Card 2: Autonomic Stress & Cortisol Reset */}
+          <div className="rounded-3xl border border-[#E2EEF4] overflow-hidden bg-white shadow-xs flex flex-col justify-between">
+            <div className="relative h-44 w-full overflow-hidden bg-slate-100 group">
+              <img
+                src={LIFESTYLE_IMAGES.recovery.stress.url}
+                alt={LIFESTYLE_IMAGES.recovery.stress.alt}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                loading="lazy"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.opacity = '0';
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent" />
+              <div className="absolute bottom-3.5 left-4 flex items-center gap-1.5 text-white font-bold text-xs">
+                <HeartPulse className="w-4 h-4 text-rose-300" />
+                <span>Autonomic Stress Reset</span>
+              </div>
             </div>
-            <p className="text-xs sm:text-sm text-slate-800 leading-relaxed pt-1">
-              {lifestyle.stress_management_protocol}
-            </p>
+            <div className="p-5 space-y-2">
+              <h4 className="text-base font-bold text-[#073B72]">Parasympathetic Vagal Activation</h4>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                {lifestyle.stress_management_protocol ||
+                  'Engage in 5 minutes of 4-7-8 diaphragmatic breathing before meals and prior to sleep to lower sympathetic tone and downregulate adrenal cortisol.'}
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* 2. Actionable Daily Habits */}
+      {/* ── 2. KEY DAILY RECOVERY HABITS ── */}
       {lifestyle.recommended_habits && lifestyle.recommended_habits.length > 0 && (
-        <section aria-labelledby="daily-habits-title" className="space-y-4">
+        <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 id="daily-habits-title" className="text-lg font-bold text-[#073B72]">
-                Key Daily Recovery Habits
-              </h3>
-              <p className="text-xs text-[#55718F]">
-                Simple, sustainable routines to align your biological clock
-              </p>
+              <h3 className="text-lg font-bold text-[#073B72]">Daily Recovery Anchors</h3>
+              <p className="text-xs text-slate-500">Bite-sized micro-habits designed for biological consistency</p>
             </div>
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-[#F5FBFD] border border-[#D7EAF2] text-[#073B72]">
+            <span className="text-xs font-semibold px-3 py-1 rounded-full bg-[#F7FBFC] border border-[#E2EEF4] text-[#073B72]">
               {lifestyle.recommended_habits.length} Habits
             </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {lifestyle.recommended_habits.map((habit, idx) => (
-              <div
-                key={idx}
-                className="rounded-2xl bg-white border border-[#D7EAF2] p-5 space-y-3 shadow-xs flex flex-col justify-between"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#F5FBFD] text-[#073B72] border border-[#D7EAF2]">
-                      {habit.category}
-                    </span>
-                    <span className="text-xs font-medium text-[#55718F] flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-[#16B8C4]" />
-                      {habit.timing}
-                    </span>
+            {lifestyle.recommended_habits.map((habit, idx) => {
+              const isDone = Boolean(completedHabits[idx]);
+              return (
+                <div
+                  key={idx}
+                  className={`p-5 rounded-3xl border transition-all duration-300 flex items-start justify-between gap-4 shadow-xs ${
+                    isDone
+                      ? 'bg-emerald-50/50 border-emerald-200'
+                      : 'bg-white border-[#E2EEF4] hover:border-[#0E9EAA]/40'
+                  }`}
+                >
+                  <div className="space-y-2 max-w-md">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-100 text-[#073B72]">
+                        {habit.category}
+                      </span>
+                      {habit.timing && (
+                        <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {habit.timing}
+                        </span>
+                      )}
+                    </div>
+
+                    <h4
+                      className={`text-sm font-bold leading-snug ${
+                        isDone ? 'text-emerald-900 line-through decoration-emerald-500' : 'text-[#073B72]'
+                      }`}
+                    >
+                      {habit.title}
+                    </h4>
+
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      {habit.action_item}
+                    </p>
+
+                    {habit.rationale && (
+                      <p className="text-[11px] text-slate-500 italic pt-1">
+                        &ldquo;{habit.rationale}&rdquo;
+                      </p>
+                    )}
                   </div>
 
-                  <h4 className="text-sm sm:text-base font-bold text-[#073B72]">
-                    {habit.title}
-                  </h4>
-                  <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-                    {habit.action_item}
-                  </p>
+                  <button
+                    type="button"
+                    onClick={() => toggleHabit(idx)}
+                    className={`w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 transition-all cursor-pointer ${
+                      isDone
+                        ? 'bg-emerald-500 text-white shadow-xs'
+                        : 'border border-[#E2EEF4] bg-slate-50 text-slate-400 hover:text-emerald-600 hover:border-emerald-300'
+                    }`}
+                    title={isDone ? 'Mark as incomplete' : 'Mark as done today'}
+                  >
+                    <CheckCircle2 className="w-5 h-5" />
+                  </button>
                 </div>
-
-                <div className="text-xs text-[#55718F] pt-2 border-t border-[#D7EAF2]/60">
-                  <strong className="text-[#073B72] font-semibold">Why: </strong>
-                  <span>{habit.rationale}</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       )}
 
-      {/* 3. Filtered Lifestyle Recommendations */}
+      {/* ── 3. CLINICAL LIFESTYLE RECOMMENDATIONS ── */}
       {lifestyleRecs.length > 0 && (
-        <section aria-labelledby="lifestyle-recs-title" className="space-y-4 pt-4 border-t border-[#D7EAF2]">
-          <h3 id="lifestyle-recs-title" className="text-lg font-bold text-[#073B72]">
-            Specific Lifestyle & Recovery Actions
-          </h3>
+        <section className="space-y-4 pt-2">
+          <h3 className="text-lg font-bold text-[#073B72]">Evidence-Based Lifestyle Priorities</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {lifestyleRecs.map((rec) => (
               <RecommendationCard

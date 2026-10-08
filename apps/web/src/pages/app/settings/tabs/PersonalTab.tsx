@@ -39,13 +39,212 @@ export const PersonalTab: React.FC<PersonalTabProps> = ({
   const dobBounds = getDobInputBounds();
 
   // Unit conversion state
-  const [heightUnit, setHeightUnit] = React.useState<'cm' | 'ft_in' | 'in'>('cm');
+  const [heightUnit, setHeightUnit] = React.useState<'cm' | 'ft_in'>('cm');
   const [weightUnit, setWeightUnit] = React.useState<'kg' | 'lbs'>('kg');
   const [waistUnit, setWaistUnit] = React.useState<'cm' | 'in'>('cm');
 
-  const { feet: heightFeet, inches: heightInches } = cmToFtInNullable(draft.heightCm);
-  const weightLbs = kgToLbs(draft.weightKg);
-  const waistInches = cmToInches(draft.waistCm);
+  // Separate editing states (string buffers) to prevent keystroke conversions and cursor jumps
+  const [heightCmInput, setHeightCmInput] = React.useState<string>(
+    draft.heightCm != null ? String(draft.heightCm) : ''
+  );
+  const initialFtIn = cmToFtInNullable(draft.heightCm);
+  const [heightFeetInput, setHeightFeetInput] = React.useState<string>(
+    initialFtIn.feet != null ? String(initialFtIn.feet) : ''
+  );
+  const [heightInchesInput, setHeightInchesInput] = React.useState<string>(
+    initialFtIn.inches != null ? String(initialFtIn.inches) : ''
+  );
+
+  const [weightKgInput, setWeightKgInput] = React.useState<string>(
+    draft.weightKg != null ? String(draft.weightKg) : ''
+  );
+  const [weightLbsInput, setWeightLbsInput] = React.useState<string>(() => {
+    const lbs = kgToLbs(draft.weightKg);
+    return lbs != null ? String(lbs) : '';
+  });
+
+  const [waistCmInput, setWaistCmInput] = React.useState<string>(
+    draft.waistCm != null ? String(draft.waistCm) : ''
+  );
+  const [waistInchesInput, setWaistInchesInput] = React.useState<string>(() => {
+    const inches = cmToInches(draft.waistCm);
+    return inches != null ? String(inches) : '';
+  });
+
+  // Track last committed canonical values to avoid overwriting active user typing
+  const lastCanonicalRef = React.useRef({
+    heightCm: draft.heightCm,
+    weightKg: draft.weightKg,
+    waistCm: draft.waistCm,
+  });
+
+  React.useEffect(() => {
+    if (draft.heightCm !== lastCanonicalRef.current.heightCm) {
+      lastCanonicalRef.current.heightCm = draft.heightCm;
+      setHeightCmInput(draft.heightCm != null ? String(draft.heightCm) : '');
+      const ftIn = cmToFtInNullable(draft.heightCm);
+      setHeightFeetInput(ftIn.feet != null ? String(ftIn.feet) : '');
+      setHeightInchesInput(ftIn.inches != null ? String(ftIn.inches) : '');
+    }
+    if (draft.weightKg !== lastCanonicalRef.current.weightKg) {
+      lastCanonicalRef.current.weightKg = draft.weightKg;
+      setWeightKgInput(draft.weightKg != null ? String(draft.weightKg) : '');
+      const lbs = kgToLbs(draft.weightKg);
+      setWeightLbsInput(lbs != null ? String(lbs) : '');
+    }
+    if (draft.waistCm !== lastCanonicalRef.current.waistCm) {
+      lastCanonicalRef.current.waistCm = draft.waistCm;
+      setWaistCmInput(draft.waistCm != null ? String(draft.waistCm) : '');
+      const inches = cmToInches(draft.waistCm);
+      setWaistInchesInput(inches != null ? String(inches) : '');
+    }
+  }, [draft.heightCm, draft.weightKg, draft.waistCm]);
+
+  // Height handlers
+  const handleHeightCmChange = (val: string) => {
+    setHeightCmInput(val);
+    const trimmed = val.trim();
+    if (!trimmed) {
+      lastCanonicalRef.current.heightCm = null;
+      setDraft((p) => ({ ...p, heightCm: null }));
+      return;
+    }
+    const num = parseFloat(trimmed);
+    if (!isNaN(num) && num > 0) {
+      lastCanonicalRef.current.heightCm = num;
+      setDraft((p) => ({ ...p, heightCm: num }));
+    }
+  };
+
+  const handleHeightFeetChange = (val: string) => {
+    setHeightFeetInput(val);
+    const feet = parseFloat(val.trim()) || 0;
+    const inches = parseFloat(heightInchesInput.trim()) || 0;
+    if (!val.trim() && !heightInchesInput.trim()) {
+      lastCanonicalRef.current.heightCm = null;
+      setDraft((p) => ({ ...p, heightCm: null }));
+    } else {
+      const cm = ftInToCm(feet, inches);
+      lastCanonicalRef.current.heightCm = cm;
+      setDraft((p) => ({ ...p, heightCm: cm }));
+    }
+  };
+
+  const handleHeightInchesChange = (val: string) => {
+    setHeightInchesInput(val);
+    const feet = parseFloat(heightFeetInput.trim()) || 0;
+    const inches = parseFloat(val.trim()) || 0;
+    if (!heightFeetInput.trim() && !val.trim()) {
+      lastCanonicalRef.current.heightCm = null;
+      setDraft((p) => ({ ...p, heightCm: null }));
+    } else {
+      const cm = ftInToCm(feet, inches);
+      lastCanonicalRef.current.heightCm = cm;
+      setDraft((p) => ({ ...p, heightCm: cm }));
+    }
+  };
+
+  const handleSwitchHeightUnit = (newUnit: 'cm' | 'ft_in') => {
+    if (newUnit === heightUnit) return;
+    if (newUnit === 'cm') {
+      setHeightCmInput(draft.heightCm != null ? String(Math.round(draft.heightCm)) : '');
+    } else {
+      const ftIn = cmToFtInNullable(draft.heightCm);
+      setHeightFeetInput(ftIn.feet != null ? String(ftIn.feet) : '');
+      setHeightInchesInput(ftIn.inches != null ? String(ftIn.inches) : '');
+    }
+    setHeightUnit(newUnit);
+  };
+
+  // Weight handlers
+  const handleWeightKgChange = (val: string) => {
+    setWeightKgInput(val);
+    const trimmed = val.trim();
+    if (!trimmed) {
+      lastCanonicalRef.current.weightKg = null;
+      setDraft((p) => ({ ...p, weightKg: null }));
+      return;
+    }
+    const num = parseFloat(trimmed);
+    if (!isNaN(num) && num > 0) {
+      lastCanonicalRef.current.weightKg = num;
+      setDraft((p) => ({ ...p, weightKg: num }));
+    }
+  };
+
+  const handleWeightLbsChange = (val: string) => {
+    setWeightLbsInput(val);
+    const trimmed = val.trim();
+    if (!trimmed) {
+      lastCanonicalRef.current.weightKg = null;
+      setDraft((p) => ({ ...p, weightKg: null }));
+      return;
+    }
+    const num = parseFloat(trimmed);
+    if (!isNaN(num) && num > 0) {
+      const kg = lbsToKg(num);
+      lastCanonicalRef.current.weightKg = kg;
+      setDraft((p) => ({ ...p, weightKg: kg }));
+    }
+  };
+
+  const handleSwitchWeightUnit = (newUnit: 'kg' | 'lbs') => {
+    if (newUnit === weightUnit) return;
+    if (newUnit === 'kg') {
+      setWeightKgInput(
+        draft.weightKg != null ? String(Math.round(draft.weightKg * 10) / 10) : ''
+      );
+    } else {
+      const lbs = kgToLbs(draft.weightKg);
+      setWeightLbsInput(lbs != null ? String(lbs) : '');
+    }
+    setWeightUnit(newUnit);
+  };
+
+  // Waist handlers
+  const handleWaistCmChange = (val: string) => {
+    setWaistCmInput(val);
+    const trimmed = val.trim();
+    if (!trimmed) {
+      lastCanonicalRef.current.waistCm = null;
+      setDraft((p) => ({ ...p, waistCm: null }));
+      return;
+    }
+    const num = parseFloat(trimmed);
+    if (!isNaN(num) && num > 0) {
+      lastCanonicalRef.current.waistCm = num;
+      setDraft((p) => ({ ...p, waistCm: num }));
+    }
+  };
+
+  const handleWaistInchesChange = (val: string) => {
+    setWaistInchesInput(val);
+    const trimmed = val.trim();
+    if (!trimmed) {
+      lastCanonicalRef.current.waistCm = null;
+      setDraft((p) => ({ ...p, waistCm: null }));
+      return;
+    }
+    const num = parseFloat(trimmed);
+    if (!isNaN(num) && num > 0) {
+      const cm = inchesToCm(num);
+      lastCanonicalRef.current.waistCm = cm;
+      setDraft((p) => ({ ...p, waistCm: cm }));
+    }
+  };
+
+  const handleSwitchWaistUnit = (newUnit: 'cm' | 'in') => {
+    if (newUnit === waistUnit) return;
+    if (newUnit === 'cm') {
+      setWaistCmInput(
+        draft.waistCm != null ? String(Math.round(draft.waistCm * 10) / 10) : ''
+      );
+    } else {
+      const inches = cmToInches(draft.waistCm);
+      setWaistInchesInput(inches != null ? String(inches) : '');
+    }
+    setWaistUnit(newUnit);
+  };
 
   // Live BMI calculation
   const calculatedBmi = React.useMemo(() => {
@@ -459,8 +658,8 @@ export const PersonalTab: React.FC<PersonalTabProps> = ({
               <div className="flex bg-slate-200/60 p-0.5 rounded-lg text-[10px] font-semibold">
                 <button
                   type="button"
-                  onClick={() => setHeightUnit('cm')}
-                  className={`px-2 py-0.5 rounded-md transition-all ${
+                  onClick={() => handleSwitchHeightUnit('cm')}
+                  className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
                     heightUnit === 'cm' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
                   }`}
                 >
@@ -468,8 +667,8 @@ export const PersonalTab: React.FC<PersonalTabProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setHeightUnit('ft_in')}
-                  className={`px-2 py-0.5 rounded-md transition-all ${
+                  onClick={() => handleSwitchHeightUnit('ft_in')}
+                  className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
                     heightUnit === 'ft_in' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
                   }`}
                 >
@@ -481,16 +680,10 @@ export const PersonalTab: React.FC<PersonalTabProps> = ({
             {heightUnit === 'cm' ? (
               <div className="relative">
                 <input
-                  type="number"
-                  min="80"
-                  max="250"
-                  value={draft.heightCm || ''}
-                  onChange={(e) =>
-                    setDraft((p) => ({
-                      ...p,
-                      heightCm: e.target.value ? Number(e.target.value) : null,
-                    }))
-                  }
+                  type="text"
+                  inputMode="decimal"
+                  value={heightCmInput}
+                  onChange={(e) => handleHeightCmChange(e.target.value)}
                   placeholder="e.g. 168"
                   className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0E9EAA]/20 focus:border-[#0E9EAA]"
                 />
@@ -500,17 +693,10 @@ export const PersonalTab: React.FC<PersonalTabProps> = ({
               <div className="grid grid-cols-2 gap-2">
                 <div className="relative">
                   <input
-                    type="number"
-                    min="3"
-                    max="7"
-                    value={heightFeet ?? ''}
-                    onChange={(e) => {
-                      const f = e.target.value ? Number(e.target.value) : null;
-                      setDraft((p) => ({
-                        ...p,
-                        heightCm: ftInToCm(f ?? 0, heightInches ?? 0),
-                      }));
-                    }}
+                    type="text"
+                    inputMode="numeric"
+                    value={heightFeetInput}
+                    onChange={(e) => handleHeightFeetChange(e.target.value)}
                     placeholder="5"
                     className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0E9EAA]/20 focus:border-[#0E9EAA]"
                   />
@@ -518,17 +704,10 @@ export const PersonalTab: React.FC<PersonalTabProps> = ({
                 </div>
                 <div className="relative">
                   <input
-                    type="number"
-                    min="0"
-                    max="11"
-                    value={heightInches ?? ''}
-                    onChange={(e) => {
-                      const inch = e.target.value ? Number(e.target.value) : null;
-                      setDraft((p) => ({
-                        ...p,
-                        heightCm: ftInToCm(heightFeet ?? 0, inch ?? 0),
-                      }));
-                    }}
+                    type="text"
+                    inputMode="decimal"
+                    value={heightInchesInput}
+                    onChange={(e) => handleHeightInchesChange(e.target.value)}
                     placeholder="6"
                     className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0E9EAA]/20 focus:border-[#0E9EAA]"
                   />
@@ -550,8 +729,8 @@ export const PersonalTab: React.FC<PersonalTabProps> = ({
               <div className="flex bg-slate-200/60 p-0.5 rounded-lg text-[10px] font-semibold">
                 <button
                   type="button"
-                  onClick={() => setWeightUnit('kg')}
-                  className={`px-2 py-0.5 rounded-md transition-all ${
+                  onClick={() => handleSwitchWeightUnit('kg')}
+                  className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
                     weightUnit === 'kg' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
                   }`}
                 >
@@ -559,8 +738,8 @@ export const PersonalTab: React.FC<PersonalTabProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setWeightUnit('lbs')}
-                  className={`px-2 py-0.5 rounded-md transition-all ${
+                  onClick={() => handleSwitchWeightUnit('lbs')}
+                  className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
                     weightUnit === 'lbs' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
                   }`}
                 >
@@ -572,17 +751,10 @@ export const PersonalTab: React.FC<PersonalTabProps> = ({
             {weightUnit === 'kg' ? (
               <div className="relative">
                 <input
-                  type="number"
-                  min="30"
-                  max="250"
-                  step="0.1"
-                  value={draft.weightKg || ''}
-                  onChange={(e) =>
-                    setDraft((p) => ({
-                      ...p,
-                      weightKg: e.target.value ? Number(e.target.value) : null,
-                    }))
-                  }
+                  type="text"
+                  inputMode="decimal"
+                  value={weightKgInput}
+                  onChange={(e) => handleWeightKgChange(e.target.value)}
                   placeholder="e.g. 64.5"
                   className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0E9EAA]/20 focus:border-[#0E9EAA]"
                 />
@@ -591,17 +763,10 @@ export const PersonalTab: React.FC<PersonalTabProps> = ({
             ) : (
               <div className="relative">
                 <input
-                  type="number"
-                  min="60"
-                  max="500"
-                  step="0.1"
-                  value={weightLbs || ''}
-                  onChange={(e) =>
-                    setDraft((p) => ({
-                      ...p,
-                      weightKg: e.target.value ? lbsToKg(Number(e.target.value)) : null,
-                    }))
-                  }
+                  type="text"
+                  inputMode="decimal"
+                  value={weightLbsInput}
+                  onChange={(e) => handleWeightLbsChange(e.target.value)}
                   placeholder="e.g. 142"
                   className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0E9EAA]/20 focus:border-[#0E9EAA]"
                 />
@@ -632,8 +797,8 @@ export const PersonalTab: React.FC<PersonalTabProps> = ({
               <div className="flex bg-slate-200/60 p-0.5 rounded-lg text-[10px] font-semibold">
                 <button
                   type="button"
-                  onClick={() => setWaistUnit('cm')}
-                  className={`px-2 py-0.5 rounded-md transition-all ${
+                  onClick={() => handleSwitchWaistUnit('cm')}
+                  className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
                     waistUnit === 'cm' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
                   }`}
                 >
@@ -641,8 +806,8 @@ export const PersonalTab: React.FC<PersonalTabProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setWaistUnit('in')}
-                  className={`px-2 py-0.5 rounded-md transition-all ${
+                  onClick={() => handleSwitchWaistUnit('in')}
+                  className={`px-2 py-0.5 rounded-md transition-all cursor-pointer ${
                     waistUnit === 'in' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
                   }`}
                 >
@@ -654,17 +819,10 @@ export const PersonalTab: React.FC<PersonalTabProps> = ({
             {waistUnit === 'cm' ? (
               <div className="relative">
                 <input
-                  type="number"
-                  min="40"
-                  max="180"
-                  step="0.5"
-                  value={draft.waistCm || ''}
-                  onChange={(e) =>
-                    setDraft((p) => ({
-                      ...p,
-                      waistCm: e.target.value ? Number(e.target.value) : null,
-                    }))
-                  }
+                  type="text"
+                  inputMode="decimal"
+                  value={waistCmInput}
+                  onChange={(e) => handleWaistCmChange(e.target.value)}
                   placeholder="e.g. 84"
                   className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0E9EAA]/20 focus:border-[#0E9EAA]"
                 />
@@ -673,17 +831,10 @@ export const PersonalTab: React.FC<PersonalTabProps> = ({
             ) : (
               <div className="relative">
                 <input
-                  type="number"
-                  min="16"
-                  max="70"
-                  step="0.5"
-                  value={waistInches || ''}
-                  onChange={(e) =>
-                    setDraft((p) => ({
-                      ...p,
-                      waistCm: e.target.value ? inchesToCm(Number(e.target.value)) : null,
-                    }))
-                  }
+                  type="text"
+                  inputMode="decimal"
+                  value={waistInchesInput}
+                  onChange={(e) => handleWaistInchesChange(e.target.value)}
                   placeholder="e.g. 33"
                   className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0E9EAA]/20 focus:border-[#0E9EAA]"
                 />

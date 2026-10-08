@@ -783,6 +783,7 @@ class LongitudinalHealthService:
             "verified_labs: %.0f ms\n"
             "symptoms: %.0f ms\n"
             "cycle_records: %.0f ms\n"
+            "metric_observations: %.0f ms\n"
             "payload_build: %.0f ms\n"
             "total: %.2f s",
             timings.get("assessment_history", 0.0),
@@ -790,6 +791,7 @@ class LongitudinalHealthService:
             timings.get("verified_labs", 0.0),
             timings.get("symptoms", 0.0),
             timings.get("cycle_records", 0.0),
+            timings.get("metric_observations", 0.0),
             payload_build_ms,
             total_duration,
         )
