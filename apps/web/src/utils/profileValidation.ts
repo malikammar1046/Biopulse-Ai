@@ -179,3 +179,167 @@ export function validatePakistaniPhone(phone: string | undefined | null): Valida
     error: 'Phone number must be a valid Pakistani number of 11 digits starting with 0 (e.g. 03001234567) or +92 (e.g. +923001234567).',
   };
 }
+
+/**
+ * Rigorously validates an email address against RFC standards:
+ * - Proper local-part and domain separation via a single '@'
+ * - Disallows spaces, consecutive dots, and leading/trailing dots/hyphens
+ * - Enforces minimum 2-character alphabetic Top-Level Domain (TLD) e.g., .com, .org, .ai, .edu, .co.uk
+ * - Enforces RFC length limits (total <= 254 chars, local part <= 64 chars)
+ */
+export function validateEmail(email: string | undefined | null): ValidationResult {
+  if (!email || !email.trim()) {
+    return {
+      isValid: false,
+      error: 'Please enter your email address.',
+    };
+  }
+
+  const trimmed = email.trim();
+
+  if (trimmed.length > 254) {
+    return {
+      isValid: false,
+      error: 'Email address cannot exceed 254 characters.',
+    };
+  }
+
+  if (/\s/.test(trimmed)) {
+    return {
+      isValid: false,
+      error: 'Email address cannot contain spaces.',
+    };
+  }
+
+  if (trimmed.includes('..')) {
+    return {
+      isValid: false,
+      error: 'Email address cannot contain consecutive dots.',
+    };
+  }
+
+  const atParts = trimmed.split('@');
+  if (atParts.length < 2) {
+    return {
+      isValid: false,
+      error: "Email address must include an '@' symbol (e.g., name@example.com).",
+    };
+  }
+
+  if (atParts.length > 2) {
+    return {
+      isValid: false,
+      error: "Email address cannot contain more than one '@' symbol.",
+    };
+  }
+
+  const [local, domain] = atParts;
+
+  if (!local) {
+    return {
+      isValid: false,
+      error: "Please enter a username before the '@' symbol.",
+    };
+  }
+
+  if (local.length > 64) {
+    return {
+      isValid: false,
+      error: 'Email username cannot exceed 64 characters.',
+    };
+  }
+
+  if (local.startsWith('.') || local.endsWith('.')) {
+    return {
+      isValid: false,
+      error: 'Email username cannot start or end with a dot.',
+    };
+  }
+
+  // Local part valid characters: letters, numbers, and allowed punctuation: !#$%&'*+/=?^_`{|}~.-
+  const localRegex = /^[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*$/;
+  if (!localRegex.test(local)) {
+    return {
+      isValid: false,
+      error: 'Email username contains invalid characters.',
+    };
+  }
+
+  if (!domain) {
+    return {
+      isValid: false,
+      error: "Please enter a domain after the '@' symbol (e.g., example.com).",
+    };
+  }
+
+  if (domain.length > 253) {
+    return {
+      isValid: false,
+      error: 'Email domain is too long.',
+    };
+  }
+
+  if (domain.startsWith('.') || domain.endsWith('.')) {
+    return {
+      isValid: false,
+      error: 'Email domain cannot start or end with a dot.',
+    };
+  }
+
+  const domainParts = domain.split('.');
+  if (domainParts.length < 2) {
+    return {
+      isValid: false,
+      error: 'Email domain must include an extension (e.g., name@example.com).',
+    };
+  }
+
+  for (let i = 0; i < domainParts.length; i++) {
+    const label = domainParts[i];
+    if (!label) {
+      return {
+        isValid: false,
+        error: 'Email domain contains invalid empty segments.',
+      };
+    }
+    if (label.length > 63) {
+      return {
+        isValid: false,
+        error: 'Email domain segment cannot exceed 63 characters.',
+      };
+    }
+    if (label.startsWith('-') || label.endsWith('-')) {
+      return {
+        isValid: false,
+        error: 'Email domain cannot start or end with a hyphen.',
+      };
+    }
+
+    if (i === domainParts.length - 1) {
+      // Top-level domain must be only alphabetic characters, between 2 and 63 chars
+      if (!/^[a-zA-Z]{2,63}$/.test(label)) {
+        return {
+          isValid: false,
+          error: 'Please enter a valid domain extension (e.g., .com, .org, .edu, .ai).',
+        };
+      }
+    } else {
+      if (!/^[a-zA-Z0-9-]+$/.test(label)) {
+        return {
+          isValid: false,
+          error: 'Email domain contains invalid characters.',
+        };
+      }
+    }
+  }
+
+  return { isValid: true };
+}
+
+/**
+ * Returns boolean whether an email address is valid according to RFC and TLD standards.
+ */
+export function isValidEmail(email: string | undefined | null): boolean {
+  return validateEmail(email).isValid;
+}
+

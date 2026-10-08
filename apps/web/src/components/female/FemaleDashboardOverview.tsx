@@ -16,6 +16,7 @@ import { CareCircleModuleCard } from '../dashboard/overview/modules/CareCircleMo
 import { SymptomsModuleCard } from '../dashboard/overview/modules/SymptomsModuleCard';
 import { NextBestActionModuleCard } from '../dashboard/overview/modules/NextBestActionModuleCard';
 
+import { SpecialistCareModuleCard } from '../doctors/SpecialistCareModuleCard';
 import { getAuthoritativeAssessmentForPathway } from '../../utils/authoritativeAssessmentSelector';
 import { logDashboardRenderTrace } from '../../utils/probabilityTrace';
 
@@ -235,6 +236,9 @@ export const FemaleDashboardOverview: React.FC = () => {
           onOpenAiTwin={() => openAiChatWithPrompt('What is my recommended next clinical step?')}
         />
       </div>
+
+      {/* ── 3. Clinical Specialist Care Pathway ───────────────────────────── */}
+      <SpecialistCareModuleCard pathway="female" />
     </motion.div>
   );
 };

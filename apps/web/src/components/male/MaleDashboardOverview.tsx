@@ -17,6 +17,7 @@ import { SymptomsModuleCard } from '../dashboard/overview/modules/SymptomsModule
 import { NextBestActionModuleCard } from '../dashboard/overview/modules/NextBestActionModuleCard';
 import { MaleClinicalLabsModal } from '../adaptive/MaleClinicalLabsModal';
 
+import { SpecialistCareModuleCard } from '../doctors/SpecialistCareModuleCard';
 import { getAuthoritativeAssessmentForPathway } from '../../utils/authoritativeAssessmentSelector';
 import { logDashboardRenderTrace } from '../../utils/probabilityTrace';
 
@@ -258,6 +259,9 @@ export const MaleDashboardOverview: React.FC = () => {
           onOpenAiTwin={() => openAiChatWithPrompt('What is my recommended next clinical step for male health?')}
         />
       </div>
+
+      {/* ── 3. Clinical Specialist Care Pathway ───────────────────────────── */}
+      <SpecialistCareModuleCard pathway="male" />
 
       {/* Male Clinical Labs Modal */}
       <MaleClinicalLabsModal

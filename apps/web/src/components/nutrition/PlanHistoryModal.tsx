@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, History, Calendar, Check, ArrowRight } from 'lucide-react';
+import { X, History, Calendar, Check } from 'lucide-react';
 import type { NutritionPlanSummary } from '../../types/nutrition';
 import { nutritionService } from '../../services/nutritionService';
 
@@ -43,7 +43,7 @@ export const PlanHistoryModal: React.FC<PlanHistoryModalProps> = ({
   const handleActivate = async (planId: string) => {
     setActivatingId(planId);
     try {
-      await nutritionService.activatePlan(planId);
+      await nutritionService.updatePlanStatus(planId, 'active');
       await onSelectPlan(planId);
       onClose();
     } catch (err) {
@@ -57,7 +57,6 @@ export const PlanHistoryModal: React.FC<PlanHistoryModalProps> = ({
 
   const accentColor = isMale ? 'bg-[#0868B9]' : 'bg-[#0E9EAA]';
   const accentBorder = isMale ? 'border-[#0868B9]' : 'border-[#0E9EAA]';
-  const accentText = isMale ? 'text-[#0868B9]' : 'text-[#0E9EAA]';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">

@@ -21,13 +21,70 @@ export function validateFullName(name: string): string | null {
  * Returns null if valid, or a concise user-friendly error string.
  */
 export function validateEmail(email: string): string | null {
+  if (!email || typeof email !== 'string') {
+    return 'Email address is required';
+  }
   const trimmed = email.trim();
   if (!trimmed) {
     return 'Email address is required';
   }
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(trimmed)) {
-    return 'Please enter a valid email address';
+  if (trimmed.length > 254) {
+    return 'Email address cannot exceed 254 characters';
+  }
+  if (/\s/.test(trimmed)) {
+    return 'Email address cannot contain spaces';
+  }
+  if (trimmed.includes('..')) {
+    return 'Email address cannot contain consecutive dots';
+  }
+  const atParts = trimmed.split('@');
+  if (atParts.length < 2) {
+    return "Email address must include an '@' symbol";
+  }
+  if (atParts.length > 2) {
+    return "Email address cannot contain more than one '@' symbol";
+  }
+  const [local, domain] = atParts;
+  if (!local) {
+    return "Please enter a username before the '@' symbol";
+  }
+  if (local.length > 64) {
+    return 'Email username cannot exceed 64 characters';
+  }
+  if (local.startsWith('.') || local.endsWith('.')) {
+    return 'Email username cannot start or end with a dot';
+  }
+  const localRegex = /^[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*$/;
+  if (!localRegex.test(local)) {
+    return 'Email username contains invalid characters';
+  }
+  if (!domain || domain.length > 253) {
+    return 'Email domain is invalid';
+  }
+  if (domain.startsWith('.') || domain.endsWith('.')) {
+    return 'Email domain cannot start or end with a dot';
+  }
+  const domainParts = domain.split('.');
+  if (domainParts.length < 2) {
+    return 'Email domain must include an extension (e.g. .com)';
+  }
+  for (let i = 0; i < domainParts.length; i++) {
+    const label = domainParts[i];
+    if (!label || label.length > 63) {
+      return 'Email domain segment is invalid';
+    }
+    if (label.startsWith('-') || label.endsWith('-')) {
+      return 'Email domain cannot start or end with a hyphen';
+    }
+    if (i === domainParts.length - 1) {
+      if (!/^[a-zA-Z]{2,63}$/.test(label)) {
+        return 'Please enter a valid domain extension (e.g. .com, .org, .ai)';
+      }
+    } else {
+      if (!/^[a-zA-Z0-9-]+$/.test(label)) {
+        return 'Email domain contains invalid characters';
+      }
+    }
   }
   return null;
 }
