@@ -43,7 +43,7 @@ export const MobileBottomNav: React.FC = () => {
   const isFemale = pathway === 'female';
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-[#EAECF0] shadow-lg z-30 flex items-center justify-around px-2 select-none pb-[env(safe-area-inset-bottom,0px)]">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-[calc(4rem+env(safe-area-inset-bottom,0px))] bg-white/98 backdrop-blur-md border-t border-[#EAECF0] shadow-lg z-30 flex items-center justify-around px-1 select-none pb-[env(safe-area-inset-bottom,0px)] pt-1">
       {navItems.map((item) => {
         const active = isActive(item.path);
         const Icon = item.icon;
@@ -51,14 +51,14 @@ export const MobileBottomNav: React.FC = () => {
           <Link
             key={item.path}
             to={item.path}
-            className={`flex flex-col items-center justify-center gap-1 w-14 py-1 rounded-xl transition-all active:scale-95 cursor-pointer ${
+            className={`flex flex-col items-center justify-center gap-0.5 sm:gap-1 flex-1 max-w-[64px] py-1 rounded-xl transition-all active:scale-95 cursor-pointer ${
               active
                 ? (isFemale ? 'text-[#F43F7D] font-bold' : 'text-[#29B6F6] font-bold')
                 : 'text-slate-500 hover:text-slate-900 font-medium'
             }`}
           >
-            <Icon className="w-5 h-5" aria-hidden="true" />
-            <span className="text-[10px] font-sans">{item.label}</span>
+            <Icon className="w-5 h-5 shrink-0" aria-hidden="true" />
+            <span className="text-[10px] font-sans truncate">{item.label}</span>
           </Link>
         );
       })}

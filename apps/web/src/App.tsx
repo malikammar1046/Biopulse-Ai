@@ -91,25 +91,32 @@ const AssessmentPage = lazy(() => import('./pages/app/AssessmentPage').then((m) 
 const ProgressPage = lazy(() => import('./pages/app/ProgressPage').then((m) => ({ default: m.ProgressPage })));
 
 import { AIChatProvider } from './context/AIChatContext';
+import { AnimatePresence } from 'framer-motion';
 
 const AppContent: React.FC = () => {
   const { loading: authLoading } = useAuth();
-  const [initialSplashDismissed, setInitialSplashDismissed] = React.useState(false);
+  const [showInitialSplash, setShowInitialSplash] = React.useState(true);
 
   React.useEffect(() => {
+    // Keep botanical splash smoothly visible on cold start, then gracefully fade out
     if (!authLoading) {
-      setInitialSplashDismissed(true);
+      const timer = setTimeout(() => {
+        setShowInitialSplash(false);
+      }, 650);
+      return () => clearTimeout(timer);
     }
   }, [authLoading]);
 
-  // Show full-screen brand splash screen ONLY ONCE on initial cold load if auth is still pending
-  if (authLoading && !initialSplashDismissed) {
-    return <BioPulseLoadingScreen message="Preparing your health experience" fullScreen={true} />;
-  }
-
   return (
-    <Suspense fallback={<PageLoadingFallback />}>
-      <Routes>
+    <>
+      <AnimatePresence mode="wait">
+        {showInitialSplash && (
+          <BioPulseLoadingScreen message="Preparing your health experience" fullScreen={true} />
+        )}
+      </AnimatePresence>
+
+      <Suspense fallback={<PageLoadingFallback />}>
+        <Routes>
               {/* Public Marketing Website */}
               <Route element={<PublicLayout />}>
                 <Route path={ROUTES.HOME} element={<Home />} />
@@ -232,6 +239,7 @@ const AppContent: React.FC = () => {
               <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
             </Routes>
           </Suspense>
+    </>
   );
 };
 

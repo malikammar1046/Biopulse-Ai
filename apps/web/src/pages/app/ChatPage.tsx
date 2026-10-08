@@ -117,7 +117,7 @@ export const ChatPage: React.FC = () => {
   const primaryText = isFemale ? 'text-[#F43F7D]' : 'text-[#0868B9]';
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8.5rem)] md:h-[calc(100vh-6rem)] w-full max-w-6xl mx-auto bg-white rounded-2xl border border-[#E2E8F0] shadow-xs overflow-hidden select-none text-left">
+    <div className="flex flex-col h-[calc(100dvh-10rem)] md:h-[calc(100dvh-6.5rem)] w-full max-w-6xl mx-auto bg-white rounded-2xl border border-[#E2E8F0] shadow-xs overflow-hidden select-none text-left">
       {/* ── 1. Dedicated AI Workspace Header ── */}
       <header className="px-5 py-4 border-b border-[#E2E8F0] bg-white flex items-center justify-between shrink-0 z-10">
         <div className="flex items-center gap-3.5 min-w-0">
@@ -324,7 +324,7 @@ export const ChatPage: React.FC = () => {
             onKeyDown={handleKeyDown}
             placeholder={placeholderText}
             disabled={isLoading}
-            className="flex-1 bg-transparent px-2.5 py-1.5 text-xs sm:text-sm text-[#0F172A] placeholder-[#94A3B8] focus:outline-none resize-none max-h-36 disabled:opacity-60 leading-relaxed"
+            className="flex-1 bg-transparent px-2.5 py-1.5 text-base sm:text-sm text-[#0F172A] placeholder-[#94A3B8] focus:outline-none resize-none max-h-36 disabled:opacity-60 leading-relaxed"
             aria-label="Ask BioPulse AI"
           />
 
@@ -368,7 +368,7 @@ export const ChatPage: React.FC = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="w-full max-w-md bg-white h-full shadow-2xl p-6 overflow-y-auto flex flex-col justify-between text-[#0F172A]"
+              className="w-full max-w-md bg-white h-full shadow-2xl p-4 sm:p-6 overflow-y-auto flex flex-col justify-between text-[#0F172A]"
               onClick={(e) => e.stopPropagation()}
             >
               <div>

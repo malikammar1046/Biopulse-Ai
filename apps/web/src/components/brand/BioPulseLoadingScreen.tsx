@@ -283,18 +283,52 @@ export const BioPulseLoadingScreen: React.FC<BioPulseLoadingScreenProps> = ({
   const shouldReduceMotion = useReducedMotion() ?? false;
 
   return (
-    <div
+    <motion.div
       role="status"
       aria-live="polite"
+      initial={{ opacity: 1 }}
+      animate={{ opacity: 1 }}
+      exit={{
+        opacity: 0,
+        transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+      }}
       className={`w-full ${
-        fullScreen ? 'fixed inset-0 z-50 min-h-screen' : 'min-h-[70vh]'
+        fullScreen ? 'fixed inset-0 z-[100] min-h-[100dvh]' : 'min-h-[70vh]'
       } flex items-center justify-center bg-[#F8FAFC] text-[#162A45] relative overflow-hidden select-none px-4 ${className}`}
     >
+      {/* ── Soft Ambient Radial Background Wash ── */}
+      <div
+        className="absolute inset-0 pointer-events-none z-0"
+        style={{
+          background:
+            'radial-gradient(circle at 50% 50%, rgba(248, 250, 252, 0.7) 0%, rgba(241, 245, 249, 0.96) 100%)',
+        }}
+        aria-hidden="true"
+      />
+
       {/* ── Left Botanical Decoration (Teal Pathway) ── */}
       <motion.div
-        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0.8, x: -6 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.25, ease: 'easeOut' }}
+        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, x: -16 }}
+        animate={
+          shouldReduceMotion
+            ? { opacity: 1 }
+            : {
+                opacity: 1,
+                x: 0,
+                y: [0, -8, 0],
+                rotate: [0, 0.75, 0],
+              }
+        }
+        transition={
+          shouldReduceMotion
+            ? { duration: 0.35 }
+            : {
+                opacity: { duration: 0.6, ease: 'easeOut' },
+                x: { duration: 0.6, ease: 'easeOut' },
+                y: { duration: 7, repeat: Infinity, ease: 'easeInOut' },
+                rotate: { duration: 8, repeat: Infinity, ease: 'easeInOut' },
+              }
+        }
         className="absolute left-0 top-0 sm:top-1/2 sm:-translate-y-1/2 pointer-events-none z-0"
       >
         <LeftTealBotanical />
@@ -302,9 +336,27 @@ export const BioPulseLoadingScreen: React.FC<BioPulseLoadingScreenProps> = ({
 
       {/* ── Right Botanical Decoration (Pink Pathway) ── */}
       <motion.div
-        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0.8, x: 6 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.25, ease: 'easeOut' }}
+        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, x: 16 }}
+        animate={
+          shouldReduceMotion
+            ? { opacity: 1 }
+            : {
+                opacity: 1,
+                x: 0,
+                y: [0, 8, 0],
+                rotate: [0, -0.75, 0],
+              }
+        }
+        transition={
+          shouldReduceMotion
+            ? { duration: 0.35 }
+            : {
+                opacity: { duration: 0.6, ease: 'easeOut' },
+                x: { duration: 0.6, ease: 'easeOut' },
+                y: { duration: 7.5, repeat: Infinity, ease: 'easeInOut' },
+                rotate: { duration: 8.5, repeat: Infinity, ease: 'easeInOut' },
+              }
+        }
         className="absolute right-0 bottom-0 sm:top-1/2 sm:-translate-y-1/2 pointer-events-none z-0"
       >
         <RightPinkBotanical />
@@ -312,9 +364,9 @@ export const BioPulseLoadingScreen: React.FC<BioPulseLoadingScreenProps> = ({
 
       {/* ── Center: BioPulse Identity & Pulse Rhythm ── */}
       <motion.div
-        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0.9, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.2, ease: 'easeOut' }}
+        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 10, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
         className="relative z-10 flex flex-col items-center text-center max-w-sm sm:max-w-md mx-auto"
       >
         {/* BioPulse Heart Emblem with Subtle Breathing Micro-Pulse */}
@@ -324,15 +376,20 @@ export const BioPulseLoadingScreen: React.FC<BioPulseLoadingScreenProps> = ({
               shouldReduceMotion
                 ? undefined
                 : {
-                    scale: [1, 1.035, 1],
+                    scale: [1, 1.03, 1],
+                    boxShadow: [
+                      '0 10px 25px -5px rgba(8, 145, 178, 0.08), 0 8px 10px -6px rgba(225, 29, 72, 0.06)',
+                      '0 20px 30px -5px rgba(8, 145, 178, 0.16), 0 10px 15px -5px rgba(225, 29, 72, 0.12)',
+                      '0 10px 25px -5px rgba(8, 145, 178, 0.08), 0 8px 10px -6px rgba(225, 29, 72, 0.06)',
+                    ],
                   }
             }
             transition={{
-              duration: 2.2,
+              duration: 2.8,
               repeat: Infinity,
               ease: 'easeInOut',
             }}
-            className="p-3.5 sm:p-4 rounded-3xl bg-white border border-slate-200/90 shadow-lg shadow-slate-200/60 flex items-center justify-center"
+            className="p-3.5 sm:p-4 rounded-3xl bg-white/95 backdrop-blur-xs border border-slate-200/90 shadow-lg flex items-center justify-center"
           >
             <BioPulseHeartEmblem size={52} />
           </motion.div>
@@ -381,7 +438,7 @@ export const BioPulseLoadingScreen: React.FC<BioPulseLoadingScreenProps> = ({
           )}
         </div>
       </motion.div>
-    </div>
+    </motion.div>
   );
 };
 

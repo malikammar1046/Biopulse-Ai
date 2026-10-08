@@ -200,7 +200,7 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-6 overflow-y-auto">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -213,17 +213,17 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          className="relative w-full max-w-xl rounded-[32px] bg-white border border-[#BAE6FD] shadow-2xl overflow-hidden z-10 my-8 text-left select-none"
+          className="relative w-full max-w-xl max-h-[90dvh] flex flex-col rounded-2xl sm:rounded-[32px] bg-white border border-[#BAE6FD] shadow-2xl overflow-hidden z-10 my-auto text-left select-none"
         >
           {/* Header */}
-          <div className="p-6 border-b border-[#E2E8F0] bg-[#F0F9FF] flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="p-4 sm:p-6 border-b border-[#E2E8F0] bg-[#F0F9FF] flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
               <Calendar className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
-              <div>
-                <h2 className="text-lg font-bold font-display text-[#0F172A]">
+              <div className="min-w-0">
+                <h2 className="text-base sm:text-lg font-bold font-display text-[#0F172A] truncate">
                   Request an Appointment
                 </h2>
-                <p className="text-xs text-[#64748B]">
+                <p className="text-xs text-[#64748B] truncate">
                   Schedule a clinical consultation with BioPulse specialists or care circle
                 </p>
               </div>
@@ -232,14 +232,14 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-xl text-[#64748B] hover:text-[#0F172A] hover:bg-white transition-colors cursor-pointer"
+              className="p-1.5 sm:p-2 rounded-xl text-[#64748B] hover:text-[#0F172A] hover:bg-white transition-colors cursor-pointer shrink-0"
             >
               <XClose className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
 
           {/* Form Body */}
-          <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto text-xs">
+          <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 flex-1 overflow-y-auto text-xs">
             {errorMsg && (
               <div className="p-3 rounded-xl bg-[#FEF2F2] border border-[#FECACA] text-[#B91C1C] flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0 text-[#B91C1C]" aria-hidden="true" />
@@ -459,11 +459,11 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
             </div>
 
             {/* Actions */}
-            <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-end gap-2.5">
+            <div className="pt-3 border-t border-[#E2E8F0] flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-2.5">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2.5 rounded-xl border border-[#E2E8F0] text-[#64748B] font-bold hover:bg-[#F8FAFC] transition-colors cursor-pointer"
+                className="px-4 py-2.5 rounded-xl border border-[#E2E8F0] text-[#64748B] font-bold hover:bg-[#F8FAFC] transition-colors cursor-pointer text-center"
               >
                 Cancel
               </button>
@@ -471,7 +471,7 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-5 py-2.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white font-bold shadow-xs transition-all disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+                className="px-5 py-2.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white font-bold shadow-xs transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5 text-center"
               >
                 <Plus className="w-4 h-4 shrink-0" aria-hidden="true" />
                 <span>{isSubmitting ? 'Requesting Appointment...' : 'Request Appointment'}</span>

@@ -763,7 +763,7 @@ export const ClinicalModalLayout: React.FC<ClinicalModalLayoutProps> = ({
   return (
     <AnimatePresence>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto"
+        className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto"
         role="dialog"
         aria-modal="true"
         aria-labelledby="clinical-modal-title"
@@ -773,21 +773,21 @@ export const ClinicalModalLayout: React.FC<ClinicalModalLayoutProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.97, y: 8 }}
           transition={{ duration: 0.2 }}
-          className="relative w-full max-w-[820px] max-h-[88vh] flex flex-col rounded-3xl bg-white border border-slate-200/90 shadow-2xl overflow-hidden my-auto text-slate-900"
+          className="relative w-full max-w-[820px] max-h-[90dvh] flex flex-col rounded-2xl sm:rounded-3xl bg-white border border-slate-200/90 shadow-2xl overflow-hidden my-auto text-slate-900"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Fixed Sticky Header */}
-          <div className="flex items-start justify-between gap-4 px-6 py-5 border-b border-slate-100 shrink-0 bg-white">
-            <div className="space-y-1">
+          <div className="flex items-start justify-between gap-3 sm:gap-4 px-4 sm:px-6 py-3.5 sm:py-5 border-b border-slate-100 shrink-0 bg-white">
+            <div className="space-y-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${badgeClass}`}>
                   {badgeText}
                 </span>
               </div>
-              <h2 id="clinical-modal-title" className="text-xl sm:text-2xl font-bold font-display text-slate-900">
+              <h2 id="clinical-modal-title" className="text-lg sm:text-2xl font-bold font-display text-slate-900 truncate">
                 {title}
               </h2>
-              <p className="text-xs text-slate-500 font-sans max-w-xl">
+              <p className="text-xs text-slate-500 font-sans max-w-xl line-clamp-2 sm:line-clamp-none">
                 {description}
               </p>
             </div>
@@ -795,7 +795,7 @@ export const ClinicalModalLayout: React.FC<ClinicalModalLayoutProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
+              className="p-1.5 sm:p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
               aria-label="Close modal"
             >
               <XClose className="w-5 h-5" aria-hidden="true" />
@@ -805,12 +805,12 @@ export const ClinicalModalLayout: React.FC<ClinicalModalLayoutProps> = ({
           {/* Form wrapper for entire body + footer */}
           <form onSubmit={onSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden bg-white text-slate-900">
             {/* Scrollable Body Only */}
-            <div className="flex-1 overflow-y-auto p-5 sm:p-7 space-y-6 bg-white text-slate-900">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-7 space-y-5 sm:space-y-6 bg-white text-slate-900">
               {children}
             </div>
 
             {/* Sticky Fixed Footer */}
-            <div className="px-6 py-4 border-t border-slate-100 bg-white flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shrink-0">
+            <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-t border-slate-100 bg-white flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3 shrink-0">
               <div className="flex items-center gap-3">
                 {footerLeft}
               </div>

@@ -166,7 +166,7 @@ export const ReportHeroUpload: React.FC<ReportHeroUploadProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2 pt-1">
+        <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 pt-1">
           <span className={`text-[10px] font-mono font-semibold px-2.5 py-1 rounded-full bg-white border text-[#475569] ${
             isFemale ? 'border-[#EAECF0]' : 'border-[#BAE6FD]'
           }`}>

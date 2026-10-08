@@ -583,10 +583,10 @@ export const AppDashboardHeader: React.FC = () => {
 
         {/* ── RIGHT: Pathway Badge (on other routes), Notifications & Profile Control ── */}
         <div className="flex items-center gap-2.5 sm:gap-3 shrink-0 self-start md:self-center">
-          {/* Subtle Pathway Badge (hidden on overview since shown in greeting row & profile pill) */}
+          {/* Subtle Pathway Badge (hidden on overview, and compact on mobile) */}
           {!isOverview && (
             <div
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold border transition-colors select-none ${
+              className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold border transition-colors select-none ${
                 isFemale
                   ? 'bg-[#FDE6EF] text-[#E11D48] border-[#F43F7D]/25'
                   : 'bg-[#E0F2FE] text-[#0284C7] border-[#BAE6FD]'
