@@ -193,8 +193,8 @@ export const MaleDashboardOverview: React.FC = () => {
           dailyTargets={dailyNutritionTargets}
           pathway="male"
           loading={dietLoading}
-          onViewMealPlan={() => navigate(ROUTES.APP.DIET)}
-          onLogMeal={() => navigate(ROUTES.APP.DIET)}
+          onViewMealPlan={() => navigate(ROUTES.APP.LIFESTYLE)}
+          onLogMeal={() => navigate(ROUTES.APP.LIFESTYLE)}
         />
 
         {/* ROW 2 */}
@@ -214,7 +214,7 @@ export const MaleDashboardOverview: React.FC = () => {
           loading={dietLoading}
           onIncrement={incrementWater}
           onDecrement={decrementWater}
-          onOpenWaterLog={() => navigate(ROUTES.APP.DIET)}
+          onOpenWaterLog={() => navigate(ROUTES.APP.LIFESTYLE)}
         />
 
         {/* Card 6: Medication Reminders */}

@@ -9,7 +9,8 @@
     "type-check": "tsc -b",
     "test:sequencing": "node --experimental-strip-types scripts/test-out-of-order-assessments.mjs",
     "test:risk-sync": "node --experimental-strip-types scripts/test-screening-risk-sync.mjs",
-    "test": "node --experimental-strip-types scripts/test-out-of-order-assessments.mjs && node --experimental-strip-types scripts/test-screening-risk-sync.mjs",
+    "test:lifestyle": "node scripts/test-lifestyle-architecture.mjs",
+    "test": "node --experimental-strip-types scripts/test-out-of-order-assessments.mjs && node --experimental-strip-types scripts/test-screening-risk-sync.mjs && node scripts/test-lifestyle-architecture.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

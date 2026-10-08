@@ -465,7 +465,7 @@ export const AppDashboardHeader: React.FC = () => {
   const quickDestinations = useMemo(() => {
     const all = [
       { label: 'Symptom Check-in', path: ROUTES.APP.SYMPTOMS, hint: 'Track feelings & pain' },
-      { label: 'Nutrition & Meals', path: ROUTES.APP.DIET, hint: 'Meal log & targets' },
+      { label: 'Nutrition & Meals', path: ROUTES.APP.LIFESTYLE, hint: 'Meal log & targets' },
       { label: 'Exercise & Movement', path: ROUTES.APP.FITNESS, hint: 'Workouts & activity' },
       { label: 'Health Reports & Labs', path: ROUTES.APP.REPORTS, hint: 'Blood tests & OCR' },
       { label: 'Medications & Reminders', path: ROUTES.APP.MEDICATIONS, hint: 'Doses & schedule' },

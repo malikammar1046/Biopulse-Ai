@@ -21,10 +21,20 @@ const BACKEND_API_URL =
 const NUTRITION_BASE_URL = `${BACKEND_API_URL}/v1/health/nutrition`;
 
 async function getAuthHeaders(): Promise<HeadersInit> {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const token = session?.access_token;
+  let token: string | undefined;
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    token = session?.access_token;
+    if (!token) {
+      const { data: refreshData } = await supabase.auth.refreshSession();
+      token = refreshData?.session?.access_token;
+    }
+  } catch {
+    // ignore
+  }
+
   return {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -32,10 +42,25 @@ async function getAuthHeaders(): Promise<HeadersInit> {
 }
 
 class NutritionService {
+  private currentPlanCache: { data: WeeklyNutritionPlan | null; timestamp: number } | null = null;
+  private readinessCache: { data: NutritionReadiness; timestamp: number } | null = null;
+  private CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes
+
+  /**
+   * Clears in-memory cached nutrition data.
+   */
+  clearCache(): void {
+    this.currentPlanCache = null;
+    this.readinessCache = null;
+  }
+
   /**
    * Check nutrition readiness for current authenticated user.
    */
-  async getReadiness(): Promise<NutritionReadiness> {
+  async getReadiness(force = false): Promise<NutritionReadiness> {
+    if (!force && this.readinessCache && Date.now() - this.readinessCache.timestamp < this.CACHE_TTL_MS) {
+      return this.readinessCache.data;
+    }
     const headers = await getAuthHeaders();
     const res = await fetch(`${NUTRITION_BASE_URL}/readiness/`, {
       method: 'GET',
@@ -45,7 +70,9 @@ class NutritionService {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || `Failed to check nutrition readiness (${res.status})`);
     }
-    return res.json();
+    const data = await res.json();
+    this.readinessCache = { data, timestamp: Date.now() };
+    return data;
   }
 
   /**
@@ -68,20 +95,26 @@ class NutritionService {
    * Retrieve current active 7-day meal plan.
    * Returns null if no active plan exists (HTTP 404).
    */
-  async getCurrentPlan(): Promise<WeeklyNutritionPlan | null> {
+  async getCurrentPlan(force = false): Promise<WeeklyNutritionPlan | null> {
+    if (!force && this.currentPlanCache && Date.now() - this.currentPlanCache.timestamp < this.CACHE_TTL_MS) {
+      return this.currentPlanCache.data;
+    }
     const headers = await getAuthHeaders();
     const res = await fetch(`${NUTRITION_BASE_URL}/plan/current/`, {
       method: 'GET',
       headers,
     });
     if (res.status === 404) {
+      this.currentPlanCache = { data: null, timestamp: Date.now() };
       return null;
     }
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || `Failed to retrieve current plan (${res.status})`);
     }
-    return res.json();
+    const data = await res.json();
+    this.currentPlanCache = { data, timestamp: Date.now() };
+    return data;
   }
 
   /**
@@ -98,7 +131,9 @@ class NutritionService {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || `Failed to generate weekly meal plan (${res.status})`);
     }
-    return res.json();
+    const plan = await res.json();
+    this.currentPlanCache = { data: plan, timestamp: Date.now() };
+    return plan;
   }
 
   /**
@@ -115,7 +150,9 @@ class NutritionService {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || `Failed to regenerate meal plan (${res.status})`);
     }
-    return res.json();
+    const plan = await res.json();
+    this.currentPlanCache = { data: plan, timestamp: Date.now() };
+    return plan;
   }
 
   /**
@@ -215,7 +252,9 @@ class NutritionService {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || `Failed to lock/unlock meal (${res.status})`);
     }
-    return res.json();
+    const plan = await res.json();
+    this.currentPlanCache = { data: plan, timestamp: Date.now() };
+    return plan;
   }
 
   /**
@@ -243,7 +282,9 @@ class NutritionService {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || `Failed to swap meal (${res.status})`);
     }
-    return res.json();
+    const plan = await res.json();
+    this.currentPlanCache = { data: plan, timestamp: Date.now() };
+    return plan;
   }
 
   /**

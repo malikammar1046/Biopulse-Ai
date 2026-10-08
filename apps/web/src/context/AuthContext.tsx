@@ -6,6 +6,8 @@ import { profileService } from '../services/profileService';
 import type { UserProfile } from '../types/onboarding';
 import { DEFAULT_USER_PROFILE, createEmptyUserProfile } from '../data/mockDashboardData';
 import { clearAllLocalAssessments } from '../services/intelligenceService';
+import { lifestyleService } from '../services/lifestyleService';
+import { nutritionService } from '../services/nutritionService';
 
 interface AuthContextType {
   user: SupabaseUser | null;
@@ -363,6 +365,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSession(null);
     setUserProfile(createEmptyUserProfile());
     clearAllLocalAssessments();
+    lifestyleService.clearCache();
+    nutritionService.clearCache();
     try {
       localStorage.removeItem(STORAGE_PROFILE_KEY);
       localStorage.removeItem('ovasense_user_reminders_v1');
