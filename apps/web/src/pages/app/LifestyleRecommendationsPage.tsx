@@ -17,7 +17,8 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import { useUserHealth } from '../../context/UserHealthContext';
-import { lifestyleService } from '../../services/lifestyleService';
+import { useAuth } from '../../context/AuthContext';
+import { lifestyleService, SessionError } from '../../services/lifestyleService';
 import type {
   LifestyleRecommendationsResult,
   LifestyleSimulationOverride,
@@ -40,15 +41,24 @@ type ErrorClassification = 'NETWORK' | 'SESSION' | 'NO_ASSESSMENT' | 'SERVER';
 export const LifestyleRecommendationsPage: React.FC = () => {
   const navigate = useNavigate();
   const { userProfile, postOnboardingReadiness } = useUserHealth();
+  const { user, loading: authLoading } = useAuth();
+  const activeUserId = user?.id || userProfile?.id;
   const isMale = userProfile?.pathway === 'male' || userProfile?.gender === 'male';
   const defaultPathway = isMale ? 'androsense' : 'ovasense';
 
   const [activeTab, setActiveTab] = useState<PillarTab>('nutrition');
-  const [data, setData] = useState<LifestyleRecommendationsResult | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+
+  // Synchronous cache lookup for instantaneous return visits (< 1ms)
+  const initialCached = useMemo(() => {
+    return lifestyleService.getCachedRecommendations(defaultPathway, activeUserId);
+  }, [defaultPathway, activeUserId]);
+
+  const [data, setData] = useState<LifestyleRecommendationsResult | null>(() => initialCached);
+  const [loading, setLoading] = useState<boolean>(() => !initialCached);
   const [simulating, setSimulating] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [errorType, setErrorType] = useState<ErrorClassification | null>(null);
+  const [nonBlockingNotice, setNonBlockingNotice] = useState<string | null>(null);
 
   // Selected recommendation for the detail modal
   const [selectedRecommendation, setSelectedRecommendation] = useState<RecommendationItem | null>(null);
@@ -71,65 +81,92 @@ export const LifestyleRecommendationsPage: React.FC = () => {
     inFlightAbortRef.current = controller;
 
     try {
-      setError(null);
-      setErrorType(null);
       if (override) {
         setSimulating(true);
+        setError(null);
+        setErrorType(null);
         const result = await lifestyleService.simulateRecommendations(override);
         if (controller.signal.aborted) return;
         setData(result);
+        setSimulating(false);
       } else {
-        setLoading(true);
-        const result = await lifestyleService.getRecommendations(defaultPathway, refresh, controller.signal);
+        // Only trigger skeleton if we don't have any cached data to show
+        if (!data) {
+          setLoading(true);
+          setError(null);
+          setErrorType(null);
+        }
+        setNonBlockingNotice(null);
+
+        const result = await lifestyleService.getRecommendations(
+          defaultPathway,
+          refresh,
+          controller.signal,
+          activeUserId
+        );
+
         if (controller.signal.aborted) return;
         setData(result);
+        setLoading(false);
+        setError(null);
+        setErrorType(null);
+        setNonBlockingNotice(null);
       }
-      setError(null);
-      setErrorType(null);
     } catch (err: any) {
       if (controller.signal.aborted || err?.name === 'AbortError') {
         return;
       }
-      console.error('Failed to load lifestyle recommendations:', err);
+      console.warn('Lifestyle recommendation fetch notice:', err);
       const msg = String(err?.message || '');
       const statusCode = err?.status || (err?.response && err.response.status);
 
+      let classifiedType: ErrorClassification = 'SERVER';
+      let errorMsg = "We couldn't prepare your recommendations right now.";
+
       if (
+        err instanceof SessionError ||
+        err?.code === 'SESSION_UNAVAILABLE' ||
         statusCode === 401 ||
         msg.includes('401') ||
         msg.toLowerCase().includes('session') ||
         msg.toLowerCase().includes('unauthorized') ||
         msg.toLowerCase().includes('log in')
       ) {
-        setErrorType('SESSION');
-        setError('Your session has expired.');
+        classifiedType = 'SESSION';
+        errorMsg = 'Your session has expired. Please sign in again.';
       } else if (
         statusCode === 404 ||
         msg.includes('404') ||
         msg.toLowerCase().includes('no active assessment') ||
         msg.toLowerCase().includes('screening assessment')
       ) {
-        setErrorType('NO_ASSESSMENT');
-        setError('Complete your screening to unlock personalized recommendations.');
-      } else if (
-        statusCode >= 500 ||
-        msg.includes('500') ||
-        msg.includes('502') ||
-        msg.includes('503') ||
-        msg.includes('Internal Server Error')
-      ) {
-        setErrorType('SERVER');
-        setError("We couldn't prepare your recommendations right now. Please try again.");
+        classifiedType = 'NO_ASSESSMENT';
+        errorMsg = 'Complete your screening to unlock personalized recommendations.';
       } else if (
         (err?.name === 'TypeError' && msg.includes('Failed to fetch')) ||
         msg.includes('NetworkError') ||
         (typeof navigator !== 'undefined' && !navigator.onLine)
       ) {
-        setErrorType('NETWORK');
-        setError("We couldn't connect to BioPulse.");
+        classifiedType = 'NETWORK';
+        errorMsg = "We couldn't connect to BioPulse. Please check your internet connection.";
+      } else if (
+        statusCode >= 500 ||
+        msg.includes('500') ||
+        msg.includes('502') ||
+        msg.includes('503') ||
+        msg.includes('504') ||
+        msg.includes('Internal Server Error')
+      ) {
+        classifiedType = 'SERVER';
+        errorMsg = "We couldn't prepare your recommendations right now. Please try again.";
+      }
+
+      // If we already have cached data, preserve it and display non-blocking update warning
+      if (data && !override) {
+        setNonBlockingNotice('Unable to update with latest health data. Showing recent cached protocol.');
       } else {
-        setErrorType('SERVER');
-        setError("We couldn't prepare your recommendations right now.");
+        setErrorType(classifiedType);
+        setError(errorMsg);
       }
     } finally {
       if (!controller.signal.aborted) {
@@ -140,16 +177,31 @@ export const LifestyleRecommendationsPage: React.FC = () => {
   };
 
   useEffect(() => {
+    // 1. Wait if auth is still hydrating from cold boot
+    if (authLoading) {
+      return;
+    }
+
+    // 2. Wait if onboarding is currently in flight
     if (postOnboardingReadiness === 'initializing') {
       return;
     }
+
+    // 3. Sync from cache if pathway switched
+    const cached = lifestyleService.getCachedRecommendations(defaultPathway, activeUserId);
+    if (cached) {
+      setData(cached);
+      setLoading(false);
+    }
+
     fetchRecommendations();
+
     return () => {
       if (inFlightAbortRef.current) {
         inFlightAbortRef.current.abort();
       }
     };
-  }, [defaultPathway, postOnboardingReadiness]);
+  }, [defaultPathway, postOnboardingReadiness, authLoading, activeUserId]);
 
   const handleDietaryChange = (newPref: string) => {
     setDietaryPref(newPref);
@@ -196,6 +248,7 @@ export const LifestyleRecommendationsPage: React.FC = () => {
         recommendation_id: recommendationId,
         status: newStatus,
         module: data.pathway || defaultPathway,
+        userId: activeUserId,
       });
     } catch (err) {
       console.error('Failed to persist recommendation status:', err);
@@ -291,7 +344,7 @@ export const LifestyleRecommendationsPage: React.FC = () => {
           </p>
           <button
             type="button"
-            onClick={() => fetchRecommendations()}
+            onClick={() => fetchRecommendations(undefined, true)}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#073B72] hover:bg-[#0B4A8B] text-white text-sm font-semibold transition cursor-pointer"
           >
             <RefreshCw className="w-4 h-4" />
@@ -314,7 +367,7 @@ export const LifestyleRecommendationsPage: React.FC = () => {
         </p>
         <button
           type="button"
-          onClick={() => fetchRecommendations()}
+          onClick={() => fetchRecommendations(undefined, true)}
           className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#073B72] hover:bg-[#0B4A8B] text-white text-sm font-semibold transition cursor-pointer"
         >
           <RefreshCw className="w-4 h-4" />
@@ -333,6 +386,26 @@ export const LifestyleRecommendationsPage: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-20 text-left">
+      {/* Subtle non-blocking banner if fresh background sync failed while showing cached data */}
+      {nonBlockingNotice && (
+        <div className="rounded-2xl bg-amber-50 border border-amber-200/70 p-3.5 flex items-center justify-between gap-3 text-xs text-amber-800 shadow-xs">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>{nonBlockingNotice}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setNonBlockingNotice(null);
+              fetchRecommendations(undefined, true);
+            }}
+            className="font-semibold text-amber-900 underline hover:no-underline shrink-0 cursor-pointer"
+          >
+            Retry Refresh
+          </button>
+        </div>
+      )}
+
       {/* ── A. AIRY LIFESTYLE SANCTUARY HEADER ── */}
       <header className="rounded-3xl bg-white border border-[#E2EEF4] p-6 sm:p-8 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -448,7 +521,7 @@ export const LifestyleRecommendationsPage: React.FC = () => {
       {/* ── C. REFINED THREE PILLAR SEGMENTED NAVIGATION ── */}
       <nav
         aria-label="Lifestyle Pillars"
-        className="flex items-center justify-center sm:justify-start gap-2 bg-[#F7FBFC] p-1.5 rounded-2xl border border-[#E2EEF4] max-w-fit mx-auto sm:mx-0"
+        className="w-full sm:w-auto overflow-x-auto no-scrollbar flex items-center justify-start gap-1.5 sm:gap-2 bg-[#F7FBFC] p-1.5 rounded-2xl border border-[#E2EEF4] max-w-full sm:max-w-fit mx-auto sm:mx-0"
         role="tablist"
       >
         <button
@@ -458,7 +531,7 @@ export const LifestyleRecommendationsPage: React.FC = () => {
           aria-selected={activeTab === 'nutrition'}
           aria-controls="panel-nutrition"
           onClick={() => setActiveTab('nutrition')}
-          className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+          className={`shrink-0 inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
             activeTab === 'nutrition'
               ? isMale
                 ? 'bg-[#0868B9] text-white shadow-sm'
@@ -466,8 +539,10 @@ export const LifestyleRecommendationsPage: React.FC = () => {
               : 'text-slate-600 hover:text-[#073B72] hover:bg-white/80'
           }`}
         >
-          <Apple className="w-4 h-4" />
-          <span>Nutritional Fuel</span>
+          <Apple className="w-4 h-4 shrink-0" />
+          <span>
+            <span className="hidden xs:inline">Nutritional </span>Fuel
+          </span>
         </button>
 
         <button
@@ -477,7 +552,7 @@ export const LifestyleRecommendationsPage: React.FC = () => {
           aria-selected={activeTab === 'fitness'}
           aria-controls="panel-fitness"
           onClick={() => setActiveTab('fitness')}
-          className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+          className={`shrink-0 inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
             activeTab === 'fitness'
               ? isMale
                 ? 'bg-[#0868B9] text-white shadow-sm'
@@ -485,8 +560,10 @@ export const LifestyleRecommendationsPage: React.FC = () => {
               : 'text-slate-600 hover:text-[#073B72] hover:bg-white/80'
           }`}
         >
-          <Dumbbell className="w-4 h-4" />
-          <span>Movement & Strength</span>
+          <Dumbbell className="w-4 h-4 shrink-0" />
+          <span>
+            Movement<span className="hidden xs:inline"> & Strength</span>
+          </span>
         </button>
 
         <button
@@ -496,7 +573,7 @@ export const LifestyleRecommendationsPage: React.FC = () => {
           aria-selected={activeTab === 'lifestyle'}
           aria-controls="panel-lifestyle"
           onClick={() => setActiveTab('lifestyle')}
-          className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+          className={`shrink-0 inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
             activeTab === 'lifestyle'
               ? isMale
                 ? 'bg-[#0868B9] text-white shadow-sm'
@@ -504,8 +581,10 @@ export const LifestyleRecommendationsPage: React.FC = () => {
               : 'text-slate-600 hover:text-[#073B72] hover:bg-white/80'
           }`}
         >
-          <HeartPulse className="w-4 h-4" />
-          <span>Rest & Circadian Balance</span>
+          <HeartPulse className="w-4 h-4 shrink-0" />
+          <span>
+            Rest<span className="hidden xs:inline"> & Circadian</span>
+          </span>
         </button>
       </nav>
 

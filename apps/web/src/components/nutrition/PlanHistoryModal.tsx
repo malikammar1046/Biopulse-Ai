@@ -43,7 +43,7 @@ export const PlanHistoryModal: React.FC<PlanHistoryModalProps> = ({
   const handleActivate = async (planId: string) => {
     setActivatingId(planId);
     try {
-      await nutritionService.activatePlan(planId);
+      await nutritionService.updatePlanStatus(planId, 'active');
       await onSelectPlan(planId);
       onClose();
     } catch (err) {

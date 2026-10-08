@@ -1,6 +1,7 @@
 import React from 'react';
 import { Target, ArrowRight, Sparkles, HelpCircle } from 'lucide-react';
 import { DashboardModuleCard } from '../DashboardModuleCard';
+import { ROUTES } from '../../../../constants/routes';
 
 interface NextBestActionModuleCardProps {
   hasAssessment: boolean;
@@ -63,7 +64,7 @@ export const NextBestActionModuleCard: React.FC<NextBestActionModuleCardProps> =
         title: 'Focus on Balanced Meals Today',
         rationale: 'No meal records logged for today yet. Logging meals helps track hormonal and metabolic response.',
         buttonLabel: 'Log Your Meal',
-        targetRoute: '/app/nutrition',
+        targetRoute: ROUTES.APP.LIFESTYLE,
       };
     }
 
@@ -72,7 +73,7 @@ export const NextBestActionModuleCard: React.FC<NextBestActionModuleCardProps> =
         title: 'Maintain Daily Hydration Baseline',
         rationale: 'Adequate hydration supports hormonal clearance and steady daily metabolic function.',
         buttonLabel: 'Log Water Intake',
-        targetRoute: '/app/nutrition',
+        targetRoute: ROUTES.APP.LIFESTYLE,
       };
     }
 

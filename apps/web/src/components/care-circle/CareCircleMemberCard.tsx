@@ -44,10 +44,10 @@ export const CareCircleMemberCard: React.FC<CareCircleMemberCardProps> = ({
   return (
     <div className="p-6 sm:p-7 rounded-2xl bg-white border border-[#BAE6FD] shadow-sm flex flex-col justify-between select-none text-left space-y-6 hover:shadow-md transition-shadow">
       {/* Top Header & Identity */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3.5 min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
+        <div className="flex items-start sm:items-center gap-3 sm:gap-3.5 min-w-0">
           <div
-            className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+            className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 ${
               isDoctor
                 ? 'bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD]'
                 : isFamily
@@ -55,12 +55,12 @@ export const CareCircleMemberCard: React.FC<CareCircleMemberCardProps> = ({
                 : 'bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD]'
             }`}
           >
-            <Icon className="w-6 h-6" aria-hidden="true" />
+            <Icon className="w-5 h-5 sm:w-6 sm:h-6" aria-hidden="true" />
           </div>
 
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h3 className="text-base font-bold font-display text-[#0F172A] truncate">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-sm sm:text-base font-bold font-display text-[#0F172A] truncate">
                 {member.name}
               </h3>
               <span
@@ -90,11 +90,11 @@ export const CareCircleMemberCard: React.FC<CareCircleMemberCardProps> = ({
         </div>
 
         {/* Last Viewed Indicator */}
-        <div className="text-right shrink-0">
+        <div className="text-left sm:text-right shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 flex items-center justify-between sm:block">
           <span className="text-[10px] font-mono text-[#64748B] block uppercase">
             Activity
           </span>
-          <span className="text-[11px] font-mono font-bold text-[#0288D1] block mt-0.5">
+          <span className="text-[11px] font-mono font-bold text-[#0288D1] block sm:mt-0.5">
             {formatLastViewed(member.lastViewedAt)}
           </span>
         </div>

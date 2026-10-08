@@ -18,7 +18,6 @@ import {
 import { Container } from '../../components/ui/Container';
 import { Button } from '../../components/ui/Button';
 import { ROUTES } from '../../constants/routes';
-import { SmallBotanicalSprig } from '../../components/brand/BotanicalFoliage';
 
 export const UnderstandMaleHypogonadism: React.FC = () => {
   useEffect(() => {
@@ -28,17 +27,7 @@ export const UnderstandMaleHypogonadism: React.FC = () => {
   return (
     <div className="relative w-full overflow-hidden bg-transparent text-[#162A45] select-none">
       {/* ── 1. HERO ── */}
-      <section className="relative pt-32 pb-20 sm:pb-24 overflow-hidden border-b border-slate-200/80">
-        <div className="absolute top-1/4 left-1/4 w-[600px] h-[500px] bg-cyan-100/50 rounded-full blur-[160px] pointer-events-none -z-10" />
-        <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-pink-100/35 rounded-full blur-[150px] pointer-events-none -z-10" />
-
-        {/* Small Botanical Accents */}
-        <div className="hidden lg:block absolute top-28 left-8 opacity-75 pointer-events-none -rotate-12">
-          <SmallBotanicalSprig variant="teal" className="w-20 h-auto" />
-        </div>
-        <div className="hidden lg:block absolute top-28 right-8 opacity-65 pointer-events-none rotate-12">
-          <SmallBotanicalSprig variant="dual" flip className="w-18 h-auto" />
-        </div>
+      <section className="relative pt-32 pb-20 sm:pb-24 overflow-hidden border-b border-slate-200/80 bg-transparent">
 
         <Container size="xl">
           <div className="max-w-4xl mx-auto text-center space-y-6">

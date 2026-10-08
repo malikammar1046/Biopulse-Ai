@@ -21,6 +21,7 @@ import { useAuth } from '../../context/AuthContext';
 import { ROUTES } from '../../constants/routes';
 import { SmallBotanicalSprig } from '../../components/brand/BotanicalFoliage';
 import { preloadOnboardingRoutes } from '../../utils/routePreloaders';
+import { validateEmail } from '../../utils/profileValidation';
 
 interface FormErrors {
   fullName?: string;
@@ -57,10 +58,9 @@ export const Register: React.FC = () => {
       nextErrors.fullName = 'Please enter your full name.';
     }
 
-    if (!email.trim()) {
-      nextErrors.email = 'Please enter your email address.';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      nextErrors.email = 'Please enter a valid email address.';
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      nextErrors.email = emailValidation.error;
     }
 
     if (!password) {
@@ -367,6 +367,14 @@ export const Register: React.FC = () => {
                       onChange={(e) => {
                         setEmail(e.target.value);
                         if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
+                      }}
+                      onBlur={() => {
+                        if (email.trim()) {
+                          const res = validateEmail(email);
+                          if (!res.isValid) {
+                            setErrors((prev) => ({ ...prev, email: res.error }));
+                          }
+                        }
                       }}
                       className={`
                         w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm font-medium

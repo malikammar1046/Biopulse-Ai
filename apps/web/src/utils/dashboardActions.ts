@@ -13,6 +13,7 @@
 import type { UserProfile, HealthPathway } from '../types/onboarding';
 import type { AdaptiveHealthProfile } from '../types/adaptiveScreening';
 import type { MedicalReport } from '../types/report';
+import { ROUTES } from '../constants/routes';
 import type { NutritionData, FitnessData, HealthSnapshotMetrics, TodayReminder } from '../types/dashboard';
 import type { ProfileCompletionResult } from './profileCompletion';
 
@@ -203,7 +204,7 @@ export function buildDashboardActions(inputs: DashboardActionInputs): DashboardA
       : 'Track your food intake for nutritional insights.',
     iconName: 'Utensils',
     actionLabel: caloriesLogged > 0 ? 'Add More' : 'Log Food',
-    route: '/app/diet',
+    route: ROUTES.APP.LIFESTYLE,
     pathways: ['female', 'male', 'general'],
     isCompleted: nutritionPercent >= 80,
   });
@@ -220,7 +221,7 @@ export function buildDashboardActions(inputs: DashboardActionInputs): DashboardA
     description: `${waterLogged}L of ${waterTarget}L target (${waterPercent}%)`,
     iconName: 'Droplets',
     actionLabel: waterPercent >= 100 ? 'Done ✓' : 'Log Water',
-    route: '/app/diet',
+    route: ROUTES.APP.LIFESTYLE,
     pathways: ['female', 'male', 'general'],
     isCompleted: waterPercent >= 100,
   });

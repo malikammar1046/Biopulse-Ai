@@ -103,7 +103,6 @@ export const Navbar: React.FC = () => {
   const isAboutActive = location.pathname === ROUTES.ABOUT;
   const isHowItWorksActive = location.pathname === ROUTES.HOW_IT_WORKS;
   const isCareCircleActive = location.pathname === ROUTES.CARE_CIRCLE;
-  const isDoctorsActive = location.pathname === ROUTES.DOCTORS;
   const isContactActive = location.pathname === ROUTES.CONTACT;
   const isAppActive =
     location.pathname === ROUTES.APP_DOWNLOAD ||
@@ -150,7 +149,7 @@ export const Navbar: React.FC = () => {
             </div>
 
             {/* ── Left: BioPulse AI Brand Logo ── */}
-            <div className="relative z-10 pl-8 sm:pl-14 md:pl-18 shrink-0">
+            <div className="relative z-10 pl-2 sm:pl-8 md:pl-14 shrink-0">
               <Link
                 to={ROUTES.HOME}
                 className="flex items-center gap-2 group transition-transform hover:scale-[1.01]"
@@ -302,22 +301,6 @@ export const Navbar: React.FC = () => {
                 </AnimatePresence>
               </div>
 
-              {/* Doctors Directory */}
-              <Link
-                to={ROUTES.DOCTORS}
-                className={`relative py-1 transition-colors whitespace-nowrap ${
-                  isDoctorsActive ? 'text-[#0891B2] font-bold' : 'text-slate-600 hover:text-[#0891B2]'
-                }`}
-              >
-                Doctors
-                {isDoctorsActive && (
-                  <motion.div
-                    layoutId="navbar-active-indicator"
-                    className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-[#0891B2] rounded-full"
-                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                  />
-                )}
-              </Link>
 
               {/* Contact */}
               <Link
@@ -358,12 +341,12 @@ export const Navbar: React.FC = () => {
             </nav>
 
             {/* ── Right: Search + Action Buttons + Cursive Flourish ── */}
-            <div className="flex items-center gap-2.5 sm:gap-3 xl:gap-3.5 shrink-0 relative z-10 pr-4 sm:pr-8 md:pr-14 lg:pr-18 xl:pr-22">
+            <div className="flex items-center gap-1.5 sm:gap-3 xl:gap-3.5 shrink-0 relative z-10 pr-1.5 sm:pr-6 md:pr-14 lg:pr-18 xl:pr-22">
               {/* Quick Search Button */}
               <button
                 type="button"
                 onClick={() => setIsSearchOpen(true)}
-                className="w-9 h-9 rounded-full flex items-center justify-center text-slate-700 hover:text-[#0891B2] hover:bg-sky-50/80 transition-all cursor-pointer"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-slate-700 hover:text-[#0891B2] hover:bg-sky-50/80 transition-all cursor-pointer"
                 title="Search topics, symptoms, conditions..."
                 aria-label="Search"
               >
@@ -372,17 +355,17 @@ export const Navbar: React.FC = () => {
 
               {/* Auth Buttons */}
               {loading ? (
-                <div className="h-8 sm:h-9 w-24 sm:w-28 rounded-full bg-slate-100/70 animate-pulse" />
+                <div className="h-8 sm:h-9 w-20 sm:w-28 rounded-full bg-slate-100/70 animate-pulse" />
               ) : isAuthenticated ? (
                 <Link
                   to={ROUTES.APP.ROOT}
-                  className="inline-flex items-center justify-center px-5 sm:px-6 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-[#00C4DF] to-[#0284C7] hover:from-[#00B4CB] hover:to-[#0369A1] text-xs sm:text-sm font-bold text-white shadow-[0_4px_14px_rgba(0,196,223,0.35)] hover:shadow-lg transition-all whitespace-nowrap flex items-center gap-1.5"
+                  className="inline-flex items-center justify-center px-3.5 sm:px-6 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-[#00C4DF] to-[#0284C7] hover:from-[#00B4CB] hover:to-[#0369A1] text-xs sm:text-sm font-bold text-white shadow-[0_4px_14px_rgba(0,196,223,0.35)] hover:shadow-lg transition-all whitespace-nowrap flex items-center gap-1.5"
                 >
                   <span>Dashboard</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               ) : (
-                <div className="flex items-center gap-2 sm:gap-2.5">
+                <div className="flex items-center gap-1.5 sm:gap-2.5">
                   <Link
                     to={ROUTES.LOGIN}
                     className="hidden sm:inline-flex items-center justify-center px-4 sm:px-5 py-1.5 rounded-full border-[1.5px] border-[#38BDF8] text-xs sm:text-sm font-semibold text-[#0284C7] bg-white hover:bg-sky-50 hover:border-[#0284C7] transition-all whitespace-nowrap shadow-2xs"
@@ -392,7 +375,7 @@ export const Navbar: React.FC = () => {
 
                   <Link
                     to={ROUTES.REGISTER}
-                    className="inline-flex items-center justify-center px-5 sm:px-6 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-[#00C4DF] to-[#0284C7] hover:from-[#00B4CB] hover:to-[#0369A1] text-xs sm:text-sm font-bold text-white shadow-[0_4px_14px_rgba(0,196,223,0.35)] hover:shadow-lg transition-all whitespace-nowrap flex items-center gap-1.5"
+                    className="inline-flex items-center justify-center px-3.5 sm:px-6 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-[#00C4DF] to-[#0284C7] hover:from-[#00B4CB] hover:to-[#0369A1] text-xs sm:text-sm font-bold text-white shadow-[0_4px_14px_rgba(0,196,223,0.35)] hover:shadow-lg transition-all whitespace-nowrap flex items-center gap-1.5"
                   >
                     <span>Get Started</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -504,14 +487,6 @@ export const Navbar: React.FC = () => {
                       </Link>
                     </div>
                   </div>
-                  <Link
-                    to={ROUTES.DOCTORS}
-                    className={`p-2.5 rounded-xl transition-colors ${
-                      isDoctorsActive ? 'bg-sky-50 text-[#0891B2] font-bold' : 'hover:bg-slate-50'
-                    }`}
-                  >
-                    Doctors Directory
-                  </Link>
                   <Link
                     to={ROUTES.CONTACT}
                     className={`p-2.5 rounded-xl transition-colors ${
