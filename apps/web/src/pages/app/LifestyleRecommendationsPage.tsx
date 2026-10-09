@@ -43,8 +43,10 @@ export const LifestyleRecommendationsPage: React.FC = () => {
   const { userProfile, postOnboardingReadiness } = useUserHealth();
   const { user, loading: authLoading } = useAuth();
   const activeUserId = user?.id || userProfile?.id;
-  const isMale = userProfile?.pathway === 'male' || userProfile?.gender === 'male';
-  const defaultPathway = isMale ? 'androsense' : 'ovasense';
+  const userProfileIsMale =
+    userProfile?.pathway === 'male' ||
+    userProfile?.gender === 'male';
+  const defaultPathway = userProfileIsMale ? 'androsense' : 'ovasense';
 
   const [activeTab, setActiveTab] = useState<PillarTab>('nutrition');
 
@@ -54,6 +56,10 @@ export const LifestyleRecommendationsPage: React.FC = () => {
   }, [defaultPathway, activeUserId]);
 
   const [data, setData] = useState<LifestyleRecommendationsResult | null>(() => initialCached);
+  const isMale =
+    userProfileIsMale ||
+    data?.pathway === 'androsense' ||
+    data?.pathway === 'male_hypogonadism';
   const [loading, setLoading] = useState<boolean>(() => !initialCached);
   const [simulating, setSimulating] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -311,7 +317,11 @@ export const LifestyleRecommendationsPage: React.FC = () => {
     if (errorType === 'NO_ASSESSMENT') {
       return (
         <div className="max-w-2xl mx-auto py-20 px-4 text-center space-y-4">
-          <div className="w-14 h-14 mx-auto rounded-3xl bg-pink-50 text-[#F43F7D] flex items-center justify-center">
+          <div
+            className={`w-14 h-14 mx-auto rounded-3xl flex items-center justify-center ${
+              isMale ? 'bg-sky-50 text-[#0868B9]' : 'bg-pink-50 text-[#F43F7D]'
+            }`}
+          >
             <ClipboardCheck className="w-6 h-6" />
           </div>
           <h2 className="text-2xl font-bold text-[#073B72]">
@@ -323,7 +333,11 @@ export const LifestyleRecommendationsPage: React.FC = () => {
           <button
             type="button"
             onClick={() => navigate('/app/assessment')}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#F43F7D] hover:bg-[#DC326C] text-white text-sm font-semibold transition cursor-pointer"
+            className={`inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-white text-sm font-semibold transition cursor-pointer ${
+              isMale
+                ? 'bg-[#0868B9] hover:bg-[#07599c]'
+                : 'bg-[#F43F7D] hover:bg-[#DC326C]'
+            }`}
           >
             <span>Go to Screening</span>
             <ArrowRight className="w-4 h-4" />
@@ -418,7 +432,7 @@ export const LifestyleRecommendationsPage: React.FC = () => {
                     : 'bg-teal-50 text-[#0E9EAA] border-teal-200'
                 }`}
               >
-                {data.pathway === 'androsense'
+                {isMale
                   ? 'Male Androgen & Vitality Support'
                   : 'Female PCOS Metabolic Rhythm'}
               </span>

@@ -1,6 +1,9 @@
 import React, { useMemo, useState } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   ActivityHeart,
+  ArrowLeft,
+  ArrowRight,
   Check,
   CheckCircle,
   ShieldTick,
@@ -12,41 +15,42 @@ import { OnboardingWhyModal, OnboardingWhyTrigger } from '../../../components/on
 interface MaleStep3Props {
   data: MensHealthProfile;
   onChange: (profile: MensHealthProfile) => void;
+  onComplete?: () => void;
+  onBackToHealthProfile?: () => void;
 }
 
-export const MaleStep3SymptomsADAM: React.FC<MaleStep3Props> = ({ data, onChange }) => {
+export const MaleStep3SymptomsADAM: React.FC<MaleStep3Props> = ({
+  data,
+  onChange,
+  onComplete,
+  onBackToHealthProfile,
+}) => {
   const [showWhyModal, setShowWhyModal] = useState(false);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const shouldReduceMotion = useReducedMotion();
+
+  // Canonical list of 10 ADAM questions
   const initialQuestions = useMemo(() => getInitialADAMQuestions().questions, []);
 
-  // Hydrate responses from data.adamResponses or fallback to clinical fields
+  // Hydrate responses strictly from explicit user answers — NEVER fabricate or prefill defaults
   const responses: Record<string, boolean | null> = useMemo(() => {
-    const existing = { ...(data.adamResponses || {}) };
+    return { ...(data.adamResponses || {}) };
+  }, [data.adamResponses]);
 
-    // Fallback sync from existing profile fields if adamResponses was uninitialized
-    if (existing.adam_q1 === undefined && data.sexDrive) {
-      existing.adam_q1 = data.sexDrive === 'reduced' || data.sexDrive === 'significantly_reduced';
-    }
-    if (existing.adam_q2 === undefined && data.energyLevel) {
-      existing.adam_q2 = data.energyLevel === 'low' || data.energyLevel === 'very_low';
-    }
-    if (existing.adam_q3 === undefined && data.muscleStrengthChanges) {
-      existing.adam_q3 = data.muscleStrengthChanges === 'reduced' || data.muscleStrengthChanges === 'significantly_reduced';
-    }
-    if (existing.adam_q7 === undefined && data.erectileDifficulties) {
-      existing.adam_q7 = data.erectileDifficulties === 'occasional' || data.erectileDifficulties === 'frequent';
-    }
-    if (existing.adam_q9 === undefined && data.sleepQuality) {
-      existing.adam_q9 = data.sleepQuality === 'poor' || data.sleepQuality === 'frequently_waking';
-    }
-
-    return existing;
-  }, [data]);
-
-  const answeredCount = Object.values(responses).filter((v) => v !== null && v !== undefined).length;
-  const yesCount = Object.values(responses).filter((v) => v === true).length;
+  const answeredCount = initialQuestions.filter(
+    (q) => responses[q.id] !== undefined && responses[q.id] !== null
+  ).length;
+  const yesCount = initialQuestions.filter((q) => responses[q.id] === true).length;
   const allAnswered = answeredCount === initialQuestions.length;
 
+  const currentQuestion = initialQuestions[currentQuestionIndex];
+  const currentResponse = currentQuestion ? responses[currentQuestion.id] : undefined;
+  const isCurrentAnswered = currentResponse !== undefined && currentResponse !== null;
+
   const handleAnswer = (questionId: string, answer: boolean) => {
+    // Avoid redundant state update if same value is already selected
+    if (responses[questionId] === answer) return;
+
     const updatedResponses = {
       ...responses,
       [questionId]: answer,
@@ -81,149 +85,303 @@ export const MaleStep3SymptomsADAM: React.FC<MaleStep3Props> = ({ data, onChange
     });
   };
 
-  const handleMarkAllRemainingNo = () => {
-    const updatedResponses = { ...responses };
-    initialQuestions.forEach((q) => {
-      if (updatedResponses[q.id] === undefined || updatedResponses[q.id] === null) {
-        updatedResponses[q.id] = false;
-      }
-    });
+  const handleNextQuestion = () => {
+    if (!isCurrentAnswered) return;
+    if (currentQuestionIndex < initialQuestions.length - 1) {
+      setCurrentQuestionIndex((prev) => prev + 1);
+    }
+  };
 
-    const updatedYesCount = Object.values(updatedResponses).filter((v) => v === true).length;
+  const handlePreviousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex((prev) => prev - 1);
+    }
+  };
 
-    onChange({
-      ...data,
-      adamResponses: updatedResponses,
-      adamScore: updatedYesCount,
-    });
+  const handleCompleteQuestionnaire = () => {
+    if (!allAnswered) return;
+    if (onComplete) {
+      onComplete();
+    }
   };
 
   return (
-    <div className="space-y-5 text-left max-w-4xl mx-auto">
-      {/* ── Question Header with Why We Ask Trigger ── */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#DDEFFD] flex items-center justify-center shrink-0 shadow-2xs">
-            <ActivityHeart className="w-5 h-5 text-[#0868B9]" aria-hidden="true" />
+    <div className="w-full max-w-3xl mx-auto space-y-4 text-left">
+      {/* Return to Health Profile Link (if provided) */}
+      {onBackToHealthProfile && (
+        <button
+          type="button"
+          onClick={onBackToHealthProfile}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold font-sans text-[#55718F] hover:text-[#073B72] transition-colors cursor-pointer select-none"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
+          <span>Return to Health Profile (Step 2)</span>
+        </button>
+      )}
+
+      {/* ════════════════════════════════════════════════════════════
+          MAIN QUESTIONNAIRE CARD (Single Unified Card Container)
+         ════════════════════════════════════════════════════════════ */}
+      <div className="bg-[#FAFCFF] sm:bg-white rounded-2xl sm:rounded-3xl border border-[#D7EAF2] shadow-xs sm:shadow-sm p-5 sm:p-7 lg:p-8 space-y-6">
+        {/* ── Top Header: Section Label & Why Trigger ── */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#DDEFFD] flex items-center justify-center shrink-0 shadow-2xs">
+              <ActivityHeart className="w-4 h-4 text-[#0868B9]" aria-hidden="true" />
+            </div>
+            <span className="text-[11px] sm:text-xs font-bold font-sans text-[#0868B9] uppercase tracking-wider block">
+              Symptoms Assessment
+            </span>
           </div>
 
-          <div>
-            <span className="text-xs font-bold font-sans text-[#0868B9] uppercase tracking-wider block leading-none">
-              Vitality &amp; ADAM Questionnaire
+          <OnboardingWhyTrigger
+            onClick={() => setShowWhyModal(true)}
+            label="About ADAM"
+            accentColor="blue"
+          />
+        </div>
+
+        {/* ── Heading & Context Description ── */}
+        <div className="space-y-1.5">
+          <h2 className="text-xl sm:text-2xl lg:text-[1.65rem] font-bold font-display text-[#073B72] tracking-tight leading-tight">
+            ADAM Questionnaire
+          </h2>
+          <p className="text-xs sm:text-sm text-[#55718F] font-sans leading-relaxed">
+            These clinical screening questions help assess symptoms associated with low testosterone and male vitality. This questionnaire provides initial symptom screening and does not provide a medical diagnosis.
+          </p>
+        </div>
+
+        {/* ── Progress Indicators: Question X of 10 & Slim Progress Bar ── */}
+        <div className="space-y-2 pt-1">
+          <div className="flex items-center justify-between text-xs sm:text-sm font-sans">
+            <span className="font-bold font-mono text-[#073B72]">
+              Question {currentQuestion.questionNumber} of {initialQuestions.length}
             </span>
-            <h2 className="text-xl sm:text-2xl font-bold font-display text-[#073B72] tracking-tight leading-tight mt-1">
-              Tell us about your energy and symptoms
-            </h2>
+            <span className="font-medium text-[#55718F]">
+              {answeredCount} of {initialQuestions.length} answered
+              {yesCount > 0 && ` • ${yesCount} positive indicator${yesCount > 1 ? 's' : ''}`}
+            </span>
           </div>
-        </div>
 
-        <OnboardingWhyTrigger
-          onClick={() => setShowWhyModal(true)}
-          label="About ADAM"
-          accentColor="blue"
-        />
-      </div>
-
-      <p className="text-xs sm:text-sm text-[#55718F] font-sans leading-relaxed">
-        Answer the 10 validated ADAM (Androgen Deficiency in the Aging Male) questions below to calibrate your Tier 1 screening.
-      </p>
-
-      {/* ── Progress Counter & Quick Actions ── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2]">
-        <div className="flex items-center gap-2.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-[#0868B9]" />
-          <span className="text-[14px] sm:text-[15px] font-bold text-[#073B72]">
-            {answeredCount} of {initialQuestions.length} Questions Answered
-          </span>
-          {yesCount > 0 && (
-            <span className="text-[13px] font-medium text-[#55718F]">
-              ({yesCount} positive indicator{yesCount > 1 ? 's' : ''})
-            </span>
-          )}
-        </div>
-
-        {!allAnswered && (
-          <button
-            type="button"
-            onClick={handleMarkAllRemainingNo}
-            className="text-[13px] sm:text-[14px] font-semibold text-[#0868B9] hover:text-[#07589D] flex items-center gap-1.5 cursor-pointer transition-colors"
+          {/* Slim progress bar */}
+          <div
+            className="w-full h-1.5 sm:h-2 bg-[#E2EEF5] rounded-full overflow-hidden"
+            role="progressbar"
+            aria-valuenow={currentQuestionIndex + 1}
+            aria-valuemin={1}
+            aria-valuemax={initialQuestions.length}
+            aria-label={`Question ${currentQuestionIndex + 1} of ${initialQuestions.length}`}
           >
-            <CheckCircle className="w-4 h-4 text-[#0868B9]" aria-hidden="true" />
-            <span>Mark remaining as "No"</span>
-          </button>
-        )}
-      </div>
+            <motion.div
+              className="h-full bg-gradient-to-r from-[#0288D1] to-[#0868B9] rounded-full"
+              initial={false}
+              animate={{ width: `${((currentQuestionIndex + 1) / initialQuestions.length) * 100}%` }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+            />
+          </div>
 
-      {/* ── Main Questions List (Full Width) ── */}
-      <div className="space-y-3 sm:space-y-3.5">
-          {initialQuestions.map((q) => {
-            const currentResponse = responses[q.id];
-            const isAnswered = currentResponse !== undefined && currentResponse !== null;
+          {/* Interactive Question Step Tracks (click answered questions to review) */}
+          <div className="flex items-center gap-1.5 pt-0.5" aria-hidden="true">
+            {initialQuestions.map((q, idx) => {
+              const isAnswered = responses[q.id] !== undefined && responses[q.id] !== null;
+              const isCurrent = idx === currentQuestionIndex;
+              return (
+                <button
+                  key={q.id}
+                  type="button"
+                  tabIndex={-1}
+                  onClick={() => {
+                    if (isAnswered || idx < currentQuestionIndex) {
+                      setCurrentQuestionIndex(idx);
+                    }
+                  }}
+                  disabled={!isAnswered && idx > currentQuestionIndex}
+                  title={`Question ${idx + 1}: ${isAnswered ? 'Answered' : 'Unanswered'}`}
+                  className={`flex-1 h-1.5 rounded-full transition-all duration-200 ${
+                    isCurrent
+                      ? 'bg-[#0868B9] ring-2 ring-[#0868B9]/30'
+                      : isAnswered
+                      ? 'bg-[#BAE6FD] hover:bg-[#7DD3FC] cursor-pointer'
+                      : 'bg-[#E2EEF5] cursor-not-allowed'
+                  }`}
+                />
+              );
+            })}
+          </div>
+        </div>
 
-            return (
+        {/* ── Current Question Display with Framer Motion Animation ── */}
+        <div className="min-h-[160px] flex flex-col justify-center py-2">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentQuestion.id}
+              initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: 12 }}
+              animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, x: 0 }}
+              exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: -12 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="space-y-4"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-xs sm:text-[13px] font-mono font-bold text-[#0868B9] bg-[#E0F2FE] px-2.5 py-0.5 rounded-full border border-[#BAE6FD]">
+                  Question {currentQuestion.questionNumber}
+                </span>
+                {currentQuestion.isCriticalQuestion && (
+                  <span className="text-[10px] sm:text-[11px] font-sans px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 font-bold uppercase tracking-wide">
+                    Primary Clinical Indicator
+                  </span>
+                )}
+              </div>
+
+              <h3 className="text-lg sm:text-xl lg:text-[1.3rem] font-semibold font-display text-[#073B72] leading-snug">
+                {currentQuestion.prompt}
+              </h3>
+
+              {/* Two clearly separated answer options */}
               <div
-                key={q.id}
-                className={`p-4 sm:p-5 rounded-2xl border text-left transition-all duration-200 ${
-                  isAnswered
-                    ? currentResponse === true
-                      ? 'bg-[#F0F8FF] border-2 border-[#0868B9]/60 shadow-2xs'
-                      : 'bg-white border-[#D7EAF2]'
-                    : 'bg-white border-[#D7EAF2] hover:border-[#0868B9]/40 hover:bg-[#F8FDFF]'
-                }`}
+                className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4 pt-2"
+                role="radiogroup"
+                aria-label={currentQuestion.prompt}
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="space-y-1.5 max-w-xl">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[12px] sm:text-[13px] font-mono font-bold text-[#0868B9]">
-                        Question {q.questionNumber}
-                      </span>
-                      {q.isCriticalQuestion && (
-                        <span className="text-[11px] font-sans px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 font-bold uppercase">
-                          Primary Clinical Indicator
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[15px] sm:text-[16px] font-sans text-[#073B72] font-semibold leading-snug">
-                      {q.prompt}
-                    </p>
-                  </div>
-
-                  {/* Yes / No Toggle Controls */}
-                  <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-auto">
-                    <button
-                      type="button"
-                      onClick={() => handleAnswer(q.id, false)}
-                      className={`min-w-[84px] sm:min-w-[92px] min-h-[48px] px-5 py-2.5 rounded-xl text-[14px] sm:text-[15px] font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                {/* Option: No (false) */}
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={currentResponse === false}
+                  onClick={() => handleAnswer(currentQuestion.id, false)}
+                  className={`group min-h-[62px] sm:min-h-[70px] p-4 sm:p-4.5 rounded-2xl border-2 text-left transition-all duration-200 flex items-center justify-between cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#073B72] focus-visible:ring-offset-2 ${
+                    currentResponse === false
+                      ? 'bg-[#F0F8FF] border-[#073B72] text-[#073B72] shadow-sm ring-2 ring-[#073B72]/15'
+                      : 'bg-white border-[#D7EAF2] text-[#486581] hover:border-[#073B72]/40 hover:bg-[#F8FDFF]'
+                  }`}
+                >
+                  <div className="flex items-center gap-3.5">
+                    <div
+                      className={`w-6 h-6 rounded-full flex items-center justify-center border transition-all ${
                         currentResponse === false
-                          ? 'bg-[#073B72] text-white shadow-xs'
-                          : 'bg-white border-2 border-[#D7EAF2] text-[#55718F] hover:border-[#073B72]/40 hover:text-[#073B72]'
+                          ? 'border-[#073B72] bg-[#073B72] text-white shadow-2xs'
+                          : 'border-[#CBD5E1] bg-white group-hover:border-[#073B72]/50'
                       }`}
                     >
                       {currentResponse === false && (
-                        <Check className="w-4 h-4 stroke-[3]" aria-hidden="true" />
+                        <Check className="w-3.5 h-3.5 stroke-[3]" aria-hidden="true" />
                       )}
-                      <span>No</span>
-                    </button>
+                    </div>
+                    <div>
+                      <span className="text-[16px] sm:text-[17px] font-bold font-sans block leading-tight">
+                        No
+                      </span>
+                      <span className="text-[11px] sm:text-[12px] font-sans text-[#8FA3B8] group-hover:text-[#55718F]">
+                        Symptom absent
+                      </span>
+                    </div>
+                  </div>
+                </button>
 
-                    <button
-                      type="button"
-                      onClick={() => handleAnswer(q.id, true)}
-                      className={`min-w-[84px] sm:min-w-[92px] min-h-[48px] px-5 py-2.5 rounded-xl text-[14px] sm:text-[15px] font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                {/* Option: Yes (true) */}
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={currentResponse === true}
+                  onClick={() => handleAnswer(currentQuestion.id, true)}
+                  className={`group min-h-[62px] sm:min-h-[70px] p-4 sm:p-4.5 rounded-2xl border-2 text-left transition-all duration-200 flex items-center justify-between cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#0868B9] focus-visible:ring-offset-2 ${
+                    currentResponse === true
+                      ? 'bg-[#F0F8FF] border-[#0868B9] text-[#073B72] shadow-sm ring-2 ring-[#0868B9]/20'
+                      : 'bg-white border-[#D7EAF2] text-[#486581] hover:border-[#0868B9]/40 hover:bg-[#F8FDFF]'
+                  }`}
+                >
+                  <div className="flex items-center gap-3.5">
+                    <div
+                      className={`w-6 h-6 rounded-full flex items-center justify-center border transition-all ${
                         currentResponse === true
-                          ? 'bg-[#0868B9] text-white shadow-xs'
-                          : 'bg-white border-2 border-[#D7EAF2] text-[#55718F] hover:border-[#0868B9]/40 hover:text-[#0868B9]'
+                          ? 'border-[#0868B9] bg-[#0868B9] text-white shadow-2xs'
+                          : 'border-[#CBD5E1] bg-white group-hover:border-[#0868B9]/50'
                       }`}
                     >
                       {currentResponse === true && (
-                        <Check className="w-4 h-4 stroke-[3]" aria-hidden="true" />
+                        <Check className="w-3.5 h-3.5 stroke-[3]" aria-hidden="true" />
                       )}
-                      <span>Yes</span>
-                    </button>
+                    </div>
+                    <div>
+                      <span className="text-[16px] sm:text-[17px] font-bold font-sans block leading-tight">
+                        Yes
+                      </span>
+                      <span className="text-[11px] sm:text-[12px] font-sans text-[#8FA3B8] group-hover:text-[#55718F]">
+                        Symptom present
+                      </span>
+                    </div>
                   </div>
-                </div>
+                </button>
               </div>
-            );
-          })}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* ── Bottom Navigation Area: Back & Next / Complete Questionnaire ── */}
+        <div className="pt-5 border-t border-[#E8F1F5] flex items-center justify-between gap-3">
+          {/* Back Button (Disabled on Question 1) */}
+          <button
+            type="button"
+            onClick={handlePreviousQuestion}
+            disabled={currentQuestionIndex === 0}
+            aria-label="Previous question"
+            className={`min-h-[46px] sm:min-h-[50px] px-5 sm:px-7 py-2.5 sm:py-3 rounded-full text-xs sm:text-[14px] font-semibold font-sans uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer ${
+              currentQuestionIndex === 0
+                ? 'opacity-35 cursor-not-allowed bg-[#F5FBFD] border border-[#E2EEF5] text-[#8FA3B8]'
+                : 'bg-[#F5FBFD] hover:bg-[#E8F4F8] border border-[#D7EAF2] text-[#55718F] hover:text-[#073B72]'
+            }`}
+          >
+            <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+            <span>Back</span>
+          </button>
+
+          {/* Next / Complete Questionnaire Button */}
+          <div className="flex items-center">
+            <AnimatePresence mode="wait">
+              {isCurrentAnswered ? (
+                currentQuestionIndex === initialQuestions.length - 1 ? (
+                  <motion.button
+                    key="complete"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.18 }}
+                    type="button"
+                    onClick={handleCompleteQuestionnaire}
+                    disabled={!allAnswered}
+                    className="min-h-[46px] sm:min-h-[50px] px-6 sm:px-9 py-2.5 sm:py-3 rounded-full font-sans font-semibold text-xs sm:text-[14px] uppercase tracking-wider text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-md shadow-sky-500/25 transition-all flex items-center gap-2 cursor-pointer transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <CheckCircle className="w-4 h-4 sm:w-4.5 sm:h-4.5" aria-hidden="true" />
+                    <span>Complete Questionnaire</span>
+                  </motion.button>
+                ) : (
+                  <motion.button
+                    key="next"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.18 }}
+                    type="button"
+                    onClick={handleNextQuestion}
+                    className="min-h-[46px] sm:min-h-[50px] px-6 sm:px-8 py-2.5 sm:py-3 rounded-full font-sans font-semibold text-xs sm:text-[14px] uppercase tracking-wider text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-md shadow-sky-500/20 transition-all flex items-center gap-2 cursor-pointer transform hover:scale-[1.01] active:scale-[0.99]"
+                  >
+                    <span>Next</span>
+                    <ArrowRight className="w-4 h-4 sm:w-4.5 sm:h-4.5" aria-hidden="true" />
+                  </motion.button>
+                )
+              ) : (
+                <motion.span
+                  key="hint"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="text-xs sm:text-[13px] font-sans font-medium text-[#8FA3B8] italic py-2 px-3"
+                >
+                  Select an answer to proceed
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
       </div>
 
       {/* ── "Why We Ask This" Modal Dialog ── */}
@@ -235,14 +393,18 @@ export const MaleStep3SymptomsADAM: React.FC<MaleStep3Props> = ({ data, onChange
         accentColor="blue"
       >
         <div className="p-4 sm:p-4.5 rounded-2xl bg-[#F0F8FF] border border-[#BAE6FD]">
-          <span className="font-bold text-[14px] sm:text-[15px] text-[#0868B9] block mb-1">Clinical Screening Tool</span>
+          <span className="font-bold text-[14px] sm:text-[15px] text-[#0868B9] block mb-1">
+            Clinical Screening Tool
+          </span>
           <p className="text-[13px] sm:text-[14px] text-[#486581] leading-relaxed">
             The Androgen Deficiency in the Aging Male (ADAM) questionnaire is a clinically established 10-item screening tool designed to identify subjective symptoms of hormonal and vitality decline.
           </p>
         </div>
 
         <div className="p-4 sm:p-4.5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-2">
-          <span className="font-bold text-[14px] sm:text-[15px] text-[#073B72] block">Clinical Context:</span>
+          <span className="font-bold text-[14px] sm:text-[15px] text-[#073B72] block">
+            Clinical Context:
+          </span>
           <p className="text-[13px] sm:text-[14px] text-[#486581] leading-relaxed">
             In clinical medicine (Morley et al., 2000), a positive screening is noted if question 1 (libido) or question 7 (erections) is positive, or if any 3 other questions are positive.
           </p>

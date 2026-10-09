@@ -18,37 +18,66 @@ interface RemindersCardProps {
   reminders: TodayReminder[];
   onToggle: (id: string) => void;
   onAddReminder?: () => void;
+  isMale?: boolean;
 }
 
 export const TodayRemindersCard: React.FC<RemindersCardProps> = ({
   reminders,
   onToggle,
   onAddReminder,
+  isMale = false,
 }) => {
   const getCategoryIcon = (cat: TodayReminder['category']) => {
     switch (cat) {
       case 'medication':
-        return <MedicalCross className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />;
+        return (
+          <MedicalCross
+            className={`w-3.5 h-3.5 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`}
+            aria-hidden="true"
+          />
+        );
       case 'hydration':
-        return <Droplets01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />;
+        return (
+          <Droplets01
+            className={`w-3.5 h-3.5 ${isMale ? 'text-[#0288D1]' : 'text-[#008CA5]'}`}
+            aria-hidden="true"
+          />
+        );
       case 'fitness':
         return <ActivityHeart className="w-3.5 h-3.5 text-[#059669]" aria-hidden="true" />;
       case 'appointment':
-        return <Calendar className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />;
+        return (
+          <Calendar
+            className={`w-3.5 h-3.5 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`}
+            aria-hidden="true"
+          />
+        );
       case 'cycle':
       default:
-        return <CalendarCheck01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />;
+        return (
+          <CalendarCheck01
+            className={`w-3.5 h-3.5 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`}
+            aria-hidden="true"
+          />
+        );
     }
   };
 
   const completedCount = reminders.filter((r) => r.completed).length;
 
   return (
-    <div className="p-6 sm:p-7 rounded-[32px] bg-white border border-[#BAE6FD] shadow-sm flex flex-col justify-between select-none text-left space-y-5">
+    <div
+      className={`p-6 sm:p-7 rounded-[32px] bg-white border ${
+        isMale ? 'border-[#BAE6FD]' : 'border-[#F3E8EC]'
+      } shadow-sm flex flex-col justify-between select-none text-left space-y-5`}
+    >
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Clock className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
+          <Clock
+            className={`w-5 h-5 shrink-0 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`}
+            aria-hidden="true"
+          />
           <h3 className="text-base font-bold font-display text-[#0F172A]">
             Today’s Reminders
           </h3>
@@ -62,14 +91,20 @@ export const TodayRemindersCard: React.FC<RemindersCardProps> = ({
       {/* Interactive Reminders Checklist */}
       <div className="space-y-2.5 flex-1">
         {reminders.length === 0 ? (
-          <div className="p-6 rounded-2xl bg-[#F8FAFC] border border-dashed border-[#BAE6FD] text-center space-y-2">
+          <div
+            className={`p-6 rounded-2xl bg-[#F8FAFC] border border-dashed ${
+              isMale ? 'border-[#BAE6FD]' : 'border-[#FDE6EF]'
+            } text-center space-y-2`}
+          >
             <p className="text-xs font-semibold text-[#64748B]">
               No active health reminders scheduled for today.
             </p>
             <button
               type="button"
               onClick={onAddReminder}
-              className="text-xs text-[#0288D1] font-bold hover:underline cursor-pointer"
+              className={`text-xs font-bold hover:underline cursor-pointer ${
+                isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'
+              }`}
             >
               Add first reminder
             </button>
@@ -84,11 +119,19 @@ export const TodayRemindersCard: React.FC<RemindersCardProps> = ({
                 className={`p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 ${
                   isDone
                     ? 'bg-[#F8FAFC] border-[#E2E8F0] opacity-65'
-                    : 'bg-white hover:bg-[#F0F9FF] border-[#BAE6FD] shadow-xs'
+                    : isMale
+                    ? 'bg-white hover:bg-[#F0F9FF] border-[#BAE6FD] shadow-xs'
+                    : 'bg-white hover:bg-[#FFF8FA] border-[#FDE6EF] shadow-xs'
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="p-2 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD]/60 shrink-0">
+                  <div
+                    className={`p-2 rounded-xl shrink-0 border ${
+                      isMale
+                        ? 'bg-[#F0F9FF] border-[#BAE6FD]/60'
+                        : 'bg-[#FFF8FA] border-[#FDE6EF]'
+                    }`}
+                  >
                     {getCategoryIcon(rem.category)}
                   </div>
                   <div className="min-w-0">
@@ -109,12 +152,17 @@ export const TodayRemindersCard: React.FC<RemindersCardProps> = ({
                 <button
                   type="button"
                   aria-label={isDone ? `Mark "${rem.title}" as incomplete` : `Mark "${rem.title}" as complete`}
-                  className="shrink-0 p-1 text-[#0288D1] hover:scale-110 transition-transform cursor-pointer"
+                  className={`shrink-0 p-1 hover:scale-110 transition-transform cursor-pointer ${
+                    isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'
+                  }`}
                 >
                   {isDone ? (
                     <CheckCircle className="w-5 h-5 text-[#059669]" aria-hidden="true" />
                   ) : (
-                    <Circle className="w-5 h-5 text-[#BAE6FD]" aria-hidden="true" />
+                    <Circle
+                      className={`w-5 h-5 ${isMale ? 'text-[#BAE6FD]' : 'text-[#FDE6EF]'}`}
+                      aria-hidden="true"
+                    />
                   )}
                 </button>
               </div>
@@ -127,7 +175,11 @@ export const TodayRemindersCard: React.FC<RemindersCardProps> = ({
       <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-between">
         <Link
           to={ROUTES.APP.MEDICATIONS}
-          className="inline-flex items-center gap-1 text-xs font-bold text-[#0288D1] hover:text-[#01579B] transition-colors"
+          className={`inline-flex items-center gap-1 text-xs font-bold transition-colors ${
+            isMale
+              ? 'text-[#0288D1] hover:text-[#01579B]'
+              : 'text-[#F43F7D] hover:text-[#BE185D]'
+          }`}
         >
           <span>Manage Medicines →</span>
         </Link>

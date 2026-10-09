@@ -21,6 +21,8 @@ import type {
   LifestyleRecommendationsResult,
   LifestyleSimulationOverride,
   AILifestylePlan,
+  PersonalizedRecipe,
+  RecipeGenerationParams,
 } from '../types/lifestyle';
 
 const BACKEND_API_URL =
@@ -29,6 +31,7 @@ const BACKEND_API_URL =
 
 const LIFESTYLE_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/lifestyle-recommendations/`;
 const AI_PLAN_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/lifestyle-ai-plan/`;
+const RECIPE_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/lifestyle-recipe/`;
 
 const CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes
 
@@ -507,6 +510,82 @@ class LifestyleService {
     }
 
     return res.json();
+  }
+
+  private inFlightRecipePromise: Promise<PersonalizedRecipe> | null = null;
+
+  /**
+   * Retrieves the latest generated personalized recipe for the authenticated user.
+   */
+  async getLatestRecipe(
+    module?: 'ovasense' | 'androsense' | 'female_pcos' | 'male_hypogonadism' | string
+  ): Promise<PersonalizedRecipe | null> {
+    const { headers } = await getAuthHeaders();
+    const params = new URLSearchParams();
+    if (module) params.set('module', normalizeModule(module));
+    const url = params.toString() ? `${RECIPE_ENDPOINT}?${params.toString()}` : RECIPE_ENDPOINT;
+
+    const res = await fetch(url, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!res.ok) {
+      if (res.status === 404) return null;
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || err.detail || `Failed to fetch recipe (${res.status})`);
+    }
+
+    const data = await res.json();
+    if (data && 'recipe_name' in data) {
+      return data as PersonalizedRecipe;
+    }
+    return data?.recipe || null;
+  }
+
+  /**
+   * Generates a tailored Pakistani whole-food recipe using authenticated user health context.
+   * Includes duplicate-click protection via inFlightRecipePromise.
+   */
+  async generateRecipe(
+    params: RecipeGenerationParams = {}
+  ): Promise<PersonalizedRecipe> {
+    if (this.inFlightRecipePromise) {
+      return this.inFlightRecipePromise;
+    }
+
+    const exec = async (): Promise<PersonalizedRecipe> => {
+      const { headers } = await getAuthHeaders();
+      const payload: Record<string, any> = {
+        meal_type: params.meal_type || 'Lunch',
+        preference: params.preference,
+        custom_notes: params.custom_notes,
+      };
+      if (params.module) payload.module = normalizeModule(params.module);
+      if (params.dietary_preference) payload.dietary_preference = params.dietary_preference;
+      if (params.allergens) payload.allergens = params.allergens;
+
+      const res = await fetch(RECIPE_ENDPOINT, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(
+          err.error || err.detail || `Failed to generate personalized recipe (${res.status})`
+        );
+      }
+
+      return res.json();
+    };
+
+    this.inFlightRecipePromise = exec().finally(() => {
+      this.inFlightRecipePromise = null;
+    });
+
+    return this.inFlightRecipePromise;
   }
 }
 

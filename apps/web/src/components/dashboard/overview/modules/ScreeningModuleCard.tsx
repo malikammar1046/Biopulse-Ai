@@ -45,19 +45,23 @@ export const ScreeningModuleCard: React.FC<ScreeningModuleCardProps> = ({
   const riskTypeLabel = isFemale ? t('dashboard:pcosRiskType') : t('dashboard:maleRiskType');
 
   // Authoritative clinical risk classification matching policy v2 cutoffs
-  const highCutoff = isFemale ? 25 : 18.08;
+  const highCutoff = isFemale ? 25 : (assessmentLevel === 'tier_1_2' ? 33.79 : 18.08);
   const lowCutoff = isFemale ? 18 : 10;
 
   let isHigh = false;
   let isIntermediate = false;
 
-  if (probabilityPercent !== null) {
+  const normRisk = (riskCategory || '').toLowerCase();
+  if (normRisk === 'higher' || normRisk.includes('elevated') || normRisk === 'high') {
+    isHigh = true;
+  } else if (normRisk === 'intermediate' || normRisk.includes('moderate')) {
+    isIntermediate = true;
+  } else if (normRisk === 'lower' || normRisk === 'low') {
+    isHigh = false;
+    isIntermediate = false;
+  } else if (probabilityPercent !== null) {
     isHigh = probabilityPercent >= highCutoff;
     isIntermediate = !isHigh && probabilityPercent >= lowCutoff;
-  } else {
-    const normRisk = (riskCategory || '').toLowerCase();
-    isHigh = normRisk.includes('elevated') || normRisk.includes('high');
-    isIntermediate = !isHigh && (normRisk.includes('intermediate') || normRisk.includes('moderate'));
   }
 
   // Consistent with Screening Workspace & Design System tokens

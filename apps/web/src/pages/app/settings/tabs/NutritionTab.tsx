@@ -12,6 +12,7 @@ interface NutritionTabProps {
 export const NutritionTab: React.FC<NutritionTabProps> = ({
   draft,
   setDraft,
+  isMale,
 }) => {
   const currentDiet = draft.lifestyle?.dietaryPreference || 'Balanced';
 
@@ -52,7 +53,9 @@ export const NutritionTab: React.FC<NutritionTabProps> = ({
                 }
                 className={`p-4 rounded-2xl text-left border transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-[#0288D1] text-white border-[#0288D1] shadow-xs ring-1 ring-[#0288D1]/30'
+                    ? isMale
+                      ? 'bg-[#0288D1] text-white border-[#0288D1] shadow-xs ring-1 ring-[#0288D1]/30'
+                      : 'bg-[#F43F7D] text-white border-[#F43F7D] shadow-xs ring-1 ring-[#F43F7D]/30'
                     : 'bg-slate-50/70 border-slate-200 text-slate-700 hover:bg-slate-100'
                 }`}
               >
@@ -63,7 +66,7 @@ export const NutritionTab: React.FC<NutritionTabProps> = ({
                       isSelected ? 'border-white bg-white' : 'border-slate-300 bg-white'
                     }`}
                   >
-                    {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[#0288D1]" />}
+                    {isSelected && <span className={`w-1.5 h-1.5 rounded-full ${isMale ? 'bg-[#0288D1]' : 'bg-[#F43F7D]'}`} />}
                   </div>
                 </div>
                 <p

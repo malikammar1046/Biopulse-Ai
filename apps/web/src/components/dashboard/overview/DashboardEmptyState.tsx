@@ -18,14 +18,16 @@ export const DashboardEmptyState: React.FC<DashboardEmptyStateProps> = ({
   icon: Icon,
   accentColor = 'pink',
 }) => {
-  const isFemale = accentColor === 'pink';
-
-  const btnBg = isFemale
+  const btnBg = accentColor === 'pink'
     ? 'bg-[#F43F7D] hover:bg-[#E11D48] text-white shadow-xs'
+    : accentColor === 'teal'
+    ? 'bg-[#008CA5] hover:bg-[#007A90] text-white shadow-xs'
     : 'bg-[#0284C7] hover:bg-[#0369A1] text-white shadow-xs';
 
-  const iconBg = isFemale
+  const iconBg = accentColor === 'pink'
     ? 'bg-[#FDE6EF] text-[#F43F7D]'
+    : accentColor === 'teal'
+    ? 'bg-[#E0F7FA] text-[#008CA5]'
     : 'bg-[#E0F2FE] text-[#0284C7]';
 
   return (

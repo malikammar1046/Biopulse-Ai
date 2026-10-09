@@ -8,9 +8,13 @@ import {
 
 interface ReportTrendVisualizerProps {
   reports: MedicalReport[];
+  isMale?: boolean;
 }
 
-export const ReportTrendVisualizer: React.FC<ReportTrendVisualizerProps> = ({ reports }) => {
+export const ReportTrendVisualizer: React.FC<ReportTrendVisualizerProps> = ({
+  reports,
+  isMale = false,
+}) => {
   const commonTests = getCommonTrendableTests(reports);
 
   // Default to first recurring test, or fallback to common tests
@@ -38,13 +42,16 @@ export const ReportTrendVisualizer: React.FC<ReportTrendVisualizerProps> = ({ re
 
   const polylinePoints = pointsSvgCoords.map((p) => `${p.x},${p.y}`).join(' ');
 
+  const primaryAccent = isMale ? '#0288D1' : '#F43F7D';
+  const gridStroke = isMale ? '#BAE6FD' : '#FDE6EF';
+
   return (
-    <div className="p-6 sm:p-8 rounded-[32px] bg-white border border-[#BAE6FD] shadow-sm text-left select-none space-y-6">
+    <div className={`p-6 sm:p-8 rounded-[32px] bg-white border ${isMale ? 'border-[#BAE6FD]' : 'border-[#F3E8EC]'} shadow-sm text-left select-none space-y-6`}>
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD] text-xs font-mono font-bold">
-            <LineChartUp01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
+          <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${isMale ? 'bg-[#E0F2FE] text-[#0288D1] border-[#BAE6FD]' : 'bg-[#FDE6EF] text-[#E11D48] border-[#F43F7D]/20'} border text-xs font-mono font-bold`}>
+            <LineChartUp01 className={`w-3.5 h-3.5 ${isMale ? 'text-[#0288D1]' : 'text-[#E11D48]'}`} aria-hidden="true" />
             <span>Historical Lab Comparison</span>
           </div>
           <h3 className="text-xl sm:text-2xl font-bold font-display text-[#0F172A]">
@@ -62,7 +69,7 @@ export const ReportTrendVisualizer: React.FC<ReportTrendVisualizerProps> = ({ re
             <select
               value={selectedTest}
               onChange={(e) => setSelectedTest(e.target.value)}
-              className="px-3 py-1.5 rounded-xl bg-[#F8FAFC] border border-[#BAE6FD] text-xs font-bold text-[#0F172A] focus:outline-none focus:border-[#0288D1]"
+              className={`px-3 py-1.5 rounded-xl bg-[#F8FAFC] border ${isMale ? 'border-[#BAE6FD] focus:border-[#0288D1]' : 'border-[#FDE6EF] focus:border-[#F43F7D]'} text-xs font-bold text-[#0F172A] focus:outline-none`}
             >
               {commonTests.map((t) => (
                 <option key={t} value={t}>
@@ -75,10 +82,10 @@ export const ReportTrendVisualizer: React.FC<ReportTrendVisualizerProps> = ({ re
       </div>
 
       {/* SVG Trend Wave Container */}
-      <div className="p-6 rounded-3xl bg-[#F0F9FF] border border-[#BAE6FD] space-y-4">
+      <div className={`p-6 rounded-3xl ${isMale ? 'bg-[#F0F9FF] border-[#BAE6FD]' : 'bg-[#FFF8FA] border-[#FDE6EF]'} border space-y-4`}>
         <div className="flex items-center justify-between text-xs">
           <span className="font-bold text-[#0F172A] font-display">{selectedTest}</span>
-          <span className="font-mono text-[11px] text-[#0288D1] font-bold">
+          <span className={`font-mono text-[11px] ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'} font-bold`}>
             {trendPoints.length} chronological reports
           </span>
         </div>
@@ -86,15 +93,15 @@ export const ReportTrendVisualizer: React.FC<ReportTrendVisualizerProps> = ({ re
         <div className="relative h-40 w-full flex items-center justify-center">
           <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full overflow-visible">
             {/* Horizontal Grid lines */}
-            <line x1="0" y1="20" x2="100" y2="20" stroke="#BAE6FD" strokeDasharray="2,2" strokeWidth="0.5" />
-            <line x1="0" y1="50" x2="100" y2="50" stroke="#BAE6FD" strokeDasharray="2,2" strokeWidth="0.5" />
-            <line x1="0" y1="80" x2="100" y2="80" stroke="#BAE6FD" strokeDasharray="2,2" strokeWidth="0.5" />
+            <line x1="0" y1="20" x2="100" y2="20" stroke={gridStroke} strokeDasharray="2,2" strokeWidth="0.5" />
+            <line x1="0" y1="50" x2="100" y2="50" stroke={gridStroke} strokeDasharray="2,2" strokeWidth="0.5" />
+            <line x1="0" y1="80" x2="100" y2="80" stroke={gridStroke} strokeDasharray="2,2" strokeWidth="0.5" />
 
             {/* Connecting Polyline */}
             {pointsSvgCoords.length > 1 && (
               <polyline
                 fill="none"
-                stroke="#0288D1"
+                stroke={primaryAccent}
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -105,7 +112,7 @@ export const ReportTrendVisualizer: React.FC<ReportTrendVisualizerProps> = ({ re
             {/* Data Points */}
             {pointsSvgCoords.map((pt, idx) => (
               <g key={idx} className="cursor-pointer group">
-                <circle cx={pt.x} cy={pt.y} r="3.5" fill="#0288D1" stroke="#FFFFFF" strokeWidth="1.5" />
+                <circle cx={pt.x} cy={pt.y} r="3.5" fill={primaryAccent} stroke="#FFFFFF" strokeWidth="1.5" />
               </g>
             ))}
           </svg>
@@ -116,7 +123,7 @@ export const ReportTrendVisualizer: React.FC<ReportTrendVisualizerProps> = ({ re
           {trendPoints.map((pt, idx) => (
             <div
               key={idx}
-              className="p-3 rounded-2xl bg-white border border-[#BAE6FD] text-left shadow-xs space-y-1"
+              className={`p-3 rounded-2xl bg-white border ${isMale ? 'border-[#BAE6FD]' : 'border-[#FDE6EF]'} text-left shadow-xs space-y-1`}
             >
               <span className="text-[10px] font-mono text-[#64748B] block">{pt.date}</span>
               <div className="flex items-baseline gap-1">

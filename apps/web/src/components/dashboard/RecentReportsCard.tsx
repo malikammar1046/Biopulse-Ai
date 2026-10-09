@@ -6,15 +6,23 @@ import { ROUTES } from '../../constants/routes';
 
 interface ReportsCardProps {
   reports: MedicalReport[];
+  isMale?: boolean;
 }
 
-export const RecentReportsCard: React.FC<ReportsCardProps> = ({ reports }) => {
+export const RecentReportsCard: React.FC<ReportsCardProps> = ({ reports, isMale = false }) => {
   return (
-    <div className="p-6 sm:p-7 rounded-[32px] bg-white border border-[#BAE6FD] shadow-sm flex flex-col justify-between select-none text-left space-y-5">
+    <div
+      className={`p-6 sm:p-7 rounded-[32px] bg-white border ${
+        isMale ? 'border-[#BAE6FD]' : 'border-[#F3E8EC]'
+      } shadow-sm flex flex-col justify-between select-none text-left space-y-5`}
+    >
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <FileCheck01 className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
+          <FileCheck01
+            className={`w-5 h-5 shrink-0 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`}
+            aria-hidden="true"
+          />
           <h3 className="text-base font-bold font-display text-[#0F172A]">
             Recent Health Reports
           </h3>
@@ -22,7 +30,9 @@ export const RecentReportsCard: React.FC<ReportsCardProps> = ({ reports }) => {
 
         <Link
           to={ROUTES.APP.REPORTS}
-          className="text-xs font-bold text-[#0288D1] hover:text-[#01579B] transition-colors"
+          className={`text-xs font-bold transition-colors ${
+            isMale ? 'text-[#0288D1] hover:text-[#01579B]' : 'text-[#F43F7D] hover:text-[#BE185D]'
+          }`}
         >
           View all ({reports.length})
         </Link>
@@ -31,13 +41,21 @@ export const RecentReportsCard: React.FC<ReportsCardProps> = ({ reports }) => {
       {/* Reports List / Empty State */}
       <div className="space-y-3 flex-1">
         {reports.length === 0 ? (
-          <div className="py-6 px-4 rounded-2xl bg-[#F8FAFC] border border-dashed border-[#BAE6FD] text-center space-y-2">
+          <div
+            className={`py-6 px-4 rounded-2xl bg-[#F8FAFC] border border-dashed text-center space-y-2 ${
+              isMale ? 'border-[#BAE6FD]' : 'border-[#FDE6EF]'
+            }`}
+          >
             <p className="text-xs font-medium text-[#64748B]">
               No lab or ultrasound reports uploaded yet.
             </p>
             <Link
               to={ROUTES.APP.REPORTS}
-              className="inline-flex items-center gap-1 text-xs font-bold text-[#0288D1] hover:text-[#01579B]"
+              className={`inline-flex items-center gap-1 text-xs font-bold ${
+                isMale
+                  ? 'text-[#0288D1] hover:text-[#01579B]'
+                  : 'text-[#F43F7D] hover:text-[#BE185D]'
+              }`}
             >
               <Plus className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Scan your first report</span>
@@ -54,11 +72,24 @@ export const RecentReportsCard: React.FC<ReportsCardProps> = ({ reports }) => {
               <Link
                 key={rep.id}
                 to={ROUTES.APP.REPORTS}
-                className="p-3.5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] hover:border-[#BAE6FD] hover:bg-[#F0F9FF] transition-all flex items-center justify-between gap-3 group"
+                className={`p-3.5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] transition-all flex items-center justify-between gap-3 group ${
+                  isMale
+                    ? 'hover:border-[#BAE6FD] hover:bg-[#F0F9FF]'
+                    : 'hover:border-[#F43F7D]/30 hover:bg-[#FFF8FA]'
+                }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="p-2.5 rounded-xl bg-white border border-[#BAE6FD]/60 text-[#0288D1] shrink-0 group-hover:bg-[#E0F2FE] transition-colors">
-                    <File01 className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
+                  <div
+                    className={`p-2.5 rounded-xl bg-white border shrink-0 transition-colors ${
+                      isMale
+                        ? 'border-[#BAE6FD]/60 text-[#0288D1] group-hover:bg-[#E0F2FE]'
+                        : 'border-[#FDE6EF] text-[#F43F7D] group-hover:bg-[#FDE6EF]'
+                    }`}
+                  >
+                    <File01
+                      className={`w-4 h-4 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`}
+                      aria-hidden="true"
+                    />
                   </div>
                   <div className="min-w-0">
                     <span className="text-xs font-bold text-[#0F172A] block truncate">
@@ -84,7 +115,11 @@ export const RecentReportsCard: React.FC<ReportsCardProps> = ({ reports }) => {
       <div className="pt-2 border-t border-[#E2E8F0] flex items-center justify-between">
         <Link
           to={ROUTES.APP.REPORTS}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0288D1] hover:text-[#01579B] transition-colors group"
+          className={`inline-flex items-center gap-1.5 text-xs font-bold transition-colors group ${
+            isMale
+              ? 'text-[#0288D1] hover:text-[#01579B]'
+              : 'text-[#F43F7D] hover:text-[#BE185D]'
+          }`}
         >
           <Upload01 className="w-3.5 h-3.5" aria-hidden="true" />
           <span>Upload New Report</span>

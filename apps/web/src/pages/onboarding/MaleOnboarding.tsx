@@ -10,7 +10,7 @@ import type {
   MensHealthProfile,
   LifestyleProfile,
 } from '../../types/onboarding';
-import { validateDateOfBirth, validatePakistaniPhone } from '../../utils/profileValidation';
+import { validateMaleScreeningAge, validatePakistaniPhone } from '../../utils/profileValidation';
 import { MaleOnboardingLayout } from './male/MaleOnboardingLayout';
 import { MaleStep1BasicInfo } from './male/MaleStep1BasicInfo';
 import { MaleStep2HealthProfile } from './male/MaleStep2HealthProfile';
@@ -94,6 +94,8 @@ export const MaleOnboarding: React.FC = () => {
         priorMedications: userProfile.mensHealth?.priorMedications?.length
           ? userProfile.mensHealth.priorMedications
           : ['None of the above'],
+        adamResponses: userProfile.mensHealth?.adamResponses,
+        adamScore: userProfile.mensHealth?.adamScore,
       },
       lifestyle: {
         dietaryPreference: userProfile.lifestyle?.dietaryPreference || 'Balanced',
@@ -182,13 +184,21 @@ export const MaleOnboarding: React.FC = () => {
     if (stepNum === 1) {
       if (!draftProfile.fullName.trim()) errs.fullName = 'Full Name is required.';
 
-      const dobCheck = validateDateOfBirth(draftProfile.dateOfBirth);
+      const dobCheck = validateMaleScreeningAge(draftProfile.dateOfBirth);
       if (!dobCheck.isValid) errs.dateOfBirth = dobCheck.error!;
 
-      const phoneCheck = validatePakistaniPhone(draftProfile.phone);
+      const phoneCheck = validatePakistaniPhone(draftProfile.phone, { optional: true });
       if (!phoneCheck.isValid) errs.phone = phoneCheck.error!;
 
       if (!draftProfile.email.trim()) errs.email = 'Email address is required.';
+    }
+
+    if (stepNum === 3) {
+      const adam = draftProfile.mensHealth?.adamResponses || {};
+      const answeredCount = Object.values(adam).filter((v) => v !== null && v !== undefined).length;
+      if (answeredCount < 10) {
+        errs.adam = 'Please answer all 10 ADAM questions to continue.';
+      }
     }
 
     setErrors(errs);
@@ -217,6 +227,17 @@ export const MaleOnboarding: React.FC = () => {
   };
 
   const handleEnterAndroSense = async () => {
+    // Blocking eligibility gate: Ensure age 19–60 before onboarding completion
+    const dobCheck = validateMaleScreeningAge(draftProfile.dateOfBirth);
+    if (!dobCheck.isValid) {
+      setIsSubmitting(false);
+      setIsProcessingScreening(false);
+      setSaveError(dobCheck.error || 'BioPulse AI male screening is calibrated for adult men aged 19 to 60.');
+      setCurrentStep(1);
+      setErrors((prev) => ({ ...prev, dateOfBirth: dobCheck.error! }));
+      return;
+    }
+
     setIsSubmitting(true);
     setIsProcessingScreening(true);
     setSaveError(undefined);
@@ -282,6 +303,7 @@ export const MaleOnboarding: React.FC = () => {
       onBack={handleBack}
       isSubmitting={isSubmitting}
       canGoBack={currentStep > 1}
+      hideBottomNav={currentStep === 3}
     >
       <AnimatePresence mode="wait">
         <motion.div
@@ -322,6 +344,8 @@ export const MaleOnboarding: React.FC = () => {
             <MaleStep3SymptomsADAM
               data={draftProfile.mensHealth!}
               onChange={updateMensHealth}
+              onComplete={handleNext}
+              onBackToHealthProfile={handleBack}
             />
           )}
 

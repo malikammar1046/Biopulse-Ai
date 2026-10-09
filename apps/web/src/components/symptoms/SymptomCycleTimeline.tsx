@@ -48,8 +48,8 @@ export const SymptomCycleTimeline: React.FC<SymptomCycleTimelineProps> = ({
 
         <div className="flex items-center gap-2 text-xs font-mono text-[#64748B]">
           <span className="w-2.5 h-2.5 rounded-full bg-rose-500" /> Cycle & Body
-          <span className="w-2.5 h-2.5 rounded-full bg-[#0288D1] ml-2" /> Skin & Hair
-          <span className="w-2.5 h-2.5 rounded-full bg-[#01579B] ml-2" /> Energy & Mood
+          <span className="w-2.5 h-2.5 rounded-full bg-[#A21CAF] ml-2" /> Skin & Hair
+          <span className="w-2.5 h-2.5 rounded-full bg-[#8E3EAF] ml-2" /> Energy & Mood
         </div>
       </div>
 

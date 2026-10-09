@@ -45,10 +45,14 @@ export const DashboardModuleCard: React.FC<DashboardModuleCardProps> = ({
 
   const iconBg = isFemale
     ? 'bg-[#FDE6EF] text-[#E11D48] border border-[#F43F7D]/20'
+    : accentColor === 'teal'
+    ? 'bg-[#E0F7FA] text-[#008CA5] border border-[#B2EBF2]'
     : 'bg-[#E0F2FE] text-[#0284C7] border border-[#BAE6FD]';
 
   const cardBorder = isFemale
     ? 'border-[#F3E8EC]'
+    : accentColor === 'teal'
+    ? 'border-[#E0F2F1]'
     : 'border-[#E2E8F0]';
 
   return (
@@ -106,7 +110,7 @@ export const DashboardModuleCard: React.FC<DashboardModuleCardProps> = ({
             <div className="h-4 bg-slate-100 rounded-md w-1/2" />
           </div>
         ) : error ? (
-          <DashboardErrorState message={error} onRetry={onRetry} accentColor={accentColor === 'blue' ? 'blue' : 'pink'} />
+          <DashboardErrorState message={error} onRetry={onRetry} accentColor={accentColor} />
         ) : (
           children
         )}

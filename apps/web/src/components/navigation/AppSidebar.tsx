@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutGrid01,
   CalendarCheck01,
@@ -14,7 +13,6 @@ import {
   MessageChatCircle,
   ClipboardCheck,
   LineChartUp01,
-  ChevronDown,
   Calendar,
   Users01,
 } from '../icons';
@@ -26,17 +24,10 @@ import { useUserHealth } from '../../context/UserHealthContext';
 import { useAuth } from '../../context/AuthContext';
 import { UserAvatar } from '../common/UserAvatar';
 
-interface NavItem {
+export interface NavItem {
   label: string;
   path: string;
-  icon: React.ComponentType<{ className?: string }>;
-}
-
-interface NavGroup {
-  id: string;
-  title: string;
-  icon: React.ComponentType<{ className?: string }>;
-  items: NavItem[];
+  icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }>;
 }
 
 export const AppSidebar: React.FC = () => {
@@ -53,109 +44,121 @@ export const AppSidebar: React.FC = () => {
 
   const overviewPath = getPathwayDashboardRoute(userProfile);
   const pathway = resolvePathway(userProfile.gender, userProfile.pathway);
+  const isFemale = pathway === 'female';
+
   const brandTagline =
     pathway === 'male'
       ? "Men's Health Intelligence"
       : pathway === 'female'
-      ? "Women's Health Intelligence"
-      : 'Unified Health Intelligence';
+        ? "Women's Health Intelligence"
+        : 'Unified Health Intelligence';
 
+  // Overview active match includes path aliases and root
   const isOverviewActive =
     location.pathname === overviewPath ||
     location.pathname === ROUTES.APP.ROOT ||
-    location.pathname === ROUTES.APP.DASHBOARD;
+    location.pathname === ROUTES.APP.DASHBOARD ||
+    location.pathname === ROUTES.APP.OVASENSE ||
+    location.pathname === ROUTES.APP.ANDROSENSE ||
+    location.pathname === ROUTES.APP.VITASENSE;
 
-  const isItemActive = (path: string) => {
+  // Exact and hierarchical active state detection with related route aliases
+  const isItemActive = (path: string): boolean => {
     if (path === overviewPath) {
       return isOverviewActive;
     }
-    return location.pathname === path;
+    if (location.pathname === path) {
+      return true;
+    }
+    if (path !== ROUTES.APP.ROOT && location.pathname.startsWith(path + '/')) {
+      return true;
+    }
+    // Related route connections
+    if (path === ROUTES.APP.PROGRESS && location.pathname.startsWith(ROUTES.APP.TIMELINE)) {
+      return true;
+    }
+    if (
+      path === ROUTES.APP.CHAT &&
+      (location.pathname.startsWith(ROUTES.APP.AI_TWIN) ||
+        location.pathname.startsWith('/app/ai') ||
+        location.pathname.startsWith('/app/assistant'))
+    ) {
+      return true;
+    }
+    if (
+      path === ROUTES.APP.LIFESTYLE &&
+      (location.pathname.startsWith(ROUTES.APP.DIET) ||
+        location.pathname.startsWith(ROUTES.APP.NUTRITION))
+    ) {
+      return true;
+    }
+    if (
+      path === ROUTES.APP.SETTINGS &&
+      location.pathname.startsWith(ROUTES.APP.PROFILE)
+    ) {
+      return true;
+    }
+    return false;
   };
 
-  // Section 1: MAIN
-  const maleMainItems: NavItem[] = [
+  // ── 1. MAIN (Core Application Overview, Lifestyle & Progress) ──
+  const mainItems: NavItem[] = [
     { label: t('overview'), path: overviewPath, icon: LayoutGrid01 },
     { label: t('lifestyle'), path: ROUTES.APP.LIFESTYLE, icon: Scales01 },
-    { label: t('screening'), path: ROUTES.APP.ASSESSMENT, icon: ClipboardCheck },
     { label: t('longitudinal'), path: ROUTES.APP.PROGRESS, icon: LineChartUp01 },
   ];
 
-  const femaleMainItems: NavItem[] = [
-    { label: t('overview'), path: overviewPath, icon: LayoutGrid01 },
-    { label: t('lifestyle'), path: ROUTES.APP.LIFESTYLE, icon: Scales01 },
-    { label: t('screening'), path: ROUTES.APP.ASSESSMENT, icon: ClipboardCheck },
-    { label: t('longitudinal'), path: ROUTES.APP.PROGRESS, icon: LineChartUp01 },
-  ];
-
-  const mainItems = pathway === 'female' ? femaleMainItems : maleMainItems;
-
-  // Section 2: HEALTH
-  const maleHealthItems: NavItem[] = [
-    { label: t('reports'), path: ROUTES.APP.REPORTS, icon: File06 },
-    { label: t('appointments'), path: ROUTES.APP.APPOINTMENTS, icon: CalendarCheck01 },
-    { label: t('careCircle'), path: ROUTES.APP.CARE_CIRCLE, icon: Users01 },
-  ];
-
+  // ── 2. HEALTH (Clinical Assessment, Reports, Clinical Care) ──
   const femaleHealthItems: NavItem[] = [
-    { label: t('lifestyle'), path: ROUTES.APP.FITNESS, icon: Activity },
+    { label: t('screening'), path: ROUTES.APP.ASSESSMENT, icon: ClipboardCheck },
     { label: t('reports'), path: ROUTES.APP.REPORTS, icon: File06 },
     { label: t('appointments'), path: ROUTES.APP.APPOINTMENTS, icon: CalendarCheck01 },
     { label: t('careCircle'), path: ROUTES.APP.CARE_CIRCLE, icon: Users01 },
   ];
 
-  const healthItems = pathway === 'female' ? femaleHealthItems : maleHealthItems;
+  const maleHealthItems: NavItem[] = [
+    { label: t('screening'), path: ROUTES.APP.ASSESSMENT, icon: ClipboardCheck },
+    { label: t('reports'), path: ROUTES.APP.REPORTS, icon: File06 },
+    { label: t('appointments'), path: ROUTES.APP.APPOINTMENTS, icon: CalendarCheck01 },
+    { label: t('careCircle'), path: ROUTES.APP.CARE_CIRCLE, icon: Users01 },
+  ];
 
-  // Section 3: DAILY TRACKING (Collapsible, female gets Cycle, male never gets Cycle)
-  const trackingGroup: NavGroup = {
-    id: 'tracking',
-    title: t('symptoms'),
-    icon: ActivityHeart,
-    items: [
-      ...(pathway === 'female'
-        ? [{ label: t('cycle'), path: ROUTES.APP.CYCLE, icon: Calendar }]
-        : []),
-      { label: t('symptoms'), path: ROUTES.APP.SYMPTOMS, icon: ActivityHeart },
-      ...(pathway === 'male'
-        ? [{ label: t('lifestyle'), path: ROUTES.APP.FITNESS, icon: Activity }]
-        : []),
-      { label: t('medications'), path: ROUTES.APP.MEDICATIONS, icon: MedicalCross },
-    ],
-  };
+  const healthItems = isFemale ? femaleHealthItems : maleHealthItems;
 
-  // Section 4: TOOLS
-  const toolItems: NavItem[] = [
+  // ── 3. DAILY TRACKING (Direct, un-collapsed tracking destinations) ──
+  const dailyTrackingItems: NavItem[] = [
+    ...(isFemale
+      ? [{ label: t('cycle'), path: ROUTES.APP.CYCLE, icon: Calendar }]
+      : []),
+    { label: t('symptoms'), path: ROUTES.APP.SYMPTOMS, icon: ActivityHeart },
+    { label: t('fitness'), path: ROUTES.APP.FITNESS, icon: Activity },
+    { label: t('medications'), path: ROUTES.APP.MEDICATIONS, icon: MedicalCross },
+  ];
+
+  // ── 4. INTELLIGENCE (AI Companion & Clinical Intelligence) ──
+  const intelligenceItems: NavItem[] = [
     { label: t('aiCompanion'), path: ROUTES.APP.CHAT, icon: MessageChatCircle },
   ];
 
-  // Section 5: ACCOUNT
-  const accountItems: NavItem[] = [
-    { label: t('settings'), path: ROUTES.APP.SETTINGS, icon: Settings01 },
-  ];
+  // ── 5. ACCOUNT (Pinned to bottom) ──
+  const settingsItem: NavItem = {
+    label: t('settings'),
+    path: ROUTES.APP.SETTINGS,
+    icon: Settings01,
+  };
 
-  // Collapsible tracking open/closed state (auto-opens if on a tracking page)
-  const isTrackingActive = trackingGroup.items.some((i) => isItemActive(i.path));
-  const [isTrackingOpen, setIsTrackingOpen] = useState(isTrackingActive);
-
-  useEffect(() => {
-    if (isTrackingActive) {
-      setIsTrackingOpen(true);
-    }
-  }, [location.pathname, isTrackingActive]);
-
-  const isFemale = pathway === 'female';
-
-  // Dynamic theme styling - Unified #29b6f6 primary accent with restrained tones
+  // Visual styling tokens adhering to BioPulse design system
   const sidebarContainerClass =
     'w-64 bg-white border-r border-[#EAECF0] text-[#111318] flex flex-col h-screen sticky top-0 p-4 hidden md:flex shrink-0 select-none z-30 shadow-[0_1px_3px_rgba(0,0,0,0.02)]';
 
   const sectionLabelClass =
-    'text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 px-2.5 block mb-1';
+    'text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 px-3 block mb-1 select-none';
 
   const getLinkClasses = (active: boolean) => {
     if (active) {
       return isFemale
-        ? 'bg-[#FDE6EF] text-[#F43F7D] border border-[#F43F7D]/25 font-semibold shadow-xs'
-        : 'bg-[#E1F5FE] text-[#0288D1] border border-[#B3E5FC] font-semibold shadow-xs';
+        ? 'bg-[#FDE6EF] text-[#F43F7D] border-[#F43F7D]/25 font-semibold shadow-xs'
+        : 'bg-[#E1F5FE] text-[#0288D1] border-[#B3E5FC] font-semibold shadow-xs';
     }
     return 'border-transparent text-[#475569] hover:bg-slate-50 hover:text-[#0F172A] font-medium';
   };
@@ -169,208 +172,83 @@ export const AppSidebar: React.FC = () => {
 
   const getDotClass = () => (isFemale ? 'bg-[#F43F7D]' : 'bg-[#29B6F6]');
 
+  const renderNavLink = (item: NavItem) => {
+    const active = isItemActive(item.path);
+    const Icon = item.icon;
+
+    return (
+      <Link
+        key={item.path}
+        to={item.path}
+        aria-current={active ? 'page' : undefined}
+        className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all duration-150 group border outline-none focus-visible:ring-2 focus-visible:ring-offset-1 ${
+          isFemale
+            ? 'focus-visible:ring-[#F43F7D]/40'
+            : 'focus-visible:ring-[#0288D1]/40'
+        } ${getLinkClasses(active)}`}
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          <Icon
+            className={`w-5 h-5 shrink-0 transition-colors ${getIconClasses(active)}`}
+            aria-hidden="true"
+          />
+          <span className="truncate">{item.label}</span>
+        </div>
+        {active && (
+          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${getDotClass()}`} />
+        )}
+      </Link>
+    );
+  };
+
   return (
-    <aside className={sidebarContainerClass}>
+    <aside className={sidebarContainerClass} aria-label="Sidebar Navigation">
       {/* Brand Logo at Top */}
       <div className="px-2 py-2 shrink-0">
-        <Link to={overviewPath} className="flex items-center">
+        <Link to={overviewPath} className="flex items-center" aria-label="BioPulse AI Dashboard">
           <Logo size="sm" theme="light" showTagline tagline={brandTagline} />
         </Link>
       </div>
 
       {/* Navigation Links Area */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden my-3 pr-1 space-y-4 scrollbar-thin scrollbar-thumb-slate-200">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden my-2 pr-1 space-y-3.5 scrollbar-thin scrollbar-thumb-slate-200">
         {/* ── 1. MAIN Section ── */}
-        <nav className="space-y-1">
+        <nav aria-label="Main navigation" className="space-y-0.5">
           <span className={sectionLabelClass}>
-            Main
+            {t('mainSection', 'Main')}
           </span>
-
-          {mainItems.map((item) => {
-            const active = isItemActive(item.path);
-            const Icon = item.icon;
-
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all duration-150 group border ${getLinkClasses(active)}`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Icon
-                    className={`w-5 h-5 transition-colors ${getIconClasses(active)}`}
-                    aria-hidden="true"
-                  />
-                  <span>{item.label}</span>
-                </div>
-                {active && <span className={`w-1.5 h-1.5 rounded-full ${getDotClass()}`} />}
-              </Link>
-            );
-          })}
+          {mainItems.map(renderNavLink)}
         </nav>
 
         {/* ── 2. HEALTH Section ── */}
-        <nav className="space-y-1 pt-1">
+        <nav aria-label="Health navigation" className="space-y-0.5">
           <span className={sectionLabelClass}>
-            Health
+            {t('healthSection', 'Health')}
           </span>
-
-          {healthItems.map((item) => {
-            const active = isItemActive(item.path);
-            const Icon = item.icon;
-
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all duration-150 group border ${getLinkClasses(active)}`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Icon
-                    className={`w-5 h-5 transition-colors ${getIconClasses(active)}`}
-                    aria-hidden="true"
-                  />
-                  <span>{item.label}</span>
-                </div>
-                {active && <span className={`w-1.5 h-1.5 rounded-full ${getDotClass()}`} />}
-              </Link>
-            );
-          })}
+          {healthItems.map(renderNavLink)}
         </nav>
 
-        {/* ── 3. DAILY TRACKING (Collapsible) ── */}
-        <div className="pt-1">
-          <div className="rounded-xl overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setIsTrackingOpen(!isTrackingOpen)}
-              className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer select-none group border ${
-                isTrackingActive && !isTrackingOpen
-                  ? (isFemale ? 'bg-[#FDE6EF] text-[#F43F7D] border-[#F43F7D]/25' : 'bg-[#E1F5FE] text-[#0288D1] border-[#B3E5FC]')
-                  : 'border-transparent text-[#475569] hover:text-[#0F172A] hover:bg-slate-50'
-              }`}
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <ActivityHeart className={`w-5 h-5 shrink-0 ${isTrackingActive ? (isFemale ? 'text-[#F43F7D]' : 'text-[#29B6F6]') : 'text-[#64748B] group-hover:text-[#0F172A]'}`} aria-hidden="true" />
-                <span className="truncate">Daily Tracking</span>
-                {isTrackingActive && !isTrackingOpen && (
-                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isFemale ? 'bg-[#F43F7D]' : 'bg-[#29B6F6]'}`} />
-                )}
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-white border border-[#E2E8F0] text-[#64748B]">
-                  {trackingGroup.items.length}
-                </span>
-                <ChevronDown
-                  className={`w-4 h-4 text-[#64748B] transition-transform duration-200 ${
-                    isTrackingOpen ? (isFemale ? 'rotate-180 text-[#F43F7D]' : 'rotate-180 text-[#29B6F6]') : ''
-                  }`}
-                  aria-hidden="true"
-                />
-              </div>
-            </button>
-
-            <AnimatePresence initial={false}>
-              {isTrackingOpen && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.18, ease: 'easeInOut' }}
-                  className="overflow-hidden"
-                >
-                  <div className="ml-3 pl-2.5 my-1 border-l-2 border-[#E2E8F0] space-y-0.5">
-                    {trackingGroup.items.map((item) => {
-                      const active = isItemActive(item.path);
-                      const ItemIcon = item.icon;
-
-                      return (
-                        <Link
-                          key={item.path}
-                          to={item.path}
-                          className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] transition-all duration-150 group border ${
-                            active
-                              ? (isFemale
-                                  ? 'bg-[#FDE6EF] text-[#F43F7D] border-[#F43F7D]/25 font-semibold shadow-xs'
-                                  : 'bg-[#E1F5FE] text-[#0288D1] border-[#B3E5FC] font-semibold shadow-xs')
-                              : 'border-transparent text-[#475569] hover:bg-slate-50 hover:text-[#0F172A]'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <ItemIcon
-                              className={`w-4 h-4 shrink-0 transition-colors ${
-                                active ? (isFemale ? 'text-[#F43F7D]' : 'text-[#29B6F6]') : 'text-[#64748B] group-hover:text-[#0F172A]'
-                              }`}
-                              aria-hidden="true"
-                            />
-                            <span className="truncate">{item.label}</span>
-                          </div>
-                          {active && (
-                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isFemale ? 'bg-[#F43F7D]' : 'bg-[#29B6F6]'}`} />
-                          )}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-
-        {/* ── 4. AI INTELLIGENCE Section (Both Female & Male) ── */}
-        <nav className="space-y-1 pt-1">
+        {/* ── 3. DAILY TRACKING Section (Direct, un-collapsed) ── */}
+        <nav aria-label="Daily tracking navigation" className="space-y-0.5">
           <span className={sectionLabelClass}>
-            Intelligence
+            {t('dailyTrackingSection', 'Daily Tracking')}
           </span>
+          {dailyTrackingItems.map(renderNavLink)}
+        </nav>
 
-          {toolItems.map((item) => {
-            const active = isItemActive(item.path);
-            const Icon = item.icon;
-
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all duration-150 group border ${getLinkClasses(active)}`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Icon
-                    className={`w-5 h-5 transition-colors ${getIconClasses(active)}`}
-                    aria-hidden="true"
-                  />
-                  <span>{item.label}</span>
-                </div>
-                {active && <span className={`w-1.5 h-1.5 rounded-full ${getDotClass()}`} />}
-              </Link>
-            );
-          })}
+        {/* ── 4. INTELLIGENCE Section ── */}
+        <nav aria-label="Intelligence navigation" className="space-y-0.5">
+          <span className={sectionLabelClass}>
+            {t('intelligenceSection', 'Intelligence')}
+          </span>
+          {intelligenceItems.map(renderNavLink)}
         </nav>
       </div>
 
       {/* ── 5. ACCOUNT & Bottom Area ── */}
-      <div className="pt-3 border-t border-[#EAECF0] space-y-2.5 shrink-0">
-        <nav className="space-y-1">
-          {accountItems.map((item) => {
-            const active = isItemActive(item.path);
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs transition-colors border ${
-                  active
-                    ? (isFemale
-                        ? 'bg-[#FDE6EF] text-[#F43F7D] border-[#F43F7D]/25 font-semibold'
-                        : 'bg-[#E1F5FE] text-[#0288D1] border-[#B3E5FC] font-semibold')
-                    : 'border-transparent text-[#475569] hover:bg-slate-50 hover:text-[#0F172A]'
-                }`}
-              >
-                <Icon className={`w-5 h-5 ${active ? (isFemale ? 'text-[#F43F7D]' : 'text-[#29B6F6]') : 'text-[#64748B] group-hover:text-[#0F172A]'}`} aria-hidden="true" />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
+      <div className="pt-3 border-t border-[#EAECF0] space-y-2 shrink-0">
+        <nav aria-label="Account navigation" className="space-y-0.5">
+          {renderNavLink(settingsItem)}
         </nav>
 
         {/* User Profile Card */}

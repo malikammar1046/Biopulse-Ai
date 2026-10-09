@@ -19,38 +19,40 @@ interface TimelineEventCardProps {
   isFirst?: boolean;
   isLast?: boolean;
   onClick: () => void;
+  isFemale?: boolean;
 }
 
 export const TimelineEventCard: React.FC<TimelineEventCardProps> = ({
   event,
   isLast,
   onClick,
+  isFemale = false,
 }) => {
   const getCategoryTheme = (cat: TimelineCategory) => {
     switch (cat) {
       case 'cycle':
         return {
           icon: Calendar,
-          iconBg: 'bg-[#F0F9FF]',
-          iconColor: 'text-[#0288D1]',
-          badgeBg: 'bg-[#E0F2FE]',
-          badgeText: 'text-[#01579B]',
+          iconBg: isFemale ? 'bg-[#FDE6EF]' : 'bg-[#F0F9FF]',
+          iconColor: isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]',
+          badgeBg: isFemale ? 'bg-[#FDE6EF]' : 'bg-[#E0F2FE]',
+          badgeText: isFemale ? 'text-[#BE185D]' : 'text-[#01579B]',
         };
       case 'symptom':
         return {
           icon: Activity,
-          iconBg: 'bg-[#F0F9FF]',
-          iconColor: 'text-[#0288D1]',
-          badgeBg: 'bg-[#E0F2FE]',
-          badgeText: 'text-[#0288D1]',
+          iconBg: isFemale ? 'bg-[#FDE6EF]' : 'bg-[#F0F9FF]',
+          iconColor: isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]',
+          badgeBg: isFemale ? 'bg-[#FDE6EF]' : 'bg-[#E0F2FE]',
+          badgeText: isFemale ? 'text-[#BE185D]' : 'text-[#0288D1]',
         };
       case 'report':
         return {
           icon: File06,
-          iconBg: 'bg-[#F0F9FF]',
-          iconColor: 'text-[#0288D1]',
-          badgeBg: 'bg-[#E0F2FE]',
-          badgeText: 'text-[#0288D1]',
+          iconBg: isFemale ? 'bg-[#FDE6EF]' : 'bg-[#F0F9FF]',
+          iconColor: isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]',
+          badgeBg: isFemale ? 'bg-[#FDE6EF]' : 'bg-[#E0F2FE]',
+          badgeText: isFemale ? 'text-[#BE185D]' : 'text-[#0288D1]',
         };
       case 'medication':
         return {
@@ -120,16 +122,22 @@ export const TimelineEventCard: React.FC<TimelineEventCardProps> = ({
 
         {/* Vertical line connecting to next node */}
         {!isLast && (
-          <div className="w-0.5 flex-1 bg-[#BAE6FD] my-1" />
+          <div className={`w-0.5 flex-1 ${isFemale ? 'bg-[#FDE6EF]' : 'bg-[#BAE6FD]'} my-1`} />
         )}
       </div>
 
       {/* Main Event Content Card */}
       <div
         onClick={onClick}
-        className={`flex-1 mb-5 p-5 sm:p-6 rounded-2xl bg-white border transition-all duration-200 cursor-pointer shadow-none hover:border-[#0288D1] text-left select-none ${
+        className={`flex-1 mb-5 p-5 sm:p-6 rounded-2xl bg-white border transition-all duration-200 cursor-pointer shadow-none ${
+          isFemale ? 'hover:border-[#F43F7D]' : 'hover:border-[#0288D1]'
+        } text-left select-none ${
           isHighImportance
-            ? 'border-[#0288D1] ring-1 ring-[#BAE6FD]'
+            ? isFemale
+              ? 'border-[#F43F7D] ring-1 ring-[#FDE6EF]'
+              : 'border-[#0288D1] ring-1 ring-[#BAE6FD]'
+            : isFemale
+            ? 'border-[#FDE6EF]'
             : 'border-[#BAE6FD]'
         }`}
       >
@@ -170,7 +178,11 @@ export const TimelineEventCard: React.FC<TimelineEventCardProps> = ({
 
         {/* Event Title & Metric Pill */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-          <h3 className="text-sm sm:text-base font-bold text-[#0F172A] group-hover:text-[#0288D1] transition-colors">
+          <h3
+            className={`text-sm sm:text-base font-bold text-[#0F172A] ${
+              isFemale ? 'group-hover:text-[#F43F7D]' : 'group-hover:text-[#0288D1]'
+            } transition-colors`}
+          >
             {event.title}
           </h3>
 
@@ -198,7 +210,11 @@ export const TimelineEventCard: React.FC<TimelineEventCardProps> = ({
         {/* Bottom Clickable Hint */}
         <div className="mt-3 pt-2.5 border-t border-[#E2E8F0] flex items-center justify-between text-[11px] text-[#64748B]">
           <span>Click to view longitudinal details</span>
-          <div className="flex items-center gap-0.5 text-[#0288D1] font-semibold group-hover:translate-x-1 transition-transform">
+          <div
+            className={`flex items-center gap-0.5 ${
+              isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'
+            } font-semibold group-hover:translate-x-1 transition-transform`}
+          >
             <span>Details</span>
             <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
           </div>

@@ -40,7 +40,7 @@ export function kgToLbs(kg: number | null | undefined): number | null {
 
 export function lbsToKg(lbs: number | null | undefined): number | null {
   if (lbs === null || lbs === undefined || isNaN(lbs) || lbs <= 0) return null;
-  return Math.round((lbs / 2.20462) * 10) / 10;
+  return Math.round((lbs / 2.20462) * 100) / 100;
 }
 
 export function cmToInches(cm: number | null | undefined): number | null {
@@ -50,5 +50,5 @@ export function cmToInches(cm: number | null | undefined): number | null {
 
 export function inchesToCm(inches: number | null | undefined): number | null {
   if (inches === null || inches === undefined || isNaN(inches) || inches <= 0) return null;
-  return Math.round(inches * 2.54);
+  return Math.round(inches * 2.54 * 10) / 10;
 }

@@ -145,7 +145,11 @@ export const ExerciseModuleCard: React.FC<ExerciseModuleCardProps> = ({
 
           {/* Active Duration */}
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-sky-50 text-[#0284C7] flex items-center justify-center shrink-0">
+            <div
+              className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                isFemale ? 'bg-[#FDE6EF] text-[#E11D48]' : 'bg-sky-50 text-[#0284C7]'
+              }`}
+            >
               <MapPin className="w-3.5 h-3.5" aria-hidden="true" />
             </div>
             <div>

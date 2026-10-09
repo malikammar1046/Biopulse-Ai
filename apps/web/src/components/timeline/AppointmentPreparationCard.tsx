@@ -10,6 +10,7 @@ interface AppointmentPreparationCardProps {
   symptomsCount: number;
   flaggedReportsCount: number;
   onPrepareAppointment: () => void;
+  isFemale?: boolean;
 }
 
 export const AppointmentPreparationCard: React.FC<AppointmentPreparationCardProps> = ({
@@ -18,16 +19,24 @@ export const AppointmentPreparationCard: React.FC<AppointmentPreparationCardProp
   symptomsCount,
   flaggedReportsCount,
   onPrepareAppointment,
+  isFemale = false,
 }) => {
   const unansweredQuestions =
     upcomingAppointment?.doctorQuestions?.filter((q) => !q.isDiscussed).length || 0;
 
   return (
-    <div className="p-6 sm:p-7 rounded-2xl bg-white border border-[#BAE6FD] shadow-none space-y-4 select-none text-left">
+    <div
+      className={`p-6 sm:p-7 rounded-2xl bg-white border ${
+        isFemale ? 'border-[#FDE6EF]' : 'border-[#BAE6FD]'
+      } shadow-none space-y-4 select-none text-left`}
+    >
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <CalendarCheck01 className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
+          <CalendarCheck01
+            className={`w-5 h-5 ${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'} shrink-0`}
+            aria-hidden="true"
+          />
           <div>
             <h2 className="text-base sm:text-lg font-bold text-[#0F172A]">
               Prepare for Your Next Appointment
@@ -53,25 +62,47 @@ export const AppointmentPreparationCard: React.FC<AppointmentPreparationCardProp
               <span className="text-sm font-bold text-[#0F172A] block">
                 {upcomingAppointment.providerName} ({upcomingAppointment.providerSpecialty || 'Specialist'})
               </span>
-              <span className="text-xs text-[#0288D1] font-semibold block mt-0.5">
+              <span
+                className={`text-xs font-semibold block mt-0.5 ${
+                  isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'
+                }`}
+              >
                 Scheduled for {upcomingAppointment.scheduledDate} at {upcomingAppointment.scheduledTime}
               </span>
             </div>
 
             {/* Quick Metrics Badges for Preparation */}
             <div className="flex flex-wrap items-center gap-2 text-xs">
-              <span className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-[#E0F2FE] text-[#01579B] border border-[#BAE6FD] font-mono font-bold">
+              <span
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-xl font-mono font-bold ${
+                  isFemale
+                    ? 'bg-[#FDE6EF] text-[#BE185D] border border-[#F43F7D]/30'
+                    : 'bg-[#E0F2FE] text-[#01579B] border border-[#BAE6FD]'
+                }`}
+              >
                 <Calendar className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{currentPhase || 'Cycle'}</span>
               </span>
 
-              <span className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-sky-50 text-sky-800 border border-sky-200 font-mono font-bold">
+              <span
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-xl font-mono font-bold ${
+                  isFemale
+                    ? 'bg-pink-50 text-pink-800 border border-pink-200'
+                    : 'bg-sky-50 text-sky-800 border border-sky-200'
+                }`}
+              >
                 <Activity className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{symptomsCount} Symptoms</span>
               </span>
 
               {flaggedReportsCount > 0 && (
-                <span className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-sky-50 text-sky-800 border border-sky-200 font-mono font-bold">
+                <span
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-xl font-mono font-bold ${
+                    isFemale
+                      ? 'bg-pink-50 text-pink-800 border border-pink-200'
+                      : 'bg-sky-50 text-sky-800 border border-sky-200'
+                  }`}
+                >
                   <File06 className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>{flaggedReportsCount} Lab Findings</span>
                 </span>
@@ -95,7 +126,11 @@ export const AppointmentPreparationCard: React.FC<AppointmentPreparationCardProp
             <button
               type="button"
               onClick={onPrepareAppointment}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm transition-all cursor-pointer"
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white shadow-sm transition-all cursor-pointer ${
+                isFemale
+                  ? 'bg-[#F43F7D] hover:bg-[#E11D48]'
+                  : 'bg-[#0288D1] hover:bg-[#0277BD]'
+              }`}
             >
               <span>Prepare Consultation Summary</span>
               <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -110,7 +145,11 @@ export const AppointmentPreparationCard: React.FC<AppointmentPreparationCardProp
 
           <Link
             to={ROUTES.APP.APPOINTMENTS}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-[#01579B] bg-[#E0F2FE] hover:bg-[#BAE6FD] transition-colors shrink-0"
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-colors shrink-0 ${
+              isFemale
+                ? 'text-[#BE185D] bg-[#FDE6EF] hover:bg-[#FCE7F3]'
+                : 'text-[#01579B] bg-[#E0F2FE] hover:bg-[#BAE6FD]'
+            }`}
           >
             <span>Book Consultation</span>
             <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />

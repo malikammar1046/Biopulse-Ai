@@ -18,12 +18,14 @@ interface TimelineFiltersProps {
   filterState: TimelineFilterState;
   onFilterChange: (newFilters: Partial<TimelineFilterState>) => void;
   categoryCounts: Record<string, number>;
+  isFemale?: boolean;
 }
 
 export const TimelineFilters: React.FC<TimelineFiltersProps> = ({
   filterState,
   onFilterChange,
   categoryCounts,
+  isFemale = false,
 }) => {
   const dateRanges: { label: string; value: TimelineDateRange }[] = [
     { label: '7 Days', value: '7d' },
@@ -62,13 +64,17 @@ export const TimelineFilters: React.FC<TimelineFiltersProps> = ({
   };
 
   return (
-    <div className="p-5 sm:p-6 rounded-2xl bg-white border border-[#BAE6FD] shadow-none space-y-4 select-none">
+    <div
+      className={`p-5 sm:p-6 rounded-2xl bg-white border ${
+        isFemale ? 'border-[#FDE6EF]' : 'border-[#BAE6FD]'
+      } shadow-none space-y-4 select-none`}
+    >
       {/* Top Row: Date Range Buttons + Search + Milestone Toggle */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         {/* Date Range Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
           <span className="text-[11px] font-mono text-[#64748B] uppercase font-bold mr-1 flex items-center gap-1 shrink-0">
-            <Sliders01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
+            <Sliders01 className={`w-3.5 h-3.5 ${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'}`} aria-hidden="true" />
             <span>Horizon:</span>
           </span>
           {dateRanges.map((range) => {
@@ -80,7 +86,11 @@ export const TimelineFilters: React.FC<TimelineFiltersProps> = ({
                 onClick={() => onFilterChange({ dateRange: range.value })}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer border ${
                   isSelected
-                    ? 'bg-[#0288D1] border-[#0288D1] text-white shadow-xs'
+                    ? isFemale
+                      ? 'bg-[#F43F7D] border-[#F43F7D] text-white shadow-xs'
+                      : 'bg-[#0288D1] border-[#0288D1] text-white shadow-xs'
+                    : isFemale
+                    ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#475569] hover:bg-[#FDE6EF] hover:text-[#BE185D]'
                     : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#475569] hover:bg-[#E0F2FE] hover:text-[#0288D1]'
                 }`}
               >
@@ -100,7 +110,9 @@ export const TimelineFilters: React.FC<TimelineFiltersProps> = ({
               value={filterState.searchQuery}
               onChange={(e) => onFilterChange({ searchQuery: e.target.value })}
               placeholder="Search health events..."
-              className="w-full pl-8 pr-3 py-1.5 rounded-xl text-xs bg-[#F8FAFC] border border-[#E2E8F0] focus:outline-none focus:border-[#0288D1] text-[#0F172A] placeholder-[#94A3B8]"
+              className={`w-full pl-8 pr-3 py-1.5 rounded-xl text-xs bg-[#F8FAFC] border border-[#E2E8F0] focus:outline-none ${
+                isFemale ? 'focus:border-[#F43F7D]' : 'focus:border-[#0288D1]'
+              } text-[#0F172A] placeholder-[#94A3B8]`}
             />
           </div>
 
@@ -111,6 +123,8 @@ export const TimelineFilters: React.FC<TimelineFiltersProps> = ({
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer border ${
               filterState.onlyImportant
                 ? 'bg-amber-50 text-amber-800 border-amber-300'
+                : isFemale
+                ? 'bg-[#F8FAFC] text-[#475569] border-[#E2E8F0] hover:bg-[#FDE6EF]'
                 : 'bg-[#F8FAFC] text-[#475569] border-[#E2E8F0] hover:bg-[#E0F2FE]'
             }`}
           >
@@ -127,7 +141,11 @@ export const TimelineFilters: React.FC<TimelineFiltersProps> = ({
           onClick={selectAllCategories}
           className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer border ${
             filterState.selectedCategories.length === 0
-              ? 'bg-[#0288D1] border-[#0288D1] text-white shadow-xs'
+              ? isFemale
+                ? 'bg-[#F43F7D] border-[#F43F7D] text-white shadow-xs'
+                : 'bg-[#0288D1] border-[#0288D1] text-white shadow-xs'
+              : isFemale
+              ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#475569] hover:bg-[#FDE6EF] hover:text-[#BE185D]'
               : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#475569] hover:bg-[#E0F2FE] hover:text-[#0288D1]'
           }`}
         >
@@ -146,15 +164,19 @@ export const TimelineFilters: React.FC<TimelineFiltersProps> = ({
               onClick={() => toggleCategory(cat.value)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer border ${
                 isSelected
-                  ? 'bg-[#E0F2FE] text-[#01579B] border-[#0288D1]'
+                  ? isFemale
+                    ? 'bg-[#FDE6EF] text-[#BE185D] border-[#F43F7D]'
+                    : 'bg-[#E0F2FE] text-[#01579B] border-[#0288D1]'
                   : 'bg-white text-[#475569] border-[#E2E8F0] hover:bg-[#F8FAFC]'
               }`}
             >
-              <Icon className="w-3.5 h-3.5 text-[#0288D1]" />
+              <Icon className={`w-3.5 h-3.5 ${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'}`} />
               <span>{cat.label}</span>
               <span
                 className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
-                  isSelected ? 'bg-[#0288D1] text-white' : 'bg-[#E2E8F0] text-[#475569]'
+                  isSelected
+                    ? isFemale ? 'bg-[#F43F7D] text-white' : 'bg-[#0288D1] text-white'
+                    : 'bg-[#E2E8F0] text-[#475569]'
                 }`}
               >
                 {count}

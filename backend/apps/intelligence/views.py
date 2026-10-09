@@ -57,6 +57,7 @@ from apps.intelligence.services.pcos_ml_service import (
     TIER1_SCREENING_THRESHOLD,
     TIER2_SCREENING_THRESHOLD,
     MULTIMODAL_SCREENING_THRESHOLD,
+    UltrasoundInferenceError,
 )
 from apps.intelligence.services.male_ml_service import male_ml_service
 from apps.intelligence.services.safety_guardrails import SafetyGuardrails
@@ -294,6 +295,19 @@ class MaleTier1AssessmentView(APIView):
                 auth_token=auth_token,
                 client_health_data=client_payload,
             )
+            # Direct API eligibility enforcement: Reject ineligible requests
+            if result.get("risk_category") == "unavailable" and result.get("unavailable_reason") in (
+                "age_under_19", "age_over_60", "missing_age", "conflicting_age_and_dob", "future_dob", "invalid_dob"
+            ):
+                return Response(
+                    {
+                        "error": "Male screening is calibrated and available exclusively for adult men aged 19 to 60.",
+                        "details": result.get("summary_text"),
+                        "reason": result.get("unavailable_reason"),
+                        "eligible": False,
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             serializer = ProgressiveAssessmentSerializer(data=result)
             if serializer.is_valid():
                 return Response(serializer.validated_data, status=status.HTTP_200_OK)
@@ -344,7 +358,21 @@ class MaleTier2AssessmentView(APIView):
                 patient_uuid,
                 auth_token=auth_token,
                 clinical_inputs=clinical_payload,
+                client_health_data=clinical_payload,
             )
+            # Direct API eligibility enforcement: Reject ineligible requests
+            if result.get("risk_category") == "unavailable" and result.get("unavailable_reason") in (
+                "age_under_19", "age_over_60", "missing_age", "conflicting_age_and_dob", "future_dob", "invalid_dob"
+            ):
+                return Response(
+                    {
+                        "error": "Male screening is calibrated and available exclusively for adult men aged 19 to 60.",
+                        "details": result.get("summary_text"),
+                        "reason": result.get("unavailable_reason"),
+                        "eligible": False,
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             serializer = ProgressiveAssessmentSerializer(data=result)
             if serializer.is_valid():
                 return Response(serializer.validated_data, status=status.HTTP_200_OK)
@@ -591,6 +619,12 @@ class UltrasoundAssessmentView(APIView):
             return Response(
                 {"error": str(ve)},
                 status=status.HTTP_400_BAD_REQUEST,
+            )
+        except UltrasoundInferenceError as uie:
+            logger.error("Ultrasound inference error: %s", uie)
+            return Response(
+                {"error": "Ultrasound feature extraction failed.", "details": str(uie)},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
         except PersistenceError as pe:
             logger.error("Ultrasound assessment persistence error: %s", pe)

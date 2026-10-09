@@ -8,9 +8,10 @@ import {
   cmToInches,
   inchesToCm,
 } from '../../../utils/unitConversions';
-import { getDobInputBounds } from '../../../utils/profileValidation';
+import { getMaleDobInputBounds } from '../../../utils/profileValidation';
 import { OnboardingWhyModal, OnboardingWhyTrigger } from '../../../components/onboarding/OnboardingWhyModal';
 import { ProfilePictureSelector } from '../../../components/onboarding/ProfilePictureSelector';
+import { MeasurementInput } from '../../../components/common/MeasurementInput';
 
 interface MaleStep1Props {
   data: {
@@ -37,10 +38,8 @@ export const MaleStep1BasicInfo: React.FC<MaleStep1Props> = ({
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg');
   const [waistUnit, setWaistUnit] = useState<'cm' | 'in'>('cm');
 
-  const dobBounds = getDobInputBounds();
+  const dobBounds = getMaleDobInputBounds();
   const { feet, inches } = cmToFtIn(data.heightCm);
-  const displayLbs = kgToLbs(data.weightKg);
-  const displayWaistInches = cmToInches(data.waistCm);
 
   // Live BMI calculation
   const heightM = (data.heightCm || 178) / 100;
@@ -153,7 +152,7 @@ export const MaleStep1BasicInfo: React.FC<MaleStep1Props> = ({
               ) : (
                 <div className="flex items-center gap-1.5 text-xs text-[#55718F]">
                   <InfoCircle className="w-3.5 h-3.5 text-[#0288D1] shrink-0" aria-hidden="true" />
-                  <span>You must be 12 years or older to continue.</span>
+                  <span>Male screening is calibrated and available for adult men aged 19–60.</span>
                 </div>
               )}
             </div>
@@ -161,7 +160,7 @@ export const MaleStep1BasicInfo: React.FC<MaleStep1Props> = ({
             {/* Phone Number */}
             <div className="space-y-1.5">
               <label className="text-[14px] sm:text-[15px] font-semibold font-sans text-[#073B72] flex items-center justify-between">
-                <span>Phone (Pakistan) <span className="text-[#0288D1]">*</span></span>
+                <span>Phone (Pakistan) <span className="text-xs text-[#55718F] font-normal">(Optional)</span></span>
                 <span className="text-xs text-[#55718F] font-normal">03xx or +92</span>
               </label>
               <div className="relative">
@@ -311,48 +310,32 @@ export const MaleStep1BasicInfo: React.FC<MaleStep1Props> = ({
                   </div>
                 </div>
 
-                {weightUnit === 'kg' ? (
-                  <div className="relative">
-                    <input
-                      type="number"
-                      min={30}
-                      max={250}
-                      step="0.5"
-                      placeholder="80"
-                      value={data.weightKg || ''}
-                      onChange={(e) => onChange('weightKg', Number(e.target.value) || null)}
-                      className="w-full h-10 sm:h-11 px-3 pr-9 rounded-xl bg-white border border-[#D7EAF2] text-sm sm:text-base font-medium text-[#073B72] placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0288D1]"
-                    />
-                    <span className="absolute right-3 top-2.5 sm:top-3 text-xs text-[#55718F]">kg</span>
-                  </div>
-                ) : (
-                  <div className="relative">
-                    <input
-                      type="number"
-                      min={65}
-                      max={550}
-                      step="1"
-                      placeholder="176"
-                      value={displayLbs || ''}
-                      onChange={(e) => {
-                        const val = parseFloat(e.target.value);
-                        onChange('weightKg', lbsToKg(val));
-                      }}
-                      className="w-full h-10 sm:h-11 px-3 pr-9 rounded-xl bg-white border border-[#D7EAF2] text-sm sm:text-base font-medium text-[#073B72] placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0288D1]"
-                    />
-                    <span className="absolute right-3 top-2.5 sm:top-3 text-xs text-[#55718F]">lbs</span>
-                  </div>
-                )}
+                <MeasurementInput
+                  value={data.weightKg}
+                  onChange={(val) => onChange('weightKg', val)}
+                  unit={weightUnit}
+                  toDisplay={weightUnit === 'lbs' ? kgToLbs : undefined}
+                  fromDisplay={weightUnit === 'lbs' ? lbsToKg : undefined}
+                  placeholder={weightUnit === 'kg' ? '80' : '176'}
+                  unitLabel={weightUnit}
+                  className="w-full h-10 sm:h-11 px-3 pr-9 rounded-xl bg-white border border-[#D7EAF2] text-sm sm:text-base font-medium text-[#073B72] placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0288D1]"
+                />
               </div>
 
               {/* 3. Waist Circumference */}
               <div className="p-3 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-[13px] sm:text-[14px] font-semibold text-[#073B72] flex items-center gap-1.5">
-                    <Activity className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
-                    <span>Waist Size</span>
-                  </label>
-                  <div className="flex rounded-lg bg-[#EAEFF4] p-0.5 text-xs font-sans">
+                  <div>
+                    <label className="text-[13px] sm:text-[14px] font-semibold text-[#073B72] flex items-center gap-1.5">
+                      <Activity className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
+                      <span>Waist Size</span>
+                      <span className="text-xs text-[#55718F] font-normal">(optional)</span>
+                    </label>
+                    <p className="text-[11px] text-[#55718F] font-normal mt-0.5">
+                      Optional. Place a flexible tape measure horizontally just above the top of your hip bone (iliac crest) after exhaling normally. Note: self-measurements approximate clinical protocol.
+                    </p>
+                  </div>
+                  <div className="flex rounded-lg bg-[#EAEFF4] p-0.5 text-xs font-sans self-start">
                     <button
                       type="button"
                       onClick={() => setWaistUnit('cm')}
@@ -378,37 +361,16 @@ export const MaleStep1BasicInfo: React.FC<MaleStep1Props> = ({
                   </div>
                 </div>
 
-                {waistUnit === 'cm' ? (
-                  <div className="relative">
-                    <input
-                      type="number"
-                      min={50}
-                      max={180}
-                      placeholder="e.g. 95"
-                      value={data.waistCm || ''}
-                      onChange={(e) => onChange('waistCm', Number(e.target.value) || null)}
-                      className="w-full h-10 sm:h-11 px-3 pr-9 rounded-xl bg-white border border-[#D7EAF2] text-sm sm:text-base font-medium text-[#073B72] placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0288D1]"
-                    />
-                    <span className="absolute right-3 top-2.5 sm:top-3 text-xs text-[#55718F]">cm</span>
-                  </div>
-                ) : (
-                  <div className="relative">
-                    <input
-                      type="number"
-                      min={20}
-                      max={70}
-                      step="0.5"
-                      placeholder="34.5"
-                      value={displayWaistInches || ''}
-                      onChange={(e) => {
-                        const val = parseFloat(e.target.value);
-                        onChange('waistCm', inchesToCm(val));
-                      }}
-                      className="w-full h-10 sm:h-11 px-3 pr-9 rounded-xl bg-white border border-[#D7EAF2] text-sm sm:text-base font-medium text-[#073B72] placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0288D1]"
-                    />
-                    <span className="absolute right-3 top-2.5 sm:top-3 text-xs text-[#55718F]">in</span>
-                  </div>
-                )}
+                <MeasurementInput
+                  value={data.waistCm}
+                  onChange={(val) => onChange('waistCm', val)}
+                  unit={waistUnit}
+                  toDisplay={waistUnit === 'in' ? cmToInches : undefined}
+                  fromDisplay={waistUnit === 'in' ? inchesToCm : undefined}
+                  placeholder={waistUnit === 'cm' ? 'e.g. 95' : '34.5'}
+                  unitLabel={waistUnit}
+                  className="w-full h-10 sm:h-11 px-3 pr-9 rounded-xl bg-white border border-[#D7EAF2] text-sm sm:text-base font-medium text-[#073B72] placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0288D1]"
+                />
               </div>
             </div>
           </div>
@@ -437,9 +399,9 @@ export const MaleStep1BasicInfo: React.FC<MaleStep1Props> = ({
         </div>
 
         <div className="p-4 sm:p-4.5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2]">
-          <span className="font-bold text-[14px] sm:text-[15px] text-[#073B72] block mb-1">Screening Context:</span>
+          <span className="font-bold text-[14px] sm:text-[15px] text-[#073B72] block mb-1">Measurement Guidance:</span>
           <p className="text-[13px] sm:text-[14px] text-[#486581] leading-relaxed">
-            Under CDC reference data, waist measurement (&ge;94 cm or &ge;102 cm) is the single strongest clinical indicator of circulating testosterone and metabolic health.
+            Waist measurement is optional. In the NHANES reference protocol, trained examiners measure circumference at the uppermost border of the hip bone (iliac crest), not at the navel. For home self-reporting, measure horizontally just above your hip bone after a normal breath out. Self-measurements provide an approximate estimate.
           </p>
         </div>
       </OnboardingWhyModal>

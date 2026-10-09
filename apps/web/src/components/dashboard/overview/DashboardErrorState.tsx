@@ -4,7 +4,7 @@ import { AlertCircle, RefreshCw } from 'lucide-react';
 interface DashboardErrorStateProps {
   message?: string;
   onRetry?: () => void;
-  accentColor?: 'pink' | 'blue';
+  accentColor?: 'pink' | 'blue' | 'teal';
 }
 
 export const DashboardErrorState: React.FC<DashboardErrorStateProps> = ({
@@ -34,6 +34,8 @@ export const DashboardErrorState: React.FC<DashboardErrorStateProps> = ({
           className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer border ${
             isFemale
               ? 'border-[#F43F7D]/30 text-[#E11D48] hover:bg-[#FDE6EF]/40'
+              : accentColor === 'teal'
+              ? 'border-[#008CA5]/30 text-[#008CA5] hover:bg-[#E0F7FA]/40'
               : 'border-[#0284C7]/30 text-[#0284C7] hover:bg-[#E0F2FE]/40'
           }`}
         >

@@ -244,7 +244,7 @@ export type AssessmentLevel = 'tier_1' | 'tier_1_2' | 'tier_1_3' | 'tier_1_2_3';
 
 export type ProgressiveRiskCategory = 'lower' | 'intermediate' | 'higher' | 'insufficient_data';
 
-export type PCOMStatus = 'PCOM Detected' | 'PCOM Not Visible' | 'Not Assessed';
+export type PCOMStatus = 'PCOM Detected' | 'PCOM Not Detected' | 'Indeterminate';
 
 export interface AssessmentEvidenceUsed {
   tier_1: boolean;
@@ -260,13 +260,21 @@ export interface AvailableHistoricalEvidence {
 
 export interface FusionDetails {
   clinical_probability: number;
+  clinical_score?: number;
   ultrasound_pcom_probability?: number;
+  ultrasound_pcom_status?: PCOMStatus | string;
   ultrasound_probability?: number;
-  clinical_weight: number;
-  ultrasound_weight: number;
-  combined_score: number;
+  clinical_weight?: number;
+  ultrasound_weight?: number;
+  combined_score?: number;
   threshold?: number;
   fusion_method?: string;
+  score_source?: string;
+  numerical_score_anchored_to_tier2?: boolean;
+  multimodal_fusion_applied?: boolean;
+  exploratory_model_contributes_to_score?: boolean;
+  ultrasound_inference_error?: string | null;
+  note?: string;
 }
 
 export interface HormonePatternInterpretation {
@@ -322,7 +330,7 @@ export interface ProgressiveAssessment {
   limitations: string[];
   next_step?: string;
   next_available_tier?: number | null;
-  pcom_status?: string | null;
+  pcom_status?: PCOMStatus | null;
   pcom_probability?: number | null;
   gradcam_url?: string | null;
   gradcam_b64?: string | null;

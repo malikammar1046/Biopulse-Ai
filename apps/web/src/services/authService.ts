@@ -1,7 +1,7 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { User as SupabaseUser, Session as SupabaseSession } from '@supabase/supabase-js';
 import type { UserGender, HealthPathway } from '../types/onboarding';
-import { validateEmail } from '../utils/profileValidation';
+import { validateEmail, validateRegistrationPassword } from '../utils/profileValidation';
 
 export interface LoginPayload {
   email: string;
@@ -165,6 +165,14 @@ class AuthService {
       return {
         success: false,
         error: emailValidation.error || 'Please enter a valid email address.',
+      };
+    }
+
+    const passwordValidation = validateRegistrationPassword(payload.password);
+    if (!passwordValidation.isValid) {
+      return {
+        success: false,
+        error: passwordValidation.error || 'Password must be at least 8 characters and contain at least one letter and one number.',
       };
     }
 

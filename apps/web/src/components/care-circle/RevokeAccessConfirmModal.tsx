@@ -80,7 +80,7 @@ export const RevokeAccessConfirmModal: React.FC<RevokeAccessConfirmModalProps> =
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="flex-1 py-3 rounded-xl font-sans font-semibold text-xs text-[#475569] bg-[#F8FAFC] hover:bg-[#F0F9FF] border border-[#E2E8F0] transition-all cursor-pointer"
+              className="flex-1 py-3 rounded-xl font-sans font-semibold text-xs text-[#475569] bg-[#F8FAFC] hover:bg-slate-100 border border-[#E2E8F0] transition-all cursor-pointer"
             >
               Cancel
             </button>

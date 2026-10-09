@@ -21,12 +21,14 @@ interface TimelineDetailModalProps {
   event: TimelineEvent | null;
   isOpen: boolean;
   onClose: () => void;
+  isFemale?: boolean;
 }
 
 export const TimelineDetailModal: React.FC<TimelineDetailModalProps> = ({
   event,
   isOpen,
   onClose,
+  isFemale = false,
 }) => {
   const navigate = useNavigate();
 
@@ -35,11 +37,11 @@ export const TimelineDetailModal: React.FC<TimelineDetailModalProps> = ({
   const getCategoryIcon = (cat: TimelineCategory) => {
     switch (cat) {
       case 'cycle':
-        return <Calendar className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />;
+        return <Calendar className={`w-5 h-5 ${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'}`} aria-hidden="true" />;
       case 'symptom':
-        return <Activity className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />;
+        return <Activity className={`w-5 h-5 ${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'}`} aria-hidden="true" />;
       case 'report':
-        return <File06 className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />;
+        return <File06 className={`w-5 h-5 ${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'}`} aria-hidden="true" />;
       case 'medication':
         return <MedicalCross className="w-5 h-5 text-amber-600" aria-hidden="true" />;
       case 'nutrition':
@@ -47,10 +49,10 @@ export const TimelineDetailModal: React.FC<TimelineDetailModalProps> = ({
       case 'fitness':
         return <ActivityHeart className="w-5 h-5 text-sky-600" aria-hidden="true" />;
       case 'appointment':
-        return <CalendarCheck01 className="w-5 h-5 text-[#01579B]" aria-hidden="true" />;
+        return <CalendarCheck01 className={`w-5 h-5 ${isFemale ? 'text-[#BE185D]' : 'text-[#01579B]'}`} aria-hidden="true" />;
       case 'care_circle':
       default:
-        return <Users01 className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />;
+        return <Users01 className={`w-5 h-5 ${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'}`} aria-hidden="true" />;
     }
   };
 
@@ -91,7 +93,11 @@ export const TimelineDetailModal: React.FC<TimelineDetailModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs select-none">
-      <div className="relative w-full max-w-lg rounded-2xl bg-white border border-[#BAE6FD] shadow-xl p-6 sm:p-7 space-y-5 animate-in fade-in zoom-in-95 duration-200 text-left">
+      <div
+        className={`relative w-full max-w-lg rounded-2xl bg-white border ${
+          isFemale ? 'border-[#FDE6EF]' : 'border-[#BAE6FD]'
+        } shadow-xl p-6 sm:p-7 space-y-5 animate-in fade-in zoom-in-95 duration-200 text-left`}
+      >
         {/* Close Button */}
         <button
           type="button"
@@ -119,9 +125,15 @@ export const TimelineDetailModal: React.FC<TimelineDetailModalProps> = ({
         </div>
 
         {/* Meta Pills: Date, Time, Cycle Day, Metric */}
-        <div className="p-3.5 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] flex flex-wrap items-center gap-3 text-xs">
+        <div
+          className={`p-3.5 rounded-xl ${
+            isFemale
+              ? 'bg-[#FDE6EF]/60 border border-[#F43F7D]/25'
+              : 'bg-[#F0F9FF] border border-[#BAE6FD]'
+          } flex flex-wrap items-center gap-3 text-xs`}
+        >
           <div className="flex items-center gap-1.5 text-[#0F172A] font-semibold">
-            <Calendar className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
+            <Calendar className={`w-3.5 h-3.5 ${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'}`} aria-hidden="true" />
             <span>{formattedDate}</span>
           </div>
 
@@ -133,7 +145,13 @@ export const TimelineDetailModal: React.FC<TimelineDetailModalProps> = ({
           )}
 
           {event.cycleDay && (
-            <span className="px-2.5 py-0.5 rounded-full bg-[#E0F2FE] text-[#01579B] font-mono font-bold text-[10px]">
+            <span
+              className={`px-2.5 py-0.5 rounded-full ${
+                isFemale
+                  ? 'bg-[#FDE6EF] text-[#BE185D]'
+                  : 'bg-[#E0F2FE] text-[#01579B]'
+              } font-mono font-bold text-[10px]`}
+            >
               Cycle Day {event.cycleDay} {event.cyclePhase ? `(${event.cyclePhase})` : ''}
             </span>
           )}
@@ -178,8 +196,14 @@ export const TimelineDetailModal: React.FC<TimelineDetailModalProps> = ({
         )}
 
         {/* Educational Safe Guard Notice */}
-        <div className="p-3 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-start gap-2 text-xs text-[#01579B]">
-          <InfoCircle className="w-4 h-4 shrink-0 text-[#0288D1] mt-0.5" aria-hidden="true" />
+        <div
+          className={`p-3 rounded-xl ${
+            isFemale
+              ? 'bg-[#FDE6EF]/50 border border-[#F43F7D]/30 text-[#BE185D]'
+              : 'bg-[#F0F9FF] border border-[#BAE6FD] text-[#01579B]'
+          } flex items-start gap-2 text-xs`}
+        >
+          <InfoCircle className={`w-4 h-4 shrink-0 ${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'} mt-0.5`} aria-hidden="true" />
           <p className="text-[11px] leading-relaxed">
             Longitudinal records help build patterns for discussion with your healthcare provider. BIOPulse AI provides educational synthesis, not clinical diagnosis.
           </p>
@@ -190,7 +214,9 @@ export const TimelineDetailModal: React.FC<TimelineDetailModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-semibold text-[#64748B] bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-[#E0F2FE] hover:text-[#0288D1] transition-all cursor-pointer"
+            className={`px-4 py-2 rounded-xl text-xs font-semibold text-[#64748B] bg-[#F8FAFC] border border-[#E2E8F0] ${
+              isFemale ? 'hover:bg-[#FDE6EF] hover:text-[#BE185D]' : 'hover:bg-[#E0F2FE] hover:text-[#0288D1]'
+            } transition-all cursor-pointer`}
           >
             Close
           </button>
@@ -198,7 +224,11 @@ export const TimelineDetailModal: React.FC<TimelineDetailModalProps> = ({
           <button
             type="button"
             onClick={handleNavigateToSource}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm transition-all cursor-pointer"
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-white shadow-sm transition-all cursor-pointer ${
+              isFemale
+                ? 'bg-[#F43F7D] hover:bg-[#E11D48]'
+                : 'bg-[#0288D1] hover:bg-[#0277BD]'
+            }`}
           >
             <span>Open in {event.sourceModule}</span>
             <LinkExternal01 className="w-3.5 h-3.5" aria-hidden="true" />

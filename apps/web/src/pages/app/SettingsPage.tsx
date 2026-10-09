@@ -198,7 +198,7 @@ export const SettingsPage: React.FC = () => {
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-[#0288D1] uppercase tracking-wider">
+            <span className={`text-xs font-bold uppercase tracking-wider ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`}>
               {t('settings:clinicalCenter', 'Clinical Health Center')}
             </span>
             <span className="text-slate-300">•</span>
@@ -273,7 +273,9 @@ export const SettingsPage: React.FC = () => {
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full p-3 rounded-2xl text-left transition-all flex items-center justify-between group cursor-pointer ${
                     isActive
-                      ? 'bg-[#F0F9FF] text-[#01579B] font-bold shadow-xs border border-[#BAE6FD]'
+                      ? isMale
+                        ? 'bg-[#F0F9FF] text-[#01579B] font-bold shadow-xs border border-[#BAE6FD]'
+                        : 'bg-[#FDE6EF] text-[#BE185D] font-bold shadow-xs border border-[#F43F7D]/30'
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'
                   }`}
                 >
@@ -281,7 +283,9 @@ export const SettingsPage: React.FC = () => {
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
                         isActive
-                          ? 'bg-[#0288D1] text-white shadow-xs'
+                          ? isMale
+                            ? 'bg-[#0288D1] text-white shadow-xs'
+                            : 'bg-[#F43F7D] text-white shadow-xs'
                           : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200/80 group-hover:text-slate-700'
                       }`}
                     >
@@ -298,7 +302,7 @@ export const SettingsPage: React.FC = () => {
 
                   <ChevronRight
                     className={`w-4 h-4 shrink-0 transition-transform ${
-                      isActive ? 'text-[#0288D1] translate-x-0.5' : 'text-slate-300'
+                      isActive ? (isMale ? 'text-[#0288D1] translate-x-0.5' : 'text-[#F43F7D] translate-x-0.5') : 'text-slate-300'
                     }`}
                     aria-hidden="true"
                   />
@@ -354,6 +358,7 @@ export const SettingsPage: React.FC = () => {
                 <AccountTab
                   draft={draft}
                   setDraft={setDraft}
+                  isMale={isMale}
                   onLogout={handleLogout}
                   onRestartOnboarding={handleRestartOnboarding}
                   onOpenDeleteModal={() => {

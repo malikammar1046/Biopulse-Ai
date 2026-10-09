@@ -29,6 +29,8 @@ import {
   CARE_CIRCLE_PERMISSION_DEFINITIONS,
   PRESET_PERMISSIONS,
 } from '../../types/careCircle';
+import { useUserHealth } from '../../context/UserHealthContext';
+import { resolvePathway } from '../../types/onboarding';
 
 interface AddCareMemberModalProps {
   isOpen: boolean;
@@ -43,6 +45,10 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
   onSubmit,
   initialRole = 'doctor',
 }) => {
+  const { userProfile } = useUserHealth();
+  const pathway = resolvePathway(userProfile?.gender, userProfile?.pathway);
+  const isFemale = pathway === 'female';
+
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [role, setRole] = useState<CareCircleRole>(initialRole);
   const [name, setName] = useState('');
@@ -169,20 +175,20 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
           initial={{ opacity: 0, scale: 0.96, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 15 }}
-          className="relative w-full max-w-2xl max-h-[90vh] bg-white rounded-2xl shadow-xl border border-[#BAE6FD] flex flex-col text-left select-none z-10 overflow-hidden"
+          className={`relative w-full max-w-2xl max-h-[90vh] bg-white rounded-2xl shadow-xl border ${isFemale ? 'border-[#FDE6EF]' : 'border-[#BAE6FD]'} flex flex-col text-left select-none z-10 overflow-hidden`}
         >
           {/* Header */}
-          <div className="p-6 sm:p-7 border-b border-[#BAE6FD] flex items-center justify-between shrink-0 bg-[#01579B] text-white">
+          <div className={`p-6 sm:p-7 border-b ${isFemale ? 'border-[#FDE6EF] bg-[#BE185D]' : 'border-[#BAE6FD] bg-[#01579B]'} flex items-center justify-between shrink-0 text-white`}>
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="p-1.5 rounded-xl bg-white/10 text-white">
-                  <Users01 className="w-4 h-4 text-[#BAE6FD]" aria-hidden="true" />
+                  <Users01 className={`w-4 h-4 ${isFemale ? 'text-[#FDE6EF]' : 'text-[#BAE6FD]'}`} aria-hidden="true" />
                 </span>
                 <h3 className="text-xl font-bold font-display text-white">
                   {step === 4 ? 'Invitation Created' : 'Add to Care Circle'}
                 </h3>
               </div>
-              <p className="text-xs text-[#E0F2FE]">
+              <p className={`text-xs ${isFemale ? 'text-[#FCE7F3]' : 'text-[#E0F2FE]'}`}>
                 {step === 1 && 'Step 1 of 3: Choose who can support your health journey.'}
                 {step === 2 && 'Step 2 of 3: Enter contact information.'}
                 {step === 3 && 'Step 3 of 3: Set granular access permissions.'}
@@ -225,9 +231,9 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                   <button
                     type="button"
                     onClick={() => handleRoleSelect('doctor')}
-                    className="p-6 rounded-2xl border text-left transition-all flex flex-col justify-between gap-4 group cursor-pointer hover:border-[#0288D1] hover:bg-[#F0F9FF] border-[#BAE6FD] bg-white shadow-xs"
+                    className={`p-6 rounded-2xl border text-left transition-all flex flex-col justify-between gap-4 group cursor-pointer ${isFemale ? 'hover:border-[#F43F7D] hover:bg-[#FFF8FA] border-[#FDE6EF]' : 'hover:border-[#0288D1] hover:bg-[#F0F9FF] border-[#BAE6FD]'} bg-white shadow-xs`}
                   >
-                    <div className="w-12 h-12 rounded-xl bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD] flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <div className={`w-12 h-12 rounded-xl ${isFemale ? 'bg-[#FDE6EF] text-[#F43F7D] border-[#FDE6EF]' : 'bg-[#F0F9FF] text-[#0288D1] border-[#BAE6FD]'} border flex items-center justify-center group-hover:scale-105 transition-transform`}>
                       <MedicalCircle className="w-6 h-6" aria-hidden="true" />
                     </div>
                     <div>
@@ -238,7 +244,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                         Gynecologist, endocrinologist, or fertility specialist.
                       </span>
                     </div>
-                    <span className="text-[10px] font-mono font-bold text-[#0288D1] inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                    <span className={`text-[10px] font-mono font-bold ${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'} inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform`}>
                       Select Doctor <ArrowRight className="w-3 h-3" aria-hidden="true" />
                     </span>
                   </button>
@@ -247,7 +253,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                   <button
                     type="button"
                     onClick={() => handleRoleSelect('family')}
-                    className="p-6 rounded-2xl border text-left transition-all flex flex-col justify-between gap-4 group cursor-pointer hover:border-[#0288D1] hover:bg-[#F0F9FF] border-[#BAE6FD] bg-white shadow-xs"
+                    className={`p-6 rounded-2xl border text-left transition-all flex flex-col justify-between gap-4 group cursor-pointer ${isFemale ? 'hover:border-[#F43F7D] hover:bg-[#FFF8FA] border-[#FDE6EF]' : 'hover:border-[#0288D1] hover:bg-[#F0F9FF] border-[#BAE6FD]'} bg-white shadow-xs`}
                   >
                     <div className="w-12 h-12 rounded-xl bg-[#FFE4E6] text-[#E11D48] border border-[#FFE4E6] flex items-center justify-center group-hover:scale-105 transition-transform">
                       <Heart className="w-6 h-6" aria-hidden="true" />
@@ -260,7 +266,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                         Mother, sister, partner, or daughter for personal support.
                       </span>
                     </div>
-                    <span className="text-[10px] font-mono font-bold text-[#0288D1] inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                    <span className={`text-[10px] font-mono font-bold ${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'} inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform`}>
                       Select Family <ArrowRight className="w-3 h-3" aria-hidden="true" />
                     </span>
                   </button>
@@ -269,9 +275,9 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                   <button
                     type="button"
                     onClick={() => handleRoleSelect('trusted_person')}
-                    className="p-6 rounded-2xl border text-left transition-all flex flex-col justify-between gap-4 group cursor-pointer hover:border-[#0288D1] hover:bg-[#F0F9FF] border-[#BAE6FD] bg-white shadow-xs"
+                    className={`p-6 rounded-2xl border text-left transition-all flex flex-col justify-between gap-4 group cursor-pointer ${isFemale ? 'hover:border-[#F43F7D] hover:bg-[#FFF8FA] border-[#FDE6EF]' : 'hover:border-[#0288D1] hover:bg-[#F0F9FF] border-[#BAE6FD]'} bg-white shadow-xs`}
                   >
-                    <div className="w-12 h-12 rounded-xl bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD] flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <div className={`w-12 h-12 rounded-xl ${isFemale ? 'bg-[#FDE6EF] text-[#F43F7D] border-[#FDE6EF]' : 'bg-[#F0F9FF] text-[#0288D1] border-[#BAE6FD]'} border flex items-center justify-center group-hover:scale-105 transition-transform`}>
                       <ShieldTick className="w-6 h-6" aria-hidden="true" />
                     </div>
                     <div>
@@ -282,7 +288,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                         Close friend, wellness advocate, or personal caregiver.
                       </span>
                     </div>
-                    <span className="text-[10px] font-mono font-bold text-[#0288D1] inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                    <span className={`text-[10px] font-mono font-bold ${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'} inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform`}>
                       Select Trusted <ArrowRight className="w-3 h-3" aria-hidden="true" />
                     </span>
                   </button>
@@ -293,9 +299,9 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
             {/* ── STEP 2: DETAILS ENTRY ── */}
             {step === 2 && (
               <form onSubmit={handleStep2Submit} className="space-y-4">
-                <div className="p-3.5 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-center justify-between text-xs">
+                <div className={`p-3.5 rounded-xl ${isFemale ? 'bg-[#FFF8FA] border-[#FDE6EF]' : 'bg-[#F0F9FF] border-[#BAE6FD]'} border flex items-center justify-between text-xs`}>
                   <span className="text-[#475569]">Adding as:</span>
-                  <span className="font-mono font-bold px-3 py-1 rounded-full bg-white text-[#0288D1] border border-[#BAE6FD] capitalize">
+                  <span className={`font-mono font-bold px-3 py-1 rounded-full bg-white ${isFemale ? 'text-[#F43F7D] border-[#FDE6EF]' : 'text-[#0288D1] border-[#BAE6FD]'} border capitalize`}>
                     {role === 'doctor' ? 'Doctor / Healthcare Professional' : role === 'family' ? 'Family Member' : 'Trusted Person'}
                   </span>
                 </div>
@@ -312,7 +318,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                       placeholder={role === 'doctor' ? 'e.g. Dr. Sarah Malik' : 'e.g. Mariam Khan'}
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#F8FAFC] border border-[#BAE6FD] text-sm text-[#0F172A] focus:outline-hidden focus:border-[#0288D1] focus:bg-white transition-all"
+                      className={`w-full pl-10 pr-4 py-3 rounded-xl bg-[#F8FAFC] border ${isFemale ? 'border-[#FDE6EF] focus:border-[#F43F7D]' : 'border-[#BAE6FD] focus:border-[#0288D1]'} text-sm text-[#0F172A] focus:outline-hidden focus:bg-white transition-all`}
                     />
                   </div>
                 </div>
@@ -329,7 +335,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                       placeholder="e.g. sarah.malik@clinic.org"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#F8FAFC] border border-[#BAE6FD] text-sm text-[#0F172A] focus:outline-hidden focus:border-[#0288D1] focus:bg-white transition-all"
+                      className={`w-full pl-10 pr-4 py-3 rounded-xl bg-[#F8FAFC] border ${isFemale ? 'border-[#FDE6EF] focus:border-[#F43F7D]' : 'border-[#BAE6FD] focus:border-[#0288D1]'} text-sm text-[#0F172A] focus:outline-hidden focus:bg-white transition-all`}
                     />
                   </div>
                   <span className="text-[10px] text-[#64748B] block">
@@ -352,7 +358,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                     }
                     value={relationship}
                     onChange={(e) => setRelationship(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-[#F8FAFC] border border-[#BAE6FD] text-sm text-[#0F172A] focus:outline-hidden focus:border-[#0288D1] focus:bg-white transition-all"
+                    className={`w-full px-4 py-3 rounded-xl bg-[#F8FAFC] border ${isFemale ? 'border-[#FDE6EF] focus:border-[#F43F7D]' : 'border-[#BAE6FD] focus:border-[#0288D1]'} text-sm text-[#0F172A] focus:outline-hidden focus:bg-white transition-all`}
                   />
                 </div>
 
@@ -368,7 +374,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                         placeholder="e.g. Harley St. Women’s Health, City Hospital"
                         value={clinicOrganization}
                         onChange={(e) => setClinicOrganization(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#F8FAFC] border border-[#BAE6FD] text-sm text-[#0F172A] focus:outline-hidden focus:border-[#0288D1] focus:bg-white transition-all"
+                        className={`w-full pl-10 pr-4 py-3 rounded-xl bg-[#F8FAFC] border ${isFemale ? 'border-[#FDE6EF] focus:border-[#F43F7D]' : 'border-[#BAE6FD] focus:border-[#0288D1]'} text-sm text-[#0F172A] focus:outline-hidden focus:bg-white transition-all`}
                       />
                     </div>
                   </div>
@@ -378,7 +384,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setStep(1)}
-                    className="px-4 py-2.5 rounded-xl font-sans font-bold text-xs text-[#475569] bg-[#F8FAFC] hover:bg-[#F0F9FF] border border-[#E2E8F0] transition-colors flex items-center gap-1.5 cursor-pointer"
+                    className={`px-4 py-2.5 rounded-xl font-sans font-bold text-xs text-[#475569] bg-[#F8FAFC] ${isFemale ? 'hover:bg-[#FFF8FA]' : 'hover:bg-[#F0F9FF]'} border border-[#E2E8F0] transition-colors flex items-center gap-1.5 cursor-pointer`}
                   >
                     <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Back</span>
@@ -386,7 +392,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
 
                   <button
                     type="submit"
-                    className="px-6 py-2.5 rounded-xl font-sans font-semibold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm transition-all flex items-center gap-2 cursor-pointer"
+                    className={`px-6 py-2.5 rounded-xl font-sans font-semibold text-xs text-white ${isFemale ? 'bg-[#F43F7D] hover:bg-[#BE185D]' : 'bg-[#0288D1] hover:bg-[#0277BD]'} shadow-sm transition-all flex items-center gap-2 cursor-pointer`}
                   >
                     <span>Choose Permissions</span>
                     <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -418,14 +424,18 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                           onClick={() => handlePresetSelect(p.id as CareCirclePreset)}
                           className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                             isSelected
-                              ? 'bg-[#01579B] border-[#0288D1] text-white shadow-sm'
+                              ? isFemale
+                                ? 'bg-[#BE185D] border-[#F43F7D] text-white shadow-sm'
+                                : 'bg-[#01579B] border-[#0288D1] text-white shadow-sm'
+                              : isFemale
+                              ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] hover:bg-[#FFF8FA] hover:border-[#FDE6EF]'
                               : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] hover:bg-[#F0F9FF] hover:border-[#BAE6FD]'
                           }`}
                         >
-                          <span className={`text-[11px] font-mono font-bold block ${isSelected ? 'text-[#BAE6FD]' : 'text-[#0288D1]'}`}>
+                          <span className={`text-[11px] font-mono font-bold block ${isSelected ? (isFemale ? 'text-[#FDE6EF]' : 'text-[#BAE6FD]') : (isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]')}`}>
                             {p.label}
                           </span>
-                          <span className={`text-[10px] block truncate ${isSelected ? 'text-[#E0F2FE]' : 'text-[#64748B]'}`}>
+                          <span className={`text-[10px] block truncate ${isSelected ? (isFemale ? 'text-[#FCE7F3]' : 'text-[#E0F2FE]') : 'text-[#64748B]'}`}>
                             {p.desc}
                           </span>
                         </button>
@@ -435,8 +445,8 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                 </div>
 
                 {/* Privacy Guarantee Note */}
-                <div className="p-4 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-start gap-3">
-                  <Shield01 className="w-4 h-4 text-[#0288D1] shrink-0 mt-0.5" aria-hidden="true" />
+                <div className={`p-4 rounded-xl ${isFemale ? 'bg-[#FFF8FA] border-[#FDE6EF]' : 'bg-[#F0F9FF] border-[#BAE6FD]'} border flex items-start gap-3`}>
+                  <Shield01 className={`w-4 h-4 ${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'} shrink-0 mt-0.5`} aria-hidden="true" />
                   <div className="text-xs space-y-0.5">
                     <span className="font-bold text-[#0F172A] block">
                       Patient Ownership Guarantee
@@ -462,7 +472,9 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                           onClick={() => handleTogglePermission(def.key)}
                           className={`p-3.5 rounded-xl border transition-all flex items-center justify-between gap-4 cursor-pointer ${
                             isEnabled
-                              ? 'bg-[#F0F9FF] border-[#BAE6FD]'
+                              ? isFemale
+                                ? 'bg-[#FFF8FA] border-[#FDE6EF]'
+                                : 'bg-[#F0F9FF] border-[#BAE6FD]'
                               : 'bg-white border-[#E2E8F0] hover:bg-[#F8FAFC]'
                           }`}
                         >
@@ -483,7 +495,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                           {/* Switch Switcher */}
                           <div
                             className={`w-11 h-6 rounded-full transition-colors relative shrink-0 p-0.5 ${
-                              isEnabled ? 'bg-[#0288D1]' : 'bg-[#CBD5E1]'
+                              isEnabled ? (isFemale ? 'bg-[#F43F7D]' : 'bg-[#0288D1]') : 'bg-[#CBD5E1]'
                             }`}
                           >
                             <motion.div
@@ -494,7 +506,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                               }`}
                             >
                               {isEnabled ? (
-                                <Check className="w-3 h-3 text-[#0288D1]" aria-hidden="true" />
+                                <Check className={`w-3 h-3 ${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'}`} aria-hidden="true" />
                               ) : (
                                 <Lock01 className="w-2.5 h-2.5 text-[#94A3B8]" aria-hidden="true" />
                               )}
@@ -520,7 +532,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                     type="button"
                     onClick={() => setStep(2)}
                     disabled={isSubmitting}
-                    className="px-4 py-2.5 rounded-xl font-sans font-bold text-xs text-[#475569] bg-[#F8FAFC] hover:bg-[#F0F9FF] border border-[#E2E8F0] transition-colors flex items-center gap-1.5 cursor-pointer"
+                    className={`px-4 py-2.5 rounded-xl font-sans font-bold text-xs text-[#475569] bg-[#F8FAFC] ${isFemale ? 'hover:bg-[#FFF8FA]' : 'hover:bg-[#F0F9FF]'} border border-[#E2E8F0] transition-colors flex items-center gap-1.5 cursor-pointer`}
                   >
                     <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Back</span>
@@ -530,7 +542,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                     type="button"
                     onClick={handleFinalSubmit}
                     disabled={isSubmitting}
-                    className="px-6 py-3 rounded-xl font-sans font-semibold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60"
+                    className={`px-6 py-3 rounded-xl font-sans font-semibold text-xs text-white ${isFemale ? 'bg-[#F43F7D] hover:bg-[#BE185D]' : 'bg-[#0288D1] hover:bg-[#0277BD]'} shadow-sm transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60`}
                   >
                     {isSubmitting ? (
                       <>
@@ -539,7 +551,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                       </>
                     ) : (
                       <>
-                        <Mail01 className="w-3.5 h-3.5 text-[#BAE6FD]" aria-hidden="true" />
+                        <Mail01 className={`w-3.5 h-3.5 ${isFemale ? 'text-[#FDE6EF]' : 'text-[#BAE6FD]'}`} aria-hidden="true" />
                         <span>Send Invitation & Generate Link</span>
                       </>
                     )}
@@ -565,8 +577,8 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                 </div>
 
                 {/* Copyable Link Box */}
-                <div className="p-4 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] space-y-3 text-left">
-                  <span className="text-[10px] font-mono text-[#0369A1] uppercase block font-bold">
+                <div className={`p-4 rounded-xl ${isFemale ? 'bg-[#FFF8FA] border-[#FDE6EF]' : 'bg-[#F0F9FF] border-[#BAE6FD]'} border space-y-3 text-left`}>
+                  <span className={`text-[10px] font-mono ${isFemale ? 'text-[#BE185D]' : 'text-[#0369A1]'} uppercase block font-bold`}>
                     Direct Care Provider Link
                   </span>
                   <div className="flex items-center gap-2">
@@ -574,12 +586,12 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                       type="text"
                       readOnly
                       value={generatedInviteLink}
-                      className="flex-1 px-3.5 py-2.5 rounded-xl bg-white border border-[#BAE6FD] font-mono text-xs text-[#0288D1] truncate focus:outline-hidden"
+                      className={`flex-1 px-3.5 py-2.5 rounded-xl bg-white border ${isFemale ? 'border-[#FDE6EF] text-[#F43F7D]' : 'border-[#BAE6FD] text-[#0288D1]'} font-mono text-xs truncate focus:outline-hidden`}
                     />
                     <button
                       type="button"
                       onClick={handleCopyLink}
-                      className="px-4 py-2.5 rounded-xl font-sans font-semibold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+                      className={`px-4 py-2.5 rounded-xl font-sans font-semibold text-xs text-white ${isFemale ? 'bg-[#F43F7D] hover:bg-[#BE185D]' : 'bg-[#0288D1] hover:bg-[#0277BD]'} shadow-sm transition-all flex items-center gap-1.5 shrink-0 cursor-pointer`}
                     >
                       {copied ? <Check className="w-3.5 h-3.5" aria-hidden="true" /> : <Copy01 className="w-3.5 h-3.5" aria-hidden="true" />}
                       <span>{copied ? 'Copied!' : 'Copy Link'}</span>
@@ -593,7 +605,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                     href={generatedInviteLink}
                     target="_blank"
                     rel="noreferrer"
-                    className="w-full sm:w-auto px-6 py-3 rounded-xl font-sans font-semibold text-xs text-[#0288D1] bg-[#F0F9FF] hover:bg-[#E0F2FE] border border-[#BAE6FD] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    className={`w-full sm:w-auto px-6 py-3 rounded-xl font-sans font-semibold text-xs ${isFemale ? 'text-[#F43F7D] bg-[#FFF8FA] hover:bg-[#FDE6EF] border-[#FDE6EF]' : 'text-[#0288D1] bg-[#F0F9FF] hover:bg-[#E0F2FE] border-[#BAE6FD]'} border transition-all flex items-center justify-center gap-2 cursor-pointer`}
                   >
                     <span>Preview Doctor / Portal View</span>
                     <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -602,7 +614,7 @@ export const AddCareMemberModal: React.FC<AddCareMemberModalProps> = ({
                   <button
                     type="button"
                     onClick={handleClose}
-                    className="w-full sm:w-auto px-8 py-3 rounded-xl font-sans font-semibold text-xs text-white bg-[#01579B] hover:bg-[#0277BD] transition-all cursor-pointer shadow-sm"
+                    className={`w-full sm:w-auto px-8 py-3 rounded-xl font-sans font-semibold text-xs text-white ${isFemale ? 'bg-[#BE185D] hover:bg-[#9D174D]' : 'bg-[#01579B] hover:bg-[#0277BD]'} transition-all cursor-pointer shadow-sm`}
                   >
                     Done
                   </button>

@@ -15,6 +15,7 @@ interface MaleOnboardingLayoutProps {
   onBack: () => void;
   isSubmitting?: boolean;
   canGoBack?: boolean;
+  hideBottomNav?: boolean;
   children: React.ReactNode;
 }
 
@@ -27,6 +28,7 @@ export const MaleOnboardingLayout: React.FC<MaleOnboardingLayoutProps> = ({
   onBack,
   isSubmitting = false,
   canGoBack = true,
+  hideBottomNav = false,
   children,
 }) => {
   const { t } = useTranslation(['onboarding', 'common']);
@@ -163,46 +165,48 @@ export const MaleOnboardingLayout: React.FC<MaleOnboardingLayoutProps> = ({
             </div>
 
             {/* Bottom Navigation Row with Responsive Touch-Friendly Buttons */}
-            <div className={`mt-6 pt-4 sm:pt-5 border-t border-[#E8F1F5] flex items-center ${currentStep === 1 ? 'justify-end' : 'justify-between'} gap-2 sm:gap-4 shrink-0`}>
-              {/* Back Button */}
-              {currentStep > 1 && (
+            {!hideBottomNav && (
+              <div className={`mt-6 pt-4 sm:pt-5 border-t border-[#E8F1F5] flex items-center ${currentStep === 1 ? 'justify-end' : 'justify-between'} gap-2 sm:gap-4 shrink-0`}>
+                {/* Back Button */}
+                {currentStep > 1 && (
+                  <button
+                    type="button"
+                    onClick={onBack}
+                    disabled={!canGoBack || isSubmitting}
+                    className="min-h-[44px] sm:min-h-[50px] px-4 sm:px-7 py-2.5 sm:py-3 rounded-full text-xs sm:text-[15px] font-semibold font-sans uppercase tracking-wider flex items-center gap-1.5 sm:gap-2.5 transition-all cursor-pointer bg-[#F5FBFD] hover:bg-[#E8F4F8] border border-[#D7EAF2] text-[#55718F] hover:text-[#073B72]"
+                  >
+                    <ArrowLeft className="w-4 h-4 sm:w-4.5 sm:h-4.5" aria-hidden="true" />
+                    <span>{t('onboarding:layout.back', 'Back')}</span>
+                  </button>
+                )}
+
+                {/* Continue / Submit Button */}
                 <button
                   type="button"
-                  onClick={onBack}
-                  disabled={!canGoBack || isSubmitting}
-                  className="min-h-[44px] sm:min-h-[50px] px-4 sm:px-7 py-2.5 sm:py-3 rounded-full text-xs sm:text-[15px] font-semibold font-sans uppercase tracking-wider flex items-center gap-1.5 sm:gap-2.5 transition-all cursor-pointer bg-[#F5FBFD] hover:bg-[#E8F4F8] border border-[#D7EAF2] text-[#55718F] hover:text-[#073B72]"
+                  onClick={onNext}
+                  disabled={isSubmitting}
+                  className={`min-h-[44px] sm:min-h-[50px] px-5 sm:px-10 py-2.5 sm:py-3 rounded-full font-sans font-semibold text-xs sm:text-base uppercase tracking-wider text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-md shadow-sky-500/20 transition-all flex items-center justify-center gap-2 sm:gap-2.5 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed transform hover:scale-[1.01] active:scale-[0.99] ${currentStep === 1 ? 'w-full sm:w-auto' : ''}`}
                 >
-                  <ArrowLeft className="w-4 h-4 sm:w-4.5 sm:h-4.5" aria-hidden="true" />
-                  <span>{t('onboarding:layout.back', 'Back')}</span>
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                      <span>{t('onboarding:layout.saving', 'Saving...')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>
+                        {currentStep === totalSteps
+                          ? t('onboarding:layout.completeSetup', 'Complete Setup')
+                          : currentStep === totalSteps - 1
+                          ? t('onboarding:layout.reviewProfile', 'Review Profile')
+                          : t('onboarding:layout.continue', 'Continue')}
+                      </span>
+                      <ArrowRight className="w-4 h-4 sm:w-4.5 sm:h-4.5" aria-hidden="true" />
+                    </>
+                  )}
                 </button>
-              )}
-
-              {/* Continue / Submit Button */}
-              <button
-                type="button"
-                onClick={onNext}
-                disabled={isSubmitting}
-                className={`min-h-[44px] sm:min-h-[50px] px-5 sm:px-10 py-2.5 sm:py-3 rounded-full font-sans font-semibold text-xs sm:text-base uppercase tracking-wider text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-md shadow-sky-500/20 transition-all flex items-center justify-center gap-2 sm:gap-2.5 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed transform hover:scale-[1.01] active:scale-[0.99] ${currentStep === 1 ? 'w-full sm:w-auto' : ''}`}
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                    <span>{t('onboarding:layout.saving', 'Saving...')}</span>
-                  </>
-                ) : (
-                  <>
-                    <span>
-                      {currentStep === totalSteps
-                        ? t('onboarding:layout.completeSetup', 'Complete Setup')
-                        : currentStep === totalSteps - 1
-                        ? t('onboarding:layout.reviewProfile', 'Review Profile')
-                        : t('onboarding:layout.continue', 'Continue')}
-                    </span>
-                    <ArrowRight className="w-4 h-4 sm:w-4.5 sm:h-4.5" aria-hidden="true" />
-                  </>
-                )}
-              </button>
-            </div>
+              </div>
+            )}
           </div>
 
           {/* Privacy Note & Footer Step Counter below Main Card */}

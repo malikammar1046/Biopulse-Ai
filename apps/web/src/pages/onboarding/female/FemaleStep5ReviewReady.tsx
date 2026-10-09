@@ -195,7 +195,7 @@ export const FemaleStep5ReviewReady: React.FC<FemaleStep5Props> = ({
         </div>
 
         <div className="p-4 sm:p-4.5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-1">
-          <span className="font-bold text-[12px] sm:text-[13px] text-[#0288D1] block uppercase tracking-wide">
+          <span className="font-bold text-[12px] sm:text-[13px] text-[#F43F7D] block uppercase tracking-wide">
             Clinical Disclaimer
           </span>
           <p className="text-[13px] sm:text-[14px] text-[#55718F] leading-relaxed">

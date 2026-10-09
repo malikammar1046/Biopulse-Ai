@@ -49,7 +49,11 @@ export const CompletenessCard: React.FC<CompletenessCardProps> = ({
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
               Screening Profile Completeness
             </span>
-            <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-[#E0F2FE] text-[#0288D1]">
+            <span
+              className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                isMale ? 'bg-[#E0F2FE] text-[#0288D1]' : 'bg-[#FDE6EF] text-[#BE185D]'
+              }`}
+            >
               {percentage}%
             </span>
           </div>
@@ -71,7 +75,9 @@ export const CompletenessCard: React.FC<CompletenessCardProps> = ({
         <div className="w-full sm:w-48">
           <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
             <div
-              className="bg-[#0288D1] h-2 rounded-full transition-all duration-500"
+              className={`h-2 rounded-full transition-all duration-500 ${
+                isMale ? 'bg-[#0288D1]' : 'bg-[#F43F7D]'
+              }`}
               style={{ width: `${percentage}%` }}
             />
           </div>

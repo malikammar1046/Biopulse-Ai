@@ -182,13 +182,19 @@ ${brief.disclaimer}
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          className="relative w-full max-w-3xl rounded-2xl bg-white border border-[#BAE6FD] shadow-xl overflow-hidden z-10 my-8 max-h-[90vh] flex flex-col text-left select-none"
+          className={`relative w-full max-w-3xl rounded-2xl bg-white border ${
+            isMale ? 'border-[#BAE6FD]' : 'border-[#FDE6EF]'
+          } shadow-xl overflow-hidden z-10 my-8 max-h-[90vh] flex flex-col text-left select-none`}
         >
           {/* Header */}
-          <div className="p-4 sm:p-6 border-b border-[#BAE6FD] bg-[#01579B] text-white flex items-center justify-between gap-4 shrink-0">
+          <div
+            className={`p-4 sm:p-6 border-b ${
+              isMale ? 'border-[#BAE6FD] bg-[#01579B]' : 'border-[#FDE6EF] bg-[#BE185D]'
+            } text-white flex items-center justify-between gap-4 shrink-0`}
+          >
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-white/10 text-white flex items-center justify-center shrink-0">
-                <File01 className="w-6 h-6 text-[#E0F2FE]" aria-hidden="true" />
+                <File01 className={`w-6 h-6 ${isMale ? 'text-[#E0F2FE]' : 'text-[#FDE6EF]'}`} aria-hidden="true" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
@@ -199,7 +205,7 @@ ${brief.disclaimer}
                     Live Data
                   </span>
                 </div>
-                <p className="text-xs text-[#E0F2FE]">
+                <p className={`text-xs ${isMale ? 'text-[#E0F2FE]' : 'text-[#FDE6EF]'}`}>
                   {appointment.providerName} • {appointment.scheduledDate} at {appointment.scheduledTime}
                 </p>
               </div>
@@ -221,7 +227,9 @@ ${brief.disclaimer}
               onClick={() => setActiveTab('prep')}
               className={`pb-3 text-xs font-bold font-display tracking-tight transition-all border-b-2 cursor-pointer ${
                 activeTab === 'prep'
-                  ? 'border-[#0288D1] text-[#0288D1]'
+                  ? isMale
+                    ? 'border-[#0288D1] text-[#0288D1]'
+                    : 'border-[#F43F7D] text-[#F43F7D]'
                   : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
               }`}
             >
@@ -233,11 +241,13 @@ ${brief.disclaimer}
               onClick={() => setActiveTab('brief')}
               className={`pb-3 text-xs font-bold font-display tracking-tight transition-all border-b-2 cursor-pointer flex items-center gap-1.5 ${
                 activeTab === 'brief'
-                  ? 'border-[#0288D1] text-[#0288D1]'
+                  ? isMale
+                    ? 'border-[#0288D1] text-[#0288D1]'
+                    : 'border-[#F43F7D] text-[#F43F7D]'
                   : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
               }`}
             >
-              <File01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
+              <File01 className={`w-3.5 h-3.5 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`} aria-hidden="true" />
               <span>2. 1-Page Doctor Brief</span>
             </button>
           </div>
@@ -250,7 +260,7 @@ ${brief.disclaimer}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-bold font-display text-[#0F172A] flex items-center gap-1.5">
-                      <ActivityHeart className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
+                      <ActivityHeart className={`w-4 h-4 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`} aria-hidden="true" />
                       <span>Health Summary</span>
                     </h3>
                     <span className="text-[10px] font-mono text-[#64748B]">
@@ -274,8 +284,8 @@ ${brief.disclaimer}
                         </p>
                       </div>
                     ) : (
-                      <div className="p-3.5 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] space-y-1">
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-[#0288D1]">
+                      <div className="p-3.5 rounded-xl bg-[#FFF8FA] border border-[#FDE6EF] space-y-1">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-[#F43F7D]">
                           <Calendar className="w-3.5 h-3.5" aria-hidden="true" />
                           <span>Cycle</span>
                         </div>
@@ -320,7 +330,7 @@ ${brief.disclaimer}
 
                     {/* Medications Card */}
                     <div className="p-3.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-1">
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-[#0288D1]">
+                      <div className={`flex items-center gap-1.5 text-xs font-bold ${isMale ? 'text-[#0288D1]' : 'text-[#0E9EAA]'}`}>
                         <MedicalCross className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>Medication</span>
                       </div>
@@ -362,14 +372,14 @@ ${brief.disclaimer}
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-sm font-bold font-display text-[#0F172A] flex items-center gap-1.5">
-                        <HelpCircle className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
+                        <HelpCircle className={`w-4 h-4 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`} aria-hidden="true" />
                         <span>Questions for My Doctor</span>
                       </h3>
                       <p className="text-xs text-[#64748B]">
                         List specific questions or symptoms you would like to discuss during your appointment.
                       </p>
                     </div>
-                    <span className="text-xs font-mono font-bold text-[#0288D1]">
+                    <span className={`text-xs font-mono font-bold ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`}>
                       {appointment.doctorQuestions?.length || 0} Saved
                     </span>
                   </div>
@@ -385,12 +395,18 @@ ${brief.disclaimer}
                           ? 'e.g. How do my morning testosterone levels compare with baseline?'
                           : 'e.g. My cycle has been less predictable. What should I ask about?'
                       }
-                      className="flex-1 px-4 py-2.5 rounded-xl border border-[#BAE6FD] text-xs text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#0288D1]/30 focus:border-[#0288D1]"
+                      className={`flex-1 px-4 py-2.5 rounded-xl border text-xs text-[#0F172A] focus:outline-none focus:ring-2 ${
+                        isMale
+                          ? 'border-[#BAE6FD] focus:ring-[#0288D1]/30 focus:border-[#0288D1]'
+                          : 'border-[#FDE6EF] focus:ring-[#F43F7D]/30 focus:border-[#F43F7D]'
+                      }`}
                     />
                     <button
                       type="submit"
                       disabled={isAddingQuestion || !newQuestionText.trim()}
-                      className="px-4 py-2.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold transition-all disabled:opacity-50 cursor-pointer flex items-center gap-1 shrink-0 shadow-sm"
+                      className={`px-4 py-2.5 rounded-xl text-white text-xs font-bold transition-all disabled:opacity-50 cursor-pointer flex items-center gap-1 shrink-0 shadow-sm ${
+                        isMale ? 'bg-[#0288D1] hover:bg-[#0277BD]' : 'bg-[#F43F7D] hover:bg-[#BE185D]'
+                      }`}
                     >
                       <Plus className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>Add</span>
@@ -408,7 +424,11 @@ ${brief.disclaimer}
                           key={idx}
                           type="button"
                           onClick={() => handleAddSuggestedQuestion(q)}
-                          className="text-[11px] text-left px-2.5 py-1 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] hover:border-[#BAE6FD] hover:bg-[#F0F9FF] text-[#475569] hover:text-[#0288D1] transition-all cursor-pointer"
+                          className={`text-[11px] text-left px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                            isMale
+                              ? 'bg-[#F8FAFC] border-[#E2E8F0] hover:border-[#BAE6FD] hover:bg-[#F0F9FF] text-[#475569] hover:text-[#0288D1]'
+                              : 'bg-[#F8FAFC] border-[#E2E8F0] hover:border-[#FDE6EF] hover:bg-[#FFF8FA] text-[#475569] hover:text-[#F43F7D]'
+                          }`}
                         >
                           + {q}
                         </button>
@@ -431,7 +451,7 @@ ${brief.disclaimer}
                           <button
                             type="button"
                             onClick={() => onToggleQuestion(appointment.id, q.id)}
-                            className="mt-0.5 text-[#0288D1] hover:scale-110 transition-transform cursor-pointer shrink-0"
+                            className={`mt-0.5 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'} hover:scale-110 transition-transform cursor-pointer shrink-0`}
                           >
                             {q.isDiscussed ? (
                               <CheckCircle className="w-4 h-4 text-[#15803D]" aria-hidden="true" />
@@ -469,8 +489,12 @@ ${brief.disclaimer}
               /* ── SECTION 3: 1-PAGE DOCTOR CONSULTATION BRIEF ── */
               <div className="space-y-6">
                 {/* Action Bar */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#F0F9FF] p-3 rounded-xl border border-[#BAE6FD]">
-                  <span className="text-xs font-bold text-[#01579B]">
+                <div
+                  className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl border ${
+                    isMale ? 'bg-[#F0F9FF] border-[#BAE6FD]' : 'bg-[#FFF8FA] border-[#FDE6EF]'
+                  }`}
+                >
+                  <span className={`text-xs font-bold ${isMale ? 'text-[#01579B]' : 'text-[#BE185D]'}`}>
                     1-Page Clinical Consultation Brief
                   </span>
 
@@ -478,7 +502,11 @@ ${brief.disclaimer}
                     <button
                       type="button"
                       onClick={handleCopyBrief}
-                      className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-white border border-[#BAE6FD] text-xs font-bold text-[#0288D1] hover:bg-[#F0F9FF] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+                      className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-white border text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm ${
+                        isMale
+                          ? 'border-[#BAE6FD] text-[#0288D1] hover:bg-[#F0F9FF]'
+                          : 'border-[#FDE6EF] text-[#F43F7D] hover:bg-[#FFF8FA]'
+                      }`}
                     >
                       {copied ? <Check className="w-3.5 h-3.5 text-[#15803D]" aria-hidden="true" /> : <Copy01 className="w-3.5 h-3.5" aria-hidden="true" />}
                       <span>{copied ? 'Copied Brief' : 'Copy Text'}</span>
@@ -487,7 +515,9 @@ ${brief.disclaimer}
                     <button
                       type="button"
                       onClick={handlePrint}
-                      className="flex-1 sm:flex-initial px-3 py-1.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                      className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-xl text-white text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                        isMale ? 'bg-[#0288D1] hover:bg-[#0277BD]' : 'bg-[#F43F7D] hover:bg-[#BE185D]'
+                      }`}
                     >
                       <Printer className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>Print Brief</span>
@@ -496,9 +526,13 @@ ${brief.disclaimer}
                 </div>
 
                 {/* Printable Brief Card */}
-                <div className="p-4 sm:p-8 rounded-2xl bg-white border border-[#BAE6FD] space-y-6 text-[#0F172A] font-sans shadow-sm">
+                <div
+                  className={`p-4 sm:p-8 rounded-2xl bg-white border ${
+                    isMale ? 'border-[#BAE6FD]' : 'border-[#FDE6EF]'
+                  } space-y-6 text-[#0F172A] font-sans shadow-sm`}
+                >
                   {/* Brief Header */}
-                  <div className="border-b-2 border-[#01579B] pb-4 flex items-start justify-between">
+                  <div className={`border-b-2 ${isMale ? 'border-[#01579B]' : 'border-[#BE185D]'} pb-4 flex items-start justify-between`}>
                     <div>
                       <h4 className="text-xl font-bold font-display tracking-tight text-[#0F172A]">
                         BIOPulse AI Clinical Consultation Summary
@@ -532,8 +566,12 @@ ${brief.disclaimer}
                   {/* Summary Columns */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                     {/* Endocrine / Cycle & Symptoms */}
-                    <div className="space-y-3 p-4 rounded-xl border border-[#BAE6FD] bg-[#F0F9FF]">
-                      <h5 className="font-bold font-display text-[#01579B] uppercase tracking-wider text-[11px]">
+                    <div
+                      className={`space-y-3 p-4 rounded-xl border ${
+                        isMale ? 'border-[#BAE6FD] bg-[#F0F9FF]' : 'border-[#FDE6EF] bg-[#FFF8FA]'
+                      }`}
+                    >
+                      <h5 className={`font-bold font-display ${isMale ? 'text-[#01579B]' : 'text-[#BE185D]'} uppercase tracking-wider text-[11px]`}>
                         {isMale ? 'Hormone Vitality & Symptom Overview' : 'Cycle & Symptom Overview'}
                       </h5>
                       <div className="space-y-1 text-xs text-[#334155]">
@@ -554,8 +592,12 @@ ${brief.disclaimer}
                     </div>
 
                     {/* Medications & Lab Reports */}
-                    <div className="space-y-3 p-4 rounded-xl border border-[#BAE6FD] bg-[#F0F9FF]">
-                      <h5 className="font-bold font-display text-[#01579B] uppercase tracking-wider text-[11px]">
+                    <div
+                      className={`space-y-3 p-4 rounded-xl border ${
+                        isMale ? 'border-[#BAE6FD] bg-[#F0F9FF]' : 'border-[#FDE6EF] bg-[#FFF8FA]'
+                      }`}
+                    >
+                      <h5 className={`font-bold font-display ${isMale ? 'text-[#01579B]' : 'text-[#BE185D]'} uppercase tracking-wider text-[11px]`}>
                         Medications & Biomarkers
                       </h5>
                       <div className="space-y-1 text-xs text-[#334155]">
@@ -575,14 +617,16 @@ ${brief.disclaimer}
 
                   {/* Patient Questions Section */}
                   <div className="p-4 rounded-xl border border-[#E2E8F0] space-y-2 bg-[#F8FAFC]">
-                    <h5 className="font-bold font-display text-[#01579B] uppercase tracking-wider text-[11px]">
+                    <h5 className={`font-bold font-display ${isMale ? 'text-[#01579B]' : 'text-[#BE185D]'} uppercase tracking-wider text-[11px]`}>
                       Patient-Prepared Questions for Discussion ({appointment.doctorQuestions?.length || 0})
                     </h5>
                     <div className="space-y-1.5 text-xs text-[#334155]">
                       {appointment.doctorQuestions && appointment.doctorQuestions.length > 0 ? (
                         appointment.doctorQuestions.map((q, idx) => (
                           <div key={idx} className="flex items-center gap-2">
-                            <span className="w-4 h-4 rounded border border-[#94A3B8] flex items-center justify-center text-[10px] font-bold text-[#0288D1]">
+                            <span className={`w-4 h-4 rounded border border-[#94A3B8] flex items-center justify-center text-[10px] font-bold ${
+                              isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'
+                            }`}>
                               {q.isDiscussed ? '✓' : ''}
                             </span>
                             <span>{q.question}</span>
@@ -595,8 +639,14 @@ ${brief.disclaimer}
                   </div>
 
                   {/* Mandatory Clinical Disclaimer */}
-                  <div className="p-3.5 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-start gap-2.5 text-[11px] text-[#0369A1] leading-relaxed">
-                    <ShieldTick className="w-4 h-4 text-[#0288D1] shrink-0 mt-0.5" aria-hidden="true" />
+                  <div
+                    className={`p-3.5 rounded-xl border flex items-start gap-2.5 text-[11px] leading-relaxed ${
+                      isMale
+                        ? 'bg-[#F0F9FF] border-[#BAE6FD] text-[#0369A1]'
+                        : 'bg-[#FFF8FA] border-[#FDE6EF] text-[#9D174D]'
+                    }`}
+                  >
+                    <ShieldTick className={`w-4 h-4 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'} shrink-0 mt-0.5`} aria-hidden="true" />
                     <span>
                       {brief?.disclaimer ||
                         'This summary is generated from information recorded in BIOPulse AI and is intended to support discussion with a healthcare professional. It does not replace clinical judgment or provide a diagnosis.'}
@@ -616,7 +666,9 @@ ${brief.disclaimer}
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white font-semibold text-xs transition-all cursor-pointer shadow-sm"
+              className={`px-5 py-2 rounded-xl text-white font-semibold text-xs transition-all cursor-pointer shadow-sm ${
+                isMale ? 'bg-[#0288D1] hover:bg-[#0277BD]' : 'bg-[#F43F7D] hover:bg-[#BE185D]'
+              }`}
             >
               Done
             </button>

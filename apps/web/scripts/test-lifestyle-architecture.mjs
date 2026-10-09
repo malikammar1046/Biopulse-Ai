@@ -99,7 +99,8 @@ runTest('AppSidebar.tsx contains exactly ONE Lifestyle & Nutrition link in MAIN 
 
   // Both female and male main items must contain Lifestyle & Nutrition
   assert.ok(
-    sidebarContent.includes("{ label: 'Lifestyle & Nutrition', path: ROUTES.APP.LIFESTYLE, icon: Scales01 }"),
+    sidebarContent.includes("{ label: 'Lifestyle & Nutrition', path: ROUTES.APP.LIFESTYLE, icon: Scales01 }") ||
+    sidebarContent.includes("{ label: t('lifestyle'), path: ROUTES.APP.LIFESTYLE, icon: Scales01 }"),
     'Sidebar must contain Lifestyle & Nutrition pointing to ROUTES.APP.LIFESTYLE'
   );
 
@@ -126,7 +127,8 @@ runTest('MobileBottomNav.tsx contains single canonical Lifestyle destination', (
     'MobileBottomNav must not contain duplicate ROUTES.APP.NUTRITION'
   );
   assert.ok(
-    mobileNavContent.includes("{ label: 'Lifestyle', path: ROUTES.APP.LIFESTYLE, icon: Scales01 }"),
+    mobileNavContent.includes("{ label: 'Lifestyle', path: ROUTES.APP.LIFESTYLE, icon: Scales01 }") ||
+    mobileNavContent.includes("{ label: t('lifestyle'), path: ROUTES.APP.LIFESTYLE, icon: Scales01 }"),
     'MobileBottomNav must contain Lifestyle pointing to ROUTES.APP.LIFESTYLE'
   );
 });

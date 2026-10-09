@@ -98,6 +98,37 @@ MALE_TIER2_FEATURE_LABELS = {
 # Standard screening thresholds verified from metrics_report.json
 MALE_TIER1_SCREENING_THRESHOLD = 0.1808
 MALE_TIER2_SCREENING_THRESHOLD = 0.3379
+MALE_LOWER_RISK_THRESHOLD = 0.10
+
+
+def classify_male_screening_risk(
+    prob: float | None,
+    threshold: float = MALE_TIER1_SCREENING_THRESHOLD,
+    low_cutoff: float = MALE_LOWER_RISK_THRESHOLD,
+) -> tuple[str, str]:
+    """
+    Authoritative classification of Male Hypogonadism screening risk.
+    Returns (category, label).
+    - Lower: prob < low_cutoff (p < 0.10)
+    - Intermediate: low_cutoff <= prob < threshold (0.10 <= p < threshold)
+    - Higher: prob >= threshold (p >= threshold)
+    - Unavailable: prob is None or NaN
+    """
+    if prob is None:
+        return ("unavailable", "Assessment Unavailable")
+    try:
+        fprob = float(prob)
+        if np.isnan(fprob) or np.isneginf(fprob) or np.isposinf(fprob):
+            return ("unavailable", "Assessment Unavailable")
+    except (ValueError, TypeError):
+        return ("unavailable", "Assessment Unavailable")
+
+    if fprob >= threshold:
+        return ("higher", "Higher Screening Risk")
+    elif fprob >= low_cutoff:
+        return ("intermediate", "Intermediate Screening Risk")
+    return ("lower", "Lower Screening Risk")
+
 
 DISCLAIMER_TEXT = (
     "This assessment is an AI-assisted screening estimate and does not diagnose hypogonadism. "
@@ -445,20 +476,76 @@ class MaleMLService:
         threshold = float(self._tier1_artifact.get("screening_threshold", MALE_TIER1_SCREENING_THRESHOLD))
         model_name = self._tier1_artifact.get("model_name", "Logistic Regression (Balanced)")
 
+        # Check explicit eligibility rejection reason if passed
+        rejection_reason = raw_inputs.get("eligibility_rejection_reason")
+        rejection_summary = raw_inputs.get("eligibility_rejection_summary")
+
+        # Validate age before inference (NHANES cohort 19 to 60)
+        age_val = df.iloc[0].get("age")
+        if rejection_reason or pd.isna(age_val) or age_val < 19.0 or age_val > 60.0:
+            if rejection_reason:
+                unavail_reason = rejection_reason
+                reason_summary = rejection_summary or (
+                    "Submitted age and date of birth conflict or are invalid."
+                    if rejection_reason == "conflicting_age_and_dob"
+                    else "Date of birth cannot be in the future."
+                    if rejection_reason == "future_dob"
+                    else "Please provide a valid date of birth."
+                )
+            elif pd.isna(age_val):
+                reason_summary = "Age is required for male hypogonadism screening. Please provide your date of birth or age in your profile."
+                unavail_reason = "missing_age"
+            elif age_val < 19.0:
+                reason_summary = "BioPulse AI screening models are calibrated for adult men aged 19 to 60. Adolescent androgen physiology requires specialized pediatric clinical evaluation."
+                unavail_reason = "age_under_19"
+            else:
+                reason_summary = "BioPulse AI screening models are calibrated for adult men aged 19 to 60. In men older than 60, age-related endocrine changes require direct clinical evaluation with a physician."
+                unavail_reason = "age_over_60"
+
+            return {
+                "module": "male_hypogonadism",
+                "assessment_level": "tier_1",
+                "tiers_included": [1],
+                "model_name": model_name,
+                "model_version": "Male-ML v1.0-T1",
+                "probability": None,
+                "probability_percent": None,
+                "threshold": threshold,
+                "risk_category": "unavailable",
+                "risk_label": "Assessment Unavailable",
+                "summary_text": reason_summary,
+                "unavailable_reason": unavail_reason,
+                "available_features": available_feats,
+                "missing_features": missing_feats,
+                "input_features": {k: (None if pd.isna(v) else v) for k, v in df.iloc[0].to_dict().items()},
+                "explanations": [],
+                "shap_explanation": None,
+                "limitations": [
+                    "This screening model was trained and evaluated on NHANES adult men aged 19 to 60.",
+                    "Predictions cannot be reliably generated without a valid age within the supported 19–60 range.",
+                ],
+                "next_step": "Consult a healthcare provider for an individualized clinical hormone evaluation.",
+                "disclaimer": DISCLAIMER_TEXT,
+            }
+
         # Inference: calibrated probability for positive class (column 1)
         prob_matrix = model.predict_proba(df)
         prob = float(prob_matrix[0, 1])
         prob_percent = round(prob * 100.0, 1)
 
-        # Risk categorization using validated screening threshold
-        if prob >= threshold:
-            risk_category = "higher"
-            risk_label = "Higher Screening Risk"
+        # Risk categorization using validated screening threshold and lower cutoff
+        risk_category, risk_label = classify_male_screening_risk(
+            prob,
+            threshold=threshold,
+            low_cutoff=MALE_LOWER_RISK_THRESHOLD,
+        )
+        if risk_category == "higher":
             summary_text = "Your answers and health profile show factors that are sometimes associated with lower testosterone levels."
             next_step = "Add clinical laboratory evidence (e.g. morning fasting blood draw) to refine this assessment."
+        elif risk_category == "intermediate":
+            summary_text = "Your answers and health profile indicate an intermediate screening risk profile for testosterone deficiency."
+            next_step = "Consider morning hormone testing or discussing clinical symptoms with a specialist."
         else:
-            risk_category = "lower"
-            risk_label = "Lower Screening Risk"
             summary_text = "Your answers and health profile show a lower probability pattern for testosterone deficiency."
             next_step = "You can add clinical laboratory results anytime if symptoms arise."
 
@@ -538,17 +625,18 @@ class MaleMLService:
         available_features: List[str] = []
         missing_features: List[str] = []
 
-        # Age is derived from Tier 1 or lab inputs
-        age_val = (
+        # Age is derived from Tier 1 or lab inputs (never fabricated or defaulted to 35)
+        raw_age = (
             lab_inputs.get("age")
-            or (tier1_inputs.get("age") if tier1_inputs else None)
-            or 35.0
+            if lab_inputs.get("age") is not None
+            else (tier1_inputs.get("age") if tier1_inputs else None)
         )
-        try:
-            row["age"] = float(age_val)
+        age_norm = normalize_continuous_input(raw_age)
+        if age_norm is not None:
+            row["age"] = age_norm
             available_features.append("age")
-        except (ValueError, TypeError):
-            row["age"] = 35.0
+        else:
+            row["age"] = np.nan
             missing_features.append("age")
 
         # Indirect laboratory features
@@ -751,20 +839,103 @@ class MaleMLService:
         threshold = float(self._tier2_artifact.get("screening_threshold", MALE_TIER2_SCREENING_THRESHOLD))
         model_name = self._tier2_artifact.get("model_name", "Random Forest")
 
+        # Check explicit eligibility rejection reason if passed
+        rejection_reason = (tier1_inputs or {}).get("eligibility_rejection_reason") or lab_inputs.get("eligibility_rejection_reason")
+        rejection_summary = (tier1_inputs or {}).get("eligibility_rejection_summary") or lab_inputs.get("eligibility_rejection_summary")
+
+        # Validate age before inference (NHANES cohort 19 to 60)
+        age_val = df.iloc[0].get("age")
+        if rejection_reason or pd.isna(age_val) or age_val < 19.0 or age_val > 60.0:
+            if rejection_reason:
+                unavail_reason = rejection_reason
+                reason_summary = rejection_summary or (
+                    "Submitted age and date of birth conflict or are invalid."
+                    if rejection_reason == "conflicting_age_and_dob"
+                    else "Date of birth cannot be in the future."
+                    if rejection_reason == "future_dob"
+                    else "Please provide a valid date of birth."
+                )
+            elif pd.isna(age_val):
+                reason_summary = "Age is required for male hypogonadism screening. Please provide your date of birth or age."
+                unavail_reason = "missing_age"
+            elif age_val < 19.0:
+                reason_summary = "BioPulse AI screening models are calibrated for adult men aged 19 to 60. Adolescent androgen physiology requires specialized pediatric clinical evaluation."
+                unavail_reason = "age_under_19"
+            else:
+                reason_summary = "BioPulse AI screening models are calibrated for adult men aged 19 to 60. In men older than 60, age-related endocrine changes require direct clinical evaluation with a physician."
+                unavail_reason = "age_over_60"
+
+            hormone_pattern = self.evaluate_hormone_pattern(lab_inputs)
+
+            # Direct lab interpretations
+            direct_labs: List[Dict[str, Any]] = []
+            for feat in available_feats:
+                if feat == "age":
+                    continue
+                val = df.iloc[0][feat]
+                direct_labs.append({
+                    "analyte_key": feat,
+                    "label": MALE_TIER2_FEATURE_LABELS.get(feat, feat),
+                    "value": float(val),
+                })
+
+            evidence_completeness_pct = round((len(available_feats) / len(MALE_TIER2_FEATURE_NAMES)) * 100.0, 1)
+
+            return {
+                "module": "male_hypogonadism",
+                "assessment_level": "tier_1_2",
+                "tiers_included": [1, 2],
+                "model_name": model_name,
+                "model_version": "Male-ML v1.0-T2",
+                "probability": None,
+                "probability_percent": None,
+                "threshold": threshold,
+                "risk_category": "unavailable",
+                "risk_label": "Assessment Unavailable",
+                "summary_text": reason_summary,
+                "unavailable_reason": unavail_reason,
+                "available_features": available_feats,
+                "missing_features": missing_feats,
+                "tier_2_available_count": len(available_feats),
+                "tier_2_total_count": len(MALE_TIER2_FEATURE_NAMES),
+                "tier_2_available_fields": available_feats,
+                "tier_2_missing_fields": missing_feats,
+                "evidence_completeness_percent": evidence_completeness_pct,
+                "evidence_completeness": {
+                    "total_required": len(MALE_TIER2_FEATURE_NAMES),
+                    "total_available": len(available_feats),
+                    "missing": missing_feats,
+                },
+                "direct_laboratory_values": direct_labs,
+                "hormone_pattern_interpretation": hormone_pattern,
+                "explanations": [],
+                "shap_explanation": None,
+                "limitations": [
+                    "This screening model was trained and evaluated on NHANES adult men aged 19 to 60.",
+                    "Predictions cannot be reliably generated without a valid age within the supported 19–60 range.",
+                ],
+                "next_step": "Discuss your laboratory measurements directly with your physician.",
+                "disclaimer": DISCLAIMER_TEXT,
+            }
+
         # Inference: calibrated probability for positive class (column 1)
         prob_matrix = model.predict_proba(df)
         prob = float(prob_matrix[0, 1])
         prob_percent = round(prob * 100.0, 1)
 
-        # Risk categorization using validated screening threshold
-        if prob >= threshold:
-            risk_category = "higher"
-            risk_label = "Higher Screening Risk"
+        # Risk categorization using validated screening threshold and lower cutoff
+        risk_category, risk_label = classify_male_screening_risk(
+            prob,
+            threshold=threshold,
+            low_cutoff=MALE_LOWER_RISK_THRESHOLD,
+        )
+        if risk_category == "higher":
             summary_text = "Your laboratory and metabolic blood markers show a pattern that is frequently associated with lower testosterone."
             next_step = "Discuss these laboratory findings and morning fasting hormone levels with your physician."
+        elif risk_category == "intermediate":
+            summary_text = "Your laboratory and metabolic blood markers indicate an intermediate screening risk profile for androgen deficiency."
+            next_step = "Continue monitoring your metabolic biomarkers and discuss with your physician."
         else:
-            risk_category = "lower"
-            risk_label = "Lower Screening Risk"
             summary_text = "Your laboratory blood markers show a lower probability pattern for biochemical androgen deficiency."
             next_step = "Continue healthy lifestyle habits and periodic routine monitoring."
 
