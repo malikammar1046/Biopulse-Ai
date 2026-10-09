@@ -676,6 +676,7 @@ class AssessmentRepository:
             "is_diagnostic": assessment_data.get("is_diagnostic", False),
             "risk_category": assessment_data.get("risk_category", "lower"),
             "risk_label": assessment_data.get("risk_label", "Lower Screening Risk" if is_male else "Lower Likelihood"),
+            "unavailable_reason": assessment_data.get("unavailable_reason"),
             "summary_text": assessment_data.get("summary_text", ""),
             "is_active": make_active,
             "replaced_assessment_id": replaced_id,

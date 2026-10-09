@@ -124,12 +124,12 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
       {/* ── Question Header with Why We Ask Trigger ── */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#E0F2FE] flex items-center justify-center shrink-0 shadow-2xs">
-            <MedicalCross className="w-5 h-5 text-[#0288D1]" aria-hidden="true" />
+          <div className="w-10 h-10 rounded-full bg-[#FDE6EF] flex items-center justify-center shrink-0 shadow-2xs">
+            <MedicalCross className="w-5 h-5 text-[#F43F7D]" aria-hidden="true" />
           </div>
 
           <div>
-            <span className="text-xs font-bold font-sans text-[#0288D1] uppercase tracking-wider block leading-none">
+            <span className="text-xs font-bold font-sans text-[#F43F7D] uppercase tracking-wider block leading-none">
               Health Profile
             </span>
             <h2 className="text-xl sm:text-2xl font-bold font-display text-[#073B72] tracking-tight leading-tight mt-1">
@@ -138,7 +138,7 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
           </div>
         </div>
 
-        <OnboardingWhyTrigger onClick={() => setShowWhyModal(true)} accentColor="blue" />
+        <OnboardingWhyTrigger onClick={() => setShowWhyModal(true)} accentColor="rose" />
       </div>
 
       <p className="text-xs sm:text-sm text-[#55718F] font-sans leading-relaxed">
@@ -151,7 +151,7 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
           <div className="p-4 sm:p-5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-[15px] sm:text-[16px] font-bold font-sans text-[#073B72] flex items-center gap-2">
-                <ActivityHeart className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
+                <ActivityHeart className="w-4 h-4 text-[#F43F7D]" aria-hidden="true" />
                 Blood Group
               </span>
               <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#DDF7F7] text-[#0E9EAA]">
@@ -169,8 +169,8 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
                     onClick={() => onChange({ ...data, bloodType: bt })}
                     className={`h-[46px] min-w-[56px] px-4 py-2.5 rounded-xl text-[14px] sm:text-[15px] font-mono font-bold transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-[#0288D1] text-white shadow-xs scale-[1.02]'
-                        : 'bg-white border border-[#D7EAF2] text-[#55718F] hover:border-[#0288D1]/50 hover:text-[#073B72] hover:bg-[#F8FDFF]'
+                        ? 'bg-[#F43F7D] text-white shadow-xs scale-[1.02]'
+                        : 'bg-white border border-[#D7EAF2] text-[#55718F] hover:border-[#F43F7D]/50 hover:text-[#073B72] hover:bg-[#FFF8FA]'
                     }`}
                   >
                     {bt}
@@ -184,7 +184,7 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
           <div className="p-4 sm:p-5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-[15px] sm:text-[16px] font-bold font-sans text-[#073B72] flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
+                <AlertCircle className="w-4 h-4 text-[#F43F7D]" aria-hidden="true" />
                 Known Allergies
               </span>
               <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#DDF7F7] text-[#0E9EAA]">
@@ -202,8 +202,8 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
                     onClick={() => toggleAllergy(allergy)}
                     className={`min-h-[44px] px-4 py-2.5 rounded-xl text-[14px] sm:text-[15px] font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                       isSelected
-                        ? 'bg-[#E0F2FE] text-[#0288D1] border-2 border-[#0288D1] font-bold shadow-2xs'
-                        : 'bg-white border border-[#D7EAF2] text-[#55718F] hover:text-[#073B72] hover:border-[#0288D1]/40'
+                        ? 'bg-[#FDE6EF] text-[#F43F7D] border-2 border-[#F43F7D] font-bold shadow-2xs'
+                        : 'bg-white border border-[#D7EAF2] text-[#55718F] hover:text-[#073B72] hover:border-[#F43F7D]/40'
                     }`}
                   >
                     {isSelected && <Check className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />}
@@ -220,7 +220,7 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
                 value={customAllergy}
                 onChange={(e) => setCustomAllergy(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomAllergy())}
-                className="flex-1 h-11 sm:h-12 px-4 rounded-xl bg-white border border-[#D7EAF2] text-[14px] sm:text-[15px] text-[#073B72] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0288D1]/20 focus:border-[#0288D1]"
+                className="flex-1 h-11 sm:h-12 px-4 rounded-xl bg-white border border-[#D7EAF2] text-[14px] sm:text-[15px] text-[#073B72] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#F43F7D]/20 focus:border-[#F43F7D]"
               />
               <button
                 type="button"
@@ -236,7 +236,7 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
           <div className="p-4 sm:p-5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-[15px] sm:text-[16px] font-bold font-sans text-[#073B72] flex items-center gap-2">
-                <MedicalCross className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
+                <MedicalCross className="w-4 h-4 text-[#F43F7D]" aria-hidden="true" />
                 Current Medications &amp; Supplements
               </span>
               <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#DDF7F7] text-[#0E9EAA]">
@@ -260,7 +260,7 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
                     <button
                       type="button"
                       onClick={() => removeMedication(med.id)}
-                      className="p-1.5 text-slate-400 hover:text-[#0288D1] transition-colors cursor-pointer"
+                      className="p-1.5 text-slate-400 hover:text-[#F43F7D] transition-colors cursor-pointer"
                     >
                       <XClose className="w-4 h-4" aria-hidden="true" />
                     </button>
@@ -286,21 +286,21 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
                     placeholder="Medication name"
                     value={newMedName}
                     onChange={(e) => setNewMedName(e.target.value)}
-                    className="h-11 px-3.5 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] text-[14px] text-[#073B72] placeholder:text-slate-400 focus:outline-none focus:border-[#0288D1]"
+                    className="h-11 px-3.5 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] text-[14px] text-[#073B72] placeholder:text-slate-400 focus:outline-none focus:border-[#F43F7D]"
                   />
                   <input
                     type="text"
                     placeholder="Dosage (e.g. 500mg)"
                     value={newMedDosage}
                     onChange={(e) => setNewMedDosage(e.target.value)}
-                    className="h-11 px-3.5 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] text-[14px] text-[#073B72] placeholder:text-slate-400 focus:outline-none focus:border-[#0288D1]"
+                    className="h-11 px-3.5 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] text-[14px] text-[#073B72] placeholder:text-slate-400 focus:outline-none focus:border-[#F43F7D]"
                   />
                   <input
                     type="text"
                     placeholder="Frequency (e.g. Daily)"
                     value={newMedFreq}
                     onChange={(e) => setNewMedFreq(e.target.value)}
-                    className="h-11 px-3.5 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] text-[14px] text-[#073B72] placeholder:text-slate-400 focus:outline-none focus:border-[#0288D1]"
+                    className="h-11 px-3.5 rounded-xl bg-[#FAFCFF] border border-[#D7EAF2] text-[14px] text-[#073B72] placeholder:text-slate-400 focus:outline-none focus:border-[#F43F7D]"
                   />
                 </div>
                 <div className="flex justify-end gap-2.5">
@@ -314,7 +314,7 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
                   <button
                     type="button"
                     onClick={handleAddMedication}
-                    className="px-5 py-2 rounded-xl bg-[#0288D1] hover:bg-[#01579B] text-sm font-bold text-white cursor-pointer shadow-xs"
+                    className="px-5 py-2 rounded-xl bg-[#F43F7D] hover:bg-[#BE185D] text-sm font-bold text-white cursor-pointer shadow-xs"
                   >
                     Save
                   </button>
@@ -328,7 +328,7 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
             {/* Conditions */}
             <div className="p-4 sm:p-5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-3">
               <span className="text-[15px] sm:text-[16px] font-bold font-sans text-[#073B72] flex items-center gap-2">
-                <MedicalCross className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
+                <MedicalCross className="w-4 h-4 text-[#F43F7D]" aria-hidden="true" />
                 Diagnosed Conditions
               </span>
               <div className="flex flex-wrap gap-2">
@@ -341,7 +341,7 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
                       onClick={() => toggleCondition(cond)}
                       className={`min-h-[44px] px-3.5 py-2 rounded-xl text-[13px] sm:text-[14px] font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                         isSelected
-                          ? 'bg-[#E0F2FE] text-[#0288D1] border-2 border-[#0288D1] font-bold shadow-2xs'
+                          ? 'bg-[#FDE6EF] text-[#F43F7D] border-2 border-[#F43F7D] font-bold shadow-2xs'
                           : 'bg-white border border-[#D7EAF2] text-[#55718F] hover:text-[#073B72]'
                       }`}
                     >
@@ -358,7 +358,7 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
                   value={customCondition}
                   onChange={(e) => setCustomCondition(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomCondition())}
-                  className="flex-1 h-11 px-3.5 rounded-xl bg-white border border-[#D7EAF2] text-[14px] text-[#073B72] placeholder:text-slate-400 focus:outline-none focus:border-[#0288D1]"
+                  className="flex-1 h-11 px-3.5 rounded-xl bg-white border border-[#D7EAF2] text-[14px] text-[#073B72] placeholder:text-slate-400 focus:outline-none focus:border-[#F43F7D]"
                 />
                 <button
                   type="button"
@@ -373,7 +373,7 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
             {/* Family History */}
             <div className="p-4 sm:p-5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-3">
               <span className="text-[15px] sm:text-[16px] font-bold font-sans text-[#073B72] flex items-center gap-2">
-                <ActivityHeart className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
+                <ActivityHeart className="w-4 h-4 text-[#F43F7D]" aria-hidden="true" />
                 Family History
               </span>
               <div className="flex flex-wrap gap-2">
@@ -386,7 +386,7 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
                       onClick={() => toggleFamilyHistory(item)}
                       className={`min-h-[44px] px-3.5 py-2 rounded-xl text-[13px] sm:text-[14px] font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                         isSelected
-                          ? 'bg-[#E0F2FE] text-[#0288D1] border-2 border-[#0288D1] font-bold shadow-2xs'
+                          ? 'bg-[#FDE6EF] text-[#F43F7D] border-2 border-[#F43F7D] font-bold shadow-2xs'
                           : 'bg-white border border-[#D7EAF2] text-[#55718F] hover:text-[#073B72]'
                       }`}
                     >
@@ -404,10 +404,10 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
             <div className="p-4 sm:p-5 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-3.5">
               <div className="flex items-center justify-between">
                 <span className="text-[15px] sm:text-[16px] font-bold font-sans text-[#073B72] flex items-center gap-2">
-                  <ActivityHeart className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
+                  <ActivityHeart className="w-4 h-4 text-[#F43F7D]" aria-hidden="true" />
                   Lifestyle Factors (Model Indicators)
                 </span>
-                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#E0F2FE] text-[#0288D1]">
+                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#FDE6EF] text-[#F43F7D]">
                   ML Evaluated
                 </span>
               </div>
@@ -416,7 +416,7 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
                 {/* Fast Food Intake */}
                 <div className="space-y-2">
                   <label className="text-[14px] font-semibold text-[#073B72] flex items-center gap-1.5">
-                    <Scales01 className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
+                    <Scales01 className="w-4 h-4 text-[#F43F7D]" aria-hidden="true" />
                     <span>Fast-Food Intake</span>
                   </label>
                   <div className="grid grid-cols-3 gap-2">
@@ -433,7 +433,7 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
                           onClick={() => onLifestyleChange({ ...lifestyle, fastFoodIntake: opt.id as any })}
                           className={`min-h-[48px] py-2.5 px-2 rounded-xl border text-center transition-all cursor-pointer text-[13px] sm:text-[14px] font-bold ${
                             isSelected
-                              ? 'bg-[#E0F2FE] border-2 border-[#0288D1] text-[#0288D1] shadow-2xs'
+                              ? 'bg-[#FDE6EF] border-2 border-[#F43F7D] text-[#F43F7D] shadow-2xs'
                               : 'bg-white border-[#D7EAF2] text-[#55718F] hover:text-[#073B72]'
                           }`}
                         >
@@ -490,10 +490,10 @@ export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
         onClose={() => setShowWhyModal(false)}
         title="Why we ask about medical history"
         icon={MedicalCross}
-        accentColor="blue"
+        accentColor="rose"
       >
-        <div className="p-4 sm:p-4.5 rounded-2xl bg-[#F0F8FF] border border-[#BAE6FD]">
-          <span className="font-bold text-[14px] sm:text-[15px] text-[#0288D1] block mb-1">Clinical Baseline</span>
+        <div className="p-4 sm:p-4.5 rounded-2xl bg-[#FFF1F2] border border-[#FECDD3]">
+          <span className="font-bold text-[14px] sm:text-[15px] text-[#F43F7D] block mb-1">Clinical Baseline</span>
           <p className="text-[13px] sm:text-[14px] text-[#486581] leading-relaxed">
             Certain health conditions, medications, and lifestyle patterns provide critical context for distinguishing PCOS indicators from metabolic or endocrine overlaps.
           </p>

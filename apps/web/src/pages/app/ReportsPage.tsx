@@ -8,17 +8,23 @@ import { ReportTrendVisualizer } from '../../components/reports/ReportTrendVisua
 import { ReportUploadModal } from '../../components/reports/ReportUploadModal';
 import { ReportDetailModal } from '../../components/reports/ReportDetailModal';
 import { ReportDeleteModal } from '../../components/reports/ReportDeleteModal';
+import { resolvePathway } from '../../types/onboarding';
 import type { MedicalReport, MedicalReportInput } from '../../types/report';
 
 export const ReportsPage: React.FC = () => {
   const { t } = useTranslation(['reports', 'common']);
   const {
+    userProfile,
     reports,
     reportStats,
     reportsLoading,
     uploadReport,
     deleteReport,
   } = useUserHealth();
+
+  const pathway = resolvePathway(userProfile?.gender, userProfile?.pathway);
+  const isFemale = pathway === 'female';
+  const isMale = pathway === 'male';
 
   // Modal States
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -63,7 +69,7 @@ export const ReportsPage: React.FC = () => {
   if (reportsLoading && reports.length === 0) {
     return (
       <div className="py-24 flex flex-col items-center justify-center text-center space-y-3">
-        <div className="w-10 h-10 rounded-2xl bg-[#0288D1] flex items-center justify-center animate-pulse shadow-md">
+        <div className={`w-10 h-10 rounded-2xl ${isFemale ? 'bg-[#F43F7D]' : 'bg-[#0288D1]'} flex items-center justify-center animate-pulse shadow-md`}>
           <div className="w-3 h-3 rounded-full bg-white animate-ping" />
         </div>
         <p className="text-xs font-mono font-bold tracking-widest text-[#64748B] uppercase">
@@ -88,11 +94,12 @@ export const ReportsPage: React.FC = () => {
       />
 
       {/* Historical Biomarker Trend Comparison Chart (if multi-report trends exist) */}
-      <ReportTrendVisualizer reports={reports} />
+      <ReportTrendVisualizer reports={reports} isMale={isMale} />
 
       {/* Chronological Report Timeline & Category Filters */}
       <ReportTimeline
         reports={reports}
+        isMale={isMale}
         onViewDetail={handleViewDetail}
         onDelete={handleDeleteTrigger}
         onOpenUploadModal={handleOpenUploadWizard}

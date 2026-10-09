@@ -1,6 +1,8 @@
 import React from 'react';
 import { Check, Scales01, ActivityHeart, MedicalCross, Calendar } from '@untitledui/icons';
 import type { WeeklyTimelineDay } from '../../types/careCircle';
+import { useUserHealth } from '../../context/UserHealthContext';
+import { resolvePathway } from '../../types/onboarding';
 
 interface WeeklyTimelineViewProps {
   days: WeeklyTimelineDay[];
@@ -17,11 +19,15 @@ export const WeeklyTimelineView: React.FC<WeeklyTimelineViewProps> = ({
   showSymptoms = true,
   showMedications = true,
 }) => {
+  const { userProfile } = useUserHealth();
+  const pathway = resolvePathway(userProfile?.gender, userProfile?.pathway);
+  const isFemale = pathway === 'female';
+
   return (
     <div className="space-y-4 select-none text-left">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
+          <Calendar className={`w-5 h-5 ${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'} shrink-0`} aria-hidden="true" />
           <h3 className="text-sm font-bold font-display text-[#0F172A]">
             7-Day Longitudinal Health Timeline
           </h3>
@@ -35,10 +41,10 @@ export const WeeklyTimelineView: React.FC<WeeklyTimelineViewProps> = ({
         {days.map((day, idx) => (
           <div
             key={idx}
-            className="p-4 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] flex flex-col justify-between space-y-3 hover:bg-[#E0F2FE] transition-colors"
+            className={`p-4 rounded-xl ${isFemale ? 'bg-[#FFF8FA] border-[#FDE6EF] hover:bg-[#FDF2F8]' : 'bg-[#F0F9FF] border-[#BAE6FD] hover:bg-[#E0F2FE]'} border flex flex-col justify-between space-y-3 transition-colors`}
           >
             {/* Day Header */}
-            <div className="border-b border-[#BAE6FD] pb-2">
+            <div className={`border-b ${isFemale ? 'border-[#FDE6EF]' : 'border-[#BAE6FD]'} pb-2`}>
               <span className="text-xs font-bold text-[#0F172A] block">
                 {day.dayName}
               </span>
@@ -90,7 +96,7 @@ export const WeeklyTimelineView: React.FC<WeeklyTimelineViewProps> = ({
                     <MedicalCross className="w-3 h-3 text-[#64748B]" aria-hidden="true" />
                     Meds
                   </span>
-                  <span className="font-mono text-[10px] text-[#0288D1] font-bold">
+                  <span className={`font-mono text-[10px] ${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'} font-bold`}>
                     {day.medsCompleted}/{day.medsTotal}
                   </span>
                 </div>
@@ -98,7 +104,7 @@ export const WeeklyTimelineView: React.FC<WeeklyTimelineViewProps> = ({
 
               {/* Symptoms */}
               {showSymptoms && (
-                <div className="pt-1 border-t border-[#BAE6FD] space-y-1">
+                <div className={`pt-1 border-t ${isFemale ? 'border-[#FDE6EF]' : 'border-[#BAE6FD]'} space-y-1`}>
                   <span className="text-[9px] font-mono uppercase text-[#64748B] block">
                     Symptoms
                   </span>

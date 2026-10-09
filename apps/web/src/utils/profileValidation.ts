@@ -90,6 +90,133 @@ export function validateDateOfBirth(dateOfBirth: string | undefined | null): Dob
 }
 
 /**
+ * Validates male screening age eligibility (ages 19–60 inclusive).
+ * Enforces that users below 19 or above 60 cannot enter or complete male onboarding.
+ * Calculated dynamically using the provided or current date, handling birthdays and leap years.
+ */
+export function validateMaleScreeningAge(
+  dateOfBirth: string | undefined | null,
+  now: Date = new Date()
+): DobValidationResult {
+  if (!dateOfBirth || !dateOfBirth.trim()) {
+    return {
+      isValid: false,
+      error: 'Date of birth is required.',
+    };
+  }
+
+  const trimmed = dateOfBirth.trim();
+  const match = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (!match) {
+    return {
+      isValid: false,
+      error: 'Please enter a valid date of birth (YYYY-MM-DD).',
+    };
+  }
+
+  const birthYear = parseInt(match[1], 10);
+  const birthMonth = parseInt(match[2], 10);
+  const birthDay = parseInt(match[3], 10);
+
+  // Validate calendar validity (e.g., rejects Feb 30, April 31)
+  const testDate = new Date(birthYear, birthMonth - 1, birthDay);
+  if (
+    testDate.getFullYear() !== birthYear ||
+    testDate.getMonth() !== birthMonth - 1 ||
+    testDate.getDate() !== birthDay
+  ) {
+    return {
+      isValid: false,
+      error: 'Please enter a valid calendar date of birth.',
+    };
+  }
+
+  const todayYear = now.getFullYear();
+  const todayMonth = now.getMonth() + 1;
+  const todayDay = now.getDate();
+
+  // Check if future date
+  if (
+    birthYear > todayYear ||
+    (birthYear === todayYear && birthMonth > todayMonth) ||
+    (birthYear === todayYear && birthMonth === todayMonth && birthDay > todayDay)
+  ) {
+    return {
+      isValid: false,
+      error: 'Date of birth cannot be in the future.',
+    };
+  }
+
+  // Calculate exact age from complete date of birth, respecting birthdays and leap years
+  let age = todayYear - birthYear;
+  if (todayMonth < birthMonth || (todayMonth === birthMonth && todayDay < birthDay)) {
+    age--;
+  }
+
+  // Lower boundary: Must be at least 19 years old
+  if (age < 19) {
+    return {
+      isValid: false,
+      age,
+      error: 'BioPulse AI male screening is calibrated for adult men aged 19 to 60. You must be at least 19 years old to participate in male screening.',
+    };
+  }
+
+  // Upper boundary: Must be 60 or younger
+  if (age > 60) {
+    return {
+      isValid: false,
+      age,
+      error: 'BioPulse AI male screening is calibrated for adult men aged 19 to 60. In men older than 60, age-related endocrine changes require direct clinical evaluation with a physician.',
+    };
+  }
+
+  return {
+    isValid: true,
+    age,
+  };
+}
+
+/**
+ * Returns dynamic HTML date picker bounds for male screening:
+ * - max: Exactly 19 years before today's date (youngest eligible user)
+ * - min: 61 years before today's date + 1 day (oldest user who is still 60 today)
+ */
+export function getMaleDobInputBounds(now: Date = new Date()): { min: string; max: string } {
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const day = now.getDate();
+
+  let maxDate: Date;
+  let minDate: Date;
+
+  if (month === 1 && day === 29) {
+    // Leap day edge case: year - 19 and year - 61 are non-leap years.
+    // Latest eligible birthdate (turning 19 today) is Feb 28, year - 19.
+    // Earliest eligible birthdate (turning 61 tomorrow on Mar 1) is Mar 1, year - 61.
+    maxDate = new Date(year - 19, 1, 28);
+    minDate = new Date(year - 61, 2, 1);
+  } else {
+    // Exactly 19 years ago (turning 19 today)
+    maxDate = new Date(year - 19, month, day);
+    // 61 years ago + 1 day (oldest eligible birthdate where age is still 60 today)
+    minDate = new Date(year - 61, month, day + 1);
+  }
+
+  const format = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dt = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${dt}`;
+  };
+
+  return {
+    min: format(minDate),
+    max: format(maxDate),
+  };
+}
+
+/**
  * Returns dynamic HTML date picker bounds:
  * - max: Exactly 13 years before today's date
  * - min: 120 years before today's date
@@ -120,9 +247,16 @@ export function getDobInputBounds(): { min: string; max: string } {
 
 /**
  * Validates that a phone number is an 11-digit Pakistani phone number starting with 03 or +92.
+ * Supports optional phone numbers (returns valid when empty if options.optional is true).
  */
-export function validatePakistaniPhone(phone: string | undefined | null): ValidationResult {
+export function validatePakistaniPhone(
+  phone: string | undefined | null,
+  options?: { optional?: boolean }
+): ValidationResult {
   if (!phone || !phone.trim()) {
+    if (options?.optional) {
+      return { isValid: true };
+    }
     return {
       isValid: false,
       error: 'Phone number is required.',
@@ -341,5 +475,58 @@ export function validateEmail(email: string | undefined | null): ValidationResul
  */
 export function isValidEmail(email: string | undefined | null): boolean {
   return validateEmail(email).isValid;
+}
+
+export interface PasswordValidationResult {
+  isValid: boolean;
+  hasMinLength: boolean;
+  hasLetter: boolean;
+  hasNumber: boolean;
+  error?: string;
+}
+
+/**
+ * Validates registration password:
+ * - At least 8 characters
+ * - At least one letter (a-z or A-Z)
+ * - At least one number (0-9)
+ */
+export function validateRegistrationPassword(password: string | undefined | null): PasswordValidationResult {
+  const pwd = password || '';
+  const hasMinLength = pwd.length >= 8;
+  const hasLetter = /[a-zA-Z]/.test(pwd);
+  const hasNumber = /\d/.test(pwd);
+
+  if (!pwd) {
+    return {
+      isValid: false,
+      hasMinLength: false,
+      hasLetter: false,
+      hasNumber: false,
+      error: 'Please create a password.',
+    };
+  }
+
+  const missing: string[] = [];
+  if (!hasMinLength) missing.push('at least 8 characters');
+  if (!hasLetter) missing.push('at least one letter');
+  if (!hasNumber) missing.push('at least one number');
+
+  if (missing.length > 0) {
+    return {
+      isValid: false,
+      hasMinLength,
+      hasLetter,
+      hasNumber,
+      error: `Password must include ${missing.join(', ')}.`,
+    };
+  }
+
+  return {
+    isValid: true,
+    hasMinLength: true,
+    hasLetter: true,
+    hasNumber: true,
+  };
 }
 

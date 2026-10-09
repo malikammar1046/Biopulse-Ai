@@ -5,11 +5,13 @@ import type { CareCircleInvitation } from '../../types/careCircle';
 interface CareCirclePendingInvitesProps {
   invitations: CareCircleInvitation[];
   onDeleteInvite: (inviteId: string) => Promise<{ success: boolean; error?: string }>;
+  isFemale?: boolean;
 }
 
 export const CareCirclePendingInvites: React.FC<CareCirclePendingInvitesProps> = ({
   invitations,
   onDeleteInvite,
+  isFemale = false,
 }) => {
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
 
@@ -23,10 +25,10 @@ export const CareCirclePendingInvites: React.FC<CareCirclePendingInvitesProps> =
   };
 
   return (
-    <div className="p-6 sm:p-8 rounded-2xl bg-white border border-[#BAE6FD] shadow-sm text-left select-none space-y-4">
+    <div className={`p-6 sm:p-8 rounded-2xl bg-white border ${isFemale ? 'border-[#F3E8EC]' : 'border-[#BAE6FD]'} shadow-sm text-left select-none space-y-4`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Clock className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
+          <Clock className={`w-5 h-5 ${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'} shrink-0`} aria-hidden="true" />
           <h2 className="text-base font-bold font-display text-[#0F172A]">
             Pending Invitations
           </h2>
@@ -51,9 +53,13 @@ export const CareCirclePendingInvites: React.FC<CareCirclePendingInvitesProps> =
                 <div
                   className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
                     isDoctor
-                      ? 'bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD]'
+                      ? isFemale
+                        ? 'bg-[#FDE6EF] text-[#F43F7D] border border-[#FDE6EF]'
+                        : 'bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD]'
                       : isFamily
                       ? 'bg-[#FFE4E6] text-[#E11D48] border border-[#FFE4E6]'
+                      : isFemale
+                      ? 'bg-[#FDE6EF] text-[#F43F7D] border border-[#FDE6EF]'
                       : 'bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD]'
                   }`}
                 >
@@ -78,7 +84,7 @@ export const CareCirclePendingInvites: React.FC<CareCirclePendingInvitesProps> =
                 <button
                   type="button"
                   onClick={() => handleCopy(inv.token)}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#0288D1] bg-white border border-[#BAE6FD] hover:bg-[#F0F9FF] transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold ${isFemale ? 'text-[#F43F7D] bg-white border-[#FDE6EF] hover:bg-[#FFF8FA]' : 'text-[#0288D1] bg-white border-[#BAE6FD] hover:bg-[#F0F9FF]'} border transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs`}
                 >
                   {copiedToken === inv.token ? (
                     <>

@@ -24,6 +24,8 @@ from apps.intelligence.services.male_ml_service import (
     MALE_TIER2_FEATURE_NAMES,
     MALE_TIER1_SCREENING_THRESHOLD,
     MALE_TIER2_SCREENING_THRESHOLD,
+    MALE_LOWER_RISK_THRESHOLD,
+    classify_male_screening_risk,
 )
 
 
@@ -35,6 +37,32 @@ class TestMaleMLService(unittest.TestCase):
         self.assertTrue(male_ml_service.is_ready)
         self.assertIsNotNone(male_ml_service.tier1_pipeline)
         self.assertIsNotNone(male_ml_service.tier2_pipeline)
+
+    def test_classify_male_screening_risk_boundaries(self):
+        # 10.6% must be intermediate risk
+        cat106, lbl106 = classify_male_screening_risk(0.106)
+        self.assertEqual(cat106, 'intermediate')
+        self.assertEqual(lbl106, 'Intermediate Screening Risk')
+
+        # Below 10.0% -> lower
+        cat_low, lbl_low = classify_male_screening_risk(0.099)
+        self.assertEqual(cat_low, 'lower')
+        self.assertEqual(lbl_low, 'Lower Screening Risk')
+
+        # Exactly 10.0% -> intermediate
+        cat_10, lbl_10 = classify_male_screening_risk(0.10)
+        self.assertEqual(cat_10, 'intermediate')
+        self.assertEqual(lbl_10, 'Intermediate Screening Risk')
+
+        # Exactly threshold (0.1808) -> higher
+        cat_hi, lbl_hi = classify_male_screening_risk(MALE_TIER1_SCREENING_THRESHOLD)
+        self.assertEqual(cat_hi, 'higher')
+        self.assertEqual(lbl_hi, 'Higher Screening Risk')
+
+        # None / NaN -> unavailable
+        cat_none, lbl_none = classify_male_screening_risk(None)
+        self.assertEqual(cat_none, 'unavailable')
+        self.assertEqual(lbl_none, 'Assessment Unavailable')
         self.assertEqual(len(MALE_TIER1_FEATURE_NAMES), 11)
         self.assertEqual(len(MALE_TIER2_FEATURE_NAMES), 16)
 
@@ -68,7 +96,7 @@ class TestMaleMLService(unittest.TestCase):
 
     def test_tier1_high_risk_case(self):
         high_risk_data = {
-            'age': 65,
+            'age': 58,
             'height_cm': 172.0,
             'weight_kg': 110.0,
             'waist_cm': 118.0,
@@ -84,6 +112,90 @@ class TestMaleMLService(unittest.TestCase):
         self.assertGreaterEqual(res['probability'], MALE_TIER1_SCREENING_THRESHOLD)
         self.assertEqual(res['risk_category'], 'higher')
         self.assertEqual(res['risk_label'], 'Higher Screening Risk')
+
+    def test_tier1_age_boundaries_and_missing_age(self):
+        base_t1 = {
+            'height_cm': 175.0,
+            'weight_kg': 80.0,
+            'waist_cm': 90.0,
+        }
+
+        # Missing age -> unavailable (missing_age)
+        res_missing = male_ml_service.predict_tier1(base_t1)
+        self.assertIsNone(res_missing['probability'])
+        self.assertIsNone(res_missing['probability_percent'])
+        self.assertEqual(res_missing['risk_category'], 'unavailable')
+        self.assertEqual(res_missing.get('unavailable_reason'), 'missing_age')
+
+        # Age 18 (below 19) -> unavailable (age_under_19)
+        res_18 = male_ml_service.predict_tier1({**base_t1, 'age': 18})
+        self.assertIsNone(res_18['probability'])
+        self.assertEqual(res_18['risk_category'], 'unavailable')
+        self.assertEqual(res_18.get('unavailable_reason'), 'age_under_19')
+
+        # Age 19 (lower boundary) -> valid prediction
+        res_19 = male_ml_service.predict_tier1({**base_t1, 'age': 19})
+        self.assertIsNotNone(res_19['probability'])
+        self.assertGreaterEqual(res_19['probability'], 0.0)
+        self.assertLessEqual(res_19['probability'], 1.0)
+        self.assertIn(res_19['risk_category'], ['lower', 'intermediate', 'higher'])
+
+        # Age 60 (upper boundary) -> valid prediction
+        res_60 = male_ml_service.predict_tier1({**base_t1, 'age': 60})
+        self.assertIsNotNone(res_60['probability'])
+        self.assertGreaterEqual(res_60['probability'], 0.0)
+        self.assertLessEqual(res_60['probability'], 1.0)
+        self.assertIn(res_60['risk_category'], ['lower', 'intermediate', 'higher'])
+
+        # Age 61 (above 60) -> unavailable (age_over_60)
+        res_61 = male_ml_service.predict_tier1({**base_t1, 'age': 61})
+        self.assertIsNone(res_61['probability'])
+        self.assertEqual(res_61['risk_category'], 'unavailable')
+        self.assertEqual(res_61.get('unavailable_reason'), 'age_over_60')
+
+    def test_tier2_age_boundaries_and_missing_age(self):
+        base_t2 = {
+            'shbg_nmol_l': 28.5,
+            'total_testosterone': 250.0,
+            'lh': 12.0,
+            'glucose_mg_dl': 95.0,
+        }
+
+        # Missing age -> unavailable (missing_age)
+        res_missing = male_ml_service.predict_tier2(base_t2)
+        self.assertIsNone(res_missing['probability'])
+        self.assertIsNone(res_missing['probability_percent'])
+        self.assertEqual(res_missing['risk_category'], 'unavailable')
+        self.assertEqual(res_missing.get('unavailable_reason'), 'missing_age')
+
+        # Age 18 (below 19) -> unavailable (age_under_19)
+        res_18 = male_ml_service.predict_tier2({**base_t2, 'age': 18})
+        self.assertIsNone(res_18['probability'])
+        self.assertEqual(res_18['risk_category'], 'unavailable')
+        self.assertEqual(res_18.get('unavailable_reason'), 'age_under_19')
+
+        # Age 19 (lower boundary) -> valid prediction
+        res_19 = male_ml_service.predict_tier2({**base_t2, 'age': 19})
+        self.assertIsNotNone(res_19['probability'])
+        self.assertGreaterEqual(res_19['probability'], 0.0)
+        self.assertLessEqual(res_19['probability'], 1.0)
+        self.assertIn(res_19['risk_category'], ['lower', 'intermediate', 'higher'])
+
+        # Age 60 (upper boundary) -> valid prediction
+        res_60 = male_ml_service.predict_tier2({**base_t2, 'age': 60})
+        self.assertIsNotNone(res_60['probability'])
+        self.assertGreaterEqual(res_60['probability'], 0.0)
+        self.assertLessEqual(res_60['probability'], 1.0)
+        self.assertIn(res_60['risk_category'], ['lower', 'intermediate', 'higher'])
+
+        # Age 61 (above 60) -> unavailable (age_over_60)
+        res_61 = male_ml_service.predict_tier2({**base_t2, 'age': 61})
+        self.assertIsNone(res_61['probability'])
+        self.assertEqual(res_61['risk_category'], 'unavailable')
+        self.assertEqual(res_61.get('unavailable_reason'), 'age_over_60')
+        # Rule-based hormone pattern should still be evaluated despite unavailable ML risk
+        self.assertIsNotNone(res_61['hormone_pattern_interpretation'])
+        self.assertTrue(res_61['hormone_pattern_interpretation']['is_hypogonadal'])
 
     def test_tier2_complete_labs_inference(self):
         sample_t2 = {

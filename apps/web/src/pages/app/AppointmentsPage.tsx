@@ -158,7 +158,7 @@ export const AppointmentsPage: React.FC = () => {
           {upcomingAppointment && (
             <span
               className={`w-2 h-2 rounded-full ${
-                activeTab === 'upcoming' ? 'bg-[#22C55E]' : 'bg-[#0288D1]'
+                activeTab === 'upcoming' ? 'bg-[#22C55E]' : isFemale ? 'bg-[#F43F7D]' : 'bg-[#0288D1]'
               }`}
             />
           )}

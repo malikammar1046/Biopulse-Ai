@@ -18,6 +18,7 @@
   "overview": "مجموعی جائزہ",
   "screening": "اسکریننگ",
   "lifestyle": "طرزِ زندگی اور غذائیت",
+  "fitness": "ورزش اور جسمانی صحت",
   "longitudinal": "طویل مدتی صحت",
   "reports": "رپورٹس و لیب رزلٹس",
   "appointments": "اپائنٹمنٹس",
@@ -31,5 +32,9 @@
   "openMenu": "مینو کھولیں",
   "closeMenu": "مینو بند کریں",
   "backToHome": "ہوم پر واپس جائیں",
-  "profile": "پروفائل"
+  "profile": "پروفائل",
+  "mainSection": "بنیادی",
+  "healthSection": "طبی صحت",
+  "dailyTrackingSection": "روزانہ ٹریکنگ",
+  "intelligenceSection": "انٹیلیجنس"
 }

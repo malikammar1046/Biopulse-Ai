@@ -7,7 +7,11 @@ import {
 } from '../../data/mockDashboardData';
 import type { HealthPatternPoint } from '../../types/dashboard';
 
-export const HealthPatternsChart: React.FC = () => {
+interface HealthPatternsChartProps {
+  isMale?: boolean;
+}
+
+export const HealthPatternsChart: React.FC<HealthPatternsChartProps> = ({ isMale = false }) => {
   const [activeTab, setActiveTab] = useState<'7d' | '30d' | '3m'>('7d');
   const [hoveredPoint, setHoveredPoint] = useState<HealthPatternPoint | null>(null);
 
@@ -19,12 +23,19 @@ export const HealthPatternsChart: React.FC = () => {
       : MOCK_HEALTH_PATTERNS_3M;
 
   return (
-    <div className="p-6 sm:p-8 rounded-[36px] bg-white border border-[#BAE6FD] shadow-sm select-none text-left space-y-6">
+    <div
+      className={`p-6 sm:p-8 rounded-[36px] bg-white border ${
+        isMale ? 'border-[#BAE6FD]' : 'border-[#FDE6EF]'
+      } shadow-sm select-none text-left space-y-6`}
+    >
       {/* Header & Range Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <LineChartUp01 className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
+            <LineChartUp01
+              className={`w-5 h-5 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'} shrink-0`}
+              aria-hidden="true"
+            />
             <h3 className="text-lg font-bold font-display text-[#0F172A]">
               Your Health Patterns
             </h3>
@@ -35,7 +46,11 @@ export const HealthPatternsChart: React.FC = () => {
         </div>
 
         {/* Time Tabs */}
-        <div className="inline-flex p-1 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] self-start sm:self-auto">
+        <div
+          className={`inline-flex p-1 rounded-2xl border ${
+            isMale ? 'bg-[#F0F9FF] border-[#BAE6FD]' : 'bg-[#FDE6EF]/50 border-[#FDE6EF]'
+          } self-start sm:self-auto`}
+        >
           {[
             { id: '7d', label: '7 Days' },
             { id: '30d', label: '30 Days' },
@@ -47,7 +62,7 @@ export const HealthPatternsChart: React.FC = () => {
               onClick={() => setActiveTab(tab.id as '7d' | '30d' | '3m')}
               className={`px-3 py-1 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
                 activeTab === tab.id
-                  ? 'bg-white text-[#0288D1] shadow-xs'
+                  ? `bg-white ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'} shadow-xs`
                   : 'text-[#64748B] hover:text-[#0F172A]'
               }`}
             >
@@ -60,7 +75,7 @@ export const HealthPatternsChart: React.FC = () => {
       {/* Metric Indicators Legend */}
       <div className="flex flex-wrap items-center gap-4 text-xs font-mono border-b border-[#E2E8F0] pb-4">
         <div className="flex items-center gap-1.5 text-[#64748B]">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#0288D1]" />
+          <span className={`w-2.5 h-2.5 rounded-full ${isMale ? 'bg-[#0288D1]' : 'bg-[#F43F7D]'}`} />
           <span>Active Movement (min)</span>
         </div>
         <div className="flex items-center gap-1.5 text-[#64748B]">
@@ -89,8 +104,12 @@ export const HealthPatternsChart: React.FC = () => {
                 onMouseLeave={() => setHoveredPoint(null)}
                 className={`p-3 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col items-center justify-between min-h-[180px] sm:min-h-[220px] ${
                   isHovered
-                    ? 'bg-[#E0F2FE] border-[#0288D1] scale-105 shadow-md z-10'
-                    : 'bg-[#F8FAFC] border-[#E2E8F0] hover:bg-[#F0F9FF]'
+                    ? isMale
+                      ? 'bg-[#E0F2FE] border-[#0288D1] scale-105 shadow-md z-10'
+                      : 'bg-[#FDE6EF] border-[#F43F7D] scale-105 shadow-md z-10'
+                    : isMale
+                    ? 'bg-[#F8FAFC] border-[#E2E8F0] hover:bg-[#F0F9FF]'
+                    : 'bg-[#F8FAFC] border-[#E2E8F0] hover:bg-[#FDE6EF]/30'
                 }`}
               >
                 {/* Day Label */}
@@ -107,7 +126,7 @@ export const HealthPatternsChart: React.FC = () => {
                 <div className="w-full flex items-end justify-center gap-1.5 h-24 sm:h-32 px-1">
                   {/* Activity Bar (Scaled to 60m max) */}
                   <div
-                    className="w-2.5 sm:w-3 bg-[#0288D1] rounded-t-md transition-all"
+                    className={`w-2.5 sm:w-3 ${isMale ? 'bg-[#0288D1]' : 'bg-[#F43F7D]'} rounded-t-md transition-all`}
                     style={{ height: `${Math.min((pt.activityMinutes / 60) * 100, 100)}%` }}
                     title={`Activity: ${pt.activityMinutes} min`}
                   />
@@ -128,7 +147,11 @@ export const HealthPatternsChart: React.FC = () => {
                 </div>
 
                 {/* Phase Badge */}
-                <span className="text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded-md bg-white border border-[#BAE6FD] text-[#0288D1]">
+                <span
+                  className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded-md bg-white border ${
+                    isMale ? 'border-[#BAE6FD] text-[#0288D1]' : 'border-[#FDE6EF] text-[#BE185D]'
+                  }`}
+                >
                   {pt.cyclePhase}
                 </span>
               </div>
@@ -137,16 +160,20 @@ export const HealthPatternsChart: React.FC = () => {
         </div>
 
         {/* Dynamic Tooltip Bar when hovering */}
-        <div className="p-3.5 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD] flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div
+          className={`p-3.5 rounded-2xl ${
+            isMale ? 'bg-[#F0F9FF] border-[#BAE6FD]' : 'bg-[#FDE6EF]/50 border-[#FDE6EF]'
+          } border flex flex-wrap items-center justify-between gap-3 text-xs`}
+        >
           <div className="flex items-center gap-2">
-            <BarChart01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
+            <BarChart01 className={`w-3.5 h-3.5 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`} aria-hidden="true" />
             <span className="font-semibold text-[#0F172A]">
               {hoveredPoint ? `Insights for ${hoveredPoint.date}` : 'Hover over any day for unified metrics:'}
             </span>
           </div>
 
           {hoveredPoint ? (
-            <div className="flex items-center gap-4 font-mono font-bold text-[#0288D1]">
+            <div className={`flex items-center gap-4 font-mono font-bold ${isMale ? 'text-[#0288D1]' : 'text-[#BE185D]'}`}>
               <span>Movement: {hoveredPoint.activityMinutes}m</span>
               <span>Sleep: {hoveredPoint.sleepHours}h</span>
               <span>Symptom Index: {hoveredPoint.symptomScore}/10</span>

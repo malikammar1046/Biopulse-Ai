@@ -188,6 +188,7 @@ export const FemaleDashboardOverview: React.FC = () => {
         {/* Card 5: Water Log */}
         <WaterModuleCard
           waterLog={waterLog}
+          pathway="female"
           loading={dietLoading}
           onIncrement={incrementWater}
           onDecrement={decrementWater}

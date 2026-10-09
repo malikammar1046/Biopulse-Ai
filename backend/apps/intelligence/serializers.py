@@ -49,8 +49,13 @@ class ProgressiveAssessmentSerializer(serializers.Serializer):
     shap_explanation = serializers.DictField(required=False, allow_null=True)
     longitudinal_shap_comparison = serializers.DictField(required=False, allow_null=True)
     limitations = serializers.ListField(child=serializers.CharField(), required=False, default=list)
-    next_available_tier = serializers.IntegerField(allow_null=True, required=False)
-    pcom_status = serializers.CharField(allow_null=True, required=False)
+    PCOM_STATUS_CHOICES = ["PCOM Detected", "PCOM Not Detected", "Indeterminate"]
+
+    pcom_status = serializers.ChoiceField(
+        choices=PCOM_STATUS_CHOICES,
+        allow_null=True,
+        required=False,
+    )
     pcom_probability = serializers.FloatField(allow_null=True, required=False)
     gradcam_b64 = serializers.CharField(allow_null=True, required=False)
     gradcam_url = serializers.CharField(allow_null=True, required=False)
@@ -100,6 +105,19 @@ class ProgressiveAssessmentSerializer(serializers.Serializer):
     shap_enabled = serializers.BooleanField(required=False, default=True)
     backend_mode = serializers.CharField(required=False, default="ml")
     fetch_errors = serializers.ListField(child=serializers.CharField(), required=False, default=list)
+
+    def to_internal_value(self, data):
+        if isinstance(data, dict) and 'pcom_status' in data and data['pcom_status'] is not None:
+            from apps.intelligence.services.pcos_ml_service import normalize_pcom_status
+            data = {**data, 'pcom_status': normalize_pcom_status(data['pcom_status'])}
+        return super().to_internal_value(data)
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        if ret.get('pcom_status') is not None:
+            from apps.intelligence.services.pcos_ml_service import normalize_pcom_status
+            ret['pcom_status'] = normalize_pcom_status(ret['pcom_status'])
+        return ret
 
 
 # Alias for backward compatibility

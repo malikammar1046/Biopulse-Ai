@@ -22,6 +22,8 @@ import {
   CARE_CIRCLE_PERMISSION_DEFINITIONS,
   PRESET_PERMISSIONS,
 } from '../../types/careCircle';
+import { useUserHealth } from '../../context/UserHealthContext';
+import { resolvePathway } from '../../types/onboarding';
 
 interface ManageAccessModalProps {
   isOpen: boolean;
@@ -38,6 +40,10 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({
   onUpdatePermissions,
   onRequestRevoke,
 }) => {
+  const { userProfile } = useUserHealth();
+  const pathway = resolvePathway(userProfile?.gender, userProfile?.pathway);
+  const isFemale = pathway === 'female';
+
   const [permissions, setPermissions] = useState<CareCirclePermissionsMap>(
     member?.permissions || PRESET_PERMISSIONS.private
   );
@@ -96,19 +102,19 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({
           initial={{ opacity: 0, scale: 0.96, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 15 }}
-          className="relative w-full max-w-2xl max-h-[90vh] bg-white rounded-2xl shadow-xl border border-[#BAE6FD] flex flex-col text-left select-none z-10 overflow-hidden"
+          className={`relative w-full max-w-2xl max-h-[90vh] bg-white rounded-2xl shadow-xl border ${isFemale ? 'border-[#FDE6EF]' : 'border-[#BAE6FD]'} flex flex-col text-left select-none z-10 overflow-hidden`}
         >
           {/* Top Bar */}
-          <div className="p-6 sm:p-7 border-b border-[#BAE6FD] flex items-center justify-between shrink-0 bg-[#01579B] text-white">
+          <div className={`p-6 sm:p-7 border-b ${isFemale ? 'border-[#FDE6EF] bg-[#BE185D]' : 'border-[#BAE6FD] bg-[#01579B]'} flex items-center justify-between shrink-0 text-white`}>
             <div className="flex items-center gap-3.5">
               <div className="w-12 h-12 rounded-xl bg-white/10 text-white flex items-center justify-center">
-                <IconComponent className="w-6 h-6 text-[#E0F2FE]" aria-hidden="true" />
+                <IconComponent className={`w-6 h-6 ${isFemale ? 'text-[#FDE6EF]' : 'text-[#E0F2FE]'}`} aria-hidden="true" />
               </div>
               <div>
                 <h3 className="text-xl font-bold font-display text-white">
                   Manage Access
                 </h3>
-                <p className="text-xs text-[#E0F2FE]">
+                <p className={`text-xs ${isFemale ? 'text-[#FCE7F3]' : 'text-[#E0F2FE]'}`}>
                   Control what <span className="font-semibold text-white">{member.name}</span> can view.
                 </p>
               </div>
@@ -126,11 +132,11 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({
           {/* Body Content */}
           <div className="p-6 sm:p-8 overflow-y-auto flex-1 space-y-6">
             {/* Member Profile Badge */}
-            <div className="p-4 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className={`p-4 rounded-xl ${isFemale ? 'bg-[#FFF8FA] border-[#FDE6EF]' : 'bg-[#F0F9FF] border-[#BAE6FD]'} border flex flex-col sm:flex-row sm:items-center justify-between gap-4`}>
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold text-[#0F172A]">{member.name}</span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white text-[#0288D1] border border-[#BAE6FD] font-bold capitalize">
+                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full bg-white ${isFemale ? 'text-[#F43F7D] border-[#FDE6EF]' : 'text-[#0288D1] border-[#BAE6FD]'} border font-bold capitalize`}>
                     {member.relationship || member.role}
                   </span>
                 </div>
@@ -175,14 +181,18 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({
                       onClick={() => handlePresetSelect(p.id as CareCirclePreset)}
                       className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                         isSelected
-                          ? 'bg-[#01579B] border-[#0288D1] text-white shadow-sm'
+                          ? isFemale
+                            ? 'bg-[#BE185D] border-[#F43F7D] text-white shadow-sm'
+                            : 'bg-[#01579B] border-[#0288D1] text-white shadow-sm'
+                          : isFemale
+                          ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] hover:bg-[#FFF8FA] hover:border-[#FDE6EF]'
                           : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#0F172A] hover:bg-[#F0F9FF] hover:border-[#BAE6FD]'
                       }`}
                     >
-                      <span className={`text-[11px] font-mono font-bold block ${isSelected ? 'text-[#BAE6FD]' : 'text-[#0288D1]'}`}>
+                      <span className={`text-[11px] font-mono font-bold block ${isSelected ? (isFemale ? 'text-[#FDE6EF]' : 'text-[#BAE6FD]') : (isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]')}`}>
                         {p.label}
                       </span>
-                      <span className={`text-[10px] block truncate ${isSelected ? 'text-[#E0F2FE]' : 'text-[#64748B]'}`}>
+                      <span className={`text-[10px] block truncate ${isSelected ? (isFemale ? 'text-[#FCE7F3]' : 'text-[#E0F2FE]') : 'text-[#64748B]'}`}>
                         {p.desc}
                       </span>
                     </button>
@@ -206,7 +216,9 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({
                       onClick={() => handleToggle(def.key)}
                       className={`p-3.5 rounded-xl border transition-all flex items-center justify-between gap-4 cursor-pointer ${
                         isEnabled
-                          ? 'bg-[#F0F9FF] border-[#BAE6FD]'
+                          ? isFemale
+                            ? 'bg-[#FFF8FA] border-[#FDE6EF]'
+                            : 'bg-[#F0F9FF] border-[#BAE6FD]'
                           : 'bg-white border-[#E2E8F0] hover:bg-[#F8FAFC]'
                       }`}
                     >
@@ -227,7 +239,7 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({
                       {/* Toggle Switch */}
                       <div
                         className={`w-11 h-6 rounded-full transition-colors relative shrink-0 p-0.5 ${
-                          isEnabled ? 'bg-[#0288D1]' : 'bg-[#CBD5E1]'
+                          isEnabled ? (isFemale ? 'bg-[#F43F7D]' : 'bg-[#0288D1]') : 'bg-[#CBD5E1]'
                         }`}
                       >
                         <motion.div
@@ -238,7 +250,7 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({
                           }`}
                         >
                           {isEnabled ? (
-                            <Check className="w-3 h-3 text-[#0288D1]" aria-hidden="true" />
+                            <Check className={`w-3 h-3 ${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'}`} aria-hidden="true" />
                           ) : (
                             <Lock01 className="w-2.5 h-2.5 text-[#94A3B8]" aria-hidden="true" />
                           )}
@@ -275,7 +287,7 @@ export const ManageAccessModal: React.FC<ManageAccessModalProps> = ({
                 type="button"
                 onClick={handleSave}
                 disabled={saving}
-                className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl font-sans font-semibold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl font-sans font-semibold text-xs text-white ${isFemale ? 'bg-[#F43F7D] hover:bg-[#BE185D]' : 'bg-[#0288D1] hover:bg-[#0277BD]'} shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60`}
               >
                 {saving ? (
                   <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />

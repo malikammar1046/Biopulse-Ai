@@ -17,6 +17,7 @@ export const ReportTimeline: React.FC<ReportTimelineProps> = ({
   onViewDetail,
   onDelete,
   onOpenUploadModal,
+  isMale = false,
 }) => {
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
 
@@ -43,7 +44,7 @@ export const ReportTimeline: React.FC<ReportTimelineProps> = ({
       {/* Filter Tabs Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#E2E8F0]">
         <div className="flex items-center gap-2">
-          <span className="p-1.5 rounded-xl bg-[#E0F2FE] text-[#0288D1]">
+          <span className={`p-1.5 rounded-xl ${isMale ? 'bg-[#E0F2FE] text-[#0288D1]' : 'bg-[#FDE6EF] text-[#F43F7D]'}`}>
             <FilterLines className="w-4 h-4" aria-hidden="true" />
           </span>
           <h2 className="text-lg font-bold font-display text-[#0F172A]">
@@ -58,8 +59,12 @@ export const ReportTimeline: React.FC<ReportTimelineProps> = ({
             onClick={() => setSelectedFilter('all')}
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer active:scale-[0.98] ${
               selectedFilter === 'all'
-                ? 'bg-[#0288D1] text-white shadow-xs'
-                : 'bg-[#F8FAFC] text-[#64748B] hover:bg-[#F0F9FF] border border-[#E2E8F0]'
+                ? isMale
+                  ? 'bg-[#0288D1] text-white shadow-xs'
+                  : 'bg-[#F43F7D] text-white shadow-xs'
+                : isMale
+                ? 'bg-[#F8FAFC] text-[#64748B] hover:bg-[#F0F9FF] border border-[#E2E8F0]'
+                : 'bg-[#F8FAFC] text-[#64748B] hover:bg-[#FFF8FA] border border-[#E2E8F0]'
             }`}
           >
             All Reports ({reports.length})
@@ -75,8 +80,12 @@ export const ReportTimeline: React.FC<ReportTimelineProps> = ({
                 onClick={() => setSelectedFilter(cat.id)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer active:scale-[0.98] ${
                   selectedFilter === cat.id
-                    ? 'bg-[#0288D1] text-white shadow-xs'
-                    : 'bg-[#F8FAFC] text-[#64748B] hover:bg-[#F0F9FF] border border-[#E2E8F0]'
+                    ? isMale
+                      ? 'bg-[#0288D1] text-white shadow-xs'
+                      : 'bg-[#F43F7D] text-white shadow-xs'
+                    : isMale
+                    ? 'bg-[#F8FAFC] text-[#64748B] hover:bg-[#F0F9FF] border border-[#E2E8F0]'
+                    : 'bg-[#F8FAFC] text-[#64748B] hover:bg-[#FFF8FA] border border-[#E2E8F0]'
                 }`}
               >
                 {cat.label} ({count})
@@ -88,8 +97,8 @@ export const ReportTimeline: React.FC<ReportTimelineProps> = ({
 
       {/* Empty State */}
       {filteredReports.length === 0 ? (
-        <div className="p-8 sm:p-12 text-center space-y-4 shadow-xs rounded-[28px] bg-white border border-[#BAE6FD]">
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto shadow-2xs bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD]">
+        <div className={`p-8 sm:p-12 text-center space-y-4 shadow-xs rounded-[28px] bg-white border ${isMale ? 'border-[#BAE6FD]' : 'border-[#FDE6EF]'}`}>
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto shadow-2xs ${isMale ? 'bg-[#E0F2FE] text-[#0288D1] border-[#BAE6FD]' : 'bg-[#FDE6EF] text-[#F43F7D] border-[#FDE6EF]'} border`}>
             <File06 className="w-6 h-6" aria-hidden="true" />
           </div>
           <div className="space-y-1 max-w-sm mx-auto">
@@ -106,7 +115,7 @@ export const ReportTimeline: React.FC<ReportTimelineProps> = ({
             <button
               type="button"
               onClick={onOpenUploadModal}
-              className="px-5 py-2.5 rounded-xl font-sans font-semibold text-xs text-white shadow-xs transition-all cursor-pointer inline-flex items-center gap-2 active:scale-[0.98] bg-[#0288D1] hover:bg-[#0277BD]"
+              className={`px-5 py-2.5 rounded-xl font-sans font-semibold text-xs text-white shadow-xs transition-all cursor-pointer inline-flex items-center gap-2 active:scale-[0.98] ${isMale ? 'bg-[#0288D1] hover:bg-[#0277BD]' : 'bg-[#F43F7D] hover:bg-[#E11D48]'}`}
             >
               <Plus className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />
               <span>Upload Your First Report</span>
@@ -118,7 +127,7 @@ export const ReportTimeline: React.FC<ReportTimelineProps> = ({
         <div className="space-y-8">
           {Object.entries(groupedByMonth).map(([monthYear, monthReports]) => (
             <div key={monthYear} className="space-y-3">
-              <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-[#0288D1]">
+              <div className={`flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`}>
                 <Calendar className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{monthYear}</span>
                 <span className="text-[#64748B] font-normal">
@@ -131,6 +140,7 @@ export const ReportTimeline: React.FC<ReportTimelineProps> = ({
                   <ReportCard
                     key={report.id}
                     report={report}
+                    isMale={isMale}
                     onViewDetail={onViewDetail}
                     onDelete={onDelete}
                   />

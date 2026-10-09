@@ -57,11 +57,11 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
       ) : (
         <div
           onClick={onViewCycle}
-          className="p-5 rounded-2xl bg-white border border-[#E2E8F0] hover:border-[#BAE6FD] shadow-xs transition-all text-left space-y-3 cursor-pointer group"
+          className="p-5 rounded-2xl bg-white border border-[#E2E8F0] hover:border-[#FDE6EF] shadow-xs transition-all text-left space-y-3 cursor-pointer group"
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#0288D1] uppercase tracking-wider">
-              <Calendar className="w-4 h-4 text-[#0288D1] shrink-0" aria-hidden="true" />
+            <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#F43F7D] uppercase tracking-wider">
+              <Calendar className="w-4 h-4 text-[#F43F7D] shrink-0" aria-hidden="true" />
               <span>Your Cycle Day</span>
             </div>
             <span className="text-[10px] font-mono text-[#64748B] font-medium">
@@ -75,8 +75,8 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
                 {metrics.cycleDay > 0 ? `Day ${metrics.cycleDay}` : 'Day —'}
               </span>
             </div>
-            <span className="text-xs font-semibold text-[#0288D1] flex items-center gap-1.5 mt-0.5">
-              <span className="w-2 h-2 rounded-full bg-[#29B6F6]" />
+            <span className="text-xs font-semibold text-[#F43F7D] flex items-center gap-1.5 mt-0.5">
+              <span className="w-2 h-2 rounded-full bg-[#FB7185]" />
               {metrics.phaseName}
             </span>
           </div>
@@ -87,13 +87,13 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
               <path
                 d="M 0 18 Q 25 22, 50 8 T 100 12"
                 fill="none"
-                stroke="#29B6F6"
+                stroke="#FB7185"
                 strokeWidth="2.5"
                 strokeLinecap="round"
               />
-              <circle cx="50" cy="8" r="3.5" fill="#0288D1" />
+              <circle cx="50" cy="8" r="3.5" fill="#F43F7D" />
             </svg>
-            <span className="text-[10px] font-mono text-[#64748B] group-hover:text-[#0288D1] flex items-center transition-colors">
+            <span className="text-[10px] font-mono text-[#64748B] group-hover:text-[#F43F7D] flex items-center transition-colors">
               Details <ChevronRight className="w-3 h-3" aria-hidden="true" />
             </span>
           </div>
@@ -134,11 +134,11 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
       ) : (
         <div
           onClick={onViewCycle}
-          className="p-5 rounded-2xl bg-white border border-[#E2E8F0] hover:border-[#BAE6FD] shadow-xs transition-all text-left space-y-3 cursor-pointer group"
+          className="p-5 rounded-2xl bg-white border border-[#E2E8F0] hover:border-[#FDE6EF] shadow-xs transition-all text-left space-y-3 cursor-pointer group"
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#0288D1] uppercase tracking-wider">
-              <Clock className="w-4 h-4 text-[#0288D1] shrink-0" aria-hidden="true" />
+            <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#F43F7D] uppercase tracking-wider">
+              <Clock className="w-4 h-4 text-[#F43F7D] shrink-0" aria-hidden="true" />
               <span>Next Period</span>
             </div>
             <span className="text-[10px] font-mono text-[#64748B] font-medium">Estimated</span>
@@ -159,7 +159,7 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
               <span
                 key={i}
                 className={`h-1.5 rounded-full flex-1 transition-all ${
-                  i < 7 ? 'bg-[#0288D1]' : 'bg-[#E2E8F0]'
+                  i < 7 ? 'bg-[#F43F7D]' : 'bg-[#E2E8F0]'
                 }`}
               />
             ))}
@@ -170,14 +170,27 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
       {/* ── 3. SYMPTOMS LOGGED CARD ── */}
       <div
         onClick={onViewSymptoms}
-        className="p-5 rounded-2xl bg-white border border-[#E2E8F0] hover:border-[#BAE6FD] shadow-xs transition-all text-left space-y-3 cursor-pointer group"
+        className={`p-5 rounded-2xl bg-white border border-[#E2E8F0] ${
+          isMale ? 'hover:border-[#BAE6FD]' : 'hover:border-[#FDE6EF]'
+        } shadow-xs transition-all text-left space-y-3 cursor-pointer group`}
       >
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#0288D1] uppercase tracking-wider">
-            <ActivityHeart className="w-4 h-4 text-[#0288D1] shrink-0" aria-hidden="true" />
+          <div
+            className={`flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider ${
+              isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'
+            }`}
+          >
+            <ActivityHeart
+              className={`w-4 h-4 shrink-0 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`}
+              aria-hidden="true"
+            />
             <span>Today&apos;s Symptoms</span>
           </div>
-          <span className="text-[10px] font-mono text-[#0288D1] font-bold group-hover:underline">
+          <span
+            className={`text-[10px] font-mono font-bold group-hover:underline ${
+              isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'
+            }`}
+          >
             View all
           </span>
         </div>
@@ -198,16 +211,20 @@ export const HealthSnapshotCard: React.FC<SnapshotCardsProps> = ({
 
         {/* Mini Vertical Bar Indicator */}
         <div className="pt-1 flex items-end gap-1.5 h-6">
-          <div className="w-2 h-3 bg-[#BAE6FD] rounded-t-sm" />
-          <div className="w-2 h-5 bg-[#29B6F6] rounded-t-sm" />
-          <div className="w-2 h-4 bg-[#0288D1] rounded-t-sm" />
+          <div className={`w-2 h-3 rounded-t-sm ${isMale ? 'bg-[#BAE6FD]' : 'bg-[#FDE6EF]'}`} />
+          <div className={`w-2 h-5 rounded-t-sm ${isMale ? 'bg-[#29B6F6]' : 'bg-[#FB7185]'}`} />
+          <div className={`w-2 h-4 rounded-t-sm ${isMale ? 'bg-[#0288D1]' : 'bg-[#F43F7D]'}`} />
           <div className="w-2 h-2 bg-[#E2E8F0] rounded-t-sm" />
-          <div className="w-2 h-6 bg-[#0288D1] rounded-t-sm" />
+          <div className={`w-2 h-6 rounded-t-sm ${isMale ? 'bg-[#0288D1]' : 'bg-[#F43F7D]'}`} />
         </div>
       </div>
 
       {/* ── 4. WELLNESS SCORE CARD ── */}
-      <div className="p-5 rounded-2xl bg-white border border-[#E2E8F0] hover:border-[#BAE6FD] shadow-xs transition-all text-left space-y-3">
+      <div
+        className={`p-5 rounded-2xl bg-white border border-[#E2E8F0] ${
+          isMale ? 'hover:border-[#BAE6FD]' : 'hover:border-[#FDE6EF]'
+        } shadow-xs transition-all text-left space-y-3`}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-mono font-bold text-emerald-700 uppercase tracking-wider">
             <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
