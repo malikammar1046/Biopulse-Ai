@@ -33,7 +33,6 @@ export interface BioPulseLoginScreenProps {
   onForgotPassword?: () => void;
   onSignUp?: () => void;
   onGoogleLogin?: () => void;
-  onAppleLogin?: () => void;
 }
 
 /**
@@ -47,7 +46,7 @@ export interface BioPulseLoginScreenProps {
  * - "Forgot password?" right aligned
  * - "Login  →" primary teal gradient button
  * - "─── OR ───" divider
- * - Social login: Google & Apple
+ * - Social login: Google
  * - "Don't have an account? Sign Up"
  * - Bottom trust indicators: Secure | Private | Evidence-based
  * - Full Supabase authentication & validation preserved
@@ -57,7 +56,6 @@ export const BioPulseLoginScreen: React.FC<BioPulseLoginScreenProps> = ({
   onForgotPassword,
   onSignUp,
   onGoogleLogin,
-  onAppleLogin,
 }) => {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
@@ -130,18 +128,6 @@ export const BioPulseLoginScreen: React.FC<BioPulseLoginScreenProps> = ({
       );
     }
   }, [onGoogleLogin]);
-
-  const handleApplePress = useCallback(() => {
-    if (onAppleLogin) {
-      onAppleLogin();
-    } else {
-      Alert.alert(
-        'Apple Sign-In',
-        'Apple Sign-In is configured for iOS production builds. Please sign in with your BioPulse email and password.',
-        [{ text: 'OK' }]
-      );
-    }
-  }, [onAppleLogin]);
 
   return (
     <BioPulseBackground style={styles.container}>
@@ -232,7 +218,6 @@ export const BioPulseLoginScreen: React.FC<BioPulseLoginScreenProps> = ({
               <SocialAuthRow
                 dividerText="OR"
                 onGooglePress={handleGooglePress}
-                onApplePress={handleApplePress}
               />
 
               {/* 7. Sign Up Switcher */}

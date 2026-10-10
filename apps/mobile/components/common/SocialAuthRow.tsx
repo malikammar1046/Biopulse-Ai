@@ -7,13 +7,12 @@ const GOOGLE_ICON = require('../../assets/google_logo.png');
 
 export interface SocialAuthRowProps {
   onGooglePress: () => void;
-  onApplePress: () => void;
+  onApplePress?: () => void;
   dividerText?: string;
 }
 
 export const SocialAuthRow: React.FC<SocialAuthRowProps> = ({
   onGooglePress,
-  onApplePress,
   dividerText = 'OR',
 }) => {
   return (
@@ -34,17 +33,6 @@ export const SocialAuthRow: React.FC<SocialAuthRowProps> = ({
       >
         <Image source={GOOGLE_ICON} style={styles.googleIcon} resizeMode="contain" />
         <Text style={styles.socialText}>Continue with Google</Text>
-      </Pressable>
-
-      {/* Apple Button */}
-      <Pressable
-        onPress={onApplePress}
-        style={({ pressed }) => [styles.socialButton, pressed && styles.pressed]}
-        accessibilityRole="button"
-        accessibilityLabel="Continue with Apple"
-      >
-        <Ionicons name="logo-apple" size={20} color="#000000" style={styles.appleIcon} />
-        <Text style={styles.socialText}>Continue with Apple</Text>
       </Pressable>
     </View>
   );

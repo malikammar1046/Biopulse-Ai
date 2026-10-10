@@ -206,6 +206,36 @@ export default function NotificationPreferencesScreen() {
             />
           </View>
         </View>
+
+        {/* Section 4: Device Delivery Status */}
+        <View style={styles.sectionBlock}>
+          <Text style={styles.sectionHeading}>Device Delivery Status</Text>
+          <View style={[styles.cardContainer, { padding: 16 }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 8 }}>
+              <Ionicons name="information-circle" size={20} color="#0284C7" />
+              <Text style={{ fontSize: 14, fontWeight: '700', color: '#0F172A' }}>
+                Delivery Channels
+              </Text>
+            </View>
+            <View style={{ gap: 6 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Ionicons name="checkmark-circle" size={16} color="#10B981" />
+                <Text style={{ fontSize: 12.5, color: '#334155' }}>
+                  In-App Clinical Alerts: Active & Live
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Ionicons name="time" size={16} color="#F59E0B" />
+                <Text style={{ fontSize: 12.5, color: '#334155' }}>
+                  Remote FCM / APNs Push: Pending Provider Console Setup
+                </Text>
+              </View>
+            </View>
+            <Text style={{ fontSize: 11, color: '#64748B', marginTop: 10, lineHeight: 15 }}>
+              Scheduled clinical notifications appear within the in-app notification center. Remote push delivery to locked physical devices requires configuring Google Firebase Cloud Messaging (FCM) credentials in the EAS Expo project console.
+            </Text>
+          </View>
+        </View>
       </ScrollView>
 
       {/* BOTTOM NAV */}

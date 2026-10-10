@@ -146,19 +146,36 @@ export class AppointmentService {
       return { data: null, error: res.error, status: res.status };
     }
 
-    const doctors: SpecialistDoctor[] = (res.data || []).map((doc: any) => ({
+    const rawList: any[] = Array.isArray(res.data)
+      ? res.data
+      : Array.isArray((res.data as any)?.doctors)
+      ? (res.data as any).doctors
+      : Array.isArray((res.data as any)?.results)
+      ? (res.data as any).results
+      : [];
+
+    const doctors: SpecialistDoctor[] = rawList.map((doc: any) => ({
       id: String(doc.id || doc.slug),
       name: doc.name,
       specialty: doc.specialty || doc.designation || 'Medical Specialist',
       pathway: doc.pathway === 'male_hypogonadism' ? 'male' : 'female',
-      hospital: doc.hospital || doc.clinic_organization || 'BioPulse Partner Center',
+      hospital: doc.hospital || doc.clinic_organization || (doc.location ? doc.location.split('/')[0].trim() : 'BioPulse Partner Center'),
       experienceYears: Number(doc.experience_years) || 10,
-      patientsCount: Number(doc.patients_count) || 500,
-      rating: Number(doc.rating) || 4.8,
-      photoUrl: doc.photo_url || doc.avatar_url,
-      areasOfExpertise: Array.isArray(doc.areas_of_expertise) ? doc.areas_of_expertise : ['Endocrine Care'],
-      about: doc.about || doc.bio || 'Verified BioPulse clinical specialist.',
+      patientsCount: Number(doc.reviews_count) || Number(doc.patients_count) || 120,
+      rating: typeof doc.rating === 'string' ? parseFloat(doc.rating) || 4.8 : Number(doc.rating) || 4.8,
+      photoUrl: doc.profile_image || doc.photo_url || doc.avatar_url,
+      areasOfExpertise: Array.isArray(doc.areas_of_expertise)
+        ? doc.areas_of_expertise
+        : typeof doc.services_offered === 'string'
+        ? doc.services_offered.split(',').map((s: string) => s.trim())
+        : ['Endocrine Care'],
+      about: doc.short_bio || doc.about || doc.bio || 'Verified BioPulse clinical specialist.',
       isAvailableToday: Boolean(doc.is_active),
+      qualifications: doc.qualifications || 'MBBS, FCPS',
+      city: doc.location?.includes('Lahore') ? 'Lahore' : doc.location?.includes('Karachi') ? 'Karachi' : doc.location?.includes('Islamabad') ? 'Islamabad' : (doc.city || 'Lahore'),
+      fee: doc.fee,
+      waitTime: doc.wait_time,
+      reviewCount: Number(doc.reviews_count) || 120,
     }));
 
     return { data: doctors, error: null, status: 200 };

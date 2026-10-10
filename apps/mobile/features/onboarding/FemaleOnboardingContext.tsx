@@ -37,6 +37,10 @@ export interface FemaleLifestyleState {
   fastFoodIntake: 'never' | 'occasionally' | 'frequently';
   exerciseFrequency: 'none' | '1-2_days' | '3+_days';
   stressLevel: 'low' | 'moderate' | 'high';
+  waterIntake?: string;
+  smokingStatus?: string;
+  alcoholIntake?: string;
+  additionalNotes?: string;
 }
 
 export interface FemaleOnboardingState {
@@ -72,6 +76,10 @@ const DEFAULT_LIFESTYLE: FemaleLifestyleState = {
   fastFoodIntake: 'occasionally',
   exerciseFrequency: '1-2_days',
   stressLevel: 'moderate',
+  waterIntake: '1.6 L',
+  smokingStatus: 'No',
+  alcoholIntake: 'Rarely',
+  additionalNotes: '',
 };
 
 interface FemaleOnboardingContextValue {

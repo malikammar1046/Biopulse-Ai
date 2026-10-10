@@ -7,17 +7,13 @@
  */
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY, mobileSupabaseAuth } from '../lib/supabase';
-
-declare const process: {
-  env: Record<string, string | undefined>;
-};
+import { BACKEND_API_URL, resolveBackendApiUrl } from './api';
 
 // ---------------------------------------------------------------------------
 // Configuration
 // ---------------------------------------------------------------------------
 
-export const BACKEND_API_URL =
-  process.env.EXPO_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8000/api';
+export { BACKEND_API_URL, resolveBackendApiUrl };
 
 const DEFAULT_TIMEOUT_MS = 25000;
 
@@ -59,6 +55,7 @@ export interface ProgressiveAssessment {
   threshold: number;
   risk_category: RiskCategory | string;
   risk_label?: string;
+  summary_text?: string;
   explanations?: ShapFactor[];
   shap_explanation?: {
     factors?: ShapFactor[];
@@ -302,15 +299,21 @@ export interface RiskBandDisplay {
 }
 
 export const FEMALE_DEFAULT_THRESHOLD = 0.25;
-export const MALE_DEFAULT_THRESHOLD = 0.45;
+export const FEMALE_LOWER_CUTOFF = 0.18;
+export const MALE_DEFAULT_THRESHOLD = 0.1808;
+export const MALE_TIER1_DEFAULT_THRESHOLD = 0.1808;
+export const MALE_TIER2_DEFAULT_THRESHOLD = 0.3379;
 
 export function resolveRiskBand(
   probability: number,
   category?: string,
   threshold: number = FEMALE_DEFAULT_THRESHOLD,
-  lowCutoff: number = 0.18
+  lowCutoff: number = FEMALE_LOWER_CUTOFF,
+  module?: string,
+  customSummaryText?: string
 ): RiskBandDisplay {
   const normCategory = (category || '').toLowerCase().trim();
+  const isMale = (module || '').toLowerCase().includes('male');
 
   let resolvedCat: RiskCategory;
   if (normCategory.includes('higher') || normCategory.includes('high')) {
@@ -333,6 +336,20 @@ export function resolveRiskBand(
   const probPercent = Math.round(probability * 100);
 
   if (resolvedCat === 'higher') {
+    if (isMale) {
+      return {
+        category: 'higher',
+        label: 'Higher Screening Risk',
+        color: '#E0316A',
+        badgeBg: '#FCE8EF',
+        badgeBorder: '#F8CAD9',
+        badgeTextColor: '#E0316A',
+        summaryText:
+          customSummaryText ||
+          'Your answers and health profile show factors that are sometimes associated with lower testosterone levels. Consider discussing these findings with a qualified healthcare professional.',
+        progressPercent: Math.min(100, Math.max(0, probPercent)),
+      };
+    }
     return {
       category: 'higher',
       label: 'Higher Likelihood',
@@ -341,12 +358,27 @@ export function resolveRiskBand(
       badgeBorder: '#F8CAD9',
       badgeTextColor: '#E0316A',
       summaryText:
+        customSummaryText ||
         'Several of your current screening factors are associated with PCOS. Consider discussing these findings with a qualified healthcare professional.',
       progressPercent: Math.min(100, Math.max(0, probPercent)),
     };
   }
 
   if (resolvedCat === 'intermediate') {
+    if (isMale) {
+      return {
+        category: 'intermediate',
+        label: 'Intermediate Screening Risk',
+        color: '#D97706',
+        badgeBg: '#FEF3C7',
+        badgeBorder: '#FDE68A',
+        badgeTextColor: '#B45309',
+        summaryText:
+          customSummaryText ||
+          'Some of your screening answers are associated with testosterone patterns, but the result is not conclusive. Additional information or clinical review may be helpful.',
+        progressPercent: Math.min(100, Math.max(0, probPercent)),
+      };
+    }
     return {
       category: 'intermediate',
       label: 'Intermediate Likelihood',
@@ -355,11 +387,26 @@ export function resolveRiskBand(
       badgeBorder: '#FDE68A',
       badgeTextColor: '#B45309',
       summaryText:
+        customSummaryText ||
         'Some of your current health patterns are associated with PCOS, but the result is not conclusive. Additional information or clinical review may be helpful.',
       progressPercent: Math.min(100, Math.max(0, probPercent)),
     };
   }
 
+  if (isMale) {
+    return {
+      category: 'lower',
+      label: 'Lower Screening Risk',
+      color: '#059669',
+      badgeBg: '#D1FAE5',
+      badgeBorder: '#A7F3D0',
+      badgeTextColor: '#047857',
+      summaryText:
+        customSummaryText ||
+        'Your answers and health profile show a lower probability pattern for testosterone deficiency. Continue regular preventive health tracking.',
+      progressPercent: Math.min(100, Math.max(0, probPercent)),
+    };
+  }
   return {
     category: 'lower',
     label: 'Lower Likelihood',
@@ -368,6 +415,7 @@ export function resolveRiskBand(
     badgeBorder: '#A7F3D0',
     badgeTextColor: '#047857',
     summaryText:
+      customSummaryText ||
       'Your current screening pattern shows fewer features associated with PCOS. Continue regular preventive health tracking.',
     progressPercent: Math.min(100, Math.max(0, probPercent)),
   };
@@ -521,9 +569,10 @@ export async function fetchActiveScreeningAssessment(
             model_version: row.model_version || (targetModule === 'male_hypogonadism' ? 'MALE-ML v1.0' : 'PCOS-ML v1.2-T1'),
             probability: Number(row.probability ?? 0),
             probability_percent: Number(row.probability_percent ?? (Number(row.probability ?? 0) * 100)),
-            threshold: Number(row.threshold ?? (targetModule === 'male_hypogonadism' ? 0.45 : 0.25)),
+            threshold: Number(row.threshold ?? (targetModule === 'male_hypogonadism' ? MALE_DEFAULT_THRESHOLD : FEMALE_DEFAULT_THRESHOLD)),
             risk_category: row.risk_category || 'lower',
             risk_label: row.risk_label,
+            summary_text: row.summary_text,
             explanations: normalizedExps,
             shap_explanation: row.shap_explanation || null,
             limitations: row.limitations || [],
@@ -585,16 +634,34 @@ export async function submitFemaleTier1AssessmentWithStatus(
       const errJson = await response.json();
       errorDetail = errJson.error || errJson.details || errJson.message || `Error status ${response.status}`;
     } catch {
-      errorDetail = `Assessment submission failed with HTTP ${response.status}.`;
+      if (response.status === 401) {
+        errorDetail = 'Your authentication session has expired. Please sign in again to continue.';
+      } else if (response.status === 400 || response.status === 422) {
+        errorDetail = 'Invalid screening inputs provided. Please review all health values.';
+      } else if (response.status >= 500) {
+        errorDetail = 'BioPulse screening service is currently encountering an internal error. Please retry shortly.';
+      } else {
+        errorDetail = `Assessment submission failed with HTTP ${response.status}.`;
+      }
     }
 
     return { data: null, error: errorDetail, statusCode: response.status };
   } catch (err: any) {
+    let errorMsg = 'Unable to connect to BioPulse screening service. Please check your network connection and retry.';
+    let status = 0;
+    if (err?.name === 'AbortError') {
+      errorMsg = 'Screening request timed out. Please check your connection and retry.';
+      status = 408;
+    } else if (err?.message?.toLowerCase().includes('network request failed')) {
+      errorMsg = 'Network connection failed. Please ensure your device is connected to the network and the BioPulse server is running.';
+      status = 0;
+    } else if (err?.message) {
+      errorMsg = err.message;
+    }
     return {
       data: null,
-      error:
-        err?.message ||
-        'Unable to connect to BioPulse screening service. Please check your network connection and retry.',
+      error: errorMsg,
+      statusCode: status,
     };
   }
 }
@@ -848,16 +915,34 @@ export async function submitMaleTier1AssessmentWithStatus(
       const errJson = await response.json();
       errorDetail = errJson.error || errJson.details || errJson.message || `Error status ${response.status}`;
     } catch {
-      errorDetail = `Assessment submission failed with HTTP ${response.status}.`;
+      if (response.status === 401) {
+        errorDetail = 'Your authentication session has expired. Please sign in again to continue.';
+      } else if (response.status === 400 || response.status === 422) {
+        errorDetail = 'Invalid screening inputs provided. Please review all health values.';
+      } else if (response.status >= 500) {
+        errorDetail = 'BioPulse screening service is currently encountering an internal error. Please retry shortly.';
+      } else {
+        errorDetail = `Assessment submission failed with HTTP ${response.status}.`;
+      }
     }
 
     return { data: null, error: errorDetail, statusCode: response.status };
   } catch (err: any) {
+    let errorMsg = 'Unable to connect to BioPulse screening service. Please check your network connection and retry.';
+    let status = 0;
+    if (err?.name === 'AbortError') {
+      errorMsg = 'Screening request timed out. Please check your connection and retry.';
+      status = 408;
+    } else if (err?.message?.toLowerCase().includes('network request failed')) {
+      errorMsg = 'Network connection failed. Please ensure your device is connected to the network and the BioPulse server is running.';
+      status = 0;
+    } else if (err?.message) {
+      errorMsg = err.message;
+    }
     return {
       data: null,
-      error:
-        err?.message ||
-        'Unable to connect to BioPulse screening service. Please check your network connection and retry.',
+      error: errorMsg,
+      statusCode: status,
     };
   }
 }
@@ -947,9 +1032,10 @@ export async function fetchAssessmentHistory(
               model_version: row.model_version || (targetModule === 'male_hypogonadism' ? 'MALE-ML v1.0' : 'PCOS-ML v1.2-T1'),
               probability: Number(row.probability ?? 0),
               probability_percent: Number(row.probability_percent ?? (Number(row.probability ?? 0) * 100)),
-              threshold: Number(row.threshold ?? (targetModule === 'male_hypogonadism' ? 0.45 : 0.25)),
+              threshold: Number(row.threshold ?? (targetModule === 'male_hypogonadism' ? MALE_DEFAULT_THRESHOLD : FEMALE_DEFAULT_THRESHOLD)),
               risk_category: row.risk_category || 'lower',
               risk_label: row.risk_label,
+              summary_text: row.summary_text,
               explanations: normalizedExps,
               shap_explanation: row.shap_explanation || null,
               limitations: row.limitations || [],
@@ -1066,7 +1152,10 @@ export async function getHistoricalAssessmentById(
 
 export const assessmentService = {
   FEMALE_DEFAULT_THRESHOLD,
+  FEMALE_LOWER_CUTOFF,
   MALE_DEFAULT_THRESHOLD,
+  MALE_TIER1_DEFAULT_THRESHOLD,
+  MALE_TIER2_DEFAULT_THRESHOLD,
   fetchActiveScreeningAssessment,
   getLatestAssessment: fetchActiveScreeningAssessment,
   fetchAssessmentHistory,

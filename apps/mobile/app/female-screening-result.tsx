@@ -24,6 +24,7 @@ import {
   resolveRiskBand,
   formatShapFactorForPatient,
   formatAssessmentDate,
+  FEMALE_DEFAULT_THRESHOLD,
 } from '../services/assessmentService';
 
 interface FactorItem {
@@ -64,7 +65,10 @@ export default function FemaleScreeningResultScreen() {
   const band = resolveRiskBand(
     probability,
     activeAssessment?.risk_category || screening.riskCategory,
-    activeAssessment?.threshold || 0.25
+    activeAssessment?.threshold ?? FEMALE_DEFAULT_THRESHOLD,
+    0.18,
+    'female_pcos',
+    activeAssessment?.summary_text
   );
 
   const riskLabel = activeAssessment?.risk_label || band.label;
