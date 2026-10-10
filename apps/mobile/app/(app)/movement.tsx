@@ -18,93 +18,260 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../../constants/Colors';
 import { BioPulseBackground } from '../../components/common/BioPulseBackground';
+import { useAuth } from '../../features/authentication';
 import { useHealthStore } from '../../store';
 
-interface RecommendedRoutine {
+export interface RecommendedRoutine {
   id: string;
   title: string;
   duration: string;
   benefit: string;
+  intensity: 'Restorative' | 'Gentle' | 'Low-Impact' | 'Moderate';
+  focus: string;
+  whyThisRoutine: string;
+  steps: string[];
+  safetyNotice: string;
   icon: keyof typeof Ionicons.glyphMap;
   iconBg: string;
   iconColor: string;
   defaultMins: number;
   defaultSteps: number;
   type: string;
+  pathway: 'female' | 'male' | 'both';
+  category: 'strength' | 'walking' | 'recovery' | 'yoga' | 'other';
 }
 
-const RECOMMENDED_ROUTINES: RecommendedRoutine[] = [
+const FEMALE_ROUTINES: RecommendedRoutine[] = [
   {
-    id: 'walk',
-    title: 'Walking',
-    duration: '20–30 min',
-    benefit: 'Improves insulin sensitivity & glucose uptake',
-    icon: 'walk',
-    iconBg: '#ECFDF5',
-    iconColor: '#10B981',
-    defaultMins: 25,
-    defaultSteps: 2500,
-    type: 'walking',
+    id: 'f_cramps_pelvic',
+    title: 'Pelvic & Lower Back Release',
+    duration: '15 min',
+    benefit: 'Eases menstrual cramps & reduces abdominal tension',
+    intensity: 'Restorative',
+    focus: 'Cramp Relief & Lower Back Ease',
+    whyThisRoutine:
+      'Low-stress gentle stretching eases uterine congestion and lower back pressure without triggering adrenal fatigue or cortisol spikes.',
+    steps: [
+      '5 mins Child’s Pose (Balasana) with slow diaphragmatic breaths into the belly',
+      '5 mins gentle Cat-Cow spine waves to mobilize the sacrum and lower back',
+      '5 mins Reclined Bound Angle (Supta Baddha Konasana) with knee support',
+    ],
+    safetyNotice:
+      'Gentle movement can relieve mild muscular tension. It does not replace medical care. Do not push through sharp or severe pelvic pain; seek medical evaluation for unusual or debilitating symptoms.',
+    icon: 'body',
+    iconBg: '#FDF2F8',
+    iconColor: '#E11D48',
+    defaultMins: 15,
+    defaultSteps: 0,
+    type: 'stretching',
+    pathway: 'female',
+    category: 'recovery',
   },
   {
-    id: 'strength',
-    title: 'Light Strength',
-    duration: '15–20 min',
-    benefit: 'Builds metabolic health & muscle mass',
+    id: 'f_period_walk',
+    title: 'Mindful Fresh Air Walk',
+    duration: '20 min',
+    benefit: 'Stimulates pelvic circulation & lymphatic flow',
+    intensity: 'Gentle',
+    focus: 'Circulation & Mood Support',
+    whyThisRoutine:
+      'A relaxed outdoor stroll oxygenates smooth muscles, naturally relieving pelvic discomfort without elevating stress hormones.',
+    steps: [
+      'Walk at a comfortable, conversational pace with shoulders relaxed',
+      'Focus on steady nasal breathing to maintain parasympathetic calm',
+      'Hydrate with warm water or herbal infusion post-walk',
+    ],
+    safetyNotice:
+      'Keep your pace easy. Listen to your body and rest if you feel fatigued or lightheaded.',
+    icon: 'walk',
+    iconBg: '#FFF1F2',
+    iconColor: '#F43F7D',
+    defaultMins: 20,
+    defaultSteps: 2200,
+    type: 'walking',
+    pathway: 'female',
+    category: 'walking',
+  },
+  {
+    id: 'f_pcos_strength',
+    title: 'Low-Impact Slow Strength & Stability',
+    duration: '20 min',
+    benefit: 'Enhances insulin sensitivity without cortisol spikes',
+    intensity: 'Low-Impact',
+    focus: 'Insulin Sensitivity & Muscle Mass',
+    whyThisRoutine:
+      'Controlled resistance movements recruit large muscle groups for optimal glucose uptake while protecting the HPA axis from overtraining.',
+    steps: [
+      '3 sets of 10 slow tempo bodyweight or light goblet squats',
+      '3 sets of 10 Bird-Dog core stabilizers (5-sec hold per side)',
+      '3 sets of 12 standing calf raises and glute bridges',
+      '3 mins seated hamstring and chest opening stretch',
+    ],
+    safetyNotice:
+      'Exercise supports metabolic health and insulin regulation, but is not a standalone cure for PCOS. Maintain controlled form and adequate hydration.',
     icon: 'barbell',
-    iconBg: '#EFF6FF',
-    iconColor: '#0284C7',
+    iconBg: '#FCE7F3',
+    iconColor: '#BE123C',
     defaultMins: 20,
     defaultSteps: 600,
     type: 'strength',
+    pathway: 'female',
+    category: 'strength',
   },
   {
-    id: 'stretching',
-    title: 'Stretching',
-    duration: '10–15 min',
-    benefit: 'Reduces cortisol and stress levels',
-    icon: 'body',
+    id: 'f_rest_recovery',
+    title: 'Restorative Rest & Diaphragmatic Breath',
+    duration: '15 min',
+    benefit: 'Calms the nervous system & resets cortisol',
+    intensity: 'Restorative',
+    focus: 'Nervous System Reset',
+    whyThisRoutine:
+      'Active recovery with elevated legs facilitates venous return and shifts your body into autonomic recovery mode.',
+    steps: [
+      'Lie comfortably with legs elevated against a wall or resting on pillows',
+      'Practice 4-second inhales and 6-second slow exhales',
+      'Allow muscles to completely decompress in stillness',
+    ],
+    safetyNotice:
+      'Use comfortable cushioning under your hips and neck for optimal relaxation.',
+    icon: 'flower-outline',
     iconBg: '#F5F3FF',
     iconColor: '#8B5CF6',
     defaultMins: 15,
     defaultSteps: 0,
-    type: 'stretching',
+    type: 'rest_recovery',
+    pathway: 'female',
+    category: 'recovery',
   },
   {
-    id: 'cardio',
-    title: 'Low-Impact Cardio',
-    duration: '20–25 min',
-    benefit: 'Aerobic endurance without adrenal stress',
-    icon: 'heart',
+    id: 'f_glucose_walk',
+    title: 'Post-Meal Glucose Clearing Walk',
+    duration: '20 min',
+    benefit: 'Smooths blood sugar spikes after meals',
+    intensity: 'Gentle',
+    focus: 'Glycemic Regulation',
+    whyThisRoutine:
+      'Walking 15–20 minutes after eating uses muscle contractions to clear circulating glucose without requiring extra insulin.',
+    steps: [
+      'Start walking 15–30 minutes after completing a meal',
+      'Maintain an easy conversational tempo',
+      'Relax your posture and enjoy the outdoors',
+    ],
+    safetyNotice:
+      'Gentle post-prandial movement supports glycemic stability. Do not perform high-intensity sprints immediately after eating.',
+    icon: 'walk',
+    iconBg: '#ECFDF5',
+    iconColor: '#10B981',
+    defaultMins: 20,
+    defaultSteps: 2000,
+    type: 'walking',
+    pathway: 'female',
+    category: 'walking',
+  },
+];
+
+const MALE_ROUTINES: RecommendedRoutine[] = [
+  {
+    id: 'm_functional_strength',
+    title: 'Full Body Functional Strength & Mobility',
+    duration: '30 min',
+    benefit: 'Supports lean body mass & metabolic vitality',
+    intensity: 'Moderate',
+    focus: 'Muscular Health & Metabolic Rate',
+    whyThisRoutine:
+      'Compound movements engage major muscle groups, promoting lean body composition, bone mineral density, and optimal metabolic health.',
+    steps: [
+      '5 mins joint mobilization (shoulder circles, hip openers, torso twists)',
+      '3 sets of 10-12 bodyweight or goblet squats with controlled tempo',
+      '3 sets of 8-10 push-ups (incline or standard)',
+      '3 sets of 10 resistance band rows',
+      '3 mins cool-down stretch and nasal breathing recovery',
+    ],
+    safetyNotice:
+      'Regular strength training supports general metabolic wellness and body composition. It does not replace medical hormone evaluation or diagnostic testing for hypogonadism.',
+    icon: 'barbell',
+    iconBg: '#EFF6FF',
+    iconColor: '#0284C7',
+    defaultMins: 30,
+    defaultSteps: 800,
+    type: 'strength',
+    pathway: 'male',
+    category: 'strength',
+  },
+  {
+    id: 'm_zone2_walk',
+    title: 'Zone-2 Brisk Aerobic Power Walk',
+    duration: '25 min',
+    benefit: 'Cardiovascular endurance & mitochondrial health',
+    intensity: 'Moderate',
+    focus: 'Cardiovascular & Metabolic Fitness',
+    whyThisRoutine:
+      'Steady conversational aerobic exercise improves vascular endothelium, capillary density, and insulin sensitivity.',
+    steps: [
+      '3 mins easy warm-up pace',
+      '20 mins steady brisk walking (maintain a pace where you can hold a conversation)',
+      '2 mins gentle cool-down stroll and hydration',
+    ],
+    safetyNotice:
+      'Cardiorespiratory fitness benefits overall longevity. If you experience chest tightness, dizziness, or irregular heartbeat, stop immediately and seek medical attention.',
+    icon: 'walk',
+    iconBg: '#E0F2FE',
+    iconColor: '#0369A1',
+    defaultMins: 25,
+    defaultSteps: 2800,
+    type: 'walking',
+    pathway: 'male',
+    category: 'walking',
+  },
+  {
+    id: 'm_postural_decompression',
+    title: 'Postural Alignment & Decompression',
+    duration: '15 min',
+    benefit: 'Relieves desk strain, decompresses spine & eases stress',
+    intensity: 'Restorative',
+    focus: 'Spinal Health & Autonomic Balance',
+    whyThisRoutine:
+      'Counters prolonged sitting by opening tight hip flexors and decompressing the lumbar spine, resetting parasympathetic balance.',
+    steps: [
+      '5 mins gentle Cat-Cow and thoracic spine rotations',
+      '5 mins door-frame chest stretches and kneeling hip flexor release',
+      '5 mins slow diaphragmatic box breathing in a comfortable seated position',
+    ],
+    safetyNotice:
+      'Move gently through your natural range of motion. Avoid sharp twisting or painful hyperextension.',
+    icon: 'body',
+    iconBg: '#F0FDF4',
+    iconColor: '#16A34A',
+    defaultMins: 15,
+    defaultSteps: 0,
+    type: 'rest_recovery',
+    pathway: 'male',
+    category: 'recovery',
+  },
+  {
+    id: 'm_metabolic_walk',
+    title: 'Metabolic Clearing Evening Stroll',
+    duration: '20 min',
+    benefit: 'Supports insulin sensitivity & evening blood pressure',
+    intensity: 'Gentle',
+    focus: 'Insulin Sensitivity & Sleep Prep',
+    whyThisRoutine:
+      'Gentle post-dinner walking clears circulating triglycerides and blood sugar while lowering evening cortisol before sleep.',
+    steps: [
+      'Walk at an unhurried, comfortable pace in fresh air',
+      'Keep shoulders and jaw relaxed',
+      'Hydrate with pure water when finished',
+    ],
+    safetyNotice:
+      'Regular walking is safe for most adults. Consult your physician before initiating any vigorous exercise program.',
+    icon: 'walk',
     iconBg: '#FEF3C7',
     iconColor: '#D97706',
     defaultMins: 20,
-    defaultSteps: 1800,
-    type: 'low_impact_cardio',
-  },
-  {
-    id: 'yoga',
-    title: 'Restorative Yoga',
-    duration: '20–30 min',
-    benefit: 'Calms nervous system and lowers tension',
-    icon: 'flower-outline',
-    iconBg: '#FDF2F8',
-    iconColor: '#EC4899',
-    defaultMins: 25,
-    defaultSteps: 0,
-    type: 'yoga',
-  },
-  {
-    id: 'cycling',
-    title: 'Cycling',
-    duration: '25–35 min',
-    benefit: 'Cardiovascular conditioning with low joint impact',
-    icon: 'bicycle',
-    iconBg: '#E0F2FE',
-    iconColor: '#0284C7',
-    defaultMins: 30,
-    defaultSteps: 2200,
-    type: 'cycling',
+    defaultSteps: 2100,
+    type: 'walking',
+    pathway: 'male',
+    category: 'walking',
   },
 ];
 
@@ -115,6 +282,7 @@ const ACTIVITY_TYPES = [
   { label: 'Stretching', value: 'stretching' },
   { label: 'Cycling', value: 'cycling' },
   { label: 'Cardio', value: 'low_impact_cardio' },
+  { label: 'Recovery', value: 'rest_recovery' },
   { label: 'Mobility', value: 'mobility' },
   { label: 'Other', value: 'other' },
 ];
@@ -127,6 +295,7 @@ const getActivityIcon = (type: string): keyof typeof Ionicons.glyphMap => {
   if (t.includes('stretch')) return 'body';
   if (t.includes('cycl')) return 'bicycle';
   if (t.includes('cardio')) return 'heart';
+  if (t.includes('recovery')) return 'bed-outline';
   if (t.includes('mobility')) return 'fitness';
   return 'fitness-outline';
 };
@@ -147,28 +316,18 @@ const formatActivityDate = (dateStr?: string) => {
 /**
  * SCREEN 29: EXERCISE & MOVEMENT
  *
- * Strict visual match to Screenshot 29:
- * - Top Header: Back chevron (<), centered "Exercise & Movement"
- * - Segmented Tabs: [ Today ] (active pink pill), [ This Week ], [ Recommendations ]
- * - Dual Metrics Row:
- *   - Card 1: Activity Time (min, Goal: 30 min, Teal progress bar, %)
- *   - Card 2: Steps (steps, Goal: 8,000, Teal progress bar, %)
- * - Weekly Activity Card:
- *   - 7 vertical pink bars (Mon-Sun) truthfully calculated from real stored fitness_logs
- *   - 60 min and 30 min benchmark guidelines
- * - Recommended for You Section:
- *   - Header with "View All" link
- *   - Cards: Walking, Light Strength, Stretching, etc.
- * - Persistent Backend Integration:
- *   - Connects to public.fitness_logs via useHealthStore
- *   - Truthful weekly activity without hardcoded demo values
- *   - Loading, Empty, Error, Retry, and Save Confirmation states
+ * Full pathway parity (Female PCOS/cramps, Male metabolic/strength)
+ * Integrated with Supabase public.fitness_logs.
+ * Real metrics, genuine routines, honest empty states.
  */
 export default function MovementScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
+
+  const { pathway } = useAuth();
+  const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
 
   const {
     movement,
@@ -182,6 +341,9 @@ export default function MovementScreen() {
 
   const [activeTab, setActiveTab] = useState<'today' | 'week' | 'recommendations'>('today');
   const [modalVisible, setModalVisible] = useState(false);
+  const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [selectedRoutine, setSelectedRoutine] = useState<RecommendedRoutine | null>(null);
+
   const [logType, setLogType] = useState('Walking');
   const [selectedActivityType, setSelectedActivityType] = useState('walking');
   const [logMins, setLogMins] = useState('20');
@@ -189,9 +351,19 @@ export default function MovementScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
 
+  const [filterCategory, setFilterCategory] = useState<string>('All');
+
+  // Pathway specific routines
+  const availableRoutines = isFemale ? FEMALE_ROUTINES : MALE_ROUTINES;
+
+  const filteredRoutines = useMemo(() => {
+    if (filterCategory === 'All') return availableRoutines;
+    return availableRoutines.filter((r) => r.category === filterCategory.toLowerCase());
+  }, [availableRoutines, filterCategory]);
+
   // Today's metrics connected to persistent health store
   const todayMins = movement.todayActivityMinutes ?? 0;
-  const targetMins = movement.targetMinutes || 30; // BioPulse daily movement target
+  const targetMins = movement.targetMinutes || 30;
   const minsPercent = targetMins > 0 ? Math.round((todayMins / targetMins) * 100) : 0;
 
   const todaySteps = movement.todaySteps ?? 0;
@@ -216,7 +388,7 @@ export default function MovementScreen() {
       }));
     }
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const currentDayIdx = (new Date().getDay() + 6) % 7; // 0 for Mon, 6 for Sun
+    const currentDayIdx = (new Date().getDay() + 6) % 7;
     return days.map((day, idx) => ({
       day,
       mins: idx === currentDayIdx ? todayMins : 0,
@@ -244,6 +416,7 @@ export default function MovementScreen() {
     setIsSaving(false);
     if (success) {
       setModalVisible(false);
+      setDetailModalVisible(false);
       setFeedbackMsg(`Logged ${minsNum} min of ${logType}`);
       setTimeout(() => setFeedbackMsg(null), 4000);
       Alert.alert(
@@ -277,13 +450,21 @@ export default function MovementScreen() {
     [deleteActivityLog]
   );
 
-  const handleSelectRoutine = useCallback((routine: RecommendedRoutine) => {
+  const handleOpenRoutineDetails = useCallback((routine: RecommendedRoutine) => {
+    setSelectedRoutine(routine);
+    setDetailModalVisible(true);
+  }, []);
+
+  const handleLogRoutineDirectly = useCallback((routine: RecommendedRoutine) => {
     setLogType(routine.title);
     setSelectedActivityType(routine.type || 'walking');
     setLogMins(routine.defaultMins.toString());
     setLogSteps(routine.defaultSteps.toString());
     setModalVisible(true);
   }, []);
+
+  const themeColor = isFemale ? '#E11D48' : '#0284C7';
+  const themeBgLight = isFemale ? '#FCE7F3' : '#DBEAFE';
 
   return (
     <View style={styles.root}>
@@ -317,35 +498,26 @@ export default function MovementScreen() {
           <RefreshControl
             refreshing={isLoadingMovement}
             onRefresh={loadMovementData}
-            tintColor="#F43F7D"
-            colors={['#F43F7D']}
+            tintColor={themeColor}
           />
         }
       >
-        {/* Success Banner */}
+        {/* User feedback banner */}
         {feedbackMsg && (
           <View style={styles.successBanner}>
-            <Ionicons name="checkmark-circle" size={18} color="#10B981" />
+            <Ionicons name="checkmark-circle" size={18} color="#059669" />
             <Text style={styles.successBannerText}>{feedbackMsg}</Text>
           </View>
         )}
 
-        {/* Error Banner with Retry */}
+        {/* Error banner */}
         {movementError && (
           <View style={styles.errorBanner}>
-            <Ionicons name="alert-circle-outline" size={18} color="#EF4444" />
+            <Ionicons name="alert-circle" size={18} color="#DC2626" />
             <Text style={styles.errorBannerText}>{movementError}</Text>
-            <Pressable onPress={() => loadMovementData()} style={styles.retryBtn}>
+            <Pressable onPress={loadMovementData} style={styles.retryBtn}>
               <Text style={styles.retryBtnText}>Retry</Text>
             </Pressable>
-          </View>
-        )}
-
-        {/* Loading Indicator */}
-        {isLoadingMovement && movementLogs.length === 0 && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color="#F43F7D" />
-            <Text style={styles.loadingText}>Syncing movement data...</Text>
           </View>
         )}
 
@@ -353,27 +525,30 @@ export default function MovementScreen() {
         <View style={styles.tabsContainer}>
           <Pressable
             onPress={() => setActiveTab('today')}
-            style={[styles.tabPill, activeTab === 'today' && styles.tabPillActive]}
+            style={[styles.tabPill, activeTab === 'today' && { backgroundColor: themeBgLight }]}
           >
-            <Text style={[styles.tabText, activeTab === 'today' && styles.tabTextActive]}>
+            <Text style={[styles.tabText, activeTab === 'today' && { color: themeColor, fontWeight: '700' }]}>
               Today
             </Text>
           </Pressable>
-
           <Pressable
             onPress={() => setActiveTab('week')}
-            style={[styles.tabPill, activeTab === 'week' && styles.tabPillActive]}
+            style={[styles.tabPill, activeTab === 'week' && { backgroundColor: themeBgLight }]}
           >
-            <Text style={[styles.tabText, activeTab === 'week' && styles.tabTextActive]}>
+            <Text style={[styles.tabText, activeTab === 'week' && { color: themeColor, fontWeight: '700' }]}>
               This Week
             </Text>
           </Pressable>
-
           <Pressable
             onPress={() => setActiveTab('recommendations')}
-            style={[styles.tabPill, activeTab === 'recommendations' && styles.tabPillActive]}
+            style={[styles.tabPill, activeTab === 'recommendations' && { backgroundColor: themeBgLight }]}
           >
-            <Text style={[styles.tabText, activeTab === 'recommendations' && styles.tabTextActive]}>
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'recommendations' && { color: themeColor, fontWeight: '700' },
+              ]}
+            >
               Recommendations
             </Text>
           </Pressable>
@@ -382,13 +557,13 @@ export default function MovementScreen() {
         {/* TAB 1: TODAY */}
         {activeTab === 'today' && (
           <>
-            {/* Dual Stat Cards */}
+            {/* Dual Metrics Row */}
             <View style={styles.statsRow}>
               {/* Card 1: Activity Time */}
               <View style={styles.statCard}>
                 <View style={styles.statCardTop}>
-                  <View style={[styles.statIconBox, { backgroundColor: '#FDF2F8' }]}>
-                    <Ionicons name="walk" size={20} color="#F43F7D" />
+                  <View style={[styles.statIconBox, { backgroundColor: isFemale ? '#FDF2F8' : '#EFF6FF' }]}>
+                    <Ionicons name="time-outline" size={20} color={themeColor} />
                   </View>
                   <View style={styles.statMeta}>
                     <Text style={styles.statLabel}>Activity Time</Text>
@@ -396,71 +571,70 @@ export default function MovementScreen() {
                     <Text style={styles.statGoal}>Goal: {targetMins} min</Text>
                   </View>
                 </View>
-
                 <View style={styles.progressRow}>
                   <View style={styles.progressTrack}>
                     <View
                       style={[
                         styles.progressFill,
-                        { width: `${Math.min(100, minsPercent)}%` },
+                        {
+                          width: `${Math.min(100, minsPercent)}%`,
+                          backgroundColor: themeColor,
+                        },
                       ]}
                     />
                   </View>
-                  <Text style={styles.progressPercent}>{minsPercent}%</Text>
+                  <Text style={[styles.progressPercent, { color: themeColor }]}>{minsPercent}%</Text>
                 </View>
               </View>
 
               {/* Card 2: Steps */}
               <View style={styles.statCard}>
                 <View style={styles.statCardTop}>
-                  <View style={[styles.statIconBox, { backgroundColor: '#EFF6FF' }]}>
-                    <Ionicons name="footsteps" size={20} color="#0284C7" />
+                  <View style={[styles.statIconBox, { backgroundColor: '#ECFDF5' }]}>
+                    <Ionicons name="footsteps-outline" size={20} color="#10B981" />
                   </View>
                   <View style={styles.statMeta}>
                     <Text style={styles.statLabel}>Steps</Text>
                     <Text style={styles.statValue}>{todaySteps.toLocaleString()}</Text>
-                    <Text style={styles.statGoal}>Goal: {targetSteps.toLocaleString()}</Text>
+                    <Text style={styles.statGoal}>Goal: 8,000</Text>
                   </View>
                 </View>
-
                 <View style={styles.progressRow}>
                   <View style={styles.progressTrack}>
                     <View
                       style={[
                         styles.progressFill,
-                        { width: `${stepsPercent}%` },
+                        { width: `${Math.min(100, stepsPercent)}%`, backgroundColor: '#10B981' },
                       ]}
                     />
                   </View>
-                  <Text style={styles.progressPercent}>{stepsPercent}%</Text>
+                  <Text style={[styles.progressPercent, { color: '#059669' }]}>{stepsPercent}%</Text>
                 </View>
               </View>
             </View>
 
-            {/* Today's Activities Section */}
+            {/* Today's Logged Activities */}
             <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionTitle}>
-                Today's Activities ({todayLogs.length})
-              </Text>
+              <Text style={styles.sectionTitle}>Today's Activities ({todayLogs.length})</Text>
               <Pressable onPress={() => setModalVisible(true)} hitSlop={8}>
-                <Text style={styles.addActivityLink}>+ Add</Text>
+                <Text style={[styles.addActivityLink, { color: themeColor }]}>+ Log Activity</Text>
               </Pressable>
             </View>
 
             {todayLogs.length === 0 ? (
               <View style={styles.emptyCard}>
-                <Ionicons name="fitness-outline" size={32} color="#CBD5E1" />
+                <Ionicons name="walk-outline" size={32} color="#CBD5E1" />
                 <Text style={styles.emptyTitle}>No Activities Logged Today</Text>
                 <Text style={styles.emptySubtitle}>
-                  Every minute counts toward metabolic balance and hormone health. Log your activity below or choose a routine.
+                  Every minute of gentle movement supports your hormone balance. Tap below to log a walk or stretch.
                 </Text>
               </View>
             ) : (
               <View style={styles.logsList}>
                 {todayLogs.map((log) => (
                   <View key={log.id} style={styles.activityItemCard}>
-                    <View style={[styles.activityItemIconBox, { backgroundColor: '#FDF2F8' }]}>
-                      <Ionicons name={getActivityIcon(log.activityType)} size={20} color="#F43F7D" />
+                    <View style={[styles.activityItemIconBox, { backgroundColor: isFemale ? '#FDF2F8' : '#EFF6FF' }]}>
+                      <Ionicons name={getActivityIcon(log.activityType)} size={20} color={themeColor} />
                     </View>
                     <View style={styles.activityItemInfo}>
                       <Text style={styles.activityItemName}>{log.activityName || 'Activity'}</Text>
@@ -469,7 +643,7 @@ export default function MovementScreen() {
                       </Text>
                     </View>
                     <View style={styles.activityItemRight}>
-                      <Text style={styles.activityItemMins}>{log.durationMinutes} min</Text>
+                      <Text style={[styles.activityItemMins, { color: themeColor }]}>{log.durationMinutes} min</Text>
                       <Pressable
                         onPress={() => handleDeleteActivity(log.id, log.activityName || 'Activity')}
                         hitSlop={8}
@@ -486,12 +660,11 @@ export default function MovementScreen() {
 
             {/* Recommended for You Section */}
             <View style={styles.recSectionHeader}>
-              <Text style={styles.recSectionTitle}>Recommended for You</Text>
-              <Pressable
-                onPress={() => setActiveTab('recommendations')}
-                hitSlop={8}
-              >
-                <Text style={styles.viewAllText}>View All</Text>
+              <Text style={styles.recSectionTitle}>
+                {isFemale ? 'Gentle Recommendations' : 'Metabolic Recommendations'}
+              </Text>
+              <Pressable onPress={() => setActiveTab('recommendations')} hitSlop={8}>
+                <Text style={[styles.viewAllText, { color: themeColor }]}>View All</Text>
               </Pressable>
             </View>
 
@@ -500,10 +673,10 @@ export default function MovementScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.recCardsRow}
             >
-              {RECOMMENDED_ROUTINES.slice(0, 3).map((routine) => (
+              {availableRoutines.slice(0, 3).map((routine) => (
                 <Pressable
                   key={routine.id}
-                  onPress={() => handleSelectRoutine(routine)}
+                  onPress={() => handleOpenRoutineDetails(routine)}
                   style={({ pressed }) => [
                     styles.routineCard,
                     pressed && styles.routineCardPressed,
@@ -514,11 +687,11 @@ export default function MovementScreen() {
                       <Ionicons name={routine.icon} size={18} color={routine.iconColor} />
                     </View>
                     <View style={styles.routineTitleWrap}>
-                      <Text style={styles.routineTitle}>{routine.title}</Text>
+                      <Text style={styles.routineTitle} numberOfLines={1}>{routine.title}</Text>
                       <Text style={styles.routineDuration}>{routine.duration}</Text>
                     </View>
                   </View>
-                  <Text style={styles.routineBenefit}>{routine.benefit}</Text>
+                  <Text style={styles.routineBenefit} numberOfLines={2}>{routine.benefit}</Text>
                 </Pressable>
               ))}
             </ScrollView>
@@ -532,13 +705,12 @@ export default function MovementScreen() {
             <View style={styles.weeklyCard}>
               <View style={styles.weeklyCardHeader}>
                 <Text style={styles.weeklyTitle}>Weekly Activity</Text>
-                <Text style={styles.weeklySummaryText}>
+                <Text style={[styles.weeklySummaryText, { color: themeColor }]}>
                   {totalWeeklyMins} min total ({activeDaysCount} active days)
                 </Text>
               </View>
 
               <View style={styles.chartWrapper}>
-                {/* Y-axis guidelines & labels */}
                 <View style={styles.guideline60}>
                   <View style={styles.guidelineLine} />
                   <Text style={styles.guidelineText}>60 min</Text>
@@ -560,7 +732,7 @@ export default function MovementScreen() {
                       <View key={index} style={styles.barCol}>
                         <View style={styles.barTrackArea}>
                           {item.mins > 0 ? (
-                            <View style={[styles.pinkBar, { height: barHeight }]} />
+                            <View style={[styles.pinkBar, { height: barHeight, backgroundColor: themeColor }]} />
                           ) : (
                             <View style={styles.emptyBarDash} />
                           )}
@@ -610,8 +782,8 @@ export default function MovementScreen() {
               <View style={styles.logsList}>
                 {movementLogs.map((log) => (
                   <View key={log.id} style={styles.activityItemCard}>
-                    <View style={[styles.activityItemIconBox, { backgroundColor: '#FDF2F8' }]}>
-                      <Ionicons name={getActivityIcon(log.activityType)} size={20} color="#F43F7D" />
+                    <View style={[styles.activityItemIconBox, { backgroundColor: isFemale ? '#FDF2F8' : '#EFF6FF' }]}>
+                      <Ionicons name={getActivityIcon(log.activityType)} size={20} color={themeColor} />
                     </View>
                     <View style={styles.activityItemInfo}>
                       <View style={styles.historyRow}>
@@ -625,7 +797,7 @@ export default function MovementScreen() {
                       </Text>
                     </View>
                     <View style={styles.activityItemRight}>
-                      <Text style={styles.activityItemMins}>{log.durationMinutes} min</Text>
+                      <Text style={[styles.activityItemMins, { color: themeColor }]}>{log.durationMinutes} min</Text>
                       <Pressable
                         onPress={() => handleDeleteActivity(log.id, log.activityName || 'Activity')}
                         hitSlop={8}
@@ -645,16 +817,47 @@ export default function MovementScreen() {
         {/* TAB 3: RECOMMENDATIONS */}
         {activeTab === 'recommendations' && (
           <View style={styles.recommendationsTabWrapper}>
-            <Text style={styles.recTabHeader}>Recommended Routines</Text>
+            <Text style={styles.recTabHeader}>
+              {isFemale ? 'Clinical Movement Routines' : 'Metabolic & Physical Routines'}
+            </Text>
             <Text style={styles.recTabSubtitle}>
-              Gentle, hormone-balancing movement tailored for metabolic health and insulin regulation.
+              {isFemale
+                ? 'Hormone-aware low-impact movement designed for cramps, PCOS insulin regulation, and recovery.'
+                : 'Cardiovascular conditioning and functional resistance designed for metabolic health and energy.'}
             </Text>
 
+            {/* Filter Pills */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filterPillsRow}
+            >
+              {['All', 'Strength', 'Walking', 'Recovery'].map((cat) => (
+                <Pressable
+                  key={cat}
+                  onPress={() => setFilterCategory(cat)}
+                  style={[
+                    styles.catPill,
+                    filterCategory === cat && { backgroundColor: themeColor },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.catPillText,
+                      filterCategory === cat && styles.catPillTextActive,
+                    ]}
+                  >
+                    {cat}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+
             <View style={styles.recList}>
-              {RECOMMENDED_ROUTINES.map((routine) => (
+              {filteredRoutines.map((routine) => (
                 <Pressable
                   key={routine.id}
-                  onPress={() => handleSelectRoutine(routine)}
+                  onPress={() => handleOpenRoutineDetails(routine)}
                   style={({ pressed }) => [
                     styles.fullRoutineCard,
                     pressed && styles.routineCardPressed,
@@ -666,18 +869,23 @@ export default function MovementScreen() {
                   <View style={styles.fullRoutineInfo}>
                     <View style={styles.fullRoutineHeader}>
                       <Text style={styles.fullRoutineTitle}>{routine.title}</Text>
-                      <Text style={styles.fullRoutineDuration}>{routine.duration}</Text>
+                      <Text style={[styles.fullRoutineDuration, { color: themeColor }]}>
+                        {routine.duration}
+                      </Text>
                     </View>
                     <Text style={styles.fullRoutineBenefit}>{routine.benefit}</Text>
-                    {routine.defaultSteps > 0 && (
-                      <Text style={styles.fullRoutineSteps}>
-                        ~{routine.defaultSteps.toLocaleString()} steps estimated
-                      </Text>
-                    )}
+                    <View style={styles.routineBadgeRow}>
+                      <Text style={styles.intensityBadge}>{routine.intensity}</Text>
+                      <Text style={styles.focusBadge}>{routine.focus}</Text>
+                    </View>
                   </View>
-                  <View style={styles.fullRoutineAction}>
-                    <Ionicons name="add-circle" size={24} color="#F43F7D" />
-                  </View>
+                  <Pressable
+                    onPress={() => handleLogRoutineDirectly(routine)}
+                    style={styles.fullRoutineAction}
+                    hitSlop={8}
+                  >
+                    <Ionicons name="add-circle" size={26} color={themeColor} />
+                  </Pressable>
                 </Pressable>
               ))}
             </View>
@@ -695,11 +903,74 @@ export default function MovementScreen() {
             setLogSteps('2000');
             setModalVisible(true);
           }}
-          style={({ pressed }) => [styles.logBtn, pressed && styles.logBtnPressed]}
+          style={({ pressed }) => [
+            styles.logBtn,
+            { backgroundColor: themeColor, shadowColor: themeColor },
+            pressed && styles.logBtnPressed,
+          ]}
         >
           <Text style={styles.logBtnText}>Log Activity</Text>
         </Pressable>
       </View>
+
+      {/* Routine Detail Modal */}
+      <Modal
+        visible={detailModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setDetailModalVisible(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setDetailModalVisible(false)}
+        >
+          <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
+            {selectedRoutine && (
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>{selectedRoutine.title}</Text>
+                  <Pressable onPress={() => setDetailModalVisible(false)} hitSlop={8}>
+                    <Ionicons name="close" size={22} color={BioPulseColors.navy} />
+                  </Pressable>
+                </View>
+
+                <View style={styles.detailMetaRow}>
+                  <Text style={[styles.detailMetaDuration, { color: themeColor }]}>
+                    {selectedRoutine.duration} • {selectedRoutine.intensity}
+                  </Text>
+                </View>
+
+                <Text style={styles.detailSectionTitle}>Clinical Rationale & Hormone Balance</Text>
+                <Text style={styles.detailBodyText}>{selectedRoutine.whyThisRoutine}</Text>
+
+                <Text style={styles.detailSectionTitle}>Routine Instructions</Text>
+                {selectedRoutine.steps.map((step, idx) => (
+                  <View key={idx} style={styles.stepRow}>
+                    <View style={[styles.stepBullet, { backgroundColor: themeColor }]} />
+                    <Text style={styles.stepText}>{step}</Text>
+                  </View>
+                ))}
+
+                {/* Safety notice banner */}
+                <View style={styles.safetyBox}>
+                  <Ionicons name="information-circle-outline" size={18} color="#0369A1" />
+                  <Text style={styles.safetyText}>{selectedRoutine.safetyNotice}</Text>
+                </View>
+
+                <Pressable
+                  onPress={() => {
+                    setDetailModalVisible(false);
+                    handleLogRoutineDirectly(selectedRoutine);
+                  }}
+                  style={[styles.modalSaveBtn, { backgroundColor: themeColor, marginTop: 20 }]}
+                >
+                  <Text style={styles.modalSaveText}>Log This Routine</Text>
+                </Pressable>
+              </ScrollView>
+            )}
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       {/* Log Activity Modal */}
       <Modal
@@ -746,13 +1017,13 @@ export default function MovementScreen() {
                   }}
                   style={[
                     styles.typeChip,
-                    selectedActivityType === t.value && styles.typeChipActive,
+                    selectedActivityType === t.value && { backgroundColor: themeBgLight },
                   ]}
                 >
                   <Text
                     style={[
                       styles.typeChipText,
-                      selectedActivityType === t.value && styles.typeChipTextActive,
+                      selectedActivityType === t.value && { color: themeColor, fontWeight: '700' },
                     ]}
                   >
                     {t.label}
@@ -794,9 +1065,9 @@ export default function MovementScreen() {
                 <Pressable
                   key={m}
                   onPress={() => setLogMins(m.toString())}
-                  style={styles.quickChip}
+                  style={[styles.quickChip, { backgroundColor: themeBgLight }]}
                 >
-                  <Text style={styles.quickChipText}>+{m} min</Text>
+                  <Text style={[styles.quickChipText, { color: themeColor }]}>+{m} min</Text>
                 </Pressable>
               ))}
             </View>
@@ -806,6 +1077,7 @@ export default function MovementScreen() {
               disabled={isSaving}
               style={({ pressed }) => [
                 styles.modalSaveBtn,
+                { backgroundColor: themeColor },
                 pressed && styles.logBtnPressed,
                 isSaving && { opacity: 0.7 },
               ]}
@@ -861,7 +1133,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
 
-  // Banners & Loading
+  // Banners
   successBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -908,18 +1180,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
   },
-  loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 8,
-    marginBottom: 8,
-  },
-  loadingText: {
-    fontSize: 12,
-    color: '#64748B',
-  },
 
   // Segmented Tabs
   tabsContainer: {
@@ -936,17 +1196,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 20,
   },
-  tabPillActive: {
-    backgroundColor: '#FCE7F3',
-  },
   tabText: {
     fontSize: 13,
     fontWeight: '500',
     color: '#64748B',
-  },
-  tabTextActive: {
-    color: '#F43F7D',
-    fontWeight: '700',
   },
 
   // Dual Stat Cards
@@ -1010,13 +1263,11 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: 6,
-    backgroundColor: '#14B8A6',
     borderRadius: 3,
   },
   progressPercent: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#0D9488',
     marginLeft: 8,
   },
 
@@ -1036,7 +1287,6 @@ const styles = StyleSheet.create({
   addActivityLink: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#F43F7D',
   },
 
   // Activity List Items
@@ -1087,13 +1337,11 @@ const styles = StyleSheet.create({
   activityItemMins: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#F43F7D',
   },
   deleteBtn: {
     padding: 6,
   },
 
-  // History Badges
   historyRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1108,7 +1356,6 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
 
-  // Empty Card
   emptyCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
@@ -1161,7 +1408,6 @@ const styles = StyleSheet.create({
   weeklySummaryText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#F43F7D',
   },
   chartWrapper: {
     height: 125,
@@ -1202,7 +1448,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-end',
     height: 90,
-    paddingRight: 44, // leave room for right y-axis text
+    paddingRight: 44,
   },
   barCol: {
     flex: 1,
@@ -1217,7 +1463,6 @@ const styles = StyleSheet.create({
   },
   pinkBar: {
     width: 13,
-    backgroundColor: '#F43F7D',
     borderTopLeftRadius: 6,
     borderTopRightRadius: 6,
   },
@@ -1234,7 +1479,6 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
 
-  // Week Metric Row
   weekMetricsRow: {
     flexDirection: 'row',
     gap: 8,
@@ -1260,7 +1504,6 @@ const styles = StyleSheet.create({
     color: BioPulseColors.navy,
   },
 
-  // Recommended for You (Today Tab)
   recSectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1276,7 +1519,6 @@ const styles = StyleSheet.create({
   viewAllText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#F43F7D',
   },
   recCardsRow: {
     flexDirection: 'row',
@@ -1284,7 +1526,7 @@ const styles = StyleSheet.create({
     paddingRight: 16,
   },
   routineCard: {
-    width: 146,
+    width: 156,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 12,
@@ -1333,7 +1575,6 @@ const styles = StyleSheet.create({
     lineHeight: 14,
   },
 
-  // Recommendations Tab (Full list)
   recommendationsTabWrapper: {
     paddingTop: 4,
   },
@@ -1347,6 +1588,27 @@ const styles = StyleSheet.create({
     color: '#64748B',
     marginTop: 2,
     marginBottom: 12,
+    lineHeight: 17,
+  },
+  filterPillsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 14,
+  },
+  catPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
+  },
+  catPillText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  catPillTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
   recList: {
     gap: 10,
@@ -1390,23 +1652,38 @@ const styles = StyleSheet.create({
   fullRoutineDuration: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#F43F7D',
   },
   fullRoutineBenefit: {
     fontSize: 11,
     color: '#059669',
     lineHeight: 15,
   },
-  fullRoutineSteps: {
+  routineBadgeRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 6,
+  },
+  intensityBadge: {
     fontSize: 10,
-    color: '#64748B',
-    marginTop: 2,
+    fontWeight: '600',
+    color: '#475569',
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  focusBadge: {
+    fontSize: 10,
+    color: '#0284C7',
+    backgroundColor: '#F0F9FF',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
   fullRoutineAction: {
     marginLeft: 10,
   },
 
-  // Floating Bottom Button
   bottomBar: {
     position: 'absolute',
     bottom: 0,
@@ -1419,12 +1696,10 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   logBtn: {
-    backgroundColor: '#F43F7D',
     borderRadius: 24,
     height: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#F43F7D',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 8,
@@ -1439,7 +1714,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 
-  // Modal
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(7, 59, 114, 0.4)',
@@ -1451,18 +1725,73 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     padding: 20,
     paddingBottom: 36,
+    maxHeight: '85%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: BioPulseColors.navy,
   },
+  detailMetaRow: {
+    marginBottom: 12,
+  },
+  detailMetaDuration: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  detailSectionTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: BioPulseColors.navy,
+    marginTop: 12,
+    marginBottom: 6,
+  },
+  detailBodyText: {
+    fontSize: 13,
+    color: '#475569',
+    lineHeight: 18,
+  },
+  stepRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    marginVertical: 4,
+  },
+  stepBullet: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginTop: 7,
+  },
+  stepText: {
+    fontSize: 12,
+    color: '#334155',
+    flex: 1,
+    lineHeight: 17,
+  },
+  safetyBox: {
+    backgroundColor: '#F0F9FF',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 16,
+  },
+  safetyText: {
+    fontSize: 11,
+    color: '#0369A1',
+    flex: 1,
+    lineHeight: 16,
+  },
+
   inputLabel: {
     fontSize: 12,
     fontWeight: '600',
@@ -1491,16 +1820,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9',
     borderRadius: 16,
   },
-  typeChipActive: {
-    backgroundColor: '#FCE7F3',
-  },
   typeChipText: {
     fontSize: 12,
     fontWeight: '600',
     color: '#64748B',
-  },
-  typeChipTextActive: {
-    color: '#F43F7D',
   },
   inputRow: {
     flexDirection: 'row',
@@ -1514,16 +1837,13 @@ const styles = StyleSheet.create({
   quickChip: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#FCE7F3',
     borderRadius: 16,
   },
   quickChipText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#F43F7D',
   },
   modalSaveBtn: {
-    backgroundColor: '#F43F7D',
     borderRadius: 24,
     height: 48,
     alignItems: 'center',

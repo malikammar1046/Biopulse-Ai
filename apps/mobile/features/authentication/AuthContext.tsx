@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { Linking } from 'react-native';
 import { UserProfile, HealthPathway, AuthState } from './types';
 import {
   loginWithEmailAndPassword,
@@ -105,10 +106,41 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     });
 
+    // 4. Handle incoming deep links (Google OAuth redirect & recovery tokens)
+    let lastHandledUrl = '';
+    const handleDeepLinkUrl = async (url: string) => {
+      if (!url || url === lastHandledUrl) return;
+      if (
+        url.includes('auth/callback') ||
+        url.includes('access_token') ||
+        url.includes('refresh_token') ||
+        url.includes('error=') ||
+        url.includes('error_description=')
+      ) {
+        lastHandledUrl = url;
+        try {
+          await mobileSupabaseAuth.handleAuthCallback(url);
+        } catch (err) {
+          console.warn('[BioPulse AuthContext] OAuth callback parse error:', err);
+        }
+      }
+    };
+
+    const urlSubscription = Linking.addEventListener('url', ({ url }) => {
+      handleDeepLinkUrl(url);
+    });
+
+    Linking.getInitialURL().then((initialUrl) => {
+      if (initialUrl) {
+        handleDeepLinkUrl(initialUrl);
+      }
+    });
+
     return () => {
       isMounted = false;
       unsubscribe();
       unsubscribeAuthFailure();
+      urlSubscription.remove();
     };
   }, []);
 

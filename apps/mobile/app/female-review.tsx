@@ -157,8 +157,12 @@ export default function FemaleReviewScreen() {
       if (result.error || !result.data) {
         setIsSubmitting(false);
         Alert.alert(
-          'Screening Engine Unavailable',
-          result.error || 'Failed to connect to the BioPulse assessment pipeline. Please check your network connection and retry.'
+          result.statusCode === 401 ? 'Session Expired' : 'Screening Notice',
+          result.error || 'Failed to connect to the BioPulse assessment pipeline. Please check your network connection and retry.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Retry', onPress: () => handleRunScreening() },
+          ]
         );
         return;
       }

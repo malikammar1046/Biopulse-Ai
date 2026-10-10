@@ -7,17 +7,13 @@
  */
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY, mobileSupabaseAuth } from '../lib/supabase';
-
-declare const process: {
-  env: Record<string, string | undefined>;
-};
+import { BACKEND_API_URL, resolveBackendApiUrl } from './api';
 
 // ---------------------------------------------------------------------------
 // Configuration
 // ---------------------------------------------------------------------------
 
-export const BACKEND_API_URL =
-  process.env.EXPO_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8000/api';
+export { BACKEND_API_URL, resolveBackendApiUrl };
 
 const DEFAULT_TIMEOUT_MS = 25000;
 
@@ -638,16 +634,34 @@ export async function submitFemaleTier1AssessmentWithStatus(
       const errJson = await response.json();
       errorDetail = errJson.error || errJson.details || errJson.message || `Error status ${response.status}`;
     } catch {
-      errorDetail = `Assessment submission failed with HTTP ${response.status}.`;
+      if (response.status === 401) {
+        errorDetail = 'Your authentication session has expired. Please sign in again to continue.';
+      } else if (response.status === 400 || response.status === 422) {
+        errorDetail = 'Invalid screening inputs provided. Please review all health values.';
+      } else if (response.status >= 500) {
+        errorDetail = 'BioPulse screening service is currently encountering an internal error. Please retry shortly.';
+      } else {
+        errorDetail = `Assessment submission failed with HTTP ${response.status}.`;
+      }
     }
 
     return { data: null, error: errorDetail, statusCode: response.status };
   } catch (err: any) {
+    let errorMsg = 'Unable to connect to BioPulse screening service. Please check your network connection and retry.';
+    let status = 0;
+    if (err?.name === 'AbortError') {
+      errorMsg = 'Screening request timed out. Please check your connection and retry.';
+      status = 408;
+    } else if (err?.message?.toLowerCase().includes('network request failed')) {
+      errorMsg = 'Network connection failed. Please ensure your device is connected to the network and the BioPulse server is running.';
+      status = 0;
+    } else if (err?.message) {
+      errorMsg = err.message;
+    }
     return {
       data: null,
-      error:
-        err?.message ||
-        'Unable to connect to BioPulse screening service. Please check your network connection and retry.',
+      error: errorMsg,
+      statusCode: status,
     };
   }
 }
@@ -901,16 +915,34 @@ export async function submitMaleTier1AssessmentWithStatus(
       const errJson = await response.json();
       errorDetail = errJson.error || errJson.details || errJson.message || `Error status ${response.status}`;
     } catch {
-      errorDetail = `Assessment submission failed with HTTP ${response.status}.`;
+      if (response.status === 401) {
+        errorDetail = 'Your authentication session has expired. Please sign in again to continue.';
+      } else if (response.status === 400 || response.status === 422) {
+        errorDetail = 'Invalid screening inputs provided. Please review all health values.';
+      } else if (response.status >= 500) {
+        errorDetail = 'BioPulse screening service is currently encountering an internal error. Please retry shortly.';
+      } else {
+        errorDetail = `Assessment submission failed with HTTP ${response.status}.`;
+      }
     }
 
     return { data: null, error: errorDetail, statusCode: response.status };
   } catch (err: any) {
+    let errorMsg = 'Unable to connect to BioPulse screening service. Please check your network connection and retry.';
+    let status = 0;
+    if (err?.name === 'AbortError') {
+      errorMsg = 'Screening request timed out. Please check your connection and retry.';
+      status = 408;
+    } else if (err?.message?.toLowerCase().includes('network request failed')) {
+      errorMsg = 'Network connection failed. Please ensure your device is connected to the network and the BioPulse server is running.';
+      status = 0;
+    } else if (err?.message) {
+      errorMsg = err.message;
+    }
     return {
       data: null,
-      error:
-        err?.message ||
-        'Unable to connect to BioPulse screening service. Please check your network connection and retry.',
+      error: errorMsg,
+      statusCode: status,
     };
   }
 }

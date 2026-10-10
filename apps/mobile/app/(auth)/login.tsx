@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import { Alert } from 'react-native';
 import { BioPulseLoginScreen } from '../../components/auth';
-import { UserProfile } from '../../features/authentication';
+import { UserProfile, signInWithGoogle } from '../../features/authentication';
 
 /**
  * BioPulse AI Mobile Login Route (`/(auth)/login`)
@@ -37,21 +37,19 @@ export default function LoginRoute() {
     router.push('/(auth)/register');
   }, [router]);
 
-  // 4. Social Auth integration boundaries
-  const handleGoogleLogin = useCallback(() => {
-    Alert.alert(
-      'Google Sign-In',
-      'Google OAuth is configured via our Supabase backend. On mobile, please sign in with your registered email and password or use the BioPulse web portal.',
-      [{ text: 'OK' }]
-    );
-  }, []);
-
-  const handleAppleLogin = useCallback(() => {
-    Alert.alert(
-      'Apple Sign-In',
-      'Apple ID Authentication is not currently enabled for this project environment. Please authenticate with your BioPulse email and password.',
-      [{ text: 'OK' }]
-    );
+  // 4. Social Auth integration
+  const handleGoogleLogin = useCallback(async () => {
+    try {
+      const res = await signInWithGoogle();
+      if (!res.success && res.error) {
+        Alert.alert(
+          'Google Sign-In Notice',
+          res.error || 'Google authentication requires configuring Google OAuth Client ID in your Supabase project dashboard under Authentication > Providers > Google.'
+        );
+      }
+    } catch (err: any) {
+      Alert.alert('Google Sign-In', err?.message || 'Failed to initiate Google sign-in.');
+    }
   }, []);
 
   return (
@@ -60,7 +58,6 @@ export default function LoginRoute() {
       onForgotPassword={handleForgotPassword}
       onSignUp={handleSignUp}
       onGoogleLogin={handleGoogleLogin}
-      onAppleLogin={handleAppleLogin}
     />
   );
 }

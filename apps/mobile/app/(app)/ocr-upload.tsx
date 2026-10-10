@@ -17,6 +17,8 @@ import { BioPulseBackground } from '../../components/common/BioPulseBackground';
 import { useAuth } from '../../features/authentication';
 import { useHealthStore } from '../../store';
 import { ocrService, reportService } from '../../services';
+import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
 
 /**
  * SCREEN 21: OCR UPLOAD
@@ -66,26 +68,81 @@ export default function OcrUploadScreen() {
       return;
     }
 
-    setProcessing(true);
     setOcrError(null);
+
+    let chosenFileUri = '';
+    let chosenFileName = '';
+    let chosenMimeType = '';
+    let chosenFileSize: number | undefined;
+
+    try {
+      if (mode === 'camera') {
+        const perm = await ImagePicker.requestCameraPermissionsAsync();
+        if (perm.status !== 'granted') {
+          setOcrError('Camera permission is required to capture lab reports.');
+          return;
+        }
+
+        const result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ['images'],
+          allowsEditing: false,
+          quality: 0.85,
+        });
+
+        if (result.canceled || !result.assets || result.assets.length === 0) {
+          return;
+        }
+
+        const asset = result.assets[0];
+        chosenFileUri = asset.uri;
+        chosenFileName = asset.fileName || `clinical_scan_${Date.now()}.jpg`;
+        chosenMimeType = asset.mimeType || 'image/jpeg';
+        chosenFileSize = asset.fileSize;
+      } else {
+        const result = await DocumentPicker.getDocumentAsync({
+          type: ['application/pdf', 'image/*'],
+          copyToCacheDirectory: true,
+        });
+
+        if (result.canceled || !result.assets || result.assets.length === 0) {
+          return;
+        }
+
+        const asset = result.assets[0];
+        chosenFileUri = asset.uri;
+        chosenFileName = asset.name || `lab_report_${Date.now()}.pdf`;
+        chosenMimeType = asset.mimeType || (chosenFileName.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
+        chosenFileSize = asset.size;
+      }
+    } catch (pickerErr: any) {
+      setOcrError(`Unable to select file: ${pickerErr?.message || 'Unknown picker error'}`);
+      return;
+    }
+
+    if (!chosenFileUri) {
+      return;
+    }
+
+    if (chosenFileSize && chosenFileSize > 10 * 1024 * 1024) {
+      setOcrError('Selected file exceeds the maximum 10 MB limit.');
+      return;
+    }
+
+    setProcessing(true);
     setCurrentStage(0);
 
-    const isCamera = mode === 'camera';
-    const sampleFileName = isCamera ? 'clinical_scan.jpg' : 'hormone_lab_report.pdf';
-    const sampleMimeType = isCamera ? 'image/jpeg' : 'application/pdf';
-    const sampleFileUri = `file:///documents/${sampleFileName}`;
-
-    const t1 = setTimeout(() => setCurrentStage(1), 400);
-    const t2 = setTimeout(() => setCurrentStage(2), 900);
-    const t3 = setTimeout(() => setCurrentStage(3), 1400);
+    const t1 = setTimeout(() => setCurrentStage(1), 500);
+    const t2 = setTimeout(() => setCurrentStage(2), 1200);
+    const t3 = setTimeout(() => setCurrentStage(3), 1800);
 
     try {
       // 1. Call real backend PaddleOCR pipeline
       const ocrRes = await ocrService.uploadDocument(
         user.accessToken,
-        sampleFileUri,
-        sampleFileName,
-        sampleMimeType
+        chosenFileUri,
+        chosenFileName,
+        chosenMimeType,
+        chosenFileSize
       );
 
       clearTimeout(t1);
@@ -104,7 +161,7 @@ export default function OcrUploadScreen() {
       setCurrentStage(3);
 
       const data = ocrRes.data;
-      const cleanTitle = sampleFileName
+      const cleanTitle = chosenFileName
         .replace(/\.[^/.]+$/, '')
         .replace(/[-_]/g, ' ')
         .replace(/\b\w/g, (c) => c.toUpperCase());
@@ -119,8 +176,8 @@ export default function OcrUploadScreen() {
           title: cleanTitle,
           reportType: 'lab',
           reportDate: new Date().toISOString().split('T')[0],
-          fileName: sampleFileName,
-          mimeType: sampleMimeType,
+          fileName: chosenFileName,
+          mimeType: chosenMimeType,
           status: 'needs_verification',
           tests: data.results.map((r) => ({
             testName: r.test_name,
@@ -145,9 +202,9 @@ export default function OcrUploadScreen() {
       setPendingOcrReport({
         id: createdReportId,
         title: cleanTitle,
-        fileName: sampleFileName,
-        fileUri: sampleFileUri,
-        mimeType: sampleMimeType,
+        fileName: chosenFileName,
+        fileUri: chosenFileUri,
+        mimeType: chosenMimeType,
         results: data.results.map((r, idx) => ({
           id: `field_${idx}`,
           testName: r.test_name,

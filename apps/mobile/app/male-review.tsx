@@ -153,9 +153,16 @@ export default function MaleReviewScreen() {
       const res = await submitMaleTier1AssessmentWithStatus(payload);
 
       if (res.error || !res.data) {
+        setSubmitting(false);
+        setIsLoadingAssessment(false);
+        setAssessmentError(res.error);
         Alert.alert(
-          'Screening Engine Unavailable',
-          res.error || 'Failed to connect to the BioPulse assessment pipeline. Please check your network connection and retry.'
+          res.statusCode === 401 ? 'Session Expired' : 'Screening Notice',
+          res.error || 'Failed to connect to the BioPulse assessment pipeline. Please check your network connection and retry.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Retry', onPress: () => handleRunScreening() },
+          ]
         );
         return;
       }
