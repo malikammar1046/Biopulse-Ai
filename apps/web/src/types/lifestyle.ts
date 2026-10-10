@@ -227,3 +227,52 @@ export interface AILifestylePlan {
   generated_at: string;
 }
 
+export interface RecipeIngredient {
+  item: string;
+  quantity: string;
+  practical_measure: string;
+  category?: string;
+}
+
+export interface RecipeSubstitution {
+  original: string;
+  substitute: string;
+  reason: string;
+}
+
+export interface RecipeNutritionalHighlights {
+  estimated_calories_per_serving: number | null;
+  protein_grams: number | null;
+  carbs_grams: number | null;
+  fat_grams: number | null;
+  fiber_grams: number | null;
+  key_micronutrients: string[];
+  qualitative_summary: string;
+}
+
+export interface PersonalizedRecipe {
+  recipe_name: string;
+  short_description: string;
+  meal_type: string;
+  prep_time_minutes: number;
+  cook_time_minutes: number;
+  servings: number;
+  ingredients: RecipeIngredient[];
+  instructions: string[];
+  why_suits_profile: string;
+  nutritional_highlights: RecipeNutritionalHighlights;
+  substitutions: RecipeSubstitution[];
+  allergens_excluded: string[];
+  disclaimer: string;
+  generated_at: string;
+}
+
+export interface RecipeGenerationParams {
+  module?: 'ovasense' | 'androsense' | 'female_pcos' | 'male_hypogonadism';
+  meal_type?: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snack';
+  preference?: 'high_protein' | 'quick' | 'budget' | 'heart_healthy' | string;
+  custom_notes?: string;
+  dietary_preference?: string;
+  allergens?: string[];
+}
+

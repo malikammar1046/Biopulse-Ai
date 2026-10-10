@@ -42,7 +42,7 @@ export const PersonalizedAppointmentsHeader: React.FC<PersonalizedAppointmentsHe
           </div>
 
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F8FAFC] border border-[#EAECF0] text-xs font-mono text-[#0F172A]">
-            <MedicalCircle className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
+            <MedicalCircle className={`w-3.5 h-3.5 ${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'}`} aria-hidden="true" />
             <span>
               {upcomingAppointment
                 ? `Next: ${upcomingAppointment.scheduledDate} (${getAppointmentDaysRemaining(upcomingAppointment.scheduledDate).label})`
@@ -51,7 +51,7 @@ export const PersonalizedAppointmentsHeader: React.FC<PersonalizedAppointmentsHe
           </div>
 
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F8FAFC] border border-[#EAECF0] text-xs font-mono text-[#0F172A]">
-            <Clock className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
+            <Clock className={`w-3.5 h-3.5 ${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'}`} aria-hidden="true" />
             <span>{totalAppointmentsCount} Total Records</span>
           </div>
         </div>
@@ -75,7 +75,7 @@ export const PersonalizedAppointmentsHeader: React.FC<PersonalizedAppointmentsHe
             onClick={onAskAi}
             className="px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] hover:bg-[#F1F5F9] border border-[#EAECF0] text-xs font-semibold text-[#344054] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
           >
-            <MessageChatCircle className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
+            <MessageChatCircle className={`w-3.5 h-3.5 ${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'}`} aria-hidden="true" />
             <span className="hidden sm:inline">Clinical Visit Companion</span>
             <span className="sm:hidden">AI Companion</span>
           </button>

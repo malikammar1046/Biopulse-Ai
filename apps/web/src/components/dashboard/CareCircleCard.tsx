@@ -83,7 +83,7 @@ export const CareCircleCard: React.FC<CareCircleProps> = ({
           <span className="text-rose-700 font-medium">Emergency contact not added</span>
           <Link
             to={ROUTES.APP.SETTINGS}
-            className="text-[#0288D1] font-bold hover:underline inline-flex items-center gap-1"
+            className={`${accentColor} font-bold hover:underline inline-flex items-center gap-1`}
           >
             <Plus className="w-3 h-3" aria-hidden="true" /> Add
           </Link>
@@ -165,7 +165,7 @@ export const CareCircleCard: React.FC<CareCircleProps> = ({
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     {m.role === 'doctor' ? (
-                      <MedicalCircle className="w-3.5 h-3.5 text-[#0288D1] shrink-0" aria-hidden="true" />
+                      <MedicalCircle className={`w-3.5 h-3.5 ${accentColor} shrink-0`} aria-hidden="true" />
                     ) : (
                       <Heart className="w-3.5 h-3.5 text-rose-500 shrink-0" aria-hidden="true" />
                     )}

@@ -169,7 +169,7 @@ export const GeneralOnboarding: React.FC = () => {
       const dobCheck = validateDateOfBirth(draftProfile.dateOfBirth);
       if (!dobCheck.isValid) errs.dateOfBirth = dobCheck.error!;
 
-      const phoneCheck = validatePakistaniPhone(draftProfile.phone);
+      const phoneCheck = validatePakistaniPhone(draftProfile.phone, { optional: true });
       if (!phoneCheck.isValid) errs.phone = phoneCheck.error!;
     }
 
@@ -307,7 +307,7 @@ export const GeneralOnboarding: React.FC = () => {
 
                   <div>
                     <label className="text-xs font-bold text-[#E6F4EA] uppercase tracking-wider flex items-center justify-between mb-1">
-                      <span>Phone Number <span className="text-[#34D399]">*</span></span>
+                      <span>Phone Number <span className="text-xs text-[#A7F3D0]/70 font-normal capitalize">(Optional)</span></span>
                       <span className="text-[10px] text-[#A7F3D0]/70 font-mono">11 digits (03xx or +92)</span>
                     </label>
                     <div className="relative">

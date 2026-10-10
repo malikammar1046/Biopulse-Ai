@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityHeart, Plus, MessageChatCircle, Calendar } from '@untitledui/icons';
 import type { UserProfile } from '../../types/onboarding';
 
@@ -21,6 +22,7 @@ export const PersonalizedFitnessHeader: React.FC<PersonalizedFitnessHeaderProps>
   onOpenLogModal,
   onAskAi,
 }) => {
+  const { t } = useTranslation(['lifestyle', 'dashboard', 'common']);
   const isMale = userProfile.pathway === 'male' || userProfile.gender === 'male';
   const movementPreferences =
     userProfile.lifestyle?.exercisePreferences?.join(', ') || 'Walking, Yoga & Gentle Movement';
@@ -46,13 +48,13 @@ export const PersonalizedFitnessHeader: React.FC<PersonalizedFitnessHeaderProps>
                 className={`w-3.5 h-3.5 ${!isMale ? 'text-[#F43F7D]' : 'text-[#0288D1]'}`}
                 aria-hidden="true"
               />
-              <span>{!isMale ? 'Cycle-Synced Movement' : 'Daily Vitality & Functional Movement'}</span>
+              <span>{!isMale ? t('lifestyle:movementSection.title', { defaultValue: 'Cycle-Synced Movement' }) : t('dashboard:malePathwayTitle', { defaultValue: 'Daily Vitality & Functional Movement' })}</span>
             </span>
 
             {!isMale && cycleDay > 0 && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-semibold bg-[#F8FAFC] text-[#344054] border border-[#EAECF0]">
                 <Calendar className="w-3.5 h-3.5 text-[#F43F7D]" aria-hidden="true" />
-                <span>Day {cycleDay} • {cyclePhaseName}</span>
+                <span>{t('dashboard:cycleDay', { defaultValue: 'Day' })} {cycleDay} • {cyclePhaseName}</span>
               </span>
             )}
           </div>
@@ -83,9 +85,9 @@ export const PersonalizedFitnessHeader: React.FC<PersonalizedFitnessHeaderProps>
               />
               <span>
                 {todayMinutes > 0 ? (
-                  <><strong>{todayMinutes} minutes</strong> logged today</>
+                  <><strong>{todayMinutes} {t('common:minutes', { defaultValue: 'minutes' })}</strong> {t('lifestyle:loggedToday', { defaultValue: 'logged today' })}</>
                 ) : (
-                  'No movement logged yet today'
+                  t('dashboard:noMovementLogs', { defaultValue: 'No movement logged yet today' })
                 )}
               </span>
             </div>
@@ -95,7 +97,7 @@ export const PersonalizedFitnessHeader: React.FC<PersonalizedFitnessHeaderProps>
                 !isMale ? 'text-[#DC326C]' : 'text-[#0288D1]'
               }`}
             >
-              {weeklyTotalMinutes} min this week
+              {weeklyTotalMinutes} {t('lifestyle:movementSection.minutes', { defaultValue: 'min' })} {t('dashboard:week', { defaultValue: 'this week' })}
             </span>
           </div>
         </div>
@@ -111,7 +113,7 @@ export const PersonalizedFitnessHeader: React.FC<PersonalizedFitnessHeaderProps>
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = accentColor)}
           >
             <Plus className="w-4 h-4 text-white" aria-hidden="true" />
-            <span>Log Activity</span>
+            <span>{t('dashboard:addMovement', { defaultValue: 'Log Activity' })}</span>
           </button>
 
           <button
@@ -123,11 +125,11 @@ export const PersonalizedFitnessHeader: React.FC<PersonalizedFitnessHeaderProps>
               className={`w-4 h-4 ${!isMale ? 'text-[#F43F7D]' : 'text-[#0288D1]'}`}
               aria-hidden="true"
             />
-            <span>Movement Guidance</span>
+            <span>{t('common:askAI', { defaultValue: 'Movement Guidance' })}</span>
           </button>
 
           <span className="text-[10px] font-mono text-[#98A2B3] text-center pt-0.5">
-            🌱 Educational suggestions • Non-diagnostic
+            {t('common:disclaimerBadge', { defaultValue: '🌱 Educational suggestions • Non-diagnostic' })}
           </span>
         </div>
       </div>

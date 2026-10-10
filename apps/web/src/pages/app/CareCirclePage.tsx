@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
   Users01,
   Plus,
@@ -15,8 +16,10 @@ import { ManageAccessModal } from '../../components/care-circle/ManageAccessModa
 import { RevokeAccessConfirmModal } from '../../components/care-circle/RevokeAccessConfirmModal';
 import { CareCircleMemberCard } from '../../components/care-circle/CareCircleMemberCard';
 import { CareCirclePendingInvites } from '../../components/care-circle/CareCirclePendingInvites';
+import { resolvePathway } from '../../types/onboarding';
 
 export const CareCirclePage: React.FC = () => {
+  const { t } = useTranslation(['careCircle', 'common']);
   const {
     userProfile,
     careCircleMembers,
@@ -28,6 +31,9 @@ export const CareCirclePage: React.FC = () => {
     deleteCareMember,
     openAiChatWithPrompt,
   } = useUserHealth();
+
+  const pathway = resolvePathway(userProfile?.gender, userProfile?.pathway);
+  const isFemale = pathway === 'female';
 
   // Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -65,22 +71,22 @@ export const CareCirclePage: React.FC = () => {
       <div className="rounded-2xl bg-white border border-[#EAECF0] p-5 sm:p-6 shadow-xs select-none">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
           <div className="space-y-2.5 max-w-2xl text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F0F9FF] text-xs font-mono font-semibold text-[#0288D1] border border-[#BAE6FD]">
-              <ShieldTick className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
-              <span>Zero-Compromise Patient Consent</span>
+            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full ${isFemale ? 'bg-[#FDE6EF] text-[#E11D48] border-[#F43F7D]/20' : 'bg-[#F0F9FF] text-[#0288D1] border-[#BAE6FD]'} text-xs font-mono font-semibold border`}>
+              <ShieldTick className={`w-3.5 h-3.5 ${isFemale ? 'text-[#E11D48]' : 'text-[#0288D1]'}`} aria-hidden="true" />
+              <span>{t('careCircle:title', { defaultValue: 'Zero-Compromise Patient Consent' })}</span>
             </div>
 
             {/* Quick Stat Badges */}
             <div className="flex flex-wrap items-center gap-2.5">
               <div className="px-3 py-1.5 rounded-xl bg-[#F8FAFC] border border-[#EAECF0] text-xs font-mono text-[#0F172A]">
-                <span className="text-[#0288D1] font-bold">{activeMembers.length}</span> Active Connections
+                <span className={`${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'} font-bold`}>{activeMembers.length}</span> {t('careCircle:status.accepted', { defaultValue: 'Active Connections' })}
               </div>
               <div className="px-3 py-1.5 rounded-xl bg-[#F8FAFC] border border-[#EAECF0] text-xs font-mono text-[#0F172A]">
-                <span className="text-[#F79009] font-bold">{careCircleInvitations.length || pendingMembers.length}</span> Pending
+                <span className="text-[#F79009] font-bold">{careCircleInvitations.length || pendingMembers.length}</span> {t('careCircle:status.pending', { defaultValue: 'Pending' })}
               </div>
               <div className="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-mono text-emerald-700 flex items-center gap-1.5 font-medium">
                 <Lock01 className="w-3 h-3 text-emerald-600" aria-hidden="true" />
-                <span>Instant Revocation Enabled</span>
+                <span>{t('careCircle:status.revoked', { defaultValue: 'Instant Revocation Enabled' })}</span>
               </div>
             </div>
           </div>
@@ -90,10 +96,10 @@ export const CareCirclePage: React.FC = () => {
             <button
               type="button"
               onClick={() => handleOpenAddModal('doctor')}
-              className="px-4 py-2.5 rounded-xl font-sans font-semibold text-xs sm:text-sm text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
+              className={`px-4 py-2.5 rounded-xl font-sans font-semibold text-xs sm:text-sm text-white ${isFemale ? 'bg-[#F43F7D] hover:bg-[#E11D48]' : 'bg-[#0288D1] hover:bg-[#0277BD]'} shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]`}
             >
               <MedicalCircle className="w-4 h-4 text-white" aria-hidden="true" />
-              <span>Add Doctor / Clinician</span>
+              <span>{t('careCircle:inviteMember', { defaultValue: 'Add Doctor / Clinician' })}</span>
             </button>
 
             <button
@@ -102,7 +108,7 @@ export const CareCirclePage: React.FC = () => {
               className="px-4 py-2.5 rounded-xl font-sans font-semibold text-xs sm:text-sm text-[#344054] bg-[#FAFAFC] hover:bg-[#F2F4F7] border border-[#EAECF0] shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
             >
               <Heart className="w-4 h-4 text-[#F43F7D]" aria-hidden="true" />
-              <span>Add Family Member</span>
+              <span>{t('careCircle:inviteMember', { defaultValue: 'Add Family Member' })}</span>
             </button>
           </div>
         </div>
@@ -112,8 +118,8 @@ export const CareCirclePage: React.FC = () => {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-xl bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD]">
-              <Users01 className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
+            <span className={`p-1.5 rounded-xl ${isFemale ? 'bg-[#FDE6EF] text-[#F43F7D] border-[#FDE6EF]' : 'bg-[#F0F9FF] text-[#0288D1] border-[#BAE6FD]'} border`}>
+              <Users01 className={`w-4 h-4 ${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'}`} aria-hidden="true" />
             </span>
             <h2 className="text-lg font-bold font-display text-[#0F172A]">
               Active Connections ({activeMembers.length})
@@ -123,16 +129,16 @@ export const CareCirclePage: React.FC = () => {
           <button
             type="button"
             onClick={() => handleOpenAddModal('trusted_person')}
-            className="text-xs font-bold text-[#0288D1] hover:text-[#01579B] transition-colors inline-flex items-center gap-1 cursor-pointer"
+            className={`text-xs font-bold ${isFemale ? 'text-[#F43F7D] hover:text-[#BE185D]' : 'text-[#0288D1] hover:text-[#01579B]'} transition-colors inline-flex items-center gap-1 cursor-pointer`}
           >
-            <Plus className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
+            <Plus className={`w-3.5 h-3.5 ${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'}`} aria-hidden="true" />
             <span>Add Trusted Person</span>
           </button>
         </div>
 
         {careCircleLoading && careCircleMembers.length === 0 ? (
-          <div className="p-12 rounded-2xl bg-white border border-[#BAE6FD] text-center space-y-3">
-            <div className="w-8 h-8 rounded-full border-2 border-[#0288D1] border-t-transparent animate-spin mx-auto" />
+          <div className={`p-12 rounded-2xl bg-white border ${isFemale ? 'border-[#FDE6EF]' : 'border-[#BAE6FD]'} text-center space-y-3`}>
+            <div className={`w-8 h-8 rounded-full border-2 ${isFemale ? 'border-[#F43F7D]' : 'border-[#0288D1]'} border-t-transparent animate-spin mx-auto`} />
             <span className="text-xs font-mono text-[#64748B] block">
               Loading Care Circle members...
             </span>
@@ -143,28 +149,31 @@ export const CareCirclePage: React.FC = () => {
               <CareCircleMemberCard
                 key={member.id}
                 member={member}
+                isFemale={isFemale}
                 onManageAccess={(m) => setSelectedMemberForManage(m)}
                 onRevokeAccess={(m) => setSelectedMemberForRevoke(m)}
               />
             ))}
           </div>
         ) : (
-          <div className="p-8 sm:p-12 rounded-2xl bg-white border border-dashed border-[#BAE6FD] text-center space-y-4">
-            <div className="w-14 h-14 rounded-2xl bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD] flex items-center justify-center mx-auto">
-              <Users01 className="w-7 h-7 text-[#0288D1]" aria-hidden="true" />
+          <div className={`p-8 sm:p-12 rounded-2xl bg-white border border-dashed ${isFemale ? 'border-[#FDE6EF]' : 'border-[#BAE6FD]'} text-center space-y-4`}>
+            <div className={`w-14 h-14 rounded-2xl ${isFemale ? 'bg-[#FDE6EF] text-[#F43F7D] border-[#FDE6EF]' : 'bg-[#F0F9FF] text-[#0288D1] border-[#BAE6FD]'} border flex items-center justify-center mx-auto`}>
+              <Users01 className={`w-7 h-7 ${isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'}`} aria-hidden="true" />
             </div>
             <div className="space-y-1">
               <h3 className="text-base font-bold font-display text-[#0F172A]">
                 Your Care Circle is empty
               </h3>
               <p className="text-xs text-[#475569] max-w-md mx-auto leading-relaxed">
-                Connect your gynecologist, reproductive endocrinologist, or family members to share longitudinal summaries on your terms.
+                {isFemale
+                  ? 'Connect your gynecologist, reproductive endocrinologist, or family members to share longitudinal summaries on your terms.'
+                  : 'Connect your andrologist, endocrinologist, or family members to share longitudinal summaries on your terms.'}
               </p>
             </div>
             <button
               type="button"
               onClick={() => handleOpenAddModal('doctor')}
-              className="px-6 py-2.5 rounded-xl font-sans font-semibold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-sm transition-all inline-flex items-center gap-2 cursor-pointer"
+              className={`px-6 py-2.5 rounded-xl font-sans font-semibold text-xs text-white ${isFemale ? 'bg-[#F43F7D] hover:bg-[#E11D48]' : 'bg-[#0288D1] hover:bg-[#0277BD]'} shadow-sm transition-all inline-flex items-center gap-2 cursor-pointer`}
             >
               <Plus className="w-3.5 h-3.5 text-white" aria-hidden="true" />
               <span>Add Someone You Trust</span>
@@ -176,13 +185,14 @@ export const CareCirclePage: React.FC = () => {
       {/* ── 3. PENDING INVITATIONS ── */}
       <CareCirclePendingInvites
         invitations={careCircleInvitations}
+        isFemale={isFemale}
         onDeleteInvite={async (id) => {
           return await deleteCareMember(id);
         }}
       />
 
       {/* ── 4. EMERGENCY SAFETY CONTACTS ── */}
-      <div className="p-6 sm:p-8 rounded-2xl bg-white border border-[#BAE6FD] shadow-sm space-y-4">
+      <div className={`p-6 sm:p-8 rounded-2xl bg-white border ${isFemale ? 'border-[#F3E8EC]' : 'border-[#BAE6FD]'} shadow-sm space-y-4`}>
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-base font-bold font-display text-[#0F172A]">
@@ -195,7 +205,7 @@ export const CareCirclePage: React.FC = () => {
           <button
             type="button"
             onClick={() => openAiChatWithPrompt('How do I update my emergency safety contacts?')}
-            className="text-xs font-bold text-[#0288D1] hover:text-[#01579B] transition-colors"
+            className={`text-xs font-bold ${isFemale ? 'text-[#F43F7D] hover:text-[#BE185D]' : 'text-[#0288D1] hover:text-[#01579B]'} transition-colors`}
           >
             Update Contacts
           </button>
@@ -206,7 +216,7 @@ export const CareCirclePage: React.FC = () => {
             {emergencyContacts.map((contact, idx) => (
               <div
                 key={contact.id || idx}
-                className="p-5 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                className={`p-5 rounded-xl ${isFemale ? 'bg-[#FFF8FA] border-[#FDE6EF]' : 'bg-[#F0F9FF] border-[#BAE6FD]'} border flex flex-col sm:flex-row sm:items-center justify-between gap-4`}
               >
                 <div>
                   <div className="flex items-center gap-2">

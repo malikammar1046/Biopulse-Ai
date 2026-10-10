@@ -28,51 +28,61 @@ export interface SettingsTabItem {
   isPathwaySpecific?: boolean;
 }
 
-export function getSettingsTabs(isMale: boolean): SettingsTabItem[] {
+export function getSettingsTabs(
+  isMale: boolean,
+  t?: (key: string, optionsOrFallback?: any) => string
+): SettingsTabItem[] {
+  const tr = (key: string, fallback: string) => {
+    if (!t) return fallback;
+    const res = (t as any)(key, { defaultValue: fallback });
+    return typeof res === 'string' && res.trim() ? res : fallback;
+  };
   return [
     {
       id: 'personal',
-      label: 'Personal Information',
-      description: 'Identity, demographics & biometrics',
+      label: tr('settings:navTabs.personal', 'Personal Information'),
+      description: tr('settings:navTabs.personalDesc', 'Identity, demographics & biometrics'),
       icon: User01,
     },
     {
       id: 'health',
-      label: 'Health Profile',
-      description: 'Medical history, conditions & vitals',
+      label: tr('settings:navTabs.health', 'Health Profile'),
+      description: tr('settings:navTabs.healthDesc', 'Medical history, conditions & vitals'),
       icon: ActivityHeart,
     },
     {
       id: 'screening',
-      label: isMale ? 'Male Hormonal Health' : 'PCOS Screening Profile',
+      label: isMale
+        ? tr('settings:navTabs.screeningMale', 'Male Hormonal Health')
+        : tr('settings:navTabs.screeningFemale', 'PCOS Screening Profile'),
       description: isMale
-        ? 'ADAM symptoms & metabolic markers'
-        : 'Cycle, symptoms & reproductive history',
+        ? tr('settings:navTabs.screeningMaleDesc', 'ADAM symptoms & metabolic markers')
+        : tr('settings:navTabs.screeningFemaleDesc', 'Cycle, symptoms & reproductive history'),
       icon: isMale ? Activity : Calendar,
       isPathwaySpecific: true,
     },
     {
       id: 'lifestyle',
-      label: 'Lifestyle & Habits',
-      description: 'Activity, exercise, sleep & routines',
+      label: tr('settings:navTabs.lifestyle', 'Lifestyle & Habits'),
+      description: tr('settings:navTabs.lifestyleDesc', 'Activity, exercise, sleep & routines'),
       icon: Activity,
     },
     {
       id: 'nutrition',
-      label: 'Nutrition Preferences',
-      description: 'Dietary habits, allergies & readiness',
+      label: tr('settings:navTabs.nutrition', 'Nutrition Preferences'),
+      description: tr('settings:navTabs.nutritionDesc', 'Dietary habits, allergies & readiness'),
       icon: Scales01,
     },
     {
       id: 'goals',
-      label: 'Goals & Preferences',
-      description: 'Health focus & coaching cadence',
+      label: tr('settings:navTabs.goals', 'Goals & Preferences'),
+      description: tr('settings:navTabs.goalsDesc', 'Health focus & coaching cadence'),
       icon: Target04,
     },
     {
       id: 'account',
-      label: 'Account & Privacy',
-      description: 'Security, contacts & data controls',
+      label: tr('settings:navTabs.account', 'Account & Privacy'),
+      description: tr('settings:navTabs.accountDesc', 'Security, contacts & data controls'),
       icon: ShieldTick,
     },
   ];

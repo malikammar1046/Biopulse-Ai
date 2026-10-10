@@ -1,0 +1,72 @@
+{
+  "title": "Account & Application Settings",
+  "subtitle": "Manage your clinical preferences, language, profile details, and data privacy",
+  "tabs": {
+    "profile": "Profile & Biometrics",
+    "language": "Language / زبان",
+    "notifications": "Notifications",
+    "privacy": "Data & Privacy",
+    "security": "Security"
+  },
+  "clinicalCenter": "Clinical Health Center",
+  "pcosProtocol": "PCOS Screening Protocol",
+  "maleProtocol": "Male Hypogonadism Protocol",
+  "changesSaved": "Changes saved",
+  "unsavedChanges": "Unsaved changes",
+  "discardChanges": "Discard Changes",
+  "saveChanges": "Save Changes",
+  "saving": "Saving...",
+  "saveAndRecalculate": "Save & Recalculate",
+  "navTabs": {
+    "personal": "Personal Information",
+    "personalDesc": "Identity, demographics & biometrics",
+    "health": "Health Profile",
+    "healthDesc": "Medical history, conditions & vitals",
+    "screeningFemale": "PCOS Screening Profile",
+    "screeningFemaleDesc": "Cycle, symptoms & reproductive history",
+    "screeningMale": "Male Hormonal Health",
+    "screeningMaleDesc": "ADAM symptoms & metabolic markers",
+    "lifestyle": "Lifestyle & Habits",
+    "lifestyleDesc": "Activity, exercise, sleep & routines",
+    "nutrition": "Nutrition Preferences",
+    "nutritionDesc": "Dietary habits, allergies & readiness",
+    "goals": "Goals & Preferences",
+    "goalsDesc": "Health focus & coaching cadence",
+    "account": "Account & Privacy",
+    "accountDesc": "Security, contacts & data controls"
+  },
+  "completeness": {
+    "title": "Profile Completeness",
+    "highDesc": "Your profile is comprehensive. Clinical models operate with high confidence.",
+    "lowDesc": "Complete your medical profile for more accurate clinical screening.",
+    "remaining": "{{count}} essential fields remaining"
+  },
+  "languageSection": {
+    "title": "Language Preference",
+    "description": "Choose the display language for the BioPulse application and conversational assistant.",
+    "selectLabel": "Selected Language",
+    "englishLabel": "English (US)",
+    "urduLabel": "اردو (Urdu)",
+    "englishDesc": "Complete clinical interface and reports in English",
+    "urduDesc": "روایتی پاکستانی طبی انداز اور درست RTL لے آؤٹ کے ساتھ",
+    "persistedNotice": "Your language choice is automatically saved to your profile and retained across sessions."
+  },
+  "profileSection": {
+    "title": "Personal & Health Profile",
+    "name": "Full Name",
+    "email": "Email Address",
+    "phone": "Phone Number",
+    "dob": "Date of Birth",
+    "gender": "Gender",
+    "pathway": "Assigned Pathway",
+    "height": "Height (cm)",
+    "weight": "Weight (kg)",
+    "saveProfile": "Save Profile Changes"
+  },
+  "privacySection": {
+    "title": "Data Privacy & Management",
+    "exportData": "Export My Health Data (JSON)",
+    "deleteAccount": "Delete Account & Clinical Data",
+    "deleteWarning": "This permanently deletes your assessments, symptom logs, and medical records from the system."
+  }
+}

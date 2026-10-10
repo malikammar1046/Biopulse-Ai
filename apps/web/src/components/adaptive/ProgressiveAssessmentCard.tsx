@@ -155,7 +155,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
       if (isTier2) return isPartialTier2 ? 'Tier 1 + Available Clinical Evidence' : 'Tier 1 + Complete Clinical Assessment';
       return 'Tier 1 Biometric Assessment';
     }
-    if (isTier3Multimodal) return 'Complete Tier 1 + Clinical + Ultrasound Assessment';
+    if (isTier3Multimodal) return 'Tier 1 + Clinical Assessment with Independent Ultrasound Morphology';
     if (isTier2) return isPartialTier2 ? 'Tier 1 + Available Clinical Evidence' : 'Tier 1 + Clinical Assessment';
     if (hasUltrasoundOnly) return 'Tier 1 + Ultrasound Assessment';
     return 'Tier 1 Assessment';
@@ -172,7 +172,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
       return 'Screening model utilizing 11 non-invasive features (demographics, body composition, sleep, and energy indicators).';
     }
     if (isTier3Multimodal) {
-      return 'Comprehensive multimodal screening combining 32 cumulative lifestyle & clinical biomarkers with deep ultrasound vision analysis.';
+      return 'Current Tier 2 model-derived screening estimate anchored in 32 validated lifestyle and laboratory biomarkers, accompanied by independent ultrasound PCOM morphology.';
     }
     if (isTier2) {
       if (isPartialTier2) {
@@ -329,7 +329,9 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
                 className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
                   assessment.pcom_status === 'PCOM Detected'
                     ? 'bg-rose-50 text-rose-700 border-rose-200'
-                    : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : assessment.pcom_status === 'PCOM Not Detected'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-amber-50 text-amber-700 border-amber-200'
                 }`}
               >
                 {assessment.pcom_status}
@@ -355,19 +357,26 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
             )}
 
             {isTier3Multimodal && assessment.fusion_details && (
-              <div className="text-[11px] font-mono text-slate-600 space-y-1 pt-1 border-t border-slate-200">
+              <div className="text-[11px] font-mono text-slate-600 space-y-1.5 pt-1.5 border-t border-slate-200">
                 <div className="flex justify-between">
-                  <span>Clinical Weight (95%):</span>
+                  <span>Clinical Risk (Tier 2):</span>
                   <strong className="text-slate-900">
                     {(assessment.fusion_details.clinical_probability * 100).toFixed(1)}%
                   </strong>
                 </div>
                 <div className="flex justify-between">
-                  <span>Ultrasound Weight (5%):</span>
+                  <span>PCOM Model Output:</span>
                   <strong className="text-slate-900">
-                    {(((assessment.fusion_details.ultrasound_pcom_probability ?? assessment.fusion_details.ultrasound_probability ?? 0)) * 100).toFixed(1)}%
+                    {assessment.fusion_details.ultrasound_pcom_probability !== undefined && assessment.fusion_details.ultrasound_pcom_probability !== null
+                      ? `${(assessment.fusion_details.ultrasound_pcom_probability * 100).toFixed(1)}%`
+                      : assessment.pcom_status === 'Indeterminate'
+                      ? 'Indeterminate'
+                      : 'Unavailable'}
                   </strong>
                 </div>
+                <p className="text-[10px] text-slate-500 font-sans leading-normal pt-0.5">
+                  AI-estimated PCOM-like morphology finding. Not a confirmed clinical criterion or medical diagnosis.
+                </p>
               </div>
             )}
           </div>

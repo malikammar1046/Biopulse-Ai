@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   LogOut01,
   Trash01,
@@ -7,8 +8,10 @@ import {
   AlertTriangle,
   File01,
   CheckCircle,
+  Globe02,
 } from '@untitledui/icons';
 import type { UserProfile, EmergencyContact } from '../../../../types/onboarding';
+import { useAuth } from '../../../../context/AuthContext';
 import { downloadHealthSummaryPdf } from '../../../../services/healthSummaryPdfService';
 
 interface AccountTabProps {
@@ -17,6 +20,7 @@ interface AccountTabProps {
   onLogout: () => void;
   onRestartOnboarding: () => void;
   onOpenDeleteModal: () => void;
+  isMale?: boolean;
 }
 
 export const AccountTab: React.FC<AccountTabProps> = ({
@@ -25,10 +29,21 @@ export const AccountTab: React.FC<AccountTabProps> = ({
   onLogout,
   onRestartOnboarding,
   onOpenDeleteModal,
+  isMale = false,
 }) => {
+  const { updateUserLanguage } = useAuth();
+  const { i18n } = useTranslation(['settings', 'common']);
+  const isUrdu = i18n.language === 'ur';
+  const currentLocale = (i18n.language === 'ur' ? 'ur' : 'en') as 'en' | 'ur';
+
   const [downloadPdfLoading, setDownloadPdfLoading] = useState(false);
   const [downloadPdfSuccess, setDownloadPdfSuccess] = useState(false);
   const [downloadPdfError, setDownloadPdfError] = useState<string | null>(null);
+
+  const handleLanguageSelect = async (lang: 'en' | 'ur') => {
+    setDraft((prev) => ({ ...prev, preferredLanguage: lang }));
+    await updateUserLanguage(lang);
+  };
 
   const primaryContact: EmergencyContact = draft.emergencyContacts?.[0] || {
     name: '',
@@ -60,6 +75,68 @@ export const AccountTab: React.FC<AccountTabProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* 0. Language Preferences (Dedicated Section) */}
+      <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+              <Globe02 className={`w-4 h-4 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`} aria-hidden="true" />
+              <span>{isUrdu ? 'زبان کا انتخاب (Language Preferences)' : 'Language / زبان'}</span>
+            </h3>
+            <p className="text-xs text-slate-400 mt-0.5">
+              {isUrdu
+                ? 'ایپلیکیشن کی زبان منتخب کریں۔ ترجیح فوری طور پر لاگو ہوگی اور اکاؤنٹ میں محفوظ ہو جائے گی۔'
+                : 'Choose your interface language. Preference will sync across all sessions.'}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-w-lg">
+          <button
+            type="button"
+            onClick={() => handleLanguageSelect('en')}
+            className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer ${
+              currentLocale === 'en'
+                ? isMale
+                  ? 'border-[#0288D1] bg-[#F0F9FF] shadow-xs ring-2 ring-[#0288D1]/20'
+                  : 'border-[#F43F7D] bg-[#FDE6EF] shadow-xs ring-2 ring-[#F43F7D]/20'
+                : 'border-slate-200 hover:border-slate-300 bg-white'
+            }`}
+          >
+            <div className="text-left">
+              <span className="text-sm font-bold text-slate-900 block">English</span>
+              <span className="text-[11px] text-slate-500 block mt-0.5">Reference clinical presentation</span>
+            </div>
+            {currentLocale === 'en' && (
+              <span className={`w-5 h-5 rounded-full ${isMale ? 'bg-[#0288D1]' : 'bg-[#F43F7D]'} text-white flex items-center justify-center text-xs font-bold`}>
+                ✓
+              </span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleLanguageSelect('ur')}
+            className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer ${
+              currentLocale === 'ur'
+                ? isMale
+                  ? 'border-[#0288D1] bg-[#F0F9FF] shadow-xs ring-2 ring-[#0288D1]/20'
+                  : 'border-[#F43F7D] bg-[#FDE6EF] shadow-xs ring-2 ring-[#F43F7D]/20'
+                : 'border-slate-200 hover:border-slate-300 bg-white'
+            }`}
+          >
+            <div className="text-right w-full pr-2">
+              <span className="text-sm font-bold text-slate-900 block">اردو (Urdu)</span>
+              <span className="text-[11px] text-slate-500 block mt-0.5">پاکستانی طبی رہنمائی کے معیارات</span>
+            </div>
+            {currentLocale === 'ur' && (
+              <span className={`w-5 h-5 rounded-full ${isMale ? 'bg-[#0288D1]' : 'bg-[#F43F7D]'} text-white flex items-center justify-center text-xs font-bold`}>
+                ✓
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
       {/* 1. Account Credentials & Security */}
       <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs">
         <div className="flex items-center justify-between mb-5">
@@ -99,7 +176,7 @@ export const AccountTab: React.FC<AccountTabProps> = ({
             </label>
             <div className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium text-slate-600 flex items-center justify-between">
               <span>••••••••••••</span>
-              <span className="text-[11px] text-[#0288D1] font-semibold">
+              <span className={`text-[11px] font-semibold ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`}>
                 Protected via Supabase Auth
               </span>
             </div>
@@ -128,7 +205,9 @@ export const AccountTab: React.FC<AccountTabProps> = ({
               value={primaryContact.name || ''}
               onChange={(e) => updatePrimary('name', e.target.value)}
               placeholder="e.g. Sarah Jenkins"
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0288D1]/20 focus:border-[#0288D1]"
+              className={`w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 ${
+                isMale ? 'focus:ring-[#0288D1]/20 focus:border-[#0288D1]' : 'focus:ring-[#F43F7D]/20 focus:border-[#F43F7D]'
+              }`}
             />
           </div>
 
@@ -139,7 +218,9 @@ export const AccountTab: React.FC<AccountTabProps> = ({
             <select
               value={primaryContact.relationship || 'Partner / Spouse'}
               onChange={(e) => updatePrimary('relationship', e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0288D1]/20 focus:border-[#0288D1] bg-white"
+              className={`w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 ${
+                isMale ? 'focus:ring-[#0288D1]/20 focus:border-[#0288D1]' : 'focus:ring-[#F43F7D]/20 focus:border-[#F43F7D]'
+              } bg-white`}
             >
               <option value="Partner / Spouse">Partner / Spouse</option>
               <option value="Parent">Parent</option>
@@ -158,7 +239,9 @@ export const AccountTab: React.FC<AccountTabProps> = ({
               value={primaryContact.phone || ''}
               onChange={(e) => updatePrimary('phone', e.target.value)}
               placeholder="e.g. +92 300 9876543"
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0288D1]/20 focus:border-[#0288D1]"
+              className={`w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 ${
+                isMale ? 'focus:ring-[#0288D1]/20 focus:border-[#0288D1]' : 'focus:ring-[#F43F7D]/20 focus:border-[#F43F7D]'
+              }`}
             />
           </div>
         </div>
@@ -233,7 +316,7 @@ export const AccountTab: React.FC<AccountTabProps> = ({
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
             <div>
               <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5 mb-1">
-                <RefreshCw01 className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
+                <RefreshCw01 className={`w-3.5 h-3.5 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`} aria-hidden="true" />
                 Re-take Clinical Onboarding
               </span>
               <p className="text-[11px] text-slate-500 leading-relaxed mb-3">

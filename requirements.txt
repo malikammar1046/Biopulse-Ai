@@ -13,23 +13,29 @@ djangorestframework>=3.14.0
 django-cors-headers>=4.3.0
 python-dotenv>=1.0.0
 PyJWT>=2.8.0
+requests>=2.31.0
 
 # Supabase & Cloud Database
 supabase>=2.3.0
 
-# Machine Learning & Feature Engineering
+# Machine Learning, Feature Engineering & Ensembles
 pandas>=2.2.0
 numpy>=1.26.0
 scipy>=1.10.0
-scikit-learn>=1.4.0
+scikit-learn>=1.4.0,<=1.9.0
+joblib>=1.3.0
+xgboost>=2.0.0
 openpyxl>=3.1.0
 
 # Deep Learning (PCOS-ML Multimodal Ultrasound EfficientNet-B0 & Grad-CAM)
 torch>=2.2.0
 torchvision>=0.17.0
+timm>=0.9.12
 
-# Model Explainability (TreeSHAP)
+# Model Explainability & Visualization
 shap>=0.45.0
+matplotlib>=3.8.0
+seaborn>=0.13.0
 
 # Computer Vision & Medical Lab Report OCR
 opencv-python-headless>=4.9.0
@@ -38,6 +44,9 @@ Pillow>=10.2.0
 pypdf>=3.17.0
 pymupdf>=1.23.8
 rapidocr-onnxruntime>=1.2.0
+
+# Clinical PDF Report Generation
+reportlab>=5.0.0
 
 # Testing & Code Quality
 pytest>=8.0.0

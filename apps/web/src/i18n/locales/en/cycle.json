@@ -1,0 +1,38 @@
+{
+  "title": "Menstrual Cycle & Ovulation Tracker",
+  "subtitle": "Monitor your cycle regularity, phases, and ovulation windows with clinical accuracy",
+  "currentPhase": "Current Cycle Phase",
+  "dayOfCycle": "Day of Cycle",
+  "nextPeriodIn": "Next period expected in",
+  "days": "days",
+  "phaseDescriptions": {
+    "period": "Menstruation — Resting phase, lower estrogen and progesterone levels.",
+    "follicular": "Follicular — Follicle maturation phase; rising estrogen supports energy.",
+    "ovulation": "Ovulatory Window — Peak estrogen and LH surge; fertile window.",
+    "luteal": "Luteal Phase — Rising progesterone; monitor for PMS or metabolic sensitivity."
+  },
+  "logPeriod": "Log Period Flow",
+  "flowIntensity": {
+    "spotting": "Spotting",
+    "light": "Light Flow",
+    "medium": "Medium Flow",
+    "heavy": "Heavy Flow"
+  },
+  "cycleStatistics": {
+    "title": "Cycle Metrics",
+    "averageLength": "Average Cycle Length",
+    "averageDuration": "Average Bleeding Duration",
+    "regularity": "Regularity Status",
+    "regular": "Predictable / Regular",
+    "irregular": "Variable / Irregular"
+  },
+  "cycleStoryTitle": "Your cycle story starts here.",
+  "cycleStoryDesc": "Log your first period to begin understanding your patterns, biological phases, and longitudinal rhythms.",
+  "logFirstPeriodCTA": "Log Your First Period",
+  "cycleEncryptedNotice": "Your cycle records are privately encrypted with Row Level Security (RLS).",
+  "responsibleBoundaryTitle": "Responsible Health & Non-Diagnostic Framing",
+  "responsibleBoundaryDesc": "BioPulse AI cycle projections, estimated phases, and fertile windows are calculated from your self-reported dates and historical rhythm. They are informational estimations and do not constitute diagnostic ovulation detection or medical birth control.",
+  "refreshCycleTitle": "Refresh cycle records",
+  "loadingRecords": "Loading your cycle records...",
+  "cycleIntelligenceTag": "Cycle Intelligence"
+}

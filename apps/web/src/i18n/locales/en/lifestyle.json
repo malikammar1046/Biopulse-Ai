@@ -1,0 +1,56 @@
+{
+  "title": "Lifestyle, Nutrition & Daily Recovery",
+  "subtitle": "Culturally attuned dietary habits, active movement, and sleep routines supporting endocrine health",
+  "tabs": {
+    "nutrition": "Nutrition & Meals",
+    "movement": "Movement & Fitness",
+    "recovery": "Sleep & Recovery",
+    "habits": "Daily Habits"
+  },
+  "todayFocus": "Today's Clinical Focus",
+  "calorieTarget": "Target Calories",
+  "proteinTarget": "Protein",
+  "carbsTarget": "Carbohydrates",
+  "fatTarget": "Healthy Fats",
+  "waterTarget": "Daily Water Target",
+  "meals": {
+    "breakfast": "Breakfast (Nashta)",
+    "lunch": "Lunch (Dopahar ka Khana)",
+    "dinner": "Dinner (Raat ka Khana)",
+    "snack": "Snack",
+    "viewRecipe": "View Ingredients & Instructions",
+    "culturalNote": "Traditional Pakistani preparation adapted for lower glycemic impact."
+  },
+  "pakistaniFoods": {
+    "roti": "Whole Wheat Roti",
+    "daal": "Moong / Masoor Daal",
+    "chickenKarahi": "Low-Oil Chicken Karahi",
+    "chanaChaat": "Spiced Boiled Chana Salad",
+    "raita": "Cucumber & Mint Raita",
+    "palakPaneer": "Spinach & Paneer / Tofu",
+    "lassi": "Unsweetened Mint Lassi"
+  },
+  "movementSection": {
+    "title": "Movement & Physical Activity",
+    "subtitle": "Targeted movement that optimizes insulin sensitivity without spiking stress cortisol",
+    "recommendedWorkout": "Recommended Routine",
+    "duration": "Duration",
+    "intensity": "Intensity",
+    "lowImpact": "Low Impact & Joint Friendly",
+    "briskWalk": "Brisk Walking (Post-meal)",
+    "resistanceTraining": "Full-Body Strength & Resistance",
+    "yogaStretching": "Gentle Yoga & Mobility",
+    "minutes": "min"
+  },
+  "sleepSection": {
+    "title": "Sleep Rhythm & Cortisol Balance",
+    "subtitle": "Consistent circadian rhythms are essential for hormone synthesis and recovery",
+    "sleepGoal": "Sleep Goal: 7-8 hours",
+    "sleepHygiene1": "Avoid heavy caffeine or chai within 6 hours of bedtime",
+    "sleepHygiene2": "Keep sleeping room cool and dark",
+    "sleepHygiene3": "Wind down screen usage 45 minutes prior to sleep"
+  },
+  "logHabit": "Log Today's Habits",
+  "habitSaved": "Habit logged successfully",
+  "emptyLifestyle": "No lifestyle logs recorded today. Log your water or meals to start tracking."
+}

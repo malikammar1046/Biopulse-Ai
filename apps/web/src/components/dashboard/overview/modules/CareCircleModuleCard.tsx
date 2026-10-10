@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Users, ArrowRight, UserPlus } from 'lucide-react';
 import { DashboardModuleCard } from '../DashboardModuleCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
@@ -21,16 +22,17 @@ export const CareCircleModuleCard: React.FC<CareCircleModuleCardProps> = ({
   onAddMember,
   updatedAt = '3 hrs ago',
 }) => {
+  const { t } = useTranslation(['dashboard', 'careCircle', 'common']);
   const isFemale = pathway === 'female';
 
   const menuItems = [
     {
-      label: 'Open Care Circle',
+      label: t('dashboard:manageCircle', { defaultValue: 'Open Care Circle' }),
       onClick: onOpenCareCircle,
       icon: Users,
     },
     {
-      label: 'Invite Member',
+      label: t('dashboard:inviteMember', { defaultValue: 'Invite Member' }),
       onClick: onAddMember,
       icon: UserPlus,
     },
@@ -41,8 +43,8 @@ export const CareCircleModuleCard: React.FC<CareCircleModuleCardProps> = ({
   if (!hasMembers) {
     return (
       <DashboardModuleCard
-        title="Care Circle"
-        subtitle="Your support network"
+        title={t('dashboard:careCircleSupport', { defaultValue: 'Care Circle' })}
+        subtitle={t('dashboard:careCircleSubtitle', { defaultValue: 'Your support network' })}
         icon={Users}
         accentColor={isFemale ? 'pink' : 'blue'}
         isLive={false}
@@ -50,9 +52,11 @@ export const CareCircleModuleCard: React.FC<CareCircleModuleCardProps> = ({
         loading={loading}
       >
         <DashboardEmptyState
-          title="Your Care Circle is empty"
-          description="Invite a trusted family member, close friend, or clinical provider to view your health updates."
-          actionLabel="Add Trusted Person"
+          title={t('dashboard:noCircleMembers', { defaultValue: 'Your Care Circle is empty' })}
+          description={t('dashboard:noCircleDesc', {
+            defaultValue: 'Invite a trusted family member, close friend, or clinical provider to view your health updates.',
+          })}
+          actionLabel={t('dashboard:inviteMember', { defaultValue: 'Add Trusted Person' })}
           onAction={onAddMember}
           icon={Users}
           accentColor={isFemale ? 'pink' : 'blue'}
@@ -66,12 +70,12 @@ export const CareCircleModuleCard: React.FC<CareCircleModuleCardProps> = ({
 
   return (
     <DashboardModuleCard
-      title="Care Circle"
-      subtitle="Your support network"
+      title={t('dashboard:careCircleSupport', { defaultValue: 'Care Circle' })}
+      subtitle={t('dashboard:careCircleSubtitle', { defaultValue: 'Your support network' })}
       icon={Users}
       accentColor={isFemale ? 'pink' : 'blue'}
       isLive={true}
-      syncedModule="Care Circle"
+      syncedModule={t('dashboard:careCircleSupport', { defaultValue: 'Care Circle' })}
       updatedAt={updatedAt}
       menuItems={menuItems}
       loading={loading}
@@ -92,10 +96,10 @@ export const CareCircleModuleCard: React.FC<CareCircleModuleCardProps> = ({
             const displayRole =
               member.relationship ||
               (member.role === 'doctor'
-                ? 'Clinical Specialist'
+                ? t('careCircle:roles.doctor', { defaultValue: 'Clinical Specialist' })
                 : member.role === 'family'
-                ? 'Family Support'
-                : 'Trusted Contact');
+                ? t('careCircle:roles.family', { defaultValue: 'Family Support' })
+                : t('careCircle:roles.partner', { defaultValue: 'Trusted Contact' }));
 
             return (
               <div
@@ -141,7 +145,7 @@ export const CareCircleModuleCard: React.FC<CareCircleModuleCardProps> = ({
                 : 'border-[#0284C7]/30 text-[#0284C7] hover:bg-[#E0F2FE]/40'
             }`}
           >
-            <span>Open Care Circle</span>
+            <span>{t('dashboard:manageCircle', { defaultValue: 'Open Care Circle' })}</span>
             <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
         </div>

@@ -144,8 +144,8 @@ class TestShapExplainability(TestCase):
         shap_payload = res.get('shap_explanation')
         self.assertIsNotNone(shap_payload)
         self.assertIn('multimodal_context', shap_payload)
-        self.assertEqual(shap_payload['multimodal_context']['clinical_weight'], 0.95)
-        self.assertEqual(shap_payload['multimodal_context']['ultrasound_weight'], 0.05)
+        self.assertEqual(shap_payload['multimodal_context']['clinical_weight'], 1.0)
+        self.assertEqual(shap_payload['multimodal_context']['ultrasound_weight'], 0.0)
 
         # Ensure no fake tabular ultrasound features are present
         factor_keys = [f['feature_key'] for f in shap_payload['factors']]

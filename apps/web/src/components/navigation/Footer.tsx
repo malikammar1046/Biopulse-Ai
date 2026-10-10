@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
   Heart,
@@ -50,6 +51,7 @@ const XTwitterIcon: React.FC<{ className?: string }> = ({ className = 'w-3.5 h-3
 );
 
 export const Footer: React.FC = () => {
+  const { t } = useTranslation('public');
   const [emailInput, setEmailInput] = useState('');
   const [subscribed, setSubscribed] = useState(false);
 
@@ -162,29 +164,29 @@ export const Footer: React.FC = () => {
               </Link>
 
               <p className="text-xs text-slate-600 font-sans leading-relaxed max-w-sm">
-                BioPulse AI is an AI-assisted reproductive-endocrine screening platform providing evidence-based guidance for PCOS (female) and Hypogonadism (male).
+                {t('footer.description')}
               </p>
 
               {/* 3 Trust Attribute Pills */}
               <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-cyan-50 border border-cyan-200 text-[11px] text-[#0891B2] font-semibold">
                   <Sprout className="w-3 h-3" />
-                  <span>Evidence Based</span>
+                  <span>{t('footer.evidenceBased')}</span>
                 </span>
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-sky-50 border border-sky-200 text-[11px] text-[#0284C7] font-semibold">
                   <ShieldCheck className="w-3 h-3" />
-                  <span>Dual Pathway</span>
+                  <span>{t('footer.dualPathway')}</span>
                 </span>
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-50 border border-pink-200 text-[11px] text-[#E11D48] font-semibold">
                   <Heart className="w-3 h-3 fill-rose-100" />
-                  <span>Non-Diagnostic</span>
+                  <span>{t('footer.nonDiagnostic')}</span>
                 </span>
               </div>
 
               {/* Cursive Tagline Accent */}
               <div className="pt-0.5 flex items-center gap-1.5 text-[#0891B2] -rotate-1 select-none">
                 <span className="font-script text-base sm:text-lg font-bold">
-                  Different journeys. Same brighter goal.
+                  {t('footer.tagline')}
                 </span>
                 <Heart className="w-3.5 h-3.5 text-[#E11D48] fill-rose-100 stroke-[2.2]" />
               </div>
@@ -292,7 +294,7 @@ export const Footer: React.FC = () => {
                 Stay Updated
               </h3>
               <p className="text-[11px] text-slate-500 leading-normal">
-                Get reproductive-endocrine screening updates directly to your inbox.
+                {t('footer.stayUpdatedDesc')}
               </p>
 
               {/* Newsletter Subscription Form */}
@@ -302,7 +304,7 @@ export const Footer: React.FC = () => {
                   <input
                     type="email"
                     required
-                    placeholder="Your email address"
+                    placeholder={t('footer.emailPlaceholder')}
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
                     className="w-full pl-8 pr-3 py-1.5 text-xs rounded-full border border-slate-300 focus:outline-none focus:border-[#0891B2] text-[#162A45] placeholder:text-slate-400"
@@ -319,7 +321,7 @@ export const Footer: React.FC = () => {
                 {subscribed && (
                   <p className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1 pt-0.5">
                     <CheckCircle2 className="w-3 h-3" />
-                    <span>Subscribed successfully!</span>
+                    <span>{t('footer.subscribedSuccess')}</span>
                   </p>
                 )}
               </form>
@@ -327,7 +329,7 @@ export const Footer: React.FC = () => {
               {/* Compact Cursive Signature */}
               <div className="pt-0.5 text-right text-[#0891B2] select-none pr-2">
                 <span className="font-script text-base font-bold inline-flex items-center gap-1">
-                  Knowledge. Care. Brighter Tomorrows.
+                  {t('footer.signature')}
                   <Heart className="w-3 h-3 text-[#E11D48] fill-rose-100 stroke-[2.5]" />
                 </span>
               </div>
@@ -338,8 +340,8 @@ export const Footer: React.FC = () => {
           <div className="mb-4 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200/70 flex items-center gap-2.5 text-left">
             <ShieldAlert className="w-3.5 h-3.5 text-amber-600 shrink-0" />
             <p className="text-[11px] text-slate-500 leading-normal font-sans">
-              <strong className="text-slate-700 mr-1">Medical Notice:</strong>
-              BioPulse AI is an AI-assisted screening and decision-support tool. It is <strong>NOT</strong> a diagnostic system or doctor replacement. Consult healthcare professionals for formal clinical diagnoses.
+              <strong className="text-slate-700 mr-1">{t('footer.medicalNoticeLabel')}</strong>
+              {t('footer.medicalNoticeText')}
             </p>
           </div>
 

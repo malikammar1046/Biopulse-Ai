@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useUserHealth } from './UserHealthContext';
 import { resolvePathway } from '../types/onboarding';
 import { sendChatMessage } from '../services/intelligenceService';
@@ -59,35 +60,46 @@ const generateConversationId = (): string => {
 
 export const AIChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation(['chat', 'common']);
   const { userProfile, activeAiPrompt } = useUserHealth();
 
   const pathway = resolvePathway(userProfile?.gender, userProfile?.pathway);
   const isFemale = pathway === 'female';
-  const aiBrandName = isFemale ? 'BioPulse AI Companion' : 'BioPulse AI Assistant';
+  const aiBrandName = isFemale
+    ? t('chat:title', { defaultValue: 'BioPulse AI Companion' })
+    : t('chat:title', { defaultValue: 'BioPulse AI Assistant' });
 
   const quickPrompts = isFemale ? FEMALE_QUICK_PROMPTS : MALE_QUICK_PROMPTS;
-  const placeholderText = isFemale
-    ? 'Ask about your PCOS screening, symptoms, labs, or recommendations...'
-    : 'Ask about your screening, symptoms, hormones, or recommendations...';
+  const placeholderText = t('chat:inputPlaceholder', {
+    defaultValue: isFemale
+      ? 'Ask about your PCOS screening, symptoms, labs, or recommendations...'
+      : 'Ask about your screening, symptoms, hormones, or recommendations...',
+  });
 
   const getInitialGreeting = useCallback((): AIChatMessage => {
     let greetingText = '';
     if (pathway === 'female') {
-      greetingText = 'Hi! I’m BioPulse AI. Ask me about your screening, labs, symptoms, or next steps.';
+      greetingText = t('chat:greetings.female', {
+        defaultValue: 'Hi! I’m BioPulse AI. Ask me about your screening, labs, symptoms, or next steps.',
+      });
     } else if (pathway === 'male') {
-      greetingText = 'Hi! I’m BioPulse AI. Ask me about your screening, hormones, symptoms, or next steps.';
+      greetingText = t('chat:greetings.male', {
+        defaultValue: 'Hi! I’m BioPulse AI. Ask me about your screening, hormones, symptoms, or next steps.',
+      });
     } else {
-      greetingText = 'Hi! I’m BioPulse AI. What would you like help understanding?';
+      greetingText = t('chat:greetings.general', {
+        defaultValue: 'Hi! I’m BioPulse AI. What would you like help understanding today?',
+      });
     }
 
     return {
       id: 'initial_greeting',
       sender: 'ai',
       text: greetingText,
-      timestamp: 'Just now',
+      timestamp: t('common:justNow', { defaultValue: 'Just now' }),
       safetyLevel: 'normal',
     };
-  }, [pathway]);
+  }, [pathway, t]);
 
   // Hydrate or initialize state
   const [conversationId, setConversationId] = useState<string>(() => {

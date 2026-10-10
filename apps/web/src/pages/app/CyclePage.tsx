@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { Plus, RefreshCw01 } from '@untitledui/icons';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { CycleOverviewCard } from '../../components/cycle/CycleOverviewCard';
@@ -11,6 +12,7 @@ import { DeleteCycleConfirmationModal } from '../../components/cycle/DeleteCycle
 import type { CycleRecord, CycleRecordInput, CycleHistoryItem } from '../../types/cycle';
 
 export const CyclePage: React.FC = () => {
+  const { t } = useTranslation(['cycle', 'common']);
   const {
     cycleRecords,
     cycleStats,
@@ -75,7 +77,7 @@ export const CyclePage: React.FC = () => {
           type="button"
           onClick={() => refreshCycleRecords()}
           className="p-2.5 rounded-xl bg-white border border-[#EAECF0] text-[#475569] hover:text-[#F43F7D] hover:bg-[#FDE6EF]/50 transition-colors cursor-pointer"
-          title="Refresh cycle records"
+          title={t('cycle:refreshCycleTitle', { defaultValue: 'Refresh cycle records' })}
         >
           <RefreshCw01 className={`w-4 h-4 shrink-0 ${cycleLoading ? 'animate-spin' : ''}`} aria-hidden="true" />
         </button>
@@ -86,7 +88,7 @@ export const CyclePage: React.FC = () => {
           className="flex items-center gap-2 h-10 px-4 rounded-lg font-medium text-sm text-white bg-[#F43F7D] hover:bg-[#DC326C] shadow-xs transition-all cursor-pointer"
         >
           <Plus className="w-4 h-4 shrink-0" aria-hidden="true" />
-          <span>Log Period</span>
+          <span>{t('cycle:logPeriod', { defaultValue: 'Log Period' })}</span>
         </button>
       </div>
 
@@ -94,7 +96,9 @@ export const CyclePage: React.FC = () => {
       {cycleLoading && cycleRecords.length === 0 ? (
         <div className="p-12 rounded-2xl bg-white border border-[#EAECF0] flex flex-col items-center justify-center space-y-3">
           <RefreshCw01 className="w-8 h-8 text-[#F43F7D] animate-spin" aria-hidden="true" />
-          <span className="text-xs font-mono text-[#64748B]">Loading your cycle records...</span>
+          <span className="text-xs font-mono text-[#64748B]">
+            {t('cycle:loadingRecords', { defaultValue: 'Loading your cycle records...' })}
+          </span>
         </div>
       ) : !cycleStats.hasData ? (
         /* ── 3. Empty State for Brand New Users ── */
@@ -123,10 +127,13 @@ export const CyclePage: React.FC = () => {
       {/* ── 5. Responsible Clinical Boundary Notice ── */}
       <div className="p-4 rounded-xl bg-[#FDE6EF]/30 border border-[#FDE6EF] text-center max-w-3xl mx-auto text-xs text-[#667085] space-y-1">
         <p className="font-semibold text-[#DC326C]">
-          Responsible Health & Non-Diagnostic Framing
+          {t('cycle:responsibleBoundaryTitle', { defaultValue: 'Responsible Health & Non-Diagnostic Framing' })}
         </p>
         <p>
-          BioPulse AI cycle projections, estimated phases, and fertile windows are calculated from your self-reported dates and historical rhythm. They are informational estimations and do not constitute diagnostic ovulation detection or medical birth control.
+          {t('cycle:responsibleBoundaryDesc', {
+            defaultValue:
+              'BioPulse AI cycle projections, estimated phases, and fertile windows are calculated from your self-reported dates and historical rhythm. They are informational estimations and do not constitute diagnostic ovulation detection or medical birth control.',
+          })}
         </p>
       </div>
 

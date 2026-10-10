@@ -19,6 +19,7 @@ export interface SpecialistFiltersProps {
   onSortChange: (sort: 'recommended' | 'experience' | 'fee-asc' | 'fee-desc' | 'rating' | 'name') => void;
   onResetFilters: () => void;
   totalFilteredCount: number;
+  isFemale?: boolean;
 }
 
 export const SpecialistFilters: React.FC<SpecialistFiltersProps> = ({
@@ -33,7 +34,15 @@ export const SpecialistFilters: React.FC<SpecialistFiltersProps> = ({
   onSortChange,
   onResetFilters,
   totalFilteredCount,
+  isFemale = false,
 }) => {
+  const focusRing = isFemale
+    ? 'focus:ring-[#F43F7D]/20 focus:border-[#F43F7D]'
+    : 'focus:ring-[#0288D1]/20 focus:border-[#0288D1]';
+  const resetBtnClass = isFemale
+    ? 'text-[#F43F7D] hover:text-[#DC326C]'
+    : 'text-[#0288D1] hover:text-[#0277BD]';
+
   const hasActiveFilters =
     searchQuery.trim().length > 0 ||
     specialtyFilter !== 'all' ||
@@ -52,7 +61,7 @@ export const SpecialistFilters: React.FC<SpecialistFiltersProps> = ({
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search by doctor name, specialty, or clinic area (e.g. Shadman, Lahore)..."
-            className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#D0D5DD] text-xs sm:text-sm font-medium text-[#111318] placeholder:text-[#98A2B3] focus:outline-none focus:ring-2 focus:ring-[#0288D1]/20 focus:border-[#0288D1] transition-all"
+            className={`w-full pl-10 pr-9 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#D0D5DD] text-xs sm:text-sm font-medium text-[#111318] placeholder:text-[#98A2B3] focus:outline-none focus:ring-2 ${focusRing} transition-all`}
           />
           {searchQuery && (
             <button
@@ -76,7 +85,7 @@ export const SpecialistFilters: React.FC<SpecialistFiltersProps> = ({
             <select
               value={sortBy}
               onChange={(e) => onSortChange(e.target.value as any)}
-              className="appearance-none pl-3 pr-8 py-2 rounded-xl bg-[#F8FAFC] border border-[#D0D5DD] text-xs font-semibold text-[#344054] focus:outline-none focus:ring-2 focus:ring-[#0288D1]/20 focus:border-[#0288D1] cursor-pointer"
+              className={`appearance-none pl-3 pr-8 py-2 rounded-xl bg-[#F8FAFC] border border-[#D0D5DD] text-xs font-semibold text-[#344054] focus:outline-none focus:ring-2 ${focusRing} cursor-pointer`}
               aria-label="Sort specialists"
             >
               <option value="recommended">Sort: Relevant to Pathway</option>
@@ -146,7 +155,7 @@ export const SpecialistFilters: React.FC<SpecialistFiltersProps> = ({
           <button
             type="button"
             onClick={onResetFilters}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0288D1] hover:text-[#0277BD] cursor-pointer p-1 rounded-lg"
+            className={`inline-flex items-center gap-1.5 text-xs font-semibold ${resetBtnClass} cursor-pointer p-1 rounded-lg`}
           >
             <RefreshCw01 className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Reset Filters</span>

@@ -142,6 +142,7 @@ export const SpecialistDirectory: React.FC<SpecialistDirectoryProps> = ({
         onSortChange={setSortBy}
         onResetFilters={handleResetFilters}
         totalFilteredCount={filteredDoctors.length}
+        isFemale={isFemale}
       />
 
       {/* ── 3. Doctor Cards Grid / Loading / Error / Empty States ── */}

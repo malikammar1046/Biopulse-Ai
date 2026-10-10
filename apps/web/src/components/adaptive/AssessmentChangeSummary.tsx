@@ -174,39 +174,32 @@ export const AssessmentChangeSummary: React.FC<AssessmentChangeSummaryProps> = (
         {isTier3 ? (
           <div className="p-3.5 rounded-2xl bg-pink-50/50 border border-pink-100 text-xs text-slate-700 leading-relaxed space-y-2">
             <p>
-              Your result was reassessed after ultrasound evidence was added. The screening probability
-              changed after ultrasound morphological evidence was incorporated into the multimodal model.
+              Your assessment incorporates pelvic ultrasound evidence alongside your clinical laboratory profile. The numerical PCOS risk score reflects the current Tier 2 model-derived screening estimate, while pelvic ultrasound provides an independent AI-estimated PCOM morphology finding (not a confirmation of a Rotterdam criterion or medical diagnosis).
             </p>
 
-            {/* Multimodal Fusion Breakdown */}
+            {/* Score Source & Independent Morphology Breakdown */}
             {fusion && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[11px]">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-[11px]">
                 <div className="p-2 rounded-xl bg-white border border-pink-200">
-                  <span className="block text-slate-500 font-medium">Clinical Weight</span>
+                  <span className="block text-slate-500 font-medium">Numerical Risk Source</span>
                   <strong className="text-slate-900 font-bold">
-                    {((fusion.clinical_weight ?? 0.95) * 100).toFixed(0)}%
+                    Current Tier 2 Screening Estimate ({(fusion.clinical_probability * 100).toFixed(1)}%)
                   </strong>
                 </div>
                 <div className="p-2 rounded-xl bg-white border border-pink-200">
-                  <span className="block text-slate-500 font-medium">Ultrasound Weight</span>
+                  <span className="block text-slate-500 font-medium">AI-Estimated Morphology</span>
                   <strong className="text-slate-900 font-bold">
-                    {((fusion.ultrasound_weight ?? 0.05) * 100).toFixed(0)}%
+                    {fusion.ultrasound_pcom_status || currentAssessment.pcom_status || 'Evaluated Independently'}
                   </strong>
                 </div>
                 <div className="p-2 rounded-xl bg-white border border-pink-200">
-                  <span className="block text-slate-500 font-medium">Clinical Prob.</span>
-                  <strong className="text-slate-900 font-bold">
-                    {(fusion.clinical_probability * 100).toFixed(1)}%
-                  </strong>
-                </div>
-                <div className="p-2 rounded-xl bg-white border border-pink-200">
-                  <span className="block text-slate-500 font-medium">Ultrasound PCOM</span>
+                  <span className="block text-slate-500 font-medium">Estimated PCOM Output</span>
                   <strong className="text-slate-900 font-bold">
                     {fusion.ultrasound_pcom_probability != null
                       ? `${(fusion.ultrasound_pcom_probability * 100).toFixed(1)}%`
-                      : currentAssessment.pcom_status
-                      ? currentAssessment.pcom_status.toUpperCase()
-                      : 'Evaluated'}
+                      : currentAssessment.pcom_status === 'Indeterminate'
+                      ? 'Indeterminate'
+                      : 'Unavailable'}
                   </strong>
                 </div>
               </div>

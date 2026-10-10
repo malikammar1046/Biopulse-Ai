@@ -18,6 +18,7 @@ import type { MedicalReport, ReportResult } from '../../types/report';
 import { REPORT_CATEGORIES } from '../../types/report';
 import { findTestKnowledge } from '../../utils/reportKnowledge';
 import { useUserHealth } from '../../context/UserHealthContext';
+import { resolvePathway } from '../../types/onboarding';
 
 interface ReportDetailModalProps {
   isOpen: boolean;
@@ -30,7 +31,9 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
   onClose,
   report,
 }) => {
-  const { reports, verifyReportBiomarker, updateReportBiomarker } = useUserHealth();
+  const { userProfile, reports, verifyReportBiomarker, updateReportBiomarker } = useUserHealth();
+  const pathway = resolvePathway(userProfile?.gender, userProfile?.pathway);
+  const isMale = pathway === 'male';
 
   // Find the most up-to-date version of this report from the health context
   const currentReport = reports.find((r) => r.id === report?.id) || report;
@@ -183,13 +186,21 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.2 }}
-          className="relative w-full max-w-3xl rounded-[32px] bg-white border border-[#BAE6FD] shadow-2xl p-6 sm:p-8 text-left space-y-5 z-10 select-none my-6 max-h-[90vh] overflow-y-auto"
+          className={`relative w-full max-w-3xl rounded-[32px] bg-white border ${
+            isMale ? 'border-[#BAE6FD]' : 'border-[#FDE6EF]'
+          } shadow-2xl p-6 sm:p-8 text-left space-y-5 z-10 select-none my-6 max-h-[90vh] overflow-y-auto`}
         >
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-2xl bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD]/60 shrink-0 shadow-xs">
-                <File06 className="w-6 h-6 text-[#0288D1]" aria-hidden="true" />
+              <div
+                className={`p-3 rounded-2xl border shrink-0 shadow-xs ${
+                  isMale
+                    ? 'bg-[#E0F2FE] text-[#0288D1] border-[#BAE6FD]/60'
+                    : 'bg-[#FDE6EF] text-[#F43F7D] border-[#FDE6EF]'
+                }`}
+              >
+                <File06 className={`w-6 h-6 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`} aria-hidden="true" />
               </div>
               <div className="space-y-0.5">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -197,7 +208,11 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                     {currentReport.title}
                   </h2>
                   <span
-                    className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border bg-[#F0F9FF] text-[#0288D1] border-[#BAE6FD]"
+                    className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${
+                      isMale
+                        ? 'bg-[#F0F9FF] text-[#0288D1] border-[#BAE6FD]'
+                        : 'bg-[#FFF8FA] text-[#F43F7D] border-[#FDE6EF]'
+                    }`}
                   >
                     {categoryMeta.label}
                   </span>
@@ -257,7 +272,9 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                 type="button"
                 onClick={handleConfirmAllRemaining}
                 disabled={loadingActionId === 'all'}
-                className="px-3.5 py-2 rounded-xl font-bold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-xs flex items-center justify-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
+                className={`px-3.5 py-2 rounded-xl font-bold text-xs text-white shadow-xs flex items-center justify-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50 ${
+                  isMale ? 'bg-[#0288D1] hover:bg-[#0277BD]' : 'bg-[#F43F7D] hover:bg-[#BE185D]'
+                }`}
               >
                 {loadingActionId === 'all' ? (
                   <>
@@ -277,7 +294,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
           {/* Document Attachment Bar */}
           <div className="p-3.5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2 text-[#64748B] min-w-0">
-              <File06 className="w-4 h-4 text-[#0288D1] shrink-0" aria-hidden="true" />
+              <File06 className={`w-4 h-4 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'} shrink-0`} aria-hidden="true" />
               <span className="truncate">Original Document: {currentReport.fileName}</span>
             </div>
 
@@ -286,7 +303,11 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                 href={currentReport.filePath}
                 target="_blank"
                 rel="noreferrer"
-                className="px-3 py-1.5 rounded-xl bg-white border border-[#BAE6FD] text-xs font-bold text-[#0288D1] hover:bg-[#E0F2FE] transition-colors flex items-center gap-1.5 shrink-0"
+                className={`px-3 py-1.5 rounded-xl bg-white border text-xs font-bold transition-colors flex items-center gap-1.5 shrink-0 ${
+                  isMale
+                    ? 'border-[#BAE6FD] text-[#0288D1] hover:bg-[#E0F2FE]'
+                    : 'border-[#FDE6EF] text-[#F43F7D] hover:bg-[#FDE6EF]'
+                }`}
               >
                 <LinkExternal01 className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>Open File</span>
@@ -387,7 +408,9 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                               type="button"
                               onClick={() => handleConfirmSingle(res.id)}
                               disabled={isLoadingThis}
-                              className="px-3.5 py-1 rounded-xl bg-[#0288D1] text-white text-xs font-bold shadow-xs hover:bg-[#0277BD] flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              className={`px-3.5 py-1 rounded-xl text-white text-xs font-bold shadow-xs flex items-center gap-1 cursor-pointer disabled:opacity-50 ${
+                                isMale ? 'bg-[#0288D1] hover:bg-[#0277BD]' : 'bg-[#F43F7D] hover:bg-[#BE185D]'
+                              }`}
                             >
                               {isLoadingThis ? (
                                 <Loading01 className="w-3 h-3 animate-spin" aria-hidden="true" />
@@ -403,7 +426,11 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
 
                     {/* Inline Editing Form */}
                     {isEditing && (
-                      <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-[#BAE6FD] space-y-3">
+                      <div
+                        className={`p-4 rounded-2xl bg-[#F8FAFC] border ${
+                          isMale ? 'border-[#BAE6FD]' : 'border-[#FDE6EF]'
+                        } space-y-3`}
+                      >
                         <span className="text-xs font-bold text-[#0F172A] block">
                           Edit Test Value Before Verifying:
                         </span>
@@ -418,7 +445,9 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                               onChange={(e) =>
                                 setEditForm({ ...editForm, testName: e.target.value })
                               }
-                              className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#E2E8F0] text-xs font-bold text-[#0F172A] focus:outline-none focus:border-[#0288D1]"
+                              className={`w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#E2E8F0] text-xs font-bold text-[#0F172A] focus:outline-none ${
+                                isMale ? 'focus:border-[#0288D1]' : 'focus:border-[#F43F7D]'
+                              }`}
                             />
                           </div>
                           <div>
@@ -431,7 +460,9 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                               onChange={(e) =>
                                 setEditForm({ ...editForm, resultValue: e.target.value })
                               }
-                              className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#E2E8F0] text-xs font-bold text-[#0F172A] focus:outline-none focus:border-[#0288D1]"
+                              className={`w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#E2E8F0] text-xs font-bold text-[#0F172A] focus:outline-none ${
+                                isMale ? 'focus:border-[#0288D1]' : 'focus:border-[#F43F7D]'
+                              }`}
                             />
                           </div>
                           <div>
@@ -442,7 +473,9 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                               type="text"
                               value={editForm.unit}
                               onChange={(e) => setEditForm({ ...editForm, unit: e.target.value })}
-                              className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#E2E8F0] text-xs text-[#475569] focus:outline-none focus:border-[#0288D1]"
+                              className={`w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#E2E8F0] text-xs text-[#475569] focus:outline-none ${
+                                isMale ? 'focus:border-[#0288D1]' : 'focus:border-[#F43F7D]'
+                              }`}
                             />
                           </div>
                         </div>
@@ -457,7 +490,9 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                             onChange={(e) =>
                               setEditForm({ ...editForm, referenceRange: e.target.value })
                             }
-                            className="w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#E2E8F0] text-xs text-[#475569] focus:outline-none focus:border-[#0288D1]"
+                            className={`w-full px-2.5 py-1.5 rounded-xl bg-white border border-[#E2E8F0] text-xs text-[#475569] focus:outline-none ${
+                              isMale ? 'focus:border-[#0288D1]' : 'focus:border-[#F43F7D]'
+                            }`}
                           />
                         </div>
 
@@ -474,7 +509,9 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                             type="button"
                             onClick={() => handleSaveEdit(res.id)}
                             disabled={isLoadingThis}
-                            className="px-4 py-1.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                            className={`px-4 py-1.5 rounded-xl text-white text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50 ${
+                              isMale ? 'bg-[#0288D1] hover:bg-[#0277BD]' : 'bg-[#F43F7D] hover:bg-[#BE185D]'
+                            }`}
                           >
                             {isLoadingThis ? (
                               <Loading01 className="w-3 h-3 animate-spin" aria-hidden="true" />
@@ -491,9 +528,19 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
                       {/* What is this? */}
                       {explanation && (
-                        <div className="p-3.5 rounded-2xl bg-[#F0F9FF] border border-[#BAE6FD]/60 space-y-1">
-                          <span className="text-[11px] font-mono font-bold text-[#01579B] uppercase tracking-wider flex items-center gap-1.5">
-                            <HelpCircle className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
+                        <div
+                          className={`p-3.5 rounded-2xl border space-y-1 ${
+                            isMale
+                              ? 'bg-[#F0F9FF] border-[#BAE6FD]/60'
+                              : 'bg-[#FFF8FA] border-[#FDE6EF]'
+                          }`}
+                        >
+                          <span
+                            className={`text-[11px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 ${
+                              isMale ? 'text-[#01579B]' : 'text-[#BE185D]'
+                            }`}
+                          >
+                            <HelpCircle className={`w-3.5 h-3.5 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`} aria-hidden="true" />
                             What is this test?
                           </span>
                           <p className="text-xs text-[#475569] leading-relaxed font-sans">
@@ -505,8 +552,12 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
                       {/* Connection to Health Timeline */}
                       {timelineText && (
                         <div className="p-3.5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-1">
-                          <span className="text-[11px] font-mono font-bold text-[#0288D1] uppercase tracking-wider flex items-center gap-1.5">
-                            <InfoCircle className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
+                          <span
+                            className={`text-[11px] font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 ${
+                              isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'
+                            }`}
+                          >
+                            <InfoCircle className={`w-3.5 h-3.5 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`} aria-hidden="true" />
                             Related to your health journey
                           </span>
                           <p className="text-xs text-[#64748B] leading-relaxed font-sans">
@@ -523,7 +574,7 @@ export const ReportDetailModal: React.FC<ReportDetailModalProps> = ({
 
           {/* Safety & Non-Diagnostic Reassurance */}
           <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] flex items-start gap-3 text-xs text-[#64748B] leading-relaxed">
-            <ShieldTick className="w-4 h-4 text-[#0288D1] shrink-0 mt-0.5" aria-hidden="true" />
+            <ShieldTick className={`w-4 h-4 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'} shrink-0 mt-0.5`} aria-hidden="true" />
             <span>
               This result alone cannot tell us the cause. BioPulse AI helps organize and explain health information; it does not replace medical advice. This report should be reviewed together with your healthcare professional.
             </span>

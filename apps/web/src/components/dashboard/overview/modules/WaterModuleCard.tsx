@@ -1,10 +1,13 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Droplet, Plus, Minus, ArrowRight } from 'lucide-react';
 import { DashboardModuleCard } from '../DashboardModuleCard';
 import type { WaterLogEntry } from '../../../../types/diet';
+import type { HealthPathway } from '../../../../types/onboarding';
 
 interface WaterModuleCardProps {
   waterLog: WaterLogEntry;
+  pathway?: HealthPathway | 'female' | 'male';
   loading?: boolean;
   onIncrement: () => Promise<void>;
   onDecrement?: () => Promise<void>;
@@ -14,12 +17,15 @@ interface WaterModuleCardProps {
 
 export const WaterModuleCard: React.FC<WaterModuleCardProps> = ({
   waterLog,
+  pathway = 'female',
   loading = false,
   onIncrement,
   onDecrement,
   onOpenWaterLog,
   updatedAt = '20 mins ago',
 }) => {
+  const { t } = useTranslation(['dashboard', 'lifestyle', 'common']);
+  const isFemale = pathway === 'female';
   const glasses = waterLog?.glasses || 0;
   const targetGlasses = waterLog?.targetGlasses || 8;
 
@@ -31,12 +37,12 @@ export const WaterModuleCard: React.FC<WaterModuleCardProps> = ({
 
   const menuItems = [
     {
-      label: 'Open Water Log',
+      label: t('lifestyle:waterLog', { defaultValue: 'Open Water Log' }),
       onClick: onOpenWaterLog,
       icon: Droplet,
     },
     {
-      label: 'Add 1 Glass (250ml)',
+      label: t('dashboard:logWater', { defaultValue: 'Add 1 Glass (250ml)' }),
       onClick: () => {
         onIncrement();
       },
@@ -46,12 +52,12 @@ export const WaterModuleCard: React.FC<WaterModuleCardProps> = ({
 
   return (
     <DashboardModuleCard
-      title="Water Log"
-      subtitle="Today's hydration"
+      title={t('dashboard:hydrationTracker', { defaultValue: 'Water Log' })}
+      subtitle={t('dashboard:hydrationSubtitle', { defaultValue: "Today's hydration" })}
       icon={Droplet}
-      accentColor="blue"
+      accentColor={isFemale ? 'teal' : 'blue'}
       isLive={glasses > 0}
-      syncedModule="Water Log"
+      syncedModule={t('dashboard:hydrationTracker', { defaultValue: 'Water Log' })}
       updatedAt={updatedAt}
       menuItems={menuItems}
       loading={loading}
@@ -68,13 +74,19 @@ export const WaterModuleCard: React.FC<WaterModuleCardProps> = ({
                   key={index}
                   className={`w-5 h-7 rounded-t-sm rounded-b-md border transition-all duration-300 relative flex items-end justify-center overflow-hidden ${
                     isFilled
-                      ? 'border-[#0284C7] bg-[#E0F2FE]'
+                      ? isFemale
+                        ? 'border-[#008CA5] bg-[#E0F7FA]'
+                        : 'border-[#0284C7] bg-[#E0F2FE]'
                       : 'border-slate-200 bg-slate-50'
                   }`}
                   title={`Glass ${index + 1}`}
                 >
                   {isFilled && (
-                    <div className="w-full h-full bg-[#0284C7]/80 rounded-b-xs" />
+                    <div
+                      className={`w-full h-full rounded-b-xs ${
+                        isFemale ? 'bg-[#008CA5]/80' : 'bg-[#0284C7]/80'
+                      }`}
+                    />
                   )}
                 </div>
               );
@@ -87,7 +99,7 @@ export const WaterModuleCard: React.FC<WaterModuleCardProps> = ({
               {currentLiters} L
             </span>
             <span className="text-[11px] font-mono text-slate-400 mt-0.5 block">
-              of {targetLiters} L
+              / {targetLiters} L
             </span>
           </div>
         </div>
@@ -96,16 +108,22 @@ export const WaterModuleCard: React.FC<WaterModuleCardProps> = ({
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs font-sans">
             <span className="text-slate-500 font-mono text-[11px]">
-              {glasses} of {targetGlasses} glasses
+              {glasses} / {targetGlasses} {t('dashboard:biometricsCard.glasses', { defaultValue: 'glasses' })}
             </span>
-            <span className="font-bold text-[#0284C7] font-mono text-xs">
+            <span
+              className={`font-bold font-mono text-xs ${
+                isFemale ? 'text-[#008CA5]' : 'text-[#0284C7]'
+              }`}
+            >
               {percent}%
             </span>
           </div>
 
           <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
             <div
-              className="h-full bg-[#0284C7] rounded-full transition-all duration-500"
+              className={`h-full rounded-full transition-all duration-500 ${
+                isFemale ? 'bg-[#008CA5]' : 'bg-[#0284C7]'
+              }`}
               style={{ width: `${percent}%` }}
             />
           </div>
@@ -117,10 +135,14 @@ export const WaterModuleCard: React.FC<WaterModuleCardProps> = ({
             <button
               type="button"
               onClick={() => onIncrement()}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#E0F2FE] hover:bg-[#BAE6FD] text-[#0284C7] text-xs font-semibold transition-colors cursor-pointer"
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
+                isFemale
+                  ? 'bg-[#E0F7FA] hover:bg-[#B2EBF2] text-[#008CA5]'
+                  : 'bg-[#E0F2FE] hover:bg-[#BAE6FD] text-[#0284C7]'
+              }`}
             >
               <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Add Glass</span>
+              <span>{t('dashboard:logWater', { defaultValue: 'Add Glass' })}</span>
             </button>
 
             {onDecrement && glasses > 0 && (
@@ -139,9 +161,11 @@ export const WaterModuleCard: React.FC<WaterModuleCardProps> = ({
           <button
             type="button"
             onClick={onOpenWaterLog}
-            className="text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors cursor-pointer inline-flex items-center gap-1"
+            className={`text-xs font-semibold transition-colors cursor-pointer inline-flex items-center gap-1 ${
+              isFemale ? 'text-slate-500 hover:text-[#008CA5]' : 'text-slate-500 hover:text-slate-800'
+            }`}
           >
-            <span>Details</span>
+            <span>{t('common:details', { defaultValue: 'Details' })}</span>
             <ArrowRight className="w-3 h-3" />
           </button>
         </div>

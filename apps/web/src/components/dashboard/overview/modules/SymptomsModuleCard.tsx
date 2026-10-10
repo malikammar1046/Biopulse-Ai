@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Heart, Sparkles, PlusCircle } from 'lucide-react';
 import { DashboardModuleCard } from '../DashboardModuleCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
@@ -23,16 +24,17 @@ export const SymptomsModuleCard: React.FC<SymptomsModuleCardProps> = ({
   onLogSymptom,
   updatedAt = '1 hr ago',
 }) => {
+  const { t } = useTranslation(['dashboard', 'symptoms', 'common']);
   const isFemale = pathway === 'female';
 
   const menuItems = [
     {
-      label: 'Open Symptom Tracking',
+      label: t('symptoms:title', { defaultValue: 'Open Symptom Tracking' }),
       onClick: onOpenSymptoms,
       icon: Heart,
     },
     {
-      label: 'Log New Symptom',
+      label: t('dashboard:logSymptomsCTA', { defaultValue: 'Log New Symptom' }),
       onClick: onLogSymptom,
       icon: PlusCircle,
     },
@@ -43,8 +45,8 @@ export const SymptomsModuleCard: React.FC<SymptomsModuleCardProps> = ({
   if (!hasAnyRecords) {
     return (
       <DashboardModuleCard
-        title="Symptom Check-in"
-        subtitle="Today's wellness snapshot"
+        title={t('dashboard:symptomLogging', { defaultValue: 'Symptom Check-in' })}
+        subtitle={t('dashboard:symptomsSubtitle', { defaultValue: "Today's wellness snapshot" })}
         icon={Heart}
         accentColor={isFemale ? 'pink' : 'blue'}
         isLive={false}
@@ -52,13 +54,13 @@ export const SymptomsModuleCard: React.FC<SymptomsModuleCardProps> = ({
         loading={loading}
       >
         <DashboardEmptyState
-          title="No symptoms logged today"
-          description={
-            isFemale
+          title={t('dashboard:noSymptomsToday', { defaultValue: 'No symptoms logged today' })}
+          description={t('dashboard:noSymptomsDesc', {
+            defaultValue: isFemale
               ? 'Check in on pelvic comfort, mood, energy, or skin changes to build your cycle pattern timeline.'
-              : 'Check in on morning vitality, stamina, mood, or sleep quality to track hormonal patterns.'
-          }
-          actionLabel="Log Symptoms"
+              : 'Check in on morning vitality, stamina, mood, or sleep quality to track hormonal patterns.',
+          })}
+          actionLabel={t('dashboard:logSymptomsCTA', { defaultValue: 'Log Symptoms' })}
           onAction={onLogSymptom}
           icon={Heart}
           accentColor={isFemale ? 'pink' : 'blue'}
@@ -77,12 +79,12 @@ export const SymptomsModuleCard: React.FC<SymptomsModuleCardProps> = ({
 
   return (
     <DashboardModuleCard
-      title="Symptom Check-in"
-      subtitle="Today's wellness snapshot"
+      title={t('dashboard:symptomLogging', { defaultValue: 'Symptom Check-in' })}
+      subtitle={t('dashboard:symptomsSubtitle', { defaultValue: "Today's wellness snapshot" })}
       icon={Heart}
       accentColor={isFemale ? 'pink' : 'blue'}
       isLive={true}
-      syncedModule="Symptom Tracking"
+      syncedModule={t('dashboard:symptomLogging', { defaultValue: 'Symptom Tracking' })}
       updatedAt={updatedAt}
       menuItems={menuItems}
       loading={loading}
@@ -131,7 +133,9 @@ export const SymptomsModuleCard: React.FC<SymptomsModuleCardProps> = ({
           </div>
         ) : (
           <div className="flex items-center justify-between text-xs text-slate-500 pt-0.5">
-            <span>{symptomStats.totalLoggedCount} total check-in{symptomStats.totalLoggedCount === 1 ? '' : 's'} recorded</span>
+            <span>
+              {symptomStats.totalLoggedCount} {t('symptoms:checkInsRecorded', { defaultValue: 'total check-ins recorded' })}
+            </span>
             <button
               type="button"
               onClick={onLogSymptom}
@@ -139,7 +143,7 @@ export const SymptomsModuleCard: React.FC<SymptomsModuleCardProps> = ({
                 isFemale ? 'text-[#F43F7D] hover:text-[#E11D48]' : 'text-[#0284C7] hover:text-[#0369A1]'
               }`}
             >
-              Log More
+              {t('common:logMore', { defaultValue: 'Log More' })}
             </button>
           </div>
         )}

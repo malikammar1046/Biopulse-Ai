@@ -293,29 +293,175 @@ def _get_val(obj: Any, key: str, default: Any = None) -> Any:
     return getattr(obj, key, default)
 
 
-def extract_male_patient_raw_inputs(health_data: Any, passed_data: dict | None = None) -> dict[str, Any]:
-    raw_inputs: dict[str, Any] = {}
-    passed = passed_data or {}
-    direct_keys = {
-        'age', 'height_cm', 'weight_kg', 'waist_cm', 'low_energy',
-        'sleep_trouble', 'low_mood', 'low_interest', 'high_blood_pressure', 'diabetes'
-    }
+INELIGIBLE_REASONS = {
+    "age_under_19",
+    "age_over_60",
+    "missing_age",
+    "conflicting_age_and_dob",
+    "future_dob",
+    "invalid_dob",
+}
 
-    if "userProfile" in passed:
+
+def _parse_and_check_dob(dob_val: Any) -> tuple[Any, str | None]:
+    """
+    Safely parses DOB into date object, validating format and checking against future dates.
+    Returns (date_obj, error_reason).
+    """
+    if dob_val is None or str(dob_val).strip() == "" or str(dob_val).strip().lower() in ("none", "null", "nan"):
+        return None, None
+    from datetime import date
+    if isinstance(dob_val, date):
+        bdate = dob_val
+    else:
+        try:
+            s = str(dob_val).strip()[:10]
+            bdate = date.fromisoformat(s)
+        except Exception:
+            return None, "invalid_dob"
+    today = date.today()
+    if bdate > today:
+        return None, "future_dob"
+    return bdate, None
+
+
+def _calculate_exact_age(bdate: Any) -> int:
+    """Calculates exact complete years from date of birth, respecting leap years."""
+    from datetime import date
+    today = date.today()
+    return today.year - bdate.year - ((today.month, today.day) < (bdate.month, bdate.day))
+
+
+def resolve_male_patient_age_and_eligibility(
+    health_data: Any,
+    passed_data: dict | None = None,
+) -> tuple[float | None, str | None, str | None]:
+    """
+    Authoritative resolution of male patient age and screening eligibility.
+    Enforces security and integrity rules:
+    1. Authoritative profile DOB from persisted health profile takes precedence.
+    2. If caller submits an age or DOB that contradicts authoritative profile DOB,
+       reject with 'conflicting_age_and_dob'.
+    3. If no persisted profile DOB exists (e.g. initial onboarding before profile persistence),
+       accept caller-submitted DOB, validate it, and verify caller-submitted age does not conflict.
+    4. Reject future dates of birth ('future_dob'), corrupted/invalid dates ('invalid_dob'),
+       missing DOB/age ('missing_age'), and ages outside 19–60 inclusive ('age_under_19', 'age_over_60').
+    Returns:
+        (resolved_age: float | None, rejection_reason: str | None, summary_text: str | None)
+    """
+    passed = passed_data or {}
+    if "userProfile" in passed and isinstance(passed["userProfile"], dict):
         p = passed["userProfile"]
     else:
         p = getattr(health_data, "profile", {}) or {}
 
-    dob = _get_val(p, "date_of_birth") or _get_val(p, "dateOfBirth")
-    age = 35.0
-    if dob:
+    passed_dob_raw = _get_val(passed, "date_of_birth") or _get_val(passed, "dateOfBirth")
+    passed_age_raw = _get_val(passed, "age")
+    profile_dob_raw = _get_val(p, "date_of_birth") or _get_val(p, "dateOfBirth")
+    profile_age_raw = _get_val(p, "age")
+
+    # 1. Authoritative Profile DOB exists
+    if profile_dob_raw is not None and str(profile_dob_raw).strip() != "":
+        prof_bdate, prof_err = _parse_and_check_dob(profile_dob_raw)
+        if prof_err == "future_dob":
+            return None, "future_dob", "Profile date of birth cannot be in the future."
+        if prof_err == "invalid_dob":
+            return None, "invalid_dob", "Profile date of birth is invalid or corrupted."
+
+        auth_age = _calculate_exact_age(prof_bdate)
+
+        # Check for conflicting submitted DOB
+        if passed_dob_raw is not None and str(passed_dob_raw).strip() != "":
+            pass_bdate, pass_err = _parse_and_check_dob(passed_dob_raw)
+            if pass_err == "future_dob":
+                return None, "future_dob", "Submitted date of birth cannot be in the future."
+            if pass_err == "invalid_dob":
+                return None, "invalid_dob", "Submitted date of birth is invalid."
+            if pass_bdate != prof_bdate:
+                return None, "conflicting_age_and_dob", "Submitted date of birth conflicts with authoritative profile date of birth."
+
+        # Check for conflicting submitted age
+        if passed_age_raw is not None and str(passed_age_raw).strip() != "":
+            try:
+                sub_age = int(round(float(passed_age_raw)))
+                if sub_age != auth_age:
+                    return None, "conflicting_age_and_dob", f"Submitted age ({sub_age}) conflicts with profile date of birth (age {auth_age})."
+            except (ValueError, TypeError):
+                return None, "conflicting_age_and_dob", "Submitted age is not a valid number."
+
+        if auth_age < 19:
+            return float(auth_age), "age_under_19", "BioPulse AI screening models are calibrated for adult men aged 19 to 60. Adolescent androgen physiology requires specialized pediatric clinical evaluation."
+        if auth_age > 60:
+            return float(auth_age), "age_over_60", "BioPulse AI screening models are calibrated for adult men aged 19 to 60. In men older than 60, age-related endocrine changes require direct clinical evaluation with a physician."
+        return float(auth_age), None, None
+
+    # 2. Initial Onboarding: No profile DOB yet, caller submits DOB
+    if passed_dob_raw is not None and str(passed_dob_raw).strip() != "":
+        pass_bdate, pass_err = _parse_and_check_dob(passed_dob_raw)
+        if pass_err == "future_dob":
+            return None, "future_dob", "Date of birth cannot be in the future."
+        if pass_err == "invalid_dob":
+            return None, "invalid_dob", "Please enter a valid calendar date of birth (YYYY-MM-DD)."
+
+        sub_calc_age = _calculate_exact_age(pass_bdate)
+
+        # Check for conflicting submitted age
+        if passed_age_raw is not None and str(passed_age_raw).strip() != "":
+            try:
+                sub_age = int(round(float(passed_age_raw)))
+                if sub_age != sub_calc_age:
+                    return None, "conflicting_age_and_dob", f"Submitted age ({sub_age}) conflicts with submitted date of birth (age {sub_calc_age})."
+            except (ValueError, TypeError):
+                return None, "conflicting_age_and_dob", "Submitted age is not a valid number."
+
+        if sub_calc_age < 19:
+            return float(sub_calc_age), "age_under_19", "BioPulse AI screening models are calibrated for adult men aged 19 to 60. Adolescent androgen physiology requires specialized pediatric clinical evaluation."
+        if sub_calc_age > 60:
+            return float(sub_calc_age), "age_over_60", "BioPulse AI screening models are calibrated for adult men aged 19 to 60. In men older than 60, age-related endocrine changes require direct clinical evaluation with a physician."
+        return float(sub_calc_age), None, None
+
+    # 3. Fallback when DOB is absent (e.g. legacy profiles or test mocks with age only)
+    age_candidate = None
+    if passed_age_raw is not None and str(passed_age_raw).strip() != "":
         try:
-            from datetime import date
-            bdate = date.fromisoformat(str(dob)[:10])
-            today = date.today()
-            age = float(today.year - bdate.year - ((today.month, today.day) < (bdate.month, bdate.day)))
-        except Exception:
-            age = 35.0
+            age_candidate = float(passed_age_raw)
+            if profile_age_raw is not None and str(profile_age_raw).strip() != "":
+                p_age_flt = float(profile_age_raw)
+                if int(round(age_candidate)) != int(round(p_age_flt)):
+                    return None, "conflicting_age_and_dob", f"Submitted age ({int(round(age_candidate))}) conflicts with profile age ({int(round(p_age_flt))})."
+        except (ValueError, TypeError):
+            return None, "missing_age", "Valid age or date of birth is required."
+    elif profile_age_raw is not None and str(profile_age_raw).strip() != "":
+        try:
+            age_candidate = float(profile_age_raw)
+        except (ValueError, TypeError):
+            return None, "missing_age", "Valid age or date of birth is required."
+
+    if age_candidate is not None:
+        if age_candidate < 19.0:
+            return age_candidate, "age_under_19", "BioPulse AI screening models are calibrated for adult men aged 19 to 60."
+        if age_candidate > 60.0:
+            return age_candidate, "age_over_60", "BioPulse AI screening models are calibrated for adult men aged 19 to 60."
+        return age_candidate, None, None
+
+    # 4. Neither DOB nor age is available
+    return None, "missing_age", "Date of birth or age is required for male hypogonadism screening. Please provide your date of birth in your profile."
+
+
+def extract_male_patient_raw_inputs(health_data: Any, passed_data: dict | None = None) -> dict[str, Any]:
+    raw_inputs: dict[str, Any] = {}
+    passed = passed_data or {}
+    direct_keys = {
+        'height_cm', 'weight_kg', 'waist_cm', 'low_energy',
+        'sleep_trouble', 'low_mood', 'low_interest', 'high_blood_pressure', 'diabetes'
+    }
+
+    if "userProfile" in passed and isinstance(passed["userProfile"], dict):
+        p = passed["userProfile"]
+    else:
+        p = getattr(health_data, "profile", {}) or {}
+
+    age, unavail_reason, unavail_summary = resolve_male_patient_age_and_eligibility(health_data, passed_data)
 
     h_cm = _get_val(p, "height_cm") or _get_val(p, "heightCm")
     w_kg = _get_val(p, "weight_kg") or _get_val(p, "weightKg")
@@ -364,6 +510,8 @@ def extract_male_patient_raw_inputs(health_data: Any, passed_data: dict | None =
 
     raw_inputs = {
         "age": age,
+        "eligibility_rejection_reason": unavail_reason,
+        "eligibility_rejection_summary": unavail_summary,
         "height_cm": h_cm,
         "weight_kg": w_kg,
         "waist_cm": waist,
@@ -447,15 +595,22 @@ def reassess_from_current_patient_state(
         for k, v in baseline_t1.items():
             if v is not None and str(v).strip() != "":
                 merged_tier1[k] = v
+        # Ensure age and eligibility reasons from baseline_t1 are set definitively
+        merged_tier1["age"] = baseline_t1.get("age")
+        if baseline_t1.get("eligibility_rejection_reason"):
+            merged_tier1["eligibility_rejection_reason"] = baseline_t1["eligibility_rejection_reason"]
+            merged_tier1["eligibility_rejection_summary"] = baseline_t1.get("eligibility_rejection_summary")
+
         if incoming_tier1 and isinstance(incoming_tier1, dict):
             for k, v in incoming_tier1.items():
-                if k in NON_TIER1_CLIENT_COLLECTIONS:
+                if k in NON_TIER1_CLIENT_COLLECTIONS or k == "age":
                     continue
                 if v is not None and str(v).strip() != "":
                     try:
                         merged_tier1[k] = float(v)
                     except (ValueError, TypeError):
                         merged_tier1[k] = v
+        # incoming_tier2 MUST NOT overwrite resolved age
     else:
         baseline_t1 = extract_patient_raw_inputs(health_data, client_health_data or incoming_tier1)
         merged_tier1 = dict(stored_tier1)
@@ -499,7 +654,7 @@ def reassess_from_current_patient_state(
 
         if incoming_tier2 and isinstance(incoming_tier2, dict):
             for k, v in incoming_tier2.items():
-                if k in ('remove_fields', 'removed_fields'):
+                if k in ('remove_fields', 'removed_fields', 'date_of_birth', 'dateOfBirth', 'dob', 'age', 'gender', 'userProfile', 'user_profile'):
                     continue
                 # Sanitize: empty strings or None must NEVER wipe stored lab values!
                 if v is None or str(v).strip() == "":
@@ -678,7 +833,23 @@ def reassess_from_current_patient_state(
         res.get("risk_category"),
     )
 
-    # 6. Compute canonical cumulative input hash & deduplicate if unchanged
+    # 6. Guard against persisting ineligible assessment records
+    if res.get("risk_category") == "unavailable" and res.get("unavailable_reason") in INELIGIBLE_REASONS:
+        logger.warning(
+            "[ASSESSMENT_BLOCKED] event=ineligible_assessment user=%s module=%s reason=%s",
+            patient_uuid[:8] if len(patient_uuid) >= 8 else patient_uuid,
+            module,
+            res.get("unavailable_reason"),
+        )
+        res["id"] = None
+        res["assessment_id"] = None
+        res["is_active"] = False
+        formatted = format_assessment_response(res)
+        formatted["authoritative_tier_1_inputs"] = merged_tier1
+        formatted["authoritative_tier_2_inputs"] = merged_tier2 if target_tier >= 2 else {}
+        return formatted
+
+    # 6b. Compute canonical cumulative input hash & deduplicate if unchanged
     from apps.intelligence.services.screening_hash import compute_canonical_input_hash
     computed_hash = compute_canonical_input_hash(
         raw_inputs=merged_tier1,
@@ -855,15 +1026,32 @@ def run_ultrasound_assessment(
 
     inputs = extract_patient_raw_inputs(health_data, client_health_data)
 
-    # Check if clinical labs / Tier 2 are present
+    # 1. Retrieve authoritative patient clinical state and active assessment
+    current_state = assessment_repository.get_patient_clinical_state(patient_uuid, module="female_pcos", auth_token=auth_token)
+    stored_tier1 = dict(current_state.get("tier_1_inputs") or {})
+    stored_tier2 = dict(current_state.get("tier_2_inputs") or {})
     active_prev = assessment_repository.get_active_assessment(patient_uuid, module="female_pcos", auth_token=auth_token)
+
+    # Carry forward saved Tier 1 questionnaire and biometric inputs
+    if active_prev and active_prev.get('tier_1_inputs'):
+        for k, v in active_prev['tier_1_inputs'].items():
+            if k not in stored_tier1 or stored_tier1[k] is None:
+                stored_tier1[k] = v
+    for k, v in stored_tier1.items():
+        if k not in inputs or inputs[k] is None:
+            inputs[k] = v
+
+    # Check if clinical labs / Tier 2 are present
     has_clinical = (
-        (active_prev and (active_prev.get('tier_2_inputs') or active_prev.get('assessment_level') in ('tier_1_2', 'tier_1_2_3')))
+        bool(stored_tier2 and pcos_ml_service.can_predict_tier2(stored_tier2))
+        or (active_prev and (active_prev.get('tier_2_inputs') or active_prev.get('assessment_level') in ('tier_1_2', 'tier_1_2_3')))
         or ('fsh' in inputs and 'lh' in inputs and 'amh' in inputs)
     )
 
     if has_clinical:
-        # Carry forward prior tier_2_inputs if available
+        # Carry forward prior tier_2_inputs with high priority
+        if stored_tier2:
+            inputs.update(stored_tier2)
         if active_prev and active_prev.get('tier_2_inputs'):
             inputs.update(active_prev['tier_2_inputs'])
         elif active_prev and active_prev.get('input_features'):
@@ -878,8 +1066,8 @@ def run_ultrasound_assessment(
         res['tiers_included'] = [1, 2, 3]
         res['ultrasound_report_id'] = report_id
         res['input_features'] = inputs
-        if active_prev and active_prev.get('tier_2_inputs'):
-            res['tier_2_inputs'] = active_prev['tier_2_inputs']
+        res['tier_1_inputs'] = stored_tier1 or {k: inputs[k] for k in TIER1_FEATURE_NAMES if k in inputs}
+        res['tier_2_inputs'] = stored_tier2 or (active_prev.get('tier_2_inputs') if active_prev else {})
         res['evidence_used'] = {
             'tier_1': True,
             'tier_2': True,
@@ -894,8 +1082,8 @@ def run_ultrasound_assessment(
         assessment_repository.save_patient_clinical_state(
             user_id=patient_uuid,
             module="female_pcos",
-            tier_1_inputs=inputs,
-            tier_2_inputs=res.get('tier_2_inputs'),
+            tier_1_inputs=res['tier_1_inputs'],
+            tier_2_inputs=res['tier_2_inputs'],
             ultrasound_inputs={'pcom_status': res.get('pcom_status'), 'pcom_probability': res.get('pcom_probability'), 'ultrasound_report_id': report_id},
             auth_token=auth_token,
         )
@@ -1115,7 +1303,18 @@ def format_assessment_response(record: dict[str, Any]) -> dict[str, Any]:
     module_name = record.get('module', 'female_pcos')
     is_male = module_name == 'male_hypogonadism'
 
-    prob = float(record.get('probability', 0.0) or 0.0)
+    raw_prob = record.get('probability')
+    if raw_prob is None or record.get('risk_category') == 'unavailable':
+        prob = None
+        prob_percent = None
+    else:
+        try:
+            prob = float(raw_prob)
+            prob_percent = round(prob * 100, 1)
+        except (ValueError, TypeError):
+            prob = None
+            prob_percent = None
+
     default_threshold = 0.1808 if is_male else 0.25
     threshold = float(record.get('threshold', default_threshold) or default_threshold)
 
@@ -1129,15 +1328,38 @@ def format_assessment_response(record: dict[str, Any]) -> dict[str, Any]:
 
     risk_cat = record.get('risk_category', 'lower')
     if is_male:
-        default_risk_label = "Lower Screening Risk" if prob < threshold else "Higher Screening Risk"
+        if record.get('risk_category') == 'unavailable' or prob is None:
+            risk_cat = "unavailable"
+            risk_lbl = "Assessment Unavailable"
+        elif not record.get('risk_category') or (record.get('risk_category') == 'lower' and prob >= 0.10):
+            if prob >= threshold:
+                risk_cat = "higher"
+            elif prob >= 0.10:
+                risk_cat = "intermediate"
+            else:
+                risk_cat = "lower"
+
+        default_risk_label = (
+            "Higher Screening Risk" if risk_cat == "higher"
+            else "Intermediate Screening Risk" if risk_cat == "intermediate"
+            else "Lower Screening Risk" if risk_cat == "lower"
+            else "Assessment Unavailable"
+        )
+        if record.get('risk_label') in ("Lower Screening Risk", "Higher Screening Risk") and risk_cat == "intermediate":
+            risk_lbl = default_risk_label
+        else:
+            risk_lbl = record.get('risk_label') or default_risk_label
     else:
+        if record.get('risk_category') == 'unavailable' or prob is None:
+            risk_cat = "unavailable"
+            risk_lbl = "Assessment Unavailable"
         default_risk_label = (
             "Higher Likelihood" if risk_cat == "higher"
             else "Intermediate Likelihood" if risk_cat == "intermediate"
             else "Lower Likelihood" if risk_cat == "lower"
             else "Assessment Unavailable"
         )
-    risk_lbl = record.get('risk_label') or default_risk_label
+        risk_lbl = record.get('risk_label') or default_risk_label
 
     # Determine or normalize evidence_used
     raw_evidence_used = record.get('evidence_used')
@@ -1188,12 +1410,16 @@ def format_assessment_response(record: dict[str, Any]) -> dict[str, Any]:
         ultrasound_report_id = None
         fusion_details = None
     else:
-        pcom_status = record.get('pcom_status')
+        from apps.intelligence.services.pcos_ml_service import normalize_pcom_status
+        raw_pcom = record.get('pcom_status')
+        pcom_status = normalize_pcom_status(raw_pcom) if raw_pcom is not None else None
         pcom_probability = record.get('pcom_probability')
         gradcam_url = record.get('gradcam_url')
         gradcam_b64 = record.get('gradcam_b64')
         ultrasound_report_id = record.get('ultrasound_report_id')
         fusion_details = record.get('fusion_details')
+        if isinstance(fusion_details, dict) and 'ultrasound_pcom_status' in fusion_details:
+            fusion_details['ultrasound_pcom_status'] = normalize_pcom_status(fusion_details.get('ultrasound_pcom_status'))
 
     input_features = record.get('input_features', {})
     authoritative_tier_1 = record.get('authoritative_tier_1_inputs', input_features)
@@ -1225,11 +1451,12 @@ def format_assessment_response(record: dict[str, Any]) -> dict[str, Any]:
         'tiers_included': tiers_inc,
         'model_version': record.get('model_version', '1.0.0'),
         'model_name': record.get('model_name', 'PMOSense Assessment Model'),
-        'probability': round(prob, 4),
-        'probability_percent': round(prob * 100, 1),
+        'probability': round(prob, 4) if prob is not None else None,
+        'probability_percent': prob_percent,
         'threshold': threshold,
         'risk_category': risk_cat,
         'risk_label': risk_lbl,
+        'unavailable_reason': record.get('unavailable_reason'),
         'summary_text': record.get('summary_text', ''),
         'replaced_assessment_id': record.get('replaced_assessment_id'),
         'available_features': record.get('available_features', []),

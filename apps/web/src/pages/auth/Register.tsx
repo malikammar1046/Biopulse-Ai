@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
   Mail01,
   User01,
@@ -21,7 +22,7 @@ import { useAuth } from '../../context/AuthContext';
 import { ROUTES } from '../../constants/routes';
 import { SmallBotanicalSprig } from '../../components/brand/BotanicalFoliage';
 import { preloadOnboardingRoutes } from '../../utils/routePreloaders';
-import { validateEmail } from '../../utils/profileValidation';
+import { validateEmail, validateRegistrationPassword } from '../../utils/profileValidation';
 
 interface FormErrors {
   fullName?: string;
@@ -31,6 +32,7 @@ interface FormErrors {
 }
 
 export const Register: React.FC = () => {
+  const { t } = useTranslation('auth');
   const navigate = useNavigate();
   const { register, loginWithGoogle } = useAuth();
 
@@ -45,6 +47,12 @@ export const Register: React.FC = () => {
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSuccess, setIsSuccess] = useState(false);
   const [emailConfirmReq, setEmailConfirmReq] = useState(false);
+
+  // Live password validation state
+  const hasTypedPassword = password.length > 0;
+  const hasMinLength = password.length >= 8;
+  const hasLetter = /[a-zA-Z]/.test(password);
+  const hasNumber = /\d/.test(password);
 
   // Preload lazy onboarding route chunks
   useEffect(() => {
@@ -63,10 +71,9 @@ export const Register: React.FC = () => {
       nextErrors.email = emailValidation.error;
     }
 
-    if (!password) {
-      nextErrors.password = 'Please create a password.';
-    } else if (password.length < 8) {
-      nextErrors.password = 'Password must be at least 8 characters long.';
+    const pwdValidation = validateRegistrationPassword(password);
+    if (!pwdValidation.isValid) {
+      nextErrors.password = pwdValidation.error;
     }
 
     setErrors(nextErrors);
@@ -137,16 +144,16 @@ export const Register: React.FC = () => {
           <div className="w-14 h-14 rounded-2xl bg-cyan-50 text-[#008CA5] flex items-center justify-center mx-auto">
             <CheckCircle className="w-7 h-7" aria-hidden="true" />
           </div>
-          <h2 className="text-2xl font-bold text-[#0F254B]">Verify your email</h2>
+          <h2 className="text-2xl font-bold text-[#0F254B]">{t('verifyEmailTitle')}</h2>
           <p className="text-sm text-slate-600 leading-relaxed">
-            We sent a verification link to <span className="font-semibold text-[#008CA5]">{email}</span>. Please click the link to activate your BioPulse AI account and begin your assessment.
+            {t('verifyEmailSent')} <span className="font-semibold text-[#008CA5]">{email}</span>. {t('verifyEmailInstructions')}
           </p>
           <Link to={ROUTES.LOGIN}>
             <button
               type="button"
               className="mt-4 w-full py-3 rounded-full font-bold text-white bg-[#008CA5] hover:bg-[#007A90] transition-colors"
             >
-              Return to Login
+              {t('returnToLogin')}
             </button>
           </Link>
         </div>
@@ -170,14 +177,14 @@ export const Register: React.FC = () => {
         {/* Auth Switcher */}
         <div className="flex items-center gap-3">
           <span className="text-xs sm:text-sm font-medium text-slate-500 hidden sm:inline">
-            Already have an account?
+            {t('alreadyHaveAccount')}
           </span>
           <Link to={ROUTES.LOGIN}>
             <button
               type="button"
               className="px-4 sm:px-5 py-1.5 rounded-full border border-[#008CA5]/40 text-[#008CA5] hover:bg-cyan-50/70 text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-2xs"
             >
-              Login
+              {t('signInButton')}
             </button>
           </Link>
         </div>
@@ -200,21 +207,22 @@ export const Register: React.FC = () => {
 
             {/* Eyebrow */}
             <p className="text-[11px] font-extrabold tracking-[0.2em] text-[#008CA5] uppercase select-none">
-              CREATE YOUR ACCOUNT
+              {t('registerBrandTitle')}
             </p>
 
             {/* Display Headline */}
             <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-[#0F254B] font-display leading-[1.12]">
-              Start Your
-              <br />
-              Health Journey
-              <br />
-              <span className="text-[#008CA5]">Today</span>
+              {t('startJourneyHeadline').split('\n').map((line, i) => (
+                <React.Fragment key={i}>
+                  {line}
+                  {i < t('startJourneyHeadline').split('\n').length - 1 && <br />}
+                </React.Fragment>
+              ))}
             </h1>
 
             {/* Subtitle */}
             <p className="text-sm sm:text-base text-slate-600 font-medium leading-relaxed max-w-md">
-              Join BioPulse AI and take a step towards better reproductive and hormonal health.
+              {t('registerSubtitleLong')}
             </p>
 
             {/* 4 Feature Items with Round Badges matching reference */}
@@ -225,7 +233,7 @@ export const Register: React.FC = () => {
                   <ActivityHeart className="w-4 h-4 text-[#008CA5]" aria-hidden="true" />
                 </div>
                 <span className="text-sm font-semibold text-[#0F254B]">
-                  Personalized insights
+                  {t('personalizedInsights')}
                 </span>
               </div>
 
@@ -235,7 +243,7 @@ export const Register: React.FC = () => {
                   <Users01 className="w-4 h-4 text-[#008CA5]" aria-hidden="true" />
                 </div>
                 <span className="text-sm font-semibold text-[#0F254B]">
-                  AI-powered screening
+                  {t('aiPoweredScreening')}
                 </span>
               </div>
 
@@ -245,7 +253,7 @@ export const Register: React.FC = () => {
                   <LineChartUp01 className="w-4 h-4 text-[#008CA5]" aria-hidden="true" />
                 </div>
                 <span className="text-sm font-semibold text-[#0F254B]">
-                  Track progress over time
+                  {t('trackProgress')}
                 </span>
               </div>
 
@@ -255,7 +263,7 @@ export const Register: React.FC = () => {
                   <HeartHand className="w-4 h-4 text-[#008CA5]" aria-hidden="true" />
                 </div>
                 <span className="text-sm font-semibold text-[#0F254B]">
-                  Support for a healthier you
+                  {t('healthierYouSupport')}
                 </span>
               </div>
             </div>
@@ -266,13 +274,12 @@ export const Register: React.FC = () => {
                 className="text-2xl sm:text-3xl font-bold text-[#008CA5] block leading-tight"
                 style={{ fontFamily: "'Caveat', cursive" }}
               >
-                Same
-                <br />
-                Care
-                <br />
-                Different
-                <br />
-                Journeys
+                {t('sameCareTag').split('\n').map((line, i) => (
+                  <React.Fragment key={i}>
+                    {line}
+                    {i < t('sameCareTag').split('\n').length - 1 && <br />}
+                  </React.Fragment>
+                ))}
               </span>
               <div className="w-20 h-1 bg-gradient-to-r from-pink-400 to-rose-400 rounded-full mt-1 opacity-80" />
             </div>
@@ -280,7 +287,7 @@ export const Register: React.FC = () => {
             {/* Bottom note with carousel indicator */}
             <div className="pt-2 space-y-1.5">
               <span className="text-xs font-semibold text-slate-500">
-                Informed Today • Healthier Tomorrow
+                {t('informedTodayTag')}
               </span>
               <div className="flex items-center gap-1.5">
                 <div className="w-5 h-1.5 rounded-full bg-[#008CA5]" />
@@ -303,10 +310,10 @@ export const Register: React.FC = () => {
               {/* Card Header */}
               <div className="space-y-1.5">
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F254B] font-display tracking-tight">
-                  Create Your <span className="text-[#008CA5]">Account</span>
+                  {t('registerBrandTitle')}
                 </h1>
                 <p className="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed">
-                  Join BioPulse AI in just a few steps.
+                  {t('registerBrandSubtitle')}
                 </p>
               </div>
 
@@ -334,7 +341,7 @@ export const Register: React.FC = () => {
                       type="text"
                       id="register-fullname"
                       autoComplete="name"
-                      placeholder="Full name"
+                      placeholder={t('fullNamePlaceholder')}
                       value={fullName}
                       onChange={(e) => {
                         setFullName(e.target.value);
@@ -362,7 +369,7 @@ export const Register: React.FC = () => {
                       id="register-email"
                       autoComplete="email"
                       inputMode="email"
-                      placeholder="Email address"
+                      placeholder={t('emailPlaceholder')}
                       value={email}
                       onChange={(e) => {
                         setEmail(e.target.value);
@@ -390,14 +397,14 @@ export const Register: React.FC = () => {
                 </div>
 
                 {/* Password Input */}
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <div className="relative flex items-center">
                     <Lock01 className="w-4 h-4 text-slate-400 absolute left-4 pointer-events-none" aria-hidden="true" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       id="register-password"
                       autoComplete="new-password"
-                      placeholder="Password"
+                      placeholder={t('passwordPlaceholder')}
                       value={password}
                       onChange={(e) => {
                         setPassword(e.target.value);
@@ -419,8 +426,56 @@ export const Register: React.FC = () => {
                       {showPassword ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4" aria-hidden="true" />}
                     </button>
                   </div>
+
+                  {/* Short helper text */}
+                  <p className="text-[12px] text-slate-500 font-normal pl-1">
+                    Use at least one letter and one number.
+                  </p>
+
+                  {/* Compact Password Requirements */}
+                  <div className="pt-0.5 pb-0.5 px-1 space-y-1" aria-label="Password requirements">
+                    <div className="flex items-center gap-2 text-xs">
+                      {hasTypedPassword && hasMinLength ? (
+                        <CheckCircle className="w-3.5 h-3.5 text-[#008CA5] shrink-0" aria-hidden="true" />
+                      ) : (
+                        <span className="w-3.5 h-3.5 flex items-center justify-center shrink-0">
+                          <span className={`w-1.5 h-1.5 rounded-full ${hasTypedPassword ? 'bg-slate-400' : 'bg-slate-300'}`} />
+                        </span>
+                      )}
+                      <span className={hasTypedPassword ? (hasMinLength ? 'text-[#0F254B] font-medium' : 'text-slate-500') : 'text-slate-400'}>
+                        At least 8 characters
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-xs">
+                      {hasTypedPassword && hasLetter ? (
+                        <CheckCircle className="w-3.5 h-3.5 text-[#008CA5] shrink-0" aria-hidden="true" />
+                      ) : (
+                        <span className="w-3.5 h-3.5 flex items-center justify-center shrink-0">
+                          <span className={`w-1.5 h-1.5 rounded-full ${hasTypedPassword ? 'bg-slate-400' : 'bg-slate-300'}`} />
+                        </span>
+                      )}
+                      <span className={hasTypedPassword ? (hasLetter ? 'text-[#0F254B] font-medium' : 'text-slate-500') : 'text-slate-400'}>
+                        At least one letter (a-z, A-Z)
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-xs">
+                      {hasTypedPassword && hasNumber ? (
+                        <CheckCircle className="w-3.5 h-3.5 text-[#008CA5] shrink-0" aria-hidden="true" />
+                      ) : (
+                        <span className="w-3.5 h-3.5 flex items-center justify-center shrink-0">
+                          <span className={`w-1.5 h-1.5 rounded-full ${hasTypedPassword ? 'bg-slate-400' : 'bg-slate-300'}`} />
+                        </span>
+                      )}
+                      <span className={hasTypedPassword ? (hasNumber ? 'text-[#0F254B] font-medium' : 'text-slate-500') : 'text-slate-400'}>
+                        At least one number (0-9)
+                      </span>
+                    </div>
+                  </div>
+
                   {errors.password && (
-                    <p className="text-[11px] font-semibold text-rose-600 pl-2">{errors.password}</p>
+                    <p className="text-[11px] font-semibold text-rose-600 pl-2 pt-0.5">{errors.password}</p>
                   )}
                 </div>
 
@@ -436,11 +491,11 @@ export const Register: React.FC = () => {
                     {loading ? (
                       <span className="flex items-center gap-2">
                         <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        <span>Creating Account...</span>
+                        <span>{t('creatingAccount')}</span>
                       </span>
                     ) : (
                       <>
-                        <span>Create Account</span>
+                        <span>{t('registerButton')}</span>
                         <ArrowRight className="w-4 h-4" aria-hidden="true" />
                       </>
                     )}
@@ -452,7 +507,7 @@ export const Register: React.FC = () => {
               <div className="relative flex items-center justify-center my-4">
                 <div className="w-full border-t border-slate-200" />
                 <span className="absolute bg-white px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                  or sign up with
+                  {t('orSignUpWith')}
                 </span>
               </div>
 
@@ -463,19 +518,19 @@ export const Register: React.FC = () => {
                   onClick={handleGoogleSignIn}
                   loading={googleLoading}
                   disabled={loading}
-                  text="Continue with Google"
+                  text={t('googleSignIn')}
                 />
               </div>
 
               {/* Terms & Privacy */}
               <p className="text-[11px] text-slate-400 text-center leading-relaxed pt-1">
-                By creating an account, you agree to our{' '}
+                {t('agreeTermsRegister')}{' '}
                 <Link to={ROUTES.TRUST_PRIVACY} className="underline hover:text-slate-600">
-                  Terms of Service
+                  {t('termsOfService')}
                 </Link>{' '}
-                and{' '}
+                {t('and')}{' '}
                 <Link to={ROUTES.TRUST_PRIVACY} className="underline hover:text-slate-600">
-                  Privacy Policy
+                  {t('privacyPolicy')}
                 </Link>
                 .
               </p>
@@ -486,7 +541,7 @@ export const Register: React.FC = () => {
                   <InfoCircle className="w-3.5 h-3.5" aria-hidden="true" />
                 </div>
                 <p className="text-xs font-medium text-slate-600 leading-snug">
-                  Date of birth and basic details will be collected during onboarding.
+                  {t('dobNotice')}
                 </p>
               </div>
             </motion.div>
@@ -501,7 +556,7 @@ export const Register: React.FC = () => {
             className="text-xs sm:text-sm font-semibold text-slate-500"
             style={{ fontFamily: "'Caveat', cursive" }}
           >
-            &ldquo;A healthier tomorrow starts with you.&rdquo;
+            {t('quoteHealthierTomorrow')}
           </span>
           <div className="w-12 h-0.5 bg-gradient-to-r from-pink-400 to-rose-400 rounded-full mt-1 opacity-70" />
         </div>

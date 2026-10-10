@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { MedicalCross, Plus, MessageChatCircle, CheckCircle, ShieldTick } from '@untitledui/icons';
 import type { TodayMedicationProgress, WeeklyAdherenceStats } from '../../types/medication';
 
@@ -17,6 +18,7 @@ export const PersonalizedMedicationsHeader: React.FC<PersonalizedMedicationsHead
   onAskAi,
   isMale,
 }) => {
+  const { t } = useTranslation(['medications', 'common']);
   const accentColor = !isMale ? '#F43F7D' : '#0288D1';
   const accentHover = !isMale ? '#DC326C' : '#0277BD';
 
@@ -38,12 +40,12 @@ export const PersonalizedMedicationsHeader: React.FC<PersonalizedMedicationsHead
                 className={`w-3.5 h-3.5 ${!isMale ? 'text-[#F43F7D]' : 'text-[#0288D1]'}`}
                 aria-hidden="true"
               />
-              <span>Medicine Schedule & Adherence</span>
+              <span>{t('medications:schedule', { defaultValue: 'Medicine Schedule & Adherence' })}</span>
             </span>
 
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
               <CheckCircle className="w-3 h-3 text-emerald-500" aria-hidden="true" />
-              <span>{weeklyStats.adherencePercentage}% Adherent this week</span>
+              <span>{weeklyStats.adherencePercentage}% {t('medications:adherence', { defaultValue: 'Adherent this week' })}</span>
             </span>
           </div>
 
@@ -51,14 +53,14 @@ export const PersonalizedMedicationsHeader: React.FC<PersonalizedMedicationsHead
           <div className="p-4 rounded-xl bg-[#F8FAFC] border border-[#EAECF0] space-y-2.5">
             <div className="flex items-center justify-between text-xs text-[#0F172A]">
               <span className="font-semibold">
-                Today: <strong>{todayProgress.takenCount} of {todayProgress.totalScheduled} taken</strong>
+                {t('common:today', { defaultValue: 'Today' })}: <strong>{todayProgress.takenCount} / {todayProgress.totalScheduled} {t('medications:status.taken', { defaultValue: 'taken' })}</strong>
               </span>
               <span
                 className={`font-mono text-[11px] font-bold ${
                   !isMale ? 'text-[#DC326C]' : 'text-[#0288D1]'
                 }`}
               >
-                {todayProgress.percentageTaken}% completed
+                {todayProgress.percentageTaken}%
               </span>
             </div>
 
@@ -77,18 +79,18 @@ export const PersonalizedMedicationsHeader: React.FC<PersonalizedMedicationsHead
             <div className="flex items-center gap-4 text-[11px] font-mono text-[#64748B] pt-1">
               <span className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-[#12B76A]" />
-                <span>{todayProgress.takenCount} Taken</span>
+                <span>{todayProgress.takenCount} {t('medications:status.taken', { defaultValue: 'Taken' })}</span>
               </span>
 
               <span className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-[#F79009]" />
-                <span>{todayProgress.remainingCount} Remaining</span>
+                <span>{todayProgress.remainingCount} {t('medications:status.upcoming', { defaultValue: 'Remaining' })}</span>
               </span>
 
               {todayProgress.skippedCount > 0 && (
                 <span className="flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-[#F04438]" />
-                  <span>{todayProgress.skippedCount} Skipped</span>
+                  <span>{todayProgress.skippedCount} {t('medications:status.skipped', { defaultValue: 'Skipped' })}</span>
                 </span>
               )}
             </div>
@@ -106,7 +108,7 @@ export const PersonalizedMedicationsHeader: React.FC<PersonalizedMedicationsHead
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = accentColor)}
           >
             <Plus className="w-4 h-4 text-white" aria-hidden="true" />
-            <span>Add medicine</span>
+            <span>{t('medications:addMedication', { defaultValue: 'Add medicine' })}</span>
           </button>
 
           <button
@@ -118,7 +120,7 @@ export const PersonalizedMedicationsHeader: React.FC<PersonalizedMedicationsHead
               className={`w-4 h-4 ${!isMale ? 'text-[#F43F7D]' : 'text-[#0288D1]'}`}
               aria-hidden="true"
             />
-            <span>Medicine Guidance</span>
+            <span>{t('common:askAI', { defaultValue: 'Medicine Guidance' })}</span>
           </button>
 
           <div className="p-2 rounded-xl bg-[#F8FAFC] border border-[#EAECF0] text-[10px] text-[#64748B] leading-tight flex items-center gap-1.5">
@@ -126,7 +128,7 @@ export const PersonalizedMedicationsHeader: React.FC<PersonalizedMedicationsHead
               className={`w-3.5 h-3.5 shrink-0 ${!isMale ? 'text-[#F43F7D]' : 'text-[#0288D1]'}`}
               aria-hidden="true"
             />
-            <span>Tracking only • Follow doctor’s instructions</span>
+            <span>{t('common:disclaimerBadge', { defaultValue: 'Tracking only • Follow doctor’s instructions' })}</span>
           </div>
         </div>
       </div>

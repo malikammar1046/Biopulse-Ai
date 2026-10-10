@@ -213,12 +213,12 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          className="relative w-full max-w-xl max-h-[90dvh] flex flex-col rounded-2xl sm:rounded-[32px] bg-white border border-[#BAE6FD] shadow-2xl overflow-hidden z-10 my-auto text-left select-none"
+          className={`relative w-full max-w-xl max-h-[90dvh] flex flex-col rounded-2xl sm:rounded-[32px] bg-white border ${isMale ? 'border-[#BAE6FD]' : 'border-[#FDE6EF]'} shadow-2xl overflow-hidden z-10 my-auto text-left select-none`}
         >
           {/* Header */}
-          <div className="p-4 sm:p-6 border-b border-[#E2E8F0] bg-[#F0F9FF] flex items-center justify-between shrink-0">
+          <div className={`p-4 sm:p-6 border-b border-[#E2E8F0] ${isMale ? 'bg-[#F0F9FF]' : 'bg-[#FFF8FA]'} flex items-center justify-between shrink-0`}>
             <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-              <Calendar className="w-5 h-5 text-[#0288D1] shrink-0" aria-hidden="true" />
+              <Calendar className={`w-5 h-5 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'} shrink-0`} aria-hidden="true" />
               <div className="min-w-0">
                 <h2 className="text-base sm:text-lg font-bold font-display text-[#0F172A] truncate">
                   Request an Appointment
@@ -256,7 +256,11 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
               <select
                 value={selectMode}
                 onChange={handleProviderSelectChange}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-xs text-[#0F172A] focus:ring-2 focus:ring-[#0288D1]/30 focus:border-[#0288D1]"
+                className={`w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-xs text-[#0F172A] focus:ring-2 ${
+                  isMale
+                    ? 'focus:ring-[#0288D1]/30 focus:border-[#0288D1]'
+                    : 'focus:ring-[#F43F7D]/30 focus:border-[#F43F7D]'
+                }`}
               >
                 {pathwayDoctors.length > 0 && (
                   <optgroup label={isMale ? 'Specialists for Male Hormonal Health' : 'Specialists for PCOS Care'}>
@@ -299,14 +303,14 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
                     value={providerName}
                     onChange={(e) => setProviderName(e.target.value)}
                     placeholder="Doctor Name (e.g. Dr. A. Khan)"
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#E2E8F0] text-xs text-[#0F172A] focus:outline-none focus:border-[#0288D1]"
+                    className={`w-full px-3.5 py-2 rounded-xl border border-[#E2E8F0] text-xs text-[#0F172A] focus:outline-none ${isMale ? 'focus:border-[#0288D1]' : 'focus:border-[#F43F7D]'}`}
                   />
                   <input
                     type="text"
                     value={providerSpecialty}
                     onChange={(e) => setProviderSpecialty(e.target.value)}
                     placeholder="Specialty (e.g. Endocrinologist)"
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#E2E8F0] text-xs text-[#0F172A] focus:outline-none focus:border-[#0288D1]"
+                    className={`w-full px-3.5 py-2 rounded-xl border border-[#E2E8F0] text-xs text-[#0F172A] focus:outline-none ${isMale ? 'focus:border-[#0288D1]' : 'focus:border-[#F43F7D]'}`}
                   />
                 </div>
               )}
@@ -321,7 +325,7 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. Comprehensive PCOS Review"
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#E2E8F0] text-xs focus:outline-none focus:border-[#0288D1]"
+                  className={`w-full px-3.5 py-2 rounded-xl border border-[#E2E8F0] text-xs focus:outline-none ${isMale ? 'focus:border-[#0288D1]' : 'focus:border-[#F43F7D]'}`}
                 />
               </div>
 
@@ -330,7 +334,7 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
                 <select
                   value={appointmentType}
                   onChange={(e) => setAppointmentType(e.target.value as AppointmentType)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#E2E8F0] bg-white text-xs focus:outline-none focus:border-[#0288D1]"
+                  className={`w-full px-3.5 py-2 rounded-xl border border-[#E2E8F0] bg-white text-xs focus:outline-none ${isMale ? 'focus:border-[#0288D1]' : 'focus:border-[#F43F7D]'}`}
                 >
                   {APPOINTMENT_TYPES.map((t) => (
                     <option key={t.type} value={t.type}>
@@ -350,7 +354,7 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
                   value={scheduledDate}
                   min={new Date().toISOString().split('T')[0]}
                   onChange={(e) => setScheduledDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-[#E2E8F0] text-xs focus:outline-none focus:border-[#0288D1]"
+                  className={`w-full px-3 py-2 rounded-xl border border-[#E2E8F0] text-xs focus:outline-none ${isMale ? 'focus:border-[#0288D1]' : 'focus:border-[#F43F7D]'}`}
                 />
               </div>
 
@@ -360,7 +364,7 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
                   type="time"
                   value={scheduledTime}
                   onChange={(e) => setScheduledTime(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-[#E2E8F0] text-xs focus:outline-none focus:border-[#0288D1]"
+                  className={`w-full px-3 py-2 rounded-xl border border-[#E2E8F0] text-xs focus:outline-none ${isMale ? 'focus:border-[#0288D1]' : 'focus:border-[#F43F7D]'}`}
                 />
               </div>
 
@@ -369,7 +373,7 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
                 <select
                   value={durationMinutes}
                   onChange={(e) => setDurationMinutes(Number(e.target.value))}
-                  className="w-full px-3 py-2 rounded-xl border border-[#E2E8F0] bg-white text-xs focus:outline-none focus:border-[#0288D1]"
+                  className={`w-full px-3 py-2 rounded-xl border border-[#E2E8F0] bg-white text-xs focus:outline-none ${isMale ? 'focus:border-[#0288D1]' : 'focus:border-[#F43F7D]'}`}
                 >
                   <option value={15}>15 Minutes</option>
                   <option value={30}>30 Minutes</option>
@@ -389,7 +393,9 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
                     onClick={() => setIsOnline(true)}
                     className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                       isOnline
-                        ? 'bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD]'
+                        ? isMale
+                          ? 'bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD]'
+                          : 'bg-[#FDE6EF] text-[#F43F7D] border-[#FDE6EF]'
                         : 'bg-[#F8FAFC] text-[#64748B]'
                     }`}
                   >
@@ -400,7 +406,9 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
                     onClick={() => setIsOnline(false)}
                     className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                       !isOnline
-                        ? 'bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD]'
+                        ? isMale
+                          ? 'bg-[#E0F2FE] text-[#0288D1] border border-[#BAE6FD]'
+                          : 'bg-[#FDE6EF] text-[#F43F7D] border-[#FDE6EF]'
                         : 'bg-[#F8FAFC] text-[#64748B]'
                     }`}
                   >
@@ -417,7 +425,7 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
                     value={meetingUrl}
                     onChange={(e) => setMeetingUrl(e.target.value)}
                     placeholder="https://meet.biopulse.ai/..."
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#E2E8F0] text-xs focus:outline-none focus:border-[#0288D1]"
+                    className={`w-full px-3.5 py-2 rounded-xl border border-[#E2E8F0] text-xs focus:outline-none ${isMale ? 'focus:border-[#0288D1]' : 'focus:border-[#F43F7D]'}`}
                   />
                 </div>
               ) : (
@@ -428,7 +436,7 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     placeholder="Clinic or Hospital address"
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#E2E8F0] text-xs focus:outline-none focus:border-[#0288D1]"
+                    className={`w-full px-3.5 py-2 rounded-xl border border-[#E2E8F0] text-xs focus:outline-none ${isMale ? 'focus:border-[#0288D1]' : 'focus:border-[#F43F7D]'}`}
                   />
                 </div>
               )}
@@ -442,7 +450,7 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 placeholder="What would you like to address during this visit?"
-                className="w-full px-3.5 py-2 rounded-xl border border-[#E2E8F0] text-xs resize-none focus:outline-none focus:border-[#0288D1]"
+                className={`w-full px-3.5 py-2 rounded-xl border border-[#E2E8F0] text-xs resize-none focus:outline-none ${isMale ? 'focus:border-[#0288D1]' : 'focus:border-[#F43F7D]'}`}
               />
             </div>
 
@@ -454,7 +462,7 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
                 value={patientNotes}
                 onChange={(e) => setPatientNotes(e.target.value)}
                 placeholder="Reminders for yourself (e.g. bring previous lab reports)"
-                className="w-full px-3.5 py-2 rounded-xl border border-[#E2E8F0] text-xs focus:outline-none focus:border-[#0288D1]"
+                className={`w-full px-3.5 py-2 rounded-xl border border-[#E2E8F0] text-xs focus:outline-none ${isMale ? 'focus:border-[#0288D1]' : 'focus:border-[#F43F7D]'}`}
               />
             </div>
 
@@ -471,7 +479,9 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-5 py-2.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white font-bold shadow-xs transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5 text-center"
+                className={`px-5 py-2.5 rounded-xl ${
+                  isMale ? 'bg-[#0288D1] hover:bg-[#0277BD]' : 'bg-[#F43F7D] hover:bg-[#DC326C]'
+                } text-white font-bold shadow-xs transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5 text-center`}
               >
                 <Plus className="w-4 h-4 shrink-0" aria-hidden="true" />
                 <span>{isSubmitting ? 'Requesting Appointment...' : 'Request Appointment'}</span>

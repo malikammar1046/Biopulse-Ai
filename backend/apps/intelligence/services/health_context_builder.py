@@ -488,6 +488,7 @@ class HealthContextBuilder:
         auth_token: Optional[str] = None,
         client_telemetry: Optional[Dict[str, Any]] = None,
         explicit_pathway: Optional[str] = None,
+        locale: str = "en",
     ) -> Tuple[str, str, Dict[str, bool]]:
         """
         Retrieves authoritative health records, active assessment, clinical state,
@@ -496,9 +497,9 @@ class HealthContextBuilder:
         """
         intent = cls.classify_intent(user_message)
 
-        # Fast cache check (short-lived, patient-scoped, pathway-scoped, intent-scoped)
+        # Fast cache check (short-lived, patient-scoped, pathway-scoped, intent-scoped, locale-isolated)
         is_test = hasattr(health_service.fetch_all, "mock_calls") or hasattr(health_service.fetch_selective, "mock_calls")
-        cache_key = f"{patient_uuid}:{explicit_pathway or 'auto'}:{intent}"
+        cache_key = f"{patient_uuid}:{explicit_pathway or 'auto'}:{intent}:{locale}"
         now = time.time()
         if not is_test and cache_key in cls._context_cache:
             cached_time, cached_val = cls._context_cache[cache_key]
@@ -552,6 +553,20 @@ class HealthContextBuilder:
         module = "male_hypogonadism" if is_male else "female_pcos"
         condition_name = "Male Hypogonadism" if is_male else "Polycystic Ovary Syndrome (PCOS)"
         system_instruction = MALE_SYSTEM_PROMPT if is_male else FEMALE_SYSTEM_PROMPT
+
+        if locale == "ur":
+            system_instruction += (
+                "\n\nLANGUAGE & LOCALIZATION DIRECTIVE:\n"
+                "The user's preferred language is Urdu (locale: ur).\n"
+                "- Respond in clear, professional, empathetic Pakistani Urdu (پاکستانی اردو).\n"
+                "- Use familiar English medical terms and acronyms where they improve clarity and patient understanding "
+                "(e.g., PCOS, BMI, LH, FSH, AMH, Testosterone, Insulin Resistance, Lab Results, Screening).\n"
+                "- Preserve clinical values, units, reference ranges, medication names, and medical acronyms exactly "
+                "(e.g. 24.3 kg/m², 420 ng/dL, Metformin 500mg).\n"
+                "- Avoid literal machine-style translation and overly literary or poetic Urdu.\n"
+                "- Ensure strict non-diagnostic communication: do NOT state or imply a definitive medical diagnosis. "
+                "Keep the screening vs diagnosis distinction crystal clear in Urdu.\n"
+            )
 
         # 3. Retrieve authoritative persistent clinical state (omit backfill check during live chat)
         clinical_state = {}

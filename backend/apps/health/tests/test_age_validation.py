@@ -9,6 +9,7 @@ from rest_framework.test import APIClient
 
 from apps.health.serializers import (
     validate_age_and_dob,
+    validate_male_screening_age,
     ProfileValidationSerializer,
     OnboardingValidationSerializer,
 )
@@ -60,6 +61,44 @@ class AgeValidationUnitTest(SimpleTestCase):
             validate_age_and_dob("")
         with self.assertRaises(serializers.ValidationError):
             validate_age_and_dob("invalid-date-string")
+
+    def test_male_screening_age_under_19_rejected(self):
+        today = datetime.date.today()
+        dob_18 = (datetime.date(today.year - 18, today.month, today.day)).isoformat()
+        with self.assertRaises(serializers.ValidationError) as ctx:
+            validate_male_screening_age(dob_18)
+        self.assertIn("at least 19 years old", str(ctx.exception))
+
+    def test_male_screening_age_19_accepted(self):
+        today = datetime.date.today()
+        dob_19 = (datetime.date(today.year - 19, today.month, today.day)).isoformat()
+        age = validate_male_screening_age(dob_19)
+        self.assertEqual(age, 19)
+
+    def test_male_screening_age_60_accepted(self):
+        today = datetime.date.today()
+        dob_60 = (datetime.date(today.year - 60, today.month, today.day)).isoformat()
+        age = validate_male_screening_age(dob_60)
+        self.assertEqual(age, 60)
+
+    def test_male_screening_age_over_60_rejected(self):
+        today = datetime.date.today()
+        dob_61 = (datetime.date(today.year - 61, today.month, today.day)).isoformat()
+        with self.assertRaises(serializers.ValidationError) as ctx:
+            validate_male_screening_age(dob_61)
+        self.assertIn("older than 60", str(ctx.exception))
+
+    def test_male_screening_birthday_boundaries(self):
+        today = datetime.date.today()
+        # 1 day before 19th birthday (age 18)
+        dob_18_364 = datetime.date(today.year - 19, today.month, today.day) + datetime.timedelta(days=1)
+        with self.assertRaises(serializers.ValidationError):
+            validate_male_screening_age(dob_18_364.isoformat())
+
+        # 1 day before 61st birthday (age 60)
+        dob_60_364 = datetime.date(today.year - 61, today.month, today.day) + datetime.timedelta(days=1)
+        age = validate_male_screening_age(dob_60_364.isoformat())
+        self.assertEqual(age, 60)
 
 
 class AgeValidationSerializerTest(SimpleTestCase):
@@ -139,3 +178,49 @@ class AgeValidationEndpointApiTest(TestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertIn("You must be at least 13 years old to use PMOSense.", str(response.data["details"]["date_of_birth"]))
+
+    def test_male_onboarding_validate_endpoint_rejects_age_18(self):
+        today = datetime.date.today()
+        dob_18 = (datetime.date(today.year - 18, today.month, today.day)).isoformat()
+        response = self.client.post(
+            "/api/v1/health/onboarding/validate/",
+            {"date_of_birth": dob_18, "gender": "male", "pathway": "male"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("at least 19 years old", str(response.data["details"]["date_of_birth"]))
+
+    def test_male_onboarding_validate_endpoint_accepts_age_19(self):
+        today = datetime.date.today()
+        dob_19 = (datetime.date(today.year - 19, today.month, today.day)).isoformat()
+        response = self.client.post(
+            "/api/v1/health/onboarding/validate/",
+            {"date_of_birth": dob_19, "gender": "male", "pathway": "male"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data.get("valid"))
+        self.assertEqual(response.data.get("age"), 19)
+
+    def test_male_onboarding_validate_endpoint_accepts_age_60(self):
+        today = datetime.date.today()
+        dob_60 = (datetime.date(today.year - 60, today.month, today.day)).isoformat()
+        response = self.client.post(
+            "/api/v1/health/onboarding/validate/",
+            {"date_of_birth": dob_60, "gender": "male", "pathway": "male"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data.get("valid"))
+        self.assertEqual(response.data.get("age"), 60)
+
+    def test_male_onboarding_validate_endpoint_rejects_age_61(self):
+        today = datetime.date.today()
+        dob_61 = (datetime.date(today.year - 61, today.month, today.day)).isoformat()
+        response = self.client.post(
+            "/api/v1/health/onboarding/validate/",
+            {"date_of_birth": dob_61, "gender": "male", "pathway": "male"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("older than 60", str(response.data["details"]["date_of_birth"]))

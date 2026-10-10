@@ -1,0 +1,69 @@
+{
+  "title": "Reproductive Health Screening Assessment",
+  "subtitle": "Progressive, non-diagnostic pattern analysis calibrated for your endocrine pathway",
+  "nonDiagnosticNotice": "This assessment provides probability estimates and educational feature attributions based on statistical models. It is not a clinical diagnosis.",
+  "tierSelection": {
+    "title": "Select Assessment Tier",
+    "tier1Label": "Tier 1: Symptoms & Questionnaire",
+    "tier1Desc": "Baseline clinical history, cycle or vitality indicators, and lifestyle factors.",
+    "tier2Label": "Tier 2: Laboratory Biomarkers",
+    "tier2Desc": "Hormonal panels (LH, FSH, Testosterone, Glucose, Lipids) for increased precision.",
+    "tier3Label": "Tier 3: Pelvic Imaging & Ultrasound",
+    "tier3Desc": "Pelvic ultrasound features including follicle counts and ovarian volume."
+  },
+  "results": {
+    "title": "Screening Results Summary",
+    "likelihoodLabel": "Screening Likelihood",
+    "modelConfidence": "Model Confidence",
+    "calibratedCutoff": "Screening Cutoff",
+    "categoryLabel": "Risk Pattern",
+    "lowerRisk": "Lower Risk Pattern",
+    "moderateLikelihood": "Moderate Likelihood Pattern",
+    "highLikelihood": "High Likelihood Pattern",
+    "elevatedLikelihood": "Elevated Pattern",
+    "shapTitle": "Key Influencing Factors (Explainable AI)",
+    "shapSubtitle": "These factors contributed most significantly to your calculated screening likelihood",
+    "increasesLikelihood": "Increased likelihood",
+    "decreasesLikelihood": "Decreased likelihood",
+    "nextStepsTitle": "Recommended Clinical Next Steps",
+    "consultDoctor": "Discuss this report with an endocrine specialist or gynecologist",
+    "retakeScreening": "Update Assessment with New Lab Data"
+  },
+  "femaleTier1": {
+    "title": "Tier 1 Questionnaire — Women's Health (PCOS)",
+    "cycleRegularity": "Menstrual Cycle Regularity",
+    "hyperandrogenism": "Signs of Androgen Sensitivity",
+    "metabolicHistory": "Metabolic & Weight Context"
+  },
+  "maleTier1": {
+    "title": "Tier 1 Questionnaire — Men's Health (Hypogonadism)",
+    "adamQuestionnaire": "ADAM Questionnaire",
+    "energyPatterns": "Energy & Stamina Patterns",
+    "metabolicContext": "Body Composition & Metabolic Health"
+  },
+  "tier2Form": {
+    "title": "Tier 2 Biomarker Entry",
+    "subtitle": "Enter your verified laboratory values or upload your PDF report for automated extraction",
+    "lh": "Luteinizing Hormone (LH)",
+    "fsh": "Follicle-Stimulating Hormone (FSH)",
+    "totalTestosterone": "Total Testosterone",
+    "freeTestosterone": "Free Testosterone",
+    "fastingGlucose": "Fasting Blood Glucose",
+    "fastingInsulin": "Fasting Insulin",
+    "amh": "Anti-Müllerian Hormone (AMH)",
+    "tsh": "Thyroid-Stimulating Hormone (TSH)",
+    "hba1c": "HbA1c",
+    "units": "Units",
+    "submitTier2": "Calculate Tier 2 Assessment"
+  },
+  "viewFullAssessmentCTA": "View Full Assessment",
+  "startReassessmentCTA": "Start Reassessment",
+  "noFemaleScreeningTitle": "No PCOS screening result yet",
+  "noMaleScreeningTitle": "No male hormonal screening result yet",
+  "screeningEmptyDesc": "Complete your clinical questionnaire to calculate your baseline statistical risk.",
+  "startScreeningCTA": "Start Screening",
+  "recently": "Recently",
+  "nextRecommended": "Next recommended",
+  "in3Months": "In 3 months",
+  "synced": "Synced"
+}

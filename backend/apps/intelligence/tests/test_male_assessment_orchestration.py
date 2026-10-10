@@ -30,6 +30,11 @@ from apps.intelligence.services.intelligence_orchestrator import (
     MALE_CLINICAL_FIELD_RANGES,
 )
 from apps.intelligence.services.assessment_repository import assessment_repository
+from apps.intelligence.views import (
+    MaleTier1AssessmentView,
+    MaleTier2AssessmentView,
+)
+from rest_framework.test import APIRequestFactory, force_authenticate
 
 
 @override_settings(ALLOW_LOCAL_SQLITE_FALLBACK=True)
@@ -42,7 +47,7 @@ class MaleAssessmentOrchestrationTests(TestCase):
 
         class MockProfile:
             gender = "male"
-            age = 48
+            age = None
             height_cm = None
             weight_kg = None
             cycle_length = None
@@ -213,6 +218,241 @@ class MaleAssessmentOrchestrationTests(TestCase):
 
         with self.assertRaises(ValueError):
             validate_male_clinical_value("hba1c_pct", "abc")
+
+    def test_male_tier1_api_direct_eligibility_enforcement(self):
+        factory = APIRequestFactory()
+        mock_user = MagicMock()
+        mock_user.id = self.patient_uuid
+        mock_user.raw_token = "mock-token"
+        mock_user.is_authenticated = True
+
+        base_payload = {
+            "height_cm": 178.0,
+            "weight_kg": 85.0,
+            "waist_cm": 92.0,
+            "low_energy": 1,
+            "sleep_trouble": 0,
+            "low_mood": 0,
+            "low_interest": 0,
+            "high_blood_pressure": 0,
+            "diabetes": 0,
+        }
+
+        # 1. Underage (18) direct API request -> HTTP 400 Bad Request
+        req_18 = factory.post("/api/v1/intelligence/assessment/male/tier1/", {**base_payload, "age": 18}, format="json")
+        force_authenticate(req_18, user=mock_user)
+        res_18 = MaleTier1AssessmentView.as_view()(req_18)
+        self.assertEqual(res_18.status_code, 400)
+        self.assertEqual(res_18.data.get("reason"), "age_under_19")
+        self.assertFalse(res_18.data.get("eligible"))
+
+        # Verify persistence prevention: Ineligible request must NEVER persist an active assessment
+        active_after_18 = assessment_repository.get_active_assessment(self.patient_uuid, module="male_hypogonadism")
+        self.assertIsNone(active_after_18, "Rejected assessment must not persist or create an active assessment record")
+
+        # 2. Lower boundary (19) direct API request -> HTTP 200 OK
+        req_19 = factory.post("/api/v1/intelligence/assessment/male/tier1/", {**base_payload, "age": 19}, format="json")
+        force_authenticate(req_19, user=mock_user)
+        res_19 = MaleTier1AssessmentView.as_view()(req_19)
+        self.assertEqual(res_19.status_code, 200)
+        self.assertIn("probability", res_19.data)
+
+        # 3. Upper boundary (60) direct API request -> HTTP 200 OK
+        req_60 = factory.post("/api/v1/intelligence/assessment/male/tier1/", {**base_payload, "age": 60}, format="json")
+        force_authenticate(req_60, user=mock_user)
+        res_60 = MaleTier1AssessmentView.as_view()(req_60)
+        self.assertEqual(res_60.status_code, 200)
+        self.assertIn("probability", res_60.data)
+
+        # 4. Over 60 (61) direct API request -> HTTP 400 Bad Request
+        req_61 = factory.post("/api/v1/intelligence/assessment/male/tier1/", {**base_payload, "age": 61}, format="json")
+        force_authenticate(req_61, user=mock_user)
+        res_61 = MaleTier1AssessmentView.as_view()(req_61)
+        self.assertEqual(res_61.status_code, 400)
+        self.assertEqual(res_61.data.get("reason"), "age_over_60")
+        self.assertFalse(res_61.data.get("eligible"))
+
+        # 5. Future DOB direct API request -> HTTP 400 Bad Request
+        future_dob = "2030-01-01"
+        req_future = factory.post("/api/v1/intelligence/assessment/male/tier1/", {**base_payload, "date_of_birth": future_dob, "age": None}, format="json")
+        force_authenticate(req_future, user=mock_user)
+        res_future = MaleTier1AssessmentView.as_view()(req_future)
+        self.assertEqual(res_future.status_code, 400)
+        self.assertEqual(res_future.data.get("reason"), "future_dob")
+
+        # 6. Invalid / Corrupted DOB format -> HTTP 400 Bad Request
+        req_corrupt = factory.post("/api/v1/intelligence/assessment/male/tier1/", {**base_payload, "date_of_birth": "invalid-calendar-date", "age": None}, format="json")
+        force_authenticate(req_corrupt, user=mock_user)
+        res_corrupt = MaleTier1AssessmentView.as_view()(req_corrupt)
+        self.assertEqual(res_corrupt.status_code, 400)
+        self.assertEqual(res_corrupt.data.get("reason"), "invalid_dob")
+
+        # 7. Contradictory submitted age and DOB -> HTTP 400 Bad Request
+        req_conflict = factory.post("/api/v1/intelligence/assessment/male/tier1/", {**base_payload, "date_of_birth": "2000-01-01", "age": 55}, format="json")
+        force_authenticate(req_conflict, user=mock_user)
+        res_conflict = MaleTier1AssessmentView.as_view()(req_conflict)
+        self.assertEqual(res_conflict.status_code, 400)
+        self.assertEqual(res_conflict.data.get("reason"), "conflicting_age_and_dob")
+
+    def test_male_tier1_spoofed_age_on_ineligible_account_blocked(self):
+        """
+        Security verification: An existing user account with an ineligible profile DOB (e.g. age 17)
+        CANNOT bypass screening by submitting a forged eligible age (e.g. 25) or fake DOB in the request body.
+        """
+        factory = APIRequestFactory()
+        mock_user = MagicMock()
+        mock_user.id = f"ineligible-account-{self.patient_uuid}"
+        mock_user.raw_token = "mock-token"
+        mock_user.is_authenticated = True
+
+        from datetime import date
+        today = date.today()
+        # DOB that makes user exactly 17 years old
+        ineligible_dob = f"{today.year - 17:04d}-{today.month:02d}-{today.day:02d}"
+
+        class IneligibleProfile:
+            gender = "male"
+            date_of_birth = ineligible_dob
+            age = 17
+            height_cm = 175.0
+            weight_kg = 75.0
+            waist_cm = 85.0
+            conditions = []
+            mens_health = {}
+            lifestyle = {}
+
+        class IneligibleHealthData:
+            profile = IneligibleProfile()
+            medical_reports = []
+
+        with patch("apps.health.services.supabase_health_service.health_service.fetch_all", return_value=IneligibleHealthData()):
+            base_payload = {
+                "height_cm": 175.0,
+                "weight_kg": 75.0,
+                "waist_cm": 85.0,
+                "low_energy": 0,
+                "sleep_trouble": 0,
+                "low_mood": 0,
+                "low_interest": 0,
+                "high_blood_pressure": 0,
+                "diabetes": 0,
+            }
+
+            # Attempt A: User makes request without age -> blocked by authoritative profile DOB (age 17)
+            req_a = factory.post("/api/v1/intelligence/assessment/male/tier1/", base_payload, format="json")
+            force_authenticate(req_a, user=mock_user)
+            res_a = MaleTier1AssessmentView.as_view()(req_a)
+            self.assertEqual(res_a.status_code, 400)
+            self.assertEqual(res_a.data.get("reason"), "age_under_19")
+
+            # Attempt B: User tries to spoof an eligible age (25) in request payload -> rejected due to profile conflict
+            req_b = factory.post("/api/v1/intelligence/assessment/male/tier1/", {**base_payload, "age": 25}, format="json")
+            force_authenticate(req_b, user=mock_user)
+            res_b = MaleTier1AssessmentView.as_view()(req_b)
+            self.assertEqual(res_b.status_code, 400)
+            self.assertEqual(res_b.data.get("reason"), "conflicting_age_and_dob")
+
+            # Attempt C: User tries to spoof a forged eligible DOB (1995-01-01) in request payload -> rejected due to profile conflict
+            req_c = factory.post("/api/v1/intelligence/assessment/male/tier1/", {**base_payload, "date_of_birth": "1995-01-01"}, format="json")
+            force_authenticate(req_c, user=mock_user)
+            res_c = MaleTier1AssessmentView.as_view()(req_c)
+            self.assertEqual(res_c.status_code, 400)
+            self.assertEqual(res_c.data.get("reason"), "conflicting_age_and_dob")
+
+            # Attempt D: User tries to send both forged age 25 and forged DOB 1995-01-01 -> rejected due to profile conflict
+            req_d = factory.post("/api/v1/intelligence/assessment/male/tier1/", {**base_payload, "date_of_birth": "1995-01-01", "age": 25}, format="json")
+            force_authenticate(req_d, user=mock_user)
+            res_d = MaleTier1AssessmentView.as_view()(req_d)
+            self.assertEqual(res_d.status_code, 400)
+            self.assertEqual(res_d.data.get("reason"), "conflicting_age_and_dob")
+
+            # Verify no assessment record was persisted for any of these attempts
+            active_rec = assessment_repository.get_active_assessment(mock_user.id, module="male_hypogonadism")
+            self.assertIsNone(active_rec, "Spoofed requests on ineligible account must never persist an assessment")
+
+    def test_male_tier1_initial_onboarding_without_persisted_profile(self):
+        """
+        Initial onboarding support: Before profile persistence, user can submit a validated DOB.
+        Eligible DOB (19–60) is accepted; ineligible DOB (<19 or >60) is rejected.
+        """
+        factory = APIRequestFactory()
+        mock_user = MagicMock()
+        mock_user.id = f"onboarding-new-{self.patient_uuid}"
+        mock_user.raw_token = "mock-token"
+        mock_user.is_authenticated = True
+
+        class EmptyHealthData:
+            profile = None
+            medical_reports = []
+
+        with patch("apps.health.services.supabase_health_service.health_service.fetch_all", return_value=EmptyHealthData()):
+            from datetime import date
+            today = date.today()
+            valid_dob = f"{today.year - 25:04d}-{today.month:02d}-{today.day:02d}"
+            underage_dob = f"{today.year - 18:04d}-{today.month:02d}-{today.day:02d}"
+
+            base_payload = {
+                "height_cm": 178.0,
+                "weight_kg": 80.0,
+                "waist_cm": 88.0,
+                "low_energy": 0,
+                "sleep_trouble": 0,
+                "low_mood": 0,
+                "low_interest": 0,
+                "high_blood_pressure": 0,
+                "diabetes": 0,
+            }
+
+            # 1. Eligible DOB during onboarding -> HTTP 200 OK
+            req_ok = factory.post("/api/v1/intelligence/assessment/male/tier1/", {**base_payload, "date_of_birth": valid_dob}, format="json")
+            force_authenticate(req_ok, user=mock_user)
+            res_ok = MaleTier1AssessmentView.as_view()(req_ok)
+            self.assertEqual(res_ok.status_code, 200)
+
+            # 2. Ineligible DOB (18) during onboarding -> HTTP 400 Bad Request
+            req_bad = factory.post("/api/v1/intelligence/assessment/male/tier1/", {**base_payload, "date_of_birth": underage_dob}, format="json")
+            force_authenticate(req_bad, user=mock_user)
+            res_bad = MaleTier1AssessmentView.as_view()(req_bad)
+            self.assertEqual(res_bad.status_code, 400)
+            self.assertEqual(res_bad.data.get("reason"), "age_under_19")
+
+            # 3. Missing DOB & missing age during onboarding -> HTTP 400 Bad Request
+            req_missing = factory.post("/api/v1/intelligence/assessment/male/tier1/", base_payload, format="json")
+            force_authenticate(req_missing, user=mock_user)
+            res_missing = MaleTier1AssessmentView.as_view()(req_missing)
+            self.assertEqual(res_missing.status_code, 400)
+            self.assertEqual(res_missing.data.get("reason"), "missing_age")
+
+    def test_male_tier2_api_direct_eligibility_enforcement(self):
+        factory = APIRequestFactory()
+        mock_user = MagicMock()
+        mock_user.id = self.patient_uuid
+        mock_user.raw_token = "mock-token"
+        mock_user.is_authenticated = True
+
+        # Underage (18) direct Tier 2 API request -> HTTP 400 Bad Request
+        t2_payload_18 = {**self.male_tier2_labs, "age": 18}
+        req_t2_18 = factory.post("/api/v1/intelligence/assessment/male/tier2/", t2_payload_18, format="json")
+        force_authenticate(req_t2_18, user=mock_user)
+        res_t2_18 = MaleTier2AssessmentView.as_view()(req_t2_18)
+        self.assertEqual(res_t2_18.status_code, 400)
+        self.assertEqual(res_t2_18.data.get("reason"), "age_under_19")
+
+        # Over 60 (61) direct Tier 2 API request -> HTTP 400 Bad Request
+        t2_payload_61 = {**self.male_tier2_labs, "age": 61}
+        req_t2_61 = factory.post("/api/v1/intelligence/assessment/male/tier2/", t2_payload_61, format="json")
+        force_authenticate(req_t2_61, user=mock_user)
+        res_t2_61 = MaleTier2AssessmentView.as_view()(req_t2_61)
+        self.assertEqual(res_t2_61.status_code, 400)
+        self.assertEqual(res_t2_61.data.get("reason"), "age_over_60")
+
+        # Conflicting age and DOB in Tier 2 request -> HTTP 400 Bad Request
+        t2_payload_conflict = {**self.male_tier2_labs, "date_of_birth": "2000-01-01", "age": 55}
+        req_t2_conflict = factory.post("/api/v1/intelligence/assessment/male/tier2/", t2_payload_conflict, format="json")
+        force_authenticate(req_t2_conflict, user=mock_user)
+        res_t2_conflict = MaleTier2AssessmentView.as_view()(req_t2_conflict)
+        self.assertEqual(res_t2_conflict.status_code, 400)
+        self.assertEqual(res_t2_conflict.data.get("reason"), "conflicting_age_and_dob")
 
     def tearDown(self):
         self.sb_patcher1.stop()

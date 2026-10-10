@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -75,6 +76,7 @@ const LotusIcon: React.FC<{ className?: string }> = ({ className = 'w-4 h-4' }) 
 );
 
 export const TwoHealthPathwaysSection: React.FC = () => {
+  const { t } = useTranslation(['public', 'common']);
   return (
     <section
       id="two-pathways"
@@ -137,7 +139,7 @@ export const TwoHealthPathwaysSection: React.FC = () => {
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E0F7FA] border border-[#B2EBF2] text-xs font-semibold text-[#00838F] shadow-2xs">
             <Layers className="w-3.5 h-3.5" />
             <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.18em]">
-              TWO DEDICATED PATHWAYS
+              {t('public:twoPathways.eyebrow')}
             </span>
           </div>
 
@@ -150,7 +152,7 @@ export const TwoHealthPathwaysSection: React.FC = () => {
           </h2>
 
           <p className="text-xs sm:text-sm lg:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed font-sans">
-            Specialized, evidence-based screening for women and men — powered by AI, designed for you.
+            {t('public:twoPathways.subtitle')}
           </p>
         </div>
 
@@ -173,7 +175,7 @@ export const TwoHealthPathwaysSection: React.FC = () => {
                   {/* Top Pill: ♀ For Women */}
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFF0F5] border border-pink-200/80 text-[11px] font-bold text-[#E11D48] w-fit shadow-2xs">
                     <VenusIcon className="w-3.5 h-3.5 text-[#E11D48]" />
-                    <span>For Women</span>
+                    <span>{t('public:twoPathways.forWomen')}</span>
                   </div>
 
                   {/* Title */}
@@ -184,7 +186,7 @@ export const TwoHealthPathwaysSection: React.FC = () => {
 
                   {/* Description */}
                   <p className="text-xs sm:text-[13px] text-slate-600 font-sans leading-relaxed">
-                    Understand your risk for PCOS with a simple, non-diagnostic assessment based on symptoms, cycle information, lifestyle, and metabolic indicators.
+                    {t('public:twoPathways.femaleDesc')}
                   </p>
                 </div>
 
@@ -195,7 +197,7 @@ export const TwoHealthPathwaysSection: React.FC = () => {
                       <Calendar className="w-3 h-3" />
                     </div>
                     <span className="text-xs font-semibold text-slate-700">
-                      Menstrual &amp; hormonal health
+                      {t('public:twoPathways.femaleBullet1')}
                     </span>
                   </div>
 
@@ -204,7 +206,7 @@ export const TwoHealthPathwaysSection: React.FC = () => {
                       <Heart className="w-3 h-3 fill-[#E11D48]/20" />
                     </div>
                     <span className="text-xs font-semibold text-slate-700">
-                      Symptom &amp; lifestyle assessment
+                      {t('public:twoPathways.femaleBullet2')}
                     </span>
                   </div>
 
@@ -225,7 +227,7 @@ export const TwoHealthPathwaysSection: React.FC = () => {
                       type="button"
                       className="inline-flex items-center gap-2 px-6 py-2.5 sm:py-3 rounded-full font-bold text-white text-xs sm:text-sm bg-[#E11D48] hover:bg-[#BE123C] shadow-md shadow-pink-600/20 transition-all cursor-pointer"
                     >
-                      <span>Understand PCOS</span>
+                      <span>{t('public:twoPathways.understandPcos')}</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   </Link>
@@ -293,7 +295,7 @@ export const TwoHealthPathwaysSection: React.FC = () => {
                   {/* Top Pill: ♂ For Men */}
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F0F9FF] border border-sky-200/80 text-[11px] font-bold text-[#0284C7] w-fit shadow-2xs">
                     <MarsIcon className="w-3.5 h-3.5 text-[#0284C7]" />
-                    <span>For Men</span>
+                    <span>{t('public:twoPathways.forMen')}</span>
                   </div>
 
                   {/* Title */}
@@ -304,7 +306,7 @@ export const TwoHealthPathwaysSection: React.FC = () => {
 
                   {/* Description */}
                   <p className="text-xs sm:text-[13px] text-slate-600 font-sans leading-relaxed">
-                    Explore your risk for hypogonadism with a simple, non-diagnostic assessment based on symptoms, health profile, and relevant hormonal and metabolic indicators.
+                    {t('public:twoPathways.maleDesc')}
                   </p>
                 </div>
 
@@ -315,7 +317,7 @@ export const TwoHealthPathwaysSection: React.FC = () => {
                       <Dumbbell className="w-3 h-3" />
                     </div>
                     <span className="text-xs font-semibold text-slate-700">
-                      Symptoms &amp; energy levels
+                      {t('public:twoPathways.maleBullet1')}
                     </span>
                   </div>
 
@@ -324,7 +326,7 @@ export const TwoHealthPathwaysSection: React.FC = () => {
                       <Heart className="w-3 h-3 fill-[#0284C7]/20" />
                     </div>
                     <span className="text-xs font-semibold text-slate-700">
-                      Hormonal &amp; metabolic health
+                      {t('public:twoPathways.maleBullet2')}
                     </span>
                   </div>
 
@@ -345,7 +347,7 @@ export const TwoHealthPathwaysSection: React.FC = () => {
                       type="button"
                       className="inline-flex items-center gap-2 px-6 py-2.5 sm:py-3 rounded-full font-bold text-white text-xs sm:text-sm bg-[#0284C7] hover:bg-[#0369A1] shadow-md shadow-sky-600/20 transition-all cursor-pointer"
                     >
-                      <span>Understand Hypogonadism</span>
+                      <span>{t('public:twoPathways.understandHypogonadism')}</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   </Link>
@@ -409,21 +411,21 @@ export const TwoHealthPathwaysSection: React.FC = () => {
         <div className="mt-12 sm:mt-14 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs sm:text-sm font-semibold text-slate-600">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-[#00838F]" />
-            <span>Private &amp; Secure</span>
+            <span>{t('common:privateSecure')}</span>
           </div>
 
           <div className="hidden sm:block w-px h-4 bg-slate-200" aria-hidden="true" />
 
           <div className="flex items-center gap-2">
             <Stethoscope className="w-4 h-4 text-[#00838F]" />
-            <span>Clinically Informed</span>
+            <span>{t('common:clinicallyInformed')}</span>
           </div>
 
           <div className="hidden sm:block w-px h-4 bg-slate-200" aria-hidden="true" />
 
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-[#00838F]" />
-            <span>Built for Pakistan</span>
+            <span>{t('common:builtForPakistan')}</span>
           </div>
         </div>
       </Container>

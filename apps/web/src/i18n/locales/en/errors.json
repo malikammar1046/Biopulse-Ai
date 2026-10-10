@@ -1,0 +1,14 @@
+{
+  "general": "An unexpected error occurred. Please try again.",
+  "network": "Unable to connect to the BioPulse service. Please check your internet connection.",
+  "unauthorized": "Your session has expired. Please sign in again.",
+  "notFound": "The requested record was not found.",
+  "noAssessments": "No screening assessments found. Complete Tier 1 to begin.",
+  "providerUnavailable": "The AI service is currently warming up or temporarily unavailable. Please try again in a moment.",
+  "fileTooLarge": "The uploaded file exceeds the 10 MB limit. Please upload a smaller file.",
+  "invalidFileType": "Invalid file format. Please upload a valid PDF, JPG, or PNG document.",
+  "ocrFailed": "Automated OCR extraction could not read this document clearly. Please check the scan or enter values manually.",
+  "validationFailed": "Please check the highlighted fields and correct any invalid values.",
+  "saveFailed": "Unable to save your changes to the database. Please try again.",
+  "syncFailed": "Unable to synchronize latest health metrics. Viewing cached state."
+}

@@ -21,6 +21,16 @@ EMERGENCY_PATTERNS = [
     r"\b(?:suicid\w*|kill\s+myself|harm\s+myself)\b",
 ]
 
+# Urgent clinical red-flags in Urdu
+URDU_EMERGENCY_PATTERNS = [
+    r"(?:شدید|بہت زیادہ|برداشت سے باہر)\s+(?:درد|تکلیف)",
+    r"(?:سینے میں درد|دل کا دورہ)",
+    r"(?:بے ہوش|چکر آ کر گر|غش)",
+    r"(?:سانس لینے میں دشواری|دم گھٹنا)",
+    r"(?:شدید خون|خون بہنا)",
+    r"(?:خود کشی|جان لینا|نقصان پہنچانا)",
+]
+
 # Prompt injection patterns attempting to bypass safety rules
 INJECTION_PATTERNS = [
     r"\bignore\s+(?:all\s+)?(?:previous\s+)?(?:instructions|rules|prompts|guardrails)\b",
@@ -51,26 +61,44 @@ class SafetyGuardrails:
     """Evaluates user input and LLM output against safety, emergency, and injection rules."""
 
     @staticmethod
-    def check_emergency(user_message: str) -> Optional[str]:
+    def check_emergency(user_message: str, locale: str = "en") -> Optional[str]:
         """
         Detects acute clinical emergency red flags.
         Returns urgent emergency advisory if detected, or None.
         """
         msg_lower = user_message.lower()
+        is_emergency = False
         for pattern in EMERGENCY_PATTERNS:
             if re.search(pattern, msg_lower, re.IGNORECASE):
+                is_emergency = True
+                break
+        if not is_emergency:
+            for pattern in URDU_EMERGENCY_PATTERNS:
+                if re.search(pattern, user_message, re.IGNORECASE):
+                    is_emergency = True
+                    break
+
+        if is_emergency:
+            if locale == "ur":
                 return (
-                    "⚠️ **Immediate Medical Attention Recommended**\n\n"
-                    "The symptoms you described may indicate a medical situation that requires urgent professional evaluation. "
-                    "BioPulse AI is not an emergency service and cannot diagnose or treat acute conditions.\n\n"
-                    "• **Action**: Please call your local emergency services (e.g. 911, 112, or local helpline) or go to the "
-                    "nearest hospital emergency department immediately.\n"
-                    "• If you have a trusted friend, family member, or care circle contact nearby, alert them right away."
+                    "⚠️ **فوری طبی امداد کی ضرورت ہے (Immediate Medical Attention Required)**\n\n"
+                    "آپ نے جن علامات کا ذکر کیا ہے، وہ کسی فوری اور ہنگامی طبی صورتحال کی نشاندہی کر سکتی ہیں جن کے لیے فوری پیشہ ورانہ معائنے کی ضرورت ہے۔ "
+                    "BioPulse AI کوئی ایمرجنسی سروس نہیں ہے اور نہ ہی یہ ہنگامی حالت میں تشخیص یا علاج فراہم کر سکتا ہے۔\n\n"
+                    "• **اقدام**: برائے مہربانی فوری طور پر اپنی قریبی ایمرجنسی سروس (جیسے 1122، ریسکیو یا قریبی ہسپتال) سے رابطہ کریں یا فوری ایمرجنسی وارڈ تشریف لے جائیں۔\n"
+                    "• اگر کوئی قریبی عزیز یا فیملی ممبر پاس موجود ہو تو فوری طور پر انہیں بھی مطلع کریں۔"
                 )
+            return (
+                "⚠️ **Immediate Medical Attention Recommended**\n\n"
+                "The symptoms you described may indicate a medical situation that requires urgent professional evaluation. "
+                "BioPulse AI is not an emergency service and cannot diagnose or treat acute conditions.\n\n"
+                "• **Action**: Please call your local emergency services (e.g. 911, 112, or local helpline) or go to the "
+                "nearest hospital emergency department immediately.\n"
+                "• If you have a trusted friend, family member, or care circle contact nearby, alert them right away."
+            )
         return None
 
     @staticmethod
-    def check_prompt_injection(user_message: str) -> Optional[str]:
+    def check_prompt_injection(user_message: str, locale: str = "en") -> Optional[str]:
         """
         Detects prompt injection attempts aiming to override clinical guardrails.
         Returns standard safety boundary refusal if detected, or None.
@@ -78,6 +106,12 @@ class SafetyGuardrails:
         msg_lower = user_message.lower()
         for pattern in INJECTION_PATTERNS:
             if re.search(pattern, msg_lower, re.IGNORECASE):
+                if locale == "ur":
+                    return (
+                        "BioPulse AI Companion صحت کی آگاہی اور رہنمائی کا پلیٹ فارم ہے اور طبی حفاظت کے سخت اصولوں کے تحت کام کرتا ہے۔ "
+                        "میں حتمی طبی تشخیص دینے، ادویات تجویز کرنے یا حفاظتی قواعد کو تبدیل کرنے کا مجاز نہیں ہوں۔\n\n"
+                        "میں آپ کی درج کردہ علامات کو سمجھنے، لیبارٹری رزلٹس کی وضاحت کرنے اور ڈاکٹر کے ساتھ معائنے کے لیے اہم سوالات تیار کرنے میں مدد کر سکتا ہوں۔"
+                    )
                 return (
                     "BioPulse AI Companion is an educational health literacy companion and operates strictly within clinical safety guidelines. "
                     "I cannot provide a formal medical diagnosis, prescribe medications, or override healthcare safety boundaries.\n\n"
@@ -87,7 +121,7 @@ class SafetyGuardrails:
         return None
 
     @staticmethod
-    def check_privacy_request(user_message: str) -> Optional[str]:
+    def check_privacy_request(user_message: str, locale: str = "en") -> Optional[str]:
         """
         Detects when an unauthenticated public visitor requests personal health records,
         screening results, personalized risk assessments, or private clinical data.
@@ -105,6 +139,12 @@ class SafetyGuardrails:
         ]
         for pattern in privacy_triggers:
             if re.search(pattern, msg_lower, re.IGNORECASE):
+                if locale == "ur":
+                    return (
+                        "آپ کے ذاتی ڈیٹا کے تحفظ کے لیے، ذاتی معلومات اور اسکریننگ نتائج صرف BioPulse اکاؤنٹ میں سائن ان ہونے کے بعد ہی دستیاب ہوتے ہیں۔\n\n"
+                        "بطور پبلک BioPulse اسسٹنٹ، میں عمومی صحت کے سوالات کے جوابات دے سکتا ہوں اور طبی اصطلاحات کی وضاحت کر سکتا ہوں۔ "
+                        "اپنا ذاتی اسکریننگ اسکور دیکھنے یا لیب رپورٹس اپ لوڈ کرنے کے لیے، برائے مہربانی [سائن ان کریں](/login) یا [رجسٹر کریں](/register)۔"
+                    )
                 return (
                     "To protect your privacy, personalized health information is only available after you sign in to your BioPulse account.\n\n"
                     "As the public BioPulse Assistant, I can answer general health questions, explain common medical terms, and guide you through how BioPulse works. "

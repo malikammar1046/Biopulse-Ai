@@ -89,8 +89,8 @@ export const MasterHealthHub: React.FC = () => {
       {/* ── Actions Toolbar ── */}
       <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-white border border-[#EAECF0] shadow-xs">
         <div className="flex items-center gap-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F0F9FF] border border-[#BAE6FD] text-xs font-mono text-[#0288D1] font-semibold">
-            <Grid01 className="w-3.5 h-3.5 text-[#0288D1] shrink-0" aria-hidden="true" />
+          <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full ${isMale ? 'bg-[#F0F9FF] border-[#BAE6FD] text-[#0288D1]' : 'bg-[#FDE6EF] border-[#F43F7D]/20 text-[#E11D48]'} border text-xs font-mono font-semibold`}>
+            <Grid01 className={`w-3.5 h-3.5 ${isMale ? 'text-[#0288D1]' : 'text-[#E11D48]'} shrink-0`} aria-hidden="true" />
             <span>Master Clinical Hub</span>
           </div>
           <span className="text-xs text-[#64748B] hidden sm:inline">
@@ -101,7 +101,7 @@ export const MasterHealthHub: React.FC = () => {
         <button
           type="button"
           onClick={() => openAiChatWithPrompt('Generate a comprehensive health summary across all my logged modules.')}
-          className="px-4 py-2.5 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white font-sans text-xs font-bold shadow-xs transition-all flex items-center gap-2 cursor-pointer shrink-0"
+          className={`px-4 py-2.5 rounded-xl ${isMale ? 'bg-[#0288D1] hover:bg-[#0277BD]' : 'bg-[#F43F7D] hover:bg-[#E11D48]'} text-white font-sans text-xs font-bold shadow-xs transition-all flex items-center gap-2 cursor-pointer shrink-0`}
         >
           <MessageChatCircle className="w-4 h-4 text-white shrink-0" aria-hidden="true" />
           <span>Ask Health Hub AI</span>
@@ -117,7 +117,7 @@ export const MasterHealthHub: React.FC = () => {
       </section>
 
       {/* ── 3. User Health Profile Summary & Completion Center ── */}
-      <HealthProfileSummaryCard />
+      <HealthProfileSummaryCard isMale={isMale} />
 
       {/* ── 4. Top Metric Snapshot Cards (4 Columns) ── */}
       <HealthSnapshotCard
@@ -146,6 +146,7 @@ export const MasterHealthHub: React.FC = () => {
         {/* Today's Checkable Reminders */}
         <TodayRemindersCard
           reminders={reminders}
+          isMale={isMale}
           onToggle={toggleReminder}
           onAddReminder={() => openAiChatWithPrompt('Help me add a new reminder')}
         />
@@ -153,18 +154,18 @@ export const MasterHealthHub: React.FC = () => {
 
       {/* ── 6. Lifestyle & Medical Status Triad (Nutrition, Movement, Lab Reports) ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        <NutritionSnapshotCard data={nutrition} />
+        <NutritionSnapshotCard data={nutrition} isMale={isMale} />
         <FitnessSnapshotCard data={fitness} />
-        <RecentReportsCard reports={reports} />
+        <RecentReportsCard reports={reports} isMale={isMale} />
       </div>
 
       {/* ── 7. Longitudinal Health Journey & Patterns ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
-          <HealthJourneyTimelineCard recentEvents={recentTimelineEvents} />
+          <HealthJourneyTimelineCard recentEvents={recentTimelineEvents} isMale={isMale} />
         </div>
         <div className="lg:col-span-2">
-          <HealthPatternsChart />
+          <HealthPatternsChart isMale={isMale} />
         </div>
       </div>
 
@@ -173,6 +174,7 @@ export const MasterHealthHub: React.FC = () => {
         <div className="lg:col-span-1">
           <CareCircleCard
             contacts={careCircle}
+            pathway={pathway}
             onPrepareAppointment={() =>
               openAiChatWithPrompt('Prepare a 1-page health summary for Dr. Sara Malik')
             }
@@ -180,7 +182,7 @@ export const MasterHealthHub: React.FC = () => {
         </div>
 
         <div className="lg:col-span-2 flex flex-col justify-center">
-          <WeeklyHealthSummary />
+          <WeeklyHealthSummary pathway={pathway} />
         </div>
       </div>
     </motion.div>

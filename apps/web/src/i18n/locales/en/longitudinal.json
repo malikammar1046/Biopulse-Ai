@@ -1,0 +1,34 @@
+{
+  "title": "Longitudinal Health & Biomarker Trajectory",
+  "subtitle": "Track your hormonal markers, symptom burden, and lifestyle indicators across time",
+  "timeRanges": {
+    "30d": "Last 30 Days",
+    "90d": "Last 90 Days",
+    "180d": "Last 180 Days",
+    "1y": "Full Year"
+  },
+  "metrics": {
+    "screeningLikelihood": "Screening Likelihood",
+    "bmi": "BMI & Body Composition",
+    "symptomBurden": "Symptom Severity Index",
+    "fastingGlucose": "Fasting Glucose",
+    "testosterone": "Testosterone",
+    "lhFshRatio": "LH : FSH Ratio",
+    "hydration": "Water Intake Consistency",
+    "sleepAverage": "Sleep Duration Trend"
+  },
+  "baseline": {
+    "label": "Established Baseline",
+    "establishedDate": "Baseline Established",
+    "comparativeTitle": "Current vs. Baseline Analysis",
+    "stableMessage": "Your endocrine parameters have remained within expected physiological stability.",
+    "improvingMessage": "Notable positive trend observed compared to your initial baseline assessment.",
+    "attentionMessage": "Fluctuation detected. Review lifestyle consistency or discuss with your specialist."
+  },
+  "syncStatus": {
+    "synced": "Synchronized with clinical repository",
+    "syncing": "Updating trajectory records...",
+    "offline": "Viewing cached trajectory"
+  },
+  "emptyTrajectory": "Not enough observation points yet. Complete screening updates and log daily habits to generate meaningful trends."
+}

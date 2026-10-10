@@ -15,6 +15,8 @@ import { ROUTES } from '../../constants/routes';
 import { Logo } from '../brand/Logo';
 import { HeaderLeftBotanical, HeaderRightBotanical } from '../brand/BotanicalFoliage';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from 'react-i18next';
+import { LanguageSwitcher } from '../i18n/LanguageSwitcher';
 
 interface NavDropdownItem {
   label: string;
@@ -36,6 +38,7 @@ const SEARCH_SUGGESTIONS = [
 ];
 
 export const Navbar: React.FC = () => {
+  const { t } = useTranslation(['navigation', 'common', 'public']);
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, loading } = useAuth();
@@ -168,7 +171,7 @@ export const Navbar: React.FC = () => {
                   isHomeActive ? 'text-[#0891B2] font-bold' : 'text-slate-600 hover:text-[#0891B2]'
                 }`}
               >
-                Home
+                {t('home')}
                 {isHomeActive && (
                   <motion.div
                     layoutId="navbar-active-indicator"
@@ -185,7 +188,7 @@ export const Navbar: React.FC = () => {
                   isAboutActive ? 'text-[#0891B2] font-bold' : 'text-slate-600 hover:text-[#0891B2]'
                 }`}
               >
-                About
+                {t('about')}
                 {isAboutActive && (
                   <motion.div
                     layoutId="navbar-active-indicator"
@@ -202,7 +205,7 @@ export const Navbar: React.FC = () => {
                   isHowItWorksActive ? 'text-[#0891B2] font-bold' : 'text-slate-600 hover:text-[#0891B2]'
                 }`}
               >
-                How It Works
+                {t('howItWorks')}
                 {isHowItWorksActive && (
                   <motion.div
                     layoutId="navbar-active-indicator"
@@ -219,7 +222,7 @@ export const Navbar: React.FC = () => {
                   isCareCircleActive ? 'text-[#0891B2] font-bold' : 'text-slate-600 hover:text-[#0891B2]'
                 }`}
               >
-                Care Circle
+                {t('careCircle')}
                 {isCareCircleActive && (
                   <motion.div
                     layoutId="navbar-active-indicator"
@@ -243,7 +246,7 @@ export const Navbar: React.FC = () => {
                   }`}
                   aria-expanded={activeDropdown === 'education'}
                 >
-                  <span>Education</span>
+                  <span>{t('conditions')}</span>
                   <ChevronDown
                     className={`w-3.5 h-3.5 transition-transform duration-200 ${
                       activeDropdown === 'education' ? 'rotate-180 text-[#0891B2]' : 'text-slate-400'
@@ -309,7 +312,7 @@ export const Navbar: React.FC = () => {
                   isContactActive ? 'text-[#0891B2] font-bold' : 'text-slate-600 hover:text-[#0891B2]'
                 }`}
               >
-                Contact
+                {t('contact')}
                 {isContactActive && (
                   <motion.div
                     layoutId="navbar-active-indicator"
@@ -326,7 +329,7 @@ export const Navbar: React.FC = () => {
                   isAppActive ? 'text-[#0891B2] font-bold' : 'text-slate-600 hover:text-[#0891B2]'
                 }`}
               >
-                <span>Mobile App</span>
+                <span>{t('download')}</span>
                 <span className="px-1.5 py-0.5 rounded-full bg-cyan-100 text-[#0891B2] text-[9px] font-bold tracking-tight">
                   APK
                 </span>
@@ -353,6 +356,9 @@ export const Navbar: React.FC = () => {
                 <Search className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.2]" />
               </button>
 
+              {/* Language Switcher */}
+              <LanguageSwitcher className="hidden sm:inline-flex" />
+
               {/* Auth Buttons */}
               {loading ? (
                 <div className="h-8 sm:h-9 w-20 sm:w-28 rounded-full bg-slate-100/70 animate-pulse" />
@@ -361,7 +367,7 @@ export const Navbar: React.FC = () => {
                   to={ROUTES.APP.ROOT}
                   className="inline-flex items-center justify-center px-3.5 sm:px-6 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-[#00C4DF] to-[#0284C7] hover:from-[#00B4CB] hover:to-[#0369A1] text-xs sm:text-sm font-bold text-white shadow-[0_4px_14px_rgba(0,196,223,0.35)] hover:shadow-lg transition-all whitespace-nowrap flex items-center gap-1.5"
                 >
-                  <span>Dashboard</span>
+                  <span>{t('dashboard')}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               ) : (
@@ -370,14 +376,14 @@ export const Navbar: React.FC = () => {
                     to={ROUTES.LOGIN}
                     className="hidden sm:inline-flex items-center justify-center px-4 sm:px-5 py-1.5 rounded-full border-[1.5px] border-[#38BDF8] text-xs sm:text-sm font-semibold text-[#0284C7] bg-white hover:bg-sky-50 hover:border-[#0284C7] transition-all whitespace-nowrap shadow-2xs"
                   >
-                    Log In
+                    {t('signIn')}
                   </Link>
 
                   <Link
                     to={ROUTES.REGISTER}
                     className="inline-flex items-center justify-center px-3.5 sm:px-6 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-[#00C4DF] to-[#0284C7] hover:from-[#00B4CB] hover:to-[#0369A1] text-xs sm:text-sm font-bold text-white shadow-[0_4px_14px_rgba(0,196,223,0.35)] hover:shadow-lg transition-all whitespace-nowrap flex items-center gap-1.5"
                   >
-                    <span>Get Started</span>
+                    <span>{t('register')}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
@@ -439,7 +445,7 @@ export const Navbar: React.FC = () => {
                       isHomeActive ? 'bg-sky-50 text-[#0891B2] font-bold' : 'hover:bg-slate-50'
                     }`}
                   >
-                    Home
+                    {t('home')}
                   </Link>
                   <Link
                     to={ROUTES.ABOUT}
@@ -447,7 +453,7 @@ export const Navbar: React.FC = () => {
                       isAboutActive ? 'bg-sky-50 text-[#0891B2] font-bold' : 'hover:bg-slate-50'
                     }`}
                   >
-                    About
+                    {t('about')}
                   </Link>
                   <Link
                     to={ROUTES.HOW_IT_WORKS}
@@ -455,7 +461,7 @@ export const Navbar: React.FC = () => {
                       isHowItWorksActive ? 'bg-sky-50 text-[#0891B2] font-bold' : 'hover:bg-slate-50'
                     }`}
                   >
-                    How It Works
+                    {t('howItWorks')}
                   </Link>
                   <Link
                     to={ROUTES.CARE_CIRCLE}
@@ -463,12 +469,12 @@ export const Navbar: React.FC = () => {
                       isCareCircleActive ? 'bg-sky-50 text-[#0891B2] font-bold' : 'hover:bg-slate-50'
                     }`}
                   >
-                    Care Circle
+                    {t('careCircle')}
                   </Link>
                   {/* Sub-menu for Education */}
                   <div className="pt-2 pb-1 px-2.5">
                     <span className="text-[11px] font-mono uppercase font-bold text-slate-400 block mb-1">
-                      Education Pathways
+                      {t('conditions')}
                     </span>
                     <div className="space-y-1 pl-1">
                       <Link
@@ -476,14 +482,14 @@ export const Navbar: React.FC = () => {
                         className="flex items-center gap-2 p-2 rounded-lg text-xs font-bold text-[#E11D48] hover:bg-rose-50/70"
                       >
                         <Heart className="w-3.5 h-3.5" />
-                        <span>Understand PCOS</span>
+                        <span>{t('understandPcos')}</span>
                       </Link>
                       <Link
                         to={ROUTES.UNDERSTAND_MALE_HYPOGONADISM}
                         className="flex items-center gap-2 p-2 rounded-lg text-xs font-bold text-[#0891B2] hover:bg-sky-50/70"
                       >
                         <Activity className="w-3.5 h-3.5" />
-                        <span>Understand Male Hypogonadism</span>
+                        <span>{t('understandHypogonadism')}</span>
                       </Link>
                     </div>
                   </div>
@@ -493,7 +499,7 @@ export const Navbar: React.FC = () => {
                       isContactActive ? 'bg-sky-50 text-[#0891B2] font-bold' : 'hover:bg-slate-50'
                     }`}
                   >
-                    Contact &amp; Support
+                    {t('contact')}
                   </Link>
                   <Link
                     to={ROUTES.APP_DOWNLOAD}
@@ -501,15 +507,21 @@ export const Navbar: React.FC = () => {
                       isAppActive ? 'bg-sky-50 text-[#0891B2] font-bold' : 'hover:bg-slate-50'
                     }`}
                   >
-                    <span>Download Mobile App</span>
+                    <span>{t('download')}</span>
                     <span className="px-2 py-0.5 rounded-full bg-cyan-100 text-[#0891B2] text-[10px] font-bold">
                       APK v1.0.0
                     </span>
                   </Link>
                 </div>
 
+                {/* Mobile Language Switcher */}
+                <div className="py-2.5 px-2 flex items-center justify-between border-t border-slate-100">
+                  <span className="text-xs font-semibold text-slate-600">Language / زبان</span>
+                  <LanguageSwitcher />
+                </div>
+
                 {/* Mobile Auth Actions */}
-                <div className="pt-4 border-t border-slate-100 flex flex-col gap-2.5">
+                <div className="pt-3 border-t border-slate-100 flex flex-col gap-2.5">
                   {loading ? (
                     <div className="w-full h-11 rounded-xl bg-slate-100/70 animate-pulse" />
                   ) : isAuthenticated ? (
@@ -517,7 +529,7 @@ export const Navbar: React.FC = () => {
                       to={ROUTES.APP.ROOT}
                       className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#00C4DF] to-[#0284C7] text-white text-center font-bold text-sm shadow-md flex items-center justify-center gap-2"
                     >
-                      <span>Dashboard</span>
+                      <span>{t('dashboard')}</span>
                       <ArrowRight className="w-4 h-4" />
                     </Link>
                   ) : (
@@ -526,14 +538,14 @@ export const Navbar: React.FC = () => {
                         to={ROUTES.REGISTER}
                         className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#00C4DF] to-[#0284C7] text-white text-center font-bold text-sm shadow-md flex items-center justify-center gap-2"
                       >
-                        <span>Get Started</span>
+                        <span>{t('register')}</span>
                         <ArrowRight className="w-4 h-4" />
                       </Link>
                       <Link
                         to={ROUTES.LOGIN}
                         className="w-full py-2.5 rounded-xl border border-slate-200 text-[#0284C7] text-center font-semibold text-sm hover:bg-slate-50"
                       >
-                        Log In
+                        {t('signIn')}
                       </Link>
                     </>
                   )}

@@ -147,13 +147,12 @@ class TestPCOSMLProgressiveService(TestCase):
         mm_res = pcos_ml_service.predict_tier1_2_3_multimodal(sample_t2, img)
         self.assertEqual(mm_res["assessment_level"], "tier_1_2_3")
         self.assertEqual(mm_res["tiers_included"], [1, 2, 3])
-        self.assertEqual(mm_res["threshold"], 0.29)
-        self.assertEqual(mm_res["threshold"], MULTIMODAL_SCREENING_THRESHOLD)
-        self.assertEqual(mm_res["screening_policy_version"], "exploratory_v1")
-        self.assertEqual(mm_res["operating_point_status"], "exploratory_pending_clinical_validation")
+        self.assertEqual(mm_res["threshold"], 0.25)
+        self.assertEqual(mm_res["screening_policy_version"], "v2")
         self.assertIn("fusion_details", mm_res)
-        self.assertEqual(mm_res["fusion_details"]["clinical_weight"], 0.95)
-        self.assertEqual(mm_res["fusion_details"]["ultrasound_weight"], 0.05)
+        self.assertIn("Current Tier 2 model-derived screening estimate", mm_res["fusion_details"]["fusion_method"])
+        self.assertTrue(mm_res["fusion_details"]["numerical_score_anchored_to_tier2"])
+        self.assertFalse(mm_res["fusion_details"]["multimodal_fusion_applied"])
 
 
 @override_settings(ALLOW_LOCAL_SQLITE_FALLBACK=True)

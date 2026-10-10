@@ -25,11 +25,14 @@ import { Container } from '../../components/ui/Container';
 import { Button } from '../../components/ui/Button';
 import { ROUTES } from '../../constants/routes';
 import { SmallBotanicalSprig } from '../../components/brand/BotanicalFoliage';
+import { useTranslation } from 'react-i18next';
 
 export const TrustAndPrivacy: React.FC = () => {
+  const { t } = useTranslation(['public', 'common']);
+
   useEffect(() => {
-    document.title = 'Trust, Ethics & Privacy Architecture | BioPulse AI';
-  }, []);
+    document.title = t('public:trustPage.title', 'Trust, Ethics & Privacy Architecture | BioPulse AI');
+  }, [t]);
 
   const securityPillars = [
     {
@@ -155,10 +158,7 @@ export const TrustAndPrivacy: React.FC = () => {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="text-4xl sm:text-5xl lg:text-6xl font-extrabold font-display tracking-tight text-[#162A45] leading-[1.15]"
             >
-              Your Health Data Belongs{' '}
-              <span className="text-[#0891B2]">
-                To You Alone
-              </span>
+              {t('public:trustPage.title', 'Trust, Privacy & Medical Safety')}
             </motion.h1>
 
             {/* Subtitle */}
@@ -168,9 +168,7 @@ export const TrustAndPrivacy: React.FC = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-base sm:text-lg text-slate-600 leading-relaxed font-sans max-w-2xl mx-auto"
             >
-              Reproductive health information is among the most sensitive data a human generates.
-              Explore how BioPulse AI safeguards patient sovereignty, enforces zero data brokerage, and
-              adheres to responsible, transparent AI principles.
+              {t('public:trustPage.subtitle', 'Our commitment to ethical artificial intelligence, patient data security, and non-diagnostic clinical boundaries.')}
             </motion.p>
 
             {/* Action Buttons */}

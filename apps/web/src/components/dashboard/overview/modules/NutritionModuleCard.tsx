@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Utensils, ArrowRight, PlusCircle, BookOpen } from 'lucide-react';
 import { DashboardModuleCard } from '../DashboardModuleCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
@@ -23,16 +24,17 @@ export const NutritionModuleCard: React.FC<NutritionModuleCardProps> = ({
   onLogMeal,
   updatedAt = '1 hr ago',
 }) => {
+  const { t } = useTranslation(['dashboard', 'lifestyle']);
   const isFemale = pathway === 'female';
 
   const menuItems = [
     {
-      label: 'View Meal Plan',
+      label: t('dashboard:viewMealPlan'),
       onClick: onViewMealPlan,
       icon: BookOpen,
     },
     {
-      label: 'Log a Meal',
+      label: t('dashboard:logMeal'),
       onClick: onLogMeal,
       icon: PlusCircle,
     },
@@ -61,8 +63,8 @@ export const NutritionModuleCard: React.FC<NutritionModuleCardProps> = ({
   if (!hasLogs) {
     return (
       <DashboardModuleCard
-        title="Nutrition & Meals"
-        subtitle="Today's intake vs your target"
+        title={t('dashboard:todaysNutrition')}
+        subtitle={t('dashboard:nutritionSubtitle')}
         icon={Utensils}
         accentColor={isFemale ? 'pink' : 'blue'}
         isLive={false}
@@ -70,9 +72,9 @@ export const NutritionModuleCard: React.FC<NutritionModuleCardProps> = ({
         loading={loading}
       >
         <DashboardEmptyState
-          title="No nutrition logs today"
-          description="Log your breakfast, lunch, dinner, or snacks to track calorie balance and macronutrients."
-          actionLabel="Log a Meal"
+          title={t('dashboard:noFoodLogsToday')}
+          description={t('dashboard:noFoodLogsDesc')}
+          actionLabel={t('dashboard:logFirstMeal')}
           onAction={onLogMeal}
           icon={Utensils}
           accentColor={isFemale ? 'pink' : 'blue'}
@@ -103,12 +105,12 @@ export const NutritionModuleCard: React.FC<NutritionModuleCardProps> = ({
 
   return (
     <DashboardModuleCard
-      title="Nutrition & Meals"
-      subtitle="Today's intake vs your target"
+      title={t('dashboard:todaysNutrition')}
+      subtitle={t('dashboard:nutritionSubtitle')}
       icon={Utensils}
       accentColor={isFemale ? 'pink' : 'blue'}
       isLive={true}
-      syncedModule="Nutrition module"
+      syncedModule={t('dashboard:nutritionSynced')}
       updatedAt={updatedAt}
       menuItems={menuItems}
       loading={loading}
@@ -154,7 +156,7 @@ export const NutritionModuleCard: React.FC<NutritionModuleCardProps> = ({
             {/* Carbs */}
             <div>
               <div className="flex justify-between text-xs font-sans mb-1">
-                <span className="font-semibold text-slate-700">Carbs</span>
+                <span className="font-semibold text-slate-700">{t('dashboard:carbsLabel')}</span>
                 <span className="text-slate-500 font-mono text-[11px]">
                   {carbPercent}% • {totalCarbs}g {targetCarbs ? `/ ${targetCarbs}g` : ''}
                 </span>
@@ -170,7 +172,7 @@ export const NutritionModuleCard: React.FC<NutritionModuleCardProps> = ({
             {/* Protein */}
             <div>
               <div className="flex justify-between text-xs font-sans mb-1">
-                <span className="font-semibold text-slate-700">Protein</span>
+                <span className="font-semibold text-slate-700">{t('dashboard:proteinLabel')}</span>
                 <span className="text-slate-500 font-mono text-[11px]">
                   {proteinPercent}% • {totalProtein}g {targetProtein ? `/ ${targetProtein}g` : ''}
                 </span>
@@ -186,7 +188,7 @@ export const NutritionModuleCard: React.FC<NutritionModuleCardProps> = ({
             {/* Fats */}
             <div>
               <div className="flex justify-between text-xs font-sans mb-1">
-                <span className="font-semibold text-slate-700">Fats</span>
+                <span className="font-semibold text-slate-700">{t('dashboard:fatLabel')}</span>
                 <span className="text-slate-500 font-mono text-[11px]">
                   {fatPercent}% • {totalFat}g {targetFat ? `/ ${targetFat}g` : ''}
                 </span>
@@ -212,7 +214,7 @@ export const NutritionModuleCard: React.FC<NutritionModuleCardProps> = ({
                 : 'border-[#0284C7]/30 text-[#0284C7] hover:bg-[#E0F2FE]/40'
             }`}
           >
-            <span>View Meal Plan</span>
+            <span>{t('dashboard:viewMealPlan')}</span>
             <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
         </div>

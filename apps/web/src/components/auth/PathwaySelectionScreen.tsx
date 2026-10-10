@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
   Heart,
   BarChart01,
@@ -123,6 +124,8 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
   error,
   onBack,
 }) => {
+  const { t } = useTranslation(['onboarding', 'common']);
+
   // Preload lazy onboarding chunks in the background upon mounting
   useEffect(() => {
     preloadOnboardingRoutes();
@@ -168,14 +171,14 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white/90 hover:bg-white border border-slate-200/80 shadow-2xs backdrop-blur-sm transition-all cursor-pointer disabled:opacity-50"
             >
               <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Back</span>
+              <span>{t('common:actions.back', 'Back')}</span>
             </button>
           )}
         </div>
 
         <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-slate-100/90 border border-slate-200/80 text-xs font-semibold text-slate-700 shadow-2xs">
           <Sliders01 className="w-3.5 h-3.5 text-teal-600" aria-hidden="true" />
-          <span>Step 2 of 2: Choose Pathway</span>
+          <span>{t('onboarding:pathwaySelection.stepBadge', 'Step 2 of 2: Choose Pathway')}</span>
         </div>
       </header>
 
@@ -189,7 +192,7 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
               className="text-2xl xl:text-3xl font-bold text-[#E11D48] leading-tight text-center"
               style={{ fontFamily: "'Caveat', cursive" }}
             >
-              Different<br />journeys.<br />A healthier you.
+              {t('onboarding:pathwaySelection.femaleSideNote', 'Different journeys. A healthier you.')}
             </span>
             <svg
               className="w-24 h-4 text-[#E11D48] mt-1"
@@ -210,7 +213,7 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
               className="text-2xl xl:text-3xl font-bold text-[#0284C7] leading-tight text-center"
               style={{ fontFamily: "'Caveat', cursive" }}
             >
-              Your health<br />today.<br />A brighter<br />tomorrow.
+              {t('onboarding:pathwaySelection.maleSideNote', 'Your health today. A brighter tomorrow.')}
             </span>
             <svg
               className="w-24 h-4 text-[#0284C7] mt-1"
@@ -226,19 +229,17 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
 
           {/* Top Eyebrow */}
           <p className="text-[11px] sm:text-xs font-extrabold tracking-[0.22em] text-[#162A45] uppercase mb-1.5 sm:mb-2">
-            SCIENCE TODAY. HEALTHIER TOMORROWS.
+            {t('onboarding:pathwaySelection.eyebrow', 'SCIENCE TODAY. HEALTHIER TOMORROWS.')}
           </p>
 
           {/* Main Display Title */}
           <h1 className="text-3xl sm:text-4xl lg:text-[2.6rem] font-extrabold tracking-tight text-[#162A45] leading-[1.1] mb-2">
-            Choose Your <span className="text-[#0891B2]">Health Path</span>
+            {t('onboarding:pathwaySelection.title', 'Choose Your Health Path')}
           </h1>
 
           {/* Subtitle */}
           <p className="text-slate-600 font-medium text-xs sm:text-sm lg:text-base leading-relaxed max-w-md mx-auto">
-            Tailored insights. Evidence-based screening.
-            <br />
-            A brighter tomorrow.
+            {t('onboarding:pathwaySelection.subtitle', 'Tailored insights. Evidence-based screening. A brighter tomorrow.')}
           </p>
 
           {/* Global error banner if registration failed */}
@@ -287,7 +288,7 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
                   className="text-3xl sm:text-4xl font-bold text-[#E11D48] drop-shadow-md"
                   style={{ fontFamily: "'Caveat', cursive" }}
                 >
-                  Healthier Her
+                  {t('onboarding:pathwaySelection.femaleTag', 'Healthier Her')}
                 </span>
               </div>
             </div>
@@ -296,13 +297,13 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
             <div className="bg-white/95 backdrop-blur-md rounded-[24px] p-6 sm:p-7 mt-3 shadow-xs border border-pink-100/80 flex flex-col justify-between flex-1">
               <div>
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-[#162A45] tracking-tight text-center">
-                  Female Health
+                  {t('onboarding:pathwaySelection.femaleHeading', 'Female Health')}
                 </h2>
                 <h3 className="text-base sm:text-lg font-bold text-[#E11D48] text-center mt-1">
-                  PCOS Screening
+                  {t('onboarding:pathwaySelection.femaleSubheading', 'PCOS Screening')}
                 </h3>
                 <p className="text-slate-500 text-xs sm:text-sm text-center mt-2 leading-relaxed max-w-[270px] mx-auto">
-                  Understand your hormones. Take control of your health. A brighter tomorrow.
+                  {t('onboarding:pathwaySelection.femaleDescription', 'Understand your hormones. Take control of your health. A brighter tomorrow.')}
                 </p>
 
                 {/* 4 Feature Items */}
@@ -312,7 +313,7 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
                       <Heart className="w-4 h-4 text-[#E11D48]" aria-hidden="true" />
                     </div>
                     <span className="text-xs sm:text-sm font-semibold text-slate-700">
-                      Menstrual & hormonal health
+                      {t('onboarding:pathwaySelection.femaleFeature1', 'Menstrual & hormonal health')}
                     </span>
                   </div>
 
@@ -321,7 +322,7 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
                       <ActivityHeart className="w-4 h-4 text-[#E11D48]" aria-hidden="true" />
                     </div>
                     <span className="text-xs sm:text-sm font-semibold text-slate-700">
-                      Metabolic insights
+                      {t('onboarding:pathwaySelection.femaleFeature2', 'Metabolic insights')}
                     </span>
                   </div>
 
@@ -330,7 +331,7 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
                       <Activity className="w-4 h-4 text-[#E11D48]" aria-hidden="true" />
                     </div>
                     <span className="text-xs sm:text-sm font-semibold text-slate-700">
-                      Reproductive wellness
+                      {t('onboarding:pathwaySelection.femaleFeature3', 'Reproductive wellness')}
                     </span>
                   </div>
 
@@ -339,7 +340,7 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
                       <BarChart01 className="w-4 h-4 text-[#E11D48]" aria-hidden="true" />
                     </div>
                     <span className="text-xs sm:text-sm font-semibold text-slate-700">
-                      Personalized guidance
+                      {t('onboarding:pathwaySelection.femaleFeature4', 'Personalized guidance')}
                     </span>
                   </div>
                 </div>
@@ -356,11 +357,11 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
                   {loading && loadingPathway === 'female' ? (
                     <>
                       <RefreshCw01 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                      <span>Starting Female Path...</span>
+                      <span>{t('onboarding:pathwaySelection.femaleLoading', 'Starting Female Path...')}</span>
                     </>
                   ) : (
                     <>
-                      <span>Choose Female Path</span>
+                      <span>{t('onboarding:pathwaySelection.femaleButton', 'Choose Female Path')}</span>
                       <ArrowRight className="w-4 h-4" aria-hidden="true" />
                     </>
                   )}
@@ -370,7 +371,7 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
                   className="text-center text-[#E11D48] text-sm sm:text-base font-semibold mt-3 select-none"
                   style={{ fontFamily: "'Caveat', cursive" }}
                 >
-                  For her. A healthier, brighter you.
+                  {t('onboarding:pathwaySelection.femaleTagline', 'For her. A healthier, brighter you.')}
                 </p>
               </div>
             </div>
@@ -408,7 +409,7 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
                   className="text-3xl sm:text-4xl font-bold text-[#0284C7] drop-shadow-md"
                   style={{ fontFamily: "'Caveat', cursive" }}
                 >
-                  Stronger Him
+                  {t('onboarding:pathwaySelection.maleTag', 'Stronger Him')}
                 </span>
               </div>
             </div>
@@ -417,13 +418,13 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
             <div className="bg-white/95 backdrop-blur-md rounded-[24px] p-6 sm:p-7 mt-3 shadow-xs border border-sky-100/80 flex flex-col justify-between flex-1">
               <div>
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-[#162A45] tracking-tight text-center">
-                  Male Health
+                  {t('onboarding:pathwaySelection.maleHeading', 'Male Health')}
                 </h2>
                 <h3 className="text-base sm:text-lg font-bold text-[#0284C7] text-center mt-1">
-                  Hypogonadism Screening
+                  {t('onboarding:pathwaySelection.maleSubheading', 'Hypogonadism Screening')}
                 </h3>
                 <p className="text-slate-500 text-xs sm:text-sm text-center mt-2 leading-relaxed max-w-[270px] mx-auto">
-                  Understand your hormones. Reclaim your energy, vitality and well-being.
+                  {t('onboarding:pathwaySelection.maleDescription', 'Understand your hormones. Reclaim your energy, vitality and well-being.')}
                 </p>
 
                 {/* 4 Feature Items */}
@@ -433,7 +434,7 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
                       <ActivityHeart className="w-4 h-4 text-[#0284C7]" aria-hidden="true" />
                     </div>
                     <span className="text-xs sm:text-sm font-semibold text-slate-700">
-                      Hormonal health
+                      {t('onboarding:pathwaySelection.maleFeature1', 'Hormonal health')}
                     </span>
                   </div>
 
@@ -442,7 +443,7 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
                       <Activity className="w-4 h-4 text-[#0284C7]" aria-hidden="true" />
                     </div>
                     <span className="text-xs sm:text-sm font-semibold text-slate-700">
-                      Energy & vitality
+                      {t('onboarding:pathwaySelection.maleFeature2', 'Energy & vitality')}
                     </span>
                   </div>
 
@@ -451,7 +452,7 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
                       <BarChart01 className="w-4 h-4 text-[#0284C7]" aria-hidden="true" />
                     </div>
                     <span className="text-xs sm:text-sm font-semibold text-slate-700">
-                      Metabolic function
+                      {t('onboarding:pathwaySelection.maleFeature3', 'Metabolic function')}
                     </span>
                   </div>
 
@@ -460,7 +461,7 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
                       <User01 className="w-4 h-4 text-[#0284C7]" aria-hidden="true" />
                     </div>
                     <span className="text-xs sm:text-sm font-semibold text-slate-700">
-                      Personalized guidance
+                      {t('onboarding:pathwaySelection.maleFeature4', 'Personalized guidance')}
                     </span>
                   </div>
                 </div>
@@ -477,11 +478,11 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
                   {loading && loadingPathway === 'male' ? (
                     <>
                       <RefreshCw01 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                      <span>Starting Male Path...</span>
+                      <span>{t('onboarding:pathwaySelection.maleLoading', 'Starting Male Path...')}</span>
                     </>
                   ) : (
                     <>
-                      <span>Choose Male Path</span>
+                      <span>{t('onboarding:pathwaySelection.maleButton', 'Choose Male Path')}</span>
                       <ArrowRight className="w-4 h-4" aria-hidden="true" />
                     </>
                   )}
@@ -491,7 +492,7 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
                   className="text-center text-[#0284C7] text-sm sm:text-base font-semibold mt-3 select-none"
                   style={{ fontFamily: "'Caveat', cursive" }}
                 >
-                  For him. A stronger, brighter tomorrow.
+                  {t('onboarding:pathwaySelection.maleTagline', 'For him. A stronger, brighter tomorrow.')}
                 </p>
               </div>
             </div>
@@ -501,7 +502,7 @@ export const PathwaySelectionScreen: React.FC<PathwaySelectionScreenProps> = ({
 
       {/* ── Minimal Footer ── */}
       <footer className="relative z-10 py-4 text-center text-xs text-slate-400">
-        <p>© {new Date().getFullYear()} BIOPulse AI. All rights reserved.</p>
+        <p>{t('common:footer.copyright', '© {{year}} BioPulse AI. All rights reserved.', { year: new Date().getFullYear() })}</p>
       </footer>
     </div>
   );

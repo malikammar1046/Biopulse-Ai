@@ -91,7 +91,9 @@ export const AssessmentStatusHeader: React.FC<AssessmentStatusHeaderProps> = ({
       className={`rounded-2xl p-5 border transition-all ${
         isStale
           ? 'bg-amber-50/70 border-amber-200/80 shadow-sm'
-          : 'bg-gradient-to-r from-sky-50/80 via-blue-50/40 to-white border-[#BAE6FD] shadow-xs'
+          : isMale
+          ? 'bg-gradient-to-r from-sky-50/80 via-blue-50/40 to-white border-[#BAE6FD] shadow-xs'
+          : 'bg-gradient-to-r from-pink-50/80 via-rose-50/40 to-white border-[#FDE6EF] shadow-xs'
       }`}
     >
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -101,7 +103,9 @@ export const AssessmentStatusHeader: React.FC<AssessmentStatusHeaderProps> = ({
             className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-xs ${
               isStale
                 ? 'bg-amber-100 text-amber-600'
-                : 'bg-[#0288D1] text-white'
+                : isMale
+                ? 'bg-[#0288D1] text-white'
+                : 'bg-[#F43F7D] text-white'
             }`}
           >
             {isStale ? (
@@ -176,7 +180,9 @@ export const AssessmentStatusHeader: React.FC<AssessmentStatusHeaderProps> = ({
             className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-sm ${
               isStale
                 ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-600/20'
-                : 'bg-[#0288D1] hover:bg-[#0277BD] shadow-[#0288D1]/25'
+                : isMale
+                ? 'bg-[#0288D1] hover:bg-[#0277BD] shadow-[#0288D1]/25'
+                : 'bg-[#F43F7D] hover:bg-[#E11D48] shadow-[#F43F7D]/25'
             } disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer`}
           >
             <RefreshCw01

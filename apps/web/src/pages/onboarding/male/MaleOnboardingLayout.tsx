@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ArrowRight, Lock01, ActivityHeart } from '@untitledui/icons';
 import { ROUTES } from '../../../constants/routes';
 import { MaleOnboardingStepper } from './MaleOnboardingStepper';
@@ -14,6 +15,7 @@ interface MaleOnboardingLayoutProps {
   onBack: () => void;
   isSubmitting?: boolean;
   canGoBack?: boolean;
+  hideBottomNav?: boolean;
   children: React.ReactNode;
 }
 
@@ -26,8 +28,11 @@ export const MaleOnboardingLayout: React.FC<MaleOnboardingLayoutProps> = ({
   onBack,
   isSubmitting = false,
   canGoBack = true,
+  hideBottomNav = false,
   children,
 }) => {
+  const { t } = useTranslation(['onboarding', 'common']);
+
   return (
     <div className="min-h-screen bg-[#F5FBFD] text-[#073B72] flex flex-col justify-between p-2 sm:p-4 lg:p-5 xl:p-6 select-none relative font-sans overflow-x-hidden">
       {/* ── Background Luminous Ambient Glows (Teal & Navy) ── */}
@@ -50,21 +55,20 @@ export const MaleOnboardingLayout: React.FC<MaleOnboardingLayoutProps> = ({
               className="inline-flex items-center gap-2 text-sm font-semibold text-[#55718F] hover:text-[#073B72] transition-colors group cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1 text-[#55718F] group-hover:text-[#073B72]" aria-hidden="true" />
-              <span>Back to Home</span>
+              <span>{t('common:actions.backToHome', 'Back to Home')}</span>
             </Link>
 
             <div className="space-y-2 pt-0.5">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAFBFC] border border-[#B2EBF2] text-[12px] font-bold text-[#0E9EAA] tracking-wider uppercase shadow-2xs font-sans">
-                <span>FOR MEN</span>
+                <span>{t('onboarding:layout.forMen', 'FOR MEN')}</span>
               </div>
 
               <h1 className="text-2xl sm:text-3xl xl:text-[2.1rem] font-bold font-display leading-[1.14] tracking-tight">
-                <span className="text-[#073B72] block">Your Health</span>
-                <span className="text-[#0E9EAA] block">Your Strength</span>
+                <span className="text-[#073B72] block">{t('onboarding:layout.menTitle', 'Your Health, Your Strength')}</span>
               </h1>
 
               <p className="text-[14px] sm:text-[15px] text-[#55718F] font-sans leading-relaxed">
-                A few simple steps help us understand your health and personalize your Male Hypogonadism screening and guidance.
+                {t('onboarding:layout.menSubtitle', 'A few simple steps help us understand your health and personalize your Male Hypogonadism screening and guidance.')}
               </p>
             </div>
           </div>
@@ -140,10 +144,10 @@ export const MaleOnboardingLayout: React.FC<MaleOnboardingLayoutProps> = ({
             <div className="shrink-0 mb-2">
               <div className="flex items-center justify-between pb-2.5 border-b border-[#E8F1F5] mb-2">
                 <span className="text-[13px] sm:text-sm font-bold font-sans text-[#0E9EAA] uppercase tracking-wider">
-                  MALE HYPOGONADISM ONBOARDING
+                  {t('onboarding:layout.maleOnboarding', 'MALE HYPOGONADISM ONBOARDING')}
                 </span>
                 <span className="text-[13px] sm:text-sm font-semibold font-sans text-[#55718F]">
-                  Step {currentStep} of {totalSteps}
+                  {t('onboarding:layout.stepProgress', 'Step {{current}} of {{total}}', { current: currentStep, total: totalSteps })}
                 </span>
               </div>
 
@@ -161,56 +165,58 @@ export const MaleOnboardingLayout: React.FC<MaleOnboardingLayoutProps> = ({
             </div>
 
             {/* Bottom Navigation Row with Responsive Touch-Friendly Buttons */}
-            <div className={`mt-6 pt-4 sm:pt-5 border-t border-[#E8F1F5] flex items-center ${currentStep === 1 ? 'justify-end' : 'justify-between'} gap-2 sm:gap-4 shrink-0`}>
-              {/* Back Button */}
-              {currentStep > 1 && (
+            {!hideBottomNav && (
+              <div className={`mt-6 pt-4 sm:pt-5 border-t border-[#E8F1F5] flex items-center ${currentStep === 1 ? 'justify-end' : 'justify-between'} gap-2 sm:gap-4 shrink-0`}>
+                {/* Back Button */}
+                {currentStep > 1 && (
+                  <button
+                    type="button"
+                    onClick={onBack}
+                    disabled={!canGoBack || isSubmitting}
+                    className="min-h-[44px] sm:min-h-[50px] px-4 sm:px-7 py-2.5 sm:py-3 rounded-full text-xs sm:text-[15px] font-semibold font-sans uppercase tracking-wider flex items-center gap-1.5 sm:gap-2.5 transition-all cursor-pointer bg-[#F5FBFD] hover:bg-[#E8F4F8] border border-[#D7EAF2] text-[#55718F] hover:text-[#073B72]"
+                  >
+                    <ArrowLeft className="w-4 h-4 sm:w-4.5 sm:h-4.5" aria-hidden="true" />
+                    <span>{t('onboarding:layout.back', 'Back')}</span>
+                  </button>
+                )}
+
+                {/* Continue / Submit Button */}
                 <button
                   type="button"
-                  onClick={onBack}
-                  disabled={!canGoBack || isSubmitting}
-                  className="min-h-[44px] sm:min-h-[50px] px-4 sm:px-7 py-2.5 sm:py-3 rounded-full text-xs sm:text-[15px] font-semibold font-sans uppercase tracking-wider flex items-center gap-1.5 sm:gap-2.5 transition-all cursor-pointer bg-[#F5FBFD] hover:bg-[#E8F4F8] border border-[#D7EAF2] text-[#55718F] hover:text-[#073B72]"
+                  onClick={onNext}
+                  disabled={isSubmitting}
+                  className={`min-h-[44px] sm:min-h-[50px] px-5 sm:px-10 py-2.5 sm:py-3 rounded-full font-sans font-semibold text-xs sm:text-base uppercase tracking-wider text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-md shadow-sky-500/20 transition-all flex items-center justify-center gap-2 sm:gap-2.5 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed transform hover:scale-[1.01] active:scale-[0.99] ${currentStep === 1 ? 'w-full sm:w-auto' : ''}`}
                 >
-                  <ArrowLeft className="w-4 h-4 sm:w-4.5 sm:h-4.5" aria-hidden="true" />
-                  <span>Back</span>
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                      <span>{t('onboarding:layout.saving', 'Saving...')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>
+                        {currentStep === totalSteps
+                          ? t('onboarding:layout.completeSetup', 'Complete Setup')
+                          : currentStep === totalSteps - 1
+                          ? t('onboarding:layout.reviewProfile', 'Review Profile')
+                          : t('onboarding:layout.continue', 'Continue')}
+                      </span>
+                      <ArrowRight className="w-4 h-4 sm:w-4.5 sm:h-4.5" aria-hidden="true" />
+                    </>
+                  )}
                 </button>
-              )}
-
-              {/* Continue / Submit Button */}
-              <button
-                type="button"
-                onClick={onNext}
-                disabled={isSubmitting}
-                className={`min-h-[44px] sm:min-h-[50px] px-5 sm:px-10 py-2.5 sm:py-3 rounded-full font-sans font-semibold text-xs sm:text-base uppercase tracking-wider text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-md shadow-sky-500/20 transition-all flex items-center justify-center gap-2 sm:gap-2.5 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed transform hover:scale-[1.01] active:scale-[0.99] ${currentStep === 1 ? 'w-full sm:w-auto' : ''}`}
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                    <span>Saving...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>
-                      {currentStep === totalSteps
-                        ? 'Complete Setup'
-                        : currentStep === totalSteps - 1
-                        ? 'Review Profile'
-                        : 'Continue'}
-                    </span>
-                    <ArrowRight className="w-4 h-4 sm:w-4.5 sm:h-4.5" aria-hidden="true" />
-                  </>
-                )}
-              </button>
-            </div>
+              </div>
+            )}
           </div>
 
           {/* Privacy Note & Footer Step Counter below Main Card */}
           <div className="w-full py-2.5 flex items-center justify-between text-[13px] sm:text-sm text-[#55718F] font-sans px-3 shrink-0">
             <div className="flex items-center gap-2 mx-auto">
               <Lock01 className="w-4 h-4 text-[#0E9EAA]" aria-hidden="true" />
-              <span>Your information is secure and private.</span>
+              <span>{t('onboarding:layout.secureNotice', 'Your information is secure and private.')}</span>
             </div>
             <span className="hidden sm:block text-[13px] font-sans text-[#8FA3B8]">
-              Step {currentStep} of {totalSteps}
+              {t('onboarding:layout.stepProgress', 'Step {{current}} of {{total}}', { current: currentStep, total: totalSteps })}
             </span>
           </div>
         </main>

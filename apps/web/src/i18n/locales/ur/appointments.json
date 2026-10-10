@@ -1,0 +1,38 @@
+{
+  "title": "اپائنٹمنٹس اور طبی مشورے",
+  "subtitle": "اپنے متعلقہ ریپروڈکٹیو ہیلتھ پاتھ وے کے تصدیق شدہ ماہر ڈاکٹرز سے رابطہ کریں",
+  "tabs": {
+    "upcoming": "آئندہ ملاقاتیں",
+    "history": "پچھلے طبی مشورے",
+    "bookNew": "نئی اپائنٹمنٹ بک کریں"
+  },
+  "bookModal": {
+    "title": "ڈاکٹر سے وقت طے کریں",
+    "selectDoctor": "ماہر ڈاکٹر کا انتخاب کریں",
+    "selectDate": "تاریخ منتخب کریں",
+    "selectTime": "مناسب وقت منتخب کریں",
+    "consultationType": "ملاقات کی قسم",
+    "inPerson": "کلینک میں بالمشافہ ملاقات",
+    "telehealth": "آن لائن ویڈیو مشاورت (Telehealth)",
+    "chiefComplaint": "ملاقات کی وجہ / نوٹس",
+    "complaintPlaceholder": "مختصراً اپنی علامات یا زیرِ بحث نکات بیان کریں...",
+    "confirmBooking": "اپائنٹمنٹ کی توثیق کریں",
+    "bookingSuccess": "اپائنٹمنٹ کامیابی کے ساتھ بک ہو گئی ہے۔"
+  },
+  "statusLabels": {
+    "confirmed": "تصدیق شدہ",
+    "pending": "زیرِ التواء",
+    "completed": "مکمل شدہ",
+    "cancelled": "منسوخ شدہ"
+  },
+  "emptyUpcoming": "فی الحال کوئی آئندہ اپائنٹمنٹ طے نہیں ہے۔ مشاورت کے لیے ماہر ڈاکٹر تلاش کریں۔",
+  "emptyHistory": "پچھلی ملاقاتوں کا کوئی ریکارڈ موجود نہیں ہے۔",
+  "upcomingVisitsTab": "آنے والی ملاقاتیں",
+  "findSpecialistTab": "ماہر معالج تلاش کریں",
+  "visitHistoryTab": "سابقہ مشاورت کی تاریخ",
+  "scheduleVisitCTA": "ملاقات طے کریں",
+  "noUpcomingVisits": "کوئی طے شدہ ملاقات موجود نہیں",
+  "noUpcomingDesc": "مستند ہارمونل ماہرین، ماہر امراض نسواں یا یورولوجسٹ سے رجوع کریں۔",
+  "prepareConsultationCTA": "ملاقات کی تیاری کریں",
+  "viewDetailsCTA": "تفصیلات دیکھیں"
+}

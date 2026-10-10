@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Sun, Calendar, Activity } from 'lucide-react';
 import type { HealthPathway } from '../../../types/onboarding';
 
@@ -17,44 +18,55 @@ export const DashboardGreetingRow: React.FC<DashboardGreetingRowProps> = ({
   hasCycleData = false,
   lastSyncedFormatted = 'just now',
 }) => {
+  const { t, i18n } = useTranslation('dashboard');
   const isFemale = pathway === 'female';
 
   // 1. First Name Resolution
   const firstName = useMemo(() => {
     const trimmed = (fullName || '').trim();
-    if (!trimmed) return 'there';
-    return trimmed.split(' ')[0] || 'there';
-  }, [fullName]);
+    if (!trimmed) return t('greetingThere');
+    return trimmed.split(' ')[0] || t('greetingThere');
+  }, [fullName, t]);
 
   // 2. Dynamic Local Time Greeting
   const greetingTime = useMemo(() => {
     const hour = new Date().getHours();
-    if (hour >= 5 && hour < 12) return 'Good morning';
-    if (hour >= 12 && hour < 17) return 'Good afternoon';
-    return 'Good evening';
-  }, []);
+    if (hour >= 5 && hour < 12) return t('greetingMorning');
+    if (hour >= 12 && hour < 17) return t('greetingAfternoon');
+    return t('greetingEvening');
+  }, [t]);
 
   // 3. Current Formatted Date (e.g. "Tue, Apr 23, 2024")
   const formattedToday = useMemo(() => {
-    return new Intl.DateTimeFormat('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    }).format(new Date());
-  }, []);
+    const locale = i18n.language === 'ur' ? 'ur-PK' : 'en-US';
+    try {
+      return new Intl.DateTimeFormat(locale, {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }).format(new Date());
+    } catch {
+      return new Intl.DateTimeFormat('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }).format(new Date());
+    }
+  }, [i18n.language]);
 
   // 4. Subtext for context card
   const contextSubtext = useMemo(() => {
     if (isFemale) {
       if (hasCycleData && cycleDay && cycleDay > 0) {
         const cycleWeek = Math.ceil(cycleDay / 7);
-        return `Week ${cycleWeek}, Cycle Day ${cycleDay}`;
+        return `${t('week')} ${cycleWeek}, ${t('cycleDay')} ${cycleDay}`;
       }
-      return 'No cycle data recorded';
+      return t('noCycleData');
     }
-    return 'Active Health Tracking';
-  }, [isFemale, hasCycleData, cycleDay]);
+    return t('activeHealthTracking');
+  }, [isFemale, hasCycleData, cycleDay, t]);
 
   return (
     <div className="w-full flex flex-col lg:flex-row lg:items-center justify-between gap-4 py-2 select-none text-left">
@@ -68,7 +80,7 @@ export const DashboardGreetingRow: React.FC<DashboardGreetingRowProps> = ({
             {greetingTime}, {firstName}
           </h1>
           <p className="text-xs sm:text-[13px] text-slate-500 font-sans mt-0.5">
-            You're doing great! Here's your health summary for today.
+            {t('greetingSubtitle')}
           </p>
         </div>
       </div>
@@ -88,17 +100,17 @@ export const DashboardGreetingRow: React.FC<DashboardGreetingRowProps> = ({
           ) : (
             <span className="font-bold text-sm leading-none">♂</span>
           )}
-          <span>{isFemale ? 'PCOS Dashboard' : 'Male Health Dashboard'}</span>
+          <span>{isFemale ? t('femalePathwayBadge') : t('malePathwayBadge')}</span>
         </div>
 
         {/* Global Sync Status (from real fetch completion) */}
         <div className="hidden sm:flex flex-col text-right text-[11px] leading-tight">
           <div className="flex items-center justify-end gap-1.5 font-medium text-slate-700">
             <span className="w-2 h-2 rounded-full bg-[#10B981] shrink-0" />
-            <span>Last synced {lastSyncedFormatted}</span>
+            <span>{t('lastSynced')} {lastSyncedFormatted}</span>
           </div>
           <span className="text-[10px] text-slate-400 font-sans mt-0.5">
-            All data is up to date
+            {t('allDataUpToDate')}
           </span>
         </div>
 

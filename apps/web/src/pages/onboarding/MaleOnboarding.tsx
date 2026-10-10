@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { ROUTES } from '../../constants/routes';
 import { useUserHealth } from '../../context/UserHealthContext';
 import type {
@@ -9,7 +10,7 @@ import type {
   MensHealthProfile,
   LifestyleProfile,
 } from '../../types/onboarding';
-import { validateDateOfBirth, validatePakistaniPhone } from '../../utils/profileValidation';
+import { validateMaleScreeningAge, validatePakistaniPhone } from '../../utils/profileValidation';
 import { MaleOnboardingLayout } from './male/MaleOnboardingLayout';
 import { MaleStep1BasicInfo } from './male/MaleStep1BasicInfo';
 import { MaleStep2HealthProfile } from './male/MaleStep2HealthProfile';
@@ -20,18 +21,19 @@ import { preloadDashboardRoutes } from '../../utils/routePreloaders';
 import { BioPulseLoadingScreen } from '../../components/brand/BioPulseLoadingScreen';
 import { deriveMaleTier1InputsFromProfile } from '../../utils/tier1InputMappers';
 
-const MALE_STEPS = [
-  { number: '1', label: 'Basic Info' },
-  { number: '2', label: 'Health Profile' },
-  { number: '3', label: 'Symptoms / ADAM' },
-  { number: '4', label: 'Lifestyle' },
-  { number: '5', label: 'Review & Ready' },
-];
-
 export const MaleOnboarding: React.FC = () => {
+  const { t } = useTranslation(['onboarding', 'common']);
   const navigate = useNavigate();
   const { userProfile, finalizeOnboardingAndScreen } = useUserHealth();
   const shouldReduceMotion = useReducedMotion();
+
+  const maleSteps = useMemo(() => [
+    { number: '1', label: t('onboarding:stepLabels.basicInfo', 'Basic Info') },
+    { number: '2', label: t('onboarding:stepLabels.healthProfile', 'Health Profile') },
+    { number: '3', label: t('onboarding:stepLabels.symptomsAdam', 'Symptoms / ADAM') },
+    { number: '4', label: t('onboarding:stepLabels.lifestyle', 'Lifestyle') },
+    { number: '5', label: t('onboarding:stepLabels.reviewReady', 'Review & Ready') },
+  ], [t]);
 
   const [currentStep, setCurrentStep] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -92,6 +94,8 @@ export const MaleOnboarding: React.FC = () => {
         priorMedications: userProfile.mensHealth?.priorMedications?.length
           ? userProfile.mensHealth.priorMedications
           : ['None of the above'],
+        adamResponses: userProfile.mensHealth?.adamResponses,
+        adamScore: userProfile.mensHealth?.adamScore,
       },
       lifestyle: {
         dietaryPreference: userProfile.lifestyle?.dietaryPreference || 'Balanced',
@@ -180,13 +184,21 @@ export const MaleOnboarding: React.FC = () => {
     if (stepNum === 1) {
       if (!draftProfile.fullName.trim()) errs.fullName = 'Full Name is required.';
 
-      const dobCheck = validateDateOfBirth(draftProfile.dateOfBirth);
+      const dobCheck = validateMaleScreeningAge(draftProfile.dateOfBirth);
       if (!dobCheck.isValid) errs.dateOfBirth = dobCheck.error!;
 
-      const phoneCheck = validatePakistaniPhone(draftProfile.phone);
+      const phoneCheck = validatePakistaniPhone(draftProfile.phone, { optional: true });
       if (!phoneCheck.isValid) errs.phone = phoneCheck.error!;
 
       if (!draftProfile.email.trim()) errs.email = 'Email address is required.';
+    }
+
+    if (stepNum === 3) {
+      const adam = draftProfile.mensHealth?.adamResponses || {};
+      const answeredCount = Object.values(adam).filter((v) => v !== null && v !== undefined).length;
+      if (answeredCount < 10) {
+        errs.adam = 'Please answer all 10 ADAM questions to continue.';
+      }
     }
 
     setErrors(errs);
@@ -194,7 +206,7 @@ export const MaleOnboarding: React.FC = () => {
   };
 
   const handleNext = () => {
-    if (currentStep < MALE_STEPS.length) {
+    if (currentStep < maleSteps.length) {
       if (!validateStep(currentStep)) return;
       setCurrentStep((prev) => prev + 1);
     } else {
@@ -215,6 +227,17 @@ export const MaleOnboarding: React.FC = () => {
   };
 
   const handleEnterAndroSense = async () => {
+    // Blocking eligibility gate: Ensure age 19–60 before onboarding completion
+    const dobCheck = validateMaleScreeningAge(draftProfile.dateOfBirth);
+    if (!dobCheck.isValid) {
+      setIsSubmitting(false);
+      setIsProcessingScreening(false);
+      setSaveError(dobCheck.error || 'BioPulse AI male screening is calibrated for adult men aged 19 to 60.');
+      setCurrentStep(1);
+      setErrors((prev) => ({ ...prev, dateOfBirth: dobCheck.error! }));
+      return;
+    }
+
     setIsSubmitting(true);
     setIsProcessingScreening(true);
     setSaveError(undefined);
@@ -273,13 +296,14 @@ export const MaleOnboarding: React.FC = () => {
   return (
     <MaleOnboardingLayout
       currentStep={currentStep}
-      totalSteps={MALE_STEPS.length}
-      steps={MALE_STEPS}
+      totalSteps={maleSteps.length}
+      steps={maleSteps}
       onStepClick={handleStepClick}
       onNext={handleNext}
       onBack={handleBack}
       isSubmitting={isSubmitting}
       canGoBack={currentStep > 1}
+      hideBottomNav={currentStep === 3}
     >
       <AnimatePresence mode="wait">
         <motion.div
@@ -320,6 +344,8 @@ export const MaleOnboarding: React.FC = () => {
             <MaleStep3SymptomsADAM
               data={draftProfile.mensHealth!}
               onChange={updateMensHealth}
+              onComplete={handleNext}
+              onBackToHealthProfile={handleBack}
             />
           )}
 
