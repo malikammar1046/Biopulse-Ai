@@ -54,7 +54,13 @@
     "tsh": "تھائیرائیڈ اسٹیمولیٹنگ ہارمون (TSH)",
     "hba1c": "ایچ بی اے ون سی (HbA1c)",
     "units": "یونٹس",
-    "submitTier2": "Tier 2 اسیسمنٹ کا حساب لگائیں"
+    "submitTier2": "Tier 2 اسیسمنٹ کا حساب لگائیں",
+    "savingValues": "طبی ویلیوز محفوظ ہو رہی ہیں…",
+    "valuesSaved": "ویلیوز کامیابی سے محفوظ ہو گئیں۔",
+    "recalculatingTier2": "Tier 2 رسک کا دوبارہ حساب لگایا جا رہا ہے…",
+    "tier2Updated": "Tier 2 اسیسمنٹ اپ ڈیٹ ہو گئی — رسک: {{risk}}%۔",
+    "assessmentFailedValuesSaved": "اسیسمنٹ اپ ڈیٹ نہیں ہو سکی۔ آپ کی کلینیکل ویلیوز محفوظ ہیں۔ دوبارہ کوشش کریں۔",
+    "retryAssessment": "اسیسمنٹ دوبارہ چلائیں"
   },
   "viewFullAssessmentCTA": "مکمل تشخیصی رپورٹ دیکھیں",
   "startReassessmentCTA": "دوبارہ اسکریننگ شروع کریں",

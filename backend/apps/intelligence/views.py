@@ -1186,6 +1186,96 @@ class PatientClinicalStateView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+    def post(self, request):
+        if not request.user or not getattr(request.user, "id", None):
+            return Response({"error": "Authentication required."}, status=status.HTTP_401_UNAUTHORIZED)
+        patient_uuid = str(request.user.id)
+        auth_token = getattr(request.user, "raw_token", None)
+        data = request.data if isinstance(request.data, dict) else {}
+        module = data.get("module")
+
+        if not module:
+            try:
+                health_data = health_service.fetch_all(patient_uuid, auth_token=auth_token)
+                profile = getattr(health_data, "profile", None)
+                if profile:
+                    gender = getattr(profile, "gender", "") or (profile.get("gender") if isinstance(profile, dict) else "")
+                    if str(gender).strip().lower() in ["male", "m", "man"]:
+                        module = "male_hypogonadism"
+            except Exception as e:
+                logger.warning("Could not determine user gender for clinical state post: %s", e)
+
+        module = module or "female_pcos"
+
+        try:
+            from apps.intelligence.services.clinical_state_repository import clinical_state_repository
+            from apps.intelligence.services.intelligence_orchestrator import (
+                validate_clinical_value,
+                validate_male_clinical_value,
+                CLINICAL_FIELD_RANGES,
+            )
+            # 1. Fetch current clinical state
+            current = clinical_state_repository.get_patient_clinical_state(
+                patient_uuid,
+                module=module,
+                auth_token=auth_token,
+                perform_backfill=False,
+            )
+            existing_t2 = dict(current.get("tier_2_inputs") or {})
+
+            # 2. Apply remove_fields
+            rems = list(data.get("remove_fields") or data.get("removed_fields") or [])
+            for rf in rems:
+                existing_t2.pop(rf, None)
+
+            # 3. Patch merge incoming fields (empty strings or None NEVER wipe stored values)
+            incoming_values = data.get("tier_2_inputs") if isinstance(data.get("tier_2_inputs"), dict) else data
+            for k, v in incoming_values.items():
+                if k in ("module", "remove_fields", "removed_fields", "tier_2_inputs", "tier_1_inputs", "date_of_birth", "dateOfBirth", "dob", "age", "gender"):
+                    continue
+                if v is None or str(v).strip() == "":
+                    continue
+                if module == "male_hypogonadism":
+                    parsed = validate_male_clinical_value(k, v)
+                    if parsed is not None:
+                        existing_t2[k] = parsed
+                    else:
+                        try:
+                            existing_t2[k] = float(v)
+                        except (ValueError, TypeError):
+                            pass
+                else:
+                    if k in CLINICAL_FIELD_RANGES:
+                        parsed = validate_clinical_value(k, v)
+                        if parsed is not None:
+                            existing_t2[k] = parsed
+                    else:
+                        try:
+                            existing_t2[k] = float(v)
+                        except (ValueError, TypeError):
+                            pass
+
+            # 4. Save merged clinical state
+            saved_state = clinical_state_repository.save_patient_clinical_state(
+                user_id=patient_uuid,
+                module=module,
+                tier_2_inputs=existing_t2,
+                auth_token=auth_token,
+            )
+            logger.info("[CLINICAL_STATE] Saved %d tier_2 inputs for user=%s module=%s", len(existing_t2), patient_uuid[:8] if len(patient_uuid) >= 8 else patient_uuid, module)
+            return Response({
+                "success": True,
+                "message": "Values saved successfully.",
+                "clinical_state": saved_state,
+                "tier_2_inputs": existing_t2,
+            }, status=status.HTTP_200_OK)
+        except Exception as exc:
+            logger.error("Failed to save patient clinical state: %s", exc, exc_info=True)
+            return Response(
+                {"error": "Failed to save clinical values."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
 
 class LongitudinalHealthView(APIView):
     """

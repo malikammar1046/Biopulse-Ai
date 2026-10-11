@@ -728,6 +728,51 @@ export async function fetchPatientClinicalState(
 }
 
 /**
+ * Persists patient clinical values using PATCH semantics.
+ */
+export async function savePatientClinicalState(
+  module: string = 'female_pcos',
+  tier2Inputs: Record<string, any>,
+  removeFields?: string[]
+): Promise<{ success: boolean; tier_2_inputs?: Record<string, any>; error?: string } | null> {
+  try {
+    const token = await getAccessToken();
+    if (!token) return null;
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    };
+    const payload: Record<string, any> = {
+      module,
+      tier_2_inputs: sanitizeClinicalInputs(tier2Inputs),
+    };
+    if (removeFields && removeFields.length > 0) {
+      payload.remove_fields = removeFields;
+    }
+    const response = await fetchWithTimeout(CLINICAL_STATE_ENDPOINT, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    }, 15000);
+    if (!response.ok) {
+      let errDetails = '';
+      try {
+        const errJson = await response.json();
+        errDetails = errJson.error || errJson.details || JSON.stringify(errJson);
+      } catch {
+        errDetails = response.statusText;
+      }
+      console.warn('[Intelligence API] savePatientClinicalState failed:', response.status, errDetails);
+      return { success: false, error: errDetails };
+    }
+    return await response.json();
+  } catch (err: any) {
+    console.warn('[Intelligence API] savePatientClinicalState error:', err);
+    return { success: false, error: err?.message || 'Network error saving clinical values.' };
+  }
+}
+
+/**
  * Uploads an ultrasound image for morphological analysis (PCOM) and multimodal fusion.
  */
 

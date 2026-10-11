@@ -98,6 +98,7 @@ import {
   uploadUltrasoundAssessment,
   clearTier2Assessment,
   fetchPatientClinicalState,
+  savePatientClinicalState,
   getLongitudinalHealth,
   getCachedLongitudinalHealth,
   invalidateLongitudinalCache,
@@ -224,6 +225,7 @@ interface UserHealthContextType {
   submitMaleTier2: (inputs: Record<string, any>) => Promise<ProgressiveAssessment | null>;
   clearTier2: (module?: string) => Promise<ProgressiveAssessment | null>;
   fetchClinicalState: (module?: string) => Promise<{ user_id: string; module: string; tier_1_inputs: Record<string, any>; tier_2_inputs: Record<string, any>; ultrasound_inputs: Record<string, any> } | null>;
+  saveClinicalState: (inputs: Record<string, any>, module?: string, removeFields?: string[]) => Promise<{ success: boolean; tier_2_inputs?: Record<string, any>; error?: string } | null>;
   submitUltrasound: (imageFile: File, reportId?: string) => Promise<ProgressiveAssessment | null>;
   mlAssessment: IntelligenceAssessment | null;
   mlAssessmentLoading: boolean;
@@ -2298,16 +2300,6 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             })
             .catch(() => {});
 
-          fetchActiveAssessment(true, 'male_hypogonadism', authoritativeUserId)
-            .then((verified) => {
-              if (verified && verified.id === res.id) {
-                if (import.meta.env.DEV) {
-                  console.log(`[TIER2_TRACE] event=active_readback_verified id=${verified.id} level=${verified.assessment_level}`);
-                }
-              }
-            })
-            .catch(() => {});
-
           triggerAssessmentNotification(
             'Updated Result: Your hypogonadism screening assessment has been updated with clinical evidence.',
             'success'
@@ -2451,16 +2443,6 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           fetchAssessmentHistory('female_pcos')
             .then((history) => {
               setAssessmentHistory((prev) => deduplicateHistory(history, transition.nextState.activeAssessment || prev[0]));
-            })
-            .catch(() => {});
-
-          fetchActiveAssessment(true, 'female_pcos', authoritativeUserId)
-            .then((verified) => {
-              if (verified && verified.id === res.id) {
-                if (import.meta.env.DEV) {
-                  console.log(`[TIER2_TRACE] event=active_readback_verified id=${verified.id} level=${verified.assessment_level}`);
-                }
-              }
             })
             .catch(() => {});
 
@@ -2620,6 +2602,15 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const pathway = resolvePathway(userProfile?.gender, userProfile?.pathway);
       const mod = module || (pathway === 'male' ? 'male_hypogonadism' : 'female_pcos');
       return await fetchPatientClinicalState(mod);
+    },
+    [userProfile]
+  );
+
+  const saveClinicalState = useCallback(
+    async (inputs: Record<string, any>, module?: string, removeFields?: string[]) => {
+      const pathway = resolvePathway(userProfile?.gender, userProfile?.pathway);
+      const mod = module || (pathway === 'male' ? 'male_hypogonadism' : 'female_pcos');
+      return await savePatientClinicalState(mod, inputs, removeFields);
     },
     [userProfile]
   );
@@ -3092,6 +3083,7 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         submitMaleTier2,
         clearTier2,
         fetchClinicalState,
+        saveClinicalState,
         submitUltrasound,
         mlAssessment,
         mlAssessmentLoading,

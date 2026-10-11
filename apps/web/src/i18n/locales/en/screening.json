@@ -54,7 +54,13 @@
     "tsh": "Thyroid-Stimulating Hormone (TSH)",
     "hba1c": "HbA1c",
     "units": "Units",
-    "submitTier2": "Calculate Tier 2 Assessment"
+    "submitTier2": "Calculate Tier 2 Assessment",
+    "savingValues": "Saving clinical values…",
+    "valuesSaved": "Values saved successfully.",
+    "recalculatingTier2": "Recalculating Tier 2 risk…",
+    "tier2Updated": "Tier 2 assessment updated — Risk: {{risk}}%.",
+    "assessmentFailedValuesSaved": "Assessment could not be updated. Your clinical values are saved. Retry assessment.",
+    "retryAssessment": "Retry assessment"
   },
   "viewFullAssessmentCTA": "View Full Assessment",
   "startReassessmentCTA": "Start Reassessment",
