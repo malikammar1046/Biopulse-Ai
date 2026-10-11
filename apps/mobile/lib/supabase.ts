@@ -6,7 +6,7 @@
  * iOS, Android, and Web with zero native linking requirements.
  */
 
-import { Platform } from 'react-native';
+import { Platform, Linking } from 'react-native';
 import { persistentStorage } from './storage';
 
 declare const process: {
@@ -121,7 +121,7 @@ function getHeaders(token?: string): Record<string, string> {
 async function fetchAuthEndpoint(
   endpoint: string,
   options: {
-    method: 'GET' | 'POST';
+    method: 'GET' | 'POST' | 'PUT' | 'PATCH';
     body?: any;
     token?: string;
     timeoutMs?: number;
@@ -313,6 +313,149 @@ export const mobileSupabaseAuth = {
         success: false,
         message: err?.message || 'Network error occurred while requesting password reset.',
       };
+    }
+  },
+
+  /**
+   * Update user password (used in password reset recovery or profile settings)
+   */
+  async updateUserPassword(
+    newPassword: string,
+    token?: string
+  ): Promise<{ success: boolean; message: string }> {
+    const tokenToUse = token || activeSessionCache?.access_token;
+    if (!tokenToUse) {
+      return {
+        success: false,
+        message: 'Password reset link has expired or is invalid. Please request a new recovery link.',
+      };
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+      return {
+        success: false,
+        message: 'Password must be at least 6 characters long.',
+      };
+    }
+
+    try {
+      const { status, body } = await fetchAuthEndpoint('/user', {
+        method: 'PUT',
+        token: tokenToUse,
+        body: { password: newPassword },
+      });
+
+      if (status >= 200 && status < 300) {
+        return {
+          success: true,
+          message: 'Your password has been successfully reset. You can now log in with your new password.',
+        };
+      }
+
+      return {
+        success: false,
+        message: body.msg || body.error_description || body.message || 'Unable to update password. Please try again.',
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        message: err?.message || 'Network error occurred while updating password.',
+      };
+    }
+  },
+
+  /**
+   * Get Supabase OAuth URL for Google sign-in
+   */
+  getOAuthUrl(provider: 'google' = 'google', redirectTo?: string): string {
+    const redirect = redirectTo || 'biopulse://auth/callback';
+    return `${SUPABASE_URL}/auth/v1/authorize?provider=${provider}&redirect_to=${encodeURIComponent(redirect)}`;
+  },
+
+  /**
+   * Initiate Google OAuth flow via system browser / deep linking
+   */
+  async signInWithGoogle(redirectTo?: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const authUrl = this.getOAuthUrl('google', redirectTo);
+      await Linking.openURL(authUrl);
+      return { success: true };
+    } catch (err: any) {
+      return {
+        success: false,
+        error: err?.message || 'Failed to start Google sign-in.',
+      };
+    }
+  },
+
+  /**
+   * Parse auth tokens from deep link URL callback and resolve authentic Supabase user identity.
+   */
+  async handleAuthCallback(
+    url: string
+  ): Promise<{ success: boolean; session?: SupabaseAuthSession; error?: string }> {
+    try {
+      if (!url) return { success: false, error: 'No URL provided' };
+      const fragment = url.includes('#') ? url.split('#')[1] : url.includes('?') ? url.split('?')[1] : '';
+      const params = new URLSearchParams(fragment);
+      const accessToken = params.get('access_token');
+      const refreshToken = params.get('refresh_token') || '';
+      const expiresIn = parseInt(params.get('expires_in') || '3600', 10);
+      const tokenType = params.get('token_type') || 'bearer';
+
+      const errorDescription = params.get('error_description') || params.get('error');
+      if (errorDescription) {
+        return { success: false, error: decodeURIComponent(errorDescription) };
+      }
+
+      if (accessToken) {
+        let authUser: SupabaseAuthUser = {
+          id: 'oauth-user',
+          aud: 'authenticated',
+          role: 'authenticated',
+          email: '',
+          created_at: new Date().toISOString(),
+        };
+
+        // Fetch authentic user profile from Supabase Auth GoTrue endpoint
+        try {
+          const userRes = await fetchAuthEndpoint('/user', {
+            method: 'GET',
+            token: accessToken,
+            timeoutMs: 8000,
+          });
+          if (userRes.status >= 200 && userRes.status < 300 && userRes.body?.id) {
+            authUser = {
+              id: userRes.body.id,
+              aud: userRes.body.aud || 'authenticated',
+              role: userRes.body.role || 'authenticated',
+              email: userRes.body.email || '',
+              email_confirmed_at: userRes.body.email_confirmed_at,
+              created_at: userRes.body.created_at || new Date().toISOString(),
+              updated_at: userRes.body.updated_at,
+              user_metadata: userRes.body.user_metadata || {},
+            };
+          }
+        } catch (fetchErr) {
+          console.warn('[BioPulse Supabase] Unable to fetch user profile for OAuth token:', fetchErr);
+        }
+
+        const session: SupabaseAuthSession = {
+          access_token: accessToken,
+          refresh_token: refreshToken,
+          expires_in: expiresIn,
+          expires_at: Math.floor(Date.now() / 1000) + expiresIn,
+          token_type: tokenType,
+          user: authUser,
+        };
+
+        notifyAuthListeners(session, true);
+        return { success: true, session };
+      }
+
+      return { success: false, error: 'No authentication tokens found in callback URL.' };
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Failed to parse authentication callback.' };
     }
   },
 

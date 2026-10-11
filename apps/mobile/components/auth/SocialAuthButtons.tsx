@@ -30,13 +30,11 @@ interface SocialAuthButtonsProps {
  */
 export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
   onGooglePress,
-  onApplePress,
   disabled = false,
   mode = 'login',
 }) => {
   const isSignUp = mode === 'signup';
   const googleLabel = isSignUp ? 'Sign up with Google' : 'Continue with Google';
-  const appleLabel = isSignUp ? 'Sign up with Apple' : 'Continue with Apple';
 
   const handleGooglePress = () => {
     if (disabled) return;
@@ -46,19 +44,6 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
       Alert.alert(
         'Google Authentication',
         `Google Authentication is not configured in this development environment. Please use email and password to ${isSignUp ? 'create an account' : 'log in'}.`,
-        [{ text: 'OK' }]
-      );
-    }
-  };
-
-  const handleApplePress = () => {
-    if (disabled) return;
-    if (onApplePress) {
-      onApplePress();
-    } else {
-      Alert.alert(
-        'Apple Authentication',
-        `Apple Authentication is not configured in this development environment. Please use email and password to ${isSignUp ? 'create an account' : 'log in'}.`,
         [{ text: 'OK' }]
       );
     }
@@ -96,24 +81,6 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({
             />
           </View>
           <Text style={styles.socialButtonText}>{googleLabel}</Text>
-        </Pressable>
-
-        {/* Continue / Sign up with Apple */}
-        <Pressable
-          onPress={handleApplePress}
-          disabled={disabled}
-          style={({ pressed }) => [
-            styles.socialButton,
-            pressed && styles.socialButtonPressed,
-            disabled && styles.socialButtonDisabled,
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={appleLabel}
-        >
-          <View style={styles.iconSlot}>
-            <Ionicons name="logo-apple" size={20} color="#000000" accessible={false} />
-          </View>
-          <Text style={styles.socialButtonText}>{appleLabel}</Text>
         </Pressable>
       </View>
     </View>

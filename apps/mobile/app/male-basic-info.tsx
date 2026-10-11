@@ -49,18 +49,45 @@ export default function MaleBasicHealthScreen() {
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg');
   const [waistVal, setWaistVal] = useState<string>(String(basicInfo.waistCm || 86));
 
+  // Safe bidirectional unit toggle handlers
+  const handleSetHeightUnit = useCallback((targetUnit: 'cm' | 'ft') => {
+    if (targetUnit === heightUnit) return;
+    const num = parseFloat(heightVal);
+    if (!isNaN(num) && num > 0) {
+      if (targetUnit === 'ft') {
+        setHeightVal((num / 30.48).toFixed(1));
+      } else {
+        setHeightVal(String(Math.round(num * 30.48)));
+      }
+    }
+    setHeightUnit(targetUnit);
+  }, [heightVal, heightUnit]);
+
+  const handleSetWeightUnit = useCallback((targetUnit: 'kg' | 'lbs') => {
+    if (targetUnit === weightUnit) return;
+    const num = parseFloat(weightVal);
+    if (!isNaN(num) && num > 0) {
+      if (targetUnit === 'lbs') {
+        setWeightVal(String(Math.round(num * 2.20462)));
+      } else {
+        setWeightVal(String(Math.round(num * 0.453592)));
+      }
+    }
+    setWeightUnit(targetUnit);
+  }, [weightVal, weightUnit]);
+
   const bottomPad = Math.max(insets.bottom, 20);
 
   // Compute Height in CM
   const heightCm = useMemo(() => {
     const raw = parseFloat(heightVal) || 178;
-    return heightUnit === 'cm' ? raw : Math.round(raw * 30.48);
+    return heightUnit === 'cm' ? Math.round(raw) : Math.round(raw * 30.48);
   }, [heightVal, heightUnit]);
 
   // Compute Weight in KG
   const weightKg = useMemo(() => {
     const raw = parseFloat(weightVal) || 76;
-    return weightUnit === 'kg' ? raw : Math.round(raw * 0.453592);
+    return weightUnit === 'kg' ? Math.round(raw) : Math.round(raw * 0.453592);
   }, [weightVal, weightUnit]);
 
   const waistCm = useMemo(() => parseFloat(waistVal) || 86, [waistVal]);
@@ -186,7 +213,7 @@ export default function MaleBasicHealthScreen() {
               </View>
               <View style={styles.unitToggleGroup}>
                 <Pressable
-                  onPress={() => setHeightUnit('cm')}
+                  onPress={() => handleSetHeightUnit('cm')}
                   style={[styles.unitToggleBtn, heightUnit === 'cm' && styles.unitToggleBtnActive]}
                 >
                   <Text style={[styles.unitToggleText, heightUnit === 'cm' && styles.unitToggleTextActive]}>
@@ -194,7 +221,7 @@ export default function MaleBasicHealthScreen() {
                   </Text>
                 </Pressable>
                 <Pressable
-                  onPress={() => setHeightUnit('ft')}
+                  onPress={() => handleSetHeightUnit('ft')}
                   style={[styles.unitToggleBtn, heightUnit === 'ft' && styles.unitToggleBtnActive]}
                 >
                   <Text style={[styles.unitToggleText, heightUnit === 'ft' && styles.unitToggleTextActive]}>
@@ -220,7 +247,7 @@ export default function MaleBasicHealthScreen() {
               </View>
               <View style={styles.unitToggleGroup}>
                 <Pressable
-                  onPress={() => setWeightUnit('kg')}
+                  onPress={() => handleSetWeightUnit('kg')}
                   style={[styles.unitToggleBtn, weightUnit === 'kg' && styles.unitToggleBtnActive]}
                 >
                   <Text style={[styles.unitToggleText, weightUnit === 'kg' && styles.unitToggleTextActive]}>
@@ -228,7 +255,7 @@ export default function MaleBasicHealthScreen() {
                   </Text>
                 </Pressable>
                 <Pressable
-                  onPress={() => setWeightUnit('lbs')}
+                  onPress={() => handleSetWeightUnit('lbs')}
                   style={[styles.unitToggleBtn, weightUnit === 'lbs' && styles.unitToggleBtnActive]}
                 >
                   <Text style={[styles.unitToggleText, weightUnit === 'lbs' && styles.unitToggleTextActive]}>

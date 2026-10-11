@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ScrollView,
   TextInput,
+  Modal,
   useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -38,7 +39,7 @@ export default function FemaleLifestyleScreen() {
   const { width } = useWindowDimensions();
   const { lifestyle, updateLifestyle } = useFemaleOnboarding();
 
-  // Local state
+  // Local state initialized with context/persisted values
   const [fastFood, setFastFood] = useState<FemaleLifestyleState['fastFoodIntake']>(
     lifestyle.fastFoodIntake || 'occasionally'
   );
@@ -49,10 +50,17 @@ export default function FemaleLifestyleScreen() {
   const [stress, setStress] = useState<FemaleLifestyleState['stressLevel']>(
     lifestyle.stressLevel || 'moderate'
   );
-  const [water, setWater] = useState<string>('1.6 L');
-  const [smoking, setSmoking] = useState<string>('No');
-  const [alcohol, setAlcohol] = useState<string>('Rarely');
-  const [notes, setNotes] = useState<string>('');
+  const [water, setWater] = useState<string>(lifestyle.waterIntake || '1.6 L');
+  const [smoking, setSmoking] = useState<string>(lifestyle.smokingStatus || 'No');
+  const [alcohol, setAlcohol] = useState<string>(lifestyle.alcoholIntake || 'Rarely');
+  const [notes, setNotes] = useState<string>(lifestyle.additionalNotes || '');
+
+  // Interactive picker modal state
+  const WATER_OPTIONS = ['1.0 L', '1.5 L', '1.6 L', '2.0 L', '2.5 L', '3.0 L+'];
+  const SMOKING_OPTIONS = ['No', 'Occasionally', 'Regularly'];
+  const ALCOHOL_OPTIONS = ['None', 'Rarely', '1–2 / week', '3+ / week'];
+
+  const [activePicker, setActivePicker] = useState<'water' | 'smoking' | 'alcohol' | null>(null);
 
   const bottomPad = Math.max(insets.bottom, 20);
 
@@ -62,9 +70,13 @@ export default function FemaleLifestyleScreen() {
       exerciseFrequency: exercise,
       sleepHours: sleep,
       stressLevel: stress,
+      waterIntake: water,
+      smokingStatus: smoking,
+      alcoholIntake: alcohol,
+      additionalNotes: notes,
     });
     router.push('/female-review');
-  }, [fastFood, exercise, sleep, stress, updateLifestyle, router]);
+  }, [fastFood, exercise, sleep, stress, water, smoking, alcohol, notes, updateLifestyle, router]);
 
   return (
     <BioPulseBackground style={styles.container}>
@@ -223,8 +235,10 @@ export default function FemaleLifestyleScreen() {
                 <Text style={styles.compactLabel}>Water</Text>
               </View>
               <Pressable
-                onPress={() => setWater((w) => (w === '1.6 L' ? '2.5 L' : w === '2.5 L' ? '1.0 L' : '1.6 L'))}
+                onPress={() => setActivePicker('water')}
                 style={styles.dropdownPill}
+                accessibilityRole="button"
+                accessibilityLabel="Select daily water intake"
               >
                 <Text style={styles.dropdownText}>{water}</Text>
                 <Ionicons name="chevron-down" size={13} color={BioPulseColors.textMuted} />
@@ -238,8 +252,10 @@ export default function FemaleLifestyleScreen() {
                 <Text style={styles.compactLabel}>Smoking</Text>
               </View>
               <Pressable
-                onPress={() => setSmoking((s) => (s === 'No' ? 'Yes' : 'No'))}
+                onPress={() => setActivePicker('smoking')}
                 style={styles.dropdownPill}
+                accessibilityRole="button"
+                accessibilityLabel="Select smoking status"
               >
                 <Text style={styles.dropdownText}>{smoking}</Text>
                 <Ionicons name="chevron-down" size={13} color={BioPulseColors.textMuted} />
@@ -253,8 +269,10 @@ export default function FemaleLifestyleScreen() {
                 <Text style={styles.compactLabel}>Alcohol</Text>
               </View>
               <Pressable
-                onPress={() => setAlcohol((a) => (a === 'Rarely' ? 'Never' : a === 'Never' ? 'Weekly' : 'Rarely'))}
+                onPress={() => setActivePicker('alcohol')}
                 style={styles.dropdownPill}
+                accessibilityRole="button"
+                accessibilityLabel="Select alcohol consumption"
               >
                 <Text style={styles.dropdownText}>{alcohol}</Text>
                 <Ionicons name="chevron-down" size={13} color={BioPulseColors.textMuted} />
@@ -291,6 +309,82 @@ export default function FemaleLifestyleScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* Picker Modal for Water, Smoking, Alcohol */}
+      <Modal
+        visible={activePicker !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setActivePicker(null)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setActivePicker(null)}
+        >
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalHeaderRow}>
+              <Text style={styles.modalTitle}>
+                {activePicker === 'water'
+                  ? 'Daily Water Intake'
+                  : activePicker === 'smoking'
+                  ? 'Smoking Status'
+                  : 'Alcohol Consumption'}
+              </Text>
+              <Pressable
+                onPress={() => setActivePicker(null)}
+                hitSlop={8}
+                style={styles.modalCloseBtn}
+              >
+                <Ionicons name="close" size={20} color={BioPulseColors.textSecondary} />
+              </Pressable>
+            </View>
+
+            <View style={styles.modalOptionsList}>
+              {(activePicker === 'water'
+                ? WATER_OPTIONS
+                : activePicker === 'smoking'
+                ? SMOKING_OPTIONS
+                : ALCOHOL_OPTIONS
+              ).map((option) => {
+                const isSelected =
+                  activePicker === 'water'
+                    ? water === option
+                    : activePicker === 'smoking'
+                    ? smoking === option
+                    : alcohol === option;
+
+                return (
+                  <Pressable
+                    key={option}
+                    style={[
+                      styles.modalOptionItem,
+                      isSelected && styles.modalOptionItemSelected,
+                    ]}
+                    onPress={() => {
+                      if (activePicker === 'water') setWater(option);
+                      else if (activePicker === 'smoking') setSmoking(option);
+                      else if (activePicker === 'alcohol') setAlcohol(option);
+                      setActivePicker(null);
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.modalOptionText,
+                        isSelected && styles.modalOptionTextSelected,
+                      ]}
+                    >
+                      {option}
+                    </Text>
+                    {isSelected && (
+                      <Ionicons name="checkmark-circle" size={18} color="#F43F7D" />
+                    )}
+                  </Pressable>
+                );
+              })}
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </BioPulseBackground>
   );
 }
@@ -435,5 +529,65 @@ const styles = StyleSheet.create({
   },
   ctaWrapper: {
     marginTop: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  modalHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: BioPulseColors.textPrimary,
+  },
+  modalCloseBtn: {
+    padding: 4,
+  },
+  modalOptionsList: {
+    gap: 8,
+  },
+  modalOptionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  modalOptionItemSelected: {
+    backgroundColor: '#FFF1F2',
+    borderColor: '#F43F7D',
+  },
+  modalOptionText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: BioPulseColors.textPrimary,
+  },
+  modalOptionTextSelected: {
+    fontWeight: '700',
+    color: '#E11D48',
   },
 });

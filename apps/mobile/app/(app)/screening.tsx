@@ -302,6 +302,18 @@ export default function ScreeningOverviewScreen() {
               </Text>
               <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
             </Pressable>
+
+            {screening.tierStatus !== 'Not Assessed' && (
+              <Pressable
+                onPress={() => router.push(isFemale ? '/female-review' : '/male-review')}
+                style={[styles.secondaryCTA, { borderColor: themeAccent }]}
+              >
+                <Ionicons name="refresh-outline" size={15} color={themeAccent} style={{ marginRight: 6 }} />
+                <Text style={[styles.secondaryCTAText, { color: themeAccent }]}>
+                  Retake Tier 1 Assessment
+                </Text>
+              </Pressable>
+            )}
           </View>
 
           {/* CARD 3: What this means */}
@@ -716,5 +728,19 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',
+  },
+  secondaryCTA: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1.2,
+    backgroundColor: '#FFFFFF',
+  },
+  secondaryCTAText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
 });

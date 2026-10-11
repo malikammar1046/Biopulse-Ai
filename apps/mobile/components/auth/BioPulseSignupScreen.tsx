@@ -38,7 +38,6 @@ export interface BioPulseSignupScreenProps {
   onTermsPress?: () => void;
   onPrivacyPress?: () => void;
   onGoogleSignup?: () => void;
-  onAppleSignup?: () => void;
 }
 
 /**
@@ -51,7 +50,7 @@ export interface BioPulseSignupScreenProps {
  * - Interactive Terms of Service & Privacy Policy checkbox
  * - Primary "Create Account  →" button
  * - "Or continue with" divider
- * - Google & Apple social sign-in buttons
+ * - Google social sign-in button
  * - "Already have an account? Log In"
  * - Preserves all authentication & registration logic
  */
@@ -61,7 +60,6 @@ export const BioPulseSignupScreen: React.FC<BioPulseSignupScreenProps> = ({
   onTermsPress,
   onPrivacyPress,
   onGoogleSignup,
-  onAppleSignup,
 }) => {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
@@ -143,18 +141,6 @@ export const BioPulseSignupScreen: React.FC<BioPulseSignupScreenProps> = ({
       );
     }
   }, [onGoogleSignup]);
-
-  const handleApplePress = useCallback(() => {
-    if (onAppleSignup) {
-      onAppleSignup();
-    } else {
-      Alert.alert(
-        'Apple Sign-Up',
-        'Apple Sign-In is configured for iOS production builds. Please register with your email and password.',
-        [{ text: 'OK' }]
-      );
-    }
-  }, [onAppleSignup]);
 
   return (
     <BioPulseBackground style={styles.container}>
@@ -312,7 +298,6 @@ export const BioPulseSignupScreen: React.FC<BioPulseSignupScreenProps> = ({
               <SocialAuthRow
                 dividerText="Or continue with"
                 onGooglePress={handleGooglePress}
-                onApplePress={handleApplePress}
               />
 
               {/* 7. Footer Login Switch */}

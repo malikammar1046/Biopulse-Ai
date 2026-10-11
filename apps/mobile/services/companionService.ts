@@ -92,8 +92,11 @@ export const companionService = {
     token: string,
     req: CompanionChatRequest
   ): Promise<ApiResponse<CompanionChatResponse>> {
-    const url = `${getDjangoBaseUrl()}/api/v1/intelligence/companion/chat/`;
-    const headers = getDjangoHeaders(token);
+    const isAuthed = Boolean(token && token.trim().length > 10);
+    const url = isAuthed
+      ? `${getDjangoBaseUrl()}/v1/intelligence/companion/chat/`
+      : `${getDjangoBaseUrl()}/v1/intelligence/public/chat/`;
+    const headers = isAuthed ? getDjangoHeaders(token) : { 'Content-Type': 'application/json' };
 
     // Normalize pathway format expected by Django
     let backendPathway: string | undefined = req.pathway;
@@ -114,7 +117,7 @@ export const companionService = {
       client_telemetry: req.client_telemetry || { platform: 'mobile_app' },
     };
 
-    return safeRequest<CompanionChatResponse>(
+    let res = await safeRequest<CompanionChatResponse>(
       url,
       {
         method: 'POST',
@@ -123,6 +126,22 @@ export const companionService = {
       },
       30000 // 30s timeout for LLM inference
     );
+
+    // If authenticated request returned 401, retry once on public endpoint as safe educational fallback
+    if (res.status === 401 && isAuthed) {
+      const publicUrl = `${getDjangoBaseUrl()}/v1/intelligence/public/chat/`;
+      res = await safeRequest<CompanionChatResponse>(
+        publicUrl,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        },
+        30000
+      );
+    }
+
+    return res;
   },
 
   /**
@@ -130,7 +149,7 @@ export const companionService = {
    * GET /api/v1/intelligence/companion/health/
    */
   async checkHealth(): Promise<ApiResponse<CompanionHealthStatus>> {
-    const url = `${getDjangoBaseUrl()}/api/v1/intelligence/companion/health/`;
+    const url = `${getDjangoBaseUrl()}/v1/intelligence/companion/health/`;
     return safeRequest<CompanionHealthStatus>(
       url,
       {
@@ -150,7 +169,7 @@ export const companionService = {
     module?: 'male_hypogonadism' | 'female_pcos'
   ): Promise<ApiResponse<PatientClinicalState>> {
     const query = module ? `?module=${encodeURIComponent(module)}` : '';
-    const url = `${getDjangoBaseUrl()}/api/v1/intelligence/clinical-state/${query}`;
+    const url = `${getDjangoBaseUrl()}/v1/intelligence/clinical-state/${query}`;
     const headers = getDjangoHeaders(token);
 
     return safeRequest<PatientClinicalState>(url, {

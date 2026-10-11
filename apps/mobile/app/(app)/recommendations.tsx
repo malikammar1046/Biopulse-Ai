@@ -65,33 +65,56 @@ export default function RecommendationsScreen() {
   );
 
   const allRecommendations: RecommendationItem[] = useMemo(() => [
+    // 1. NUTRITION
     {
-      id: 'rec-1',
+      id: 'rec-nut-1',
       category: 'Nutrition',
       title: isFemale ? 'Eat Low-GI Breakfast' : 'Zinc & Protein-Rich Breakfast',
       tagColor: '#10B981',
       tagBg: '#ECFDF5',
       what: isFemale
-        ? 'Choose foods like oats, eggs, or whole grains.'
-        : 'Choose whole eggs, pumpkin seeds, or lean proteins.',
+        ? 'Choose complex carbohydrates like oats, eggs, berries, and chia seeds.'
+        : 'Choose whole eggs, pumpkin seeds, Greek yogurt, or lean poultry.',
       why: isFemale
-        ? 'Helps regulate blood sugar and may improve hormonal balance.'
-        : 'Provides essential cofactors for Leydig cell steroidogenesis.',
-      how: 'Include protein + fiber in your breakfast.',
+        ? 'Helps stabilize postprandial glucose and dampens insulin-driven ovarian androgen synthesis.'
+        : 'Supplies essential zinc, magnesium, and amino acids for Leydig cell steroidogenesis.',
+      how: 'Include at least 20g protein and 8g fiber in your morning meal.',
       actionText: 'View Meal Ideas',
       actionVariant: 'solid',
       actionRoute: '/(app)/meal-plan',
       image: NUTRITION_BOWL,
     },
     {
-      id: 'rec-2',
+      id: 'rec-nut-2',
+      category: 'Nutrition',
+      title: isFemale ? 'Anti-Inflammatory Dietary Pattern' : 'Healthy Fats & Precursor Lipids',
+      tagColor: '#10B981',
+      tagBg: '#ECFDF5',
+      what: isFemale
+        ? 'Incorporate wild-caught fish, flaxseeds, leafy greens, and colorful berries.'
+        : 'Include avocados, extra virgin olive oil, walnuts, and omega-3 rich fish.',
+      why: isFemale
+        ? 'Lowers chronic low-grade systemic inflammation linked to follicular arrest in PCOS.'
+        : 'Provides cholesterol substrates and essential fatty acids for endocrine hormone synthesis.',
+      how: 'Add 2 servings of anti-inflammatory whole foods to lunch and dinner.',
+      actionText: 'Explore Recipes',
+      actionVariant: 'outline',
+      actionRoute: '/(app)/meal-plan',
+      iconName: 'nutrition-outline',
+      iconColor: '#10B981',
+      iconBg: '#ECFDF5',
+    },
+
+    // 2. MOVEMENT
+    {
+      id: 'rec-mov-1',
       category: 'Movement',
       title: 'Walk for 30 Minutes Daily',
       tagColor: '#8B5CF6',
       tagBg: '#F5F3FF',
-      what: 'Light to moderate walking.',
-      why: 'May improve insulin sensitivity and support weight management.',
-      how: 'Aim for 30 minutes, 5 days a week.',
+      what: 'Brisk walking or low-impact steady-state cardiovascular movement.',
+      why: 'Stimulates GLUT4 glucose transporters without elevating adrenal cortisol.',
+      how: 'Aim for a 30-minute walk 5 days per week, ideally after your largest meal.',
       actionText: 'Set Reminder',
       actionVariant: 'outline',
       actionRoute: '/(app)/movement',
@@ -100,14 +123,38 @@ export default function RecommendationsScreen() {
       iconBg: '#F5F3FF',
     },
     {
-      id: 'rec-3',
+      id: 'rec-mov-2',
+      category: 'Movement',
+      title: isFemale ? 'Resistance Training for Insulin Health' : 'Compound Strength Training',
+      tagColor: '#8B5CF6',
+      tagBg: '#F5F3FF',
+      what: isFemale
+        ? 'Bodyweight or dumbbell exercises targeting large muscle groups.'
+        : 'Compound movements such as squats, deadlifts, and overhead presses.',
+      why: isFemale
+        ? 'Increases peripheral insulin sensitivity and metabolic resting rate.'
+        : 'Upregulates acute and chronic androgen receptor expression in skeletal muscle.',
+      how: 'Complete 2 to 3 sessions per week with progressive overload.',
+      actionText: 'View Movement Plan',
+      actionVariant: 'solid',
+      actionRoute: '/(app)/movement',
+      iconName: 'barbell-outline',
+      iconColor: '#8B5CF6',
+      iconBg: '#F5F3FF',
+    },
+
+    // 3. LIFESTYLE
+    {
+      id: 'rec-life-1',
       category: 'Lifestyle',
-      title: 'Improve Sleep Quality',
+      title: 'Improve Sleep Quality & Circadian Rhythm',
       tagColor: '#3B82F6',
       tagBg: '#EFF6FF',
-      what: 'Get 7–8 hours of sleep.',
-      why: 'Supports hormone balance and reduces stress.',
-      how: 'Maintain a consistent sleep schedule.',
+      what: 'Aim for 7 to 8 hours of uninterrupted nocturnal sleep in a cool, dark room.',
+      why: isFemale
+        ? 'Restores nocturnal melatonin production and normalizes LH/FSH pulsatile frequency.'
+        : 'Peak daily testosterone synthesis occurs predominantly during deep sleep and REM cycles.',
+      how: 'Keep a consistent bedtime, dim blue lights 1 hour before sleep, and wake with sunlight.',
       actionText: 'See Sleep Tips',
       actionVariant: 'outline',
       iconName: 'bed',
@@ -115,14 +162,31 @@ export default function RecommendationsScreen() {
       iconBg: '#EFF6FF',
     },
     {
-      id: 'rec-4',
+      id: 'rec-life-2',
+      category: 'Lifestyle',
+      title: 'Active Stress & Cortisol Modulation',
+      tagColor: '#3B82F6',
+      tagBg: '#EFF6FF',
+      what: 'Mindfulness, physiological sighs, or nature walks to reduce sympathetic tone.',
+      why: 'Chronically elevated cortisol competes with progesterone and suppresses testosterone production.',
+      how: 'Practice 5 to 10 minutes of box breathing or slow parasympathetic respiration daily.',
+      actionText: 'Save Practice',
+      actionVariant: 'outline',
+      iconName: 'heart-outline',
+      iconColor: '#3B82F6',
+      iconBg: '#EFF6FF',
+    },
+
+    // 4. FOLLOW-UP
+    {
+      id: 'rec-fol-1',
       category: 'Follow-up',
       title: 'Clinical Biomarker Profile',
       tagColor: '#D97706',
       tagBg: '#FEF3C7',
-      what: isFemale ? 'Fasting insulin & total/free testosterone.' : 'Morning total testosterone & SHBG.',
-      why: 'Refines baseline algorithmic screening into precise clinical management.',
-      how: 'Upload your lab report or schedule a blood test.',
+      what: isFemale ? 'Fasting insulin, LH/FSH ratio, total/free testosterone.' : 'Morning total testosterone, free testosterone, and SHBG.',
+      why: 'Refines baseline algorithmic screening into precise clinical laboratory management.',
+      how: 'Upload your lab report via OCR or enter verified numbers under Track.',
       actionText: 'Add Clinical Labs',
       actionVariant: 'solid',
       actionRoute: '/(app)/add-labs',
@@ -130,16 +194,27 @@ export default function RecommendationsScreen() {
       iconColor: '#D97706',
       iconBg: '#FEF3C7',
     },
+    {
+      id: 'rec-fol-2',
+      category: 'Follow-up',
+      title: isFemale ? 'Gynecologist / Endocrinologist Consultation' : 'Andrologist / Urologist Consultation',
+      tagColor: '#D97706',
+      tagBg: '#FEF3C7',
+      what: 'Formal diagnostic consultation and clinical physical examination.',
+      why: 'Screening tools provide statistical probability; only licensed clinicians provide authoritative diagnosis.',
+      how: 'Schedule an in-person or telemedicine evaluation through our verified directory.',
+      actionText: 'Find Specialists',
+      actionVariant: 'outline',
+      actionRoute: '/(app)/specialists',
+      iconName: 'medkit-outline',
+      iconColor: '#D97706',
+      iconBg: '#FEF3C7',
+    },
   ], [isFemale]);
 
-  // If a category is selected and exists, show filtered, or show all 3 primary ones if Nutrition or All
+  // Strict category filtering: each category shows only its own verified items
   const displayedRecs = useMemo(() => {
-    if (activeCategory === 'Nutrition') {
-      // In Screenshot 35, Nutrition is selected as the first pill, and the primary 3 cards are shown
-      return allRecommendations.slice(0, 3);
-    }
-    const filtered = allRecommendations.filter((r) => r.category === activeCategory);
-    return filtered.length > 0 ? filtered : allRecommendations.slice(0, 3);
+    return allRecommendations.filter((r) => r.category === activeCategory);
   }, [allRecommendations, activeCategory]);
 
   const handleAction = (item: RecommendationItem) => {

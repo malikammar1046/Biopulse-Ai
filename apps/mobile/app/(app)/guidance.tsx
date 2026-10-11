@@ -74,7 +74,7 @@ export default function GuidanceHomeScreen() {
       icon: 'book' as const,
       iconColor: '#9333EA',
       iconBg: '#F3E8FF',
-      route: '/(app)/recommendations?category=Lifestyle',
+      route: '/(app)/health-education',
     },
     {
       id: 'ai-assistant',

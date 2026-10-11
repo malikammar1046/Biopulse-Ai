@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import QRCode from 'qrcode';
 import {
   Download,
@@ -29,8 +29,8 @@ const APP_RELEASE = {
   filename: 'biopulse-ai-v1.0.0.apk',
   downloadPath: '/downloads/biopulse-ai-v1.0.0.apk',
   mirrorPath: '/downloads/biopulse-ai-latest.apk',
-  fileSizeFormatted: '71.1 MB',
-  sha256: '15d739b2dd99945a20ab8f1df5884ea3def3117f453ad92cd6161148335e89ce',
+  fileSizeFormatted: '78.3 MB',
+  sha256: '836331db4bac961106dbe7176fd6d3cc5a7dc7400abca68750310691f04a7953',
   minAndroidVersion: 'Android 8.0+ (Oreo, API 26)',
   targetAndroidVersion: 'Android 14.0 (API 34)',
   architecture: 'Universal (ARM64, ARMv7, x86_64)',
@@ -891,4 +891,5 @@ export const AppDownloadPage: React.FC = () => {
 };
 
 export default AppDownloadPage;
+
 

@@ -167,6 +167,54 @@ export class NutritionService {
   }
 
   /**
+   * Fetch user nutrition preferences (preferred cuisines, allergies, diet pattern)
+   */
+  static async getPreferences(token: string): Promise<ApiResponse<any>> {
+    const url = `${BACKEND_API_URL}/v1/health/nutrition/preferences/`;
+    return safeRequest<any>(url, {
+      method: 'GET',
+      headers: getDjangoHeaders(token),
+    });
+  }
+
+  /**
+   * Update and persist user nutrition preferences to backend
+   */
+  static async updatePreferences(token: string, prefs: Record<string, any>): Promise<ApiResponse<any>> {
+    const url = `${BACKEND_API_URL}/v1/health/nutrition/preferences/`;
+    return safeRequest<any>(url, {
+      method: 'PUT',
+      headers: getDjangoHeaders(token),
+      body: JSON.stringify(prefs),
+    });
+  }
+
+  /**
+   * Check nutrition readiness for personalized meal plan generation
+   */
+  static async getReadiness(token: string): Promise<ApiResponse<any>> {
+    const url = `${BACKEND_API_URL}/v1/health/nutrition/readiness/`;
+    return safeRequest<any>(url, {
+      method: 'GET',
+      headers: getDjangoHeaders(token),
+    });
+  }
+
+  /**
+   * Generate fresh personalized 7-day meal plan
+   */
+  static async generateWeeklyPlan(token: string): Promise<ApiResponse<NutritionPlan>> {
+    const url = `${BACKEND_API_URL}/v1/health/nutrition/plan/weekly/`;
+    const res = await safeRequest<any>(url, {
+      method: 'POST',
+      headers: getDjangoHeaders(token),
+      body: JSON.stringify({}),
+    });
+    if (res.error) return { data: null, error: res.error, status: res.status };
+    return { data: res.data, error: null, status: 200 };
+  }
+
+  /**
    * Swap a meal in the current plan for an alternative
    */
   static async swapMeal(
