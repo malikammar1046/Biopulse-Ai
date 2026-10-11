@@ -106,7 +106,7 @@ export const MaleStep3SymptomsADAM: React.FC<MaleStep3Props> = ({
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto space-y-4 text-left">
+    <div className="w-full space-y-4 text-left">
       {/* Return to Health Profile Link (if provided) */}
       {onBackToHealthProfile && (
         <button

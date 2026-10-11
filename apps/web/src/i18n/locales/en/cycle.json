@@ -9,7 +9,8 @@
     "period": "Menstruation — Resting phase, lower estrogen and progesterone levels.",
     "follicular": "Follicular — Follicle maturation phase; rising estrogen supports energy.",
     "ovulation": "Ovulatory Window — Peak estrogen and LH surge; fertile window.",
-    "luteal": "Luteal Phase — Rising progesterone; monitor for PMS or metabolic sensitivity."
+    "luteal": "Luteal Phase — Rising progesterone; monitor for PMS or metabolic sensitivity.",
+    "overdue": "Overdue Cycle — Cycle has extended beyond the expected length; hormone levels or cycle variation may be present."
   },
   "logPeriod": "Log Period Flow",
   "flowIntensity": {
@@ -24,7 +25,8 @@
     "averageDuration": "Average Bleeding Duration",
     "regularity": "Regularity Status",
     "regular": "Predictable / Regular",
-    "irregular": "Variable / Irregular"
+    "irregular": "Variable / Irregular",
+    "insufficientHistory": "Awaiting History"
   },
   "cycleStoryTitle": "Your cycle story starts here.",
   "cycleStoryDesc": "Log your first period to begin understanding your patterns, biological phases, and longitudinal rhythms.",
@@ -34,5 +36,20 @@
   "responsibleBoundaryDesc": "BioPulse AI cycle projections, estimated phases, and fertile windows are calculated from your self-reported dates and historical rhythm. They are informational estimations and do not constitute diagnostic ovulation detection or medical birth control.",
   "refreshCycleTitle": "Refresh cycle records",
   "loadingRecords": "Loading your cycle records...",
-  "cycleIntelligenceTag": "Cycle Intelligence"
+  "cycleIntelligenceTag": "Cycle Intelligence",
+  "overdue": "Overdue",
+  "overduePhase": "Overdue (Extended Cycle)",
+  "daysOverdue": "{{count}} days overdue",
+  "periodOverdueAlert": "Your period is currently {{count}} days past the expected date ({{expectedDate}}). Delayed cycles may occur due to hormonal variability, stress, or PCOS.",
+  "irregularUncertainNotice": "Your recorded cycle lengths vary. Calendar-based fertile windows and ovulation days are estimates and cannot confirm actual ovulation.",
+  "insufficientHistoryNotice": "At least 2 recorded period start dates are needed to calculate historical cycle lengths. Displaying baseline estimates.",
+  "cycleLengthSource": {
+    "history": "Based on {{count}} recorded cycle{{suffix}}",
+    "profile": "From onboarding profile baseline",
+    "default": "Standard baseline estimate (no completed cycles yet)"
+  },
+  "fertilityDisclaimer": "Calendar calculations are estimates and must not be used as contraception or medical proof of ovulation.",
+  "irregularInterval": "Irregular Interval",
+  "prolongedGap": "Prolonged Gap (>90d)",
+  "spottingNotice": "Spotting is light bleeding between periods and is tracked separately from standard menstrual flow."
 }

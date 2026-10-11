@@ -238,8 +238,19 @@ export const MaleScreeningWorkspace: React.FC = () => {
   // Status flags
   const isTier2Done = assessmentLevel === 'tier_1_2' || assessmentLevel === 'tier_2';
 
+  const normRisk = (riskCategory || '').toLowerCase();
+  const isDirectHormone =
+    normRisk === 'direct_hormone_evaluation' ||
+    normRisk === 'hormone_pattern_only';
+  const isIncomplete =
+    normRisk === 'incomplete' || authoritativeAssessment?.is_complete === false;
+
   const displayProbability =
-    probabilityPercent != null ? `${probabilityPercent.toFixed(1)}%` : '--%';
+    probabilityPercent != null
+      ? `${probabilityPercent.toFixed(1)}%`
+      : isDirectHormone
+      ? 'Labs'
+      : '--%';
 
   // Authoritative male risk range configuration
   const riskRanges = useMemo(() => {
@@ -363,7 +374,17 @@ export const MaleScreeningWorkspace: React.FC = () => {
               </span>
 
               {hasAssessment ? (
-                isLowerRisk ? (
+                isDirectHormone ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#E0F2FE] text-[#0284C7] border border-[#BAE6FD]">
+                    <ShieldTick className="w-4 h-4 text-[#0284C7]" aria-hidden="true" />
+                    {riskLabel || 'Direct Hormone Pattern Evaluation'}
+                  </span>
+                ) : isIncomplete ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#FFFAEB] text-[#B54708] border border-[#FEDF89]">
+                    <AlertTriangle className="w-4 h-4 text-[#F79009]" aria-hidden="true" />
+                    {riskLabel || 'Incomplete Assessment'}
+                  </span>
+                ) : isLowerRisk ? (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#ECFDF3] text-[#027A48] border border-[#D1FADF]">
                     <ShieldTick className="w-4 h-4 text-[#12B76A]" aria-hidden="true" />
                     {riskLabel || 'Lower Screening Risk'}
@@ -390,6 +411,17 @@ export const MaleScreeningWorkspace: React.FC = () => {
             <p className="text-sm text-[#667085] mt-3 leading-relaxed">
               {getEvidenceDescription()}
             </p>
+
+            {/* Assessment Notice (Incomplete or Partial Evidence) */}
+            {authoritativeAssessment?.notice && (
+              <div className="mt-4 p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-left flex items-start gap-2.5">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" aria-hidden="true" />
+                <div className="text-xs text-amber-900 leading-relaxed">
+                  <span className="font-semibold block mb-0.5">Assessment Notice</span>
+                  {authoritativeAssessment.notice}
+                </div>
+              </div>
+            )}
 
             {/* Screening Metadata Row */}
             <div className="flex flex-wrap items-center gap-3 text-xs text-[#667085] mt-4 pt-3 border-t border-[#F2F4F7]">

@@ -65,10 +65,12 @@ export const MetricTrendCard: React.FC<MetricTrendCardProps> = ({
 
   const points = activeSeries.data_points || [];
 
-  // Sort chronologically ascending for the chart
-  const sortedPoints = [...points].sort(
-    (a, b) => new Date(a.observed_at || a.timestamp).getTime() - new Date(b.observed_at || b.timestamp).getTime()
-  );
+  // Sort chronologically ascending for the chart (memoized to eliminate redundant sorting)
+  const sortedPoints = useMemo(() => {
+    return [...points].sort(
+      (a, b) => new Date(a.observed_at || a.timestamp).getTime() - new Date(b.observed_at || b.timestamp).getTime()
+    );
+  }, [points]);
 
   return (
     <div className="bg-white border border-[#EAECF0] rounded-[20px] sm:rounded-[24px] p-5 sm:p-6 shadow-xs text-left select-none space-y-4">

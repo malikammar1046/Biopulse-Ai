@@ -85,6 +85,7 @@ export function deriveFemaleTier1InputsFromProfile(
 
   return {
     age,
+    date_of_birth: profile.dateOfBirth,
     height_cm: heightCm,
     weight_kg: weightKg,
     waist_inch: waistInch,
@@ -101,6 +102,10 @@ export function deriveFemaleTier1InputsFromProfile(
     marriage_years: marriageYears,
     pregnancy,
     abortions,
+    has_had_period: profile.womensHealth?.hasHadPeriod,
+    age_at_menarche: profile.womensHealth?.ageAtMenarche,
+    is_menopausal: profile.womensHealth?.isMenopausal,
+    menopausal_status: profile.womensHealth?.menopausalStatus,
   };
 }
 
@@ -128,9 +133,34 @@ export function deriveMaleTier1InputsFromProfile(
       ? Number(profile.waistCm)
       : null;
 
-  const conds = (profile.medical?.conditions || []).join(' ').toLowerCase();
-  const isHbp = conds.includes('hypertension') || conds.includes('blood pressure') ? 1 : 0;
-  const isDm = conds.includes('diabetes') || conds.includes('insulin resistance') ? 1 : 0;
+  const rawConds = profile.medical?.conditions;
+  let isHbp: number | null = null;
+  let isDm: number | null = null;
+
+  if (Array.isArray(rawConds) && rawConds.length > 0) {
+    const condsStr = rawConds.join(' ').toLowerCase();
+    if (condsStr.includes('none of these') || condsStr.includes('none')) {
+      isHbp = 0;
+      isDm = 0;
+    } else {
+      if (condsStr.includes('hypertension: unsure') || condsStr.includes('blood pressure: unsure')) {
+        isHbp = null;
+      } else if (condsStr.includes('hypertension') || condsStr.includes('blood pressure')) {
+        isHbp = 1;
+      } else {
+        isHbp = 0;
+      }
+
+      if (condsStr.includes('diabetes: unsure') || condsStr.includes('insulin: unsure') || condsStr.includes('blood sugar: unsure')) {
+        isDm = null;
+      } else if (condsStr.includes('diabetes')) {
+        isDm = 1;
+      } else {
+        isDm = 0;
+      }
+    }
+  }
+  // If conditions were unanswered/empty, isHbp and isDm remain null — never equated to 0 (No).
 
   const adam = profile.mensHealth?.adamResponses || {};
   const lowEnergy =

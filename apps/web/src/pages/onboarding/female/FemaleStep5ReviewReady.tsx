@@ -45,24 +45,30 @@ export const FemaleStep5ReviewReady: React.FC<FemaleStep5Props> = ({
             } allergies`,
     },
     {
-      label: 'Period & Cycle',
-      val: `${
-        typeof profile.womensHealth?.cycleLength === 'number'
-          ? `${profile.womensHealth.cycleLength}-day cycle`
-          : 'Cycle recorded'
-      } • ${
-        profile.womensHealth?.periodRegularity
-          ? profile.womensHealth.periodRegularity.replace(/_/g, ' ')
-          : 'Tracked'
-      }`,
+      label: 'Life Stage & Evaluation Pathway',
+      val: profile.dateOfBirth ? `${profile.womensHealth?.hasHadPeriod === false ? 'Pre-Menarche' : (profile.womensHealth?.menopausalStatus ? profile.womensHealth.menopausalStatus.replace(/_/g, ' ') : 'Reproductive stage')} • Evidence-based guideline pathway` : 'Reproductive stage',
+    },
+    {
+      label: 'Period & Menstrual Rhythm',
+      val: profile.womensHealth?.hasHadPeriod === false
+        ? 'Pre-Menarche • Periods not yet begun'
+        : `${
+            typeof profile.womensHealth?.cycleLength === 'number'
+              ? `${profile.womensHealth.cycleLength}-day cycle`
+              : 'Cycle recorded'
+          } • ${
+            profile.womensHealth?.periodRegularity
+              ? profile.womensHealth.periodRegularity.replace(/_/g, ' ')
+              : 'Tracked'
+          }${profile.womensHealth?.ageAtMenarche ? ` • Menarche at age ${profile.womensHealth.ageAtMenarche}` : ''}`,
     },
     {
       label: 'Symptoms & Patterns',
       val: symptomsText,
     },
     {
-      label: 'BioPulse AI Screening Status',
-      val: 'Profile Ready • Non-diagnostic ML analysis enabled',
+      label: 'BioPulse AI Screening Pathway',
+      val: 'Evidence-based guidance enabled • Non-diagnostic clinical safety standards',
     },
   ];
 
@@ -74,7 +80,7 @@ export const FemaleStep5ReviewReady: React.FC<FemaleStep5Props> = ({
   ];
 
   return (
-    <div className="space-y-5 text-left max-w-4xl mx-auto">
+    <div className="w-full space-y-5 text-left">
       {/* ── Question Header with Why We Ask Trigger ── */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -112,9 +118,9 @@ export const FemaleStep5ReviewReady: React.FC<FemaleStep5Props> = ({
       )}
 
       {/* ── Main Review Content (Full Width) ── */}
-      <div className="w-full space-y-4">
+      <div className="w-full space-y-3.5">
           {/* Profile Hero Card with Avatar */}
-          <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-[#FAFCFF] via-[#FDF2F8]/40 to-[#F0FDF4]/30 border border-[#D7EAF2] flex items-center gap-5">
+          <div className="p-4 sm:p-5 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#FAFCFF] via-[#FDF2F8]/40 to-[#F0FDF4]/30 border border-[#D7EAF2] flex items-center gap-4 sm:gap-5">
             <UserAvatar
               avatarUrl={profile.avatarUrl}
               name={profile.fullName}
@@ -124,38 +130,38 @@ export const FemaleStep5ReviewReady: React.FC<FemaleStep5Props> = ({
             />
 
             <div>
-              <h3 className="text-xl sm:text-2xl font-bold font-display text-[#073B72] leading-tight">
+              <h3 className="text-lg sm:text-xl font-bold font-display text-[#073B72] leading-tight">
                 {profile.fullName ? `Welcome, ${profile.fullName}` : 'Your BioPulse AI profile is ready'}
               </h3>
-              <p className="text-[14px] sm:text-[15px] text-[#55718F] font-sans mt-1">
+              <p className="text-[13px] sm:text-[13.5px] text-[#55718F] font-sans mt-0.5">
                 Baseline calibrated • Ready to explore personalized insights
               </p>
             </div>
           </div>
 
           {/* Configured Baselines Checklist */}
-          <div className="p-5 sm:p-6 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#D7EAF2]">
-              <span className="flex items-center gap-2.5 font-bold tracking-wide text-[15px] sm:text-[16px] uppercase text-[#073B72]">
-                <ShieldTick className="w-5 h-5 text-[#F43F7D]" aria-hidden="true" />
+          <div className="p-4 sm:p-4.5 rounded-xl sm:rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-3">
+            <div className="flex items-center justify-between pb-2.5 border-b border-[#D7EAF2]">
+              <span className="flex items-center gap-2 font-bold tracking-wide text-[13.5px] sm:text-[14px] uppercase text-[#073B72]">
+                <ShieldTick className="w-4.5 h-4.5 text-[#F43F7D]" aria-hidden="true" />
                 Configured Baselines
               </span>
-              <span className="text-[#0E9EAA] font-bold text-[13px] bg-[#EAFBFC] px-3 py-1 rounded-full border border-[#B2EBF2]">
+              <span className="text-[#0E9EAA] font-bold text-[12px] bg-[#EAFBFC] px-2.5 py-0.5 rounded-full border border-[#B2EBF2]">
                 100% Complete
               </span>
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               {checks.map((item, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between py-2.5 sm:py-3 border-b border-[#E8F1F5] last:border-none gap-4"
+                  className="flex items-center justify-between py-2 sm:py-2.5 border-b border-[#E8F1F5] last:border-none gap-3"
                 >
-                  <div className="flex items-center gap-2.5 text-[#073B72] font-semibold shrink-0">
-                    <CheckCircle className="w-5 h-5 text-[#0E9EAA] shrink-0" aria-hidden="true" />
-                    <span className="text-[14px] sm:text-[15px] font-sans">{item.label}</span>
+                  <div className="flex items-center gap-2 text-[#073B72] font-semibold shrink-0">
+                    <CheckCircle className="w-4.5 h-4.5 text-[#0E9EAA] shrink-0" aria-hidden="true" />
+                    <span className="text-[13px] sm:text-[13.5px] font-sans">{item.label}</span>
                   </div>
-                  <span className="text-[14px] sm:text-[15px] text-[#486581] font-sans text-right max-w-sm sm:max-w-md">
+                  <span className="text-[13px] sm:text-[13.5px] text-[#486581] font-sans text-right max-w-sm sm:max-w-md truncate">
                     {item.val}
                   </span>
                 </div>
@@ -164,15 +170,15 @@ export const FemaleStep5ReviewReady: React.FC<FemaleStep5Props> = ({
           </div>
 
           {/* What You Can Explore Overview */}
-          <div className="p-5 sm:p-6 rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-3">
-            <span className="text-[14px] sm:text-[15px] font-bold font-sans uppercase tracking-wider text-[#073B72] block">
+          <div className="p-4 sm:p-4.5 rounded-xl sm:rounded-2xl bg-[#FAFCFF] border border-[#D7EAF2] space-y-2.5">
+            <span className="text-[13px] sm:text-[13.5px] font-bold font-sans uppercase tracking-wider text-[#073B72] block">
               You can now explore:
             </span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[#486581]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5 text-[#486581]">
               {focusList.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-2.5">
-                  <span className="w-2 h-2 rounded-full bg-[#F43F7D] shrink-0" />
-                  <span className="leading-snug text-[14px] sm:text-[15px] font-sans font-medium">{item}</span>
+                <div key={idx} className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#F43F7D] shrink-0" />
+                  <span className="leading-snug text-[13px] sm:text-[13.5px] font-sans font-medium">{item}</span>
                 </div>
               ))}
             </div>

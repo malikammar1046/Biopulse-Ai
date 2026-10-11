@@ -15,6 +15,8 @@ export const CycleProgressDial: React.FC<CycleDialProps> = ({
   phaseName = 'Start tracking your cycle',
 }) => {
   const hasLogged = currentDay > 0 && !phaseName.toLowerCase().includes('start tracking');
+  const isOverdue = hasLogged && currentDay > totalDays;
+  const daysOverdue = isOverdue ? currentDay - totalDays : 0;
 
   // SVG calculations for circular progress arc
   const radius = 64;
@@ -27,6 +29,9 @@ export const CycleProgressDial: React.FC<CycleDialProps> = ({
       return 'Log your first period to activate real-time cycle day calculations, biological phase estimates, and personalized rhythm tracking.';
     }
     const lower = phaseName.toLowerCase();
+    if (lower.includes('overdue')) {
+      return 'Your cycle is currently extended past the expected window. Cycle delays can occur with stress, routine shifts, or polycystic ovarian hormone patterns.';
+    }
     if (lower.includes('period') || lower.includes('menstruat')) {
       return 'Focus on restorative rest, warmth, iron-rich nourishment, and gentle stretching.';
     }
@@ -39,7 +44,7 @@ export const CycleProgressDial: React.FC<CycleDialProps> = ({
     return 'Rising estrogen supports increasing energy, progressive workouts, and creative focus.';
   };
 
-  const mid = Math.floor(totalDays / 2);
+  const estOvulation = Math.max(1, totalDays - 14);
 
   return (
     <div className="p-6 sm:p-7 rounded-2xl bg-white border border-[#EAECF0] shadow-xs flex flex-col justify-between select-none text-left space-y-6">
@@ -76,7 +81,7 @@ export const CycleProgressDial: React.FC<CycleDialProps> = ({
               cy="80"
               r={radius}
               fill="none"
-              stroke="#F43F7D"
+              stroke={isOverdue ? '#E11D48' : '#F43F7D'}
               strokeWidth="12"
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
@@ -92,11 +97,11 @@ export const CycleProgressDial: React.FC<CycleDialProps> = ({
                 <span className="text-xs font-mono text-[#64748B] uppercase tracking-wider font-semibold">
                   Day
                 </span>
-                <span className="text-3xl font-extrabold font-display text-[#0F172A] leading-none">
+                <span className={`text-3xl font-extrabold font-display leading-none ${isOverdue ? 'text-[#E11D48]' : 'text-[#0F172A]'}`}>
                   {currentDay}
                 </span>
                 <span className="text-[11px] font-mono text-[#64748B] mt-0.5">
-                  of {totalDays}
+                  {isOverdue ? `+${daysOverdue}d overdue` : `of ${totalDays}`}
                 </span>
               </>
             ) : (
@@ -118,7 +123,7 @@ export const CycleProgressDial: React.FC<CycleDialProps> = ({
             <span className="text-xs font-mono uppercase text-[#64748B] tracking-wider block">
               {hasLogged ? 'Current Phase' : 'Rhythm Status'}
             </span>
-            <h4 className="text-lg sm:text-xl font-bold font-display text-[#F43F7D]">
+            <h4 className={`text-lg sm:text-xl font-bold font-display ${isOverdue ? 'text-[#E11D48]' : 'text-[#F43F7D]'}`}>
               {phaseName}
             </h4>
           </div>
@@ -145,15 +150,15 @@ export const CycleProgressDial: React.FC<CycleDialProps> = ({
         </div>
         <div className="flex items-center gap-1.5 text-[#475569]">
           <span className="w-2.5 h-2.5 rounded-full bg-[#8E3EAF]" />
-          <span>Follicular (6–{mid - 1})</span>
+          <span>Follicular (6–{Math.max(6, estOvulation - 3)})</span>
         </div>
         <div className="flex items-center gap-1.5 text-[#475569]">
           <span className="w-2.5 h-2.5 rounded-full bg-[#A21CAF]" />
-          <span>Ovulation ({mid})</span>
+          <span>Ovulation (~{estOvulation})</span>
         </div>
         <div className="flex items-center gap-1.5 text-[#475569]">
           <span className="w-2.5 h-2.5 rounded-full bg-[#6E2D8B]" />
-          <span>Luteal ({mid + 1}–{totalDays})</span>
+          <span>Luteal ({estOvulation + 2}–{totalDays})</span>
         </div>
       </div>
     </div>

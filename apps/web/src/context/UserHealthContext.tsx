@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import type { UserProfile } from '../types/onboarding';
 import type {
   HealthSnapshotMetrics,
@@ -78,6 +78,7 @@ import type {
   ConsultationBrief,
 } from '../types/appointment';
 import type { IntelligenceAssessment, ProgressiveAssessment } from '../types/intelligence';
+import type { LongitudinalHealthResponse, MonitoringPeriodFilter } from '../types/longitudinalHealth';
 import {
   fetchBackendAssessment,
   clearAssessmentCache,
@@ -92,6 +93,9 @@ import {
   clearTier2Assessment,
   fetchPatientClinicalState,
   getLongitudinalHealth,
+  getCachedLongitudinalHealth,
+  invalidateLongitudinalCache,
+  setLongitudinalAuthUserId,
 } from '../services/intelligenceService';
 import { lifestyleService } from '../services/lifestyleService';
 
@@ -244,6 +248,15 @@ interface UserHealthContextType {
     markVerified?: boolean
   ) => Promise<{ success: boolean; error?: string }>;
   saveADAMResponses: (adamState: ADAMQuestionnaireState) => Promise<void>;
+  longitudinalData: LongitudinalHealthResponse | null;
+  longitudinalLoading: boolean;
+  longitudinalPeriod: MonitoringPeriodFilter;
+  fetchLongitudinalHealth: (
+    period?: MonitoringPeriodFilter,
+    forceRefresh?: boolean,
+    signal?: AbortSignal
+  ) => Promise<LongitudinalHealthResponse | null>;
+  invalidateLongitudinalHealth: () => void;
 }
 
 const REMINDERS_KEY = 'ovasense_user_reminders_v1';
@@ -273,6 +286,80 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setPostOnboardingReadiness('ready');
     }
   }, [userProfile?.isOnboarded, postOnboardingReadiness]);
+
+  // ── Longitudinal Health Context State & Caching Layer (Task 5) ──
+  const [longitudinalData, setLongitudinalData] = useState<LongitudinalHealthResponse | null>(() => {
+    const targetUserId = authUser?.id || userProfile?.id;
+    const pathway = resolvePathway(userProfile?.gender, userProfile?.pathway);
+    const mod = pathway === 'male' ? 'male_hypogonadism' : 'female_pcos';
+    return getCachedLongitudinalHealth('90d', mod, targetUserId);
+  });
+  const [longitudinalLoading, setLongitudinalLoading] = useState<boolean>(false);
+  const [longitudinalPeriod, setLongitudinalPeriod] = useState<MonitoringPeriodFilter>('90d');
+  const longitudinalLastFetchedRef = useRef<Record<string, number>>({});
+
+  const invalidateLongitudinalHealth = useCallback(() => {
+    invalidateLongitudinalCache(authoritativeUserId || undefined);
+    longitudinalLastFetchedRef.current = {};
+    try {
+      window.dispatchEvent(
+        new CustomEvent('biopulse:longitudinal-refresh', {
+          detail: { userId: authoritativeUserId },
+        })
+      );
+    } catch {
+      // ignore
+    }
+  }, [authoritativeUserId]);
+
+  const fetchLongitudinalHealth = useCallback(
+    async (
+      period: MonitoringPeriodFilter = '90d',
+      forceRefresh = false,
+      signal?: AbortSignal
+    ): Promise<LongitudinalHealthResponse | null> => {
+      const pathway = resolvePathway(userProfile?.gender, userProfile?.pathway);
+      const mod = pathway === 'male' ? 'male_hypogonadism' : 'female_pcos';
+      const targetUserId = authoritativeUserId || userProfile?.id;
+      const cacheKey = `${targetUserId || 'active_user'}:${mod}:${period}`;
+
+      // 1. Check synchronous cache if not forcing refresh
+      if (!forceRefresh) {
+        const cached = getCachedLongitudinalHealth(period, mod, targetUserId);
+        const lastFetched = longitudinalLastFetchedRef.current[cacheKey] || 0;
+        const isFresh = Date.now() - lastFetched < 5 * 60 * 1000;
+
+        if (cached) {
+          setLongitudinalData(cached);
+          setLongitudinalPeriod(period);
+          if (isFresh) {
+            return cached;
+          }
+        }
+      }
+
+      // 2. Fetch in background with stale-while-revalidate (avoid blank screen or spinner if data exists)
+      if (!longitudinalData) {
+        setLongitudinalLoading(true);
+      }
+
+      try {
+        const res = await getLongitudinalHealth(period, mod, signal, forceRefresh);
+        if (signal?.aborted) return null;
+        if (res) {
+          setLongitudinalData(res);
+          setLongitudinalPeriod(period);
+          longitudinalLastFetchedRef.current[cacheKey] = Date.now();
+        }
+        return res;
+      } finally {
+        if (!signal?.aborted) {
+          setLongitudinalLoading(false);
+        }
+      }
+    },
+    [authoritativeUserId, userProfile?.gender, userProfile?.pathway, userProfile?.id, longitudinalData]
+  );
 
   // Cycle Records State
   const [cycleRecords, setCycleRecords] = useState<CycleRecord[]>([]);
@@ -360,8 +447,9 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (!userProfile?.id) return;
       await reportService.verifyReportResult(userProfile.id, reportId, resultId);
       await refreshReports();
+      invalidateLongitudinalHealth();
     },
-    [userProfile?.id, refreshReports]
+    [userProfile?.id, refreshReports, invalidateLongitudinalHealth]
   );
 
   const updateReportBiomarker = useCallback(
@@ -380,9 +468,10 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         markVerified
       );
       await refreshReports();
+      invalidateLongitudinalHealth();
       return res;
     },
-    [userProfile?.id, refreshReports]
+    [userProfile?.id, refreshReports, invalidateLongitudinalHealth]
   );
 
   const saveADAMResponses = useCallback(
@@ -404,13 +493,9 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       await authUpdateProfile({
         mensHealth: updatedMens as any,
       });
-      try {
-        window.dispatchEvent(new CustomEvent('biopulse:longitudinal-refresh'));
-      } catch {
-        // ignore
-      }
+      invalidateLongitudinalHealth();
     },
-    [userProfile, authUpdateProfile]
+    [userProfile, authUpdateProfile, invalidateLongitudinalHealth]
   );
 
   useEffect(() => {
@@ -446,30 +531,33 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
 
         // Update local cycle records state
+        let updatedRecords: CycleRecord[] = [];
         setCycleRecords((prev) => {
           const next = [record, ...prev.filter((r) => r.id !== record.id)];
-          return next.sort(
+          updatedRecords = next.sort(
             (a, b) => new Date(b.periodStartDate).getTime() - new Date(a.periodStartDate).getTime()
           );
+          return updatedRecords;
         });
 
-        // Sync last_period_date to user profile if this is the latest recorded period
-        const latestStartDate = input.periodStartDate;
-        if (!userProfile.womensHealth?.lastPeriodDate || latestStartDate >= userProfile.womensHealth.lastPeriodDate) {
+        // Sync last_period_date to user profile with the latest recorded period
+        const latestStartDate = updatedRecords[0]?.periodStartDate || input.periodStartDate;
+        if (latestStartDate && latestStartDate !== userProfile?.womensHealth?.lastPeriodDate) {
           authUpdateProfile({
             womensHealth: {
-              ...userProfile.womensHealth,
+              ...userProfile?.womensHealth,
               lastPeriodDate: latestStartDate,
             },
           }).catch((err) => console.warn('Could not sync profile last period date:', err));
         }
 
+        invalidateLongitudinalHealth();
         return { success: true };
       } catch (err: any) {
         return { success: false, error: err?.message || 'Unexpected error saving period.' };
       }
     },
-    [userProfile, authUpdateProfile]
+    [userProfile, authUpdateProfile, invalidateLongitudinalHealth]
   );
 
   // Update an existing period entry
@@ -484,19 +572,33 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           return { success: false, error: error || 'Failed to update cycle record.' };
         }
 
+        let updatedRecords: CycleRecord[] = [];
         setCycleRecords((prev) => {
           const next = prev.map((r) => (r.id === id ? record : r));
-          return next.sort(
+          updatedRecords = next.sort(
             (a, b) => new Date(b.periodStartDate).getTime() - new Date(a.periodStartDate).getTime()
           );
+          return updatedRecords;
         });
 
+        // Sync latest period date to user profile if the latest record changed
+        const latestStartDate = updatedRecords[0]?.periodStartDate;
+        if (latestStartDate && latestStartDate !== userProfile?.womensHealth?.lastPeriodDate) {
+          authUpdateProfile({
+            womensHealth: {
+              ...userProfile?.womensHealth,
+              lastPeriodDate: latestStartDate,
+            },
+          }).catch((err) => console.warn('Could not sync profile last period date on update:', err));
+        }
+
+        invalidateLongitudinalHealth();
         return { success: true };
       } catch (err: any) {
         return { success: false, error: err?.message || 'Unexpected error updating period.' };
       }
     },
-    [userProfile?.id]
+    [userProfile, authUpdateProfile, invalidateLongitudinalHealth]
   );
 
   // Delete a period entry
@@ -511,13 +613,30 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           return { success: false, error: error || 'Failed to delete cycle record.' };
         }
 
-        setCycleRecords((prev) => prev.filter((r) => r.id !== id));
+        let updatedRecords: CycleRecord[] = [];
+        setCycleRecords((prev) => {
+          updatedRecords = prev.filter((r) => r.id !== id);
+          return updatedRecords;
+        });
+
+        // Sync latest remaining period date to user profile (or clear if none remaining)
+        const newLatestStartDate = updatedRecords[0]?.periodStartDate || '';
+        if (newLatestStartDate !== (userProfile?.womensHealth?.lastPeriodDate || '')) {
+          authUpdateProfile({
+            womensHealth: {
+              ...userProfile?.womensHealth,
+              lastPeriodDate: newLatestStartDate,
+            },
+          }).catch((err) => console.warn('Could not sync profile last period date on delete:', err));
+        }
+
+        invalidateLongitudinalHealth();
         return { success: true };
       } catch (err: any) {
         return { success: false, error: err?.message || 'Unexpected error deleting period.' };
       }
     },
-    [userProfile?.id]
+    [userProfile, authUpdateProfile, invalidateLongitudinalHealth]
   );
 
   // Log a new symptom
@@ -539,12 +658,13 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           );
         });
 
+        invalidateLongitudinalHealth();
         return { success: true };
       } catch (err: any) {
         return { success: false, error: err?.message || 'Unexpected error saving symptom.' };
       }
     },
-    [userProfile?.id]
+    [userProfile?.id, invalidateLongitudinalHealth]
   );
 
   // Update an existing symptom
@@ -566,12 +686,13 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           );
         });
 
+        invalidateLongitudinalHealth();
         return { success: true };
       } catch (err: any) {
         return { success: false, error: err?.message || 'Unexpected error updating symptom.' };
       }
     },
-    [userProfile?.id]
+    [userProfile?.id, invalidateLongitudinalHealth]
   );
 
   // Delete a symptom
@@ -587,12 +708,13 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
 
         setSymptomRecords((prev) => prev.filter((r) => r.id !== id));
+        invalidateLongitudinalHealth();
         return { success: true };
       } catch (err: any) {
         return { success: false, error: err?.message || 'Unexpected error deleting symptom.' };
       }
     },
-    [userProfile?.id]
+    [userProfile?.id, invalidateLongitudinalHealth]
   );
 
   const reportStats: ReportSummaryStats = useMemo(() => {
@@ -618,12 +740,13 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           );
         });
 
+        invalidateLongitudinalHealth();
         return { success: true };
       } catch (err: any) {
         return { success: false, error: err?.message || 'Unexpected error saving report.' };
       }
     },
-    [userProfile?.id]
+    [userProfile?.id, invalidateLongitudinalHealth]
   );
 
   // Delete a medical report
@@ -639,12 +762,13 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
 
         setReports((prev) => prev.filter((r) => r.id !== id));
+        invalidateLongitudinalHealth();
         return { success: true };
       } catch (err: any) {
         return { success: false, error: err?.message || 'Unexpected error deleting report.' };
       }
     },
-    [userProfile?.id]
+    [userProfile?.id, invalidateLongitudinalHealth]
   );
 
   // --- Diet & Nutrition Live State & Handlers ---
@@ -1905,11 +2029,15 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Enforce zero cross-user assessment contamination when user switches or logs out
   useEffect(() => {
+    setLongitudinalAuthUserId(authoritativeUserId || null);
     if (!authoritativeUserId) {
       setActiveAssessment(null);
       setMlAssessment(null);
       setAssessmentHistory([]);
       clearAssessmentCache();
+      setLongitudinalData(null);
+      invalidateLongitudinalCache();
+      longitudinalLastFetchedRef.current = {};
     }
   }, [authoritativeUserId]);
 
@@ -2651,6 +2779,7 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         // Pre-warm longitudinal health and lifestyle recommendations concurrently
         onProgress?.('preparing_guidance');
         logTs('prewarm_guidance_start');
+        invalidateLongitudinalHealth();
         try {
           const pathwaySlug = pathway === 'male' ? 'androsense' : 'ovasense';
           await Promise.allSettled([
@@ -2724,6 +2853,9 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setActiveAssessment(null);
     setMlAssessment(null);
     setAssessmentHistory([]);
+    setLongitudinalData(null);
+    invalidateLongitudinalCache();
+    longitudinalLastFetchedRef.current = {};
     logout();
   }, [logout]);
 
@@ -2857,6 +2989,11 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         verifyReportBiomarker,
         updateReportBiomarker,
         saveADAMResponses,
+        longitudinalData,
+        longitudinalLoading,
+        longitudinalPeriod,
+        fetchLongitudinalHealth,
+        invalidateLongitudinalHealth,
       }}
     >
       {children}

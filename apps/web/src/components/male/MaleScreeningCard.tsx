@@ -31,6 +31,8 @@ interface MaleScreeningCardProps {
     pattern_name?: string;
     pattern_description?: string;
   } | null;
+  isComplete?: boolean;
+  notice?: string | null;
 }
 
 export const MaleScreeningCard: React.FC<MaleScreeningCardProps> = ({
@@ -51,9 +53,19 @@ export const MaleScreeningCard: React.FC<MaleScreeningCardProps> = ({
   isOnboarded = false,
   screeningState,
   hormonePatternInterpretation,
+  isComplete = true,
+  notice,
 }) => {
+  const normRisk = (riskCategory || '').toLowerCase();
+  const isDirectHormone =
+    normRisk === 'direct_hormone_evaluation' ||
+    normRisk === 'hormone_pattern_only' ||
+    !!hormonePatternInterpretation?.pattern_name;
+  const isIncomplete = normRisk === 'incomplete' || isComplete === false;
+  const hasValidAssessmentDisplay = hasAssessment && (probabilityPercent !== null || isDirectHormone || isIncomplete);
+
   // 1. Loading / Processing State
-  if (screeningState === 'processing' || (loading && (!hasAssessment || probabilityPercent === null))) {
+  if (screeningState === 'processing' || (loading && !hasValidAssessmentDisplay)) {
     return (
       <MaleLoadingState
         title="Calculating your screening result..."
@@ -63,7 +75,7 @@ export const MaleScreeningCard: React.FC<MaleScreeningCardProps> = ({
   }
 
   // 2. Error State (When user is onboarded but assessment calculation is missing or failed)
-  if (screeningState === 'error' || (isOnboarded && (!hasAssessment || probabilityPercent === null) && !loading)) {
+  if (screeningState === 'error' || (isOnboarded && !hasValidAssessmentDisplay && !loading)) {
     return (
       <MaleEmptyState
         badge="Screening Notice"
@@ -77,7 +89,7 @@ export const MaleScreeningCard: React.FC<MaleScreeningCardProps> = ({
   }
 
   // 3. Not Started State (Only shown when not loading and user has not completed onboarding)
-  if (!hasAssessment || probabilityPercent === null) {
+  if (!hasValidAssessmentDisplay) {
     return (
       <MaleEmptyState
         badge="Not Started"
@@ -99,30 +111,40 @@ export const MaleScreeningCard: React.FC<MaleScreeningCardProps> = ({
 
   // Threshold calculations (0.1808 is the calibrated screening cutoff)
   const cutoffDisplay = Number((threshold * 100).toFixed(1)); // 18.1%
-  const isAboveThreshold = (probabilityPercent / 100) >= threshold;
+  const isAboveThreshold = probabilityPercent !== null ? (probabilityPercent / 100) >= threshold : false;
 
   // Evaluate ADAM clinical screening criteria independently
   const adamEval = evaluateAdamResponses(adamResponses);
 
   // Map category to calm patient-friendly label & badge variant
   const normalizedCategory = riskCategory?.toLowerCase() || 'lower';
-  const badgeVariant =
-    normalizedCategory === 'higher' || normalizedCategory === 'elevated' || isAboveThreshold
-      ? 'danger'
-      : normalizedCategory === 'intermediate' || normalizedCategory === 'moderate'
-      ? 'warning'
-      : 'success';
+  const badgeVariant = isDirectHormone
+    ? 'blue'
+    : isIncomplete
+    ? 'warning'
+    : normalizedCategory === 'higher' || normalizedCategory === 'elevated' || isAboveThreshold
+    ? 'danger'
+    : normalizedCategory === 'intermediate' || normalizedCategory === 'moderate'
+    ? 'warning'
+    : 'success';
 
   const categoryLabel =
     riskLabel ||
-    (isAboveThreshold
+    (isDirectHormone
+      ? 'Direct Hormone Pattern Evaluation'
+      : isIncomplete
+      ? 'Incomplete Assessment'
+      : isAboveThreshold
       ? 'Higher Screening Risk'
       : 'Lower Screening Risk');
 
   // SVG circular geometry with calibrated threshold tick at 18.08%
   // Circumference = 2 * PI * 40 = 251.327
   const ringCircumference = 251.327;
-  const progressOffset = ringCircumference - (ringCircumference * Math.min(Math.max(probabilityPercent, 0), 100)) / 100;
+  const progressOffset =
+    probabilityPercent !== null
+      ? ringCircumference - (ringCircumference * Math.min(Math.max(probabilityPercent, 0), 100)) / 100
+      : ringCircumference;
 
   // Threshold tick angle: in SVG with -rotate-90, 0 is at 12 o'clock, alpha = 2 * PI * threshold
   const thresholdAngle = 2 * Math.PI * threshold;
@@ -162,30 +184,46 @@ export const MaleScreeningCard: React.FC<MaleScreeningCardProps> = ({
           <div className="space-y-2 text-center sm:text-left flex-1 min-w-0">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
               <span className="text-xs font-bold uppercase tracking-wider text-[#667085]">
-                Screening Probability Score
+                {isDirectHormone ? 'Direct Hormone Analysis' : 'Screening Probability Score'}
               </span>
-              <span
-                className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                  isAboveThreshold
-                    ? 'bg-rose-50 text-rose-800 border border-rose-200'
-                    : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                }`}
-              >
-                {isAboveThreshold ? `↑ Above ${cutoffDisplay}% screening cutoff` : `↓ Below ${cutoffDisplay}% screening cutoff`}
-              </span>
+              {probabilityPercent !== null ? (
+                <span
+                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                    isAboveThreshold
+                      ? 'bg-rose-50 text-rose-800 border border-rose-200'
+                      : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                  }`}
+                >
+                  {isAboveThreshold ? `↑ Above ${cutoffDisplay}% screening cutoff` : `↓ Below ${cutoffDisplay}% screening cutoff`}
+                </span>
+              ) : isDirectHormone ? (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-800 border border-blue-200">
+                  Serum Labs Evaluated
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                  Incomplete Biometrics
+                </span>
+              )}
             </div>
 
             <div className="flex items-baseline justify-center sm:justify-start gap-2.5">
               <span className="text-4xl sm:text-5xl font-bold tracking-tight text-[#111318]">
-                {probabilityPercent}%
+                {probabilityPercent !== null ? `${probabilityPercent}%` : isDirectHormone ? 'Labs' : '--%'}
               </span>
-              <span className="text-xs text-[#667085] font-medium">
-                (screening threshold: {cutoffDisplay}%)
-              </span>
+              {probabilityPercent !== null && (
+                <span className="text-xs text-[#667085] font-medium">
+                  (screening threshold: {cutoffDisplay}%)
+                </span>
+              )}
             </div>
 
             <p className="text-xs sm:text-sm text-[#475569] leading-relaxed max-w-md pt-0.5">
-              {isAboveThreshold
+              {isDirectHormone
+                ? 'Your laboratory results provide direct hormone evaluation based on morning serum draw.'
+                : isIncomplete
+                ? 'Your preliminary screening is incomplete due to missing physical measurements. Waist circumference is needed.'
+                : isAboveThreshold
                 ? `Estimated probability exceeds the ${cutoffDisplay}% screening cutoff for lower morning serum testosterone. ${tierSummary}`
                 : `Estimated probability remains below the ${cutoffDisplay}% screening cutoff for lower morning serum testosterone. ${tierSummary}`}
             </p>
@@ -211,7 +249,13 @@ export const MaleScreeningCard: React.FC<MaleScreeningCardProps> = ({
                   cy="50"
                   r="40"
                   className={`transition-all duration-700 ease-out ${
-                    isAboveThreshold ? 'text-[#D97706]' : 'text-[#0868B9]'
+                    isDirectHormone
+                      ? 'text-[#0868B9]'
+                      : isIncomplete
+                      ? 'text-[#D97706]'
+                      : isAboveThreshold
+                      ? 'text-[#D97706]'
+                      : 'text-[#0868B9]'
                   }`}
                   strokeWidth="8"
                   strokeDasharray={ringCircumference}
@@ -236,13 +280,25 @@ export const MaleScreeningCard: React.FC<MaleScreeningCardProps> = ({
               <div className="absolute flex flex-col items-center justify-center text-center px-1">
                 <span
                   className={`text-[11px] font-bold leading-tight ${
-                    isAboveThreshold ? 'text-amber-800' : 'text-[#0868B9]'
+                    isDirectHormone
+                      ? 'text-[#0868B9]'
+                      : isIncomplete
+                      ? 'text-amber-800'
+                      : isAboveThreshold
+                      ? 'text-amber-800'
+                      : 'text-[#0868B9]'
                   }`}
                 >
-                  {isAboveThreshold ? 'Above Cutoff' : 'Below Cutoff'}
+                  {isDirectHormone
+                    ? 'Direct Labs'
+                    : isIncomplete
+                    ? 'Incomplete'
+                    : isAboveThreshold
+                    ? 'Above Cutoff'
+                    : 'Below Cutoff'}
                 </span>
                 <span className="text-[9px] text-[#667085] font-medium leading-none mt-0.5">
-                  Cutoff {cutoffDisplay}%
+                  {probabilityPercent !== null ? `Cutoff ${cutoffDisplay}%` : 'Clinical'}
                 </span>
               </div>
             </div>
@@ -252,10 +308,16 @@ export const MaleScreeningCard: React.FC<MaleScreeningCardProps> = ({
               <span className="flex items-center gap-1 font-medium">
                 <span
                   className={`w-2 h-2 rounded-full ${
-                    isAboveThreshold ? 'bg-[#D97706]' : 'bg-[#0868B9]'
+                    isDirectHormone
+                      ? 'bg-[#0868B9]'
+                      : isIncomplete
+                      ? 'bg-[#D97706]'
+                      : isAboveThreshold
+                      ? 'bg-[#D97706]'
+                      : 'bg-[#0868B9]'
                   }`}
                 />
-                Score: {probabilityPercent}%
+                Score: {probabilityPercent !== null ? `${probabilityPercent}%` : isDirectHormone ? 'Labs' : '--%'}
               </span>
               <span className="flex items-center gap-1 font-medium">
                 <span className="w-2.5 h-1 bg-rose-500 rounded-xs" />
@@ -305,19 +367,39 @@ export const MaleScreeningCard: React.FC<MaleScreeningCardProps> = ({
               </span>
               <span
                 className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${
-                  isAboveThreshold
+                  isDirectHormone
+                    ? 'bg-blue-100 text-blue-900 border border-blue-200'
+                    : isIncomplete
+                    ? 'bg-amber-100 text-amber-900 border border-amber-200'
+                    : isAboveThreshold
                     ? 'bg-amber-100 text-amber-900 border border-amber-200'
                     : 'bg-emerald-100 text-emerald-900 border border-emerald-200'
                 }`}
               >
-                {isAboveThreshold ? 'Above Cutoff' : 'Below Cutoff'}
+                {isDirectHormone
+                  ? 'Labs Evaluated'
+                  : isIncomplete
+                  ? 'Incomplete'
+                  : isAboveThreshold
+                  ? 'Above Cutoff'
+                  : 'Below Cutoff'}
               </span>
             </div>
             <div className="text-base sm:text-lg font-bold text-[#0F172A]">
-              {probabilityPercent}% <span className="text-xs font-normal text-[#64748B]">/ {cutoffDisplay}% cutoff</span>
+              {probabilityPercent !== null ? (
+                <>
+                  {probabilityPercent}% <span className="text-xs font-normal text-[#64748B]">/ {cutoffDisplay}% cutoff</span>
+                </>
+              ) : isDirectHormone ? (
+                'Hormone Panels Evaluated'
+              ) : (
+                'Measurement Pending'
+              )}
             </div>
             <p className="text-[11px] text-[#64748B] leading-relaxed">
-              Calibrated statistical estimate trained on NHANES morning serum testosterone.
+              {isDirectHormone
+                ? 'Clinical serum hormone patterns evaluated independently from indirect metabolic models.'
+                : 'Calibrated statistical estimate trained on NHANES morning serum testosterone.'}
             </p>
           </div>
         </div>
@@ -382,6 +464,19 @@ export const MaleScreeningCard: React.FC<MaleScreeningCardProps> = ({
               >
                 View Details →
               </button>
+            </div>
+          </div>
+        )}
+
+        {notice && (
+          <div className="pt-4 border-t border-[#EAECF0]">
+            <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-left">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 block mb-0.5">
+                Screening Notice
+              </span>
+              <p className="text-xs text-amber-900 leading-relaxed">
+                {notice}
+              </p>
             </div>
           </div>
         )}

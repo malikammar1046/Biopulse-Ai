@@ -160,7 +160,8 @@ export const SettingsPage: React.FC = () => {
   };
 
   const handleRestartOnboarding = () => {
-    navigate(ROUTES.ONBOARDING, { state: { allowReonboard: true } });
+    const target = isMale ? ROUTES.ONBOARDING_MALE : ROUTES.ONBOARDING_FEMALE;
+    navigate(target, { state: { allowReonboard: true, isUpdate: true } });
   };
 
   const handleLogout = async () => {

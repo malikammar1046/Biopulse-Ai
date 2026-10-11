@@ -12,7 +12,10 @@
     "test:lifestyle": "node scripts/test-lifestyle-architecture.mjs",
     "test:atmosphere": "node scripts/test-page-atmosphere.mjs",
     "test:longitudinal": "node --experimental-strip-types scripts/test-longitudinal-health.mjs",
-    "test": "node --experimental-strip-types scripts/test-out-of-order-assessments.mjs && node --experimental-strip-types scripts/test-screening-risk-sync.mjs && node scripts/test-lifestyle-architecture.mjs && node scripts/test-page-atmosphere.mjs && node --experimental-strip-types scripts/test-longitudinal-health.mjs",
+    "test:cycle": "node --experimental-strip-types scripts/test-cycle-accuracy-and-sync.mjs",
+    "test:ovasense": "node scripts/test-ovasense-lifestyle.mjs",
+    "test:ovasense-behavioral": "node scripts/test-ovasense-behavioral.mjs",
+    "test": "node --experimental-strip-types scripts/test-out-of-order-assessments.mjs && node --experimental-strip-types scripts/test-screening-risk-sync.mjs && node scripts/test-lifestyle-architecture.mjs && node scripts/test-page-atmosphere.mjs && node --experimental-strip-types scripts/test-longitudinal-health.mjs && node --experimental-strip-types scripts/test-cycle-accuracy-and-sync.mjs && node scripts/test-ovasense-lifestyle.mjs && node scripts/test-ovasense-behavioral.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

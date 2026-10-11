@@ -24,6 +24,7 @@ from PIL import Image
 
 from django.http import StreamingHttpResponse
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -312,6 +313,13 @@ class MaleTier1AssessmentView(APIView):
             if serializer.is_valid():
                 return Response(serializer.validated_data, status=status.HTTP_200_OK)
             return Response(result, status=status.HTTP_200_OK)
+        except (ValidationError, ValueError) as ve:
+            logger.warning("Male Tier 1 validation error: %s", ve)
+            err_msg = str(getattr(ve, 'detail', ve))
+            return Response(
+                {"error": err_msg},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         except PersistenceError as pe:
             logger.error("Male Tier 1 persistence error: %s", pe)
             return Response(
@@ -420,10 +428,30 @@ class Tier1AssessmentView(APIView):
                 auth_token=auth_token,
                 client_health_data=client_payload,
             )
+            # Direct API input integrity enforcement: Reject hard input errors
+            if result.get("risk_category") == "unavailable" and result.get("unavailable_reason") in (
+                "ineligible_child", "conflicting_age_and_dob", "future_dob", "invalid_dob", "missing_dob"
+            ):
+                return Response(
+                    {
+                        "error": result.get("title") or "Invalid Date of Birth or Age",
+                        "details": result.get("summary_text") or result.get("summary"),
+                        "reason": result.get("unavailable_reason"),
+                        "eligible": False,
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             serializer = ProgressiveAssessmentSerializer(data=result)
             if serializer.is_valid():
                 return Response(serializer.validated_data, status=status.HTTP_200_OK)
             return Response(result, status=status.HTTP_200_OK)
+        except (ValidationError, ValueError) as ve:
+            logger.warning("Tier 1 validation error: %s", ve)
+            err_msg = str(getattr(ve, 'detail', ve))
+            return Response(
+                {"error": err_msg},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         except PersistenceError as pe:
             logger.error("Tier 1 persistence error: %s", pe)
             return Response(
@@ -471,14 +499,28 @@ class Tier2AssessmentView(APIView):
                 auth_token=auth_token,
                 clinical_inputs=clinical_payload,
             )
+            # Direct API input integrity enforcement: Reject hard input errors
+            if result.get("risk_category") == "unavailable" and result.get("unavailable_reason") in (
+                "ineligible_child", "conflicting_age_and_dob", "future_dob", "invalid_dob", "missing_dob"
+            ):
+                return Response(
+                    {
+                        "error": result.get("title") or "Invalid Date of Birth or Age",
+                        "details": result.get("summary_text") or result.get("summary"),
+                        "reason": result.get("unavailable_reason"),
+                        "eligible": False,
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             serializer = ProgressiveAssessmentSerializer(data=result)
             if serializer.is_valid():
                 return Response(serializer.validated_data, status=status.HTTP_200_OK)
             return Response(result, status=status.HTTP_200_OK)
-        except ValueError as val_err:
+        except (ValidationError, ValueError) as val_err:
             logger.warning("Tier 2 clinical input validation error: %s", val_err)
+            err_msg = str(getattr(val_err, 'detail', val_err))
             return Response(
-                {"error": str(val_err)},
+                {"error": err_msg},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         except PersistenceError as pe:

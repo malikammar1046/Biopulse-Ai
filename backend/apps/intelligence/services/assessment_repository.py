@@ -158,7 +158,7 @@ def _normalize_assessment_record(item: dict[str, Any]) -> dict[str, Any]:
             if field in us_data and item.get(field) is None:
                 item[field] = us_data[field]
     elif is_male or not is_ultrasound_tier:
-        for field in ("pcom_status", "pcom_probability", "gradcam_url", "gradcam_b64", "ultrasound_report_id"):
+        for field in ("pcom_status", "pcom_probability", "gradcam_url", "gradcam_b64", "ultrasound_report_id", "ultrasound_explainability", "multimodal_synthesis"):
             item[field] = None
 
     if isinstance(item.get("shap_explanation"), str):
@@ -701,9 +701,13 @@ class AssessmentRepository:
             "gradcam_url": assessment_data.get("gradcam_url") if has_t3 else None,
             "gradcam_b64": assessment_data.get("gradcam_b64") if has_t3 else None,
             "ultrasound_report_id": assessment_data.get("ultrasound_report_id") if has_t3 else None,
+            "ultrasound_explainability": assessment_data.get("ultrasound_explainability") if has_t3 else None,
+            "multimodal_synthesis": assessment_data.get("multimodal_synthesis") if has_t3 else None,
             "fusion_details": assessment_data.get("fusion_details") if has_t3 else None,
             "status_code": assessment_data.get("status_code"),
             "notice": assessment_data.get("notice"),
+            "is_complete": assessment_data.get("is_complete", True),
+            "assessment_status": assessment_data.get("assessment_status", "complete"),
             "next_step": assessment_data.get("next_step", ""),
             "disclaimer": assessment_data.get("disclaimer", ""),
             "evidence_used": evidence_used,

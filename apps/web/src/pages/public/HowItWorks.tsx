@@ -94,11 +94,11 @@ export const HowItWorks: React.FC = () => {
     {
       num: '06',
       title: 'Follow nutrition and guidance',
-      subtitle: 'Evidence-aligned 7-day Pakistani meal plan',
+      subtitle: 'Evidence-aligned 3-day Pakistani meal plan',
       icon: UtensilsCrossed,
       accent: '#E11D48',
       bg: 'bg-rose-50',
-      desc: 'Access your 7-day nutritional plan built around authentic Pakistani foods (daal, roti, sabzi, seasonal produce) with balanced glycemic load and verified portion sizes to support hormonal stability.',
+      desc: 'Access your 3-day nutritional plan built around authentic Pakistani foods (daal, roti, sabzi, seasonal produce) with balanced glycemic load and verified portion sizes to support hormonal stability.',
       highlights: [
         'Structured daily schedule: breakfast, lunch, dinner, and snack targets',
         'Daily hydration and food logging separated into "Your Plan" vs "What You Ate"',

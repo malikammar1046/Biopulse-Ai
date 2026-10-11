@@ -42,7 +42,7 @@ export const FemaleStep1BasicInfo: React.FC<FemaleStep1Props> = ({
   const { feet, inches } = cmToFtIn(data.heightCm);
 
   return (
-    <div className="space-y-5 text-left font-sans max-w-4xl mx-auto">
+    <div className="w-full space-y-5 text-left font-sans">
       {/* ── Question Header with Why We Ask Trigger ── */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -143,10 +143,15 @@ export const FemaleStep1BasicInfo: React.FC<FemaleStep1Props> = ({
               </div>
               {errors.dateOfBirth ? (
                 <p className="text-xs text-[#F43F7D] font-medium">{errors.dateOfBirth}</p>
+              ) : data.dateOfBirth ? (
+                <div className="flex items-center gap-1.5 text-xs text-[#073B72] font-medium">
+                  <InfoCircle className="w-3.5 h-3.5 text-[#0E9EAA] shrink-0" aria-hidden="true" />
+                  <span>BioPulse AI welcomes female users aged 13 and older across all life stages.</span>
+                </div>
               ) : (
                 <div className="flex items-center gap-1.5 text-xs text-[#55718F]">
                   <InfoCircle className="w-3.5 h-3.5 text-[#F43F7D] shrink-0" aria-hidden="true" />
-                  <span>You must be 12 years or older to continue.</span>
+                  <span>You must be 13 years or older to continue.</span>
                 </div>
               )}
             </div>

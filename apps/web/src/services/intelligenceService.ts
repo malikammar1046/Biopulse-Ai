@@ -1108,6 +1108,14 @@ const longitudinalCache = new Map<string, CachedLongitudinalEntry>();
 const inFlightLongitudinalPromises = new Map<string, Promise<LongitudinalHealthResponse | null>>();
 
 const SESSION_STORAGE_LONGITUDINAL_PREFIX = 'biopulse_longitudinal_';
+let currentLongitudinalUserId: string | null = null;
+
+/**
+ * Sets the active authenticated user ID for synchronous longitudinal cache lookups.
+ */
+export function setLongitudinalAuthUserId(userId: string | null): void {
+  currentLongitudinalUserId = userId;
+}
 
 /**
  * Synchronously retrieves cached longitudinal data for instantaneous render.
@@ -1117,13 +1125,22 @@ export function getCachedLongitudinalHealth(
   module = 'female_pcos',
   userId?: string
 ): LongitudinalHealthResponse | null {
-  const activeUserId = userId || 'active_user';
+  const activeUserId = userId || currentLongitudinalUserId || 'active_user';
   const cacheKey = `${activeUserId}:${module}:${period}`;
 
   // 1. Check in-memory map
   const memEntry = longitudinalCache.get(cacheKey);
   if (memEntry && Date.now() - memEntry.timestamp < LONGITUDINAL_CACHE_TTL_MS) {
     return memEntry.data;
+  }
+
+  // Fallback check if user ID is known
+  if (!userId && currentLongitudinalUserId && currentLongitudinalUserId !== activeUserId) {
+    const fallbackKey = `${currentLongitudinalUserId}:${module}:${period}`;
+    const fallbackEntry = longitudinalCache.get(fallbackKey);
+    if (fallbackEntry && Date.now() - fallbackEntry.timestamp < LONGITUDINAL_CACHE_TTL_MS) {
+      return fallbackEntry.data;
+    }
   }
 
   // 2. Check sessionStorage fallback
@@ -1150,20 +1167,21 @@ export function getCachedLongitudinalHealth(
  * Invalidates cached longitudinal health responses when mutations occur.
  */
 export function invalidateLongitudinalCache(userId?: string): void {
-  if (userId) {
+  const targetId = userId || currentLongitudinalUserId;
+  if (targetId) {
     for (const key of Array.from(longitudinalCache.keys())) {
-      if (key.startsWith(`${userId}:`)) {
+      if (key.startsWith(`${targetId}:`)) {
         longitudinalCache.delete(key);
       }
     }
     for (const key of Array.from(inFlightLongitudinalPromises.keys())) {
-      if (key.startsWith(`${userId}:`)) {
+      if (key.startsWith(`${targetId}:`)) {
         inFlightLongitudinalPromises.delete(key);
       }
     }
     if (typeof window !== 'undefined' && window.sessionStorage) {
       try {
-        const prefix = `${SESSION_STORAGE_LONGITUDINAL_PREFIX}${userId}:`;
+        const prefix = `${SESSION_STORAGE_LONGITUDINAL_PREFIX}${targetId}:`;
         for (let i = sessionStorage.length - 1; i >= 0; i--) {
           const k = sessionStorage.key(i);
           if (k && k.startsWith(prefix)) {
@@ -1212,11 +1230,12 @@ export async function getLongitudinalHealth(
   forceRefresh = false
 ): Promise<LongitudinalHealthResponse | null> {
   // Resolve active user id for cache key
-  let activeUserId = 'active_user';
+  let activeUserId = currentLongitudinalUserId || 'active_user';
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user?.id) {
       activeUserId = session.user.id;
+      currentLongitudinalUserId = session.user.id;
     }
   } catch {
     // ignore

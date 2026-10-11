@@ -34,6 +34,7 @@ import { EvidenceSourcesSection } from '../../components/lifestyle/EvidenceSourc
 import { ClinicianReviewBanner } from '../../components/lifestyle/ClinicianReviewBanner';
 import { RecommendationDetailModal } from '../../components/lifestyle/RecommendationDetailModal';
 import { LifestyleEmptyState } from '../../components/lifestyle/LifestyleEmptyState';
+import { OvaSenseLifestyleDashboard } from '../../components/lifestyle/ovasense/OvaSenseLifestyleDashboard';
 
 type PillarTab = 'nutrition' | 'fitness' | 'lifestyle';
 type ErrorClassification = 'NETWORK' | 'SESSION' | 'NO_ASSESSMENT' | 'SERVER';
@@ -394,6 +395,20 @@ export const LifestyleRecommendationsPage: React.FC = () => {
   // Baseline / Empty State
   if (!data || !data.recommendations || data.recommendations.length === 0) {
     return <LifestyleEmptyState isMale={isMale} />;
+  }
+
+  // ── FEMALE OVASENSE PROTOCOL (Pixel-Accurate Reference Redesign) ──
+  if (!isMale) {
+    return (
+      <OvaSenseLifestyleDashboard
+        data={data}
+        onUpdateStatus={handleUpdateStatus}
+        onRefresh={() => fetchRecommendations(undefined, true)}
+        activeUserId={activeUserId}
+        nonBlockingNotice={nonBlockingNotice}
+        onClearNonBlockingNotice={() => setNonBlockingNotice(null)}
+      />
+    );
   }
 
   const { nutrition, fitness, lifestyle, evidence_rationale, evidence_registry } = data;

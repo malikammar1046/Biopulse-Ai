@@ -186,6 +186,11 @@ export interface WeeklyNutritionPlan {
   coverage: NutritionPlanCoverage;
   condition_guidance: string[];
   warnings: string[];
+  provisional_notice?: string | null;
+  unresolved_dislikes?: string[];
+  allergen_safe_claimed?: boolean;
+  no_known_allergies_declared?: boolean;
+  allergy_status?: string;
   plan_data?: any;
 }
 
@@ -282,17 +287,27 @@ export interface PlanAdherenceSummary {
   days_total: number;         // for week
 }
 
+export interface ScheduledMeal {
+  id: string;
+  user_id: string;
+  date: string;
+  meal_type: string;
+  meal_name: string;
+  meal_data: Record<string, any>;
+  created_at?: string;
+}
+
 export interface FoodLogItem {
   id: string;
   user_id?: string;
   meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'morning_snack' | 'afternoon_snack' | string;
   food_name: string;
   serving: string;
-  calories: number;
-  protein_g: number;
-  carbs_g: number;
-  fat_g: number;
-  fiber_g?: number;
+  calories: number | null;
+  protein_g: number | null;
+  carbs_g: number | null;
+  fat_g: number | null;
+  fiber_g?: number | null;
   notes?: string;
   logged_at: string;
   created_at?: string;

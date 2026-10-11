@@ -130,8 +130,10 @@ if HAS_MEAL_MODULE:
         "inactive": PALCategory.INACTIVE,
         "light": PALCategory.LOW_ACTIVE,
         "low_active": PALCategory.LOW_ACTIVE,
+        "lightly_active": PALCategory.LOW_ACTIVE,
         "moderate": PALCategory.ACTIVE,
         "active": PALCategory.ACTIVE,
+        "moderately_active": PALCategory.ACTIVE,
         "very_active": PALCategory.VERY_ACTIVE,
     }
 
@@ -169,10 +171,11 @@ class CanonicalNutritionProfile:
     # Goal
     weight_goal: str
 
-    # Hard safety restrictions
-    food_allergies: List[str]      # CanonicalAllergen values
-    food_intolerances: List[str]   # CanonicalIntolerance values
-    dietary_pattern: DietaryPattern
+    # Safety status & hard safety restrictions
+    allergy_status: str = "CONFIRMED_NONE"  # "CONFIRMED_NONE" | "CONFIRMED_ALLERGENS" | "UNCONFIRMED"
+    food_allergies: List[str] = field(default_factory=list)      # CanonicalAllergen values
+    food_intolerances: List[str] = field(default_factory=list)   # CanonicalIntolerance values
+    dietary_pattern: DietaryPattern = DietaryPattern.OMNIVORE
 
     # Preferences
     favorite_ingredients: List[str] = field(default_factory=list)
@@ -202,19 +205,18 @@ class CanonicalNutritionProfile:
 
         diet_cls = DIETARY_CLASS_MAP.get(self.dietary_pattern, DietaryClass.STANDARD)
 
-        # Map canonical food allergies to engine Allergen enum
+        # Map canonical food allergies strictly to engine Allergen enum
         engine_allergies: List[Allergen] = []
         for a in self.food_allergies:
             mapped = ENGINE_ALLERGEN_MAP.get(a)
             if mapped and mapped not in engine_allergies:
                 engine_allergies.append(mapped)
 
-        # Gluten intolerance adds wheat exclusion if not already present
+        # Medical flags record intolerances distinctly without contaminating IgE food allergy records
+        medical_flags = [f"INTOLERANCE_{i.upper()}" for i in self.food_intolerances]
+
+        # Dislikes contain only explicit ingredient/food dislikes, never allergen categories
         dislikes = list(self.disliked_ingredients)
-        if CanonicalIntolerance.GLUTEN.value in self.food_intolerances and "wheat" not in dislikes:
-            dislikes.append("wheat")
-        if CanonicalIntolerance.LACTOSE.value in self.food_intolerances and "dairy" not in dislikes:
-            dislikes.append("dairy")
 
         return UserNutritionProfile(
             age=self.age,
@@ -230,6 +232,7 @@ class CanonicalNutritionProfile:
             disliked_foods=dislikes,
             pregnant=False,
             lactating=False,
+            relevant_medical_nutrition_flags=medical_flags,
             pal_assignment_source="USER_SELECTED",
         )
 
@@ -343,7 +346,7 @@ class MealProfileBuilder:
                 blocking_issues.append(f"Invalid date of birth format: {e}")
 
         # Height cm
-        height_cm = profile.get("height_cm") or raw_meta.get("height_cm")
+        height_cm = profile.get("height_cm") or profile.get("height") or raw_meta.get("height_cm") or raw_meta.get("height")
         try:
             if height_cm is None or float(height_cm) <= 0:
                 missing_biometrics.append("height_cm")
@@ -353,7 +356,7 @@ class MealProfileBuilder:
             blocking_issues.append("Height must be a valid positive number.")
 
         # Weight kg
-        weight_kg = profile.get("weight_kg") or raw_meta.get("weight_kg")
+        weight_kg = profile.get("weight_kg") or profile.get("weight") or raw_meta.get("weight_kg") or raw_meta.get("weight")
         try:
             if weight_kg is None or float(weight_kg) <= 0:
                 missing_biometrics.append("weight_kg")
@@ -371,36 +374,47 @@ class MealProfileBuilder:
             )
 
         # ----------------------------------------------------------------------
-        # 2. FOOD SAFETY & ALLERGY STATUS (BLOCKING)
+        # 2. FOOD SAFETY & ALLERGY STATUS
+        # Three distinct states:
+        # State 1: Unknown / Unanswered / Skipped (None or empty list) -> PROCEED PROVISIONALLY
+        # State 2: Explicitly confirmed no known allergies ('none') -> PROCEED
+        # State 3: Confirmed known allergens -> PROCEED with strict exclusions
         # ----------------------------------------------------------------------
-        # Check dedicated food_allergies first, then fallback to general allergies
         food_allergies_val = profile.get("food_allergies")
         allergies_val = profile.get("allergies")
         if allergies_val is None and "allergies" in raw_meta:
             allergies_val = raw_meta.get("allergies")
 
-        allergy_input_present = (food_allergies_val is not None) or (allergies_val is not None)
+        raw_to_check = food_allergies_val if food_allergies_val is not None else allergies_val
+        allergy_input_present = (
+            raw_to_check is not None
+            and (not isinstance(raw_to_check, list) or len(raw_to_check) > 0)
+        )
 
         if not allergy_input_present:
-            missing_safety.append("allergy_confirmation")
-            blocking_issues.append("Food allergy confirmation is missing (must confirm allergies or select 'None').")
+            # Task 2: Allow users with unconfirmed/skipped allergy status to generate provisional plan.
+            # Do NOT block users simply because no individual allergen is selected.
+            warning_issues.append(
+                "Food allergy status is unconfirmed. Your meal plan is provisional and not certified allergen-free. "
+                "Please review all meal ingredients carefully if you have food sensitivities."
+            )
+            warnings.append(
+                "Allergy status unconfirmed: provisional meal plan provided without allergen-free certification."
+            )
         else:
-            raw_to_check = food_allergies_val if (food_allergies_val is not None and len(food_allergies_val) > 0) else allergies_val
-            if raw_to_check is None and food_allergies_val is not None:
-                raw_to_check = food_allergies_val
+            str_repr = str(raw_to_check).strip().lower()
+            is_explicit_none = (
+                str_repr in ("none", "no allergies", "no known allergies", "['none']", "[\"none\"]")
+                or raw_to_check == ["none"]
+            )
 
-            # Empty list is treated as unconfirmed/unanswered -> FAIL
-            if isinstance(raw_to_check, list) and len(raw_to_check) == 0:
-                missing_safety.append("allergy_confirmation")
-                blocking_issues.append("Food allergy status cannot be empty. Please confirm allergies or select 'None'.")
+            if is_explicit_none:
+                # Explicitly confirmed no known allergies
+                pass
             else:
                 canonical, non_food, unmapped = normalize_food_allergens(raw_to_check)
 
-                # Check if user entered explicit 'none'
-                str_repr = str(raw_to_check).strip().lower()
-                is_explicit_none = str_repr in ("none", "no allergies", "no known allergies", "['none']", "[\"none\"]")
-
-                if not is_explicit_none and not canonical and not non_food and unmapped:
+                if not canonical and not non_food and unmapped:
                     # Unrecognized allergy string that is neither food nor non-food
                     missing_safety.append("unsupported_allergen_requires_manual_review")
                     blocking_issues.append(
@@ -633,12 +647,12 @@ class MealProfileBuilder:
             pathway = clean_pathway or "general"
 
         # 4. Biometrics & BMI
-        height_val = profile.get("height_cm") or raw_meta.get("height_cm")
+        height_val = profile.get("height_cm") or profile.get("height") or raw_meta.get("height_cm") or raw_meta.get("height")
         if height_val is None or float(height_val) <= 0:
             raise ValueError("height_cm must be greater than zero.")
         height_cm = float(height_val)
 
-        weight_val = profile.get("weight_kg") or raw_meta.get("weight_kg")
+        weight_val = profile.get("weight_kg") or profile.get("weight") or raw_meta.get("weight_kg") or raw_meta.get("weight")
         if weight_val is None or float(weight_val) <= 0:
             raise ValueError("weight_kg must be greater than zero.")
         weight_kg = float(weight_val)
@@ -663,23 +677,36 @@ class MealProfileBuilder:
         if allergies_val is None and "allergies" in raw_meta:
             allergies_val = raw_meta.get("allergies")
 
-        if food_allergies_val is None and allergies_val is None:
-            raise ValueError("Allergy status must be confirmed (cannot be null/unanswered).")
-
         raw_allergies = food_allergies_val if food_allergies_val is not None else allergies_val
-        if isinstance(raw_allergies, list) and len(raw_allergies) == 0:
-            raise ValueError("Allergy status must be confirmed (cannot be empty list).")
 
-        canonical_allergens, non_food, unmapped = normalize_food_allergens(raw_allergies)
+        canonical_allergens = []
+        allergy_status = "UNCONFIRMED"
 
-        # Verify no unsupported food allergens block planning
-        unsupported = [a for a in canonical_allergens if a not in CATALOG_COVERED_ALLERGENS]
-        if unsupported:
-            raise ValueError(f"Unsupported food allergy '{', '.join(unsupported)}' cannot be verified for exclusion.")
-        if unmapped and not canonical_allergens and not non_food:
+        if raw_allergies is not None and (not isinstance(raw_allergies, list) or len(raw_allergies) > 0):
             str_repr = str(raw_allergies).strip().lower()
-            if str_repr not in ("none", "no allergies", "no known allergies", "['none']", "[\"none\"]"):
-                raise ValueError(f"Unmapped allergy '{', '.join(unmapped)}' requires clinical review.")
+            is_explicit_none = (
+                str_repr in ("none", "no allergies", "no known allergies", "['none']", "[\"none\"]")
+                or raw_allergies == ["none"]
+            )
+            if is_explicit_none:
+                # Explicitly confirmed no allergies
+                allergy_status = "CONFIRMED_NONE"
+                canonical_allergens = []
+            else:
+                # Confirmed known allergens
+                allergy_status = "CONFIRMED_ALLERGENS"
+                canonical_allergens, non_food, unmapped = normalize_food_allergens(raw_allergies)
+
+                # Verify no unsupported food allergens block planning
+                unsupported = [a for a in canonical_allergens if a not in CATALOG_COVERED_ALLERGENS]
+                if unsupported:
+                    raise ValueError(f"Unsupported food allergy '{', '.join(unsupported)}' cannot be verified for exclusion.")
+                if unmapped and not canonical_allergens and not non_food:
+                    raise ValueError(f"Unmapped allergy '{', '.join(unmapped)}' requires clinical review.")
+        else:
+            # Unspecified / skipped allergy status: provisional plan allowed
+            allergy_status = "UNCONFIRMED"
+            canonical_allergens = []
 
         # 8. Food Intolerances
         intolerances_val = profile.get("food_intolerances") or raw_meta.get("food_intolerances") or []
@@ -723,6 +750,7 @@ class MealProfileBuilder:
             bmi=bmi,
             activity_level=clean_act,
             weight_goal=weight_goal,
+            allergy_status=allergy_status,
             food_allergies=canonical_allergens,
             food_intolerances=canonical_intolerances,
             dietary_pattern=norm_diet,

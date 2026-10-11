@@ -174,17 +174,43 @@ class LifestyleService {
 
   /**
    * Synchronously checks for valid, non-expired cached recommendations.
+   * Checks in-memory cache first, then falls back to session-scoped storage.
    */
   getCachedRecommendations(
     module?: 'ovasense' | 'androsense' | 'female_pcos' | 'male_hypogonadism' | string,
     userId?: string | null
   ): LifestyleRecommendationsResult | null {
     const key = this.buildCacheKey(module, userId);
-    const entry = this.cache.get(key);
+    let entry = this.cache.get(key);
+
+    if (!entry && typeof window !== 'undefined' && window.sessionStorage) {
+      try {
+        const stored = window.sessionStorage.getItem(`biopulse_lifestyle_cache_${key}`);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && typeof parsed.timestamp === 'number') {
+            if (Date.now() - parsed.timestamp <= CACHE_TTL_MS) {
+              entry = parsed;
+              this.cache.set(key, parsed);
+            } else {
+              window.sessionStorage.removeItem(`biopulse_lifestyle_cache_${key}`);
+            }
+          }
+        }
+      } catch {
+        // Safe fallback
+      }
+    }
+
     if (!entry) return null;
 
     if (Date.now() - entry.timestamp > CACHE_TTL_MS) {
       this.cache.delete(key);
+      try {
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          window.sessionStorage.removeItem(`biopulse_lifestyle_cache_${key}`);
+        }
+      } catch {}
       return null;
     }
 
@@ -192,7 +218,7 @@ class LifestyleService {
   }
 
   /**
-   * Stores successful result in user-scoped cache.
+   * Stores successful result in user-scoped cache and synchronizes to session storage.
    */
   setCachedRecommendations(
     module: string | undefined,
@@ -200,10 +226,19 @@ class LifestyleService {
     userId?: string | null
   ): void {
     const key = this.buildCacheKey(module, userId);
-    this.cache.set(key, {
+    const entry = {
       data,
       timestamp: Date.now(),
-    });
+    };
+    this.cache.set(key, entry);
+
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      try {
+        window.sessionStorage.setItem(`biopulse_lifestyle_cache_${key}`, JSON.stringify(entry));
+      } catch {
+        // Safe fallback for quota or private browsing limits
+      }
+    }
   }
 
   /**
@@ -224,13 +259,20 @@ class LifestyleService {
       rec.id === recommendationId ? { ...rec, status } : rec
     );
 
-    this.cache.set(key, {
+    const updatedEntry = {
       ...entry,
       data: {
         ...entry.data,
         recommendations: updated,
       },
-    });
+    };
+    this.cache.set(key, updatedEntry);
+
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      try {
+        window.sessionStorage.setItem(`biopulse_lifestyle_cache_${key}`, JSON.stringify(updatedEntry));
+      } catch {}
+    }
   }
 
   /**
@@ -239,6 +281,18 @@ class LifestyleService {
   clearCache(userId?: string | null): void {
     if (!userId) {
       this.cache.clear();
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        try {
+          const keysToRemove: string[] = [];
+          for (let i = 0; i < window.sessionStorage.length; i++) {
+            const k = window.sessionStorage.key(i);
+            if (k?.startsWith('biopulse_lifestyle_cache_')) {
+              keysToRemove.push(k);
+            }
+          }
+          keysToRemove.forEach((k) => window.sessionStorage.removeItem(k));
+        } catch {}
+      }
       return;
     }
     const prefix = `${userId}:`;
@@ -246,6 +300,19 @@ class LifestyleService {
       if (key.startsWith(prefix)) {
         this.cache.delete(key);
       }
+    }
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      try {
+        const fullPrefix = `biopulse_lifestyle_cache_${prefix}`;
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < window.sessionStorage.length; i++) {
+          const k = window.sessionStorage.key(i);
+          if (k?.startsWith(fullPrefix)) {
+            keysToRemove.push(k);
+          }
+        }
+        keysToRemove.forEach((k) => window.sessionStorage.removeItem(k));
+      } catch {}
     }
   }
 

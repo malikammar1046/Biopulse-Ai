@@ -152,6 +152,11 @@ export const FemaleDashboardOverview: React.FC = () => {
           assessmentLevel={assessmentLevel}
           lastAssessmentDate={lastAssessmentDateFormatted}
           loading={assessmentLoading}
+          lifeStage={authoritativeAssessment?.life_stage}
+          unavailableReason={authoritativeAssessment?.unavailable_reason}
+          badgeLabel={authoritativeAssessment?.badge_label}
+          title={authoritativeAssessment?.title}
+          summaryText={authoritativeAssessment?.summary_text}
           onStartScreening={() => navigate(ROUTES.APP.ASSESSMENT)}
           onViewAssessment={() => navigate(ROUTES.APP.ASSESSMENT)}
         />

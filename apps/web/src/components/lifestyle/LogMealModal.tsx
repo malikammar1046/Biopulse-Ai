@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check, Utensils, AlertCircle } from 'lucide-react';
 import { nutritionService } from '../../services/nutritionService';
+import { dietService } from '../../services/dietService';
+import { useUserHealth } from '../../context/UserHealthContext';
 import type { FoodLogItem, SingleMeal } from '../../types/nutrition';
 
 interface LogMealModalProps {
@@ -20,6 +22,7 @@ export const LogMealModal: React.FC<LogMealModalProps> = ({
   dayName,
   isMale = false,
 }) => {
+  const { userProfile } = useUserHealth();
   const [mealType, setMealType] = useState<string>('Lunch');
   const [foodName, setFoodName] = useState<string>('');
   const [serving, setServing] = useState<string>('1 serving');
@@ -80,6 +83,40 @@ export const LogMealModal: React.FC<LogMealModalProps> = ({
         notes: notes.trim(),
         logged_at: now,
       });
+
+      // Synchronize local cache in dietService so dashboard donut charts and daily consumed macro totals refresh instantly
+      try {
+        if (userProfile?.id && item) {
+          const todayStr = (item.logged_at || now).split('T')[0];
+          let validMealType: 'breakfast' | 'morning_snack' | 'lunch' | 'afternoon_snack' | 'dinner' = 'lunch';
+          const lower = (item.meal_type || mealType).toLowerCase();
+          if (lower.includes('breakfast')) validMealType = 'breakfast';
+          else if (lower.includes('dinner')) validMealType = 'dinner';
+          else if (lower.includes('snack')) validMealType = 'afternoon_snack';
+
+          dietService.cacheFoodLog(userProfile.id, {
+            id: item.id || `flog_${Date.now().toString(36)}`,
+            userId: userProfile.id,
+            mealType: validMealType,
+            foodName: item.food_name || foodName.trim(),
+            serving: item.serving || serving.trim() || '1 serving',
+            calories: Number(item.calories) || (calories ? parseFloat(calories) : 0),
+            proteinG: Number(item.protein_g) || (proteinG ? parseFloat(proteinG) : 0),
+            carbsG: Number(item.carbs_g) || (carbsG ? parseFloat(carbsG) : 0),
+            fatG: Number(item.fat_g) || (fatG ? parseFloat(fatG) : 0),
+            fiberG: Number(item.fiber_g) || 0,
+            loggedAt: todayStr,
+            notes: item.notes || notes.trim() || '',
+            createdAt: item.created_at || now,
+          });
+        }
+      } catch (syncErr) {
+        console.warn('dietService cache note:', syncErr);
+      }
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('ovasense_diet_updated'));
+      }
 
       onFoodLogged(item);
       onClose();

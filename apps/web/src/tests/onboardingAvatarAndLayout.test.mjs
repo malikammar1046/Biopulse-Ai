@@ -52,11 +52,10 @@ console.log('✓ Test 6: Female & Male review steps display "Default avatar" whe
 const femaleLayoutSource = fs.readFileSync(path.join(webRoot, 'src/pages/onboarding/female/FemaleOnboardingLayout.tsx'), 'utf8');
 const maleLayoutSource = fs.readFileSync(path.join(webRoot, 'src/pages/onboarding/male/MaleOnboardingLayout.tsx'), 'utf8');
 
-for (const [name, source] of [['FemaleOnboardingLayout', femaleLayoutSource], ['MaleOnboardingLayout', maleLayoutSource]]) {
-  assert.ok(source.includes('lg:gap-10 xl:gap-14'), `${name} must use expanded desktop gap (lg:gap-10 xl:gap-14)`);
-  assert.ok(source.includes('md:w-[calc(100%-1.25rem)] md:ml-auto lg:w-auto lg:ml-2 xl:ml-4'), `${name} must responsively shift card slightly right on tablet and desktop`);
-}
-console.log('✓ Test 7: Onboarding card position adjusted slightly right on tablet & desktop, centered on mobile');
+assert.ok(femaleLayoutSource.includes('lg:w-[220px] xl:w-[240px] 2xl:w-[250px]'), 'FemaleOnboardingLayout must use compact 220-250px introduction sidebar');
+assert.ok(femaleLayoutSource.includes('flex-1 min-w-0'), 'FemaleOnboardingLayout main card must be flex-1 min-w-0 to occupy remaining space');
+assert.ok(maleLayoutSource.includes('flex-1'), 'MaleOnboardingLayout must use flex-1 main card');
+console.log('✓ Test 7: Onboarding card expanded to dominate screen width, compact introduction sidebar verified');
 
 // 8. Viewport Width Calculations
 const viewports = [

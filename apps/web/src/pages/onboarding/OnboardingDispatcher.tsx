@@ -28,7 +28,14 @@ export const OnboardingDispatcher: React.FC = () => {
     return <Navigate to={getPathwayDashboardRoute(userProfile)} replace />;
   }
 
-  // 2. If user already has an assigned pathway and not re-onboarding, route directly
+  // 2. If user is explicitly re-onboarding and already has a pathway, route directly with state
+  if (isExplicitRelaunch && (userProfile.pathway === 'female' || userProfile.pathway === 'male' || userProfile.gender === 'female' || userProfile.gender === 'male')) {
+    const isMale = userProfile.pathway === 'male' || userProfile.gender === 'male';
+    const directTarget = isMale ? ROUTES.ONBOARDING_MALE : ROUTES.ONBOARDING_FEMALE;
+    return <Navigate to={directTarget} replace state={location.state} />;
+  }
+
+  // 3. If user already has an assigned pathway and not re-onboarding, route directly
   if (!isExplicitRelaunch && (userProfile.pathway === 'female' || userProfile.pathway === 'male')) {
     const directTarget = userProfile.pathway === 'female' ? ROUTES.ONBOARDING_FEMALE : ROUTES.ONBOARDING_MALE;
     return <Navigate to={directTarget} replace />;

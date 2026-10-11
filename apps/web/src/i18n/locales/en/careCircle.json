@@ -33,5 +33,69 @@
   },
   "removeMember": "Remove Member",
   "removeConfirm": "Are you sure you want to revoke access for this member?",
-  "emptyCircle": "No members in your Care Circle yet. Invite a trusted family member to stay connected."
+  "emptyCircle": "No members in your Care Circle yet. Invite a trusted family member to stay connected.",
+  "recipient": {
+    "confidentialBrief": "Confidential Health Brief",
+    "portalTitle": "BioPulse AI Care Circle",
+    "verifiedShare": "Securely Shared via BioPulse AI",
+    "patientBrief": "{{name}}'s Clinical Health Brief",
+    "lastUpdated": "Last calibrated",
+    "activeScopes": "Active Shared Scopes",
+    "clinicalDisclaimer": "Non-diagnostic health brief. Synthesized from patient-logged entries and AI screening models for medical consultation and family support only.",
+    "accessDeniedTitle": "Access Not Available",
+    "accessDeniedMessage": "This Care Circle link is either invalid, expired, or access has been updated or revoked by the patient.",
+    "returnHome": "Return to BioPulse AI Home",
+    "invitationTitle": "Care Circle Invitation",
+    "invitationMessage": "You have been invited as a {{role}} ({{relationship}}) for {{patientName}}.",
+    "claimButton": "Accept & View Health Summary",
+    "claiming": "Claiming Access...",
+    "connectionActive": "Connection Activated ✓",
+    "sections": {
+      "overview": "Longitudinal Health Overview",
+      "cycle": "Menstrual & Reproductive Rhythm",
+      "symptoms": "Logged Symptoms & Severity",
+      "reports": "Clinical Measurements & Lab Reports",
+      "timeline": "7-Day Longitudinal Health Timeline",
+      "medications": "Medication Regimen & Reminders",
+      "appointments": "Upcoming Consultation & Logistics",
+      "discussion": "Synthesized Health Discussion Themes"
+    },
+    "metrics": {
+      "cycleRhythm": "Cycle Rhythm",
+      "cycleDay": "Day {{day}} • {{phase}}",
+      "symptomsLogged": "Logged Symptoms",
+      "symptomsCount": "{{count}} Entries Logged",
+      "nutrition": "Nutrition Tracking",
+      "nutritionCount": "{{count}} of 7 Days Logged",
+      "movement": "Movement & Activity",
+      "movementCount": "{{count}} Active Days",
+      "medications": "Medication Adherence",
+      "medicationsCount": "{{completed}}/{{scheduled}} Completed",
+      "appointment": "Next Appointment",
+      "notScheduled": "None Scheduled",
+      "age": "Age: {{age}} yrs",
+      "blood": "Blood: {{type}}",
+      "conditions": "Conditions: {{conditions}}"
+    },
+    "reports": {
+      "verifiedDoc": "{{count}} Verified Document",
+      "verifiedDocs": "{{count}} Verified Documents",
+      "verifiedByPatient": "Verified by Patient",
+      "extractedBiomarkers": "Extracted Biomarkers & Clinical Findings",
+      "noReports": "No medical reports have been shared in this brief."
+    },
+    "appointments": {
+      "active": "Active Appointment",
+      "reason": "Reason for Consultation",
+      "location": "Location: {{location}}",
+      "joinVideo": "Join Video Consultation →",
+      "patientQuestions": "Patient-Prepared Consultation Questions ({{count}})",
+      "noAppointments": "No upcoming appointments scheduled with this provider."
+    },
+    "chat": {
+      "disclaimer": "Topics discussed by the patient with BioPulse AI. Zero private chat transcripts are recorded or shared.",
+      "themes": "Discussion Themes This Week:",
+      "noDiagnosis": "No diagnostic conclusion is generated from this summary. For clinical context only."
+    }
+  }
 }

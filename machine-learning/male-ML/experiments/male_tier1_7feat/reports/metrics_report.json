@@ -1,0 +1,613 @@
+{
+  "experiment_title": "Male Tier 1 Seven-Feature Clean Biometric Candidate Model",
+  "provenance": {
+    "canonical_dataset_path": "C:\\Users\\hp\\Desktop\\Projects\\PMOSense\\machine-learning\\male-ML\\male_tier1\\data\\processed\\male_tier1_nhanes_19_60.csv",
+    "canonical_dataset_sha256": "48806ffbddac1999bd646118301dfea102134aebd1eddc96a457b9eae7779953",
+    "canonical_dataset_rows": 3575,
+    "legacy_model_path": "C:\\Users\\hp\\Desktop\\Projects\\PMOSense\\machine-learning\\male-ML\\male_tier1\\artifacts\\male_low_t_model.joblib",
+    "legacy_model_sha256": "7e2ace11f8f3bfaf74dd888474bf816a949c662adf094cacac4f201bca9d92cd",
+    "candidate_artifact_path": "C:\\Users\\hp\\Desktop\\Projects\\PMOSense\\machine-learning\\male-ML\\experiments\\male_tier1_7feat\\artifacts\\male_tier1_7feat_candidate.joblib",
+    "candidate_artifact_sha256": "8334b37cb450fc85e8137a89c0300e8d5f3f0c35123823d5a1b871f198eed29f",
+    "random_seed": 42,
+    "features_7": [
+      "age",
+      "height_cm",
+      "weight_kg",
+      "bmi",
+      "waist_cm",
+      "high_blood_pressure",
+      "diabetes"
+    ],
+    "features_11_legacy": [
+      "age",
+      "height_cm",
+      "weight_kg",
+      "bmi",
+      "waist_cm",
+      "low_energy",
+      "sleep_trouble",
+      "low_mood",
+      "low_interest",
+      "high_blood_pressure",
+      "diabetes"
+    ]
+  },
+  "sample_size": {
+    "total_records": 3575,
+    "train_n": 2860,
+    "test_n": 715,
+    "prevalence_overall_pct": 23.8,
+    "prevalence_train_pct": 23.81,
+    "prevalence_test_pct": 23.78
+  },
+  "cross_validation_development": {
+    "cv_benchmark_candidates": {
+      "Logistic Regression (Balanced, C=0.2)": {
+        "roc_auc_mean": 0.7237,
+        "roc_auc_std": 0.0295,
+        "pr_auc_mean": 0.4677,
+        "recall_mean": 0.6167,
+        "brier_mean": 0.2102
+      },
+      "Logistic Regression (Unweighted, C=0.2)": {
+        "roc_auc_mean": 0.7233,
+        "roc_auc_std": 0.0295,
+        "pr_auc_mean": 0.4679,
+        "recall_mean": 0.1762,
+        "brier_mean": 0.1594
+      },
+      "Random Forest (Balanced, max_depth=6)": {
+        "roc_auc_mean": 0.716,
+        "roc_auc_std": 0.0267,
+        "pr_auc_mean": 0.4612,
+        "recall_mean": 0.6269,
+        "brier_mean": 0.208
+      },
+      "HistGradientBoosting (Balanced)": {
+        "roc_auc_mean": 0.6891,
+        "roc_auc_std": 0.0187,
+        "pr_auc_mean": 0.4208,
+        "recall_mean": 0.5785,
+        "brier_mean": 0.2088
+      }
+    },
+    "out_of_fold_validation_logistic_calibrated": {
+      "oof_roc_auc": 0.7228591703343691,
+      "oof_pr_auc": 0.4618365840680443,
+      "oof_brier_score": 0.15940059284689426,
+      "selected_candidate_threshold": 0.1799337829244513,
+      "threshold_selection_rule": "Target OOF Sensitivity >= 0.80 while maximizing Specificity"
+    }
+  },
+  "test_evaluation_comparison": {
+    "candidate_7feat": {
+      "screening_threshold": 0.1799337829244513,
+      "roc_auc": 0.7074,
+      "pr_auc": 0.4204,
+      "brier_score": 0.1646,
+      "metrics_at_screening_threshold": {
+        "threshold": 0.1799,
+        "sensitivity": 0.8294,
+        "specificity": 0.4477,
+        "precision": 0.319,
+        "npv": 0.8938,
+        "f1": 0.4608,
+        "accuracy": 0.5385,
+        "confusion_matrix": {
+          "TN": 244,
+          "FP": 301,
+          "FN": 29,
+          "TP": 141
+        }
+      },
+      "metrics_at_legacy_threshold_0_1808": {
+        "threshold": 0.1808,
+        "sensitivity": 0.8176,
+        "specificity": 0.4495,
+        "precision": 0.3166,
+        "npv": 0.8877,
+        "f1": 0.4565,
+        "accuracy": 0.5371,
+        "confusion_matrix": {
+          "TN": 245,
+          "FP": 300,
+          "FN": 31,
+          "TP": 139
+        }
+      },
+      "metrics_at_default_0_5": {
+        "threshold": 0.5,
+        "sensitivity": 0.1529,
+        "specificity": 0.9651,
+        "precision": 0.5778,
+        "npv": 0.7851,
+        "f1": 0.2419,
+        "accuracy": 0.772,
+        "confusion_matrix": {
+          "TN": 526,
+          "FP": 19,
+          "FN": 144,
+          "TP": 26
+        }
+      },
+      "metrics_at_lower_0_10": {
+        "threshold": 0.1,
+        "sensitivity": 0.9824,
+        "specificity": 0.1468,
+        "precision": 0.2642,
+        "npv": 0.9639,
+        "f1": 0.4165,
+        "accuracy": 0.3455,
+        "confusion_matrix": {
+          "TN": 80,
+          "FP": 465,
+          "FN": 3,
+          "TP": 167
+        }
+      }
+    },
+    "legacy_11feat": {
+      "screening_threshold": 0.1808,
+      "roc_auc": 0.7044,
+      "pr_auc": 0.4201,
+      "brier_score": 0.165,
+      "metrics_at_screening_threshold": {
+        "threshold": 0.1808,
+        "sensitivity": 0.8059,
+        "specificity": 0.4459,
+        "precision": 0.3121,
+        "npv": 0.8804,
+        "f1": 0.4499,
+        "accuracy": 0.5315,
+        "confusion_matrix": {
+          "TN": 243,
+          "FP": 302,
+          "FN": 33,
+          "TP": 137
+        }
+      },
+      "metrics_at_default_0_5": {
+        "threshold": 0.5,
+        "sensitivity": 0.1471,
+        "specificity": 0.9651,
+        "precision": 0.5682,
+        "npv": 0.7839,
+        "f1": 0.2336,
+        "accuracy": 0.7706,
+        "confusion_matrix": {
+          "TN": 526,
+          "FP": 19,
+          "FN": 145,
+          "TP": 25
+        }
+      },
+      "metrics_at_lower_0_10": {
+        "threshold": 0.1,
+        "sensitivity": 0.9882,
+        "specificity": 0.1413,
+        "precision": 0.2642,
+        "npv": 0.9747,
+        "f1": 0.4169,
+        "accuracy": 0.3427,
+        "confusion_matrix": {
+          "TN": 77,
+          "FP": 468,
+          "FN": 2,
+          "TP": 168
+        }
+      }
+    },
+    "paired_bootstrap_1000_runs": {
+      "candidate": {
+        "roc_auc_ci": [
+          0.6604,
+          0.7492
+        ],
+        "pr_auc_ci": [
+          0.3518,
+          0.5019
+        ],
+        "brier_ci": [
+          0.1495,
+          0.1808
+        ],
+        "sensitivity_ci": [
+          0.7674,
+          0.8854
+        ],
+        "specificity_ci": [
+          0.406,
+          0.4908
+        ]
+      },
+      "legacy": {
+        "roc_auc_ci": [
+          0.6571,
+          0.7466
+        ],
+        "pr_auc_ci": [
+          0.3533,
+          0.5029
+        ],
+        "brier_ci": [
+          0.15,
+          0.1814
+        ],
+        "sensitivity_ci": [
+          0.7438,
+          0.8662
+        ],
+        "specificity_ci": [
+          0.4043,
+          0.4899
+        ]
+      },
+      "paired_difference_candidate_minus_legacy": {
+        "delta_roc_auc_mean": 0.003,
+        "delta_roc_auc_ci": [
+          -0.0012,
+          0.0073
+        ],
+        "delta_roc_p_value_empirical": 0.096,
+        "delta_pr_auc_mean": 0.0006,
+        "delta_pr_auc_ci": [
+          -0.0062,
+          0.0064
+        ],
+        "delta_brier_mean": -0.0004,
+        "delta_brier_ci": [
+          -0.0011,
+          0.0004
+        ],
+        "delta_sensitivity_mean": 0.0237,
+        "delta_sensitivity_ci": [
+          0.0055,
+          0.0471
+        ],
+        "delta_specificity_mean": 0.0016,
+        "delta_specificity_ci": [
+          -0.0115,
+          0.0147
+        ]
+      }
+    }
+  },
+  "age_subpopulation_breakdown": {
+    "19-30": {
+      "n_samples": 197,
+      "positive_count": 38,
+      "prevalence": 0.1929,
+      "candidate": {
+        "roc_auc": 0.8155,
+        "sensitivity": 0.7105,
+        "specificity": 0.7673,
+        "precision": 0.4219,
+        "npv": 0.9173
+      },
+      "legacy": {
+        "roc_auc": 0.812,
+        "sensitivity": 0.6842,
+        "specificity": 0.7673,
+        "precision": 0.4127,
+        "npv": 0.9104
+      }
+    },
+    "31-40": {
+      "n_samples": 170,
+      "positive_count": 44,
+      "prevalence": 0.2588,
+      "candidate": {
+        "roc_auc": 0.6623,
+        "sensitivity": 0.7727,
+        "specificity": 0.3889,
+        "precision": 0.3063,
+        "npv": 0.8305
+      },
+      "legacy": {
+        "roc_auc": 0.6587,
+        "sensitivity": 0.75,
+        "specificity": 0.3889,
+        "precision": 0.3,
+        "npv": 0.8167
+      }
+    },
+    "41-50": {
+      "n_samples": 177,
+      "positive_count": 49,
+      "prevalence": 0.2768,
+      "candidate": {
+        "roc_auc": 0.6582,
+        "sensitivity": 0.9184,
+        "specificity": 0.2656,
+        "precision": 0.3237,
+        "npv": 0.8947
+      },
+      "legacy": {
+        "roc_auc": 0.654,
+        "sensitivity": 0.898,
+        "specificity": 0.2656,
+        "precision": 0.3188,
+        "npv": 0.8718
+      }
+    },
+    "51-60": {
+      "n_samples": 171,
+      "positive_count": 39,
+      "prevalence": 0.2281,
+      "candidate": {
+        "roc_auc": 0.6727,
+        "sensitivity": 0.8974,
+        "specificity": 0.2955,
+        "precision": 0.2734,
+        "npv": 0.907
+      },
+      "legacy": {
+        "roc_auc": 0.6758,
+        "sensitivity": 0.8718,
+        "specificity": 0.2879,
+        "precision": 0.2656,
+        "npv": 0.8837
+      }
+    }
+  },
+  "collinearity_and_vif": {
+    "vif": {
+      "age": 1.32,
+      "height_cm": 13.25,
+      "weight_kg": 98.21,
+      "bmi": 81.5,
+      "waist_cm": 6.88,
+      "high_blood_pressure": 1.22,
+      "diabetes": 1.16
+    },
+    "anthropometric_correlations": {
+      "height_cm": {
+        "height_cm": 1.0,
+        "weight_kg": 0.4145,
+        "bmi": 0.0638,
+        "waist_cm": 0.1987
+      },
+      "weight_kg": {
+        "height_cm": 0.4145,
+        "weight_kg": 1.0,
+        "bmi": 0.9307,
+        "waist_cm": 0.9246
+      },
+      "bmi": {
+        "height_cm": 0.0638,
+        "weight_kg": 0.9307,
+        "bmi": 1.0,
+        "waist_cm": 0.938
+      },
+      "waist_cm": {
+        "height_cm": 0.1987,
+        "weight_kg": 0.9246,
+        "bmi": 0.938,
+        "waist_cm": 1.0
+      }
+    }
+  },
+  "feature_weights_and_importances": {
+    "standardized_coefficients": {
+      "age": {
+        "standardized_coef": 0.1037,
+        "odds_ratio": 1.10927,
+        "vif": 1.32,
+        "risk_direction": "Increases Risk"
+      },
+      "height_cm": {
+        "standardized_coef": -0.07973,
+        "odds_ratio": 0.92336,
+        "vif": 13.25,
+        "risk_direction": "Decreases Risk"
+      },
+      "weight_kg": {
+        "standardized_coef": -0.00225,
+        "odds_ratio": 0.99775,
+        "vif": 98.21,
+        "risk_direction": "Decreases Risk"
+      },
+      "bmi": {
+        "standardized_coef": 0.22407,
+        "odds_ratio": 1.25116,
+        "vif": 81.5,
+        "risk_direction": "Increases Risk"
+      },
+      "waist_cm": {
+        "standardized_coef": 0.60459,
+        "odds_ratio": 1.83051,
+        "vif": 6.88,
+        "risk_direction": "Increases Risk"
+      },
+      "high_blood_pressure": {
+        "standardized_coef": 0.01074,
+        "odds_ratio": 1.01079,
+        "vif": 1.22,
+        "risk_direction": "Increases Risk"
+      },
+      "diabetes": {
+        "standardized_coef": 0.12346,
+        "odds_ratio": 1.13141,
+        "vif": 1.16,
+        "risk_direction": "Increases Risk"
+      }
+    },
+    "permutation_importance": {
+      "age": {
+        "mean_auc_drop": -0.00084,
+        "std_auc_drop": 0.00328
+      },
+      "height_cm": {
+        "mean_auc_drop": 0.00099,
+        "std_auc_drop": 0.00254
+      },
+      "weight_kg": {
+        "mean_auc_drop": 0.00024,
+        "std_auc_drop": 0.00035
+      },
+      "bmi": {
+        "mean_auc_drop": 0.01706,
+        "std_auc_drop": 0.00699
+      },
+      "waist_cm": {
+        "mean_auc_drop": 0.1257,
+        "std_auc_drop": 0.02142
+      },
+      "high_blood_pressure": {
+        "mean_auc_drop": 0.0006,
+        "std_auc_drop": 0.00043
+      },
+      "diabetes": {
+        "mean_auc_drop": -0.00195,
+        "std_auc_drop": 0.00387
+      }
+    }
+  },
+  "missingness_and_edge_case_stress_tests": {
+    "missing_waist_impact_across_bmi": [
+      {
+        "bmi": 22.0,
+        "measured_waist_cm": 80.0,
+        "prob_with_measured_waist": 0.0975,
+        "prob_with_missing_waist_median_imputed": 0.1632,
+        "probability_shift": 0.0657,
+        "clinical_consequence": "Overestimates risk for lean male"
+      },
+      {
+        "bmi": 27.0,
+        "measured_waist_cm": 92.0,
+        "prob_with_measured_waist": 0.1616,
+        "prob_with_missing_waist_median_imputed": 0.1866,
+        "probability_shift": 0.0251,
+        "clinical_consequence": "Overestimates risk for lean male"
+      },
+      {
+        "bmi": 32.0,
+        "measured_waist_cm": 106.0,
+        "prob_with_measured_waist": 0.2693,
+        "prob_with_missing_waist_median_imputed": 0.2128,
+        "probability_shift": -0.0564,
+        "clinical_consequence": "Underestimates risk for obese male"
+      },
+      {
+        "bmi": 38.0,
+        "measured_waist_cm": 120.0,
+        "prob_with_measured_waist": 0.4213,
+        "prob_with_missing_waist_median_imputed": 0.2479,
+        "probability_shift": -0.1734,
+        "clinical_consequence": "Underestimates risk for obese male"
+      }
+    ],
+    "medical_history_conditions": [
+      {
+        "scenario": "Explicit Negative (HBP=0, DM=0)",
+        "probability": 0.1912
+      },
+      {
+        "scenario": "Unknown / Missing (HBP=NaN, DM=NaN)",
+        "probability": 0.1912
+      },
+      {
+        "scenario": "Hypertension Only (HBP=1, DM=0)",
+        "probability": 0.195
+      },
+      {
+        "scenario": "Diabetes Only (HBP=0, DM=1)",
+        "probability": 0.26
+      },
+      {
+        "scenario": "Both Chronic Conditions (HBP=1, DM=1)",
+        "probability": 0.2648
+      }
+    ],
+    "age_gradient": [
+      {
+        "age": 19,
+        "probability": 0.1248
+      },
+      {
+        "age": 25,
+        "probability": 0.1301
+      },
+      {
+        "age": 35,
+        "probability": 0.1394
+      },
+      {
+        "age": 45,
+        "probability": 0.1493
+      },
+      {
+        "age": 55,
+        "probability": 0.1597
+      },
+      {
+        "age": 60,
+        "probability": 0.1652
+      }
+    ],
+    "edge_cases_and_contradictions": [
+      {
+        "description": "Extreme Obese (BMI 55, Waist 150 cm, Age 40)",
+        "inputs": {
+          "age": 40.0,
+          "height_cm": 175.0,
+          "weight_kg": 168.0,
+          "bmi": 55.0,
+          "waist_cm": 150.0,
+          "high_blood_pressure": 1.0,
+          "diabetes": 1.0
+        },
+        "predicted_probability": 0.8435
+      },
+      {
+        "description": "Extreme Underweight (BMI 15, Waist 60 cm, Age 22)",
+        "inputs": {
+          "age": 22.0,
+          "height_cm": 180.0,
+          "weight_kg": 48.6,
+          "bmi": 15.0,
+          "waist_cm": 60.0,
+          "high_blood_pressure": 0.0,
+          "diabetes": 0.0
+        },
+        "predicted_probability": 0.0344
+      },
+      {
+        "description": "Contradictory: Severe Obese BMI with Tiny Waist (BMI 42, Waist 65 cm)",
+        "inputs": {
+          "age": 35.0,
+          "height_cm": 170.0,
+          "weight_kg": 121.0,
+          "bmi": 42.0,
+          "waist_cm": 65.0,
+          "high_blood_pressure": 0.0,
+          "diabetes": 0.0
+        },
+        "predicted_probability": 0.1115
+      },
+      {
+        "description": "Contradictory: Very Lean BMI with Huge Waist (BMI 20, Waist 125 cm)",
+        "inputs": {
+          "age": 35.0,
+          "height_cm": 185.0,
+          "weight_kg": 68.0,
+          "bmi": 20.0,
+          "waist_cm": 125.0,
+          "high_blood_pressure": 0.0,
+          "diabetes": 0.0
+        },
+        "predicted_probability": 0.296
+      }
+    ]
+  },
+  "recommendation": {
+    "status": "PROCEED TO FURTHER VALIDATION",
+    "clinical_verdict": "The clean seven-feature model matches or marginally exceeds the legacy 11-feature model across all discriminative and screening metrics (Delta ROC-AUC = +0.0030, Delta PR-AUC = +0.0004, Sensitivity = 82.94% vs 80.59%, Specificity = 44.77% vs 44.59%) while completely eliminating the uncalibrated ADAM proxy symptom contract mismatch. However, production deployment must not occur until independent external validation is conducted.",
+    "caveats": [
+      "Holdout partition N=715 has been inspected across multiple prior audits; independent external validation is required.",
+      "Waist circumference is optional on the frontend; when omitted, median imputation introduces a risk shift.",
+      "Self-reported height/weight and medical tags have measurement divergence from NHANES clinical examinations."
+    ]
+  }
+}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { ROUTES } from '../../constants/routes';
@@ -24,8 +24,12 @@ import { deriveMaleTier1InputsFromProfile } from '../../utils/tier1InputMappers'
 export const MaleOnboarding: React.FC = () => {
   const { t } = useTranslation(['onboarding', 'common']);
   const navigate = useNavigate();
+  const location = useLocation();
   const { userProfile, finalizeOnboardingAndScreen } = useUserHealth();
   const shouldReduceMotion = useReducedMotion();
+
+  const isExplicitRelaunch = Boolean((location.state as any)?.allowReonboard);
+  const isUpdatingProfile = Boolean(userProfile.isOnboarded && isExplicitRelaunch);
 
   const maleSteps = useMemo(() => [
     { number: '1', label: t('onboarding:stepLabels.basicInfo', 'Basic Info') },
@@ -66,7 +70,7 @@ export const MaleOnboarding: React.FC = () => {
         medications: userProfile.medical?.medications || [],
         conditions: userProfile.medical?.conditions?.length
           ? userProfile.medical.conditions
-          : ['None of these'],
+          : [],
         surgeries: userProfile.medical?.surgeries || [],
         familyHistory: userProfile.medical?.familyHistory?.length
           ? userProfile.medical.familyHistory
@@ -147,8 +151,8 @@ export const MaleOnboarding: React.FC = () => {
     }
   }, [currentStep]);
 
-  // Route protection: If already onboarded, go directly to AndroSense app
-  if (userProfile.isOnboarded) {
+  // Route protection: If already onboarded and not explicitly re-onboarding, go directly to AndroSense app
+  if (userProfile.isOnboarded && !isExplicitRelaunch) {
     return <Navigate to={ROUTES.APP.ANDROSENSE} replace />;
   }
   if (userProfile.pathway === 'female') {
@@ -293,6 +297,10 @@ export const MaleOnboarding: React.FC = () => {
     );
   }
 
+  const handleCancel = () => {
+    navigate(ROUTES.APP.SETTINGS);
+  };
+
   return (
     <MaleOnboardingLayout
       currentStep={currentStep}
@@ -304,6 +312,8 @@ export const MaleOnboarding: React.FC = () => {
       isSubmitting={isSubmitting}
       canGoBack={currentStep > 1}
       hideBottomNav={currentStep === 3}
+      isUpdatingProfile={isUpdatingProfile}
+      onCancel={isUpdatingProfile ? handleCancel : undefined}
     >
       <AnimatePresence mode="wait">
         <motion.div

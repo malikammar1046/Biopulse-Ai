@@ -52,5 +52,127 @@
   },
   "logHabit": "Log Today's Habits",
   "habitSaved": "Habit logged successfully",
-  "emptyLifestyle": "No lifestyle logs recorded today. Log your water or meals to start tracking."
+  "emptyLifestyle": "No lifestyle logs recorded today. Log your water or meals to start tracking.",
+  "ovasense": {
+    "headerBadge": "Female • PCOS",
+    "heroTitle": "Lifestyle",
+    "heroSubtitle": "Small habits. Big changes.",
+    "heroDescription": "Your daily choices can help manage PCOS, balance hormones and improve your overall well-being. Explore personalized recommendations for diet, exercise, sleep and more.",
+    "heroTagline": "Better habits → Better hormones → A healthier you ♡",
+    "pillars": {
+      "diet": "Balanced Diet",
+      "exercise": "Regular Exercise",
+      "sleep": "Quality Sleep",
+      "stress": "Stress Management"
+    },
+    "tabs": {
+      "nutrition": "Nutrition",
+      "exercise": "Exercise",
+      "sleep": "Sleep",
+      "stress": "Stress",
+      "hydration": "Hydration"
+    },
+    "progress": {
+      "title": "Your Lifestyle Progress",
+      "nutrition": "Nutrition",
+      "exercise": "Exercise",
+      "sleep": "Sleep",
+      "stress": "Stress",
+      "bannerTitle": "Great progress!",
+      "bannerSubtitle": "Keep going. Small steps make a big difference.",
+      "notTracked": "Not tracked yet",
+      "trackPrompt": "Log to calculate progress"
+    },
+    "nutritionOverview": {
+      "title": "Nutrition Overview",
+      "description": "Fuel your body with the right nutrients. Here's your daily nutrition plan based on your health profile and PCOS management goals.",
+      "viewDetails": "View Details →",
+      "protein": "Protein",
+      "healthyFats": "Healthy Fats",
+      "complexCarbs": "Complex Carbs",
+      "fiber": "Fiber",
+      "perDay": "/ day",
+      "notCalculated": "Not calculated"
+    },
+    "recommendedFoods": {
+      "title": "Recommended Foods",
+      "description": "Foods that support hormone balance, reduce inflammation and improve insulin sensitivity.",
+      "leafyGreens": "Leafy Greens",
+      "leanProtein": "Lean Protein",
+      "wholeGrains": "Whole Grains",
+      "healthyFats": "Healthy Fats",
+      "berries": "Berries",
+      "whyTitle": "Why recommended for you"
+    },
+    "foodsToLimit": {
+      "title": "Foods to Limit",
+      "description": "These may worsen insulin resistance and hormonal imbalance.",
+      "sugaryFoods": "Sugary Foods",
+      "processedFoods": "Processed Foods",
+      "refinedCarbs": "Refined Carbs",
+      "friedFoods": "Fried Foods",
+      "sugaryDrinks": "Sugary Drinks",
+      "allergyWarning": "Confirmed Allergen"
+    },
+    "mealPlan": {
+      "title": "Your Daily Meal Plan",
+      "subtitle": "Simple, balanced and PCOS-friendly.",
+      "viewFullPlan": "View 3-Day Plan →",
+      "logMeal": "Log Meal",
+      "logCustom": "Log Meal",
+      "log": "Log",
+      "logged": "Logged",
+      "breakfast": "Breakfast",
+      "lunch": "Lunch",
+      "dinner": "Dinner",
+      "snack": "Snack",
+      "highInFiber": "High in fiber",
+      "balanced": "Balanced",
+      "lightNutritious": "Light & nutritious"
+    },
+    "weeklyPlan": {
+      "badge": "OvaSense 3-Day Protocol",
+      "title": "Your 3-Day Personalized Meal Plan",
+      "active": "Active",
+      "noPlanTitle": "No Active 3-Day Plan Yet",
+      "noPlanDesc": "Generate your evidence-grounded 3-day meal plan tailored to your PCOS risk, dietary preferences, and verified portion constraints.",
+      "generateBtn": "Personalize Your 3-Day Plan",
+      "todayTag": "Today",
+      "mealsCount": "meals planned",
+      "daySubtitle": "Review ingredients, portions, and macros. Add to today's dashboard or log directly.",
+      "regeneratePlan": "Re-tune Plan",
+      "verifiedPortions": "Verified Ingredients & Portions:",
+      "addToToday": "Add to Today",
+      "logNow": "Log Meal",
+      "disclaimer": "All portions are calibrated against verified clinical targets."
+    },
+    "tips": {
+      "title": "Nutrition Tips",
+      "subtitle": "Quick tips to make your meals work better for you.",
+      "tip1": "Choose whole grains over refined grains",
+      "tip2": "Add more colorful vegetables to your plate",
+      "tip3": "Include healthy fats like nuts, seeds and olive oil",
+      "tip4": "Avoid sugary drinks and processed snacks",
+      "tagline": "Good food fuels your goals. ♡"
+    },
+    "goals": {
+      "title": "Today's Goals",
+      "viewAll": "View All >",
+      "goal1Title": "Eat a balanced meal",
+      "goal1Desc": "Include protein, fiber and healthy fats",
+      "goal2Title": "Walk for 30 minutes",
+      "goal2Desc": "Light exercise helps with insulin sensitivity",
+      "goal3Title": "Drink 8 glasses of water",
+      "goal3Desc": "Stay hydrated for better hormone balance",
+      "goal4Title": "Get 7–9 hours of sleep",
+      "goal4Desc": "Helps regulate hormones and energy"
+    },
+    "cards": {
+      "doingGreat": "You're doing great!",
+      "doingGreatDesc": "Healthy choices today build a stronger tomorrow.",
+      "needMealPlan": "Need a meal plan?",
+      "needMealPlanDesc": "Get personalized nutrition plans based on your goals and preferences.",
+      "exploreMealPlans": "Explore Meal Plans →"
+    }
+  }
 }

@@ -100,7 +100,7 @@ export const NutritionTab: React.FC<NutritionTabProps> = ({
                 Nutrition Module Readiness
               </h3>
               <p className="text-xs text-slate-400">
-                Required clinical inputs for 7-day automated meal planning
+                Required clinical inputs for 3-day automated meal planning
               </p>
             </div>
           </div>
@@ -146,7 +146,7 @@ export const NutritionTab: React.FC<NutritionTabProps> = ({
           <p>
             <strong className="text-slate-700 font-semibold">Automatic Synchronization:</strong>{' '}
             Saving your height, weight, activity, and dietary preferences instantly updates your
-            nutrition profile. When you request a new 7-Day Meal Plan in the Nutrition module, it
+            nutrition profile. When you request a new 3-Day Meal Plan in the Nutrition module, it
             will be built using these updated metrics.
           </p>
         </div>

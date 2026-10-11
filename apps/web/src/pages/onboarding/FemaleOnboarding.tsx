@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { ROUTES } from '../../constants/routes';
@@ -24,8 +24,12 @@ import { deriveFemaleTier1InputsFromProfile } from '../../utils/tier1InputMapper
 export const FemaleOnboarding: React.FC = () => {
   const { t } = useTranslation(['onboarding', 'common']);
   const navigate = useNavigate();
+  const location = useLocation();
   const { userProfile, finalizeOnboardingAndScreen } = useUserHealth();
   const shouldReduceMotion = useReducedMotion();
+
+  const isExplicitRelaunch = Boolean((location.state as any)?.allowReonboard);
+  const isUpdatingProfile = Boolean(userProfile.isOnboarded && isExplicitRelaunch);
 
   const femaleSteps = useMemo(() => [
     { number: '1', label: t('onboarding:stepLabels.basicInfo', 'Basic Info') },
@@ -101,8 +105,8 @@ export const FemaleOnboarding: React.FC = () => {
     }
   }, [currentStep]);
 
-  // Route protection: If already onboarded, go directly to OvaSense app
-  if (userProfile.isOnboarded) {
+  // Route protection: If already onboarded and not explicitly re-onboarding, go directly to OvaSense app
+  if (userProfile.isOnboarded && !isExplicitRelaunch) {
     return <Navigate to={ROUTES.APP.OVASENSE} replace />;
   }
   if (userProfile.pathway === 'male') {
@@ -122,6 +126,26 @@ export const FemaleOnboarding: React.FC = () => {
       if (!phoneCheck.isValid) errs.phone = phoneCheck.error!;
 
       if (!draftProfile.email.trim()) errs.email = 'Email address is required.';
+    }
+
+    if (stepNum === 3) {
+      if (draftProfile.womensHealth?.hasHadPeriod !== false && draftProfile.womensHealth?.ageAtMenarche) {
+        const match = (draftProfile.dateOfBirth || '').match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+        if (match) {
+          const birthYear = parseInt(match[1], 10);
+          const birthMonth = parseInt(match[2], 10);
+          const birthDay = parseInt(match[3], 10);
+          const now = new Date();
+          let currentAge = now.getFullYear() - birthYear;
+          if (now.getMonth() + 1 < birthMonth || (now.getMonth() + 1 === birthMonth && now.getDate() < birthDay)) {
+            currentAge--;
+          }
+          const menarche = Number(draftProfile.womensHealth.ageAtMenarche);
+          if (menarche > currentAge) {
+            errs.ageAtMenarche = `Age at first period (${menarche}) cannot exceed current age (${currentAge}).`;
+          }
+        }
+      }
     }
 
     setErrors(errs);
@@ -205,6 +229,10 @@ export const FemaleOnboarding: React.FC = () => {
     );
   }
 
+  const handleCancel = () => {
+    navigate(ROUTES.APP.SETTINGS);
+  };
+
   return (
     <FemaleOnboardingLayout
       currentStep={currentStep}
@@ -215,6 +243,8 @@ export const FemaleOnboarding: React.FC = () => {
       onBack={handleBack}
       isSubmitting={isSubmitting}
       canGoBack={currentStep > 1}
+      isUpdatingProfile={isUpdatingProfile}
+      onCancel={isUpdatingProfile ? handleCancel : undefined}
     >
       <AnimatePresence mode="wait">
         <motion.div
@@ -257,6 +287,8 @@ export const FemaleOnboarding: React.FC = () => {
               onChange={(wh: WomensHealthProfile) =>
                 setDraftProfile((prev) => ({ ...prev, womensHealth: wh }))
               }
+              userDob={draftProfile.dateOfBirth}
+              errors={errors}
             />
           )}
 

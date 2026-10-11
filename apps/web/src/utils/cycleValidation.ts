@@ -1,5 +1,10 @@
 import type { CycleRecord, CycleRecordInput } from '../types/cycle';
-import { formatDisplayDate, getDaysDifference } from './cycleCalculations';
+import {
+  formatDisplayDate,
+  getDaysDifference,
+  getTodayDateString,
+  toCalendarEpochDays,
+} from './cycleCalculations.ts';
 
 export interface CycleValidationResult {
   isValid: boolean;
@@ -13,6 +18,7 @@ export interface CycleValidationResult {
 
 /**
  * Validates a period log entry to protect against invalid data, impossible ranges, and overlapping periods.
+ * Pure timezone-immune calendar day validation.
  */
 export function validateCycleRecord(
   input: CycleRecordInput,
@@ -25,9 +31,9 @@ export function validateCycleRecord(
   if (!input.periodStartDate || input.periodStartDate.trim() === '') {
     errors.startDate = 'Please select a period start date.';
   } else {
-    const startDate = new Date(input.periodStartDate);
-    if (isNaN(startDate.getTime())) {
-      errors.startDate = 'Invalid start date format.';
+    const epochDays = toCalendarEpochDays(input.periodStartDate);
+    if (isNaN(epochDays)) {
+      errors.startDate = 'Invalid start date format. Please use YYYY-MM-DD.';
     }
   }
 
@@ -35,54 +41,56 @@ export function validateCycleRecord(
   if (!input.periodEndDate || input.periodEndDate.trim() === '') {
     errors.endDate = 'Please select a period end date.';
   } else {
-    const endDate = new Date(input.periodEndDate);
-    if (isNaN(endDate.getTime())) {
-      errors.endDate = 'Invalid end date format.';
+    const epochDays = toCalendarEpochDays(input.periodEndDate);
+    if (isNaN(epochDays)) {
+      errors.endDate = 'Invalid end date format. Please use YYYY-MM-DD.';
     }
   }
 
   // 3. Chronological Consistency & Duration Check
   if (!errors.startDate && !errors.endDate) {
-    const start = new Date(input.periodStartDate);
-    const end = new Date(input.periodEndDate);
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
+    const startEpoch = toCalendarEpochDays(input.periodStartDate);
+    const endEpoch = toCalendarEpochDays(input.periodEndDate);
+    const todayStr = getTodayDateString();
+    const todayEpoch = toCalendarEpochDays(todayStr);
 
-    if (end < start) {
-      errors.endDate = 'Period end date cannot be before the start date.';
+    if (endEpoch < startEpoch) {
+      errors.endDate = 'Period end date cannot be earlier than the start date.';
     }
 
-    if (start > today) {
-      errors.startDate = 'Start date cannot be set in the future.';
+    if (startEpoch > todayEpoch) {
+      errors.startDate = 'Period start date cannot be set in the future.';
     }
 
     const durationDays = getDaysDifference(input.periodStartDate, input.periodEndDate) + 1;
     if (durationDays < 1) {
       errors.endDate = 'Period duration must be at least 1 day.';
     } else if (durationDays > 14) {
-      errors.endDate = 'Period duration cannot exceed 14 consecutive days.';
+      errors.endDate = 'Period bleeding duration cannot exceed 14 consecutive days. Please review dates or consult a doctor for prolonged bleeding.';
     }
   }
 
-  // 4. Validate Menstrual Flow
-  if (!input.flow || !['light', 'medium', 'heavy'].includes(input.flow)) {
-    errors.flow = 'Please select a flow intensity (Light, Medium, or Heavy).';
+  // 4. Validate Menstrual Flow (Allow spotting, light, medium, heavy)
+  if (!input.flow || !['spotting', 'light', 'medium', 'heavy'].includes(input.flow)) {
+    errors.flow = 'Please select a flow intensity (Spotting, Light, Medium, or Heavy).';
   }
 
   // 5. Overlapping Range Check
   if (!errors.startDate && !errors.endDate) {
     const newStart = input.periodStartDate;
     const newEnd = input.periodEndDate;
+    const newStartEpoch = toCalendarEpochDays(newStart);
+    const newEndEpoch = toCalendarEpochDays(newEnd);
 
     const overlappingRecord = existingRecords.find((rec) => {
       if (editingRecordId && rec.id === editingRecordId) {
         return false;
       }
-      const existingStart = rec.periodStartDate;
-      const existingEnd = rec.periodEndDate;
+      const recStartEpoch = toCalendarEpochDays(rec.periodStartDate);
+      const recEndEpoch = toCalendarEpochDays(rec.periodEndDate);
 
-      // Two ranges [A, B] and [C, D] overlap if A <= D and B >= C
-      return newStart <= existingEnd && newEnd >= existingStart;
+      // Two intervals [A, B] and [C, D] overlap if A <= D and B >= C
+      return newStartEpoch <= recEndEpoch && newEndEpoch >= recStartEpoch;
     });
 
     if (overlappingRecord) {

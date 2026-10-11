@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { nutritionService } from './nutritionService';
 import type { UserProfile } from '../types/onboarding';
 import type {
   MealType,
@@ -45,6 +46,20 @@ class DietService {
     }
   }
 
+  /**
+   * Caches or updates a food log entry in local cache without duplicate backend writes.
+   */
+  cacheFoodLog(userId: string, entry: FoodLogEntry): void {
+    const current = this.getLocalFoodLogs(userId);
+    const existingIndex = current.findIndex((l) => l.id === entry.id);
+    if (existingIndex >= 0) {
+      current[existingIndex] = entry;
+      this.setLocalFoodLogs(userId, [...current]);
+    } else {
+      this.setLocalFoodLogs(userId, [...current, entry]);
+    }
+  }
+
   private getLocalWaterLog(userId: string, date: string): WaterLogEntry {
     try {
       const raw = localStorage.getItem(`${this.getWaterStorageKey(userId)}_${date}`);
@@ -71,7 +86,7 @@ class DietService {
     }
   }
 
-  // --- Food Logs CRUD ---
+  // --- Food Logs CRUD (Single Source of Truth via Django nutritionService) ---
   async fetchFoodLogs(
     userId: string,
     dateIso?: string
@@ -79,6 +94,32 @@ class DietService {
     const today = dateIso || new Date().toISOString().split('T')[0];
     const allLocal = this.getLocalFoodLogs(userId);
     const localFiltered = allLocal.filter((l) => l.loggedAt === today);
+
+    // Primary authoritative source: Django nutrition service API
+    try {
+      const serverLogs = await nutritionService.fetchFoodLogs(today, today);
+      if (Array.isArray(serverLogs)) {
+        const mapped: FoodLogEntry[] = serverLogs.map((row: any) => ({
+          id: row.id,
+          userId: row.user_id || userId,
+          mealType: (row.meal_type as MealType) || 'lunch',
+          foodName: row.food_name || 'Meal',
+          serving: row.serving || '1 serving',
+          calories: Number(row.calories) || 0,
+          proteinG: Number(row.protein_g) || 0,
+          carbsG: Number(row.carbs_g) || 0,
+          fatG: Number(row.fat_g) || 0,
+          fiberG: Number(row.fiber_g) || 0,
+          loggedAt: (row.logged_at ? row.logged_at.split('T')[0] : today),
+          notes: row.notes || '',
+          createdAt: row.created_at || new Date().toISOString(),
+        }));
+        this.setLocalFoodLogs(userId, mapped);
+        return { logs: mapped };
+      }
+    } catch {
+      // Backend temporarily unavailable, fallback to Supabase or local storage below
+    }
 
     if (!isSupabaseConfigured()) {
       return { logs: localFiltered };
@@ -128,57 +169,94 @@ class DietService {
     input: FoodLogInput
   ): Promise<{ success: boolean; entry?: FoodLogEntry; error?: string }> {
     const today = input.loggedAt || new Date().toISOString().split('T')[0];
-    const newEntry: FoodLogEntry = {
-      id: `flog_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`,
-      userId,
-      mealType: input.mealType,
-      foodName: input.foodName.trim(),
-      serving: input.serving.trim() || '1 serving',
-      calories: Math.round(input.calories) || 0,
-      proteinG: Math.round(input.proteinG * 10) / 10 || 0,
-      carbsG: Math.round(input.carbsG * 10) / 10 || 0,
-      fatG: Math.round(input.fatG * 10) / 10 || 0,
-      fiberG: Math.round(input.fiberG * 10) / 10 || 0,
-      loggedAt: today,
-      notes: input.notes?.trim() || '',
-      createdAt: new Date().toISOString(),
-    };
+    const nowIso = new Date().toISOString();
 
-    // Save locally
-    const current = this.getLocalFoodLogs(userId);
-    this.setLocalFoodLogs(userId, [...current, newEntry]);
+    // Use nutritionService as the single authoritative backend writer
+    try {
+      const serverItem = await nutritionService.logFood({
+        meal_type: input.mealType,
+        food_name: input.foodName.trim(),
+        serving: input.serving.trim() || '1 serving',
+        calories: input.calories ? Math.round(input.calories) : undefined,
+        protein_g: input.proteinG ? Math.round(input.proteinG * 10) / 10 : undefined,
+        carbs_g: input.carbsG ? Math.round(input.carbsG * 10) / 10 : undefined,
+        fat_g: input.fatG ? Math.round(input.fatG * 10) / 10 : undefined,
+        fiber_g: input.fiberG ? Math.round(input.fiberG * 10) / 10 : undefined,
+        notes: input.notes?.trim() || '',
+        logged_at: today,
+      });
 
-    if (isSupabaseConfigured()) {
-      try {
-        const { error } = await supabase.from('food_logs').insert({
-          id: newEntry.id,
-          user_id: userId,
-          meal_type: newEntry.mealType,
-          food_name: newEntry.foodName,
-          serving: newEntry.serving,
-          calories: newEntry.calories,
-          protein_g: newEntry.proteinG,
-          carbs_g: newEntry.carbsG,
-          fat_g: newEntry.fatG,
-          fiber_g: newEntry.fiberG,
-          logged_at: newEntry.loggedAt,
-          notes: newEntry.notes,
-          created_at: newEntry.createdAt,
-        });
+      const entry: FoodLogEntry = {
+        id: serverItem.id || `flog_${Date.now().toString(36)}`,
+        userId,
+        mealType: (serverItem.meal_type as MealType) || input.mealType,
+        foodName: serverItem.food_name || input.foodName.trim(),
+        serving: serverItem.serving || input.serving.trim() || '1 serving',
+        calories: Number(serverItem.calories) || Math.round(input.calories) || 0,
+        proteinG: Number(serverItem.protein_g) || Math.round(input.proteinG * 10) / 10 || 0,
+        carbsG: Number(serverItem.carbs_g) || Math.round(input.carbsG * 10) / 10 || 0,
+        fatG: Number(serverItem.fat_g) || Math.round(input.fatG * 10) / 10 || 0,
+        fiberG: Number(serverItem.fiber_g) || Math.round(input.fiberG * 10) / 10 || 0,
+        loggedAt: (serverItem.logged_at ? serverItem.logged_at.split('T')[0] : today),
+        notes: serverItem.notes || input.notes?.trim() || '',
+        createdAt: serverItem.created_at || nowIso,
+      };
 
-        if (error) {
-          console.warn('Supabase insert food_logs error:', error);
-        }
-      } catch (err) {
-        console.warn('Supabase logFood error:', err);
+      this.cacheFoodLog(userId, entry);
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('ovasense_diet_updated'));
       }
-    }
 
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('ovasense_diet_updated'));
-    }
+      return { success: true, entry };
+    } catch (apiErr) {
+      console.warn('Backend food log fallback to local/supabase:', apiErr);
+      const newEntry: FoodLogEntry = {
+        id: `flog_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`,
+        userId,
+        mealType: input.mealType,
+        foodName: input.foodName.trim(),
+        serving: input.serving.trim() || '1 serving',
+        calories: Math.round(input.calories) || 0,
+        proteinG: Math.round(input.proteinG * 10) / 10 || 0,
+        carbsG: Math.round(input.carbsG * 10) / 10 || 0,
+        fatG: Math.round(input.fatG * 10) / 10 || 0,
+        fiberG: Math.round(input.fiberG * 10) / 10 || 0,
+        loggedAt: today,
+        notes: input.notes?.trim() || '',
+        createdAt: nowIso,
+      };
 
-    return { success: true, entry: newEntry };
+      this.cacheFoodLog(userId, newEntry);
+
+      if (isSupabaseConfigured()) {
+        try {
+          await supabase.from('food_logs').insert({
+            id: newEntry.id,
+            user_id: userId,
+            meal_type: newEntry.mealType,
+            food_name: newEntry.foodName,
+            serving: newEntry.serving,
+            calories: newEntry.calories,
+            protein_g: newEntry.proteinG,
+            carbs_g: newEntry.carbsG,
+            fat_g: newEntry.fatG,
+            fiber_g: newEntry.fiberG,
+            logged_at: newEntry.loggedAt,
+            notes: newEntry.notes,
+            created_at: newEntry.createdAt,
+          });
+        } catch (err) {
+          console.warn('Supabase logFood error:', err);
+        }
+      }
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('ovasense_diet_updated'));
+      }
+
+      return { success: true, entry: newEntry };
+    }
   }
 
   async deleteFoodLog(
@@ -190,6 +268,13 @@ class DietService {
       userId,
       current.filter((l) => l.id !== logId)
     );
+
+    // Authoritative delete via Django backend
+    try {
+      await nutritionService.deleteFoodLog(logId);
+    } catch (apiErr) {
+      console.warn('Backend deleteFoodLog notice:', apiErr);
+    }
 
     if (isSupabaseConfigured()) {
       try {
