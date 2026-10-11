@@ -163,7 +163,8 @@ class MealPlanRepository:
         now_iso = datetime.now(timezone.utc).isoformat()
         start_str = start_date.isoformat() if isinstance(start_date, date) else str(start_date)
         end_str = end_date.isoformat() if isinstance(end_date, date) else str(end_date)
-        clean_plan_type = "weekly" if "week" in str(plan_type).lower() else str(plan_type).lower()
+        # Supports proper three-day classification while preserving historic weekly and daily types
+        clean_plan_type = "three_day" if ("three" in str(plan_type).lower() or "3" in str(plan_type).lower()) else ("weekly" if "week" in str(plan_type).lower() else str(plan_type).lower())
 
         # 1. Look up any existing active plan to deactivate
         current_active = self.get_active_plan(user_id, auth_token=auth_token)

@@ -38,13 +38,58 @@ export const LogMealModal: React.FC<LogMealModalProps> = ({
     if (!isOpen) return;
     setError(null);
     if (plannedMeal) {
-      setMealType(plannedMeal.role || 'Lunch');
-      setFoodName(plannedMeal.title || '');
-      setServing('1 planned portion');
-      setCalories(plannedMeal.energy_kcal ? String(Math.round(plannedMeal.energy_kcal)) : '');
-      setProteinG(plannedMeal.protein_g ? String(Math.round(plannedMeal.protein_g)) : '');
-      setCarbsG(plannedMeal.carbohydrate_g ? String(Math.round(plannedMeal.carbohydrate_g)) : '');
-      setFatG(plannedMeal.fat_g ? String(Math.round(plannedMeal.fat_g)) : '');
+      const pmAny = plannedMeal as any;
+      setMealType(pmAny.role || pmAny.mealType || 'Lunch');
+      setFoodName(pmAny.title || pmAny.foodName || '');
+      setServing(pmAny.approxServing || pmAny.serving || '1 planned portion');
+
+      // Check all alias field names for macros
+      const rawCals = pmAny.energy_kcal ?? pmAny.energyKcal ?? pmAny.calories ?? pmAny.caloriesPerServing;
+      const rawProtein = pmAny.protein_g ?? pmAny.proteinG ?? pmAny.proteinGrams;
+      const rawCarbs = pmAny.carbohydrate_g ?? pmAny.carbs_g ?? pmAny.carbsG ?? pmAny.carbsGrams;
+      const rawFat = pmAny.fat_g ?? pmAny.fatG ?? pmAny.fatGrams;
+
+      let calcCals = rawCals;
+      let calcProtein = rawProtein;
+      let calcCarbs = rawCarbs;
+      let calcFat = rawFat;
+
+      if ((calcCals == null || calcProtein == null || calcCarbs == null || calcFat == null) && Array.isArray(plannedMeal.items) && plannedMeal.items.length > 0) {
+        let sumCals = 0;
+        let sumProt = 0;
+        let sumCarbs = 0;
+        let sumFat = 0;
+        let hasItemMacros = false;
+
+        for (const it of plannedMeal.items) {
+          if (typeof it === 'object' && it !== null) {
+            const itAny = it as any;
+            const itCal = itAny.energy_kcal ?? itAny.calories;
+            const itProt = itAny.protein_g ?? itAny.proteinG ?? itAny.protein;
+            const itCarb = itAny.carbohydrate_g ?? itAny.carbs_g ?? itAny.carbsG ?? itAny.carbs;
+            const itFat = itAny.fat_g ?? itAny.fatG ?? itAny.fat;
+            if (itCal != null || itProt != null || itCarb != null || itFat != null) {
+              hasItemMacros = true;
+              sumCals += Number(itCal) || 0;
+              sumProt += Number(itProt) || 0;
+              sumCarbs += Number(itCarb) || 0;
+              sumFat += Number(itFat) || 0;
+            }
+          }
+        }
+
+        if (hasItemMacros) {
+          if (calcCals == null) calcCals = sumCals;
+          if (calcProtein == null) calcProtein = sumProt;
+          if (calcCarbs == null) calcCarbs = sumCarbs;
+          if (calcFat == null) calcFat = sumFat;
+        }
+      }
+
+      setCalories(calcCals != null ? String(Math.round(Number(calcCals))) : '');
+      setProteinG(calcProtein != null ? String(Math.round(Number(calcProtein))) : '');
+      setCarbsG(calcCarbs != null ? String(Math.round(Number(calcCarbs))) : '');
+      setFatG(calcFat != null ? String(Math.round(Number(calcFat))) : '');
       setNotes(dayName ? `From ${dayName} plan` : 'Planned meal');
     } else {
       setMealType('Lunch');
@@ -94,20 +139,25 @@ export const LogMealModal: React.FC<LogMealModalProps> = ({
           else if (lower.includes('dinner')) validMealType = 'dinner';
           else if (lower.includes('snack')) validMealType = 'afternoon_snack';
 
+          const parsedProtein = proteinG !== '' && !isNaN(parseFloat(proteinG)) ? parseFloat(proteinG) : null;
+          const parsedCarbs = carbsG !== '' && !isNaN(parseFloat(carbsG)) ? parseFloat(carbsG) : null;
+          const parsedFat = fatG !== '' && !isNaN(parseFloat(fatG)) ? parseFloat(fatG) : null;
+
+          const itmAny = item as any;
           dietService.cacheFoodLog(userProfile.id, {
-            id: item.id || `flog_${Date.now().toString(36)}`,
+            id: itmAny.id || `flog_${Date.now().toString(36)}`,
             userId: userProfile.id,
             mealType: validMealType,
-            foodName: item.food_name || foodName.trim(),
-            serving: item.serving || serving.trim() || '1 serving',
-            calories: Number(item.calories) || (calories ? parseFloat(calories) : 0),
-            proteinG: Number(item.protein_g) || (proteinG ? parseFloat(proteinG) : 0),
-            carbsG: Number(item.carbs_g) || (carbsG ? parseFloat(carbsG) : 0),
-            fatG: Number(item.fat_g) || (fatG ? parseFloat(fatG) : 0),
-            fiberG: Number(item.fiber_g) || 0,
+            foodName: itmAny.food_name || foodName.trim(),
+            serving: itmAny.serving || serving.trim() || '1 serving',
+            calories: Number(itmAny.calories) || (calories ? parseFloat(calories) : 0),
+            proteinG: itmAny.protein_g != null ? Number(itmAny.protein_g) : parsedProtein,
+            carbsG: itmAny.carbs_g != null ? Number(itmAny.carbs_g) : (itmAny.carbohydrate_g != null ? Number(itmAny.carbohydrate_g) : parsedCarbs),
+            fatG: itmAny.fat_g != null ? Number(itmAny.fat_g) : parsedFat,
+            fiberG: itmAny.fiber_g != null ? Number(itmAny.fiber_g) : null,
             loggedAt: todayStr,
-            notes: item.notes || notes.trim() || '',
-            createdAt: item.created_at || now,
+            notes: itmAny.notes || notes.trim() || '',
+            createdAt: itmAny.created_at || now,
           });
         }
       } catch (syncErr) {
@@ -116,6 +166,7 @@ export const LogMealModal: React.FC<LogMealModalProps> = ({
 
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('ovasense_diet_updated'));
+        window.dispatchEvent(new CustomEvent('biopulse_diet_updated'));
       }
 
       onFoodLogged(item);

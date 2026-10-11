@@ -38,6 +38,7 @@ import { reportService } from '../services/reportService';
 import { careCircleService } from '../services/careCircleService';
 import { dietService } from '../services/dietService';
 import { fitnessService } from '../services/fitnessService';
+import { stressService } from '../services/stressService';
 import { medicationService } from '../services/medicationService';
 import { appointmentService } from '../services/appointmentService';
 import { getNearestUpcomingAppointment } from '../utils/appointmentUtils';
@@ -61,6 +62,11 @@ import type {
   SuggestedMovementRoutine,
   WeeklyFitnessStats,
 } from '../types/fitness';
+import type {
+  StressSessionLog,
+  StressSessionInput,
+  StressStats,
+} from '../types/stress';
 import type {
   MedicationItem,
   MedicationInput,
@@ -163,6 +169,12 @@ interface UserHealthContextType {
   updateFitnessActivity: (id: string, input: Partial<FitnessLogInput>) => Promise<{ success: boolean; entry?: FitnessLogEntry; error?: string }>;
   deleteFitnessActivity: (id: string) => Promise<{ success: boolean; error?: string }>;
   refreshFitnessData: () => Promise<void>;
+  stressSessions: StressSessionLog[];
+  todayStressStats: StressStats;
+  stressLoading: boolean;
+  logStressSession: (input: StressSessionInput) => Promise<{ success: boolean; entry?: StressSessionLog; error?: string }>;
+  deleteStressSession: (id: string) => Promise<{ success: boolean; error?: string }>;
+  refreshStressData: () => Promise<void>;
   medications: MedicationItem[];
   medicationLogs: MedicationLogEntry[];
   medicationsLoading: boolean;
@@ -834,12 +846,14 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     if (typeof window !== 'undefined') {
       window.addEventListener('ovasense_diet_updated', handleDietUpdate);
+      window.addEventListener('biopulse_diet_updated', handleDietUpdate);
     }
 
     return () => {
       clearTimeout(dietTimer);
       if (typeof window !== 'undefined') {
         window.removeEventListener('ovasense_diet_updated', handleDietUpdate);
+        window.removeEventListener('biopulse_diet_updated', handleDietUpdate);
       }
     };
   }, [refreshDietData]);
@@ -933,12 +947,14 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     if (typeof window !== 'undefined') {
       window.addEventListener('ovasense_fitness_updated', handleFitnessUpdate);
+      window.addEventListener('biopulse_fitness_updated', handleFitnessUpdate);
     }
 
     return () => {
       clearTimeout(fitnessTimer);
       if (typeof window !== 'undefined') {
         window.removeEventListener('ovasense_fitness_updated', handleFitnessUpdate);
+        window.removeEventListener('biopulse_fitness_updated', handleFitnessUpdate);
       }
     };
   }, [refreshFitnessData]);
@@ -1021,6 +1037,111 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           : userProfile.womensHealth?.currentPhase || 'Follicular Phase');
     return fitnessService.generateSuggestedRoutines(userProfile, activePhaseName, todayFitnessActivities);
   }, [userProfile, cycleStats, todayFitnessActivities]);
+
+  // --- Stress & Relaxation Live State & Handlers ---
+  const [stressSessions, setStressSessions] = useState<StressSessionLog[]>([]);
+  const [stressLoading, setStressLoading] = useState<boolean>(true);
+
+  const refreshStressData = useCallback(async (silent = false) => {
+    if (!userProfile?.id) {
+      setStressLoading(false);
+      return;
+    }
+    if (!silent) setStressLoading(true);
+    try {
+      const res = await stressService.fetchStressLogs(userProfile.id);
+      setStressSessions(res.logs || []);
+    } catch (err) {
+      console.warn('Error refreshing stress data:', err);
+    } finally {
+      if (!silent) setStressLoading(false);
+    }
+  }, [userProfile?.id]);
+
+  useEffect(() => {
+    refreshStressData(false);
+
+    const handleStressUpdate = () => {
+      refreshStressData(true);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('biopulse_stress_updated', handleStressUpdate);
+      window.addEventListener('ovasense_stress_updated', handleStressUpdate);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('biopulse_stress_updated', handleStressUpdate);
+        window.removeEventListener('ovasense_stress_updated', handleStressUpdate);
+      }
+    };
+  }, [refreshStressData]);
+
+  const logStressSession = useCallback(
+    async (input: StressSessionInput): Promise<{ success: boolean; entry?: StressSessionLog; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to log relaxation session.' };
+      }
+      try {
+        const res = await stressService.logStressSession(userProfile.id, input);
+        if (res.success && res.entry) {
+          setStressSessions((prev) => [res.entry!, ...prev]);
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to log relaxation session.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const deleteStressSession = useCallback(
+    async (id: string): Promise<{ success: boolean; error?: string }> => {
+      if (!userProfile?.id) {
+        return { success: false, error: 'User must be signed in to delete relaxation session.' };
+      }
+      try {
+        const res = await stressService.deleteStressSession(userProfile.id, id);
+        if (res.success) {
+          setStressSessions((prev) => prev.filter((s) => s.id !== id));
+        }
+        return res;
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Failed to delete relaxation session.' };
+      }
+    },
+    [userProfile?.id]
+  );
+
+  const todayStressStats = useMemo<StressStats>(() => {
+    if (!userProfile?.id) {
+      return {
+        completedSessionsToday: 0,
+        totalRelaxationMinutesToday: 0,
+        totalMinutesToday: 0,
+        recentSessions: [],
+      };
+    }
+    const today = new Date().toISOString().split('T')[0];
+    const todayLogs = stressSessions.filter((l) => l.occurredAt === today);
+    const totalMinutes = todayLogs.reduce((sum, l) => sum + (l.durationMinutes || 0), 0);
+    const ratedLogs = todayLogs.filter(
+      (l) => l.stressBefore != null && l.stressAfter != null
+    );
+    const avgChange =
+      ratedLogs.length > 0
+        ? ratedLogs.reduce((sum, l) => sum + ((l.stressBefore ?? 0) - (l.stressAfter ?? 0)), 0) / ratedLogs.length
+        : undefined;
+
+    return {
+      completedSessionsToday: todayLogs.length,
+      totalRelaxationMinutesToday: totalMinutes,
+      totalMinutesToday: totalMinutes,
+      averageStressChange: avgChange,
+      recentSessions: stressSessions.slice(0, 10),
+    };
+  }, [stressSessions, userProfile?.id]);
 
   // --- Medications & Adherence Live State & Handlers ---
   const [medications, setMedications] = useState<MedicationItem[]>([]);
@@ -2910,6 +3031,12 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         updateFitnessActivity,
         deleteFitnessActivity,
         refreshFitnessData,
+        stressSessions,
+        todayStressStats,
+        stressLoading,
+        logStressSession,
+        deleteStressSession,
+        refreshStressData,
         medications,
         medicationLogs,
         medicationsLoading,

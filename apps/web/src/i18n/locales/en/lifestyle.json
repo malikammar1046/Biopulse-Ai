@@ -174,5 +174,128 @@
       "needMealPlanDesc": "Get personalized nutrition plans based on your goals and preferences.",
       "exploreMealPlans": "Explore Meal Plans →"
     }
+  },
+  "androsense": {
+    "headerBadge": "Male • AndroSense Protocol",
+    "heroTitle": "Lifestyle",
+    "heroSubtitle": "Small Habits. Stronger Health.",
+    "heroDescription": "Your daily choices support metabolic balance, sustained vitality, and endocrine health. Explore evidence-guided recommendations for nutrition, progressive movement, circadian sleep, and stress management.",
+    "heroDescriptionGeneral": "Your daily choices help optimize metabolic energy, cardiovascular health, and physical resilience. Explore evidence-guided recommendations tailored to your profile.",
+    "heroTagline": "Better habits → Greater vitality → A stronger you",
+    "pillars": {
+      "diet": "Balanced Nutrition",
+      "exercise": "Physical Activity",
+      "sleep": "Restorative Sleep",
+      "stress": "Stress Management"
+    },
+    "tabs": {
+      "nutrition": "Nutrition",
+      "exercise": "Exercise",
+      "sleep": "Sleep",
+      "stress": "Stress",
+      "hydration": "Hydration"
+    },
+    "progress": {
+      "title": "Your Lifestyle Progress",
+      "nutrition": "Nutrition",
+      "exercise": "Exercise",
+      "sleep": "Sleep",
+      "stress": "Stress",
+      "bannerTitle": "Consistent Habits!",
+      "bannerSubtitle": "Keep building momentum. Daily consistency creates long-term resilience.",
+      "notTracked": "Not tracked yet",
+      "trackPrompt": "Log today to calculate progress"
+    },
+    "nutritionOverview": {
+      "title": "Nutrition Overview",
+      "description": "Fuel your body with the right macronutrients. Here's your daily nutrition plan tailored to your profile and metabolic vitality goals.",
+      "viewDetails": "View Details →",
+      "protein": "Protein",
+      "healthyFats": "Healthy Fats",
+      "complexCarbs": "Complex Carbs",
+      "fiber": "Fiber",
+      "perDay": "/ day",
+      "notCalculated": "Not calculated"
+    },
+    "recommendedFoods": {
+      "title": "Recommended Foods",
+      "description": "Nutrient-dense whole foods supporting lean mass preservation, metabolic health, and endocrine cofactors.",
+      "leafyGreens": "Leafy Greens",
+      "leanProtein": "Lean Protein",
+      "wholeGrains": "Whole Grains",
+      "healthyFats": "Healthy Fats",
+      "berries": "Antioxidant Fruits",
+      "whyTitle": "Why recommended for your profile"
+    },
+    "foodsToLimit": {
+      "title": "Foods to Moderate",
+      "description": "Nutritional choices that may contribute to visceral adiposity, glucose fluctuations, and systemic inflammation.",
+      "sugaryFoods": "Sugary Foods",
+      "processedFoods": "Processed Foods",
+      "refinedCarbs": "Refined Carbs",
+      "friedFoods": "Fried Foods",
+      "sugaryDrinks": "Sugary Drinks & Excess Alcohol",
+      "allergyWarning": "Confirmed Allergen"
+    },
+    "mealPlan": {
+      "title": "Your Daily Meal Plan",
+      "subtitle": "High-protein, micronutrient-dense meals tailored to your energy needs.",
+      "viewFullPlan": "View 3-Day Plan →",
+      "logMeal": "Log Meal",
+      "logCustom": "Log Meal",
+      "log": "Log",
+      "logged": "Logged",
+      "breakfast": "Breakfast",
+      "lunch": "Lunch",
+      "dinner": "Dinner",
+      "snack": "Snack",
+      "highInFiber": "High in fiber",
+      "balanced": "Balanced",
+      "lightNutritious": "Light & nutritious"
+    },
+    "weeklyPlan": {
+      "badge": "AndroSense 3-Day Protocol",
+      "title": "Your 3-Day Personalized Meal Plan",
+      "active": "Active",
+      "noPlanTitle": "No Active 3-Day Plan Yet",
+      "noPlanDesc": "Generate your evidence-grounded 3-day meal plan tailored to your metabolic profile, dietary preferences, and verified portion constraints.",
+      "generateBtn": "Personalize Your 3-Day Plan",
+      "todayTag": "Today",
+      "mealsCount": "meals planned",
+      "daySubtitle": "Review ingredients, portions, and macros. Add to today's dashboard or log directly.",
+      "regeneratePlan": "Re-tune Plan",
+      "verifiedPortions": "Verified Ingredients & Portions:",
+      "addToToday": "Add to Today",
+      "logNow": "Log Meal",
+      "disclaimer": "All portions are calibrated against verified nutritional targets."
+    },
+    "tips": {
+      "title": "Nutrition Tips",
+      "subtitle": "Actionable guidelines to support sustained physical energy and recovery.",
+      "tip1": "Prioritize quality protein with each meal to support muscle synthesis",
+      "tip2": "Include zinc- and magnesium-rich foods like seeds, legumes, and greens",
+      "tip3": "Choose whole unrefined grains over processed starches",
+      "tip4": "Moderate liquid sugars and fried foods to preserve insulin sensitivity",
+      "tagline": "Good fuel drives strength and vitality. 💪"
+    },
+    "goals": {
+      "title": "Today's Goals",
+      "viewAll": "View All >",
+      "goal1Title": "Eat a balanced meal",
+      "goal1Desc": "Include quality protein, complex carbs, and healthy fats",
+      "goal2Title": "Walk or exercise for 30 minutes",
+      "goal2Desc": "Moderate activity promotes glucose uptake and cardiovascular health",
+      "goal3Title": "Drink 8 glasses of water",
+      "goal3Desc": "Maintain proper hydration for cellular function and stamina",
+      "goal4Title": "Get 7–9 hours of sleep",
+      "goal4Desc": "Restorative sleep supports normal endocrine rhythms"
+    },
+    "cards": {
+      "doingGreat": "Building Daily Momentum!",
+      "doingGreatDesc": "Consistent daily habits compound into lasting vitality and resilience.",
+      "needMealPlan": "Need a personalized meal plan?",
+      "needMealPlanDesc": "Generate a tailored 3-day nutrition plan aligned with your caloric targets and preferences.",
+      "exploreMealPlans": "Explore 3-Day Plans →"
+    }
   }
 }

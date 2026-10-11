@@ -196,6 +196,12 @@ export const UltrasoundUploadModal: React.FC<UltrasoundUploadModalProps> = ({
         );
       }
 
+      try {
+        await refreshActiveAssessment();
+      } catch (refErr) {
+        console.warn('Post-ultrasound active assessment refresh notice:', refErr);
+      }
+
       if (onSuccess) onSuccess();
       setTimeout(() => {
         setSuccessNotice(null);

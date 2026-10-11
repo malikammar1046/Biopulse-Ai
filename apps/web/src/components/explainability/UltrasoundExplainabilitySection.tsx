@@ -17,8 +17,14 @@ export const UltrasoundExplainabilitySection: React.FC<UltrasoundExplainabilityS
   const [viewMode, setViewMode] = useState<'side-by-side' | 'heatmap' | 'original'>('side-by-side');
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
 
+  const safeImageSrc = (b64?: string | null) => {
+    if (!b64) return '';
+    return b64.startsWith('data:') ? b64 : `data:image/png;base64,${b64}`;
+  };
+
   const isPcomDetected = data.pcom_status === 'PCOM Detected';
   const isIndeterminate = data.pcom_status === 'Indeterminate';
+  const pcomPercent = data.pcom_percentage ?? data.pcom_confidence_percent ?? (data.pcom_probability != null ? Math.round(data.pcom_probability * 100) : null);
 
   return (
     <div
@@ -50,7 +56,7 @@ export const UltrasoundExplainabilitySection: React.FC<UltrasoundExplainabilityS
               ) : (
                 <CheckCircle2 className="w-3.5 h-3.5" />
               )}
-              {data.pcom_status} ({data.pcom_percentage}%)
+              {data.pcom_status} {pcomPercent != null ? `(${pcomPercent}%)` : ''}
             </span>
           </div>
           <h3 className="text-base sm:text-lg font-bold font-display text-slate-900">
@@ -113,7 +119,7 @@ export const UltrasoundExplainabilitySection: React.FC<UltrasoundExplainabilityS
               </span>
               {data.original_image_b64 ? (
                 <img
-                  src={`data:image/png;base64,${data.original_image_b64}`}
+                  src={safeImageSrc(data.original_image_b64)}
                   alt="Original Transvaginal Ultrasound"
                   className="w-full max-w-[280px] h-auto object-contain rounded-lg aspect-square"
                 />
@@ -135,7 +141,7 @@ export const UltrasoundExplainabilitySection: React.FC<UltrasoundExplainabilityS
               </span>
               {data.gradcam_b64 ? (
                 <img
-                  src={`data:image/png;base64,${data.gradcam_b64}`}
+                  src={safeImageSrc(data.gradcam_b64)}
                   alt="Grad-CAM Activation Heatmap"
                   className="w-full max-w-[280px] h-auto object-contain rounded-lg aspect-square"
                 />
@@ -160,7 +166,7 @@ export const UltrasoundExplainabilitySection: React.FC<UltrasoundExplainabilityS
             </span>
             {data.gradcam_b64 ? (
               <img
-                src={`data:image/png;base64,${data.gradcam_b64}`}
+                src={safeImageSrc(data.gradcam_b64)}
                 alt="Grad-CAM Activation Heatmap"
                 className="w-full max-w-[320px] h-auto object-contain rounded-lg aspect-square"
               />
@@ -182,7 +188,7 @@ export const UltrasoundExplainabilitySection: React.FC<UltrasoundExplainabilityS
             </span>
             {data.original_image_b64 ? (
               <img
-                src={`data:image/png;base64,${data.original_image_b64}`}
+                src={safeImageSrc(data.original_image_b64)}
                 alt="Original Transvaginal Scan"
                 className="w-full max-w-[320px] h-auto object-contain rounded-lg aspect-square"
               />
@@ -265,7 +271,7 @@ export const UltrasoundExplainabilitySection: React.FC<UltrasoundExplainabilityS
             </div>
             <div>
               <span className="text-teal-400 font-semibold">Morphology Score:</span>{' '}
-              {data.pcom_probability.toFixed(4)} ({data.pcom_percentage}%)
+              {data.pcom_probability != null ? data.pcom_probability.toFixed(4) : '--'} ({pcomPercent != null ? `${pcomPercent}%` : '--%'})
             </div>
           </div>
         )}

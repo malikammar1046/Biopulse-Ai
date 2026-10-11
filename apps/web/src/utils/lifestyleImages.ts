@@ -25,6 +25,11 @@ export const LIFESTYLE_ASSETS = {
       alt: 'Fresh nourishing nutrient-dense Mediterranean and Pakistani salad bowl',
       fallbackGradient: 'from-pink-100 to-emerald-100',
     },
+    androsense: {
+      url: '/images/hero/androsense-lifestyle.jpg',
+      alt: 'Healthy adult man doing outdoor wellness stretch in sunny park with lush trees',
+      fallbackGradient: 'from-sky-100 via-blue-50 to-sky-200',
+    },
   },
   recommendedFoods: {
     leafy_greens: {

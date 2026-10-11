@@ -31,6 +31,7 @@ interface PatientShapExplanationProps {
   assessmentLevel?: string;
   ultrasoundExplainability?: UltrasoundExplainabilityData | null;
   multimodalSynthesis?: MultimodalSynthesisData | null;
+  hideUltrasoundSection?: boolean;
   className?: string;
 }
 
@@ -41,6 +42,7 @@ export const PatientShapExplanation: React.FC<PatientShapExplanationProps> = ({
   assessmentLevel,
   ultrasoundExplainability,
   multimodalSynthesis,
+  hideUltrasoundSection = false,
   className = '',
 }) => {
   const { t, i18n } = useTranslation();
@@ -503,7 +505,7 @@ export const PatientShapExplanation: React.FC<PatientShapExplanationProps> = ({
         </div>
 
         {/* Tier 3: Ultrasound Explainability Section (when ultrasound data present) */}
-        {ultrasoundData && (
+        {ultrasoundData && !hideUltrasoundSection && (
           <div className="mt-8 pt-6 border-t border-slate-100">
             <UltrasoundExplainabilitySection data={ultrasoundData} />
           </div>

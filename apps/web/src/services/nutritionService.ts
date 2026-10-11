@@ -411,6 +411,7 @@ class NutritionService {
     const item = await res.json();
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('ovasense_diet_updated'));
+      window.dispatchEvent(new CustomEvent('biopulse_diet_updated'));
     }
     return item;
   }
@@ -444,6 +445,7 @@ class NutritionService {
     }
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('ovasense_diet_updated'));
+      window.dispatchEvent(new CustomEvent('biopulse_diet_updated'));
     }
     return true;
   }

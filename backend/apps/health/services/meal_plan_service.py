@@ -502,8 +502,12 @@ class MealPlanService:
 
         excl_set = list(set(extra_exclusions))
 
+        # Check egg allergy and vegetarian status for breakfast protein variety
+        is_egg_allergic = any("egg" in str(getattr(a, "value", a)).lower() for a in user_profile.food_allergies)
+        is_vegetarian = (user_profile.dietary_class and getattr(user_profile.dietary_class, "name", "") in ("VEGETARIAN", "VEGAN"))
+
         if is_gluten_restricted and is_dairy_excluded:
-            # Both Gluten-free and Dairy-free: Rice and Legumes as base, Fruits & Vegetables, 0 dairy, 0 gluten
+            # Both Gluten-free and Dairy-free: Rice base, Lobia pulse for lunch/dinner, Channa & Fruits for breakfast/snack, 0 dairy, 0 gluten
             slot_definitions = [
                 # Day 1: Channa+Apple, Rice+Lobia+Tomato, Rice+Lobia+Carrot, Banana
                 {
@@ -528,7 +532,7 @@ class MealPlanService:
                 },
             ]
         elif is_gluten_restricted:
-            # Gluten-free only: Rice and Legumes, Dairy allowed (Dahi, Lassi), 0 gluten grains
+            # Gluten-free only: Rice base, Lobia for lunch/dinner, Channa/Dahi for breakfast, Dairy allowed (Dahi, Lassi), 0 gluten grains
             slot_definitions = [
                 # Day 1: Channa+Dahi, Rice+Lobia+Tomato, Rice+Lobia+Carrot, Apple
                 {
@@ -544,41 +548,42 @@ class MealPlanService:
                     "d_req": ["PK_PORTION_002", "PK_COMP_023"], "d_excl": excl_set, "d_pref": ["PK_COMP_027"],
                     "s_req": ["PK_COMP_002"], "s_excl": excl_set,
                 },
-                # Day 3: Channa+Apple, Rice+Lobia+Carrot, Rice+Lobia+Onion, Malta
+                # Day 3: Channa+Dahi, Rice+Lobia+Carrot, Rice+Lobia+Onion, Malta
                 {
-                    "b_req": ["PK_COMP_021", "PK_COMP_007"], "b_excl": excl_set,
+                    "b_req": ["PK_COMP_021", "PK_COMP_001"], "b_excl": excl_set,
                     "l_req": ["PK_PORTION_002", "PK_COMP_023"], "l_excl": excl_set, "l_pref": ["PK_COMP_028"],
                     "d_req": ["PK_PORTION_002", "PK_COMP_023"], "d_excl": excl_set, "d_pref": ["PK_COMP_031"],
                     "s_req": ["PK_COMP_012"], "s_excl": excl_set,
                 },
             ]
         elif is_dairy_excluded:
-            # Dairy-free only: Whole wheat Chapati allowed, Rice, Legumes, 0 dairy
+            # Dairy-free only: Whole wheat Chapati allowed, Rice, Lobia for lunch/dinner, 0 dairy
             slot_definitions = [
-                # Day 1: Chapati+Channa, Rice+Lobia+Tomato, Chapati+Lobia+Carrot, Apple
+                # Day 1: Chapati+Banana, Rice+Lobia+Tomato, Chapati+Lobia+Carrot, Apple
                 {
-                    "b_req": ["PK_PORTION_001", "PK_COMP_021"], "b_excl": excl_set,
+                    "b_req": ["PK_PORTION_001", "PK_COMP_008"], "b_excl": excl_set,
                     "l_req": ["PK_PORTION_002", "PK_COMP_023"], "l_excl": ["PK_PORTION_001"] + excl_set, "l_pref": ["PK_COMP_027"],
                     "d_req": ["PK_PORTION_001", "PK_COMP_023"], "d_excl": ["PK_PORTION_002"] + excl_set, "d_pref": ["PK_COMP_028"],
                     "s_req": ["PK_COMP_007"], "s_excl": excl_set,
                 },
-                # Day 2: Chapati+Banana, Chapati+Lobia+Beetroot, Rice+Lobia+Tomato, Banana
+                # Day 2: Chapati+Channa, Chapati+Lobia+Beetroot, Rice+Lobia+Tomato, Malta
                 {
-                    "b_req": ["PK_PORTION_001", "PK_COMP_008"], "b_excl": excl_set,
+                    "b_req": ["PK_PORTION_001", "PK_COMP_021"], "b_excl": excl_set,
                     "l_req": ["PK_PORTION_001", "PK_COMP_023"], "l_excl": ["PK_PORTION_002"] + excl_set, "l_pref": ["PK_COMP_030"],
                     "d_req": ["PK_PORTION_002", "PK_COMP_023"], "d_excl": ["PK_PORTION_001"] + excl_set, "d_pref": ["PK_COMP_027"],
-                    "s_req": ["PK_COMP_008"], "s_excl": excl_set,
+                    "s_req": ["PK_COMP_012"], "s_excl": excl_set,
                 },
-                # Day 3: Chapati+Apple, Rice+Lobia+Carrot, Chapati+Lobia+Onion, Malta
+                # Day 3: Chapati+Apple, Rice+Lobia+Carrot, Chapati+Lobia+Onion, Banana
                 {
                     "b_req": ["PK_PORTION_001", "PK_COMP_007"], "b_excl": excl_set,
                     "l_req": ["PK_PORTION_002", "PK_COMP_023"], "l_excl": ["PK_PORTION_001"] + excl_set, "l_pref": ["PK_COMP_028"],
                     "d_req": ["PK_PORTION_001", "PK_COMP_023"], "d_excl": ["PK_PORTION_002"] + excl_set, "d_pref": ["PK_COMP_031"],
-                    "s_req": ["PK_COMP_012"], "s_excl": excl_set,
+                    "s_req": ["PK_COMP_008"], "s_excl": excl_set,
                 },
             ]
         else:
-            # Standard: Balanced variety with both Chapati, Rice, Dahi, and Lassi
+            # Standard: Balanced Pakistani variety with Chapati, Rice, Dahi, Lassi, Channa, Lobia, and Fruits
+            b_day2 = ["PK_PORTION_001", "PK_COMP_008"]
             slot_definitions = [
                 # Day 1: Chapati+Dahi, Rice+Lobia+Tomato, Chapati+Lobia+Carrot, Apple
                 {
@@ -587,9 +592,9 @@ class MealPlanService:
                     "d_req": ["PK_PORTION_001", "PK_COMP_023"], "d_excl": ["PK_PORTION_002"], "d_pref": ["PK_COMP_028"],
                     "s_req": ["PK_COMP_007"], "s_excl": [],
                 },
-                # Day 2: Chapati+Banana, Chapati+Lobia+Beetroot, Rice+Lobia+Tomato, Lassi
+                # Day 2: Chapati+Egg (or Banana), Chapati+Lobia+Beetroot, Rice+Lobia+Tomato, Lassi
                 {
-                    "b_req": ["PK_PORTION_001", "PK_COMP_008"], "b_excl": [],
+                    "b_req": b_day2, "b_excl": [],
                     "l_req": ["PK_PORTION_001", "PK_COMP_023"], "l_excl": ["PK_PORTION_002"], "l_pref": ["PK_COMP_030"],
                     "d_req": ["PK_PORTION_002", "PK_COMP_023"], "d_excl": ["PK_PORTION_001"], "d_pref": ["PK_COMP_027"],
                     "s_req": ["PK_COMP_002"], "s_excl": [],
@@ -603,7 +608,7 @@ class MealPlanService:
                 },
             ]
 
-        # 6. Generate Phase 6D candidate full days across 3 slots
+        # 6. Generate Phase 6D candidate full days across 3 slots with scaled macro boundaries
         candidate_days_by_slot: Dict[int, List[Any]] = {}
         for slot_idx, slot in enumerate(slot_definitions, start=1):
             alloc_b = MealAllocation(
@@ -612,11 +617,11 @@ class MealPlanService:
                     target_energy_kcal=round(e_tot * 0.25, 1),
                     energy_tolerance_kcal=60.0,
                     protein_min_g=8.0,
-                    protein_max_g=30.0,
+                    protein_max_g=max(35.0, round(neutral.protein_target_max_g * 0.35, 1)),
                     carbohydrate_min_g=20.0,
-                    carbohydrate_max_g=70.0,
+                    carbohydrate_max_g=max(75.0, round(neutral.carbohydrate_target_max_g * 0.35, 1)),
                     fat_min_g=2.0,
-                    fat_max_g=20.0,
+                    fat_max_g=max(25.0, round(neutral.fat_amdr_max_g * 0.35, 1)),
                     target_source="APPLICATION_SCHEDULE",
                 ),
                 required_entity_ids=slot["b_req"],
@@ -628,11 +633,11 @@ class MealPlanService:
                     target_energy_kcal=round(e_tot * 0.35, 1),
                     energy_tolerance_kcal=70.0,
                     protein_min_g=12.0,
-                    protein_max_g=40.0,
+                    protein_max_g=max(45.0, round(neutral.protein_target_max_g * 0.45, 1)),
                     carbohydrate_min_g=30.0,
-                    carbohydrate_max_g=90.0,
+                    carbohydrate_max_g=max(110.0, round(neutral.carbohydrate_target_max_g * 0.45, 1)),
                     fat_min_g=5.0,
-                    fat_max_g=25.0,
+                    fat_max_g=max(35.0, round(neutral.fat_amdr_max_g * 0.45, 1)),
                     target_source="APPLICATION_SCHEDULE",
                 ),
                 required_entity_ids=slot["l_req"],
@@ -645,11 +650,11 @@ class MealPlanService:
                     target_energy_kcal=round(e_tot * 0.30, 1),
                     energy_tolerance_kcal=60.0,
                     protein_min_g=10.0,
-                    protein_max_g=35.0,
+                    protein_max_g=max(40.0, round(neutral.protein_target_max_g * 0.40, 1)),
                     carbohydrate_min_g=25.0,
-                    carbohydrate_max_g=80.0,
+                    carbohydrate_max_g=max(95.0, round(neutral.carbohydrate_target_max_g * 0.40, 1)),
                     fat_min_g=4.0,
-                    fat_max_g=22.0,
+                    fat_max_g=max(30.0, round(neutral.fat_amdr_max_g * 0.40, 1)),
                     target_source="APPLICATION_SCHEDULE",
                 ),
                 required_entity_ids=slot["d_req"],
@@ -662,11 +667,11 @@ class MealPlanService:
                     target_energy_kcal=round(e_tot * 0.10, 1),
                     energy_tolerance_kcal=40.0,
                     protein_min_g=1.0,
-                    protein_max_g=15.0,
+                    protein_max_g=max(20.0, round(neutral.protein_target_max_g * 0.20, 1)),
                     carbohydrate_min_g=10.0,
-                    carbohydrate_max_g=40.0,
-                    fat_min_g=0.5,
-                    fat_max_g=12.0,
+                    carbohydrate_max_g=max(50.0, round(neutral.carbohydrate_target_max_g * 0.20, 1)),
+                    fat_min_g=0.0,
+                    fat_max_g=max(15.0, round(neutral.fat_amdr_max_g * 0.20, 1)),
                     target_source="APPLICATION_SCHEDULE",
                 ),
                 required_entity_ids=slot["s_req"],
@@ -706,11 +711,11 @@ class MealPlanService:
                     target_energy_kcal=round(e_tot * 0.25, 1),
                     energy_tolerance_kcal=60.0,
                     protein_min_g=8.0,
-                    protein_max_g=30.0,
+                    protein_max_g=max(35.0, round(neutral.protein_target_max_g * 0.35, 1)),
                     carbohydrate_min_g=20.0,
-                    carbohydrate_max_g=70.0,
+                    carbohydrate_max_g=max(75.0, round(neutral.carbohydrate_target_max_g * 0.35, 1)),
                     fat_min_g=2.0,
-                    fat_max_g=20.0,
+                    fat_max_g=max(25.0, round(neutral.fat_amdr_max_g * 0.35, 1)),
                     target_source="APPLICATION_SCHEDULE",
                 ),
                 preferred_entity_ids=fb_b_pref,
@@ -722,11 +727,11 @@ class MealPlanService:
                     target_energy_kcal=round(e_tot * 0.35, 1),
                     energy_tolerance_kcal=70.0,
                     protein_min_g=12.0,
-                    protein_max_g=40.0,
+                    protein_max_g=max(45.0, round(neutral.protein_target_max_g * 0.45, 1)),
                     carbohydrate_min_g=30.0,
-                    carbohydrate_max_g=90.0,
+                    carbohydrate_max_g=max(110.0, round(neutral.carbohydrate_target_max_g * 0.45, 1)),
                     fat_min_g=5.0,
-                    fat_max_g=25.0,
+                    fat_max_g=max(35.0, round(neutral.fat_amdr_max_g * 0.45, 1)),
                     target_source="APPLICATION_SCHEDULE",
                 ),
                 preferred_entity_ids=["PK_PORTION_002", "PK_COMP_023"],
@@ -738,11 +743,11 @@ class MealPlanService:
                     target_energy_kcal=round(e_tot * 0.30, 1),
                     energy_tolerance_kcal=60.0,
                     protein_min_g=10.0,
-                    protein_max_g=35.0,
+                    protein_max_g=max(40.0, round(neutral.protein_target_max_g * 0.40, 1)),
                     carbohydrate_min_g=25.0,
-                    carbohydrate_max_g=80.0,
+                    carbohydrate_max_g=max(95.0, round(neutral.carbohydrate_target_max_g * 0.40, 1)),
                     fat_min_g=4.0,
-                    fat_max_g=22.0,
+                    fat_max_g=max(30.0, round(neutral.fat_amdr_max_g * 0.40, 1)),
                     target_source="APPLICATION_SCHEDULE",
                 ),
                 preferred_entity_ids=fb_d_pref,
@@ -754,11 +759,11 @@ class MealPlanService:
                     target_energy_kcal=round(e_tot * 0.10, 1),
                     energy_tolerance_kcal=40.0,
                     protein_min_g=1.0,
-                    protein_max_g=15.0,
+                    protein_max_g=max(20.0, round(neutral.protein_target_max_g * 0.20, 1)),
                     carbohydrate_min_g=10.0,
-                    carbohydrate_max_g=40.0,
+                    carbohydrate_max_g=max(50.0, round(neutral.carbohydrate_target_max_g * 0.20, 1)),
                     fat_min_g=0.5,
-                    fat_max_g=12.0,
+                    fat_max_g=max(15.0, round(neutral.fat_amdr_max_g * 0.20, 1)),
                     target_source="APPLICATION_SCHEDULE",
                 ),
                 preferred_entity_ids=["PK_COMP_007"],

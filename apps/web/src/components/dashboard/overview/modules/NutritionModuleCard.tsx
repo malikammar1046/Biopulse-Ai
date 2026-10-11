@@ -41,21 +41,71 @@ export const NutritionModuleCard: React.FC<NutritionModuleCardProps> = ({
   ];
 
   // Derive today's totals strictly from real foodLogs
-  const { totalCalories, totalCarbs, totalProtein, totalFat, hasLogs } = useMemo(() => {
+  const { totalCalories, totalCarbs, totalProtein, totalFat, hasCarbs, hasProtein, hasFat, hasLogs } = useMemo(() => {
     if (!foodLogs || foodLogs.length === 0) {
-      return { totalCalories: 0, totalCarbs: 0, totalProtein: 0, totalFat: 0, hasLogs: false };
+      return {
+        totalCalories: 0,
+        totalCarbs: null,
+        totalProtein: null,
+        totalFat: null,
+        hasCarbs: false,
+        hasProtein: false,
+        hasFat: false,
+        hasLogs: false,
+      };
     }
 
-    const cals = foodLogs.reduce((sum, f) => sum + (f.calories || 0), 0);
-    const carbs = foodLogs.reduce((sum, f) => sum + (f.carbsG || 0), 0);
-    const protein = foodLogs.reduce((sum, f) => sum + (f.proteinG || 0), 0);
-    const fat = foodLogs.reduce((sum, f) => sum + (f.fatG || 0), 0);
+    const getMacro = (f: any, ...keys: string[]): number | null => {
+      for (const k of keys) {
+        if (f[k] !== undefined && f[k] !== null && f[k] !== '') {
+          const val = Number(f[k]);
+          if (!isNaN(val)) return val;
+        }
+      }
+      return null;
+    };
+
+    let calsSum = 0;
+    let carbsSum = 0;
+    let proteinSum = 0;
+    let fatSum = 0;
+    let anyCarbsFound = false;
+    let anyProteinFound = false;
+    let anyFatFound = false;
+
+    for (const f of foodLogs) {
+      const cal = getMacro(f, 'calories', 'energy_kcal', 'energyKcal');
+      if (cal !== null) {
+        calsSum += cal;
+      }
+
+      const carb = getMacro(f, 'carbsG', 'carbs_g', 'carbohydrate_g', 'carbs');
+      if (carb !== null) {
+        anyCarbsFound = true;
+        carbsSum += carb;
+      }
+
+      const prot = getMacro(f, 'proteinG', 'protein_g', 'protein');
+      if (prot !== null) {
+        anyProteinFound = true;
+        proteinSum += prot;
+      }
+
+      const fat = getMacro(f, 'fatG', 'fat_g', 'fats', 'fat');
+      if (fat !== null) {
+        anyFatFound = true;
+        fatSum += fat;
+      }
+    }
 
     return {
-      totalCalories: cals,
-      totalCarbs: carbs,
-      totalProtein: protein,
-      totalFat: fat,
+      totalCalories: Math.round(calsSum),
+      totalCarbs: anyCarbsFound ? Math.round(carbsSum * 10) / 10 : null,
+      totalProtein: anyProteinFound ? Math.round(proteinSum * 10) / 10 : null,
+      totalFat: anyFatFound ? Math.round(fatSum * 10) / 10 : null,
+      hasCarbs: anyCarbsFound,
+      hasProtein: anyProteinFound,
+      hasFat: anyFatFound,
       hasLogs: true,
     };
   }, [foodLogs]);
@@ -89,19 +139,25 @@ export const NutritionModuleCard: React.FC<NutritionModuleCardProps> = ({
   const targetProtein = dailyTargets?.proteinG;
   const targetFat = dailyTargets?.fatG;
 
-  const calPercent = targetCalories
-    ? Math.min(100, Math.round((totalCalories / targetCalories) * 100))
-    : 100;
+  const calPercent = targetCalories && targetCalories > 0
+    ? Math.round((totalCalories / targetCalories) * 100)
+    : null;
 
-  // Macro percentages by calories (4 cal/g carb, 4 cal/g protein, 9 cal/g fat)
-  const totalMacroCals = totalCarbs * 4 + totalProtein * 4 + totalFat * 9;
-  const carbPercent = totalMacroCals > 0 ? Math.round(((totalCarbs * 4) / totalMacroCals) * 100) : 0;
-  const proteinPercent = totalMacroCals > 0 ? Math.round(((totalProtein * 4) / totalMacroCals) * 100) : 0;
-  const fatPercent = totalMacroCals > 0 ? Math.round(((totalFat * 9) / totalMacroCals) * 100) : 0;
+  const carbProgress = hasCarbs && totalCarbs !== null && targetCarbs && targetCarbs > 0
+    ? Math.round((totalCarbs / targetCarbs) * 100)
+    : null;
+
+  const proteinProgress = hasProtein && totalProtein !== null && targetProtein && targetProtein > 0
+    ? Math.round((totalProtein / targetProtein) * 100)
+    : null;
+
+  const fatProgress = hasFat && totalFat !== null && targetFat && targetFat > 0
+    ? Math.round((totalFat / targetFat) * 100)
+    : null;
 
   const radius = 46;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (calPercent / 100) * circumference;
+  const strokeDashoffset = circumference - (Math.min(100, calPercent ?? 0) / 100) * circumference;
 
   return (
     <DashboardModuleCard
@@ -158,13 +214,17 @@ export const NutritionModuleCard: React.FC<NutritionModuleCardProps> = ({
               <div className="flex justify-between text-xs font-sans mb-1">
                 <span className="font-semibold text-slate-700">{t('dashboard:carbsLabel')}</span>
                 <span className="text-slate-500 font-mono text-[11px]">
-                  {carbPercent}% • {totalCarbs}g {targetCarbs ? `/ ${targetCarbs}g` : ''}
+                  {hasCarbs && totalCarbs !== null
+                    ? carbProgress !== null
+                      ? `${carbProgress}% • ${totalCarbs}g / ${targetCarbs}g`
+                      : `${totalCarbs}g (${t('dashboard:targetUnavailable', 'target unavailable')})`
+                    : t('lifestyle:notCalculated', 'Not calculated')}
                 </span>
               </div>
               <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
                 <div
-                  className="h-full bg-[#F43F7D] rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(100, targetCarbs ? (totalCarbs / targetCarbs) * 100 : carbPercent)}%` }}
+                  className={`h-full ${isFemale ? 'bg-[#F43F7D]' : 'bg-[#0EA5E9]'} rounded-full transition-all duration-500`}
+                  style={{ width: `${hasCarbs && carbProgress !== null ? Math.min(100, carbProgress) : 0}%` }}
                 />
               </div>
             </div>
@@ -174,13 +234,17 @@ export const NutritionModuleCard: React.FC<NutritionModuleCardProps> = ({
               <div className="flex justify-between text-xs font-sans mb-1">
                 <span className="font-semibold text-slate-700">{t('dashboard:proteinLabel')}</span>
                 <span className="text-slate-500 font-mono text-[11px]">
-                  {proteinPercent}% • {totalProtein}g {targetProtein ? `/ ${targetProtein}g` : ''}
+                  {hasProtein && totalProtein !== null
+                    ? proteinProgress !== null
+                      ? `${proteinProgress}% • ${totalProtein}g / ${targetProtein}g`
+                      : `${totalProtein}g (${t('dashboard:targetUnavailable', 'target unavailable')})`
+                    : t('lifestyle:notCalculated', 'Not calculated')}
                 </span>
               </div>
               <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
                 <div
-                  className="h-full bg-[#0D9488] rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(100, targetProtein ? (totalProtein / targetProtein) * 100 : proteinPercent)}%` }}
+                  className={`h-full ${isFemale ? 'bg-[#0D9488]' : 'bg-[#0284C7]'} rounded-full transition-all duration-500`}
+                  style={{ width: `${hasProtein && proteinProgress !== null ? Math.min(100, proteinProgress) : 0}%` }}
                 />
               </div>
             </div>
@@ -190,13 +254,17 @@ export const NutritionModuleCard: React.FC<NutritionModuleCardProps> = ({
               <div className="flex justify-between text-xs font-sans mb-1">
                 <span className="font-semibold text-slate-700">{t('dashboard:fatLabel')}</span>
                 <span className="text-slate-500 font-mono text-[11px]">
-                  {fatPercent}% • {totalFat}g {targetFat ? `/ ${targetFat}g` : ''}
+                  {hasFat && totalFat !== null
+                    ? fatProgress !== null
+                      ? `${fatProgress}% • ${totalFat}g / ${targetFat}g`
+                      : `${totalFat}g (${t('dashboard:targetUnavailable', 'target unavailable')})`
+                    : t('lifestyle:notCalculated', 'Not calculated')}
                 </span>
               </div>
               <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
                 <div
-                  className="h-full bg-[#F59E0B] rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(100, targetFat ? (totalFat / targetFat) * 100 : fatPercent)}%` }}
+                  className={`h-full ${isFemale ? 'bg-[#F59E0B]' : 'bg-[#38BDF8]'} rounded-full transition-all duration-500`}
+                  style={{ width: `${hasFat && fatProgress !== null ? Math.min(100, fatProgress) : 0}%` }}
                 />
               </div>
             </div>

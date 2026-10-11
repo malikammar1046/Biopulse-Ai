@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutGrid01,
   CalendarCheck01,
-  Activity,
   ActivityHeart,
   Scales01,
   File06,
@@ -131,7 +130,6 @@ export const AppSidebar: React.FC = () => {
       ? [{ label: t('cycle'), path: ROUTES.APP.CYCLE, icon: Calendar }]
       : []),
     { label: t('symptoms'), path: ROUTES.APP.SYMPTOMS, icon: ActivityHeart },
-    { label: t('fitness'), path: ROUTES.APP.FITNESS, icon: Activity },
     { label: t('medications'), path: ROUTES.APP.MEDICATIONS, icon: MedicalCross },
   ];
 

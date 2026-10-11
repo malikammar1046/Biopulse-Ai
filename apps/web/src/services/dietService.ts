@@ -106,10 +106,10 @@ class DietService {
           foodName: row.food_name || 'Meal',
           serving: row.serving || '1 serving',
           calories: Number(row.calories) || 0,
-          proteinG: Number(row.protein_g) || 0,
-          carbsG: Number(row.carbs_g) || 0,
-          fatG: Number(row.fat_g) || 0,
-          fiberG: Number(row.fiber_g) || 0,
+          proteinG: row.protein_g != null && row.protein_g !== '' ? Number(row.protein_g) : (row.proteinG != null ? Number(row.proteinG) : null),
+          carbsG: row.carbs_g != null && row.carbs_g !== '' ? Number(row.carbs_g) : (row.carbohydrate_g != null ? Number(row.carbohydrate_g) : (row.carbsG != null ? Number(row.carbsG) : null)),
+          fatG: row.fat_g != null && row.fat_g !== '' ? Number(row.fat_g) : (row.fatG != null ? Number(row.fatG) : null),
+          fiberG: row.fiber_g != null && row.fiber_g !== '' ? Number(row.fiber_g) : null,
           loggedAt: (row.logged_at ? row.logged_at.split('T')[0] : today),
           notes: row.notes || '',
           createdAt: row.created_at || new Date().toISOString(),
@@ -146,10 +146,10 @@ class DietService {
           foodName: row.food_name,
           serving: row.serving,
           calories: Number(row.calories) || 0,
-          proteinG: Number(row.protein_g) || 0,
-          carbsG: Number(row.carbs_g) || 0,
-          fatG: Number(row.fat_g) || 0,
-          fiberG: Number(row.fiber_g) || 0,
+          proteinG: row.protein_g != null && row.protein_g !== '' ? Number(row.protein_g) : (row.proteinG != null ? Number(row.proteinG) : null),
+          carbsG: row.carbs_g != null && row.carbs_g !== '' ? Number(row.carbs_g) : (row.carbohydrate_g != null ? Number(row.carbohydrate_g) : (row.carbsG != null ? Number(row.carbsG) : null)),
+          fatG: row.fat_g != null && row.fat_g !== '' ? Number(row.fat_g) : (row.fatG != null ? Number(row.fatG) : null),
+          fiberG: row.fiber_g != null && row.fiber_g !== '' ? Number(row.fiber_g) : null,
           loggedAt: row.logged_at,
           notes: row.notes || '',
           createdAt: row.created_at,
@@ -178,10 +178,10 @@ class DietService {
         food_name: input.foodName.trim(),
         serving: input.serving.trim() || '1 serving',
         calories: input.calories ? Math.round(input.calories) : undefined,
-        protein_g: input.proteinG ? Math.round(input.proteinG * 10) / 10 : undefined,
-        carbs_g: input.carbsG ? Math.round(input.carbsG * 10) / 10 : undefined,
-        fat_g: input.fatG ? Math.round(input.fatG * 10) / 10 : undefined,
-        fiber_g: input.fiberG ? Math.round(input.fiberG * 10) / 10 : undefined,
+        protein_g: input.proteinG !== undefined && input.proteinG !== null ? Math.round(input.proteinG * 10) / 10 : undefined,
+        carbs_g: input.carbsG !== undefined && input.carbsG !== null ? Math.round(input.carbsG * 10) / 10 : undefined,
+        fat_g: input.fatG !== undefined && input.fatG !== null ? Math.round(input.fatG * 10) / 10 : undefined,
+        fiber_g: input.fiberG !== undefined && input.fiberG !== null ? Math.round(input.fiberG * 10) / 10 : undefined,
         notes: input.notes?.trim() || '',
         logged_at: today,
       });
@@ -193,10 +193,18 @@ class DietService {
         foodName: serverItem.food_name || input.foodName.trim(),
         serving: serverItem.serving || input.serving.trim() || '1 serving',
         calories: Number(serverItem.calories) || Math.round(input.calories) || 0,
-        proteinG: Number(serverItem.protein_g) || Math.round(input.proteinG * 10) / 10 || 0,
-        carbsG: Number(serverItem.carbs_g) || Math.round(input.carbsG * 10) / 10 || 0,
-        fatG: Number(serverItem.fat_g) || Math.round(input.fatG * 10) / 10 || 0,
-        fiberG: Number(serverItem.fiber_g) || Math.round(input.fiberG * 10) / 10 || 0,
+        proteinG: serverItem.protein_g != null
+          ? Number(serverItem.protein_g)
+          : (input.proteinG !== undefined ? input.proteinG : null),
+        carbsG: serverItem.carbs_g != null
+          ? Number(serverItem.carbs_g)
+          : (input.carbsG !== undefined ? input.carbsG : null),
+        fatG: serverItem.fat_g != null
+          ? Number(serverItem.fat_g)
+          : (input.fatG !== undefined ? input.fatG : null),
+        fiberG: serverItem.fiber_g != null
+          ? Number(serverItem.fiber_g)
+          : (input.fiberG !== undefined ? input.fiberG : null),
         loggedAt: (serverItem.logged_at ? serverItem.logged_at.split('T')[0] : today),
         notes: serverItem.notes || input.notes?.trim() || '',
         createdAt: serverItem.created_at || nowIso,
@@ -206,6 +214,7 @@ class DietService {
 
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('ovasense_diet_updated'));
+        window.dispatchEvent(new CustomEvent('biopulse_diet_updated'));
       }
 
       return { success: true, entry };
@@ -218,10 +227,10 @@ class DietService {
         foodName: input.foodName.trim(),
         serving: input.serving.trim() || '1 serving',
         calories: Math.round(input.calories) || 0,
-        proteinG: Math.round(input.proteinG * 10) / 10 || 0,
-        carbsG: Math.round(input.carbsG * 10) / 10 || 0,
-        fatG: Math.round(input.fatG * 10) / 10 || 0,
-        fiberG: Math.round(input.fiberG * 10) / 10 || 0,
+        proteinG: input.proteinG !== undefined ? input.proteinG : null,
+        carbsG: input.carbsG !== undefined ? input.carbsG : null,
+        fatG: input.fatG !== undefined ? input.fatG : null,
+        fiberG: input.fiberG !== undefined ? input.fiberG : null,
         loggedAt: today,
         notes: input.notes?.trim() || '',
         createdAt: nowIso,
@@ -253,6 +262,7 @@ class DietService {
 
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('ovasense_diet_updated'));
+        window.dispatchEvent(new CustomEvent('biopulse_diet_updated'));
       }
 
       return { success: true, entry: newEntry };
@@ -286,6 +296,7 @@ class DietService {
 
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('ovasense_diet_updated'));
+      window.dispatchEvent(new CustomEvent('biopulse_diet_updated'));
     }
 
     return { success: true };
@@ -369,6 +380,7 @@ class DietService {
 
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('ovasense_diet_updated'));
+      window.dispatchEvent(new CustomEvent('biopulse_diet_updated'));
     }
 
     return { success: true, entry: updatedEntry };
@@ -376,8 +388,13 @@ class DietService {
 
   // --- Dynamic Estimated Targets Calculator ---
   calculateNutritionTargets(profile: UserProfile): DailyNutritionTargets {
-    const weight = profile.weightKg || 60;
-    const height = profile.heightCm || 162;
+    const isMale =
+      profile.gender === 'male' ||
+      profile.pathway === 'male' ||
+      (profile as any).pathway === 'androsense';
+
+    const weight = profile.weightKg || (isMale ? 75 : 60);
+    const height = profile.heightCm || (isMale ? 175 : 162);
     let age = 26;
 
     if (profile.dateOfBirth) {
@@ -387,35 +404,38 @@ class DietService {
       }
     }
 
-    // Basal Metabolic Rate (Mifflin-St Jeor equation for women)
-    // BMR = (10 * weight in kg) + (6.25 * height in cm) - (5 * age in years) - 161
-    const bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+    // Basal Metabolic Rate (Mifflin-St Jeor equation)
+    // Men: BMR = (10 * weight in kg) + (6.25 * height in cm) - (5 * age in years) + 5
+    // Women: BMR = (10 * weight in kg) + (6.25 * height in cm) - (5 * age in years) - 161
+    const bmr = isMale
+      ? 10 * weight + 6.25 * height - 5 * age + 5
+      : 10 * weight + 6.25 * height - 5 * age - 161;
 
     // Activity multiplier
     const activityMultipliers: Record<string, number> = {
       sedentary: 1.2,
-      light: 1.375,
+      light: 1.4,
       moderate: 1.55,
       very_active: 1.725,
     };
 
-    const multiplier = activityMultipliers[profile.lifestyle?.activityLevel || 'moderate'] || 1.35;
+    const multiplier = activityMultipliers[profile.lifestyle?.activityLevel || (isMale ? 'light' : 'moderate')] || 1.375;
     const tdee = Math.round(bmr * multiplier);
 
-    // Protein target: approx 1.3g - 1.6g per kg weight for metabolic satiety
-    const proteinG = Math.round(weight * 1.35);
+    // Protein target: approx 1.3g - 1.6g per kg weight for metabolic satiety and endocrine support
+    const proteinG = Math.round(weight * (isMale ? 1.6 : 1.35));
 
-    // Fat target: approx 28% of total calories (9 kcal/g)
-    const fatG = Math.round((tdee * 0.28) / 9);
+    // Fat target: approx 28-30% of total calories (9 kcal/g)
+    const fatG = Math.round((tdee * (isMale ? 0.30 : 0.28)) / 9);
 
-    // Fiber target: approx 28g - 35g for prebiotic hormone clearance
-    const fiberG = 30;
+    // Fiber target: approx 28g - 38g
+    const fiberG = isMale ? 38 : 30;
 
     // Remaining calories allocated to complex carbohydrates (4 kcal/g)
     const carbCalories = Math.max(tdee - (proteinG * 4 + fatG * 9), 500);
     const carbsG = Math.round(carbCalories / 4);
 
-    const waterGlasses = profile.lifestyle?.dailyWaterGlasses || 8;
+    const waterGlasses = profile.lifestyle?.dailyWaterGlasses || (isMale ? 10 : 8);
 
     return {
       calories: tdee,
@@ -425,7 +445,7 @@ class DietService {
       fiberG,
       waterGlasses,
       isCustomOrEstimated: true,
-      calculationRationale: `Estimated for ${profile.fullName || 'Patient'} (${age} yrs, ${weight}kg, ${profile.lifestyle?.activityLevel || 'moderate'} movement).`,
+      calculationRationale: `Estimated for ${profile.fullName || (isMale ? 'Male Patient' : 'Patient')} (${age} yrs, ${weight}kg, ${profile.lifestyle?.activityLevel || 'standard'} movement).`,
     };
   }
 

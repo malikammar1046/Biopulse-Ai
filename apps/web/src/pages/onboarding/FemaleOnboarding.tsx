@@ -25,7 +25,7 @@ export const FemaleOnboarding: React.FC = () => {
   const { t } = useTranslation(['onboarding', 'common']);
   const navigate = useNavigate();
   const location = useLocation();
-  const { userProfile, finalizeOnboardingAndScreen } = useUserHealth();
+  const { userProfile, finalizeOnboardingAndScreen, fetchClinicalState } = useUserHealth();
   const shouldReduceMotion = useReducedMotion();
 
   const isExplicitRelaunch = Boolean((location.state as any)?.allowReonboard);
@@ -58,6 +58,18 @@ export const FemaleOnboarding: React.FC = () => {
     avatarUrl: userProfile.avatarUrl || '',
     heightCm: userProfile.heightCm || 165,
     weightKg: userProfile.weightKg || 62,
+    medical: {
+      bloodType: userProfile.medical?.bloodType || '',
+      allergies: userProfile.medical?.allergies || ['None'],
+      medications: userProfile.medical?.medications || [],
+      conditions: userProfile.medical?.conditions?.length
+        ? userProfile.medical.conditions
+        : [],
+      surgeries: userProfile.medical?.surgeries || [],
+      familyHistory: userProfile.medical?.familyHistory?.length
+        ? userProfile.medical.familyHistory
+        : ['None known'],
+    },
     womensHealth: {
       cycleLength: userProfile.womensHealth?.cycleLength || 28,
       lastPeriodDate: userProfile.womensHealth?.lastPeriodDate || '',
@@ -97,6 +109,74 @@ export const FemaleOnboarding: React.FC = () => {
           },
         ],
   }));
+
+  // Re-sync draft profile when userProfile is loaded or updated
+  useEffect(() => {
+    if (userProfile && (userProfile.fullName || userProfile.dateOfBirth || userProfile.medical || userProfile.womensHealth)) {
+      setDraftProfile((prev) => ({
+        ...prev,
+        fullName: prev.fullName || userProfile.fullName || '',
+        email: prev.email || userProfile.email || '',
+        phone: prev.phone || userProfile.phone || '',
+        dateOfBirth: prev.dateOfBirth || userProfile.dateOfBirth || '',
+        avatarUrl: prev.avatarUrl || userProfile.avatarUrl || '',
+        heightCm: prev.heightCm || userProfile.heightCm || 165,
+        weightKg: prev.weightKg || userProfile.weightKg || 62,
+        waistCm: prev.waistCm || userProfile.waistCm,
+        medical: {
+          bloodType: prev.medical?.bloodType || userProfile.medical?.bloodType || '',
+          allergies: prev.medical?.allergies?.length ? prev.medical.allergies : (userProfile.medical?.allergies || ['None']),
+          medications: prev.medical?.medications?.length ? prev.medical.medications : (userProfile.medical?.medications || []),
+          conditions: prev.medical?.conditions?.length ? prev.medical.conditions : (userProfile.medical?.conditions || []),
+          surgeries: prev.medical?.surgeries?.length ? prev.medical.surgeries : (userProfile.medical?.surgeries || []),
+          familyHistory: prev.medical?.familyHistory?.length ? prev.medical.familyHistory : (userProfile.medical?.familyHistory || ['None known']),
+        },
+        womensHealth: {
+          ...userProfile.womensHealth,
+          ...prev.womensHealth,
+        },
+        lifestyle: {
+          ...userProfile.lifestyle,
+          ...prev.lifestyle,
+        },
+        goals: {
+          ...userProfile.goals,
+          ...prev.goals,
+        },
+      }));
+    }
+  }, [userProfile]);
+
+  // Prepopulate clinical inputs from authoritative backend state
+  useEffect(() => {
+    let active = true;
+    if (fetchClinicalState) {
+      fetchClinicalState('female_pcos').then((state) => {
+        if (!active || !state) return;
+        setDraftProfile((prev) => {
+          const t1 = state.tier_1_inputs || {};
+          const next = { ...prev };
+          if (t1.height_cm && (!prev.heightCm || prev.heightCm === 165)) {
+            next.heightCm = Number(t1.height_cm);
+          }
+          if (t1.weight_kg && (!prev.weightKg || prev.weightKg === 62)) {
+            next.weightKg = Number(t1.weight_kg);
+          }
+          if (t1.waist_inch && !prev.waistCm) {
+            next.waistCm = Math.round(Number(t1.waist_inch) * 2.54);
+          }
+          if (t1.cycle_length_raw && (!prev.womensHealth?.cycleLength || prev.womensHealth.cycleLength === 28)) {
+            next.womensHealth = {
+              ...next.womensHealth,
+              cycleLength: Number(t1.cycle_length_raw),
+            };
+          }
+          return next;
+        });
+      }).catch((e) => console.warn('Female onboarding clinical state notice:', e));
+    }
+    return () => { active = false; };
+  }, [fetchClinicalState]);
 
   // Preload dashboard route chunk when user reaches late onboarding steps
   useEffect(() => {

@@ -29,7 +29,9 @@ import { ClinicalLabsModal } from '../adaptive/ClinicalLabsModal';
 import { UltrasoundUploadModal } from '../adaptive/UltrasoundUploadModal';
 import { AssessmentHistoryModal } from '../adaptive/AssessmentHistoryModal';
 import { PatientShapExplanation } from '../explainability/PatientShapExplanation';
+import { UltrasoundExplainabilitySection } from '../explainability/UltrasoundExplainabilitySection';
 import { AssessmentChangeSummary } from '../adaptive/AssessmentChangeSummary';
+import type { UltrasoundExplainabilityData } from '../../types/intelligence';
 
 
 export interface RiskRangeConfig {
@@ -216,6 +218,7 @@ export const FemaleScreeningWorkspace: React.FC = () => {
     activeAssessment,
     assessmentHistory,
     submitTier1,
+    refreshActiveAssessment,
   } = useUserHealth();
   const navigate = useNavigate();
 
@@ -245,6 +248,36 @@ export const FemaleScreeningWorkspace: React.FC = () => {
   const level = activeAssessment?.assessment_level || 'none';
   const isTier2Done = level === 'tier_1_2' || level === 'tier_1_2_3';
   const isTier3Done = level === 'tier_1_2_3' || level === 'tier_1_3';
+
+  const ultrasoundEvidenceData = React.useMemo<UltrasoundExplainabilityData | null>(() => {
+    if (!activeAssessment) return null;
+    const directData =
+      activeAssessment.ultrasound_explainability ||
+      activeAssessment.shap_explanation?.ultrasound_explainability;
+    if (directData) return directData;
+
+    if (activeAssessment.pcom_status || activeAssessment.gradcam_b64 || isTier3Done) {
+      const raw = activeAssessment as any;
+      return {
+        method: 'Grad-CAM (Gradient-weighted Class Activation Mapping)',
+        model_architecture: 'PyTorch EfficientNet-B0 Convolutional Backbone',
+        target_layer: 'features[-1] (Conv2dNormActivation)',
+        pcom_status: activeAssessment.pcom_status || 'Analyzed',
+        pcom_probability: activeAssessment.pcom_probability,
+        pcom_percentage:
+          raw.pcom_confidence_percent ??
+          (activeAssessment.pcom_probability != null
+            ? Math.round(activeAssessment.pcom_probability * 100)
+            : undefined),
+        attention_focus: 'Peripheral follicular ring and dense central ovarian stroma',
+        clinical_disclaimer:
+          'CRITICAL: Highlighted regions represent convolutional neural network feature attribution (model attention), NOT confirmed medical abnormalities, follicle count validation, or cysts. Pelvic ultrasound morphology is an independent Rotterdam criterion and does not replace diagnostic ultrasound evaluation by a qualified medical professional.',
+        gradcam_b64: activeAssessment.gradcam_b64,
+        original_image_b64: raw.original_image_b64,
+      };
+    }
+    return null;
+  }, [activeAssessment, isTier3Done]);
 
   // Canonical normalized probabilityPercent (0–100 scale)
   const probabilityPercent: number | null = (() => {
@@ -716,6 +749,22 @@ export const FemaleScreeningWorkspace: React.FC = () => {
         />
       )}
 
+      {/* ── Dedicated Ultrasound Visual Analysis & Morphology Section ── */}
+      {hasAssessment && ultrasoundEvidenceData && (
+        <div className="space-y-3 pt-2">
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-5 bg-[#F43F7D] rounded-xs" />
+            <h2 className="text-lg sm:text-xl font-bold text-[#111318] tracking-tight">
+              Pelvic Ultrasound Visual Analysis & Morphology
+            </h2>
+          </div>
+          <p className="text-xs sm:text-sm text-[#667085]">
+            Independent AI evaluation for polycystic ovarian morphology (PCOM) per the 2023 International PCOS Guidelines. Highlighted regions represent convolutional neural network feature attribution (model attention), displayed separately from clinical risk.
+          </p>
+          <UltrasoundExplainabilitySection data={ultrasoundEvidenceData} />
+        </div>
+      )}
+
       {/* ── Patient-Centered SHAP Explainability Engine ────────────────────── */}
       {hasAssessment && activeAssessment?.shap_explanation ? (
         <PatientShapExplanation
@@ -725,6 +774,7 @@ export const FemaleScreeningWorkspace: React.FC = () => {
           assessmentLevel={activeAssessment.assessment_level}
           ultrasoundExplainability={activeAssessment.ultrasound_explainability || activeAssessment.shap_explanation?.ultrasound_explainability}
           multimodalSynthesis={activeAssessment.multimodal_synthesis || activeAssessment.shap_explanation?.multimodal_synthesis}
+          hideUltrasoundSection={Boolean(ultrasoundEvidenceData)}
         />
       ) : (
         <div className="space-y-3 pt-2">
@@ -929,6 +979,7 @@ export const FemaleScreeningWorkspace: React.FC = () => {
         <UltrasoundUploadModal
           isOpen={isUltrasoundModalOpen}
           onClose={() => setIsUltrasoundModalOpen(false)}
+          onSuccess={refreshActiveAssessment}
         />
       )}
 

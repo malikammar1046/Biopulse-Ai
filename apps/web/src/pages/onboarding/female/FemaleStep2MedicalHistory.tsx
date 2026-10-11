@@ -27,11 +27,19 @@ interface FemaleStep2Props {
 const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Not Sure'];
 
 export const FemaleStep2MedicalHistory: React.FC<FemaleStep2Props> = ({
-  data,
+  data: rawData,
   onChange,
   lifestyle,
   onLifestyleChange,
 }) => {
+  const data: MedicalProfile = {
+    bloodType: rawData?.bloodType || '',
+    allergies: rawData?.allergies || ['None'],
+    medications: rawData?.medications || [],
+    conditions: rawData?.conditions || [],
+    surgeries: rawData?.surgeries || [],
+    familyHistory: rawData?.familyHistory || ['None known'],
+  };
   const [showWhyModal, setShowWhyModal] = useState(false);
   const [customAllergy, setCustomAllergy] = useState('');
   const [customCondition, setCustomCondition] = useState('');

@@ -387,14 +387,15 @@ export interface ShapFoldAgreement {
 }
 
 export interface UltrasoundExplainabilityData {
-  method: string;
-  model_architecture: string;
-  target_layer: string;
+  method?: string;
+  model_architecture?: string;
+  target_layer?: string;
   pcom_status: string;
-  pcom_probability: number;
-  pcom_percentage: number;
-  attention_focus: string;
-  clinical_disclaimer: string;
+  pcom_probability?: number | null;
+  pcom_percentage?: number | null;
+  pcom_confidence_percent?: number | null;
+  attention_focus?: string;
+  clinical_disclaimer?: string;
   gradcam_b64?: string | null;
   original_image_b64?: string | null;
 }

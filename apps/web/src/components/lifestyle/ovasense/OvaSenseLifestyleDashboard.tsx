@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { BookOpen, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 import type {
@@ -54,8 +55,49 @@ export const OvaSenseLifestyleDashboard: React.FC<OvaSenseLifestyleDashboardProp
   const isUrdu = i18n.language === 'ur';
   const { userProfile, waterLog, incrementWater, decrementWater, fitnessLogs } = useUserHealth();
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = useMemo<OvaSenseTab>(() => {
+    const tabParam = searchParams.get('tab')?.toLowerCase();
+    if (tabParam === 'exercise' || tabParam === 'fitness') return 'exercise';
+    if (tabParam === 'stress') return 'stress';
+    if (tabParam === 'sleep') return 'sleep';
+    if (tabParam === 'hydration') return 'hydration';
+    return 'nutrition';
+  }, [searchParams]);
+
   // Navigation tab
-  const [activeTab, setActiveTab] = useState<OvaSenseTab>('nutrition');
+  const [activeTab, setActiveTab] = useState<OvaSenseTab>(initialTab);
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab')?.toLowerCase();
+    if (tabParam === 'exercise' || tabParam === 'fitness') {
+      setActiveTab('exercise');
+    } else if (tabParam === 'stress') {
+      setActiveTab('stress');
+    } else if (tabParam === 'sleep') {
+      setActiveTab('sleep');
+    } else if (tabParam === 'hydration') {
+      setActiveTab('hydration');
+    } else if (tabParam === 'nutrition') {
+      setActiveTab('nutrition');
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (tab: OvaSenseTab) => {
+    setActiveTab(tab);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (tab === 'nutrition') {
+          next.delete('tab');
+        } else {
+          next.set('tab', tab);
+        }
+        return next;
+      },
+      { replace: true }
+    );
+  };
 
   // Modals state
   const [isWizardOpen, setIsWizardOpen] = useState(false);
@@ -364,10 +406,10 @@ export const OvaSenseLifestyleDashboard: React.FC<OvaSenseLifestyleDashboardProp
           {/* Section A: Lifestyle Hero Banner */}
           <OvaSenseHero
             onPillarClick={(pillar) => {
-              if (pillar === 'nutrition') setActiveTab('nutrition');
-              else if (pillar === 'fitness') setActiveTab('exercise');
-              else if (pillar === 'sleep') setActiveTab('sleep');
-              else if (pillar === 'stress') setActiveTab('stress');
+              if (pillar === 'nutrition') handleTabChange('nutrition');
+              else if (pillar === 'fitness') handleTabChange('exercise');
+              else if (pillar === 'sleep') handleTabChange('sleep');
+              else if (pillar === 'stress') handleTabChange('stress');
             }}
             riskCategory={data.risk_category}
             hasPCOSPattern={data.pathway === 'ovasense' || data.pathway === 'female_pcos'}
@@ -375,7 +417,7 @@ export const OvaSenseLifestyleDashboard: React.FC<OvaSenseLifestyleDashboardProp
           />
 
           {/* Section C: Category Navigation Tabs */}
-          <OvaSenseCategoryTabs activeTab={activeTab} onTabChange={setActiveTab} />
+          <OvaSenseCategoryTabs activeTab={activeTab} onTabChange={handleTabChange} />
 
           {/* Tab Content Panels */}
           {activeTab === 'nutrition' ? (
