@@ -39,6 +39,7 @@ COPY machine-learning /app/machine-learning
 # Create unprivileged service user and ensure directory ownership
 RUN useradd --create-home --shell /bin/bash appuser && \
     mkdir -p /app/backend/staticfiles /app/backend/media && \
+    chmod +x /app/backend/docker-entrypoint.sh && \
     chown -R appuser:appuser /app
 
 USER appuser
@@ -49,6 +50,6 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:8000/api/ || exit 1
 
-# Start Gunicorn server (1 worker, 2 threads, 120s timeout for single-instance ML memory efficiency)
-CMD ["gunicorn", "--chdir", "/app/backend", "--bind", "0.0.0.0:8000", "--workers", "1", "--threads", "2", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-", "config.wsgi:application"]
+# Execute startup entrypoint (runs migrations in /app/backend before launching Gunicorn)
+ENTRYPOINT ["/app/backend/docker-entrypoint.sh"]
 

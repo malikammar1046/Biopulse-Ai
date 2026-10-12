@@ -1061,11 +1061,15 @@ class PublicIntelligenceChatView(APIView):
                     yield f"data: {json.dumps({'token': '', 'done': True, 'safety_level': safety_level})}\n\n"
                 except Exception as stream_err:
                     logger.warning("Public chat stream error: %s", stream_err)
-                    fallback_text = (
-                        "BioPulse Assistant is momentarily busy. Please try asking again in a few moments, "
-                        "or explore our platform features via the navigation menu above."
-                    )
-                    yield f"data: {json.dumps({'error': fallback_text, 'done': True})}\n\n"
+                    if not accumulated:
+                        fallback_text = (
+                            "BioPulse Assistant is momentarily busy. Please try asking again in a few moments, "
+                            "or explore our platform features via the navigation menu above."
+                        )
+                        yield f"data: {json.dumps({'error': fallback_text, 'done': True})}\n\n"
+                    else:
+                        # Partial output already emitted; finalize stream without mixing or duplicate error text
+                        yield f"data: {json.dumps({'token': '', 'done': True, 'safety_level': 'normal'})}\n\n"
 
             resp = StreamingHttpResponse(event_stream(), content_type="text/event-stream")
             resp["Cache-Control"] = "no-cache"
