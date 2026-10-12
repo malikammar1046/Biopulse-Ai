@@ -26,7 +26,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Pre-install CPU-only PyTorch and torchvision to avoid 1.5GB+ GPU CUDA bloat
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir torch>=2.2.0 torchvision>=0.17.0 --extra-index-url https://download.pytorch.org/whl/cpu
+    pip install --no-cache-dir "torch>=2.2.0" "torchvision>=0.17.0" --index-url https://download.pytorch.org/whl/cpu
 
 # Install remaining Python dependencies
 COPY backend/requirements.txt /app/backend-requirements.txt
