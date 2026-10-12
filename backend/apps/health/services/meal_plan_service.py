@@ -1457,18 +1457,26 @@ class MealPlanService:
             "created_at": now_iso,
         }
 
+        from django.conf import settings
         client = None
         try:
             from apps.health.services.supabase_health_service import health_service
             client = health_service._client_or_raise(auth_token=auth_token)
-        except Exception:
-            pass
+        except Exception as client_err:
+            if not getattr(settings, "ALLOW_LOCAL_SQLITE_FALLBACK", False):
+                raise RuntimeError(f"Supabase client unavailable for food log persistence: {client_err}")
 
         if client is not None:
             try:
-                client.table("food_logs").insert(record).execute()
+                res = client.table("food_logs").insert(record).execute()
+                if hasattr(res, "error") and res.error:
+                    raise RuntimeError(f"Supabase food_logs insert error: {res.error}")
+                if res.data and len(res.data) > 0:
+                    return res.data[0]
             except Exception as exc:
-                logger.warning("Supabase food_logs insert failed: %s, falling back to in-memory store", exc)
+                logger.error("Supabase food_logs insert failed: %s", exc)
+                if not getattr(settings, "ALLOW_LOCAL_SQLITE_FALLBACK", False):
+                    raise RuntimeError(f"Authoritative food log could not be persisted to Supabase: {exc}")
                 self._memory_food_logs.append(record)
         else:
             self._memory_food_logs.append(record)
@@ -1511,20 +1519,26 @@ class MealPlanService:
             "created_at": now_iso,
         }
 
+        from django.conf import settings
         client = None
         try:
             from apps.health.services.supabase_health_service import health_service
             client = health_service._client_or_raise(auth_token=auth_token)
-        except Exception:
-            pass
+        except Exception as client_err:
+            if not getattr(settings, "ALLOW_LOCAL_SQLITE_FALLBACK", False):
+                raise RuntimeError(f"Supabase client unavailable for meal scheduling: {client_err}")
 
         if client is not None:
             try:
                 res = client.table("meal_plans").upsert(record, on_conflict="user_id,date,meal_type").execute()
+                if hasattr(res, "error") and res.error:
+                    raise RuntimeError(f"Supabase meal_plans upsert error: {res.error}")
                 if res.data and len(res.data) > 0:
                     return res.data[0]
             except Exception as exc:
-                logger.warning("Supabase meal_plans upsert failed: %s, falling back to memory store", exc)
+                logger.error("Supabase meal_plans upsert failed: %s", exc)
+                if not getattr(settings, "ALLOW_LOCAL_SQLITE_FALLBACK", False):
+                    raise RuntimeError(f"Authoritative scheduled meal could not be persisted to Supabase: {exc}")
 
         # In-memory store fallback with upsert semantics
         self._memory_scheduled_meals = [

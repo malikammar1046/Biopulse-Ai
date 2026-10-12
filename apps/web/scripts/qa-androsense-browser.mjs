@@ -11,6 +11,7 @@ import path from 'path';
 const ARTIFACTS_DIR = 'C:\\Users\\hp\\.gemini\\antigravity-ide\\brain\\45123111-8157-4b5b-88e0-9f685625dcd6';
 const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 
+const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
 const payload = Buffer.from(
   JSON.stringify({
     sub: 'usr_male_androsense_qa',
@@ -21,7 +22,7 @@ const payload = Buffer.from(
     user_metadata: { full_name: 'Ahmed Khan', gender: 'male', pathway: 'male', preferred_language: 'en' },
   })
 ).toString('base64url');
-const validJwt = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' + payload + '.mock_signature';
+const validJwt = `${header}.${payload}.mock_signature`;
 
 const mockMaleSession = {
   access_token: validJwt,

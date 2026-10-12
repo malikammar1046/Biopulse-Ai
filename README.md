@@ -5,7 +5,7 @@
 ### Advanced Dual-Pathway Reproductive & Endocrine Health Intelligence Platform
 **AI-Assisted Multi-Tier Screening, Fold-Aware TreeSHAP Explainability & Longitudinal Health Monitoring**
 
-[![PMOSense CI](https://github.com/malikammar1046/Biopulse-Ai/actions/workflows/ci.yml/badge.svg)](https://github.com/malikammar1046/Biopulse-Ai/actions/workflows/ci.yml)
+[![PMOSense CI](https://github.com/MHamzaAhmed-dev/biopulse-ai-risk-assessment/actions/workflows/ci.yml/badge.svg)](https://github.com/MHamzaAhmed-dev/biopulse-ai-risk-assessment/actions/workflows/ci.yml)
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
 [![Django 5.0](https://img.shields.io/badge/django-5.0-green.svg)](https://www.djangoproject.com/)
 [![React 19](https://img.shields.io/badge/react-19-61dafb.svg)](https://react.dev/)
@@ -134,8 +134,8 @@ PMOSense/
 
 #### A. Clone Repository & Setup Environment File
 ```bash
-git clone https://github.com/malikammar1046/Biopulse-Ai.git
-cd Biopulse-Ai
+git clone -b ammar-latest-work https://github.com/MHamzaAhmed-dev/biopulse-ai-risk-assessment.git
+cd biopulse-ai-risk-assessment
 
 # Copy environment template
 cp .env.example .env

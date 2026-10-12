@@ -100,16 +100,18 @@ class StressService {
       stressAfter: input.stressAfter !== undefined ? input.stressAfter : null,
       notes: input.notes?.trim() || '',
       createdAt: nowIso,
+      isPendingSync: true,
+      isCloudPersisted: false,
+      syncStatus: 'pending',
     };
 
-    // 1. Local persistence
-    const current = this.getLocalLogs(userId);
-    this.setLocalLogs(userId, [newEntry, ...current]);
+    let cloudPersisted = false;
+    let cloudError: string | null = null;
 
-    // 2. Remote persistence (safe, graceful fallback)
+    // 1. Remote persistence to authoritative Supabase datastore
     if (isSupabaseConfigured()) {
       try {
-        await supabase.from('lifestyle_recommendations').insert({
+        const res = await supabase.from('lifestyle_recommendations').insert({
           id: newEntry.id,
           user_id: userId,
           category: 'STRESS_LOG',
@@ -129,14 +131,40 @@ class StressService {
           created_at: newEntry.createdAt,
           updated_at: newEntry.createdAt,
         });
-      } catch (err) {
-        console.warn('Supabase logStressSession notice:', err);
+
+        if (res.error) {
+          cloudError = res.error.message || 'Supabase stress session write error';
+          console.error('Supabase logStressSession response error:', res.error);
+        } else {
+          cloudPersisted = true;
+        }
+      } catch (err: any) {
+        cloudError = err?.message || 'Exception during Supabase stress session write';
+        console.error('Supabase logStressSession exception:', err);
       }
+    } else {
+      cloudError = 'Cloud database is not configured';
     }
+
+    newEntry.isCloudPersisted = cloudPersisted;
+    newEntry.isPendingSync = !cloudPersisted;
+    newEntry.syncStatus = cloudPersisted ? 'synced' : 'pending';
+
+    // 2. Local persistence (cached with pending sync status)
+    const current = this.getLocalLogs(userId);
+    this.setLocalLogs(userId, [newEntry, ...current]);
 
     // 3. Dispatch reactive event
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('biopulse_stress_updated', { detail: { entry: newEntry } }));
+    }
+
+    if (!cloudPersisted) {
+      return {
+        success: false,
+        entry: newEntry,
+        error: cloudError || 'Failed to persist stress session to cloud storage',
+      };
     }
 
     return { success: true, entry: newEntry };

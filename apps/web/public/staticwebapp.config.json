@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json.schemastore.org/staticwebapp.config.json",
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": [
+      "/assets/*",
+      "/downloads/*",
+      "/images/*",
+      "/avatars/*",
+      "/*.{png,jpg,jpeg,gif,svg,webp,ico,json,css,js,apk,webmanifest,txt}"
+    ]
+  },
+  "routes": [
+    {
+      "route": "/assets/*",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      }
+    },
+    {
+      "route": "/*.apk",
+      "headers": {
+        "Content-Type": "application/vnd.android.package-archive",
+        "Content-Disposition": "attachment; filename=\"biopulse-ai-latest.apk\""
+      }
+    }
+  ],
+  "responseOverrides": {
+    "404": {
+      "rewrite": "/index.html",
+      "statusCode": 200
+    }
+  },
+  "mimeTypes": {
+    ".apk": "application/vnd.android.package-archive",
+    ".json": "application/json",
+    ".webmanifest": "application/manifest+json",
+    ".webp": "image/webp"
+  },
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "strict-origin-when-cross-origin"
+  }
+}

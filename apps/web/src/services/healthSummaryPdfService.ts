@@ -21,9 +21,7 @@ import autoTable from 'jspdf-autotable';
 import { supabase } from '../lib/supabase';
 import type { UserProfile, EmergencyContact } from '../types/onboarding';
 
-const BACKEND_API_URL =
-  (typeof import.meta !== 'undefined' && (import.meta as any)?.env?.VITE_BACKEND_API_URL) ||
-  '';
+import { BACKEND_API_URL } from '../config/apiConfig';
 
 export const HEALTH_SUMMARY_PDF_ENDPOINT = BACKEND_API_URL
   ? `${BACKEND_API_URL}/v1/health/summary/pdf/`
@@ -58,11 +56,16 @@ export async function downloadHealthSummaryPdf(): Promise<DownloadHealthSummaryP
     throw new Error('Authentication session required. Please sign in to download your personal health summary.');
   }
 
+  const isProd = typeof import.meta !== 'undefined' && Boolean((import.meta as any)?.env?.PROD);
   const candidateEndpoints = [
     HEALTH_SUMMARY_PDF_ENDPOINT,
     '/api/v1/health/summary/pdf/',
-    'http://127.0.0.1:8000/api/v1/health/summary/pdf/',
-    'http://localhost:8000/api/v1/health/summary/pdf/',
+    ...(!isProd
+      ? [
+          'http://127.0.0.1:8000/api/v1/health/summary/pdf/',
+          'http://localhost:8000/api/v1/health/summary/pdf/',
+        ]
+      : []),
   ];
 
   // Remove duplicates while preserving priority order

@@ -10,11 +10,17 @@ const SUPABASE_URL = 'https://dqqrqwjeebecmgfsihtv.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_rZfbhMCOuoCGq4TVmjiEbA_wnlcutJP';
 
 async function run() {
-  console.log('1. Authenticating real male test account ammar@ammar.com...');
+  console.log('1. Authenticating test account via environment variables...');
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const testEmail = process.env.TEST_USER_EMAIL || '';
+  const testPassword = process.env.TEST_USER_PASSWORD || '';
+  if (!testEmail || !testPassword) {
+    console.log('   Skipping automated login: TEST_USER_EMAIL or TEST_USER_PASSWORD not set.');
+    return;
+  }
   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-    email: 'ammar@ammar.com',
-    password: 'Password123!',
+    email: testEmail,
+    password: testPassword,
   });
 
   if (authError || !authData.session) {

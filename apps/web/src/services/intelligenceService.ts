@@ -26,11 +26,12 @@ import type {
   MonitoringPeriodFilter,
 } from '../types/longitudinalHealth';
 
+import { BACKEND_API_URL } from '../config/apiConfig';
+
 // ---------------------------------------------------------------------------
 // Configuration
 // ---------------------------------------------------------------------------
 
-const BACKEND_API_URL = (typeof import.meta !== 'undefined' && (import.meta as any)?.env?.VITE_BACKEND_API_URL) || 'http://127.0.0.1:8000/api';
 const ASSESSMENT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/assessment/`;
 const ACTIVE_ASSESSMENT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/assessment/active/`;
 const HISTORY_ASSESSMENT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/assessment/history/`;

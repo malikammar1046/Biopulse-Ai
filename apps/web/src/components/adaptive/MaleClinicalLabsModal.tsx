@@ -764,11 +764,13 @@ export const MaleClinicalLabsModal: React.FC<MaleClinicalLabsModalProps> = ({
         throw new Error('Clinical data was not incorporated into the active assessment.');
       }
 
+      const prob = typeof res.probability === 'number' ? res.probability : Number(res.probability);
+      const probPct = typeof res.probability_percent === 'number' ? res.probability_percent : Number(res.probability_percent);
       const riskVal =
-        res.probability !== null && res.probability !== undefined
-          ? Math.round(Number(res.probability) * 100)
-          : res.risk_score != null
-          ? Math.round(Number(res.risk_score))
+        Number.isFinite(probPct) && probPct >= 0 && probPct <= 100
+          ? Math.round(probPct)
+          : Number.isFinite(prob) && prob >= 0 && prob <= 1
+          ? Math.round(prob * 100)
           : null;
 
       setConfirmedRiskPercent(riskVal);
@@ -810,11 +812,13 @@ export const MaleClinicalLabsModal: React.FC<MaleClinicalLabsModalProps> = ({
         return;
       }
 
+      const prob = typeof res.probability === 'number' ? res.probability : Number(res.probability);
+      const probPct = typeof res.probability_percent === 'number' ? res.probability_percent : Number(res.probability_percent);
       const riskVal =
-        res.probability !== null && res.probability !== undefined
-          ? Math.round(Number(res.probability) * 100)
-          : res.risk_score != null
-          ? Math.round(Number(res.risk_score))
+        Number.isFinite(probPct) && probPct >= 0 && probPct <= 100
+          ? Math.round(probPct)
+          : Number.isFinite(prob) && prob >= 0 && prob <= 1
+          ? Math.round(prob * 100)
           : null;
 
       setConfirmedRiskPercent(riskVal);

@@ -764,11 +764,13 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
         return;
       }
 
+      const prob = typeof result.probability === 'number' ? result.probability : Number(result.probability);
+      const probPct = typeof result.probability_percent === 'number' ? result.probability_percent : Number(result.probability_percent);
       const riskVal =
-        result.probability !== null && result.probability !== undefined
-          ? Math.round(Number(result.probability) * 100)
-          : result.risk_score != null
-          ? Math.round(Number(result.risk_score))
+        Number.isFinite(probPct) && probPct >= 0 && probPct <= 100
+          ? Math.round(probPct)
+          : Number.isFinite(prob) && prob >= 0 && prob <= 1
+          ? Math.round(prob * 100)
           : null;
 
       setConfirmedRiskPercent(riskVal);
@@ -810,11 +812,13 @@ export const ClinicalLabsModal: React.FC<ClinicalLabsModalProps> = ({
         return;
       }
 
+      const prob = typeof result.probability === 'number' ? result.probability : Number(result.probability);
+      const probPct = typeof result.probability_percent === 'number' ? result.probability_percent : Number(result.probability_percent);
       const riskVal =
-        result.probability !== null && result.probability !== undefined
-          ? Math.round(Number(result.probability) * 100)
-          : result.risk_score != null
-          ? Math.round(Number(result.risk_score))
+        Number.isFinite(probPct) && probPct >= 0 && probPct <= 100
+          ? Math.round(probPct)
+          : Number.isFinite(prob) && prob >= 0 && prob <= 1
+          ? Math.round(prob * 100)
           : null;
 
       setConfirmedRiskPercent(riskVal);

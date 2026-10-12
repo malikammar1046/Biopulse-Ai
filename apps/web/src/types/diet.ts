@@ -43,6 +43,9 @@ export interface FoodLogEntry {
   loggedAt: string; // YYYY-MM-DD
   notes?: string;
   createdAt: string;
+  isPendingSync?: boolean;
+  isCloudPersisted?: boolean;
+  syncStatus?: 'synced' | 'pending' | 'failed';
 }
 
 export interface FoodLogInput {

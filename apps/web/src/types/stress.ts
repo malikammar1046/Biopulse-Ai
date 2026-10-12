@@ -19,6 +19,9 @@ export interface StressSessionLog {
   stressAfter?: number | null; // 1 to 10
   notes?: string;
   createdAt: string;
+  isPendingSync?: boolean;
+  isCloudPersisted?: boolean;
+  syncStatus?: 'synced' | 'pending' | 'failed';
 }
 
 export interface StressSessionInput {

@@ -210,6 +210,9 @@ class DietService {
         createdAt: serverItem.created_at || nowIso,
       };
 
+      entry.isCloudPersisted = true;
+      entry.isPendingSync = false;
+      entry.syncStatus = 'synced';
       this.cacheFoodLog(userId, entry);
 
       if (typeof window !== 'undefined') {
@@ -218,8 +221,8 @@ class DietService {
       }
 
       return { success: true, entry };
-    } catch (apiErr) {
-      console.warn('Backend food log fallback to local/supabase:', apiErr);
+    } catch (apiErr: any) {
+      console.warn('Backend food log fallback to direct Supabase:', apiErr);
       const newEntry: FoodLogEntry = {
         id: `flog_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`,
         userId,
@@ -234,13 +237,17 @@ class DietService {
         loggedAt: today,
         notes: input.notes?.trim() || '',
         createdAt: nowIso,
+        isPendingSync: true,
+        isCloudPersisted: false,
+        syncStatus: 'pending',
       };
 
-      this.cacheFoodLog(userId, newEntry);
+      let cloudPersisted = false;
+      let cloudError: string | null = null;
 
       if (isSupabaseConfigured()) {
         try {
-          await supabase.from('food_logs').insert({
+          const res = await supabase.from('food_logs').insert({
             id: newEntry.id,
             user_id: userId,
             meal_type: newEntry.mealType,
@@ -255,14 +262,36 @@ class DietService {
             notes: newEntry.notes,
             created_at: newEntry.createdAt,
           });
-        } catch (err) {
-          console.warn('Supabase logFood error:', err);
+          if (res.error) {
+            cloudError = res.error.message || 'Supabase food log write error';
+            console.error('Supabase food_logs insert response error:', res.error);
+          } else {
+            cloudPersisted = true;
+          }
+        } catch (err: any) {
+          cloudError = err?.message || 'Exception during Supabase food_logs insert';
+          console.error('Supabase logFood error:', err);
         }
+      } else {
+        cloudError = 'Cloud database is not configured';
       }
+
+      newEntry.isCloudPersisted = cloudPersisted;
+      newEntry.isPendingSync = !cloudPersisted;
+      newEntry.syncStatus = cloudPersisted ? 'synced' : 'pending';
+      this.cacheFoodLog(userId, newEntry);
 
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('ovasense_diet_updated'));
         window.dispatchEvent(new CustomEvent('biopulse_diet_updated'));
+      }
+
+      if (!cloudPersisted) {
+        return {
+          success: false,
+          entry: newEntry,
+          error: cloudError || (apiErr?.message ? `Failed to persist: ${apiErr.message}` : 'Failed to persist food log to cloud'),
+        };
       }
 
       return { success: true, entry: newEntry };

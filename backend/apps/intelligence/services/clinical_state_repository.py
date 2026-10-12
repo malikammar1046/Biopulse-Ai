@@ -24,6 +24,20 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
+
+class PersistenceError(Exception):
+    """Raised when authoritative cloud persistence fails and local SQLite fallback is disallowed."""
+    pass
+
+
+def _is_local_sqlite_fallback_allowed() -> bool:
+    """Checks whether local SQLite fallback is explicitly permitted."""
+    if getattr(settings, "ALLOW_LOCAL_SQLITE_FALLBACK", False):
+        return True
+    env_val = os.environ.get("ALLOW_LOCAL_SQLITE_FALLBACK", "").strip().lower()
+    return env_val in ("true", "1", "yes")
+
+
 def _is_valid_uuid(val: Any) -> bool:
     try:
         uuid.UUID(str(val))
@@ -395,6 +409,8 @@ class ClinicalStateRepository:
         }
 
         # 1. Supabase PostgreSQL write (Upsert)
+        remote_persisted = False
+        remote_error = None
         if _is_valid_uuid(user_id_str):
             client = get_supabase_client(auth_token)
             if client:
@@ -411,9 +427,25 @@ class ClinicalStateRepository:
                         upsert_payload,
                         on_conflict="user_id,module",
                     ).execute()
+                    remote_persisted = True
                     logger.info("Patient clinical state upserted to Supabase for %s (%s)", user_id_str, module_name)
                 except Exception as e:
-                    logger.debug("Supabase patient_clinical_state upsert notice: %s", e)
+                    remote_error = e
+                    logger.error("Supabase patient_clinical_state upsert failed for %s (%s): %s", user_id_str, module_name, e)
+            else:
+                remote_error = RuntimeError("Supabase client unavailable")
+
+        # Enforce authoritative cloud persistence policy
+        supabase_url = os.environ.get("SUPABASE_URL", "") or os.environ.get("VITE_SUPABASE_URL", "")
+        if supabase_url and not remote_persisted:
+            if not _is_local_sqlite_fallback_allowed():
+                raise PersistenceError(
+                    f"Authoritative patient clinical state could not be saved to primary cloud datastore: {remote_error}"
+                )
+            logger.warning(
+                "ALLOW_LOCAL_SQLITE_FALLBACK is enabled; persisting patient clinical state for %s to local SQLite fallback.",
+                user_id_str,
+            )
 
         # 2. SQLite Persistent write (guarantees offline & local test durability)
         conn = None

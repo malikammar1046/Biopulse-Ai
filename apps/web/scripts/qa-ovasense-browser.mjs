@@ -215,13 +215,17 @@ const mockRecommendations = {
 async function getAuthenticatedSession() {
   try {
     const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
-    const { data, error } = await sb.auth.signInWithPassword({
-      email: 'qa.test.female@biopulse.health',
-      password: 'TestPassword123!',
-    });
-    if (!error && data?.session) {
-      console.log('✅ Acquired live Supabase authenticated session for QA female user.');
-      return data.session;
+    const testEmail = process.env.TEST_FEMALE_EMAIL || process.env.TEST_USER_EMAIL || '';
+    const testPassword = process.env.TEST_FEMALE_PASSWORD || process.env.TEST_USER_PASSWORD || '';
+    if (testEmail && testPassword) {
+      const { data, error } = await sb.auth.signInWithPassword({
+        email: testEmail,
+        password: testPassword,
+      });
+      if (!error && data?.session) {
+        console.log('✅ Acquired live Supabase authenticated session for QA female user.');
+        return data.session;
+      }
     }
   } catch (err) {
     console.warn('Supabase live sign-in notice:', err.message);

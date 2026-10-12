@@ -9,9 +9,15 @@ const SUPABASE_ANON = 'sb_publishable_rZfbhMCOuoCGq4TVmjiEbA_wnlcutJP';
 
 async function main() {
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+  const testEmail = process.env.TEST_FEMALE_EMAIL || process.env.TEST_USER_EMAIL || '';
+  const testPassword = process.env.TEST_FEMALE_PASSWORD || process.env.TEST_USER_PASSWORD || '';
+  if (!testEmail || !testPassword) {
+    console.log('Test credentials not provided via TEST_FEMALE_EMAIL/TEST_USER_EMAIL, skipping capture');
+    return;
+  }
   const { data } = await sb.auth.signInWithPassword({
-    email: 'qa.test.female@biopulse.health',
-    password: 'TestPassword123!',
+    email: testEmail,
+    password: testPassword,
   });
   if (!data?.session) {
     console.log('Female test account not available, skipping female capture');
