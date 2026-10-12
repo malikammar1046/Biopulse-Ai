@@ -36,7 +36,7 @@ console.log('[SECTION 1] Signup without Date of Birth');
 const registerResult = await authService.register({
   fullName: 'Sara Ahmed',
   email: 'sara.ahmed@example.com',
-  password: process.env.TEST_USER_PASSWORD || 'Ephemeral_P@ss_' + Math.random().toString(36).slice(2),
+  password: process.env.TEST_USER_PASSWORD || `P@ss_${Date.now()}_${Math.random().toString(36).slice(2)}!`,
   consent: true,
   pathway: 'female',
   gender: 'female',

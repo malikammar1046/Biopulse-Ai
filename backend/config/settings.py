@@ -209,6 +209,12 @@ DISABLE_SUPABASE_NETWORK = os.environ.get(
     "DISABLE_SUPABASE_NETWORK", "false"
 ).lower() in ("true", "1", "yes")
 
+# Server-side feature flag for clean 7-feature Male Tier 1 candidate model
+# Default is False (disabled) — preserves existing legacy 11-feature model
+ENABLE_MALE_TIER1_CLEAN_7FEAT = os.environ.get(
+    "ENABLE_MALE_TIER1_CLEAN_7FEAT", "false"
+).lower() in ("true", "1", "yes")
+
 
 # ---------------------------------------------------------------------------
 # Internationalization

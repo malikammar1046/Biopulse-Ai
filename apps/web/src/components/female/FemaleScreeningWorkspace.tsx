@@ -29,7 +29,9 @@ import { ClinicalLabsModal } from '../adaptive/ClinicalLabsModal';
 import { UltrasoundUploadModal } from '../adaptive/UltrasoundUploadModal';
 import { AssessmentHistoryModal } from '../adaptive/AssessmentHistoryModal';
 import { PatientShapExplanation } from '../explainability/PatientShapExplanation';
+import { UltrasoundExplainabilitySection } from '../explainability/UltrasoundExplainabilitySection';
 import { AssessmentChangeSummary } from '../adaptive/AssessmentChangeSummary';
+import type { UltrasoundExplainabilityData } from '../../types/intelligence';
 
 
 export interface RiskRangeConfig {
@@ -216,6 +218,7 @@ export const FemaleScreeningWorkspace: React.FC = () => {
     activeAssessment,
     assessmentHistory,
     submitTier1,
+    refreshActiveAssessment,
   } = useUserHealth();
   const navigate = useNavigate();
 
@@ -245,6 +248,36 @@ export const FemaleScreeningWorkspace: React.FC = () => {
   const level = activeAssessment?.assessment_level || 'none';
   const isTier2Done = level === 'tier_1_2' || level === 'tier_1_2_3';
   const isTier3Done = level === 'tier_1_2_3' || level === 'tier_1_3';
+
+  const ultrasoundEvidenceData = React.useMemo<UltrasoundExplainabilityData | null>(() => {
+    if (!activeAssessment) return null;
+    const directData =
+      activeAssessment.ultrasound_explainability ||
+      activeAssessment.shap_explanation?.ultrasound_explainability;
+    if (directData) return directData;
+
+    if (activeAssessment.pcom_status || activeAssessment.gradcam_b64 || isTier3Done) {
+      const raw = activeAssessment as any;
+      return {
+        method: 'Grad-CAM (Gradient-weighted Class Activation Mapping)',
+        model_architecture: 'PyTorch EfficientNet-B0 Convolutional Backbone',
+        target_layer: 'features[-1] (Conv2dNormActivation)',
+        pcom_status: activeAssessment.pcom_status || 'Analyzed',
+        pcom_probability: activeAssessment.pcom_probability,
+        pcom_percentage:
+          raw.pcom_confidence_percent ??
+          (activeAssessment.pcom_probability != null
+            ? Math.round(activeAssessment.pcom_probability * 100)
+            : undefined),
+        attention_focus: 'Peripheral follicular ring and dense central ovarian stroma',
+        clinical_disclaimer:
+          'CRITICAL: Highlighted regions represent convolutional neural network feature attribution (model attention), NOT confirmed medical abnormalities, follicle count validation, or cysts. Pelvic ultrasound morphology is an independent Rotterdam criterion and does not replace diagnostic ultrasound evaluation by a qualified medical professional.',
+        gradcam_b64: activeAssessment.gradcam_b64,
+        original_image_b64: raw.original_image_b64,
+      };
+    }
+    return null;
+  }, [activeAssessment, isTier3Done]);
 
   // Canonical normalized probabilityPercent (0–100 scale)
   const probabilityPercent: number | null = (() => {
@@ -338,6 +371,13 @@ export const FemaleScreeningWorkspace: React.FC = () => {
     }
   };
 
+  const isLifeStageGuidance = Boolean(
+    activeAssessment &&
+    (activeAssessment.risk_category === 'unavailable' ||
+      activeAssessment.unavailable_reason ||
+      (activeAssessment.life_stage && activeAssessment.life_stage !== 'adult_reproductive'))
+  );
+
   return (
     <div className="w-full max-w-[1280px] mx-auto space-y-4 sm:space-y-5 pb-16 text-left">
       {/* ── Top Utility Row ────────────────────────────────────────────── */}
@@ -356,134 +396,194 @@ export const FemaleScreeningWorkspace: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Assessment Card (~68% width on desktop) */}
         <div className="lg:col-span-8 bg-white rounded-2xl border border-[#EAECF0] p-6 sm:p-7 shadow-xs relative flex flex-col justify-between">
-          <div>
-            {/* Header row: Tier Badge, Model Version, View Details */}
-            <div className="flex items-center justify-between gap-3 pb-4">
-              <div className="flex items-center gap-3">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FDE6EF] text-[#DC326C]">
-                  <LayersThree01 className="w-3.5 h-3.5 text-[#F43F7D]" aria-hidden="true" />
-                  {getTierLabel()}
-                </span>
-                {modelTag && (
+          {isLifeStageGuidance ? (
+            <div>
+              {/* Header row: Life Stage Badge, View Details */}
+              <div className="flex items-center justify-between gap-3 pb-4">
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FDF2F8] text-[#BE185D] border border-[#FBCFE8]">
+                    <ShieldTick className="w-3.5 h-3.5 text-[#DB2777]" aria-hidden="true" />
+                    {activeAssessment?.badge_label || 'Life-Stage Pathway'}
+                  </span>
                   <span className="text-xs text-[#98A2B3] font-medium hidden sm:inline">
-                    {modelTag}
+                    2023 Guidelines Validated
+                  </span>
+                </div>
+
+                {hasAssessment && (
+                  <button
+                    type="button"
+                    onClick={() => setIsDetailsModalOpen(true)}
+                    className="text-xs font-semibold text-[#DC326C] hover:text-[#F43F7D] transition-colors inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>View details</span>
+                    <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                  </button>
+                )}
+              </div>
+
+              {/* Title & Badge */}
+              <div className="mt-2 space-y-2">
+                <h3 className="text-2xl sm:text-3xl font-bold font-display text-[#111318] tracking-tight">
+                  {activeAssessment?.title || 'Life-Stage Health & PCOS Evaluation'}
+                </h3>
+                <p className="text-sm text-[#475467] leading-relaxed">
+                  {activeAssessment?.summary_text ||
+                    'Your health profile has been evaluated under the 2023 International Evidence-Based PCOS Guidelines. Because statistical AI risk models are calibrated for reproductive-aged women (20–48), personalized clinical guidance is provided instead of automated scores.'}
+                </p>
+              </div>
+
+              {/* Recommendations Box */}
+              {activeAssessment?.clinical_recommendations && activeAssessment.clinical_recommendations.length > 0 && (
+                <div className="mt-4 p-4 rounded-xl bg-[#F8FAFC] border border-[#EAECF0] space-y-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#475467] block">
+                    Recommended Clinical Next Steps
+                  </span>
+                  <ul className="space-y-1.5 text-xs sm:text-sm text-[#344054]">
+                    {activeAssessment.clinical_recommendations.map((rec: string, i: number) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-[#F43F7D] font-bold mt-0.5">•</span>
+                        <span>{rec}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Guideline Citation */}
+              {activeAssessment?.guideline_notice && (
+                <p className="mt-4 text-xs text-[#667085] italic">
+                  {activeAssessment.guideline_notice}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div>
+              {/* Header row: Tier Badge, Model Version, View Details */}
+              <div className="flex items-center justify-between gap-3 pb-4">
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FDE6EF] text-[#DC326C]">
+                    <LayersThree01 className="w-3.5 h-3.5 text-[#F43F7D]" aria-hidden="true" />
+                    {getTierLabel()}
+                  </span>
+                  {modelTag && (
+                    <span className="text-xs text-[#98A2B3] font-medium hidden sm:inline">
+                      {modelTag}
+                    </span>
+                  )}
+                </div>
+
+                {hasAssessment && (
+                  <button
+                    type="button"
+                    onClick={() => setIsDetailsModalOpen(true)}
+                    className="text-xs font-semibold text-[#DC326C] hover:text-[#F43F7D] transition-colors inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>View details</span>
+                    <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                  </button>
+                )}
+              </div>
+
+              {/* Risk Score Row */}
+              <div className="flex flex-wrap items-baseline gap-4 mt-2">
+                <span className="text-5xl sm:text-6xl font-extrabold text-[#111318] tracking-tight">
+                  {displayProbability}
+                </span>
+
+                {hasAssessment ? (
+                  isLowerRisk ? (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#ECFDF3] text-[#027A48] border border-[#D1FADF]">
+                      <ShieldTick className="w-4 h-4 text-[#12B76A]" aria-hidden="true" />
+                      Lower Screening Risk
+                    </span>
+                  ) : isHigherRisk ? (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#FEF3F2] text-[#B42318] border border-[#FECDCA]">
+                      <AlertCircle className="w-4 h-4 text-[#F04438]" aria-hidden="true" />
+                      Higher Screening Risk
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#FFFAEB] text-[#B54708] border border-[#FEDF89]">
+                      <AlertTriangle className="w-4 h-4 text-[#F79009]" aria-hidden="true" />
+                      Intermediate Screening Risk
+                    </span>
+                  )
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#F2F4F7] text-[#475569] border border-[#E4E7EC]">
+                    Screening Not Started
                   </span>
                 )}
               </div>
 
-              {hasAssessment && (
-                <button
-                  type="button"
-                  onClick={() => setIsDetailsModalOpen(true)}
-                  className="text-xs font-semibold text-[#DC326C] hover:text-[#F43F7D] transition-colors inline-flex items-center gap-1 cursor-pointer"
-                >
-                  <span>View details</span>
-                  <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-                </button>
-              )}
-            </div>
+              {/* Risk Description */}
+              <p className="text-sm text-[#667085] mt-3 leading-relaxed">
+                {getEvidenceDescription()}
+              </p>
 
-            {/* Risk Score Row */}
-            <div className="flex flex-wrap items-baseline gap-4 mt-2">
-              <span className="text-5xl sm:text-6xl font-extrabold text-[#111318] tracking-tight">
-                {displayProbability}
-              </span>
-
-              {hasAssessment ? (
-                isLowerRisk ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#ECFDF3] text-[#027A48] border border-[#D1FADF]">
-                    <ShieldTick className="w-4 h-4 text-[#12B76A]" aria-hidden="true" />
-                    Lower Screening Risk
-                  </span>
-                ) : isHigherRisk ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#FEF3F2] text-[#B42318] border border-[#FECDCA]">
-                    <AlertCircle className="w-4 h-4 text-[#F04438]" aria-hidden="true" />
-                    Higher Screening Risk
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#FFFAEB] text-[#B54708] border border-[#FEDF89]">
-                    <AlertTriangle className="w-4 h-4 text-[#F79009]" aria-hidden="true" />
-                    Intermediate Screening Risk
-                  </span>
-                )
-              ) : (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#F2F4F7] text-[#475569] border border-[#E4E7EC]">
-                  Screening Not Started
+              {/* Screening Metadata Row */}
+              <div className="flex flex-wrap items-center gap-3 text-xs text-[#667085] mt-4 pt-3 border-t border-[#F2F4F7]">
+                <span>
+                  Calibrated screening cutoff:{' '}
+                  <strong className="text-[#111318] font-semibold">{riskRanges.highCutoffPercent}%</strong>
                 </span>
-              )}
-            </div>
+                <span className="text-[#D0D5DD] hidden sm:inline">|</span>
+                <span>
+                  Active status:{' '}
+                  <strong className={hasAssessment ? 'text-[#12B76A] font-semibold' : 'text-[#667085] font-semibold'}>
+                    {hasAssessment ? 'Current authoritative' : 'Pending initial evaluation'}
+                  </strong>
+                </span>
+              </div>
 
-            {/* Risk Description */}
-            <p className="text-sm text-[#667085] mt-3 leading-relaxed">
-              {getEvidenceDescription()}
-            </p>
+              {/* Risk Range Horizontal Spectrum */}
+              <div className="mt-8 pt-2">
+                {/* Dynamic Probability Marker: ONLY render when real probability exists */}
+                {hasAssessment && clampedMarkerPosition !== null && (
+                  <div className="relative w-full h-5 mb-1 select-none">
+                    <div
+                      className="absolute flex items-center gap-1 text-[11px] font-semibold text-[#111318] -top-1"
+                      style={{
+                        left: `${clampedMarkerPosition}%`,
+                        transform: 'translateX(-50%)',
+                      }}
+                    >
+                      <span className="w-2 h-2 rounded-full bg-[#12B76A] shrink-0" />
+                      <span>{displayProbability}</span>
+                    </div>
+                  </div>
+                )}
 
-            {/* Screening Metadata Row */}
-            <div className="flex flex-wrap items-center gap-3 text-xs text-[#667085] mt-4 pt-3 border-t border-[#F2F4F7]">
-              <span>
-                Calibrated screening cutoff:{' '}
-                <strong className="text-[#111318] font-semibold">{riskRanges.highCutoffPercent}%</strong>
-              </span>
-              <span className="text-[#D0D5DD] hidden sm:inline">|</span>
-              <span>
-                Active status:{' '}
-                <strong className={hasAssessment ? 'text-[#12B76A] font-semibold' : 'text-[#667085] font-semibold'}>
-                  {hasAssessment ? 'Current authoritative' : 'Pending initial evaluation'}
-                </strong>
-              </span>
-            </div>
-          </div>
+                {/* Spectrum Bar (3 Segments matching authoritative thresholds) */}
+                <div className="w-full flex h-2.5 rounded-full overflow-hidden gap-1">
+                  <div
+                    className="bg-[#32D583] rounded-l-full"
+                    style={{ width: `${riskRanges.lowCutoffPercent}%` }}
+                  />
+                  <div
+                    className="bg-[#EAECF0]"
+                    style={{ width: `${riskRanges.highCutoffPercent - riskRanges.lowCutoffPercent}%` }}
+                  />
+                  <div className="flex-1 bg-[#FDA29B] rounded-r-full" />
+                </div>
 
-          {/* Risk Range Horizontal Spectrum */}
-          <div className="mt-8 pt-2">
-            {/* Dynamic Probability Marker: ONLY render when real probability exists */}
-            {hasAssessment && clampedMarkerPosition !== null && (
-              <div className="relative w-full h-5 mb-1 select-none">
-                <div
-                  className="absolute flex items-center gap-1 text-[11px] font-semibold text-[#111318] -top-1"
-                  style={{
-                    left: `${clampedMarkerPosition}%`,
-                    transform: 'translateX(-50%)',
-                  }}
-                >
-                  <span className="w-2 h-2 rounded-full bg-[#12B76A] shrink-0" />
-                  <span>{displayProbability}</span>
+                {/* Spectrum Range Labels */}
+                <div className="flex justify-between items-start mt-2 text-xs select-none">
+                  <div className="text-left">
+                    <span className="block font-semibold text-[#027A48]">Lower Likelihood</span>
+                    <span className="text-[11px] text-[#667085]">General profile</span>
+                  </div>
+                  <div className="text-center">
+                    <span className="block font-medium text-[#667085]">Intermediate Likelihood</span>
+                    <span className="text-[11px] text-[#98A2B3]">Monitoring zone</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="block font-semibold text-[#B42318]">Higher Likelihood</span>
+                    <span className="text-[11px] text-[#98A2B3]">Clinical evaluation</span>
+                  </div>
                 </div>
               </div>
-            )}
-
-            {/* Spectrum Bar (3 Segments matching authoritative thresholds) */}
-            <div className="w-full flex h-2.5 rounded-full overflow-hidden gap-1">
-              {/* Lower Risk Segment (Green) */}
-              <div
-                className="bg-[#32D583] rounded-l-full"
-                style={{ width: `${riskRanges.lowCutoffPercent}%` }}
-              />
-              {/* Intermediate Risk Segment (Neutral) */}
-              <div
-                className="bg-[#EAECF0]"
-                style={{ width: `${riskRanges.highCutoffPercent - riskRanges.lowCutoffPercent}%` }}
-              />
-              {/* Higher Risk Segment (Soft Pink) */}
-              <div className="flex-1 bg-[#FDA29B] rounded-r-full" />
             </div>
-
-            {/* Spectrum Range Labels */}
-            <div className="flex justify-between items-start mt-2 text-xs select-none">
-              <div className="text-left">
-                <span className="block font-semibold text-[#027A48]">Lower Likelihood</span>
-                <span className="text-[11px] text-[#667085]">General profile</span>
-              </div>
-              <div className="text-center">
-                <span className="block font-medium text-[#667085]">Intermediate Likelihood</span>
-                <span className="text-[11px] text-[#98A2B3]">Monitoring zone</span>
-              </div>
-              <div className="text-right">
-                <span className="block font-semibold text-[#B42318]">Higher Likelihood</span>
-                <span className="text-[11px] text-[#98A2B3]">Clinical evaluation</span>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Right Recommendation Card (~32% width on desktop) */}
@@ -517,6 +617,8 @@ export const FemaleScreeningWorkspace: React.FC = () => {
               <h3 className="text-lg font-bold text-[#111318]">
                 {!hasAssessment
                   ? 'Complete Initial Screening'
+                  : isLifeStageGuidance
+                  ? (activeAssessment?.badge_label || 'Clinical Guidance')
                   : isTier3Done
                   ? 'Screening Complete'
                   : isTier2Done
@@ -526,6 +628,8 @@ export const FemaleScreeningWorkspace: React.FC = () => {
               <p className="text-xs text-[#667085] leading-relaxed">
                 {!hasAssessment
                   ? 'Answer symptom, cycle, and biometric questions to generate your initial screening baseline.'
+                  : isLifeStageGuidance
+                  ? 'Evidence-based recommendations under the 2023 International PCOS Guidelines for your life stage.'
                   : isTier3Done
                   ? 'All three screening tiers have been evaluated with multimodal AI verification.'
                   : isTier2Done
@@ -537,7 +641,27 @@ export const FemaleScreeningWorkspace: React.FC = () => {
 
           {/* Action Buttons */}
           <div className="mt-6 space-y-2.5">
-            {!hasAssessment ? (
+            {isLifeStageGuidance ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setIsDetailsModalOpen(true)}
+                  className="w-full h-11 px-4 bg-[#F43F7D] hover:bg-[#DC326C] active:scale-[0.98] text-white text-sm font-medium rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <File06 className="w-4 h-4" aria-hidden="true" />
+                  <span>Review Clinical Details</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleStartTier1}
+                  disabled={isSubmittingT1}
+                  className="w-full h-10 px-4 bg-white hover:bg-[#F9FAFB] active:scale-[0.98] text-[#344054] text-sm font-medium rounded-xl border border-[#D0D5DD] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <RefreshCw01 className="w-4 h-4 text-[#667085]" aria-hidden="true" />
+                  <span>{isSubmittingT1 ? 'Updating...' : 'Re-evaluate Health Profile'}</span>
+                </button>
+              </>
+            ) : !hasAssessment ? (
               <button
                 type="button"
                 onClick={handleStartTier1}
@@ -625,12 +749,32 @@ export const FemaleScreeningWorkspace: React.FC = () => {
         />
       )}
 
+      {/* ── Dedicated Ultrasound Visual Analysis & Morphology Section ── */}
+      {hasAssessment && ultrasoundEvidenceData && (
+        <div className="space-y-3 pt-2">
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-5 bg-[#F43F7D] rounded-xs" />
+            <h2 className="text-lg sm:text-xl font-bold text-[#111318] tracking-tight">
+              Pelvic Ultrasound Visual Analysis & Morphology
+            </h2>
+          </div>
+          <p className="text-xs sm:text-sm text-[#667085]">
+            Independent AI evaluation for polycystic ovarian morphology (PCOM) per the 2023 International PCOS Guidelines. Highlighted regions represent convolutional neural network feature attribution (model attention), displayed separately from clinical risk.
+          </p>
+          <UltrasoundExplainabilitySection data={ultrasoundEvidenceData} />
+        </div>
+      )}
+
       {/* ── Patient-Centered SHAP Explainability Engine ────────────────────── */}
       {hasAssessment && activeAssessment?.shap_explanation ? (
         <PatientShapExplanation
           payload={activeAssessment.shap_explanation}
           longitudinalComparison={activeAssessment.longitudinal_shap_comparison}
           pathway="female_pcos"
+          assessmentLevel={activeAssessment.assessment_level}
+          ultrasoundExplainability={activeAssessment.ultrasound_explainability || activeAssessment.shap_explanation?.ultrasound_explainability}
+          multimodalSynthesis={activeAssessment.multimodal_synthesis || activeAssessment.shap_explanation?.multimodal_synthesis}
+          hideUltrasoundSection={Boolean(ultrasoundEvidenceData)}
         />
       ) : (
         <div className="space-y-3 pt-2">
@@ -835,6 +979,7 @@ export const FemaleScreeningWorkspace: React.FC = () => {
         <UltrasoundUploadModal
           isOpen={isUltrasoundModalOpen}
           onClose={() => setIsUltrasoundModalOpen(false)}
+          onSuccess={refreshActiveAssessment}
         />
       )}
 

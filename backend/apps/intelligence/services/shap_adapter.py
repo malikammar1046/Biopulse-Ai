@@ -326,22 +326,24 @@ class FoldAwareCalibratedExplainer:
         abs_shaps = {k: abs(v) for k, v in ensemble_shaps.items()}
         total_abs_shap = sum(abs_shaps.values())
 
+        # Dynamically scale influence share thresholds based on feature count
+        # In a 32-feature cumulative model, average share is ~3.1%; a 1.5% share is meaningful.
+        is_large_model = len(all_canonical_keys) > 20
+        strong_thresh = 0.12 if is_large_model else 0.20
+        moderate_thresh = 0.04 if is_large_model else 0.08
+        mild_thresh = 0.01 if is_large_model else 0.02
+
         factors_list: List[Dict[str, Any]] = []
         for feat in all_canonical_keys:
             sv = ensemble_shaps[feat]
             asv = abs_shaps[feat]
             share = (asv / total_abs_shap) if total_abs_shap > 0 else 0.0
 
-            # Deterministic Influence Categorization Policy:
-            # Strong: share >= 0.20
-            # Moderate: 0.08 <= share < 0.20
-            # Mild: 0.02 <= share < 0.08
-            # Minimal: share < 0.02
-            if share >= 0.20:
+            if share >= strong_thresh:
                 inf_level = "strong"
-            elif share >= 0.08:
+            elif share >= moderate_thresh:
                 inf_level = "moderate"
-            elif share >= 0.02:
+            elif share >= mild_thresh:
                 inf_level = "mild"
             else:
                 inf_level = "minimal"
@@ -409,6 +411,9 @@ class FoldAwareCalibratedExplainer:
                     num_val = None
 
             raw_val_clean = patient_val_raw if (patient_val_raw is not None and not pd.isna(patient_val_raw)) else "n/a"
+            is_tier2_clinical = bool(2 in meta.supported_tiers and 1 not in meta.supported_tiers)
+            tier_label = "Tier 2" if is_tier2_clinical else "Tier 1"
+            is_provided = bool(raw_val_clean != "n/a" and patient_val_raw is not None)
 
             factors_list.append({
                 "feature_key": feat,
@@ -417,6 +422,10 @@ class FoldAwareCalibratedExplainer:
                 "patient_value": patient_val_formatted,
                 "raw_value": raw_val_clean,
                 "value": num_val,
+                "unit": getattr(meta, "unit", ""),
+                "tier": tier_label,
+                "is_tier2_clinical": is_tier2_clinical,
+                "is_provided": is_provided,
                 "shap_value": round(sv, 5),
                 "absolute_shap": round(asv, 5),
                 "impact_score": round(asv, 5),
@@ -444,23 +453,59 @@ class FoldAwareCalibratedExplainer:
 
         # Filter top factors for Level 1 default cards
         # Confident higher/lower cards require fold stability (non-mixed)
-        top_higher = [
+        # Prioritize factors actually provided by the patient over unprovided/imputed baseline features
+        top_higher_provided = [
             f for f in factors_list
             if f["direction"] == "higher"
             and f["influence_level"] != "minimal"
             and f["fold_agreement"]["stability"] != "mixed"
-        ][:4]
-        top_lower = [
+            and f.get("is_provided", True)
+        ]
+        top_higher_other = [
+            f for f in factors_list
+            if f["direction"] == "higher"
+            and f["influence_level"] != "minimal"
+            and f["fold_agreement"]["stability"] != "mixed"
+            and not f.get("is_provided", True)
+        ]
+        top_higher = (top_higher_provided + top_higher_other)[:4]
+
+        top_lower_provided = [
             f for f in factors_list
             if f["direction"] == "lower"
             and f["influence_level"] != "minimal"
             and f["fold_agreement"]["stability"] != "mixed"
-        ][:3]
+            and f.get("is_provided", True)
+        ]
+        top_lower_other = [
+            f for f in factors_list
+            if f["direction"] == "lower"
+            and f["influence_level"] != "minimal"
+            and f["fold_agreement"]["stability"] != "mixed"
+            and not f.get("is_provided", True)
+        ]
+        top_lower = (top_lower_provided + top_lower_other)[:3]
+
         top_mixed = [
             f for f in factors_list
             if f["fold_agreement"]["stability"] == "mixed"
             and f["influence_level"] != "minimal"
         ][:3]
+
+        # Dedicated Tier 2 clinical factor compilation (when clinical labs are evaluated)
+        clinical_provided = [
+            f for f in factors_list
+            if f.get("is_tier2_clinical") and f.get("is_provided")
+        ]
+        clinical_provided.sort(key=lambda x: x["absolute_shap"], reverse=True)
+
+        tier2_summary = {
+            "has_clinical_evidence": len(clinical_provided) > 0,
+            "clinical_factors_provided_count": len(clinical_provided),
+            "top_clinical_elevating": [f["patient_label"] for f in clinical_provided if f["direction"] == "higher"][:3],
+            "top_clinical_lowering": [f["patient_label"] for f in clinical_provided if f["direction"] == "lower"][:3],
+            "total_clinical_factors": len([f for f in factors_list if f.get("is_tier2_clinical")]),
+        }
 
         classes = list(getattr(self.calibrated_model, "classes_", [0, 1]))
         if 1 in classes:
@@ -507,6 +552,8 @@ class FoldAwareCalibratedExplainer:
             "top_higher_factors": top_higher,
             "top_lower_factors": top_lower,
             "top_mixed_factors": top_mixed,
+            "top_clinical_factors": clinical_provided[:8],
+            "tier2_summary": tier2_summary,
             "summary": {
                 "headline": "These were the strongest factors the screening model relied on before its probability calibration step.",
                 "subheadline": (

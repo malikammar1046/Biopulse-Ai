@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { ROUTES } from '../../constants/routes';
@@ -24,8 +24,12 @@ import { deriveMaleTier1InputsFromProfile } from '../../utils/tier1InputMappers'
 export const MaleOnboarding: React.FC = () => {
   const { t } = useTranslation(['onboarding', 'common']);
   const navigate = useNavigate();
-  const { userProfile, finalizeOnboardingAndScreen } = useUserHealth();
+  const location = useLocation();
+  const { userProfile, finalizeOnboardingAndScreen, fetchClinicalState } = useUserHealth();
   const shouldReduceMotion = useReducedMotion();
+
+  const isExplicitRelaunch = Boolean((location.state as any)?.allowReonboard);
+  const isUpdatingProfile = Boolean(userProfile.isOnboarded && isExplicitRelaunch);
 
   const maleSteps = useMemo(() => [
     { number: '1', label: t('onboarding:stepLabels.basicInfo', 'Basic Info') },
@@ -66,7 +70,7 @@ export const MaleOnboarding: React.FC = () => {
         medications: userProfile.medical?.medications || [],
         conditions: userProfile.medical?.conditions?.length
           ? userProfile.medical.conditions
-          : ['None of these'],
+          : [],
         surgeries: userProfile.medical?.surgeries || [],
         familyHistory: userProfile.medical?.familyHistory?.length
           ? userProfile.medical.familyHistory
@@ -140,6 +144,82 @@ export const MaleOnboarding: React.FC = () => {
     };
   });
 
+  // Re-sync draft profile when userProfile is loaded or updated
+  useEffect(() => {
+    if (userProfile && (userProfile.fullName || userProfile.dateOfBirth || userProfile.medical || userProfile.mensHealth)) {
+      setDraftProfile((prev) => ({
+        ...prev,
+        fullName: prev.fullName || userProfile.fullName || '',
+        email: prev.email || userProfile.email || '',
+        phone: prev.phone || userProfile.phone || '',
+        dateOfBirth: prev.dateOfBirth || userProfile.dateOfBirth || '',
+        avatarUrl: prev.avatarUrl || userProfile.avatarUrl || '',
+        heightCm: prev.heightCm || userProfile.heightCm || 178,
+        weightKg: prev.weightKg || userProfile.weightKg || 80,
+        waistCm: prev.waistCm || userProfile.waistCm,
+        medical: {
+          bloodType: prev.medical?.bloodType || userProfile.medical?.bloodType || '',
+          allergies: prev.medical?.allergies?.length ? prev.medical.allergies : (userProfile.medical?.allergies || ['None']),
+          medications: prev.medical?.medications?.length ? prev.medical.medications : (userProfile.medical?.medications || []),
+          conditions: prev.medical?.conditions?.length ? prev.medical.conditions : (userProfile.medical?.conditions || []),
+          surgeries: prev.medical?.surgeries?.length ? prev.medical.surgeries : (userProfile.medical?.surgeries || []),
+          familyHistory: prev.medical?.familyHistory?.length ? prev.medical.familyHistory : (userProfile.medical?.familyHistory || ['None known']),
+        },
+        mensHealth: prev.mensHealth ? {
+          ...userProfile.mensHealth,
+          ...prev.mensHealth,
+          energyLevel: prev.mensHealth.energyLevel || userProfile.mensHealth?.energyLevel || 'moderate',
+          sexDrive: prev.mensHealth.sexDrive || userProfile.mensHealth?.sexDrive || 'normal',
+          erectileDifficulties: prev.mensHealth.erectileDifficulties || userProfile.mensHealth?.erectileDifficulties || 'none',
+          muscleStrengthChanges: prev.mensHealth.muscleStrengthChanges || userProfile.mensHealth?.muscleStrengthChanges || 'stable',
+          bodyHairChanges: prev.mensHealth.bodyHairChanges || userProfile.mensHealth?.bodyHairChanges || 'no_change',
+          moodChanges: prev.mensHealth.moodChanges || userProfile.mensHealth?.moodChanges || [],
+          sleepQuality: prev.mensHealth.sleepQuality || userProfile.mensHealth?.sleepQuality || 'restful',
+        } : prev.mensHealth,
+        lifestyle: {
+          ...userProfile.lifestyle,
+          ...prev.lifestyle,
+        },
+        goals: {
+          ...userProfile.goals,
+          ...prev.goals,
+        },
+      }));
+    }
+  }, [userProfile]);
+
+  // Prepopulate clinical inputs from authoritative backend state
+  useEffect(() => {
+    let active = true;
+    if (fetchClinicalState) {
+      fetchClinicalState('male_hypogonadism').then((state) => {
+        if (!active || !state) return;
+        setDraftProfile((prev) => {
+          const t1 = state.tier_1_inputs || {};
+          const next = { ...prev };
+          if (t1.height_cm && (!prev.heightCm || prev.heightCm === 178)) {
+            next.heightCm = Number(t1.height_cm);
+          }
+          if (t1.weight_kg && (!prev.weightKg || prev.weightKg === 80)) {
+            next.weightKg = Number(t1.weight_kg);
+          }
+          if (t1.waist_cm && !prev.waistCm) {
+            next.waistCm = Number(t1.waist_cm);
+          }
+          if (t1.adam_responses && (!prev.mensHealth?.adamResponses || Object.keys(prev.mensHealth.adamResponses).length === 0) && prev.mensHealth) {
+            next.mensHealth = {
+              ...prev.mensHealth,
+              adamResponses: t1.adam_responses,
+              adamScore: t1.adam_score ?? prev.mensHealth.adamScore,
+            };
+          }
+          return next;
+        });
+      }).catch((e) => console.warn('Male onboarding clinical state notice:', e));
+    }
+    return () => { active = false; };
+  }, [fetchClinicalState]);
+
   // Preload dashboard route chunk when user reaches late onboarding steps
   useEffect(() => {
     if (currentStep >= 4) {
@@ -147,8 +227,8 @@ export const MaleOnboarding: React.FC = () => {
     }
   }, [currentStep]);
 
-  // Route protection: If already onboarded, go directly to AndroSense app
-  if (userProfile.isOnboarded) {
+  // Route protection: If already onboarded and not explicitly re-onboarding, go directly to AndroSense app
+  if (userProfile.isOnboarded && !isExplicitRelaunch) {
     return <Navigate to={ROUTES.APP.ANDROSENSE} replace />;
   }
   if (userProfile.pathway === 'female') {
@@ -293,6 +373,10 @@ export const MaleOnboarding: React.FC = () => {
     );
   }
 
+  const handleCancel = () => {
+    navigate(ROUTES.APP.SETTINGS);
+  };
+
   return (
     <MaleOnboardingLayout
       currentStep={currentStep}
@@ -304,6 +388,8 @@ export const MaleOnboarding: React.FC = () => {
       isSubmitting={isSubmitting}
       canGoBack={currentStep > 1}
       hideBottomNav={currentStep === 3}
+      isUpdatingProfile={isUpdatingProfile}
+      onCancel={isUpdatingProfile ? handleCancel : undefined}
     >
       <AnimatePresence mode="wait">
         <motion.div

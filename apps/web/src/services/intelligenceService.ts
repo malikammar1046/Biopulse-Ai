@@ -26,11 +26,12 @@ import type {
   MonitoringPeriodFilter,
 } from '../types/longitudinalHealth';
 
+import { BACKEND_API_URL } from '../config/apiConfig';
+
 // ---------------------------------------------------------------------------
 // Configuration
 // ---------------------------------------------------------------------------
 
-const BACKEND_API_URL = (typeof import.meta !== 'undefined' && (import.meta as any)?.env?.VITE_BACKEND_API_URL) || 'http://127.0.0.1:8000/api';
 const ASSESSMENT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/assessment/`;
 const ACTIVE_ASSESSMENT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/assessment/active/`;
 const HISTORY_ASSESSMENT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/assessment/history/`;
@@ -728,6 +729,51 @@ export async function fetchPatientClinicalState(
 }
 
 /**
+ * Persists patient clinical values using PATCH semantics.
+ */
+export async function savePatientClinicalState(
+  module: string = 'female_pcos',
+  tier2Inputs: Record<string, any>,
+  removeFields?: string[]
+): Promise<{ success: boolean; tier_2_inputs?: Record<string, any>; error?: string } | null> {
+  try {
+    const token = await getAccessToken();
+    if (!token) return null;
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    };
+    const payload: Record<string, any> = {
+      module,
+      tier_2_inputs: sanitizeClinicalInputs(tier2Inputs),
+    };
+    if (removeFields && removeFields.length > 0) {
+      payload.remove_fields = removeFields;
+    }
+    const response = await fetchWithTimeout(CLINICAL_STATE_ENDPOINT, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    }, 15000);
+    if (!response.ok) {
+      let errDetails = '';
+      try {
+        const errJson = await response.json();
+        errDetails = errJson.error || errJson.details || JSON.stringify(errJson);
+      } catch {
+        errDetails = response.statusText;
+      }
+      console.warn('[Intelligence API] savePatientClinicalState failed:', response.status, errDetails);
+      return { success: false, error: errDetails };
+    }
+    return await response.json();
+  } catch (err: any) {
+    console.warn('[Intelligence API] savePatientClinicalState error:', err);
+    return { success: false, error: err?.message || 'Network error saving clinical values.' };
+  }
+}
+
+/**
  * Uploads an ultrasound image for morphological analysis (PCOM) and multimodal fusion.
  */
 
@@ -1108,6 +1154,14 @@ const longitudinalCache = new Map<string, CachedLongitudinalEntry>();
 const inFlightLongitudinalPromises = new Map<string, Promise<LongitudinalHealthResponse | null>>();
 
 const SESSION_STORAGE_LONGITUDINAL_PREFIX = 'biopulse_longitudinal_';
+let currentLongitudinalUserId: string | null = null;
+
+/**
+ * Sets the active authenticated user ID for synchronous longitudinal cache lookups.
+ */
+export function setLongitudinalAuthUserId(userId: string | null): void {
+  currentLongitudinalUserId = userId;
+}
 
 /**
  * Synchronously retrieves cached longitudinal data for instantaneous render.
@@ -1117,13 +1171,22 @@ export function getCachedLongitudinalHealth(
   module = 'female_pcos',
   userId?: string
 ): LongitudinalHealthResponse | null {
-  const activeUserId = userId || 'active_user';
+  const activeUserId = userId || currentLongitudinalUserId || 'active_user';
   const cacheKey = `${activeUserId}:${module}:${period}`;
 
   // 1. Check in-memory map
   const memEntry = longitudinalCache.get(cacheKey);
   if (memEntry && Date.now() - memEntry.timestamp < LONGITUDINAL_CACHE_TTL_MS) {
     return memEntry.data;
+  }
+
+  // Fallback check if user ID is known
+  if (!userId && currentLongitudinalUserId && currentLongitudinalUserId !== activeUserId) {
+    const fallbackKey = `${currentLongitudinalUserId}:${module}:${period}`;
+    const fallbackEntry = longitudinalCache.get(fallbackKey);
+    if (fallbackEntry && Date.now() - fallbackEntry.timestamp < LONGITUDINAL_CACHE_TTL_MS) {
+      return fallbackEntry.data;
+    }
   }
 
   // 2. Check sessionStorage fallback
@@ -1150,20 +1213,21 @@ export function getCachedLongitudinalHealth(
  * Invalidates cached longitudinal health responses when mutations occur.
  */
 export function invalidateLongitudinalCache(userId?: string): void {
-  if (userId) {
+  const targetId = userId || currentLongitudinalUserId;
+  if (targetId) {
     for (const key of Array.from(longitudinalCache.keys())) {
-      if (key.startsWith(`${userId}:`)) {
+      if (key.startsWith(`${targetId}:`)) {
         longitudinalCache.delete(key);
       }
     }
     for (const key of Array.from(inFlightLongitudinalPromises.keys())) {
-      if (key.startsWith(`${userId}:`)) {
+      if (key.startsWith(`${targetId}:`)) {
         inFlightLongitudinalPromises.delete(key);
       }
     }
     if (typeof window !== 'undefined' && window.sessionStorage) {
       try {
-        const prefix = `${SESSION_STORAGE_LONGITUDINAL_PREFIX}${userId}:`;
+        const prefix = `${SESSION_STORAGE_LONGITUDINAL_PREFIX}${targetId}:`;
         for (let i = sessionStorage.length - 1; i >= 0; i--) {
           const k = sessionStorage.key(i);
           if (k && k.startsWith(prefix)) {
@@ -1212,11 +1276,12 @@ export async function getLongitudinalHealth(
   forceRefresh = false
 ): Promise<LongitudinalHealthResponse | null> {
   // Resolve active user id for cache key
-  let activeUserId = 'active_user';
+  let activeUserId = currentLongitudinalUserId || 'active_user';
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user?.id) {
       activeUserId = session.user.id;
+      currentLongitudinalUserId = session.user.id;
     }
   } catch {
     // ignore

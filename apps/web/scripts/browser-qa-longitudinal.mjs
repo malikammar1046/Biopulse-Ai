@@ -25,8 +25,14 @@ async function runQA() {
     await page.goto('http://localhost:5173/login', { waitUntil: 'networkidle2', timeout: 15000 });
 
     // Login with female test user
-    await page.type('#login-email', 'biopulse_qa_1791463522240@example.com');
-    await page.type('#login-password', 'Password123!');
+    const femaleEmail = process.env.TEST_FEMALE_EMAIL || '';
+    const femalePass = process.env.TEST_PASSWORD || process.env.TEST_USER_PASSWORD || '';
+    if (!femaleEmail || !femalePass) {
+      console.log('Skipping female login: TEST_FEMALE_EMAIL or TEST_PASSWORD not set.');
+      return;
+    }
+    await page.type('#login-email', femaleEmail);
+    await page.type('#login-password', femalePass);
     await page.click('button[type="submit"]');
 
     // Wait for redirect after login
@@ -87,8 +93,14 @@ async function runQA() {
     });
     await page.goto('http://localhost:5173/login', { waitUntil: 'networkidle2', timeout: 15000 });
 
-    await page.type('#login-email', 'biopulse_male_qa_1791463619122@example.com');
-    await page.type('#login-password', 'Password123!');
+    const maleEmail = process.env.TEST_MALE_EMAIL || '';
+    const malePass = process.env.TEST_PASSWORD || process.env.TEST_USER_PASSWORD || '';
+    if (!maleEmail || !malePass) {
+      console.log('Skipping male login: TEST_MALE_EMAIL or TEST_PASSWORD not set.');
+      return;
+    }
+    await page.type('#login-email', maleEmail);
+    await page.type('#login-password', malePass);
     await page.click('button[type="submit"]');
 
     await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 15000 }).catch(() => {});

@@ -16,6 +16,7 @@ import {
   Flame,
   ArrowRight,
   ShieldCheck,
+  AlertCircle,
 } from 'lucide-react';
 import type {
   NutritionPillar,
@@ -322,7 +323,7 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
               className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer ${primaryBtnClass}`}
             >
               <Sparkles className="w-4 h-4" />
-              <span>{currentPlan ? 'Customize 7-Day Plan' : 'Generate 7-Day Plan'}</span>
+              <span>{currentPlan ? 'Customize 3-Day Plan' : 'Generate 3-Day Plan'}</span>
             </button>
 
             <button
@@ -443,6 +444,32 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
 
       {/* ── 2. DAILY MEAL SCHEDULE WITH CULINARY VISUALS ── */}
       <section className="space-y-6">
+        {/* Provisional Plan Notice (Allergy status unconfirmed) */}
+        {currentPlan?.provisional_notice && (
+          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-3 animate-fadeIn">
+            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <div className="space-y-0.5">
+              <p className="font-bold">Provisional Meal Guidance</p>
+              <p className="text-[11px] leading-relaxed text-amber-800">
+                {currentPlan.provisional_notice}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Unresolved Dislikes Notice */}
+        {currentPlan?.unresolved_dislikes && currentPlan.unresolved_dislikes.length > 0 && (
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 text-xs flex items-start gap-3 animate-fadeIn">
+            <AlertCircle className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
+            <div className="space-y-0.5">
+              <p className="font-bold">Custom Disliked Foods Notice</p>
+              <p className="text-[11px] leading-relaxed text-slate-600">
+                The following disliked food(s) could not be automatically matched to our verified Pakistani database: {currentPlan.unresolved_dislikes.join(', ')}. Please review meal ingredients below manually.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Day of Week Selector */}
         {currentPlan?.days && currentPlan.days.length > 0 && (
           <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -675,9 +702,9 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
             <div className="p-8 rounded-3xl bg-white border border-[#E2EEF4] text-center space-y-4 shadow-sm">
               <Sparkles className={`w-8 h-8 mx-auto ${isMale ? 'text-[#0868B9]' : 'text-[#0E9EAA]'}`} />
               <div className="space-y-1 max-w-md mx-auto">
-                <h3 className="text-lg font-bold text-[#073B72]">Personalized 7-Day Protocol Ready to Generate</h3>
+                <h3 className="text-lg font-bold text-[#073B72]">Personalized 3-Day Protocol Ready to Generate</h3>
                 <p className="text-xs text-slate-500 leading-relaxed">
-                  Generate your clinical 7-day culinary roadmap grounded in verified macro floors and blood glucose stability.
+                  Generate your clinical 3-day culinary roadmap grounded in verified macro floors and blood glucose stability.
                 </p>
               </div>
               <button
@@ -686,7 +713,7 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
                 className={`inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-bold shadow-md transition cursor-pointer ${primaryBtnClass}`}
               >
                 <Sparkles className="w-4 h-4" />
-                <span>Generate My 7-Day Plan</span>
+                <span>Generate My 3-Day Plan</span>
               </button>
             </div>
 

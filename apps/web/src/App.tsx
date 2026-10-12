@@ -80,7 +80,6 @@ const SymptomsPage = lazy(() => import('./pages/app/SymptomsPage').then((m) => (
 const LifestyleRecommendationsPage = lazy(() =>
   import('./pages/app/LifestyleRecommendationsPage').then((m) => ({ default: m.LifestyleRecommendationsPage }))
 );
-const FitnessPage = lazy(() => import('./pages/app/FitnessPage').then((m) => ({ default: m.FitnessPage })));
 const ReportsPage = lazy(() => import('./pages/app/ReportsPage').then((m) => ({ default: m.ReportsPage })));
 const MedicationsPage = lazy(() => import('./pages/app/MedicationsPage').then((m) => ({ default: m.MedicationsPage })));
 const CareCirclePage = lazy(() => import('./pages/app/CareCirclePage').then((m) => ({ default: m.CareCirclePage })));
@@ -222,7 +221,7 @@ const AppContent: React.FC = () => {
                   <Route path="nutrition" element={<Navigate to={ROUTES.APP.LIFESTYLE} replace />} />
                   <Route path="diet" element={<Navigate to={ROUTES.APP.LIFESTYLE} replace />} />
                   <Route path="diet/week" element={<Navigate to={ROUTES.APP.LIFESTYLE} replace />} />
-                  <Route path="fitness" element={<FitnessPage />} />
+                  <Route path="fitness" element={<Navigate to="/app/lifestyle?tab=exercise" replace />} />
                   <Route path="reports" element={<ReportsPage />} />
                   <Route path="medications" element={<MedicationsPage />} />
                   <Route path="care-circle" element={<CareCirclePage />} />

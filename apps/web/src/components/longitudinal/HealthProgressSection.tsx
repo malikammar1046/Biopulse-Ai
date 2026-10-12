@@ -13,7 +13,6 @@ import type {
 } from '../../types/longitudinalHealth';
 import { supabase } from '../../lib/supabase';
 import {
-  getLongitudinalHealth,
   getCachedLongitudinalHealth,
 } from '../../services/intelligenceService';
 import { deriveBaselineFromContext } from '../../utils/longitudinalCalculations';
@@ -53,6 +52,9 @@ export const HealthProgressSection: React.FC<HealthProgressSectionProps> = ({
     cycleRecords = [],
     symptomRecords = [],
     reports = [],
+    longitudinalData,
+    fetchLongitudinalHealth,
+    longitudinalLoading,
   } = useUserHealth();
 
   const activePathway = pathwayProp || resolvePathway(userProfile?.gender, userProfile?.pathway);
@@ -62,6 +64,9 @@ export const HealthProgressSection: React.FC<HealthProgressSectionProps> = ({
 
   // 1. Initial State: Synchronous Immediate Hydration from Cache or Context (<50ms)
   const initialBaseline = useMemo(() => {
+    if (longitudinalData && longitudinalData.module === moduleName && longitudinalData.period === selectedPeriod) {
+      return longitudinalData;
+    }
     const cached = getCachedLongitudinalHealth(selectedPeriod, moduleName, userProfile?.id);
     if (cached) return cached;
     return deriveBaselineFromContext({
@@ -72,13 +77,20 @@ export const HealthProgressSection: React.FC<HealthProgressSectionProps> = ({
       pathway: activePathway,
       period: selectedPeriod,
     });
-  }, [selectedPeriod, moduleName, userProfile, cycleRecords, symptomRecords, reports, activePathway]);
+  }, [longitudinalData, selectedPeriod, moduleName, userProfile, cycleRecords, symptomRecords, reports, activePathway]);
 
-  const [data, setData] = useState<LongitudinalHealthResponse | null>(initialBaseline);
+  const [data, setData] = useState<LongitudinalHealthResponse | null>(() => initialBaseline);
   const [isBackgroundFetching, setIsBackgroundFetching] = useState<boolean>(false);
   const [refreshNotice, setRefreshNotice] = useState<string | null>(null);
   const [sessionError, setSessionError] = useState<boolean>(false);
   const [retryTrigger, setRetryTrigger] = useState<number>(0);
+
+  // Sync data when context-level longitudinalData updates
+  useEffect(() => {
+    if (longitudinalData && longitudinalData.module === moduleName && longitudinalData.period === selectedPeriod) {
+      setData(longitudinalData);
+    }
+  }, [longitudinalData, moduleName, selectedPeriod]);
 
   // Listen for global refresh events (e.g. assessment submission, report upload)
   useEffect(() => {
@@ -92,13 +104,13 @@ export const HealthProgressSection: React.FC<HealthProgressSectionProps> = ({
   }, []);
 
   // 2. Resilient Background Fetching (Stale-While-Revalidate)
-  const loadLongitudinal = useCallback(async (signal?: AbortSignal) => {
+  const loadLongitudinal = useCallback(async (signal?: AbortSignal, force = false) => {
     setIsBackgroundFetching(true);
     setRefreshNotice(null);
     setSessionError(false);
 
     try {
-      const res = await getLongitudinalHealth(selectedPeriod, moduleName, signal);
+      const res = await fetchLongitudinalHealth(selectedPeriod, force, signal);
       if (signal?.aborted) return;
 
       if (res) {
@@ -153,11 +165,12 @@ export const HealthProgressSection: React.FC<HealthProgressSectionProps> = ({
         setIsBackgroundFetching(false);
       }
     }
-  }, [selectedPeriod, moduleName, userProfile, cycleRecords, symptomRecords, reports, activePathway]);
+  }, [selectedPeriod, fetchLongitudinalHealth, userProfile, cycleRecords, symptomRecords, reports, activePathway]);
 
   useEffect(() => {
     const controller = new AbortController();
-    loadLongitudinal(controller.signal);
+    const isForce = retryTrigger > 0;
+    loadLongitudinal(controller.signal, isForce);
 
     return () => {
       controller.abort();
@@ -212,7 +225,7 @@ export const HealthProgressSection: React.FC<HealthProgressSectionProps> = ({
         onSelectPeriod={setSelectedPeriod}
         trackingPeriodDisplay={data?.tracking_period_display}
         totalAssessmentsRecorded={totalAssessments}
-        isLoading={isBackgroundFetching && !data}
+        isLoading={(isBackgroundFetching || longitudinalLoading) && !data}
       />
 
       {/* ── 2. Subtle Non-Blocking Refresh Notice (Stale-While-Revalidate) ── */}

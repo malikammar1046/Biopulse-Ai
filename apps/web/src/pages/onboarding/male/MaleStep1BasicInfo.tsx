@@ -48,7 +48,7 @@ export const MaleStep1BasicInfo: React.FC<MaleStep1Props> = ({
     : null;
 
   return (
-    <div className="space-y-5 text-left max-w-4xl mx-auto">
+    <div className="w-full space-y-5 text-left">
       {/* ── Question Header with Why We Ask Trigger ── */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">

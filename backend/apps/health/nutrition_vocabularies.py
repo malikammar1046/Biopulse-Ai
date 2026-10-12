@@ -94,7 +94,6 @@ _ALLERGEN_SYNONYMS: Dict[str, CanonicalAllergen] = {
     "cow's milk": CanonicalAllergen.MILK,
     "buffalo milk": CanonicalAllergen.MILK,
     "dairy": CanonicalAllergen.MILK,
-    "dairy / lactose": CanonicalAllergen.MILK,
     "dahi": CanonicalAllergen.MILK,
     "curd": CanonicalAllergen.MILK,
     "yogurt": CanonicalAllergen.MILK,

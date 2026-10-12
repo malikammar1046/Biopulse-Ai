@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Heart, Calendar, Droplets } from 'lucide-react';
+import { Heart, Calendar, Droplets, AlertCircle } from 'lucide-react';
 import { DashboardModuleCard } from '../DashboardModuleCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
 import type { CycleSummaryStats } from '../../../../types/cycle';
@@ -18,18 +18,18 @@ export const PeriodCycleModuleCard: React.FC<PeriodCycleModuleCardProps> = ({
   loading = false,
   onOpenCycle,
   onLogPeriod,
-  updatedAt = '12 mins ago',
+  updatedAt = 'just now',
 }) => {
   const { t } = useTranslation(['dashboard', 'cycle']);
 
   const menuItems = [
     {
-      label: t('dashboard:openCycleTracking'),
+      label: t('dashboard:openCycleTracking', { defaultValue: 'Open Cycle Tracking' }),
       onClick: onOpenCycle,
       icon: Heart,
     },
     {
-      label: t('dashboard:logNewPeriod'),
+      label: t('dashboard:logNewPeriod', { defaultValue: 'Log New Period' }),
       onClick: onLogPeriod,
       icon: Droplets,
     },
@@ -38,8 +38,8 @@ export const PeriodCycleModuleCard: React.FC<PeriodCycleModuleCardProps> = ({
   if (!cycleStats.hasData || cycleStats.currentCycleDay === null) {
     return (
       <DashboardModuleCard
-        title={t('dashboard:periodCycle')}
-        subtitle={t('dashboard:currentCycleInfo')}
+        title={t('dashboard:periodCycle', { defaultValue: 'Period Cycle' })}
+        subtitle={t('dashboard:currentCycleInfo', { defaultValue: 'Current cycle information' })}
         icon={Droplets}
         accentColor="pink"
         isLive={false}
@@ -47,9 +47,9 @@ export const PeriodCycleModuleCard: React.FC<PeriodCycleModuleCardProps> = ({
         loading={loading}
       >
         <DashboardEmptyState
-          title={t('dashboard:noCycleHistory')}
-          description={t('dashboard:noCycleHistoryDesc')}
-          actionLabel={t('dashboard:addCycleData')}
+          title={t('dashboard:noCycleHistory', { defaultValue: 'No cycle history yet' })}
+          description={t('dashboard:noCycleHistoryDesc', { defaultValue: 'Log your period dates to track your menstrual rhythm, fertile windows, and ovulation estimates.' })}
+          actionLabel={t('dashboard:addCycleData', { defaultValue: 'Add Cycle Data' })}
           onAction={onLogPeriod}
           icon={Droplets}
           accentColor="pink"
@@ -64,70 +64,120 @@ export const PeriodCycleModuleCard: React.FC<PeriodCycleModuleCardProps> = ({
     nextPeriodDate,
     nextPeriodDays,
     estimatedPhase,
+    isOverdue,
+    daysOverdue,
+    cycleLengthSource,
+    completedCyclesCount,
+    regularityStatus,
+    phaseDayRanges,
   } = cycleStats;
+
+  const sourceDescription = (() => {
+    if (cycleLengthSource === 'calculated_history') {
+      return t('cycle:cycleLengthSource.history', {
+        count: completedCyclesCount,
+        suffix: completedCyclesCount === 1 ? '' : 's',
+        defaultValue: `Based on ${completedCyclesCount} recorded cycle${completedCyclesCount === 1 ? '' : 's'}`,
+      });
+    }
+    if (cycleLengthSource === 'profile_baseline') {
+      return t('cycle:cycleLengthSource.profile', {
+        defaultValue: 'From onboarding profile baseline',
+      });
+    }
+    return t('cycle:cycleLengthSource.default', {
+      defaultValue: 'Standard baseline estimate (no completed cycles yet)',
+    });
+  })();
 
   return (
     <DashboardModuleCard
-      title={t('dashboard:periodCycle')}
-      subtitle={t('dashboard:currentCycleInfo')}
+      title={t('dashboard:periodCycle', { defaultValue: 'Period Cycle' })}
+      subtitle={t('dashboard:currentCycleInfo', { defaultValue: 'Current cycle information' })}
       icon={Droplets}
       accentColor="pink"
       isLive={true}
-      syncedModule={t('dashboard:cycleTrackingSynced')}
+      syncedModule={t('dashboard:cycleTrackingSynced', { defaultValue: 'Cycle Tracking' })}
       updatedAt={updatedAt}
       menuItems={menuItems}
       loading={loading}
     >
-      <div className="space-y-4 py-1">
+      <div className="space-y-4 py-1 text-left">
         {/* Top 2 Metric Boxes */}
         <div className="grid grid-cols-2 gap-3 items-stretch">
           {/* Current Cycle Day */}
           <div className="p-3 rounded-2xl bg-[#FFF5F8] border border-[#FDE6EF] flex flex-col justify-between">
             <span className="text-[11px] font-medium text-slate-500 font-sans">
-              {t('dashboard:cycleDay')}
+              {t('dashboard:cycleDay', { defaultValue: 'Cycle Day' })}
             </span>
             <div className="flex items-baseline gap-1 mt-1">
               <span className="text-3xl font-extrabold font-display text-slate-900 leading-none">
                 {currentCycleDay}
               </span>
               <span className="text-xs text-slate-500 font-mono">
-                of ~{totalCycleDays} {t('cycle:days')}
+                of ~{totalCycleDays} {t('cycle:days', { defaultValue: 'days' })}
               </span>
             </div>
             <div className="mt-2">
-              <span className="inline-block px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-white/80 border border-[#FDE6EF] text-[#E11D48] truncate max-w-full">
-                {estimatedPhase?.tag || 'Active Cycle'}
-              </span>
+              {isOverdue ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-[#FFF1F2] border border-[#FECDD3] text-[#E11D48] truncate max-w-full">
+                  <AlertCircle className="w-3 h-3 shrink-0" aria-hidden="true" />
+                  {t('cycle:daysOverdue', { count: daysOverdue, defaultValue: `${daysOverdue} days overdue` })}
+                </span>
+              ) : (
+                <span className="inline-block px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-white/80 border border-[#FDE6EF] text-[#E11D48] truncate max-w-full">
+                  {estimatedPhase?.tag || 'Active Cycle'}
+                </span>
+              )}
             </div>
           </div>
 
-          {/* Next Period (Predicted) */}
+          {/* Next Period / Overdue Status */}
           <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] flex flex-col justify-between">
             <span className="text-[11px] font-medium text-slate-500 font-sans">
-              {t('cycle:nextPeriodIn')}
+              {isOverdue
+                ? t('cycle:overdue', { defaultValue: 'Cycle Overdue' })
+                : t('cycle:nextPeriodIn', { defaultValue: 'Next period expected in' })}
             </span>
             <div className="flex items-center gap-2 mt-1">
-              <div className="w-7 h-7 rounded-lg bg-[#FDE6EF] flex items-center justify-center text-[#E11D48] shrink-0">
+              <div
+                className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                  isOverdue ? 'bg-[#FFF1F2] text-[#E11D48]' : 'bg-[#FDE6EF] text-[#E11D48]'
+                }`}
+              >
                 <Calendar className="w-3.5 h-3.5" aria-hidden="true" />
               </div>
               <div className="min-w-0">
-                <span className="text-xs font-bold text-slate-900 block truncate">
-                  {nextPeriodDate || 'Pending next cycle'}
-                </span>
-                {nextPeriodDays !== null && (
-                  <span className="text-[10px] text-slate-500 font-mono block">
-                    In {nextPeriodDays} {t('cycle:days')}
-                  </span>
+                {isOverdue ? (
+                  <>
+                    <span className="text-xs font-bold text-[#E11D48] block truncate">
+                      +{daysOverdue} {t('cycle:days', { defaultValue: 'days' })}
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono block truncate">
+                      Exp: {nextPeriodDate}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-xs font-bold text-slate-900 block truncate">
+                      {nextPeriodDate || 'Calculating...'}
+                    </span>
+                    {nextPeriodDays !== null && (
+                      <span className="text-[10px] text-slate-500 font-mono block">
+                        In {nextPeriodDays} {t('cycle:days', { defaultValue: 'days' })}
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
             </div>
-            <div className="mt-2 text-[10px] text-slate-400 font-sans">
-              Calculated from logged history
+            <div className="mt-2 text-[10px] text-slate-400 font-sans truncate" title={sourceDescription}>
+              {sourceDescription}
             </div>
           </div>
         </div>
 
-        {/* Phase Timeline Stepper */}
+        {/* Phase Timeline Stepper with Dynamic Day Ranges */}
         <div className="pt-1">
           <div className="relative flex items-center justify-between px-1">
             {/* Timeline track line */}
@@ -136,55 +186,72 @@ export const PeriodCycleModuleCard: React.FC<PeriodCycleModuleCardProps> = ({
             {/* Step 1: Period */}
             <div className="relative z-10 flex flex-col items-center">
               <span
-                className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
                   estimatedPhase?.key === 'menstrual'
                     ? 'bg-[#F43F7D] border-white ring-2 ring-[#F43F7D]'
                     : 'bg-white border-[#F43F7D]'
                 }`}
               />
               <span className="text-[11px] font-semibold text-slate-800 mt-1">
-                {t('dashboard:cycleCard.phases.period')}
+                {t('dashboard:cycleCard.phases.period', { defaultValue: 'Period' })}
               </span>
               <span className="text-[9.5px] text-slate-400 font-mono">
-                Days 1–5
+                {phaseDayRanges.period}
               </span>
             </div>
 
             {/* Step 2: Fertile Window */}
             <div className="relative z-10 flex flex-col items-center">
               <span
-                className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
                   estimatedPhase?.key === 'follicular'
                     ? 'bg-[#10B981] border-white ring-2 ring-[#10B981]'
                     : 'bg-white border-[#10B981]'
                 }`}
               />
               <span className="text-[11px] font-semibold text-slate-800 mt-1">
-                {t('dashboard:cycleCard.phases.follicular')}
+                {t('dashboard:cycleCard.phases.follicular', { defaultValue: 'Fertile' })}
               </span>
               <span className="text-[9.5px] text-slate-400 font-mono">
-                Days 10–15
+                {phaseDayRanges.fertile}
               </span>
             </div>
 
             {/* Step 3: Ovulation */}
             <div className="relative z-10 flex flex-col items-center">
               <span
-                className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
                   estimatedPhase?.key === 'ovulation'
                     ? 'bg-[#8B5CF6] border-white ring-2 ring-[#8B5CF6]'
                     : 'bg-white border-[#8B5CF6]'
                 }`}
               />
               <span className="text-[11px] font-semibold text-slate-800 mt-1">
-                {t('dashboard:cycleCard.phases.ovulation')}
+                {t('dashboard:cycleCard.phases.ovulation', { defaultValue: 'Ovulation' })}
               </span>
               <span className="text-[9.5px] text-slate-400 font-mono">
-                Day ~14
+                {phaseDayRanges.ovulation}
               </span>
             </div>
           </div>
         </div>
+
+        {/* Advisory footnote for irregular cycle or overdue condition */}
+        {isOverdue ? (
+          <div className="p-2.5 rounded-xl bg-[#FFF1F2] border border-[#FECDD3] text-[10.5px] text-[#9F1239] leading-tight">
+            {t('cycle:periodOverdueAlert', {
+              count: daysOverdue,
+              expectedDate: nextPeriodDate,
+              defaultValue: `Your period is currently ${daysOverdue} days past the expected date (${nextPeriodDate}). Delayed cycles may occur due to hormonal variability, stress, or PCOS.`,
+            })}
+          </div>
+        ) : regularityStatus === 'irregular' ? (
+          <div className="p-2 rounded-lg bg-[#FEF3C7]/40 border border-[#FDE68A] text-[10px] text-[#92400E] leading-tight">
+            {t('cycle:irregularUncertainNotice', {
+              defaultValue: 'Variable cycle history detected. Calendar-based ovulation days are estimates and cannot confirm actual ovulation.',
+            })}
+          </div>
+        ) : null}
       </div>
     </DashboardModuleCard>
   );

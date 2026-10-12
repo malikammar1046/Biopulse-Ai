@@ -59,6 +59,8 @@ class ProgressiveAssessmentSerializer(serializers.Serializer):
     pcom_probability = serializers.FloatField(allow_null=True, required=False)
     gradcam_b64 = serializers.CharField(allow_null=True, required=False)
     gradcam_url = serializers.CharField(allow_null=True, required=False)
+    ultrasound_explainability = serializers.DictField(required=False, allow_null=True)
+    multimodal_synthesis = serializers.DictField(required=False, allow_null=True)
     fusion_details = serializers.DictField(required=False, allow_null=True)
     is_active = serializers.BooleanField(required=False, default=True)
     disclaimer = serializers.CharField(required=False)
@@ -91,6 +93,16 @@ class ProgressiveAssessmentSerializer(serializers.Serializer):
     direct_laboratory_values = serializers.ListField(child=serializers.DictField(), required=False, default=list)
     evidence_used = serializers.DictField(required=False, default=dict)
     available_historical_evidence = serializers.DictField(required=False, default=dict)
+
+    # Life-Stage & Guideline Age Eligibility Metadata
+    unavailable_reason = serializers.CharField(required=False, allow_null=True)
+    life_stage = serializers.CharField(required=False, allow_null=True)
+    badge_label = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    clinical_recommendations = serializers.ListField(child=serializers.CharField(), required=False, default=list)
+    guideline_notice = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    gynecological_age_years = serializers.FloatField(allow_null=True, required=False)
+    ultrasound_morphology_valid = serializers.BooleanField(required=False, default=True)
+    amh_valid = serializers.BooleanField(required=False, default=True)
 
     # Backwards compatibility legacy aliases
     pcos_probability = serializers.FloatField(allow_null=True, required=False)

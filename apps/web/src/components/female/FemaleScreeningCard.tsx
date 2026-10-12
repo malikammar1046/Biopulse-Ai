@@ -17,6 +17,13 @@ interface FemaleScreeningCardProps {
   assessmentLevel?: string;
   updatedAt?: string | null;
   threshold?: number;
+  lifeStage?: string | null;
+  unavailableReason?: string | null;
+  badgeLabel?: string | null;
+  title?: string | null;
+  summaryText?: string | null;
+  clinicalRecommendations?: string[];
+  guidelineNotice?: string | null;
   onStartScreening: () => void;
   onViewAssessment: () => void;
   onAddLabs?: () => void;
@@ -36,6 +43,13 @@ export const FemaleScreeningCard: React.FC<FemaleScreeningCardProps> = ({
   assessmentLevel = 'tier_1',
   updatedAt,
   threshold: _threshold = 0.25,
+  lifeStage,
+  unavailableReason,
+  badgeLabel,
+  title: clinicalTitle,
+  summaryText: clinicalSummary,
+  clinicalRecommendations = [],
+  guidelineNotice,
   onStartScreening,
   onViewAssessment,
   onAddLabs,
@@ -46,8 +60,13 @@ export const FemaleScreeningCard: React.FC<FemaleScreeningCardProps> = ({
   gradcamB64,
   pcomStatus,
 }) => {
+  const isLifeStageGuidance = Boolean(
+    hasAssessment &&
+    (riskCategory === 'unavailable' || unavailableReason || (lifeStage && lifeStage !== 'adult_reproductive'))
+  );
+
   // 1. Loading / Processing State
-  if (screeningState === 'processing' || (loading && (!hasAssessment || probabilityPercent === null))) {
+  if (screeningState === 'processing' || (loading && (!hasAssessment || (probabilityPercent === null && !isLifeStageGuidance)))) {
     return (
       <FemaleLoadingState
         title="Calculating your screening result..."
@@ -56,7 +75,66 @@ export const FemaleScreeningCard: React.FC<FemaleScreeningCardProps> = ({
     );
   }
 
-  // 2. Error State (When user is onboarded but assessment calculation is missing or failed)
+  // 2. Life-Stage Guidance Pathway (Adolescents, Pre-menarche, Perimenopause, Postmenopause)
+  if (isLifeStageGuidance) {
+    return (
+      <FemaleCard className="space-y-4 sm:space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <FemaleStatusBadge variant="neutral">
+              {badgeLabel || 'Clinical Guidance'}
+            </FemaleStatusBadge>
+            {updatedAt && (
+              <span className="text-xs text-[#667085]">
+                Evaluated {updatedAt}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <h3 className="text-lg sm:text-xl font-bold font-display text-[#111318]">
+            {clinicalTitle || 'Life-Stage Health & PCOS Evaluation'}
+          </h3>
+          <p className="text-xs sm:text-sm text-[#475467] leading-relaxed">
+            {clinicalSummary ||
+              'Your profile has been evaluated under the 2023 International PCOS Guidelines. Rather than generating an unsupported adult AI score, personalized clinical guidance is provided.'}
+          </p>
+        </div>
+
+        {clinicalRecommendations && clinicalRecommendations.length > 0 && (
+          <div className="p-3.5 rounded-2xl bg-[#F8FAFC] border border-[#EAECF0] space-y-2 text-left">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#475467] block">
+              Clinical Next Steps (International Guidelines)
+            </span>
+            <ul className="space-y-1.5 text-xs text-[#344054]">
+              {clinicalRecommendations.slice(0, 2).map((rec, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-[#F43F7D] font-bold mt-0.5">•</span>
+                  <span>{rec}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {guidelineNotice && (
+          <p className="text-[11px] text-[#667085] italic">
+            {guidelineNotice}
+          </p>
+        )}
+
+        <div className="pt-4 border-t border-[#EAECF0] flex flex-wrap items-center gap-3">
+          <FemalePrimaryButton onClick={onViewAssessment}>
+            <span>View Clinical Guidance</span>
+            <ArrowRight className="w-4 h-4 shrink-0" aria-hidden="true" />
+          </FemalePrimaryButton>
+        </div>
+      </FemaleCard>
+    );
+  }
+
+  // 3. Error State (When user is onboarded but assessment calculation is missing or failed)
   if (screeningState === 'error' || (isOnboarded && (!hasAssessment || probabilityPercent === null) && !loading)) {
     return (
       <FemaleEmptyState
@@ -70,7 +148,7 @@ export const FemaleScreeningCard: React.FC<FemaleScreeningCardProps> = ({
     );
   }
 
-  // 3. Not Started State (Only shown when not loading and user has not completed onboarding)
+  // 4. Not Started State (Only shown when not loading and user has not completed onboarding)
   if (!hasAssessment || probabilityPercent === null) {
     return (
       <FemaleEmptyState

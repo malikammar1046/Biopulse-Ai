@@ -1,20 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Apple,
-  Dumbbell,
-  HeartPulse,
   RefreshCw,
   AlertTriangle,
-  SlidersHorizontal,
-  Calendar,
   WifiOff,
   LogIn,
   ClipboardCheck,
   ArrowRight,
-  BookOpen,
-  ChevronDown,
-  ChevronUp,
 } from 'lucide-react';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { useAuth } from '../../context/AuthContext';
@@ -22,20 +14,13 @@ import { lifestyleService, SessionError } from '../../services/lifestyleService'
 import type {
   LifestyleRecommendationsResult,
   LifestyleSimulationOverride,
-  RecommendationItem,
 } from '../../types/lifestyle';
 
 import { LifestyleSkeleton } from '../../components/lifestyle/LifestyleSkeleton';
-import { TodayPriorityCard } from '../../components/lifestyle/TodayPriorityCard';
-import { NutritionPillarView } from '../../components/lifestyle/NutritionPillarView';
-import { FitnessPillarView } from '../../components/lifestyle/FitnessPillarView';
-import { LifestylePillarView } from '../../components/lifestyle/LifestylePillarView';
-import { EvidenceSourcesSection } from '../../components/lifestyle/EvidenceSourcesSection';
-import { ClinicianReviewBanner } from '../../components/lifestyle/ClinicianReviewBanner';
-import { RecommendationDetailModal } from '../../components/lifestyle/RecommendationDetailModal';
 import { LifestyleEmptyState } from '../../components/lifestyle/LifestyleEmptyState';
+import { OvaSenseLifestyleDashboard } from '../../components/lifestyle/ovasense/OvaSenseLifestyleDashboard';
+import { AndroSenseLifestyleDashboard } from '../../components/lifestyle/androsense/AndroSenseLifestyleDashboard';
 
-type PillarTab = 'nutrition' | 'fitness' | 'lifestyle';
 type ErrorClassification = 'NETWORK' | 'SESSION' | 'NO_ASSESSMENT' | 'SERVER';
 
 export const LifestyleRecommendationsPage: React.FC = () => {
@@ -48,8 +33,6 @@ export const LifestyleRecommendationsPage: React.FC = () => {
     userProfile?.gender === 'male';
   const defaultPathway = userProfileIsMale ? 'androsense' : 'ovasense';
 
-  const [activeTab, setActiveTab] = useState<PillarTab>('nutrition');
-
   // Synchronous cache lookup for instantaneous return visits (< 1ms)
   const initialCached = useMemo(() => {
     return lifestyleService.getCachedRecommendations(defaultPathway, activeUserId);
@@ -61,20 +44,10 @@ export const LifestyleRecommendationsPage: React.FC = () => {
     data?.pathway === 'androsense' ||
     data?.pathway === 'male_hypogonadism';
   const [loading, setLoading] = useState<boolean>(() => !initialCached);
-  const [simulating, setSimulating] = useState<boolean>(false);
+  const [_simulating, setSimulating] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [errorType, setErrorType] = useState<ErrorClassification | null>(null);
   const [nonBlockingNotice, setNonBlockingNotice] = useState<string | null>(null);
-
-  // Selected recommendation for the detail modal
-  const [selectedRecommendation, setSelectedRecommendation] = useState<RecommendationItem | null>(null);
-
-  // Interactive preference simulation state
-  const [dietaryPref, setDietaryPref] = useState<string>('standard');
-  const [activityLevel, setActivityLevel] = useState<string>('moderate');
-
-  // Toggle for collapsible evidence sources drawer
-  const [showEvidenceDrawer, setShowEvidenceDrawer] = useState<boolean>(false);
 
   // In-flight abort controller
   const inFlightAbortRef = React.useRef<AbortController | null>(null);
@@ -209,24 +182,6 @@ export const LifestyleRecommendationsPage: React.FC = () => {
     };
   }, [defaultPathway, postOnboardingReadiness, authLoading, activeUserId]);
 
-  const handleDietaryChange = (newPref: string) => {
-    setDietaryPref(newPref);
-    fetchRecommendations({
-      module: defaultPathway,
-      dietary_preference: newPref,
-      activity_level: activityLevel,
-    });
-  };
-
-  const handleActivityChange = (newLevel: string) => {
-    setActivityLevel(newLevel);
-    fetchRecommendations({
-      module: defaultPathway,
-      dietary_preference: dietaryPref,
-      activity_level: newLevel,
-    });
-  };
-
   const handleUpdateStatus = async (
     recommendationId: string,
     newStatus: 'NEW' | 'ACTIVE' | 'IMPROVING' | 'MAINTAIN' | 'REASSESS' | 'COMPLETED' | 'SKIPPED'
@@ -242,13 +197,6 @@ export const LifestyleRecommendationsPage: React.FC = () => {
       recommendations: updatedRecommendations,
     });
 
-    if (selectedRecommendation?.id === recommendationId) {
-      setSelectedRecommendation({
-        ...selectedRecommendation,
-        status: newStatus,
-      });
-    }
-
     try {
       await lifestyleService.updateRecommendationStatus({
         recommendation_id: recommendationId,
@@ -261,28 +209,6 @@ export const LifestyleRecommendationsPage: React.FC = () => {
       setData((prev) => (prev ? { ...prev, recommendations: oldRecommendations } : null));
     }
   };
-
-  // Top Priority Recommendation
-  const topPriorityRecommendation = useMemo(() => {
-    if (!data?.recommendations || data.recommendations.length === 0) return null;
-    return (
-      data.recommendations.find((r) => r.priority === 'high') ||
-      data.recommendations[0]
-    );
-  }, [data]);
-
-  // Formatted date
-  const formattedUpdatedDate = useMemo(() => {
-    if (!data?.generated_at) return null;
-    try {
-      return new Date(data.generated_at).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-      });
-    } catch {
-      return null;
-    }
-  }, [data?.generated_at]);
 
   // Loading State
   const isInitializing = postOnboardingReadiness === 'initializing';
@@ -396,302 +322,30 @@ export const LifestyleRecommendationsPage: React.FC = () => {
     return <LifestyleEmptyState isMale={isMale} />;
   }
 
-  const { nutrition, fitness, lifestyle, evidence_rationale, evidence_registry } = data;
-
-  return (
-    <div className="max-w-6xl mx-auto space-y-8 pb-20 text-left">
-      {/* Subtle non-blocking banner if fresh background sync failed while showing cached data */}
-      {nonBlockingNotice && (
-        <div className="rounded-2xl bg-amber-50 border border-amber-200/70 p-3.5 flex items-center justify-between gap-3 text-xs text-amber-800 shadow-xs">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-            <span>{nonBlockingNotice}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              setNonBlockingNotice(null);
-              fetchRecommendations(undefined, true);
-            }}
-            className="font-semibold text-amber-900 underline hover:no-underline shrink-0 cursor-pointer"
-          >
-            Retry Refresh
-          </button>
-        </div>
-      )}
-
-      {/* ── A. AIRY LIFESTYLE SANCTUARY HEADER ── */}
-      <header className="rounded-3xl bg-white border border-[#E2EEF4] p-6 sm:p-8 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span
-                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
-                  isMale
-                    ? 'bg-sky-50 text-[#0868B9] border-sky-200'
-                    : 'bg-teal-50 text-[#0E9EAA] border-teal-200'
-                }`}
-              >
-                {isMale
-                  ? 'Male Androgen & Vitality Support'
-                  : 'Female PCOS Metabolic Rhythm'}
-              </span>
-
-              {data.risk_category && (
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 capitalize">
-                  {data.risk_category.replace(/_/g, ' ')} Tier
-                </span>
-              )}
-
-              {formattedUpdatedDate && (
-                <span className="inline-flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-                  <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Updated {formattedUpdatedDate}</span>
-                </span>
-              )}
-            </div>
-
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#073B72] tracking-tight">
-              Daily Lifestyle Protocol
-            </h1>
-            <p className="text-sm text-slate-600 max-w-xl leading-relaxed">
-              Personalized nutritional fuel, functional movement, and circadian recovery tailored to your metabolic blueprint.
-            </p>
-          </div>
-
-          {/* Clean Interactive Preference Pills */}
-          <div className="p-3.5 rounded-2xl bg-[#F7FBFC] border border-[#E2EEF4] flex flex-wrap items-center gap-3 shrink-0">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-[#073B72]">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-[#0E9EAA]" />
-              <span className="hidden sm:inline">Preferences:</span>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <select
-                id="pref-diet"
-                value={dietaryPref}
-                onChange={(e) => handleDietaryChange(e.target.value)}
-                disabled={simulating}
-                className="text-xs font-semibold bg-white border border-[#E2EEF4] rounded-xl px-3 py-1.5 text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0E9EAA] cursor-pointer shadow-xs"
-                title="Dietary Preference"
-              >
-                <option value="standard">Standard</option>
-                <option value="vegetarian">Vegetarian</option>
-                <option value="vegan">Vegan</option>
-                <option value="pescatarian">Pescatarian</option>
-              </select>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <select
-                id="pref-activity"
-                value={activityLevel}
-                onChange={(e) => handleActivityChange(e.target.value)}
-                disabled={simulating}
-                className="text-xs font-semibold bg-white border border-[#E2EEF4] rounded-xl px-3 py-1.5 text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#0E9EAA] cursor-pointer shadow-xs"
-                title="Activity Level"
-              >
-                <option value="sedentary">Sedentary</option>
-                <option value="light">Light</option>
-                <option value="moderate">Moderate</option>
-                <option value="very_active">Active</option>
-              </select>
-            </div>
-
-            {simulating ? (
-              <span className="text-xs font-semibold text-[#0E9EAA] flex items-center gap-1.5 px-2">
-                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                <span>Updating...</span>
-              </span>
-            ) : (
-              <button
-                type="button"
-                onClick={() => fetchRecommendations(undefined, true)}
-                className="p-1.5 rounded-xl text-slate-500 hover:text-[#073B72] hover:bg-white border border-transparent hover:border-[#E2EEF4] transition cursor-pointer"
-                title="Recalculate protocol"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* Clinician Review Banner if medically indicated */}
-      {data.clinician_review?.recommended && (
-        <ClinicianReviewBanner clinicianReview={data.clinician_review} />
-      )}
-
-      {/* ── B. TODAY'S PRIME ANCHOR HERO CARD ── */}
-      {topPriorityRecommendation && (
-        <TodayPriorityCard
-          priorityRecommendation={topPriorityRecommendation}
-          onViewRecommendation={(rec) => setSelectedRecommendation(rec)}
-          onUpdateStatus={handleUpdateStatus}
-          isMale={isMale}
-        />
-      )}
-
-      {/* ── C. REFINED THREE PILLAR SEGMENTED NAVIGATION ── */}
-      <nav
-        aria-label="Lifestyle Pillars"
-        className="w-full sm:w-auto overflow-x-auto no-scrollbar flex items-center justify-start gap-1.5 sm:gap-2 bg-[#F7FBFC] p-1.5 rounded-2xl border border-[#E2EEF4] max-w-full sm:max-w-fit mx-auto sm:mx-0"
-        role="tablist"
-      >
-        <button
-          type="button"
-          role="tab"
-          id="tab-nutrition"
-          aria-selected={activeTab === 'nutrition'}
-          aria-controls="panel-nutrition"
-          onClick={() => setActiveTab('nutrition')}
-          className={`shrink-0 inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-            activeTab === 'nutrition'
-              ? isMale
-                ? 'bg-[#0868B9] text-white shadow-sm'
-                : 'bg-[#0E9EAA] text-white shadow-sm'
-              : 'text-slate-600 hover:text-[#073B72] hover:bg-white/80'
-          }`}
-        >
-          <Apple className="w-4 h-4 shrink-0" />
-          <span>
-            <span className="hidden xs:inline">Nutritional </span>Fuel
-          </span>
-        </button>
-
-        <button
-          type="button"
-          role="tab"
-          id="tab-fitness"
-          aria-selected={activeTab === 'fitness'}
-          aria-controls="panel-fitness"
-          onClick={() => setActiveTab('fitness')}
-          className={`shrink-0 inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-            activeTab === 'fitness'
-              ? isMale
-                ? 'bg-[#0868B9] text-white shadow-sm'
-                : 'bg-[#0E9EAA] text-white shadow-sm'
-              : 'text-slate-600 hover:text-[#073B72] hover:bg-white/80'
-          }`}
-        >
-          <Dumbbell className="w-4 h-4 shrink-0" />
-          <span>
-            Movement<span className="hidden xs:inline"> & Strength</span>
-          </span>
-        </button>
-
-        <button
-          type="button"
-          role="tab"
-          id="tab-lifestyle"
-          aria-selected={activeTab === 'lifestyle'}
-          aria-controls="panel-lifestyle"
-          onClick={() => setActiveTab('lifestyle')}
-          className={`shrink-0 inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-6 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-            activeTab === 'lifestyle'
-              ? isMale
-                ? 'bg-[#0868B9] text-white shadow-sm'
-                : 'bg-[#0E9EAA] text-white shadow-sm'
-              : 'text-slate-600 hover:text-[#073B72] hover:bg-white/80'
-          }`}
-        >
-          <HeartPulse className="w-4 h-4 shrink-0" />
-          <span>
-            Rest<span className="hidden xs:inline"> & Circadian</span>
-          </span>
-        </button>
-      </nav>
-
-      {/* ── D. ACTIVE PILLAR CONTENT ── */}
-      <main id="pillar-content-panels">
-        {activeTab === 'nutrition' && (
-          <div id="panel-nutrition" role="tabpanel" aria-labelledby="tab-nutrition">
-            <NutritionPillarView
-              nutrition={nutrition}
-              recommendations={data.recommendations}
-              onSelectRecommendation={(rec) => setSelectedRecommendation(rec)}
-              onUpdateStatus={handleUpdateStatus}
-              isMale={isMale}
-            />
-          </div>
-        )}
-
-        {activeTab === 'fitness' && (
-          <div id="panel-fitness" role="tabpanel" aria-labelledby="tab-fitness">
-            <FitnessPillarView
-              fitness={fitness}
-              recommendations={data.recommendations}
-              onSelectRecommendation={(rec) => setSelectedRecommendation(rec)}
-              onUpdateStatus={handleUpdateStatus}
-              isMale={isMale}
-            />
-          </div>
-        )}
-
-        {activeTab === 'lifestyle' && (
-          <div id="panel-lifestyle" role="tabpanel" aria-labelledby="tab-lifestyle">
-            <LifestylePillarView
-              lifestyle={lifestyle}
-              recommendations={data.recommendations}
-              onSelectRecommendation={(rec) => setSelectedRecommendation(rec)}
-              onUpdateStatus={handleUpdateStatus}
-              isMale={isMale}
-            />
-          </div>
-        )}
-      </main>
-
-      {/* ── E. QUIET COLLAPSIBLE CLINICAL EVIDENCE FOOTER ── */}
-      <section className="rounded-3xl bg-white border border-[#E2EEF4] p-5 sm:p-6 shadow-sm space-y-3">
-        <button
-          type="button"
-          onClick={() => setShowEvidenceDrawer(!showEvidenceDrawer)}
-          className="w-full flex items-center justify-between text-left cursor-pointer focus:outline-none"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-slate-100 text-[#073B72] flex items-center justify-center">
-              <BookOpen className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-[#073B72]">
-                Clinical Foundations & Research Sources
-              </h4>
-              <p className="text-xs text-slate-500">
-                Explore peer-reviewed clinical guidelines, biomarker attributions, and evidence registries
-              </p>
-            </div>
-          </div>
-          {showEvidenceDrawer ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
-        </button>
-
-        {showEvidenceDrawer && (
-          <div className="pt-4 border-t border-slate-100 animate-fadeIn">
-            <EvidenceSourcesSection
-              evidenceRegistry={evidence_registry}
-              evidenceRationale={evidence_rationale}
-              recommendations={data.recommendations}
-              disclaimer={data.disclaimer}
-              isMale={isMale}
-            />
-          </div>
-        )}
-      </section>
-
-      {/* ── F. MEDICAL DISCLAIMER ── */}
-      <footer className="text-center pt-2 pb-4 text-xs text-slate-400 leading-relaxed max-w-3xl mx-auto">
-        {data.disclaimer ||
-          'BioPulse AI lifestyle recommendations provide educational health guidance based on clinical consensus. This protocol is not a medical diagnosis or treatment plan. Always consult your physician before making substantial changes to your diet, exercise, or medical regimen.'}
-      </footer>
-
-      {/* Recommendation Detail Modal */}
-      <RecommendationDetailModal
-        recommendation={selectedRecommendation}
-        onClose={() => setSelectedRecommendation(null)}
+  // ── FEMALE OVASENSE PROTOCOL (Pixel-Accurate Reference Redesign) ──
+  if (!isMale) {
+    return (
+      <OvaSenseLifestyleDashboard
+        data={data}
         onUpdateStatus={handleUpdateStatus}
-        evidenceRegistry={evidence_registry}
-        isMale={isMale}
+        onRefresh={() => fetchRecommendations(undefined, true)}
+        activeUserId={activeUserId}
+        nonBlockingNotice={nonBlockingNotice}
+        onClearNonBlockingNotice={() => setNonBlockingNotice(null)}
       />
-    </div>
+    );
+  }
+
+  // ── MALE ANDROSENSE PROTOCOL (Complete Male Replication in Sky Blue) ──
+  return (
+    <AndroSenseLifestyleDashboard
+      data={data}
+      onUpdateStatus={handleUpdateStatus}
+      onRefresh={() => fetchRecommendations(undefined, true)}
+      activeUserId={activeUserId}
+      nonBlockingNotice={nonBlockingNotice}
+      onClearNonBlockingNotice={() => setNonBlockingNotice(null)}
+    />
   );
 };
 

@@ -91,8 +91,8 @@ export function calculateCycleMetrics(
     };
   }
 
-  const lastDate = new Date(lastPeriodDate);
-  if (isNaN(lastDate.getTime())) {
+  const [y, m, d] = lastPeriodDate.split('T')[0].split('-').map(Number);
+  if (!y || !m || !d || isNaN(y) || isNaN(m) || isNaN(d)) {
     return {
       hasLoggedPeriod: false,
       cycleDay: 1,
@@ -106,15 +106,12 @@ export function calculateCycleMetrics(
   }
 
   const today = new Date();
-  // Reset timestamps to midnight for pure calendar day differences
-  const lastMidnight = new Date(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate());
-  const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const lastEpoch = Math.floor(Date.UTC(y, m - 1, d) / 86400000);
+  const todayEpoch = Math.floor(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()) / 86400000);
 
-  const diffMs = todayMidnight.getTime() - lastMidnight.getTime();
-  const diffDays = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
-
-  const cycleDay = (diffDays % totalCycleDays) + 1;
-  const midpoint = Math.floor(totalCycleDays / 2);
+  const diffDays = Math.max(0, todayEpoch - lastEpoch);
+  const cycleDay = diffDays + 1;
+  const midpoint = Math.max(1, totalCycleDays - 14);
 
   let phaseKey: 'period' | 'follicular' | 'ovulation' | 'luteal' = 'follicular';
   let phaseName = 'Follicular Phase';
@@ -124,27 +121,36 @@ export function calculateCycleMetrics(
     phaseKey = 'period';
     phaseName = 'Menstrual Phase';
     phaseDescription = 'Uterine shedding and baseline estrogen & progesterone levels. Rest and gentle hydration recommended.';
-  } else if (cycleDay < midpoint) {
+  } else if (cycleDay > totalCycleDays) {
+    phaseKey = 'luteal';
+    phaseName = 'Extended Cycle';
+    phaseDescription = `Cycle day ${cycleDay} has exceeded the expected ${totalCycleDays}-day cadence. Tracking continues until your next period starts.`;
+  } else if (cycleDay < Math.max(safeDuration + 1, midpoint - 5)) {
     phaseKey = 'follicular';
     phaseName = 'Follicular Phase';
     phaseDescription = 'Estrogen is naturally rising. Ideal for creative focus, strength training, and insulin sensitivity.';
-  } else if (cycleDay >= midpoint && cycleDay <= midpoint + 1) {
+  } else if (cycleDay >= Math.max(safeDuration + 1, midpoint - 5) && cycleDay <= Math.min(totalCycleDays, midpoint + 1)) {
     phaseKey = 'ovulation';
     phaseName = 'Ovulation Window';
-    phaseDescription = 'LH surge triggers mature follicle release. Peak energy and fertile window.';
+    phaseDescription = 'Estimated fertile window based on cycle history. Peak energy and vitality.';
   } else {
     phaseKey = 'luteal';
     phaseName = 'Luteal Phase';
     phaseDescription = 'Progesterone dominance supports uterine lining. Calorie-dense complex carbs and restorative movement recommended.';
   }
 
-  const nextPeriodDays = Math.max(1, totalCycleDays - cycleDay + 1);
-  const nextDateObj = new Date(todayMidnight.getTime() + nextPeriodDays * 24 * 60 * 60 * 1000);
+  const expectedEpoch = lastEpoch + totalCycleDays;
+  const daysUntilNext = expectedEpoch - todayEpoch;
+  const isOverdue = daysUntilNext < 0;
+  const nextPeriodDays = isOverdue ? 0 : daysUntilNext;
+
+  const nextDateTarget = new Date(expectedEpoch * 86400000);
   const nextPeriodDate = new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-  }).format(nextDateObj);
+    timeZone: 'UTC',
+  }).format(nextDateTarget);
 
   return {
     hasLoggedPeriod: true,

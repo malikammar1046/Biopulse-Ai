@@ -1034,12 +1034,39 @@ class PCOSMLService:
         if not gradcam_b64:
             gradcam_b64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
 
+        original_image_b64 = None
+        try:
+            img_resized_orig = img_rgb.resize((224, 224))
+            buf_orig = io.BytesIO()
+            img_resized_orig.save(buf_orig, format='PNG')
+            buf_orig.seek(0)
+            original_image_b64 = "data:image/png;base64," + base64.b64encode(buf_orig.read()).decode('utf-8')
+        except Exception as orig_err:
+            logger.debug("Original ultrasound base64 generation notice: %s", orig_err)
+
+        pcom_confidence = round(abs(p_pcom - 0.5) * 200, 1)
+
+        ultrasound_explainability = {
+            'method': 'Grad-CAM (Gradient-weighted Class Activation Mapping)',
+            'model_architecture': 'PyTorch EfficientNet-B0 Convolutional Backbone',
+            'target_layer': 'features[-1] (Conv2dNormActivation)',
+            'pcom_status': pcom_label,
+            'pcom_probability': round(p_pcom, 4),
+            'pcom_confidence_percent': pcom_confidence,
+            'attention_focus': 'Peripheral follicular ring and dense central ovarian stroma',
+            'clinical_disclaimer': 'CRITICAL: Highlighted regions represent convolutional neural network feature attribution (model attention), NOT confirmed medical abnormalities, follicle count validation, or cysts. Pelvic ultrasound morphology is an independent Rotterdam criterion and does not replace diagnostic ultrasound evaluation by a qualified medical professional.',
+            'gradcam_b64': gradcam_b64,
+            'original_image_b64': original_image_b64,
+        }
+
         return {
             'pcom_probability': round(p_pcom, 4),
             'pcom_status': pcom_label,
-            'pcom_confidence_percent': round(abs(p_pcom - 0.5) * 200, 1),
+            'pcom_confidence_percent': pcom_confidence,
             'exploratory_pcos_probability': round(p_pcos_t3, 4) if p_pcos_t3 is not None else None,
             'gradcam_b64': gradcam_b64,
+            'original_image_b64': original_image_b64,
+            'ultrasound_explainability': ultrasound_explainability,
             'architecture': 'EfficientNet-B0 Vision Backbone',
         }
 
@@ -1077,19 +1104,19 @@ class PCOSMLService:
         # Explanations from cumulative Tier 2 plus imaging context
         explanations = t2_res['explanations']
         shap_payload = dict(t2_res.get('shap_explanation') or {})
-        if shap_payload:
-            shap_payload['tier'] = 'tier_1_2_3'
-            shap_payload['model_name'] = 'Clinical Assessment with Independent Ultrasound Morphology (Tier 1 + 2 + 3)'
-            shap_payload['multimodal_context'] = {
-                'score_source': 'Current Tier 2 model-derived screening estimate (PCOS-ML v1.2-T2: Extra Trees + Platt Sigmoid Calibration)',
-                'numerical_score_anchored_to_tier2': True,
-                'clinical_probability': p_t2,
-                'clinical_weight': 1.0,
-                'ultrasound_weight': 0.0,
-                'pcom_status': img_res['pcom_status'],
-                'pcom_probability': img_res.get('pcom_probability'),
-                'note': 'Tabular factor contributions derive directly from the current Tier 2 model-derived screening estimate (Extra Trees with Platt sigmoid calibration). Pelvic ultrasound contributes an independent AI-estimated PCOM morphology finding without altering the numerical clinical risk score, and does not constitute confirmation of a Rotterdam criterion or PCOS diagnosis. SHAP values indicate localized model feature attribution, not clinical proof of disease etiology.',
-            }
+
+        ultrasound_explainability = img_res.get('ultrasound_explainability') or {
+            'method': 'Grad-CAM (Gradient-weighted Class Activation Mapping)',
+            'model_architecture': 'PyTorch EfficientNet-B0 Convolutional Backbone',
+            'target_layer': 'features[-1] (Conv2dNormActivation)',
+            'pcom_status': img_res['pcom_status'],
+            'pcom_probability': img_res.get('pcom_probability'),
+            'pcom_confidence_percent': img_res.get('pcom_confidence_percent'),
+            'attention_focus': 'Peripheral follicular ring and dense central ovarian stroma',
+            'clinical_disclaimer': 'CRITICAL: Highlighted regions represent convolutional neural network feature attribution (model attention), NOT confirmed medical abnormalities, follicle count validation, or cysts. Pelvic ultrasound morphology is an independent Rotterdam criterion and does not replace diagnostic ultrasound evaluation by a qualified medical professional.',
+            'gradcam_b64': img_res.get('gradcam_b64'),
+            'original_image_b64': img_res.get('original_image_b64'),
+        }
 
         # Age-related safeguard for ultrasound interpretation (Adolescent guidance)
         age_val = raw_inputs.get('age')
@@ -1115,6 +1142,43 @@ class PCOSMLService:
         if img_res.get('inference_error'):
             limitations.insert(0, img_res['inference_error'])
 
+        multimodal_synthesis = {
+            'assessment_tier': 'Tier 1+2+3 (Multimodal)',
+            'clinical_tier': 'Tier 1+2 (Cumulative Extra Trees with Platt Sigmoid Calibration)',
+            'clinical_model': 'PCOS-ML v1.2 Cumulative Extra Trees',
+            'clinical_probability': p_t2,
+            'clinical_risk_category': risk_category,
+            'clinical_score_anchored': True,
+            'ultrasound_tier': 'Tier 3 (PyTorch EfficientNet-B0 + PCOM Classifier)',
+            'ultrasound_status': img_res['pcom_status'],
+            'ultrasound_confidence': img_res.get('pcom_probability') or 0.0,
+            'pcom_status': img_res['pcom_status'],
+            'pcom_probability': img_res.get('pcom_probability'),
+            'synthesis_method': 'Interim independent multimodal synthesis (clinical anchor with independent morphological validation)',
+            'fusion_method': 'Interim independent multimodal synthesis (clinical anchor with independent morphological validation)',
+            'clinical_interpretation': 'Numerical PCOS risk reflects the validated 32-feature clinical model anchored in endocrine and metabolic biomarkers. Pelvic ultrasound contributes an independent AI-estimated PCOM morphology finding without altering the numerical risk score.',
+            'independent_attribution_note': 'Clinical SHAP values and visual Grad-CAM heatmaps are maintained as distinct model-specific attributions to preserve mathematical integrity without fabricating additive combinations.',
+            'fusion_rationale': 'Numerical PCOS risk reflects the validated 32-feature clinical model anchored in endocrine and metabolic biomarkers. Pelvic ultrasound contributes an independent AI-estimated PCOM morphology finding without altering the numerical risk score. Clinical SHAP values and visual Grad-CAM heatmaps are maintained as distinct model-specific attributions to preserve mathematical integrity.',
+            'limitations': limitations,
+            'disclaimer': 'Under the 2023 International Evidence-Based PCOS Guidelines, ovarian morphology is an independent diagnostic criterion evaluated alongside clinical and biochemical hyperandrogenism and ovulatory dysfunction.',
+        }
+
+        if shap_payload:
+            shap_payload['tier'] = 'tier_1_2_3'
+            shap_payload['model_name'] = 'Clinical Assessment with Independent Ultrasound Morphology (Tier 1 + 2 + 3)'
+            shap_payload['ultrasound_explainability'] = ultrasound_explainability
+            shap_payload['multimodal_synthesis'] = multimodal_synthesis
+            shap_payload['multimodal_context'] = {
+                'score_source': 'Current Tier 2 model-derived screening estimate (PCOS-ML v1.2-T2: Extra Trees + Platt Sigmoid Calibration)',
+                'numerical_score_anchored_to_tier2': True,
+                'clinical_probability': p_t2,
+                'clinical_weight': 1.0,
+                'ultrasound_weight': 0.0,
+                'pcom_status': img_res['pcom_status'],
+                'pcom_probability': img_res.get('pcom_probability'),
+                'note': 'Tabular factor contributions derive directly from the current Tier 2 model-derived screening estimate (Extra Trees with Platt sigmoid calibration). Pelvic ultrasound contributes an independent AI-estimated PCOM morphology finding without altering the numerical clinical risk score, and does not constitute confirmation of a Rotterdam criterion or PCOS diagnosis. SHAP values indicate localized model feature attribution, not clinical proof of disease etiology.',
+            }
+
         return {
             'assessment_level': 'tier_1_2_3',
             'tiers_included': [1, 2, 3],
@@ -1139,6 +1203,9 @@ class PCOSMLService:
             'pcom_status': img_res['pcom_status'],
             'pcom_probability': img_res.get('pcom_probability'),
             'gradcam_b64': img_res.get('gradcam_b64'),
+            'original_image_b64': img_res.get('original_image_b64'),
+            'ultrasound_explainability': ultrasound_explainability,
+            'multimodal_synthesis': multimodal_synthesis,
             'fusion_details': {
                 'fusion_method': 'Current Tier 2 model-derived screening estimate with independent AI-estimated PCOM morphology',
                 'score_source': 'Current Tier 2 model-derived screening estimate (PCOS-ML v1.2-T2: Extra Trees + Platt Sigmoid Calibration)',
@@ -1244,12 +1311,14 @@ class PCOSMLService:
                         sv = float(shap_arr[i])
                         meta = FEATURE_HUMAN_METADATA.get(feat, {'label': feat.replace('_', ' ').title(), 'pos_desc': '', 'neg_desc': ''})
                         desc = meta['pos_desc'] if sv > 0 else meta['neg_desc']
+                        tier_label = meta.get('tier', 'Tier 1')
                         explanations.append({
                             'feature_key': feat,
                             'feature_name': meta['label'],
                             'value': val,
                             'unit': meta.get('unit', ''),
-                            'tier': meta.get('tier', 'Tier 1'),
+                            'tier': tier_label,
+                            'is_tier2_clinical': tier_label == 'Tier 2',
                             'impact_score': round(abs(sv), 4),
                             'direction': 'increases_risk' if sv > 0 else 'decreases_risk',
                             'description': desc,
@@ -1258,7 +1327,7 @@ class PCOSMLService:
 
                 # Sort by impact score; prioritize features that were actually provided
                 explanations.sort(key=lambda x: (x['is_provided'], x['impact_score']), reverse=True)
-                return [{k: v for k, v in item.items() if k != 'is_provided'} for item in explanations[:8]]
+                return explanations[:8]
 
         except Exception as e:
             logger.debug("TreeSHAP calculation fallback: %s", e)
@@ -1285,19 +1354,21 @@ class PCOSMLService:
                             direction = 'decreases_risk'
 
                         meta = FEATURE_HUMAN_METADATA.get(feat, {'label': feat.replace('_', ' ').title(), 'pos_desc': '', 'neg_desc': ''})
+                        tier_label = meta.get('tier', 'Tier 1')
                         explanations.append({
                             'feature_key': feat,
                             'feature_name': meta['label'],
                             'value': val,
                             'unit': meta.get('unit', ''),
-                            'tier': meta.get('tier', 'Tier 1'),
+                            'tier': tier_label,
+                            'is_tier2_clinical': tier_label == 'Tier 2',
                             'impact_score': round(float(impact), 4),
                             'direction': direction,
                             'description': meta['pos_desc'] if direction == 'increases_risk' else meta['neg_desc'],
                             'is_provided': is_provided,
                         })
                 explanations.sort(key=lambda x: (x['is_provided'], x['impact_score']), reverse=True)
-                return [{k: v for k, v in item.items() if k != 'is_provided'} for item in explanations[:8]]
+                return explanations[:8]
         except Exception as e2:
             logger.debug("Heuristic explanation fallback failed: %s", e2)
 

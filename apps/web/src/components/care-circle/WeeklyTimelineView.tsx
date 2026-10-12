@@ -10,6 +10,7 @@ interface WeeklyTimelineViewProps {
   showFitness?: boolean;
   showSymptoms?: boolean;
   showMedications?: boolean;
+  pathway?: 'female' | 'male';
 }
 
 export const WeeklyTimelineView: React.FC<WeeklyTimelineViewProps> = ({
@@ -18,9 +19,10 @@ export const WeeklyTimelineView: React.FC<WeeklyTimelineViewProps> = ({
   showFitness = true,
   showSymptoms = true,
   showMedications = true,
+  pathway: pathwayProp,
 }) => {
   const { userProfile } = useUserHealth();
-  const pathway = resolvePathway(userProfile?.gender, userProfile?.pathway);
+  const pathway = pathwayProp || resolvePathway(userProfile?.gender, userProfile?.pathway);
   const isFemale = pathway === 'female';
 
   return (
@@ -41,10 +43,10 @@ export const WeeklyTimelineView: React.FC<WeeklyTimelineViewProps> = ({
         {days.map((day, idx) => (
           <div
             key={idx}
-            className={`p-4 rounded-xl ${isFemale ? 'bg-[#FFF8FA] border-[#FDE6EF] hover:bg-[#FDF2F8]' : 'bg-[#F0F9FF] border-[#BAE6FD] hover:bg-[#E0F2FE]'} border flex flex-col justify-between space-y-3 transition-colors`}
+            className={`p-3.5 rounded-xl bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] shadow-2xs flex flex-col justify-between space-y-3 transition-colors`}
           >
             {/* Day Header */}
-            <div className={`border-b ${isFemale ? 'border-[#FDE6EF]' : 'border-[#BAE6FD]'} pb-2`}>
+            <div className="border-b border-[#F1F5F9] pb-2">
               <span className="text-xs font-bold text-[#0F172A] block">
                 {day.dayName}
               </span>
@@ -104,7 +106,7 @@ export const WeeklyTimelineView: React.FC<WeeklyTimelineViewProps> = ({
 
               {/* Symptoms */}
               {showSymptoms && (
-                <div className={`pt-1 border-t ${isFemale ? 'border-[#FDE6EF]' : 'border-[#BAE6FD]'} space-y-1`}>
+                <div className="pt-1.5 border-t border-[#F1F5F9] space-y-1">
                   <span className="text-[9px] font-mono uppercase text-[#64748B] block">
                     Symptoms
                   </span>
@@ -112,7 +114,7 @@ export const WeeklyTimelineView: React.FC<WeeklyTimelineViewProps> = ({
                     day.symptoms.map((s, sIdx) => (
                       <div
                         key={sIdx}
-                        className="px-1.5 py-0.5 rounded-lg bg-[#FFE4E6] text-[#BE123C] text-[10px] font-medium leading-tight truncate"
+                        className="px-2 py-0.5 rounded-md bg-[#FFF1F2] border border-[#FECDD3] text-[#BE123C] text-[10px] font-medium leading-tight truncate"
                       >
                         {s.name} • {s.severity}
                       </div>

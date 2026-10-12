@@ -128,6 +128,7 @@ class FitnessService {
 
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('ovasense_fitness_updated'));
+      window.dispatchEvent(new CustomEvent('biopulse_fitness_updated'));
     }
 
     return { success: true, entry: newEntry };
@@ -182,6 +183,7 @@ class FitnessService {
 
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('ovasense_fitness_updated'));
+      window.dispatchEvent(new CustomEvent('biopulse_fitness_updated'));
     }
 
     return { success: true, entry: updatedEntry };
@@ -207,6 +209,7 @@ class FitnessService {
 
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('ovasense_fitness_updated'));
+      window.dispatchEvent(new CustomEvent('biopulse_fitness_updated'));
     }
 
     return { success: true };

@@ -20,9 +20,9 @@ export const MaleOnboardingStepper: React.FC<MaleOnboardingStepperProps> = ({
 }) => {
   return (
     <div className="w-full py-1 mb-2.5">
-      <div className="relative flex items-center justify-between max-w-3xl xl:max-w-4xl mx-auto px-2">
+      <div className="relative flex items-center justify-between w-full px-2 sm:px-4">
         {/* Connector Line behind nodes */}
-        <div className="absolute top-[18px] left-10 right-10 h-[2px] bg-[#E2EEF4] -z-0" />
+        <div className="absolute top-[18px] left-6 right-6 sm:left-10 sm:right-10 h-[2px] bg-[#E2EEF4] -z-0" />
 
         {steps.map((step, idx) => {
           const stepNum = idx + 1;

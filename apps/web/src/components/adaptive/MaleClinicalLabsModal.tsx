@@ -14,6 +14,7 @@ import {
   File01,
 } from '@untitledui/icons';
 import { useUserHealth } from '../../context/UserHealthContext';
+import { useTranslation } from 'react-i18next';
 import { ocrService } from '../../services/ocrService';
 import { reportService } from '../../services/reportService';
 import type { ReportResultInput } from '../../types/report';
@@ -23,6 +24,7 @@ import {
   ClinicalSection,
   ClinicalField,
 } from './ClinicalModalPrimitives';
+import type { SaveStage } from './ClinicalLabsModal';
 
 interface MaleClinicalLabsModalProps {
   isOpen: boolean;
@@ -239,7 +241,8 @@ export const MaleClinicalLabsModal: React.FC<MaleClinicalLabsModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { activeAssessment, submitMaleTier2, clearTier2, fetchClinicalState, userProfile } = useUserHealth();
+  const { t } = useTranslation();
+  const { activeAssessment, submitMaleTier2, clearTier2, fetchClinicalState, saveClinicalState, userProfile } = useUserHealth();
 
   // Multi-Report Clinical Inbox UI Mode
   const [reportUploadTab, setReportUploadTab] = useState<'multiple' | 'category'>('multiple');
@@ -279,10 +282,13 @@ export const MaleClinicalLabsModal: React.FC<MaleClinicalLabsModalProps> = ({
   const [showConfirmClear, setShowConfirmClear] = useState(false);
   const [clearingTier2, setClearingTier2] = useState(false);
 
-  // Async submission state
-  const [submitting, setSubmitting] = useState(false);
+  // Multi-step save & assessment feedback state
+  const [saveStage, setSaveStage] = useState<SaveStage>('idle');
+  const [confirmedRiskPercent, setConfirmedRiskPercent] = useState<number | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [successNotice, setSuccessNotice] = useState(false);
+
+  const isSubmittingRef = useRef(false);
+  const latestSavedPayloadRef = useRef<Record<string, any> | null>(null);
 
   const isDev = Boolean(import.meta.env.DEV);
 
@@ -349,7 +355,10 @@ export const MaleClinicalLabsModal: React.FC<MaleClinicalLabsModalProps> = ({
       setOcrBanner(null);
       setReportUploadTab('multiple');
       setSubmitError(null);
-      setSuccessNotice(false);
+      setSaveStage('idle');
+      setConfirmedRiskPercent(null);
+      isSubmittingRef.current = false;
+      latestSavedPayloadRef.current = null;
       setShowConfirmClear(false);
     };
 
@@ -662,88 +671,170 @@ export const MaleClinicalLabsModal: React.FC<MaleClinicalLabsModalProps> = ({
     ).length;
   };
 
-  // Submit Handler: One single cumulative reassessment
+  // Submit Handler: Fast PATCH save -> Automatic Male Tier 2 Recalculation
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmittingRef.current) return;
+
     setSubmitError(null);
-    setSubmitting(true);
+
+    const payload: Record<string, any> = {};
+    const errors: Record<string, string> = {};
+    let filledCount = 0;
+
+    for (const fc of MALE_FIELD_CONFIGS) {
+      const val = formValues[fc.key]?.trim();
+      if (val !== undefined && val !== '') {
+        const num = parseFloat(val);
+        if (isNaN(num)) {
+          errors[fc.key] = 'Enter a valid numeric result.';
+        } else if (num < fc.min || num > fc.max) {
+          errors[fc.key] = `Must be between ${fc.min} and ${fc.max} ${fc.unit}.`;
+        } else {
+          payload[fc.key] = num;
+          filledCount++;
+        }
+      }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setSubmitError('Please resolve highlighted measurement errors before saving.');
+      return;
+    }
+
+    const existing =
+      activeAssessment?.tier_2_inputs ||
+      (activeAssessment as any)?.authoritative_tier_2_inputs ||
+      activeAssessment?.input_features ||
+      {};
+
+    const existingRemainingCount = Object.keys(existing).filter(
+      (k) => !removedFields.includes(k) && !payload[k]
+    ).length;
+
+    if (filledCount === 0 && existingRemainingCount === 0) {
+      setSubmitError('Please enter at least one clinical or laboratory value before saving.');
+      return;
+    }
+
+    if (removedFields.length > 0) {
+      payload['remove_fields'] = removedFields;
+    }
+
+    if (import.meta.env.DEV) {
+      console.log(
+        `[TIER2_TRACE] event=submit_start user=${activeAssessment?.patient_id || 'unknown'} module=male_hypogonadism active_before_id=${activeAssessment?.id} active_before_level=${activeAssessment?.assessment_level} tier2_field_count=${filledCount}`
+      );
+    }
+
+    isSubmittingRef.current = true;
+    latestSavedPayloadRef.current = payload;
 
     try {
-      const payload: Record<string, any> = {};
-      const errors: Record<string, string> = {};
-      let filledCount = 0;
-
-      for (const fc of MALE_FIELD_CONFIGS) {
-        const val = formValues[fc.key]?.trim();
-        if (val !== undefined && val !== '') {
-          const num = parseFloat(val);
-          if (isNaN(num)) {
-            errors[fc.key] = 'Enter a valid numeric result.';
-          } else if (num < fc.min || num > fc.max) {
-            errors[fc.key] = `Must be between ${fc.min} and ${fc.max} ${fc.unit}.`;
-          } else {
-            payload[fc.key] = num;
-            filledCount++;
-          }
+      // 1. Save clinical values immediately with patch semantics
+      setSaveStage('saving_values');
+      if (saveClinicalState) {
+        try {
+          await saveClinicalState(payload, 'male_hypogonadism', removedFields);
+        } catch (saveErr) {
+          console.warn('[MaleClinicalLabsModal] Direct clinical state save notice:', saveErr);
         }
       }
 
-      if (Object.keys(errors).length > 0) {
-        setFieldErrors(errors);
-        throw new Error('Please resolve highlighted measurement errors before saving.');
-      }
+      setSaveStage('values_saved');
 
-      const existing =
-        activeAssessment?.tier_2_inputs ||
-        activeAssessment?.input_features ||
-        {};
+      // Brief transition pause for distinct user feedback
+      await new Promise((r) => setTimeout(r, 450));
 
-      const existingRemainingCount = Object.keys(existing).filter(
-        (k) => !removedFields.includes(k) && !payload[k]
-      ).length;
-
-      if (filledCount === 0 && existingRemainingCount === 0) {
-        throw new Error('Please enter at least one clinical or laboratory value before saving.');
-      }
-
-      if (removedFields.length > 0) {
-        payload['remove_fields'] = removedFields;
-      }
-
-      if (import.meta.env.DEV) {
-        console.log(
-          `[TIER2_TRACE] event=submit_start user=${activeAssessment?.patient_id || 'unknown'} module=male_hypogonadism active_before_id=${activeAssessment?.id} active_before_level=${activeAssessment?.assessment_level} tier2_field_count=${filledCount}`
-        );
-      }
-
-      // Requirement 3: Enforce valid result check before showing success
+      // 2. Automatic Tier 2 recalculation for Male Hypogonadism
+      setSaveStage('recalculating_tier2');
       const res = await submitMaleTier2(payload);
+
       if (!res) {
-        throw new Error(
-          'Clinical data was not saved or the updated assessment could not be generated. Please try again.'
-        );
+        setSaveStage('assessment_failed_values_saved');
+        isSubmittingRef.current = false;
+        return;
       }
 
       if (
         res.assessment_level !== 'tier_1_2' &&
         res.assessment_level !== 'tier_1_2_3'
       ) {
-        throw new Error(
-          'Clinical data was not incorporated into the active assessment.'
-        );
+        throw new Error('Clinical data was not incorporated into the active assessment.');
       }
 
-      setSuccessNotice(true);
+      const prob = typeof res.probability === 'number' ? res.probability : Number(res.probability);
+      const probPct = typeof res.probability_percent === 'number' ? res.probability_percent : Number(res.probability_percent);
+      const riskVal =
+        Number.isFinite(probPct) && probPct >= 0 && probPct <= 100
+          ? Math.round(probPct)
+          : Number.isFinite(prob) && prob >= 0 && prob <= 1
+          ? Math.round(prob * 100)
+          : null;
+
+      setConfirmedRiskPercent(riskVal);
+      setSaveStage('tier2_updated');
+
       if (onSuccess) onSuccess();
+
       setTimeout(() => {
-        setSuccessNotice(false);
+        isSubmittingRef.current = false;
+        setSaveStage('idle');
         onClose();
-      }, 1200);
+      }, 1500);
     } catch (err: any) {
       console.error('[Male Labs Modal] Submit error:', err);
-      setSubmitError(err?.message || 'Encountered an error submitting laboratory assessment.');
-    } finally {
-      setSubmitting(false);
+      if (saveStage === 'recalculating_tier2' || saveStage === 'values_saved') {
+        setSaveStage('assessment_failed_values_saved');
+      } else {
+        setSaveStage('save_failed');
+        setSubmitError(err?.message || 'Encountered an error submitting laboratory assessment.');
+      }
+      isSubmittingRef.current = false;
+    }
+  };
+
+  // Retry assessment without re-saving duplicate clinical state
+  const handleRetryAssessment = async () => {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    setSaveStage('recalculating_tier2');
+    setSubmitError(null);
+
+    try {
+      const payload = latestSavedPayloadRef.current || {};
+      const res = await submitMaleTier2(payload);
+
+      if (!res) {
+        setSaveStage('assessment_failed_values_saved');
+        isSubmittingRef.current = false;
+        return;
+      }
+
+      const prob = typeof res.probability === 'number' ? res.probability : Number(res.probability);
+      const probPct = typeof res.probability_percent === 'number' ? res.probability_percent : Number(res.probability_percent);
+      const riskVal =
+        Number.isFinite(probPct) && probPct >= 0 && probPct <= 100
+          ? Math.round(probPct)
+          : Number.isFinite(prob) && prob >= 0 && prob <= 1
+          ? Math.round(prob * 100)
+          : null;
+
+      setConfirmedRiskPercent(riskVal);
+      setSaveStage('tier2_updated');
+
+      if (onSuccess) onSuccess();
+
+      setTimeout(() => {
+        isSubmittingRef.current = false;
+        setSaveStage('idle');
+        onClose();
+      }, 1500);
+    } catch (err: any) {
+      console.error('[Male Labs Modal] Retry error:', err);
+      setSaveStage('assessment_failed_values_saved');
+      isSubmittingRef.current = false;
     }
   };
 
@@ -767,8 +858,34 @@ export const MaleClinicalLabsModal: React.FC<MaleClinicalLabsModalProps> = ({
   const organCount = countCategoryAdded('hematology_organ');
 
   const hasExistingSavedData = Boolean(
-    activeAssessment?.tier_2_inputs && Object.keys(activeAssessment.tier_2_inputs).length > 0
+    (activeAssessment?.tier_2_inputs && Object.keys(activeAssessment.tier_2_inputs).length > 0) ||
+      ((activeAssessment as any)?.authoritative_tier_2_inputs &&
+        Object.keys((activeAssessment as any).authoritative_tier_2_inputs).length > 0)
   );
+
+  const isBusy =
+    saveStage === 'saving_values' ||
+    saveStage === 'values_saved' ||
+    saveStage === 'recalculating_tier2';
+
+  let submitBtnText = 'Save Results →';
+  if (saveStage === 'saving_values') {
+    submitBtnText = t('screening.clinicalSave.savingValues', { defaultValue: 'Saving clinical values…' });
+  } else if (saveStage === 'values_saved') {
+    submitBtnText = t('screening.clinicalSave.valuesSaved', { defaultValue: 'Values saved successfully.' });
+  } else if (saveStage === 'recalculating_tier2') {
+    submitBtnText = t('screening.clinicalSave.recalculatingTier2', { defaultValue: 'Recalculating Tier 2 risk…' });
+  } else if (saveStage === 'tier2_updated') {
+    submitBtnText = t('screening.clinicalSave.tier2Updated', {
+      risk: confirmedRiskPercent ?? '--',
+      defaultValue: `Tier 2 assessment updated — Risk: ${confirmedRiskPercent ?? '--'}%.`,
+    });
+  }
+
+  const cancelBtnText =
+    saveStage === 'assessment_failed_values_saved'
+      ? 'Close'
+      : 'Cancel';
 
   return (
     <ClinicalModalLayout
@@ -778,9 +895,10 @@ export const MaleClinicalLabsModal: React.FC<MaleClinicalLabsModalProps> = ({
       title="Add Clinical & Laboratory Evidence"
       description="Enter available blood markers or upload a lab report to refine your risk estimation. You don't need to complete every field. Previously saved values are preserved with patch semantics."
       accentColor="blue"
-      isSubmitting={submitting}
-      submitButtonText={submitting ? 'Saving Results...' : 'Save Results →'}
-      submitDisabled={enteredCount === 0 && !hasExistingSavedData}
+      isSubmitting={isBusy}
+      submitButtonText={submitBtnText}
+      cancelButtonText={cancelBtnText}
+      submitDisabled={(enteredCount === 0 && !hasExistingSavedData) || saveStage === 'tier2_updated'}
       onSubmit={handleSubmit}
       footerLeft={
         <div className="flex items-center gap-3 flex-wrap">
@@ -1122,18 +1240,65 @@ export const MaleClinicalLabsModal: React.FC<MaleClinicalLabsModalProps> = ({
         </motion.div>
       )}
 
-      {/* Error & Success Messages */}
-      {submitError && (
-        <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 text-rose-800 dark:text-rose-200 text-xs flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" aria-hidden="true" />
-          <span>{submitError}</span>
+      {/* Distinct Clinical & Tier 2 Save States */}
+      {saveStage === 'saving_values' && (
+        <div className="p-3.5 rounded-2xl bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-900 text-sky-800 dark:text-sky-200 text-xs flex items-center gap-2">
+          <Loading01 className="w-4 h-4 shrink-0 animate-spin text-sky-600 dark:text-sky-400" aria-hidden="true" />
+          <span>{t('screening.clinicalSave.savingValues', { defaultValue: 'Saving clinical values…' })}</span>
         </div>
       )}
 
-      {successNotice && (
+      {saveStage === 'values_saved' && (
+        <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-xs flex items-center gap-2">
+          <Check className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+          <span>{t('screening.clinicalSave.valuesSaved', { defaultValue: 'Values saved successfully.' })}</span>
+        </div>
+      )}
+
+      {saveStage === 'recalculating_tier2' && (
+        <div className="p-3.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs flex items-center gap-2">
+          <Loading01 className="w-4 h-4 shrink-0 animate-spin text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
+          <span>{t('screening.clinicalSave.recalculatingTier2', { defaultValue: 'Recalculating Tier 2 risk…' })}</span>
+        </div>
+      )}
+
+      {saveStage === 'tier2_updated' && (
         <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-xs flex items-center gap-2">
           <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-          <span>Clinical results saved and reassessment verified!</span>
+          <span className="font-semibold">
+            {t('screening.clinicalSave.tier2Updated', {
+              risk: confirmedRiskPercent ?? '--',
+              defaultValue: `Tier 2 assessment updated — Risk: ${confirmedRiskPercent ?? '--'}%.`,
+            })}
+          </span>
+        </div>
+      )}
+
+      {saveStage === 'assessment_failed_values_saved' && (
+        <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2 min-w-0">
+            <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+            <span>
+              {t('screening.clinicalSave.assessmentFailedValuesSaved', {
+                defaultValue: 'Assessment could not be updated. Your clinical values are saved. Retry assessment.',
+              })}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleRetryAssessment}
+            className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs transition-colors shrink-0 cursor-pointer flex items-center gap-1.5"
+          >
+            <RefreshCw01 className="w-3.5 h-3.5" aria-hidden="true" />
+            <span>{t('screening.clinicalSave.retryAssessment', { defaultValue: 'Retry assessment' })}</span>
+          </button>
+        </div>
+      )}
+
+      {submitError && saveStage !== 'assessment_failed_values_saved' && (
+        <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 text-rose-800 dark:text-rose-200 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" aria-hidden="true" />
+          <span>{submitError}</span>
         </div>
       )}
 

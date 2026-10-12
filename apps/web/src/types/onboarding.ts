@@ -32,6 +32,11 @@ export interface WomensHealthProfile {
   commonSymptoms: string[]; // OPTIONAL (e.g. 'Acne & Facial Breakouts', 'Excess Facial / Body Hair', 'Skin Darkening', 'Hair Thinning / Loss', 'Recent Weight Gain')
   currentCycleDay: number; // CALCULATED / STORED
   currentPhase: 'period' | 'follicular' | 'ovulation' | 'luteal'; // CALCULATED / STORED
+  // Life Stage & Menarche Indicators (2023 Guidelines & Adolescent Recommendations)
+  hasHadPeriod?: boolean; // true if periods have begun, false for pre-menarche
+  ageAtMenarche?: number | null; // Age at first period (typically 9–18)
+  isMenopausal?: boolean; // true if periods ceased >= 1 year
+  menopausalStatus?: 'premenopausal' | 'perimenopausal' | 'postmenopausal' | 'not_sure';
   // ML Model Clinical & Reproductive Indicators
   maritalStatus?: 'unmarried' | 'married' | 'prefer_not_to_say'; // REQUIRED for ML (default: 'unmarried')
   marriageYears?: number; // REQUIRED for ML (0 if unmarried, or years married)

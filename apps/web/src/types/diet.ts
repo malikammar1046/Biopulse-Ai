@@ -36,13 +36,16 @@ export interface FoodLogEntry {
   foodName: string;
   serving: string;
   calories: number;
-  proteinG: number;
-  carbsG: number;
-  fatG: number;
-  fiberG: number;
+  proteinG: number | null;
+  carbsG: number | null;
+  fatG: number | null;
+  fiberG: number | null;
   loggedAt: string; // YYYY-MM-DD
   notes?: string;
   createdAt: string;
+  isPendingSync?: boolean;
+  isCloudPersisted?: boolean;
+  syncStatus?: 'synced' | 'pending' | 'failed';
 }
 
 export interface FoodLogInput {
@@ -50,10 +53,10 @@ export interface FoodLogInput {
   foodName: string;
   serving: string;
   calories: number;
-  proteinG: number;
-  carbsG: number;
-  fatG: number;
-  fiberG: number;
+  proteinG?: number | null;
+  carbsG?: number | null;
+  fatG?: number | null;
+  fiberG?: number | null;
   loggedAt?: string;
   notes?: string;
 }

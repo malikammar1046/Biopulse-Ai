@@ -18,6 +18,10 @@ from apps.intelligence.services.safety_guardrails import SafetyGuardrails
 class ResponseHierarchyTests(TestCase):
     """Validates the clinical response hierarchy and non-diagnostic boundaries."""
 
+    def setUp(self):
+        super().setUp()
+        HealthContextBuilder.invalidate_context_cache()
+
     def test_system_prompt_defines_all_six_tiers(self):
         sys_prompt, ctx, used = HealthContextBuilder.build_context("p-1", "Hello")
 
@@ -76,7 +80,9 @@ class ResponseHierarchyTests(TestCase):
             self.assertIn("Calculated BMI: 25.0 kg/m²", ctx)
 
     def test_model_derived_insights_tier_4_screening_only(self):
-        with patch("apps.intelligence.services.health_context_builder.run_assessment") as mock_run:
+        HealthContextBuilder.invalidate_context_cache()
+        with patch("apps.intelligence.services.health_context_builder.assessment_repository.get_active_assessment", return_value=None), \
+             patch("apps.intelligence.services.health_context_builder.run_assessment") as mock_run:
             mock_res = MagicMock(
                 risk_category="higher_risk",
                 pcos_probability=0.58,

@@ -163,7 +163,8 @@ class MealPlanRepository:
         now_iso = datetime.now(timezone.utc).isoformat()
         start_str = start_date.isoformat() if isinstance(start_date, date) else str(start_date)
         end_str = end_date.isoformat() if isinstance(end_date, date) else str(end_date)
-        clean_plan_type = "weekly" if "week" in str(plan_type).lower() else str(plan_type).lower()
+        # Supports proper three-day classification while preserving historic weekly and daily types
+        clean_plan_type = "three_day" if ("three" in str(plan_type).lower() or "3" in str(plan_type).lower()) else ("weekly" if "week" in str(plan_type).lower() else str(plan_type).lower())
 
         # 1. Look up any existing active plan to deactivate
         current_active = self.get_active_plan(user_id, auth_token=auth_token)
@@ -172,11 +173,7 @@ class MealPlanRepository:
         client = self._get_client(auth_token=auth_token)
         if client is not None:
             try:
-                # 2. Deactivate old active plan if present
-                if replaced_id:
-                    client.table("nutrition_plans").update({"is_active": False}).eq("id", replaced_id).eq("user_id", user_id).execute()
-
-                # 3. Insert new active plan
+                # 2. Insert new active plan FIRST to avoid losing previous active plan if insert fails
                 insert_row = {
                     "id": new_id,
                     "user_id": user_id,
@@ -194,11 +191,26 @@ class MealPlanRepository:
                     "created_at": now_iso,
                 }
                 res = client.table("nutrition_plans").insert(insert_row).execute()
+                if hasattr(res, "error") and res.error:
+                    raise RuntimeError(f"Supabase nutrition_plans insert error: {res.error}")
+
+                # 3. ONLY deactivate old active plan AFTER new plan successfully persisted
+                if replaced_id:
+                    try:
+                        deact_res = client.table("nutrition_plans").update({"is_active": False}).eq("id", replaced_id).eq("user_id", user_id).execute()
+                        if hasattr(deact_res, "error") and deact_res.error:
+                            logger.warning("Supabase notice deactivating old plan %s: %s", replaced_id, deact_res.error)
+                    except Exception as deact_err:
+                        logger.warning("Failed to deactivate replaced plan %s: %s", replaced_id, deact_err)
+
                 if res.data and len(res.data) > 0:
                     return res.data[0]
                 return insert_row
             except Exception as exc:
                 logger.error("Failed to persist nutrition plan to Supabase: %s", exc)
+                from django.conf import settings
+                if not getattr(settings, "ALLOW_LOCAL_SQLITE_FALLBACK", False):
+                    raise RuntimeError(f"Authoritative nutrition plan could not be persisted to Supabase: {exc}")
 
         # In-memory storage
         if replaced_id and replaced_id in self._memory_store:

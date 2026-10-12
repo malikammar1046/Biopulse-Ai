@@ -60,7 +60,7 @@ export const WhatBioPulseAIDoesSection: React.FC = () => {
       num: '05',
       title: 'Pakistani Nutrition',
       subtitle: 'Culturally Tailored Plans',
-      desc: 'Receive 7-day culturally aligned meal guidance designed for endocrine and metabolic stability using accessible local ingredients.',
+      desc: 'Receive 3-day culturally aligned meal guidance designed for endocrine and metabolic stability using accessible local ingredients.',
       icon: UtensilsCrossed,
       accent: '#059669',
       bg: 'bg-emerald-50',

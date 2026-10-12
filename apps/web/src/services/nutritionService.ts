@@ -11,12 +11,11 @@ import type {
   NutritionPreferences,
   NutritionReadiness,
   NutritionTargets,
+  ScheduledMeal,
   WeeklyNutritionPlan,
 } from '../types/nutrition';
 
-const BACKEND_API_URL =
-  (typeof import.meta !== 'undefined' && (import.meta as any)?.env?.VITE_BACKEND_API_URL) ||
-  'http://127.0.0.1:8000/api';
+import { BACKEND_API_URL } from '../config/apiConfig';
 
 const NUTRITION_BASE_URL = `${BACKEND_API_URL}/v1/health/nutrition`;
 
@@ -92,7 +91,7 @@ class NutritionService {
   }
 
   /**
-   * Retrieve current active 7-day meal plan.
+   * Retrieve current active 3-day meal plan.
    * Returns null if no active plan exists (HTTP 404).
    */
   async getCurrentPlan(force = false): Promise<WeeklyNutritionPlan | null> {
@@ -118,18 +117,25 @@ class NutritionService {
   }
 
   /**
-   * Generate a fresh 7-day meal plan and store immutable snapshot.
+   * Generate a fresh 3-day meal plan and store immutable snapshot.
    */
-  async generateWeeklyPlan(): Promise<WeeklyNutritionPlan> {
+  async generateWeeklyPlan(preferences?: Partial<NutritionPreferences>): Promise<WeeklyNutritionPlan> {
     const headers = await getAuthHeaders();
     const res = await fetch(`${NUTRITION_BASE_URL}/plan/weekly/`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({}),
+      body: JSON.stringify(preferences || {}),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || `Failed to generate weekly meal plan (${res.status})`);
+      const blockingIssues = err.readiness?.blocking_issues;
+      let msg = err.error || `Failed to generate meal plan (${res.status})`;
+      if (Array.isArray(blockingIssues) && blockingIssues.length > 0) {
+        msg = blockingIssues.join('. ');
+      } else if (err.details) {
+        msg = `${msg}: ${err.details}`;
+      }
+      throw new Error(msg);
     }
     const plan = await res.json();
     this.currentPlanCache = { data: plan, timestamp: Date.now() };
@@ -137,18 +143,25 @@ class NutritionService {
   }
 
   /**
-   * Regenerate 7-day meal plan, marking old plan inactive.
+   * Regenerate 3-day meal plan, marking old plan inactive.
    */
-  async regeneratePlan(): Promise<WeeklyNutritionPlan> {
+  async regeneratePlan(preferences?: Partial<NutritionPreferences>): Promise<WeeklyNutritionPlan> {
     const headers = await getAuthHeaders();
     const res = await fetch(`${NUTRITION_BASE_URL}/plan/regenerate/`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({}),
+      body: JSON.stringify(preferences || {}),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || `Failed to regenerate meal plan (${res.status})`);
+      const blockingIssues = err.readiness?.blocking_issues;
+      let msg = err.error || `Failed to regenerate meal plan (${res.status})`;
+      if (Array.isArray(blockingIssues) && blockingIssues.length > 0) {
+        msg = blockingIssues.join('. ');
+      } else if (err.details) {
+        msg = `${msg}: ${err.details}`;
+      }
+      throw new Error(msg);
     }
     const plan = await res.json();
     this.currentPlanCache = { data: plan, timestamp: Date.now() };
@@ -393,7 +406,12 @@ class NutritionService {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || `Failed to log meal (${res.status})`);
     }
-    return res.json();
+    const item = await res.json();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('ovasense_diet_updated'));
+      window.dispatchEvent(new CustomEvent('biopulse_diet_updated'));
+    }
+    return item;
   }
 
   /**
@@ -422,6 +440,67 @@ class NutritionService {
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || `Failed to delete food log (${res.status})`);
+    }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('ovasense_diet_updated'));
+      window.dispatchEvent(new CustomEvent('biopulse_diet_updated'));
+    }
+    return true;
+  }
+
+  /**
+   * Fetch server-persisted scheduled meals for a given date.
+   */
+  async getScheduledMeals(date?: string): Promise<ScheduledMeal[]> {
+    const headers = await getAuthHeaders();
+    const url = date
+      ? `${NUTRITION_BASE_URL}/scheduled-meals/?date=${encodeURIComponent(date)}`
+      : `${NUTRITION_BASE_URL}/scheduled-meals/`;
+    const res = await fetch(url, {
+      method: 'GET',
+      headers,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to fetch scheduled meals (${res.status})`);
+    }
+    return res.json();
+  }
+
+  /**
+   * Schedule a meal to the server for a specific date and meal type.
+   */
+  async scheduleMeal(payload: {
+    date?: string;
+    meal_type: string;
+    meal_name: string;
+    meal_data?: Record<string, any>;
+  }): Promise<ScheduledMeal> {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${NUTRITION_BASE_URL}/scheduled-meals/`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to schedule meal (${res.status})`);
+    }
+    return res.json();
+  }
+
+  /**
+   * Delete a scheduled meal by its ID.
+   */
+  async deleteScheduledMeal(mealId: string): Promise<boolean> {
+    const headers = await getAuthHeaders();
+    const res = await fetch(`${NUTRITION_BASE_URL}/scheduled-meals/${mealId}/`, {
+      method: 'DELETE',
+      headers,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to delete scheduled meal (${res.status})`);
     }
     return true;
   }

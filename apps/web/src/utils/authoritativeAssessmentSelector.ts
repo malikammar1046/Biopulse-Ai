@@ -213,16 +213,12 @@ export function getAuthoritativeAssessmentForPathway({
   const expectedModule = isMale ? 'male_hypogonadism' : 'female_pcos';
   const defaultThreshold = isMale ? 0.1808 : 0.25;
 
-  // If candidate assessments provided, pick the highest valid completed cumulative tier.
-  // CRITICAL: If activeAssessment is explicitly unavailable, preserve it as target; do NOT resurrect stale historical results.
+  // CRITICAL: activeAssessment is the authoritative live assessment from the server.
+  // Candidate assessments (history) must ONLY be used as fallback when activeAssessment is missing.
+  // Historical assessments must NEVER override the active assessment (e.g. after re-onboarding).
   let targetAssessment = activeAssessment;
-  if (activeAssessment && (activeAssessment.risk_category === 'unavailable' || activeAssessment.probability === null)) {
-    targetAssessment = activeAssessment;
-  } else if (candidateAssessments && candidateAssessments.length > 0) {
-    const selected = selectAuthoritativeAssessment(
-      activeAssessment ? [activeAssessment, ...candidateAssessments] : candidateAssessments,
-      pathway
-    );
+  if (!targetAssessment && candidateAssessments && candidateAssessments.length > 0) {
+    const selected = selectAuthoritativeAssessment(candidateAssessments, pathway);
     if (selected) {
       targetAssessment = selected;
     }

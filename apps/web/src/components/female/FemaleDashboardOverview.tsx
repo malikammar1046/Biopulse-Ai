@@ -46,6 +46,7 @@ export const FemaleDashboardOverview: React.FC = () => {
     symptomRecords,
     symptomStats,
     symptomsLoading,
+    todayStressStats,
     openAiChatWithPrompt,
   } = useUserHealth();
 
@@ -152,6 +153,11 @@ export const FemaleDashboardOverview: React.FC = () => {
           assessmentLevel={assessmentLevel}
           lastAssessmentDate={lastAssessmentDateFormatted}
           loading={assessmentLoading}
+          lifeStage={authoritativeAssessment?.life_stage}
+          unavailableReason={authoritativeAssessment?.unavailable_reason}
+          badgeLabel={authoritativeAssessment?.badge_label}
+          title={authoritativeAssessment?.title}
+          summaryText={authoritativeAssessment?.summary_text}
           onStartScreening={() => navigate(ROUTES.APP.ASSESSMENT)}
           onViewAssessment={() => navigate(ROUTES.APP.ASSESSMENT)}
         />
@@ -181,8 +187,8 @@ export const FemaleDashboardOverview: React.FC = () => {
           todayMinutes={todayFitnessMinutes}
           pathway="female"
           loading={fitnessLoading}
-          onOpenFitness={() => navigate(ROUTES.APP.FITNESS)}
-          onLogActivity={() => navigate(ROUTES.APP.FITNESS)}
+          onOpenFitness={() => navigate('/app/lifestyle?tab=exercise')}
+          onLogActivity={() => navigate('/app/lifestyle?tab=exercise')}
         />
 
         {/* Card 5: Water Log */}
@@ -215,14 +221,16 @@ export const FemaleDashboardOverview: React.FC = () => {
           onAddMember={() => navigate(ROUTES.APP.CARE_CIRCLE)}
         />
 
-        {/* Card 8: Symptom Check-in */}
+        {/* Card 8: Symptom Check-in & Wellness */}
         <SymptomsModuleCard
           symptomRecords={symptomRecords}
           symptomStats={symptomStats}
+          todayStressStats={todayStressStats}
           pathway="female"
           loading={symptomsLoading}
           onOpenSymptoms={() => navigate(ROUTES.APP.SYMPTOMS)}
           onLogSymptom={() => navigate(ROUTES.APP.SYMPTOMS)}
+          onOpenStress={() => navigate('/app/lifestyle?tab=stress')}
         />
 
         {/* Card 9: Next Best Action */}

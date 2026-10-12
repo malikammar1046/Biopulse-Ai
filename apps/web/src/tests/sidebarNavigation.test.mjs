@@ -66,12 +66,12 @@ const dailyTrackingSection = sidebarContent.slice(
   sidebarContent.indexOf('const intelligenceItems: NavItem[] = [')
 );
 assert.ok(dailyTrackingSection.includes('ROUTES.APP.SYMPTOMS'), 'Daily tracking must include Symptoms');
-assert.ok(dailyTrackingSection.includes('ROUTES.APP.FITNESS'), 'Daily tracking must include Fitness');
+assert.ok(!dailyTrackingSection.includes('ROUTES.APP.FITNESS'), 'Fitness must be consolidated into Lifestyle, not duplicate standalone daily tracking');
 assert.ok(dailyTrackingSection.includes('ROUTES.APP.MEDICATIONS'), 'Daily tracking must include Medications');
 assert.ok(dailyTrackingSection.includes('isFemale'), 'Cycle tracking must be guarded by isFemale');
 
-console.log('✓ Female receives Cycle & Ovulation, Symptoms, Fitness, and Medications');
-console.log('✓ Male receives Symptoms, Fitness, and Medications (strictly no female cycle tracking)');
+console.log('✓ Female receives Cycle & Ovulation, Symptoms, and Medications (Fitness integrated in Lifestyle)');
+console.log('✓ Male receives Symptoms and Medications (Fitness integrated in Lifestyle; strictly no female cycle tracking)');
 
 // ---------------------------------------------------------------------------
 // TEST 5: Correct Section Mapping

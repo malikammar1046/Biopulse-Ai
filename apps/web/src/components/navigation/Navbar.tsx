@@ -29,7 +29,7 @@ interface NavDropdownItem {
 const SEARCH_SUGGESTIONS = [
   { title: 'PCOS Screening & Guidelines', path: ROUTES.UNDERSTAND_PCOS_CANONICAL, category: 'Women\'s Health' },
   { title: 'Male Hypogonadism & HPT Axis', path: ROUTES.UNDERSTAND_MALE_HYPOGONADISM, category: 'Men\'s Health' },
-  { title: 'Pakistani Nutrition & 7-Day Meal Plan', path: ROUTES.FEATURES, category: 'Nutrition' },
+  { title: 'Pakistani Nutrition & 3-Day Meal Plan', path: ROUTES.FEATURES, category: 'Nutrition' },
   { title: 'Progressive Cost-Aware Screening', path: ROUTES.HOW_IT_WORKS, category: 'Screening' },
   { title: 'Supported Conditions Overview', path: ROUTES.CONDITIONS, category: 'Clinical Pathways' },
   { title: 'Explainable AI & Feature Importance', path: ROUTES.FEATURES, category: 'Technology' },
@@ -152,7 +152,7 @@ export const Navbar: React.FC = () => {
             </div>
 
             {/* ── Left: BioPulse AI Brand Logo ── */}
-            <div className="relative z-10 pl-2 sm:pl-8 md:pl-14 shrink-0">
+            <div className="relative z-10 ps-2 sm:ps-8 md:ps-14 shrink-0">
               <Link
                 to={ROUTES.HOME}
                 className="flex items-center gap-2 group transition-transform hover:scale-[1.01]"
@@ -344,7 +344,7 @@ export const Navbar: React.FC = () => {
             </nav>
 
             {/* ── Right: Search + Action Buttons + Cursive Flourish ── */}
-            <div className="flex items-center gap-1.5 sm:gap-3 xl:gap-3.5 shrink-0 relative z-10 pr-1.5 sm:pr-6 md:pr-14 lg:pr-18 xl:pr-22">
+            <div className="flex items-center gap-1.5 sm:gap-3 xl:gap-3.5 shrink-0 relative z-10 pe-1.5 sm:pe-6 md:pe-14 lg:pe-18 xl:pe-22">
               {/* Quick Search Button */}
               <button
                 type="button"
@@ -389,18 +389,20 @@ export const Navbar: React.FC = () => {
                 </div>
               )}
 
-              {/* Cursive Tagline Accent from Concept: "For a / healthier you. ♡" */}
-              <div className="hidden xl:flex flex-col items-start leading-none text-[#0284C7] select-none pl-1 shrink-0 -rotate-1">
-                <span className="font-script text-[18px] xl:text-[20px] font-bold tracking-tight">
-                  For a
-                </span>
-                <div className="flex items-center gap-1 -mt-1">
+              {/* Cursive Tagline Accent from Concept: "For a / healthier you. ♡" - Rendered only when authenticated and space exists */}
+              {isAuthenticated && (
+                <div className="hidden xl:flex flex-col items-start leading-none text-[#0284C7] select-none ps-1 shrink-0 -rotate-1 rtl:rotate-1">
                   <span className="font-script text-[18px] xl:text-[20px] font-bold tracking-tight">
-                    healthier you.
+                    For a
                   </span>
-                  <Heart className="w-3.5 h-3.5 text-[#E11D48] fill-none stroke-[2.5] shrink-0" />
+                  <div className="flex items-center gap-1 -mt-1">
+                    <span className="font-script text-[18px] xl:text-[20px] font-bold tracking-tight">
+                      healthier you.
+                    </span>
+                    <Heart className="w-3.5 h-3.5 text-[#E11D48] fill-none stroke-[2.5] shrink-0" />
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Mobile Menu Toggle Button */}
               <button

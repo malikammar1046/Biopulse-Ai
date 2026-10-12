@@ -18,9 +18,15 @@ async function runChartsQA() {
     await page.setViewport({ width: 1440, height: 900 });
 
     // Login with existing female test user
+    const testEmail = process.env.TEST_FEMALE_EMAIL || process.env.TEST_USER_EMAIL || '';
+    const testPassword = process.env.TEST_PASSWORD || process.env.TEST_USER_PASSWORD || '';
+    if (!testEmail || !testPassword) {
+      console.log('Skipping login: TEST_FEMALE_EMAIL / TEST_PASSWORD not set.');
+      return;
+    }
     await page.goto('http://localhost:5173/login', { waitUntil: 'networkidle2', timeout: 15000 });
-    await page.type('#login-email', 'biopulse_qa_1791463522240@example.com');
-    await page.type('#login-password', 'Password123!');
+    await page.type('#login-email', testEmail);
+    await page.type('#login-password', testPassword);
     await page.click('button[type="submit"]');
     await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 15000 }).catch(() => {});
 
