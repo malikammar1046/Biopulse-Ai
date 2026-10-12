@@ -151,7 +151,7 @@ export async function streamPublicChatMessage(options: StreamPublicChatOptions):
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Accept: 'text/event-stream',
+        Accept: '*/*',
         'Accept-Language': locale,
       },
       body: JSON.stringify(payload),
