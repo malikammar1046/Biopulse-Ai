@@ -37,9 +37,9 @@ interface StageMeta {
 const STAGES: StageMeta[] = [
   { key: 'uploading', label: 'Uploading', detail: 'Transmitting ultrasound scan to secure clinical inference pipeline' },
   { key: 'processing_ultrasound', label: 'Processing Ultrasound', detail: 'Evaluating AI-estimated polycystic ovarian morphology (PCOM)' },
-  { key: 'multimodal_reassessment', label: 'Assessment Synthesis', detail: 'Synthesizing clinical risk with independent ultrasound morphology' },
+  { key: 'multimodal_reassessment', label: 'Multimodal Fusion', detail: 'Calculating 95% clinical + 5% ultrasound weighted probability with independent morphology' },
   { key: 'saving_assessment', label: 'Saving Assessment', detail: 'Persisting updated active assessment with full audit provenance' },
-  { key: 'completed', label: 'Completed', detail: 'Clinical assessment with independent morphology updated and verified' },
+  { key: 'completed', label: 'Completed', detail: 'Multimodal fused assessment updated and verified across all modules' },
 ];
 
 export const UltrasoundUploadModal: React.FC<UltrasoundUploadModalProps> = ({
@@ -328,7 +328,7 @@ export const UltrasoundUploadModal: React.FC<UltrasoundUploadModalProps> = ({
             <p>
               <strong className="text-slate-900">Multimodal Fusion Ready: </strong>
               Your active Tier 2 Clinical Labs will be combined with this ultrasound scan using our
-              calibrated clinical + ultrasound weighted multimodal ensemble.
+              calibrated clinical (95%) and ultrasound (5%) weighted multimodal ensemble.
             </p>
           ) : (
             <p>

@@ -15,6 +15,8 @@ import {
   Droplet,
   Search,
   Sparkles,
+  TrendingUp,
+  ShieldCheck,
 } from 'lucide-react';
 import { ROUTES } from '../../constants/routes';
 import { useUserHealth } from '../../context/UserHealthContext';
@@ -750,10 +752,52 @@ export const AppDashboardHeader: React.FC = () => {
 
   const isOverview = routeKey === 'overview';
 
+  const getRouteIcon = (key: RouteKey) => {
+    switch (key) {
+      case 'screening':
+        return <ShieldCheck className="w-4 h-4" aria-hidden="true" />;
+      case 'clinicalData':
+        return <FileText className="w-4 h-4" aria-hidden="true" />;
+      case 'progress':
+        return <TrendingUp className="w-4 h-4" aria-hidden="true" />;
+      case 'nutrition':
+        return <Heart className="w-4 h-4" aria-hidden="true" />;
+      case 'fitness':
+        return <Activity className="w-4 h-4" aria-hidden="true" />;
+      case 'companion':
+        return <Sparkles className="w-4 h-4" aria-hidden="true" />;
+      case 'tracking':
+      case 'cycle':
+        return <Droplet className="w-4 h-4" aria-hidden="true" />;
+      case 'reports':
+        return <FileText className="w-4 h-4" aria-hidden="true" />;
+      case 'care':
+        return <Calendar className="w-4 h-4" aria-hidden="true" />;
+      case 'settings':
+        return <Settings className="w-4 h-4" aria-hidden="true" />;
+      default:
+        return <Activity className="w-4 h-4" aria-hidden="true" />;
+    }
+  };
+
   return (
-    <header className="w-full bg-white border-b border-[#E2E8F0] select-none text-left z-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 sm:py-4 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
-        {/* ── LEFT: Search field on Overview, Breadcrumbs/Title on other routes ── */}
+    <header
+      className={`w-full select-none text-left z-20 transition-all ${
+        isOverview
+          ? 'bg-white border-b border-[#E2E8F0]'
+          : isFemale
+          ? 'bg-white/85 backdrop-blur-md border-b border-[#FCE7F0]/90 shadow-[0_1px_3px_0_rgba(244,63,125,0.03)]'
+          : 'bg-white/85 backdrop-blur-md border-b border-[#E0F2FE]/90 shadow-[0_1px_3px_0_rgba(2,132,199,0.03)]'
+      }`}
+    >
+      <div
+        className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${
+          isOverview
+            ? 'py-3.5 sm:py-4 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4'
+            : 'py-2.5 sm:py-3 flex items-center justify-between gap-3 sm:gap-4'
+        }`}
+      >
+        {/* ── LEFT: Search field on Overview, Sleek Compact Breadcrumbs/Title on other routes ── */}
         {isOverview ? (
           <div className="flex-1 max-w-xl w-full relative" ref={searchContainerRef}>
             <div className="relative">
@@ -822,37 +866,58 @@ export const AppDashboardHeader: React.FC = () => {
             </AnimatePresence>
           </div>
         ) : (
-          <div className="space-y-1 min-w-0">
-            {/* Eyebrow Breadcrumb */}
-            <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-mono font-bold uppercase tracking-wider text-slate-400">
-              <span>{config.eyebrow.split('/')[0]?.trim()}</span>
-              <span className="text-slate-300">/</span>
-              <span className={isFemale ? 'text-[#E11D48]' : 'text-[#0891B2]'}>
-                {config.eyebrow.split('/')[1]?.trim()}
-              </span>
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Pathway-themed icon badge for current route */}
+            <div
+              className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center shrink-0 border transition-all ${
+                isFemale
+                  ? 'bg-gradient-to-br from-[#FFF1F5] to-[#FCE7F0] border-[#FBCFE8]/80 text-[#E11D48] shadow-2xs'
+                  : 'bg-gradient-to-br from-[#F0F9FF] to-[#E0F2FE] border-[#BAE6FD]/80 text-[#0284C7] shadow-2xs'
+              }`}
+            >
+              {getRouteIcon(routeKey)}
             </div>
 
-            {/* Dynamic Page Title */}
-            <h1 className="text-2xl sm:text-[26px] lg:text-[28px] font-bold tracking-tight text-[#0F172A] font-display leading-tight truncate">
-              {resolvedTitle}
-            </h1>
+            <div className="min-w-0">
+              {/* Eyebrow Breadcrumb */}
+              <div className="flex items-center gap-1.5 text-[10.5px] font-mono font-bold uppercase tracking-wider text-slate-400 leading-tight">
+                <span>{config.eyebrow.split('/')[0]?.trim()}</span>
+                <span className="text-slate-300">/</span>
+                <span className={isFemale ? 'text-[#E11D48]' : 'text-[#0284C7]'}>
+                  {config.eyebrow.split('/')[1]?.trim() || resolvedTitle}
+                </span>
+              </div>
 
-            {/* Dynamic Short Description */}
-            <p className="text-xs sm:text-[13.5px] text-[#64748B] font-sans font-normal leading-relaxed max-w-2xl">
-              {config.subtitle}
-            </p>
+              {/* Dynamic Page Title & Subtitle */}
+              <div className="flex items-baseline gap-2 mt-0.5 min-w-0">
+                <h1 className="text-base sm:text-lg font-bold tracking-tight text-[#0F172A] font-display leading-tight truncate">
+                  {resolvedTitle}
+                </h1>
+                {config.subtitle && (
+                  <span className="hidden xl:inline text-xs text-[#64748B] font-sans truncate max-w-md">
+                    — {config.subtitle}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
         {/* ── RIGHT: Pathway Badge (on other routes), Notifications & Profile Control ── */}
-        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0 self-start md:self-center">
+        <div
+          className={
+            isOverview
+              ? 'flex items-center gap-2.5 sm:gap-3 shrink-0 self-start md:self-center'
+              : 'flex items-center gap-2 sm:gap-2.5 shrink-0'
+          }
+        >
           {/* Subtle Pathway Badge (hidden on overview, and compact on mobile) */}
           {!isOverview && (
             <div
-              className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold border transition-colors select-none ${
+              className={`hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-semibold border transition-colors select-none shadow-2xs ${
                 isFemale
-                  ? 'bg-[#FDE6EF] text-[#E11D48] border-[#F43F7D]/25'
-                  : 'bg-[#E0F2FE] text-[#0284C7] border-[#BAE6FD]'
+                  ? 'bg-[#FDF2F8] text-[#BE185D] border-[#FBCFE8]'
+                  : 'bg-[#F0F9FF] text-[#0284C7] border-[#BAE6FD]'
               }`}
             >
               <Activity className="w-3.5 h-3.5" aria-hidden="true" />
@@ -868,7 +933,11 @@ export const AppDashboardHeader: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-              className="relative p-2 rounded-xl bg-white border border-[#E2E8F0] text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors cursor-pointer"
+              className={`relative p-2 rounded-xl transition-all cursor-pointer ${
+                isOverview
+                  ? 'bg-white border border-[#E2E8F0] text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  : 'bg-white/90 hover:bg-white border border-slate-200/90 shadow-2xs text-slate-600 hover:text-slate-900 hover:border-slate-300'
+              }`}
               title={isUrdu ? 'اطلاعات' : 'Notifications'}
               aria-label={isUrdu ? 'اطلاعات' : 'Notifications'}
               aria-expanded={isNotificationsOpen}
@@ -946,7 +1015,11 @@ export const AppDashboardHeader: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="inline-flex items-center gap-2 p-1.5 sm:px-2.5 sm:py-1.5 rounded-full bg-white border border-[#E2E8F0] hover:bg-slate-50 transition-colors cursor-pointer select-none"
+              className={`inline-flex items-center gap-2 rounded-full transition-all cursor-pointer select-none ${
+                isOverview
+                  ? 'p-1.5 sm:px-2.5 sm:py-1.5 bg-white border border-[#E2E8F0] hover:bg-slate-50'
+                  : 'p-1 sm:px-2.5 sm:py-1 bg-white/90 hover:bg-white border border-slate-200/90 shadow-2xs hover:border-slate-300'
+              }`}
               aria-label={isUrdu ? 'صارف اکاؤنٹ مینو' : 'User Account Menu'}
               aria-expanded={isProfileOpen}
             >

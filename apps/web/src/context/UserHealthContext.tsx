@@ -308,6 +308,8 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const mod = pathway === 'male' ? 'male_hypogonadism' : 'female_pcos';
     return getCachedLongitudinalHealth('90d', mod, targetUserId);
   });
+  const longitudinalDataRef = useRef<LongitudinalHealthResponse | null>(longitudinalData);
+  longitudinalDataRef.current = longitudinalData;
   const [longitudinalLoading, setLongitudinalLoading] = useState<boolean>(false);
   const [longitudinalPeriod, setLongitudinalPeriod] = useState<MonitoringPeriodFilter>('90d');
   const longitudinalLastFetchedRef = useRef<Record<string, number>>({});
@@ -353,7 +355,7 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
 
       // 2. Fetch in background with stale-while-revalidate (avoid blank screen or spinner if data exists)
-      if (!longitudinalData) {
+      if (!longitudinalDataRef.current) {
         setLongitudinalLoading(true);
       }
 
@@ -372,7 +374,7 @@ export const UserHealthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
       }
     },
-    [authoritativeUserId, userProfile?.gender, userProfile?.pathway, userProfile?.id, longitudinalData]
+    [authoritativeUserId, userProfile?.gender, userProfile?.pathway, userProfile?.id]
   );
 
   // Cycle Records State

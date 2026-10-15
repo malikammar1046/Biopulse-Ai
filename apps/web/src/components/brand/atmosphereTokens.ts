@@ -238,21 +238,21 @@ export const ATMOSPHERE_TOKENS: Record<AtmosphereTone, AtmosphereDefinition> = {
   // ── 10. Longitudinal Progress (/app/progress, /app/timeline) ──
   progress: {
     tone: 'progress',
-    baseGradient: 'linear-gradient(180deg, #F8FAF9 0%, #F3F7F5 50%, #FFFFFF 100%)',
+    baseGradient: 'linear-gradient(180deg, #F5F9F8 0%, #EEF6F4 45%, #F7FAF9 100%)',
     primaryAura: {
-      color: 'radial-gradient(ellipse at 12% 12%, rgba(209, 250, 229, 0.26) 0%, transparent 65%)',
+      color: 'radial-gradient(ellipse at 12% 12%, rgba(209, 250, 229, 0.42) 0%, rgba(236, 253, 245, 0.22) 45%, transparent 70%)',
       position: 'top-0 left-0',
-      size: 'w-[46vw] h-[45vh] max-w-[650px] max-h-[480px]',
+      size: 'w-[48vw] h-[48vh] max-w-[700px] max-h-[520px]',
     },
     secondaryAura: {
-      color: 'radial-gradient(ellipse at 88% 18%, rgba(224, 242, 254, 0.22) 0%, transparent 65%)',
+      color: 'radial-gradient(ellipse at 88% 18%, rgba(224, 242, 254, 0.38) 0%, rgba(240, 249, 255, 0.20) 45%, transparent 70%)',
       position: 'top-0 right-0',
-      size: 'w-[40vw] h-[40vh] max-w-[580px] max-h-[440px]',
+      size: 'w-[42vw] h-[42vh] max-w-[620px] max-h-[460px]',
     },
     motifType: 'upward_growth',
     motifColor: '#10B981',
-    motifOpacity: 0.055,
-    mobileMotifOpacity: 0.025,
+    motifOpacity: 0.06,
+    mobileMotifOpacity: 0.03,
   },
 
   // ── 11. AI Companion & Digital Twin (/app/chat, /app/ai-twin) ──

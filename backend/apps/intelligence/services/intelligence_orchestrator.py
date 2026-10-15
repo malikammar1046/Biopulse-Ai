@@ -1602,7 +1602,10 @@ def format_assessment_response(record: dict[str, Any]) -> dict[str, Any]:
     else:
         try:
             prob = float(raw_prob)
-            prob_percent = round(prob * 100, 1)
+            if record.get('probability_percent') is not None:
+                prob_percent = round(float(record['probability_percent']), 2)
+            else:
+                prob_percent = round(prob * 100, 2)
         except (ValueError, TypeError):
             prob = None
             prob_percent = None
@@ -1752,8 +1755,8 @@ def format_assessment_response(record: dict[str, Any]) -> dict[str, Any]:
         'tiers_included': tiers_inc,
         'model_version': record.get('model_version', '1.0.0'),
         'model_name': record.get('model_name', 'PMOSense Assessment Model'),
-        'probability': round(prob, 4) if prob is not None else None,
-        'risk_probability': round(prob, 4) if prob is not None else None,
+        'probability': prob,
+        'risk_probability': prob,
         'probability_percent': prob_percent,
         'threshold': threshold,
         'risk_category': risk_cat,

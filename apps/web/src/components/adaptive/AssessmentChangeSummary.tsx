@@ -44,9 +44,23 @@ export const AssessmentChangeSummary: React.FC<AssessmentChangeSummaryProps> = (
     return null;
   }
 
-  const delta = Math.round((currProb - prevProb) * 10) / 10;
-  const isIncrease = delta > 0.05;
-  const isDecrease = delta < -0.05;
+  const rawDelta = currProb - prevProb;
+  const delta = Math.round(rawDelta * 100) / 100;
+  const isIncrease = delta > 0.005;
+  const isDecrease = delta < -0.005;
+
+  // Format score cleanly preserving up to 2 decimals when fractional
+  const formatScore = (val: number): string => {
+    if (Number.isInteger(val)) return `${val}%`;
+    const rounded = Number(val.toFixed(2));
+    return Number.isInteger(rounded) ? `${rounded}%` : `${val.toFixed(2)}%`;
+  };
+
+  const formatDelta = (val: number): string => {
+    const rounded = Number(val.toFixed(2));
+    const formatted = Number.isInteger(rounded) ? rounded.toString() : val.toFixed(2);
+    return val > 0 ? `+${formatted}` : formatted;
+  };
 
   const currentLevel = currentAssessment.assessment_level || 'tier_1';
   const previousLevel = previousAssessment.assessment_level || 'tier_1';
@@ -115,7 +129,7 @@ export const AssessmentChangeSummary: React.FC<AssessmentChangeSummaryProps> = (
             Previous Result
           </div>
           <div className="text-xl font-extrabold text-slate-700">
-            {prevProb.toFixed(1)}%
+            {formatScore(prevProb)}
           </div>
           <div className="text-[10px] text-slate-400">
             {getTierLabel(previousLevel)}
@@ -127,7 +141,7 @@ export const AssessmentChangeSummary: React.FC<AssessmentChangeSummaryProps> = (
             Current Result
           </div>
           <div className="text-xl font-extrabold text-slate-900">
-            {currProb.toFixed(1)}%
+            {formatScore(currProb)}
           </div>
           <div className="text-[10px] text-slate-500 font-medium">
             {currentAssessment.risk_label || currentAssessment.risk_category}
@@ -155,7 +169,7 @@ export const AssessmentChangeSummary: React.FC<AssessmentChangeSummaryProps> = (
               <Minus className="w-4 h-4 text-slate-400" aria-hidden="true" />
             )}
             <span>
-              {delta > 0 ? `+${delta.toFixed(1)}` : delta.toFixed(1)} pp
+              {formatDelta(delta)} pp
             </span>
           </div>
           <div className="text-[10px] text-slate-500 font-medium">
@@ -174,36 +188,41 @@ export const AssessmentChangeSummary: React.FC<AssessmentChangeSummaryProps> = (
         {isTier3 ? (
           <div className="p-3.5 rounded-2xl bg-pink-50/50 border border-pink-100 text-xs text-slate-700 leading-relaxed space-y-2">
             <p>
-              Your assessment incorporates pelvic ultrasound evidence alongside your clinical laboratory profile. The numerical PCOS risk score reflects the current Tier 2 model-derived screening estimate, while pelvic ultrasound provides an independent AI-estimated PCOM morphology finding (not a confirmation of a Rotterdam criterion or medical diagnosis).
+              Your assessment incorporates pelvic ultrasound evidence alongside your clinical laboratory profile. The numerical PCOS risk score is recalculated using calibrated multimodal fusion (95% Tier 2 clinical labs + 5% ultrasound image assessment), while pelvic ultrasound additionally provides an independent AI-estimated PCOM morphology finding.
             </p>
 
             {/* Score Source & Independent Morphology Breakdown */}
             {fusion && (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-[11px]">
                 <div className="p-2 rounded-xl bg-white border border-pink-200">
-                  <span className="block text-slate-500 font-medium">Numerical Risk Source</span>
+                  <span className="block text-slate-500 font-medium">Clinical Weight (95%)</span>
                   <strong className="text-slate-900 font-bold">
-                    Current Tier 2 Screening Estimate ({(fusion.clinical_probability * 100).toFixed(1)}%)
+                    Tier 2 Clinical Labs ({formatScore(fusion.clinical_probability * 100)})
                   </strong>
                 </div>
                 <div className="p-2 rounded-xl bg-white border border-pink-200">
-                  <span className="block text-slate-500 font-medium">AI-Estimated Morphology</span>
+                  <span className="block text-slate-500 font-medium">Ultrasound Weight (5%)</span>
+                  <strong className="text-slate-900 font-bold">
+                    {fusion.ultrasound_pcos_probability != null
+                      ? `Ultrasound Model (${formatScore(fusion.ultrasound_pcos_probability * 100)})`
+                      : fusion.exploratory_ultrasound_pcos_probability != null
+                      ? `Ultrasound Model (${formatScore(fusion.exploratory_ultrasound_pcos_probability * 100)})`
+                      : 'Unavailable (100% Clinical)'}
+                  </strong>
+                </div>
+                <div className="p-2 rounded-xl bg-white border border-pink-200">
+                  <span className="block text-slate-500 font-medium">Morphology Finding</span>
                   <strong className="text-slate-900 font-bold">
                     {fusion.ultrasound_pcom_status || currentAssessment.pcom_status || 'Evaluated Independently'}
-                  </strong>
-                </div>
-                <div className="p-2 rounded-xl bg-white border border-pink-200">
-                  <span className="block text-slate-500 font-medium">Estimated PCOM Output</span>
-                  <strong className="text-slate-900 font-bold">
-                    {fusion.ultrasound_pcom_probability != null
-                      ? `${(fusion.ultrasound_pcom_probability * 100).toFixed(1)}%`
-                      : currentAssessment.pcom_status === 'Indeterminate'
-                      ? 'Indeterminate'
-                      : 'Unavailable'}
+                    {fusion.ultrasound_pcom_probability != null &&
+                      ` (${(fusion.ultrasound_pcom_probability * 100).toFixed(1)}%)`}
                   </strong>
                 </div>
               </div>
             )}
+            <p className="text-[10px] text-slate-500 pt-0.5">
+              *Experimental AI screening estimate combining clinical risk and image inference. Pelvic ultrasound morphology is an informational finding and does not constitute a confirmed Rotterdam diagnosis.
+            </p>
           </div>
         ) : isTier2 ? (
           <div className="p-3.5 rounded-2xl bg-blue-50/50 border border-blue-100 text-xs text-slate-700 leading-relaxed space-y-2">

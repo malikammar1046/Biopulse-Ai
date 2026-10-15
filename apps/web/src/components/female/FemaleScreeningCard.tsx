@@ -238,7 +238,13 @@ export const FemaleScreeningCard: React.FC<FemaleScreeningCardProps> = ({
             </span>
             <div className="flex items-baseline justify-center sm:justify-start gap-1.5">
               <span className="text-4xl sm:text-5xl font-bold tracking-tight text-[#111318]">
-                {probabilityPercent}%
+                {probabilityPercent != null
+                  ? (Number.isInteger(probabilityPercent)
+                      ? `${probabilityPercent}%`
+                      : Number.isInteger(Number(probabilityPercent.toFixed(2)))
+                      ? `${Number(probabilityPercent.toFixed(2))}%`
+                      : `${probabilityPercent.toFixed(2)}%`)
+                  : '--%'}
               </span>
             </div>
             <p className="text-xs sm:text-sm text-[#475569] leading-relaxed max-w-md pt-1">

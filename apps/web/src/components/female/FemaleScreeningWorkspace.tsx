@@ -292,7 +292,13 @@ export const FemaleScreeningWorkspace: React.FC = () => {
     return null;
   })();
 
-  const displayProbability = probabilityPercent != null ? `${probabilityPercent.toFixed(1)}%` : '--%';
+  const displayProbability = probabilityPercent != null
+    ? (Number.isInteger(probabilityPercent)
+        ? `${probabilityPercent}%`
+        : Number.isInteger(Number(probabilityPercent.toFixed(2)))
+        ? `${Number(probabilityPercent.toFixed(2))}%`
+        : `${probabilityPercent.toFixed(2)}%`)
+    : '--%';
 
   // Authoritative risk range configuration
   const riskRanges = getAuthoritativeRiskRanges(activeAssessment);
@@ -380,27 +386,15 @@ export const FemaleScreeningWorkspace: React.FC = () => {
 
   return (
     <div className="w-full max-w-[1280px] mx-auto space-y-4 sm:space-y-5 pb-16 text-left">
-      {/* ── Top Utility Row ────────────────────────────────────────────── */}
-      <div className="flex items-center justify-end">
-        <button
-          type="button"
-          onClick={() => setIsHistoryModalOpen(true)}
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 sm:px-4 sm:py-2 bg-white hover:bg-[#F9FAFB] active:bg-[#F2F4F7] text-[#111318] text-xs sm:text-sm font-medium rounded-full border border-[#EAECF0] shadow-xs transition-colors cursor-pointer"
-        >
-          <Clock className="w-4 h-4 text-[#667085]" aria-hidden="true" />
-          <span>Assessment History</span>
-        </button>
-      </div>
-
       {/* ── Primary Assessment Area (2 Columns) ──────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Assessment Card (~68% width on desktop) */}
         <div className="lg:col-span-8 bg-white rounded-2xl border border-[#EAECF0] p-6 sm:p-7 shadow-xs relative flex flex-col justify-between">
           {isLifeStageGuidance ? (
             <div>
-              {/* Header row: Life Stage Badge, View Details */}
+              {/* Header row: Life Stage Badge, View Details & Assessment History */}
               <div className="flex items-center justify-between gap-3 pb-4">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5 sm:gap-3">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FDF2F8] text-[#BE185D] border border-[#FBCFE8]">
                     <ShieldTick className="w-3.5 h-3.5 text-[#DB2777]" aria-hidden="true" />
                     {activeAssessment?.badge_label || 'Life-Stage Pathway'}
@@ -410,16 +404,33 @@ export const FemaleScreeningWorkspace: React.FC = () => {
                   </span>
                 </div>
 
-                {hasAssessment && (
+                <div className="flex items-center gap-2 sm:gap-2.5">
                   <button
                     type="button"
-                    onClick={() => setIsDetailsModalOpen(true)}
-                    className="text-xs font-semibold text-[#DC326C] hover:text-[#F43F7D] transition-colors inline-flex items-center gap-1 cursor-pointer"
+                    onClick={() => setIsHistoryModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1 rounded-lg text-xs font-medium text-[#344054] bg-[#F9FAFB] hover:bg-[#F2F4F7] border border-[#EAECF0] shadow-2xs transition-all cursor-pointer"
+                    title="View historical assessments"
                   >
-                    <span>View details</span>
-                    <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                    <Clock className="w-3.5 h-3.5 text-[#667085]" aria-hidden="true" />
+                    <span>History</span>
+                    {assessmentHistory.length > 0 && (
+                      <span className="px-1.5 py-0.2 rounded-full bg-[#EAECF0] text-[10px] font-mono font-bold text-[#344054]">
+                        {assessmentHistory.length}
+                      </span>
+                    )}
                   </button>
-                )}
+
+                  {hasAssessment && (
+                    <button
+                      type="button"
+                      onClick={() => setIsDetailsModalOpen(true)}
+                      className="text-xs font-semibold text-[#DC326C] hover:text-[#F43F7D] transition-colors inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>View details</span>
+                      <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Title & Badge */}
@@ -459,9 +470,9 @@ export const FemaleScreeningWorkspace: React.FC = () => {
             </div>
           ) : (
             <div>
-              {/* Header row: Tier Badge, Model Version, View Details */}
-              <div className="flex items-center justify-between gap-3 pb-4">
-                <div className="flex items-center gap-3">
+              {/* Header row: Tier Badge, Model Version, Assessment History, View Details */}
+              <div className="flex items-center justify-between gap-3 pb-4 border-b border-[#F2F4F7]">
+                <div className="flex items-center gap-2.5 sm:gap-3">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FDE6EF] text-[#DC326C]">
                     <LayersThree01 className="w-3.5 h-3.5 text-[#F43F7D]" aria-hidden="true" />
                     {getTierLabel()}
@@ -473,16 +484,33 @@ export const FemaleScreeningWorkspace: React.FC = () => {
                   )}
                 </div>
 
-                {hasAssessment && (
+                <div className="flex items-center gap-2 sm:gap-2.5">
                   <button
                     type="button"
-                    onClick={() => setIsDetailsModalOpen(true)}
-                    className="text-xs font-semibold text-[#DC326C] hover:text-[#F43F7D] transition-colors inline-flex items-center gap-1 cursor-pointer"
+                    onClick={() => setIsHistoryModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1 rounded-lg text-xs font-medium text-[#344054] bg-[#F9FAFB] hover:bg-[#F2F4F7] border border-[#EAECF0] shadow-2xs transition-all cursor-pointer"
+                    title="View historical assessments"
                   >
-                    <span>View details</span>
-                    <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                    <Clock className="w-3.5 h-3.5 text-[#667085]" aria-hidden="true" />
+                    <span>History</span>
+                    {assessmentHistory.length > 0 && (
+                      <span className="px-1.5 py-0.2 rounded-full bg-[#EAECF0] text-[10px] font-mono font-bold text-[#344054]">
+                        {assessmentHistory.length}
+                      </span>
+                    )}
                   </button>
-                )}
+
+                  {hasAssessment && (
+                    <button
+                      type="button"
+                      onClick={() => setIsDetailsModalOpen(true)}
+                      className="text-xs font-semibold text-[#DC326C] hover:text-[#F43F7D] transition-colors inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>View details</span>
+                      <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Risk Score Row */}
@@ -730,6 +758,17 @@ export const FemaleScreeningWorkspace: React.FC = () => {
               >
                 <Heart className="w-4 h-4 text-[#F43F7D]" aria-hidden="true" />
                 <span>Find Relevant Specialists</span>
+              </button>
+            )}
+
+            {assessmentHistory.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setIsHistoryModalOpen(true)}
+                className="w-full py-1.5 text-xs font-medium text-[#667085] hover:text-[#111318] transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Clock className="w-3.5 h-3.5 text-[#98A2B3]" aria-hidden="true" />
+                <span>View Assessment History ({assessmentHistory.length})</span>
               </button>
             )}
 

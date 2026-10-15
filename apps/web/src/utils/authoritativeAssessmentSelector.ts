@@ -277,13 +277,25 @@ export function getAuthoritativeAssessmentForPathway({
     const rawP = Number(targetAssessment.probability);
     if (!Number.isNaN(rawP)) {
       probability = rawP > 1 ? rawP / 100 : rawP;
-      const displayVal = probability * 100;
-      probabilityPercent = Number(displayVal.toFixed(1));
+      if (targetAssessment.probability_percent !== undefined && targetAssessment.probability_percent !== null) {
+        const rawPct = Number(targetAssessment.probability_percent);
+        if (!Number.isNaN(rawPct)) {
+          probabilityPercent = Number(rawPct.toFixed(2));
+        } else {
+          probabilityPercent = targetAssessment.assessment_level === 'tier_1_2_3'
+            ? Number((probability * 100).toFixed(2))
+            : Number((probability * 100).toFixed(1));
+        }
+      } else {
+        probabilityPercent = targetAssessment.assessment_level === 'tier_1_2_3'
+          ? Number((probability * 100).toFixed(2))
+          : Number((probability * 100).toFixed(1));
+      }
     }
   } else if (targetAssessment.probability_percent !== undefined && targetAssessment.probability_percent !== null) {
     const rawVal = Number(targetAssessment.probability_percent);
     if (!Number.isNaN(rawVal)) {
-      probabilityPercent = Number(rawVal.toFixed(1));
+      probabilityPercent = Number(rawVal.toFixed(2));
       probability = rawVal / 100;
     }
   }

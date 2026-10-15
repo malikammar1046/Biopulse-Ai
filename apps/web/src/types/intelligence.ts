@@ -261,9 +261,13 @@ export interface AvailableHistoricalEvidence {
 export interface FusionDetails {
   clinical_probability: number;
   clinical_score?: number;
-  ultrasound_pcom_probability?: number;
+  ultrasound_pcom_probability?: number | null;
   ultrasound_pcom_status?: PCOMStatus | string;
-  ultrasound_probability?: number;
+  ultrasound_probability?: number | null;
+  ultrasound_pcos_probability?: number | null;
+  exploratory_ultrasound_pcos_probability?: number | null;
+  final_fused_probability?: number | null;
+  probability_change_pp?: number | null;
   clinical_weight?: number;
   ultrasound_weight?: number;
   combined_score?: number;
@@ -273,6 +277,10 @@ export interface FusionDetails {
   numerical_score_anchored_to_tier2?: boolean;
   multimodal_fusion_applied?: boolean;
   exploratory_model_contributes_to_score?: boolean;
+  fusion_status?: 'applied' | 'fusion_unavailable' | string;
+  fusion_error?: string | null;
+  fusion_policy_version?: string;
+  model_version?: string;
   ultrasound_inference_error?: string | null;
   note?: string;
 }

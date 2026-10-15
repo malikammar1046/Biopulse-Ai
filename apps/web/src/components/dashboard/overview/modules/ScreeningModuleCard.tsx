@@ -125,9 +125,13 @@ export const ScreeningModuleCard: React.FC<ScreeningModuleCardProps> = ({
     ? AlertTriangle
     : ShieldCheck;
 
-  // Display probability: formats decimal cleanly (e.g. 46.6%) or integer (e.g. 47%)
+  // Display probability: formats decimal cleanly (e.g. 10.23%) or integer (e.g. 71%)
   const displayScore = probabilityPercent !== null
-    ? (Number.isInteger(probabilityPercent) ? `${probabilityPercent}%` : `${probabilityPercent.toFixed(1)}%`)
+    ? (Number.isInteger(probabilityPercent)
+        ? `${probabilityPercent}%`
+        : Number.isInteger(Number(probabilityPercent.toFixed(2)))
+        ? `${Number(probabilityPercent.toFixed(2))}%`
+        : `${probabilityPercent.toFixed(2)}%`)
     : isLifeStage ? 'Guide' : isDirectHormone ? 'Labs' : '--%';
 
   // Friendly clinical summary

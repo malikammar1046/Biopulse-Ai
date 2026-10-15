@@ -218,26 +218,37 @@ class PCOSTier3MultimodalRegressionTests(TestCase):
         # Clinical PCOS risk is distinct and not overwritten by pcom_probability
         self.assertNotEqual(t3_res["probability"], 0.942)
         self.assertTrue(t3_res["evidence_used"]["tier_3_ultrasound"])
-        self.assertEqual(t3_res["model_name"], "Clinical Assessment with Independent Ultrasound Morphology (Tier 1 + 2 + 3)")
-        self.assertEqual(t3_res["model_version"], "PCOS-ML v1.2-T2+US-Independent")
-        self.assertEqual(t3_res["fusion_details"]["fusion_method"], "Current Tier 2 model-derived screening estimate with independent AI-estimated PCOM morphology")
+        self.assertEqual(t3_res["model_name"], "Clinical Assessment with Ultrasound Multimodal Fusion (Tier 1 + 2 + 3)")
+        self.assertEqual(t3_res["model_version"], "PCOS-ML v1.2-T2+US-Multimodal")
+        self.assertIn("Weighted linear multimodal fusion", t3_res["fusion_details"]["fusion_method"])
         self.assertEqual(t3_res["fusion_details"]["ultrasound_pcom_probability"], 0.942)
-        self.assertTrue(t3_res["fusion_details"]["numerical_score_anchored_to_tier2"])
-        self.assertFalse(t3_res["fusion_details"]["multimodal_fusion_applied"])
-        self.assertNotIn("clinical_weight", t3_res["fusion_details"])
-        self.assertNotIn("ultrasound_weight", t3_res["fusion_details"])
+        self.assertFalse(t3_res["fusion_details"]["numerical_score_anchored_to_tier2"])
+        self.assertTrue(t3_res["fusion_details"]["multimodal_fusion_applied"])
+        self.assertEqual(t3_res["fusion_details"]["clinical_weight"], 0.95)
+        self.assertEqual(t3_res["fusion_details"]["ultrasound_weight"], 0.05)
+        expected_fused = 0.95 * t3_res["fusion_details"]["clinical_probability"] + 0.05 * 0.082
+        self.assertAlmostEqual(t3_res["probability"], expected_fused, places=5)
 
     # -------------------------------------------------------------------------
-    # Requirement 5: Safe interim behavior: unvalidated image model does not alter Tier 2 probability
+    # Requirement 5: Weighted Multimodal Fusion (95% Clinical + 5% Ultrasound)
     # -------------------------------------------------------------------------
-    def test_05_safe_interim_behavior_preserves_tier2_probability(self):
+    def test_05_multimodal_weighted_fusion_calculation(self):
         """
-        Original failure reproduction & resolution:
-        Tier 1 reports ~12%. Tier 2 reports ~10%.
-        Under safe interim behavior, ultrasound evidence does NOT drop risk to 8%
-        due to the unvalidated exploratory image model (ROC-AUC 0.504).
-        Tier 2 clinical probability (10%) is preserved as the authoritative numerical score.
+        Multimodal weighted fusion requirement:
+        Tier 1 + Tier 2 combined clinical assessment: 95% weight
+        Tier 3 ultrasound image-based PCOS assessment: 5% weight
+        final_probability = 0.95 * tier2_clinical_probability + 0.05 * tier3_ultrasound_pcos_probability
+
+        Arithmetic verification:
+        clinical_probability = 0.1034
+        ultrasound_probability = 0.082
+        expected = 0.95 * 0.1034 + 0.05 * 0.082 = 0.10233 (10.23%), NOT 8%!
         """
+        clinical_probability = 0.1034
+        ultrasound_probability = 0.082
+        expected = 0.95 * clinical_probability + 0.05 * ultrasound_probability
+        self.assertLess(abs(expected - 0.10233), 1e-10)
+
         t1_res = run_tier1_assessment(self.patient_id, client_health_data=self.female_tier1_data)
         t1_pct = round(t1_res["probability"] * 100)
         self.assertEqual(t1_pct, 12)
@@ -253,7 +264,6 @@ class PCOSTier3MultimodalRegressionTests(TestCase):
 
         img = self._create_synthetic_image()
         with patch.object(pcos_ml_service, 'process_ultrasound_image') as mock_process:
-            # Simulate what the old pipeline produced: exploratory_pcos_probability = 0.082
             mock_process.return_value = {
                 'pcom_probability': 0.942,
                 'pcom_status': 'PCOM Detected',
@@ -269,11 +279,13 @@ class PCOSTier3MultimodalRegressionTests(TestCase):
                 client_health_data=self.female_tier1_data,
             )
 
-        # In the buggy code: 0.95 * 0.1034 + 0.05 * 0.082 = 0.079 (~8%)
-        # In our fixed safe interim pipeline: authoritative score remains t2_prob (~10.3%)
-        self.assertEqual(t3_res["probability"], t2_prob)
-        self.assertEqual(round(t3_res["probability"] * 100), 10)
-        self.assertNotEqual(round(t3_res["probability"] * 100), 8)
+        expected_fused = 0.95 * t2_prob + 0.05 * 0.082
+        self.assertAlmostEqual(t3_res["probability"], expected_fused, places=5)
+        self.assertEqual(t3_res["probability_percent"], round(expected_fused * 100, 2))
+        self.assertTrue(t3_res["fusion_details"]["multimodal_fusion_applied"])
+        self.assertEqual(t3_res["fusion_details"]["clinical_weight"], 0.95)
+        self.assertEqual(t3_res["fusion_details"]["ultrasound_weight"], 0.05)
+        self.assertEqual(t3_res["fusion_details"]["probability_change_pp"], round((t3_res["probability"] - t2_prob) * 100, 2))
         self.assertEqual(t3_res["pcom_status"], "PCOM Detected")
 
     # -------------------------------------------------------------------------
@@ -414,13 +426,13 @@ class PCOSTier3MultimodalRegressionTests(TestCase):
                 client_health_data=self.female_tier1_data,
             )
 
-        # 1. Authoritative numerical score and policy metadata match Tier 2 exactly (does not inflate or drop)
-        self.assertEqual(t3_res["probability"], t2_prob)
+        # 1. Authoritative numerical score calculated with 95%/5% fusion
+        expected_fused = 0.95 * t2_prob + 0.05 * 0.650
+        self.assertAlmostEqual(t3_res["probability"], expected_fused, places=5)
         self.assertEqual(t3_res["threshold"], t2_res["threshold"])
         self.assertEqual(t3_res["threshold"], 0.25)
-        self.assertNotEqual(t3_res["threshold"], 0.29)
-        self.assertEqual(t3_res["risk_category"], t2_res["risk_category"])
-        self.assertEqual(t3_res["risk_label"], t2_res["risk_label"])
+        self.assertEqual(t3_res["risk_category"], "lower")
+        self.assertEqual(t3_res["risk_label"], "Lower Likelihood")
         self.assertEqual(t3_res["screening_policy_version"], t2_res["screening_policy_version"])
 
         # 2. PCOM morphology output
@@ -429,26 +441,29 @@ class PCOSTier3MultimodalRegressionTests(TestCase):
         self.assertEqual(t3_res["fusion_details"]["ultrasound_pcom_probability"], 0.880)
         self.assertEqual(t3_res["fusion_details"]["ultrasound_pcom_status"], "PCOM Detected")
         self.assertEqual(t3_res["fusion_details"]["threshold"], 0.25)
-        self.assertTrue(t3_res["fusion_details"]["numerical_score_anchored_to_tier2"])
-        self.assertFalse(t3_res["fusion_details"]["multimodal_fusion_applied"])
-        self.assertFalse(t3_res["fusion_details"]["exploratory_model_contributes_to_score"])
+        self.assertFalse(t3_res["fusion_details"]["numerical_score_anchored_to_tier2"])
+        self.assertTrue(t3_res["fusion_details"]["multimodal_fusion_applied"])
+        self.assertTrue(t3_res["fusion_details"]["exploratory_model_contributes_to_score"])
+        self.assertEqual(t3_res["fusion_details"]["clinical_weight"], 0.95)
+        self.assertEqual(t3_res["fusion_details"]["ultrasound_weight"], 0.05)
+        self.assertEqual(t3_res["fusion_details"]["ultrasound_pcos_probability"], 0.650)
 
         # 3. Model semantics
-        self.assertEqual(t3_res["model_name"], "Clinical Assessment with Independent Ultrasound Morphology (Tier 1 + 2 + 3)")
-        self.assertEqual(t3_res["model_version"], "PCOS-ML v1.2-T2+US-Independent")
+        self.assertEqual(t3_res["model_name"], "Clinical Assessment with Ultrasound Multimodal Fusion (Tier 1 + 2 + 3)")
+        self.assertEqual(t3_res["model_version"], "PCOS-ML v1.2-T2+US-Multimodal")
         self.assertEqual(t3_res["screening_policy_version"], "v2")
 
         # 4. Persistence verification
         active_rec = assessment_repository.get_active_assessment(self.patient_id, module="female_pcos")
         self.assertIsNotNone(active_rec)
         self.assertEqual(active_rec["assessment_level"], "tier_1_2_3")
-        self.assertEqual(active_rec["probability"], t2_prob)
+        self.assertAlmostEqual(active_rec["probability"], expected_fused, places=5)
         self.assertEqual(active_rec["pcom_status"], "PCOM Detected")
         self.assertEqual(active_rec["pcom_probability"], 0.880)
 
         # 5. Formatted frontend response contract
         formatted = format_assessment_response(active_rec)
-        self.assertEqual(formatted["probability"], round(t2_prob, 4))
+        self.assertAlmostEqual(formatted["probability"], expected_fused, places=5)
         self.assertEqual(formatted["pcom_status"], "PCOM Detected")
         self.assertEqual(formatted["pcom_probability"], 0.880)
         self.assertEqual(formatted["fusion_details"]["ultrasound_pcom_probability"], 0.880)
@@ -489,15 +504,19 @@ class PCOSTier3MultimodalRegressionTests(TestCase):
                 img,
             )
 
-        self.assertEqual(t3_low["probability"], t2_low["probability"])
+        expected_low = 0.95 * t2_low["probability"] + 0.05 * 0.60
+        self.assertAlmostEqual(t3_low["probability"], expected_low, places=5)
         self.assertEqual(t3_low["threshold"], t2_low["threshold"])
         self.assertEqual(t3_low["risk_category"], "lower")
         self.assertEqual(t3_low["risk_label"], "Lower Likelihood")
         self.assertNotEqual(t3_low["risk_category"], "low")
         self.assertNotEqual(t3_low["risk_label"], "Low Risk")
         self.assertEqual(t3_low["screening_policy_version"], "v2")
-        self.assertIn("Extra Trees + Platt Sigmoid Calibration", t3_low["fusion_details"]["score_source"])
-        self.assertFalse(t3_low["fusion_details"]["exploratory_model_contributes_to_score"])
+        self.assertIn("Multimodal weighted fusion", t3_low["fusion_details"]["score_source"])
+        self.assertTrue(t3_low["fusion_details"]["exploratory_model_contributes_to_score"])
+        self.assertTrue(t3_low["fusion_details"]["multimodal_fusion_applied"])
+        self.assertEqual(t3_low["fusion_details"]["clinical_weight"], 0.95)
+        self.assertEqual(t3_low["fusion_details"]["ultrasound_weight"], 0.05)
 
         # Case B: Higher Likelihood (>= 0.25)
         high_risk_data = {
@@ -537,7 +556,8 @@ class PCOSTier3MultimodalRegressionTests(TestCase):
                 img,
             )
 
-        self.assertEqual(t3_high["probability"], t2_high["probability"])
+        expected_high = 0.95 * t2_high["probability"] + 0.05 * 0.20
+        self.assertAlmostEqual(t3_high["probability"], expected_high, places=5)
         self.assertEqual(t3_high["threshold"], t2_high["threshold"])
         self.assertEqual(t3_high["risk_category"], "higher")
         self.assertEqual(t3_high["risk_label"], "Higher Likelihood")
@@ -545,7 +565,8 @@ class PCOSTier3MultimodalRegressionTests(TestCase):
         self.assertNotEqual(t3_high["risk_label"], "High Risk")
         self.assertEqual(t3_high["screening_policy_version"], "v2")
         self.assertEqual(t3_high["fusion_details"]["clinical_probability"], t2_high["probability"])
-        self.assertFalse(t3_high["fusion_details"]["exploratory_model_contributes_to_score"])
+        self.assertTrue(t3_high["fusion_details"]["exploratory_model_contributes_to_score"])
+        self.assertTrue(t3_high["fusion_details"]["multimodal_fusion_applied"])
 
         # Case C: Intermediate Likelihood (0.18 <= prob < 0.25)
         intermediate_data = {
@@ -579,13 +600,15 @@ class PCOSTier3MultimodalRegressionTests(TestCase):
                 img,
             )
 
-        self.assertEqual(t3_inter["probability"], t2_inter["probability"])
+        expected_inter = 0.95 * t2_inter["probability"] + 0.05 * 0.40
+        self.assertAlmostEqual(t3_inter["probability"], expected_inter, places=5)
         self.assertEqual(t3_inter["threshold"], t2_inter["threshold"])
         self.assertEqual(t3_inter["risk_category"], "intermediate")
         self.assertEqual(t3_inter["risk_label"], "Intermediate Likelihood")
         self.assertEqual(t3_inter["screening_policy_version"], "v2")
         self.assertEqual(t3_inter["fusion_details"]["clinical_probability"], t2_inter["probability"])
-        self.assertFalse(t3_inter["fusion_details"]["exploratory_model_contributes_to_score"])
+        self.assertTrue(t3_inter["fusion_details"]["exploratory_model_contributes_to_score"])
+        self.assertTrue(t3_inter["fusion_details"]["multimodal_fusion_applied"])
 
     # -------------------------------------------------------------------------
     # Requirement 12: Genuine Vision Model Smoke Test on Project Dataset Scan
@@ -771,6 +794,213 @@ class PCOSTier3MultimodalRegressionTests(TestCase):
         formatted_loaded = format_assessment_response(loaded)
         self.assertEqual(formatted_loaded["pcom_status"], "PCOM Detected")
         self.assertEqual(formatted_loaded["probability"], 0.1034)
+
+    # -------------------------------------------------------------------------
+    # Requirement 15: Repeated Uploads Recalculate From Original Clean Tier 2 Baseline
+    # -------------------------------------------------------------------------
+    def test_15_repeated_ultrasound_upload_recalculates_from_clean_tier2(self):
+        """
+        Verify that repeated ultrasound uploads do NOT compound adjustments.
+        Both uploads must calculate against the original Tier 2 clinical baseline.
+        """
+        run_tier1_assessment(self.patient_id, client_health_data=self.female_tier1_data)
+        t2_res = run_tier2_assessment(
+            self.patient_id,
+            client_health_data=self.female_tier1_data,
+            clinical_inputs=self.female_tier2_normal_labs,
+        )
+        t2_prob = t2_res["probability"]
+
+        img = self._create_synthetic_image()
+
+        # Upload 1: image prob = 0.80
+        with patch.object(pcos_ml_service, 'process_ultrasound_image') as mock_process:
+            mock_process.return_value = {
+                'pcom_probability': 0.90,
+                'pcom_status': 'PCOM Detected',
+                'pcom_confidence_percent': 80.0,
+                'exploratory_pcos_probability': 0.80,
+                'gradcam_b64': 'data:image/png;base64,dummy1',
+                'architecture': 'EfficientNet-B0 Vision Backbone',
+                'inference_error': None,
+            }
+            t3_res_1 = run_ultrasound_assessment(
+                self.patient_id,
+                pil_image=img,
+                client_health_data=self.female_tier1_data,
+            )
+
+        expected_1 = 0.95 * t2_prob + 0.05 * 0.80
+        self.assertAlmostEqual(t3_res_1["probability"], expected_1, places=5)
+
+        # Upload 2: image prob = 0.20 (must calculate from t2_prob, NOT from expected_1)
+        with patch.object(pcos_ml_service, 'process_ultrasound_image') as mock_process:
+            mock_process.return_value = {
+                'pcom_probability': 0.25,
+                'pcom_status': 'PCOM Not Detected',
+                'pcom_confidence_percent': 50.0,
+                'exploratory_pcos_probability': 0.20,
+                'gradcam_b64': 'data:image/png;base64,dummy2',
+                'architecture': 'EfficientNet-B0 Vision Backbone',
+                'inference_error': None,
+            }
+            t3_res_2 = run_ultrasound_assessment(
+                self.patient_id,
+                pil_image=img,
+                client_health_data=self.female_tier1_data,
+            )
+
+        expected_2 = 0.95 * t2_prob + 0.05 * 0.20
+        compounded_wrong = 0.95 * expected_1 + 0.05 * 0.20
+
+        self.assertAlmostEqual(t3_res_2["probability"], expected_2, places=5)
+        self.assertNotAlmostEqual(t3_res_2["probability"], compounded_wrong, places=5)
+
+    # -------------------------------------------------------------------------
+    # Requirement 16: Missing/Failed Image Inference Preserves 100% Clinical Score
+    # -------------------------------------------------------------------------
+    def test_16_missing_inference_safely_falls_back_to_clinical(self):
+        """
+        If image inference fails or exploratory PCOS probability is missing,
+        do NOT invent a 5% contribution. Preserve prior clinical score.
+        """
+        img = self._create_synthetic_image()
+        with patch.object(pcos_ml_service, 'process_ultrasound_image') as mock_process:
+            mock_process.return_value = {
+                'pcom_probability': None,
+                'pcom_status': 'Indeterminate',
+                'pcom_confidence_percent': None,
+                'exploratory_pcos_probability': None,
+                'gradcam_b64': None,
+                'architecture': 'EfficientNet-B0 Vision Backbone',
+                'inference_error': 'PyTorch backbone feature extraction failed',
+            }
+            res = pcos_ml_service.predict_tier1_2_3_multimodal(
+                {**self.female_tier1_data, **self.female_tier2_normal_labs},
+                img,
+            )
+
+        t2_res = pcos_ml_service.predict_tier2_cumulative(
+            {**self.female_tier1_data, **self.female_tier2_normal_labs}
+        )
+        self.assertEqual(res["probability"], t2_res["probability"])
+        self.assertFalse(res["fusion_details"]["multimodal_fusion_applied"])
+        self.assertEqual(res["fusion_details"]["clinical_weight"], 1.0)
+        self.assertEqual(res["fusion_details"]["ultrasound_weight"], 0.0)
+        self.assertEqual(res["fusion_details"]["fusion_status"], "fusion_unavailable")
+        self.assertIn("extraction failed", res["fusion_details"]["fusion_error"])
+
+    # -------------------------------------------------------------------------
+    # Requirement 17: Equal Probabilities Produce Identical Score
+    # -------------------------------------------------------------------------
+    def test_17_equal_clinical_and_ultrasound_probabilities(self):
+        """When clinical and ultrasound probabilities are equal, unchanged score is mathematically correct."""
+        t2_res = pcos_ml_service.predict_tier2_cumulative(
+            {**self.female_tier1_data, **self.female_tier2_normal_labs}
+        )
+        t2_p = t2_res["probability"]
+
+        img = self._create_synthetic_image()
+        with patch.object(pcos_ml_service, 'process_ultrasound_image') as mock_process:
+            mock_process.return_value = {
+                'pcom_probability': 0.50,
+                'pcom_status': 'PCOM Detected',
+                'pcom_confidence_percent': 50.0,
+                'exploratory_pcos_probability': t2_p,
+                'gradcam_b64': 'data:image/png;base64,sample',
+                'architecture': 'EfficientNet-B0 Vision Backbone',
+                'inference_error': None,
+            }
+            res = pcos_ml_service.predict_tier1_2_3_multimodal(
+                {**self.female_tier1_data, **self.female_tier2_normal_labs},
+                img,
+            )
+
+        self.assertAlmostEqual(res["probability"], t2_p, places=7)
+        self.assertTrue(res["fusion_details"]["multimodal_fusion_applied"])
+        self.assertEqual(res["fusion_details"]["probability_change_pp"], 0.0)
+
+    # -------------------------------------------------------------------------
+    # Requirement 18: Threshold Crossing Driven by Ultrasound Fusion
+    # -------------------------------------------------------------------------
+    def test_18_threshold_crossing_from_ultrasound_weight(self):
+        """
+        Verify that 5% ultrasound weight can push a borderline clinical score across
+        the screening threshold (0.25) into higher risk category.
+        """
+        img = self._create_synthetic_image()
+        with patch.object(pcos_ml_service, 'predict_tier2_cumulative') as mock_t2:
+            mock_t2.return_value = {
+                'probability': 0.245,  # Just below 0.25 threshold -> intermediate
+                'threshold': 0.25,
+                'risk_category': 'intermediate',
+                'risk_label': 'Intermediate Likelihood',
+                'screening_policy_version': 'v2',
+                'explanations': [],
+                'shap_explanation': {},
+            }
+            with patch.object(pcos_ml_service, 'process_ultrasound_image') as mock_us:
+                mock_us.return_value = {
+                    'pcom_probability': 0.85,
+                    'pcom_status': 'PCOM Detected',
+                    'pcom_confidence_percent': 70.0,
+                    'exploratory_pcos_probability': 0.50,  # Fused: 0.95*0.245 + 0.05*0.50 = 0.23275 + 0.025 = 0.25775 >= 0.25
+                    'gradcam_b64': 'data:image/png;base64,sample',
+                    'architecture': 'EfficientNet-B0 Vision Backbone',
+                    'inference_error': None,
+                }
+                res = pcos_ml_service.predict_tier1_2_3_multimodal(
+                    {**self.female_tier1_data, **self.female_tier2_normal_labs},
+                    img,
+                )
+
+        expected = 0.95 * 0.245 + 0.05 * 0.50  # 0.25775
+        self.assertAlmostEqual(res["probability"], expected, places=5)
+        self.assertEqual(res["risk_category"], "higher")
+        self.assertEqual(res["risk_label"], "Higher Likelihood")
+
+    # -------------------------------------------------------------------------
+    # Requirement 19: Boundary Probabilities (0.0 and 1.0)
+    # -------------------------------------------------------------------------
+    def test_19_boundary_probabilities_zero_and_one(self):
+        """Boundary probabilities 0.0 and 1.0 are handled cleanly within [0.0, 1.0]."""
+        img = self._create_synthetic_image()
+
+        # Boundary 0.0
+        with patch.object(pcos_ml_service, 'process_ultrasound_image') as mock_us:
+            mock_us.return_value = {
+                'pcom_probability': 0.1,
+                'pcom_status': 'PCOM Not Detected',
+                'pcom_confidence_percent': 80.0,
+                'exploratory_pcos_probability': 0.0,
+                'gradcam_b64': 'data:image/png;base64,sample',
+                'architecture': 'EfficientNet-B0 Vision Backbone',
+                'inference_error': None,
+            }
+            res_zero = pcos_ml_service.predict_tier1_2_3_multimodal(
+                {**self.female_tier1_data, **self.female_tier2_normal_labs},
+                img,
+            )
+        self.assertGreaterEqual(res_zero["probability"], 0.0)
+        self.assertLessEqual(res_zero["probability"], 1.0)
+
+        # Boundary 1.0
+        with patch.object(pcos_ml_service, 'process_ultrasound_image') as mock_us:
+            mock_us.return_value = {
+                'pcom_probability': 0.9,
+                'pcom_status': 'PCOM Detected',
+                'pcom_confidence_percent': 80.0,
+                'exploratory_pcos_probability': 1.0,
+                'gradcam_b64': 'data:image/png;base64,sample',
+                'architecture': 'EfficientNet-B0 Vision Backbone',
+                'inference_error': None,
+            }
+            res_one = pcos_ml_service.predict_tier1_2_3_multimodal(
+                {**self.female_tier1_data, **self.female_tier2_normal_labs},
+                img,
+            )
+        self.assertGreaterEqual(res_one["probability"], 0.0)
+        self.assertLessEqual(res_one["probability"], 1.0)
 
 
 

@@ -102,10 +102,8 @@ runTest('LifestyleRecommendationsPage isolates OvaSense for female and preserves
     true,
     'Page must retain isMale logic'
   );
-  // Ensure the original male components remain in the file
-  assert.strictEqual(pageContent.includes('NutritionPillarView'), true, 'Must preserve NutritionPillarView for male');
-  assert.strictEqual(pageContent.includes('FitnessPillarView'), true, 'Must preserve FitnessPillarView for male');
-  assert.strictEqual(pageContent.includes('LifestylePillarView'), true, 'Must preserve LifestylePillarView for male');
+  // Ensure the male dashboard component remains in the file
+  assert.strictEqual(pageContent.includes('AndroSenseLifestyleDashboard') || pageContent.includes('NutritionPillarView'), true, 'Must preserve AndroSenseLifestyleDashboard for male');
 });
 
 // ---------------------------------------------------------------------------

@@ -150,9 +150,11 @@ class TestPCOSMLProgressiveService(TestCase):
         self.assertEqual(mm_res["threshold"], 0.25)
         self.assertEqual(mm_res["screening_policy_version"], "v2")
         self.assertIn("fusion_details", mm_res)
-        self.assertIn("Current Tier 2 model-derived screening estimate", mm_res["fusion_details"]["fusion_method"])
-        self.assertTrue(mm_res["fusion_details"]["numerical_score_anchored_to_tier2"])
-        self.assertFalse(mm_res["fusion_details"]["multimodal_fusion_applied"])
+        self.assertIn("Weighted linear multimodal fusion", mm_res["fusion_details"]["fusion_method"])
+        self.assertFalse(mm_res["fusion_details"]["numerical_score_anchored_to_tier2"])
+        self.assertTrue(mm_res["fusion_details"]["multimodal_fusion_applied"])
+        self.assertEqual(mm_res["fusion_details"]["clinical_weight"], 0.95)
+        self.assertEqual(mm_res["fusion_details"]["ultrasound_weight"], 0.05)
 
 
 @override_settings(ALLOW_LOCAL_SQLITE_FALLBACK=True)

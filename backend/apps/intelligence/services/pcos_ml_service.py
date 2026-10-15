@@ -1091,15 +1091,58 @@ class PCOSMLService:
         # 2. Process ultrasound image
         img_res = self.process_ultrasound_image(pil_image)
 
-        # 3. Safe Interim Multimodal Policy:
-        # Ground numerical risk directly in the validated Tier 2 clinical/endocrine probability.
-        # Direct image-to-clinical-PCOS models demonstrate chance-level predictive accuracy (Holdout ROC-AUC ~0.504)
-        # and are not used to calculate, alter, or lower the authoritative clinical risk score.
-        p_fused = p_t2
+        # 3. Weighted Multimodal Fusion Policy:
+        # Final probability = 0.95 * tier2_clinical_probability + 0.05 * tier3_ultrasound_pcos_probability
+        us_prob = img_res.get('exploratory_pcos_probability')
+        has_inference_error = bool(img_res.get('inference_error'))
+        is_valid_us_prob = (
+            us_prob is not None
+            and isinstance(us_prob, (int, float))
+            and not np.isnan(float(us_prob))
+            and 0.0 <= float(us_prob) <= 1.0
+            and not has_inference_error
+        )
+
         threshold = t2_res['threshold']
-        risk_category = t2_res['risk_category']
-        risk_label = t2_res['risk_label']
         screening_policy_version = t2_res['screening_policy_version']
+
+        if is_valid_us_prob:
+            p_us = float(us_prob)
+            clinical_weight = 0.95
+            ultrasound_weight = 0.05
+            p_fused = max(0.0, min(1.0, 0.95 * p_t2 + 0.05 * p_us))
+            multimodal_fusion_applied = True
+            fusion_status = 'applied'
+            fusion_error = None
+            probability_change_pp = round((p_fused - p_t2) * 100, 2)
+            score_source = (
+                'Multimodal weighted fusion (95% Tier 2 Clinical + 5% Tier 3 Ultrasound PCOS Screening Estimate)'
+            )
+            fusion_method = (
+                'Weighted linear multimodal fusion (95% validated Tier 2 clinical model + 5% Tier 3 ultrasound image PCOS screening estimate)'
+            )
+            risk_category, risk_label = classify_pcos_screening_likelihood(
+                p_fused,
+                threshold=threshold,
+                low_cutoff=PCOS_LOWER_LIKELIHOOD_CUTOFF,
+            )
+        else:
+            p_us = None
+            clinical_weight = 1.0
+            ultrasound_weight = 0.0
+            p_fused = p_t2
+            multimodal_fusion_applied = False
+            fusion_status = 'fusion_unavailable'
+            fusion_error = img_res.get('inference_error') or 'Ultrasound PCOS probability is missing or invalid; 100% clinical score preserved.'
+            probability_change_pp = 0.0
+            score_source = (
+                'Preserved Tier 2 clinical screening estimate (Ultrasound PCOS probability unavailable)'
+            )
+            fusion_method = (
+                'Current Tier 2 model-derived screening estimate (ultrasound fusion unavailable)'
+            )
+            risk_category = t2_res['risk_category']
+            risk_label = t2_res['risk_label']
 
         # Explanations from cumulative Tier 2 plus imaging context
         explanations = t2_res['explanations']
@@ -1130,8 +1173,12 @@ class PCOSMLService:
 
         limitations = [
             'Complete multimodal assessment incorporates self-reported profile, serum laboratory biomarkers, and pelvic ultrasound imaging.',
-            'Numerical PCOS risk reflects the current Tier 2 model-derived screening estimate; ultrasound evidence provides an independent AI-estimated PCOM morphology finding and does not confirm a Rotterdam criterion or medical diagnosis.',
-            'Direct image-to-clinical-PCOS models demonstrate chance-level predictive accuracy (Holdout ROC-AUC ~0.504) and are not used to calculate the authoritative clinical risk score.',
+            (
+                'Numerical PCOS risk is calculated via weighted multimodal fusion (95% validated clinical model + 5% ultrasound image PCOS screening estimate). Pelvic ultrasound additionally provides an independent AI-estimated PCOM morphology finding (Rotterdam criterion 3).'
+                if multimodal_fusion_applied else
+                'Numerical PCOS risk reflects the current Tier 2 model-derived screening estimate; ultrasound evidence provides an independent AI-estimated PCOM morphology finding and does not confirm a Rotterdam criterion or medical diagnosis.'
+            ),
+            'Research evaluation note: The image-to-PCOS predictor demonstrates approximately chance-level held-out discrimination; therefore, the combined score is an experimental AI screening estimate, not a medically validated diagnostic probability.',
             'Screening estimate only — does not replace comprehensive medical diagnosis or clinical ultrasound evaluation by a licensed sonographer.',
         ]
         if is_adolescent:
@@ -1147,45 +1194,102 @@ class PCOSMLService:
             'clinical_tier': 'Tier 1+2 (Cumulative Extra Trees with Platt Sigmoid Calibration)',
             'clinical_model': 'PCOS-ML v1.2 Cumulative Extra Trees',
             'clinical_probability': p_t2,
-            'clinical_risk_category': risk_category,
-            'clinical_score_anchored': True,
-            'ultrasound_tier': 'Tier 3 (PyTorch EfficientNet-B0 + PCOM Classifier)',
+            'clinical_risk_category': t2_res['risk_category'],
+            'clinical_weight': clinical_weight,
+            'clinical_score_anchored': not multimodal_fusion_applied,
+            'ultrasound_tier': 'Tier 3 (PyTorch EfficientNet-B0 + Vision Classifiers)',
             'ultrasound_status': img_res['pcom_status'],
             'ultrasound_confidence': img_res.get('pcom_probability') or 0.0,
+            'ultrasound_pcom_status': img_res['pcom_status'],
+            'ultrasound_pcom_probability': img_res.get('pcom_probability'),
+            'ultrasound_pcos_probability': p_us,
+            'ultrasound_weight': ultrasound_weight,
+            'final_fused_probability': p_fused,
+            'probability_change_pp': probability_change_pp,
+            'multimodal_fusion_applied': multimodal_fusion_applied,
+            'fusion_status': fusion_status,
             'pcom_status': img_res['pcom_status'],
             'pcom_probability': img_res.get('pcom_probability'),
-            'synthesis_method': 'Interim independent multimodal synthesis (clinical anchor with independent morphological validation)',
-            'fusion_method': 'Interim independent multimodal synthesis (clinical anchor with independent morphological validation)',
-            'clinical_interpretation': 'Numerical PCOS risk reflects the validated 32-feature clinical model anchored in endocrine and metabolic biomarkers. Pelvic ultrasound contributes an independent AI-estimated PCOM morphology finding without altering the numerical risk score.',
-            'independent_attribution_note': 'Clinical SHAP values and visual Grad-CAM heatmaps are maintained as distinct model-specific attributions to preserve mathematical integrity without fabricating additive combinations.',
-            'fusion_rationale': 'Numerical PCOS risk reflects the validated 32-feature clinical model anchored in endocrine and metabolic biomarkers. Pelvic ultrasound contributes an independent AI-estimated PCOM morphology finding without altering the numerical risk score. Clinical SHAP values and visual Grad-CAM heatmaps are maintained as distinct model-specific attributions to preserve mathematical integrity.',
+            'synthesis_method': fusion_method,
+            'fusion_method': fusion_method,
+            'clinical_interpretation': (
+                f'Authoritative final probability ({p_fused * 100:.2f}%) incorporates 95% validated clinical biomarkers and 5% experimental ultrasound image screening estimate (previous clinical: {p_t2 * 100:.2f}%, change: {probability_change_pp:+.2f} pp). Pelvic ultrasound also provides an independent AI-estimated PCOM morphology finding.'
+                if multimodal_fusion_applied else
+                'Numerical PCOS risk reflects the validated 32-feature clinical model anchored in endocrine and metabolic biomarkers. Pelvic ultrasound contributes an independent AI-estimated PCOM morphology finding without altering the numerical risk score because ultrasound PCOS inference was unavailable.'
+            ),
+            'independent_attribution_note': 'Clinical TreeSHAP values explain tabular feature contributions to the clinical model, while visual Grad-CAM heatmaps highlight ultrasound convolutional attention. They are maintained as distinct model-specific attributions to preserve mathematical integrity without fabricating additive combinations.',
+            'fusion_rationale': (
+                'Multimodal integration weights the comprehensive 32-feature clinical model at 95% and the image-based PCOS screening estimate at 5%. Clinical TreeSHAP values and visual Grad-CAM heatmaps are maintained as distinct model-specific attributions.'
+                if multimodal_fusion_applied else
+                'Numerical PCOS risk reflects the validated 32-feature clinical model anchored in endocrine and metabolic biomarkers. Ultrasound PCOS probability was unavailable; 100% clinical score is preserved.'
+            ),
             'limitations': limitations,
-            'disclaimer': 'Under the 2023 International Evidence-Based PCOS Guidelines, ovarian morphology is an independent diagnostic criterion evaluated alongside clinical and biochemical hyperandrogenism and ovulatory dysfunction.',
+            'disclaimer': 'Under the 2023 International Evidence-Based PCOS Guidelines, ovarian morphology is an independent diagnostic criterion evaluated alongside clinical and biochemical hyperandrogenism and ovulatory dysfunction. The combined score is an experimental AI screening estimate, not a diagnostic confirmation.',
+        }
+
+        fusion_details = {
+            'fusion_method': fusion_method,
+            'score_source': score_source,
+            'clinical_probability': p_t2,
+            'clinical_score': p_t2,
+            'clinical_weight': clinical_weight,
+            'ultrasound_weight': ultrasound_weight,
+            'ultrasound_pcos_probability': p_us,
+            'exploratory_ultrasound_pcos_probability': p_us,
+            'final_fused_probability': p_fused,
+            'combined_score': p_fused,
+            'probability_change_pp': probability_change_pp,
+            'multimodal_fusion_applied': multimodal_fusion_applied,
+            'fusion_status': fusion_status,
+            'fusion_error': fusion_error,
+            'fusion_policy_version': 'v2-multimodal-95-5',
+            'numerical_score_anchored_to_tier2': not multimodal_fusion_applied,
+            'exploratory_model_contributes_to_score': multimodal_fusion_applied,
+            'ultrasound_pcom_probability': img_res.get('pcom_probability'),
+            'ultrasound_pcom_status': img_res.get('pcom_status'),
+            'threshold': threshold,
+            'ultrasound_inference_error': img_res.get('inference_error'),
+            'model_version': 'PCOS-ML v1.2-T2+US-Multimodal',
+            'screening_policy_version': screening_policy_version,
+            'note': (
+                'Final PCOS screening probability is calculated via weighted multimodal fusion: 95% validated Tier 2 clinical assessment + 5% Tier 3 ultrasound image PCOS screening estimate. Ultrasound pelvic morphology (PCOM) is evaluated independently as a Rotterdam criterion and does not replace diagnostic ultrasound evaluation by a qualified medical professional. This score is an experimental AI screening estimate, not a diagnostic confirmation.'
+                if multimodal_fusion_applied else
+                'Numerical PCOS risk reflects the current Tier 2 model-derived screening estimate anchored in validated endocrine and metabolic biomarkers. Ultrasound PCOS probability was unavailable; 100% clinical score is preserved.'
+            ),
         }
 
         if shap_payload:
             shap_payload['tier'] = 'tier_1_2_3'
-            shap_payload['model_name'] = 'Clinical Assessment with Independent Ultrasound Morphology (Tier 1 + 2 + 3)'
+            shap_payload['model_name'] = 'Clinical Assessment with Ultrasound Multimodal Fusion (Tier 1 + 2 + 3)'
             shap_payload['ultrasound_explainability'] = ultrasound_explainability
             shap_payload['multimodal_synthesis'] = multimodal_synthesis
             shap_payload['multimodal_context'] = {
-                'score_source': 'Current Tier 2 model-derived screening estimate (PCOS-ML v1.2-T2: Extra Trees + Platt Sigmoid Calibration)',
-                'numerical_score_anchored_to_tier2': True,
+                'score_source': score_source,
+                'numerical_score_anchored_to_tier2': not multimodal_fusion_applied,
                 'clinical_probability': p_t2,
-                'clinical_weight': 1.0,
-                'ultrasound_weight': 0.0,
+                'clinical_weight': clinical_weight,
+                'ultrasound_weight': ultrasound_weight,
+                'ultrasound_pcos_probability': p_us,
+                'final_fused_probability': p_fused,
+                'probability_change_pp': probability_change_pp,
+                'multimodal_fusion_applied': multimodal_fusion_applied,
+                'fusion_status': fusion_status,
                 'pcom_status': img_res['pcom_status'],
                 'pcom_probability': img_res.get('pcom_probability'),
-                'note': 'Tabular factor contributions derive directly from the current Tier 2 model-derived screening estimate (Extra Trees with Platt sigmoid calibration). Pelvic ultrasound contributes an independent AI-estimated PCOM morphology finding without altering the numerical clinical risk score, and does not constitute confirmation of a Rotterdam criterion or PCOS diagnosis. SHAP values indicate localized model feature attribution, not clinical proof of disease etiology.',
+                'note': (
+                    'Tabular factor contributions derive directly from the validated Tier 2 clinical model (Extra Trees with Platt sigmoid calibration). TreeSHAP values explain tabular clinical feature attributions, while pelvic ultrasound Grad-CAM explains convolutional feature attention. They are preserved independently without fabricating combined SHAP values. Ultrasound PCOS model contributes 5% weight to the final screening probability when successfully inferred.'
+                    if multimodal_fusion_applied else
+                    'Tabular factor contributions derive directly from the validated Tier 2 clinical model. Pelvic ultrasound contributes an independent AI-estimated PCOM morphology finding without altering the numerical clinical risk score because ultrasound PCOS inference was unavailable.'
+                ),
             }
 
         return {
             'assessment_level': 'tier_1_2_3',
             'tiers_included': [1, 2, 3],
-            'model_name': 'Clinical Assessment with Independent Ultrasound Morphology (Tier 1 + 2 + 3)',
-            'model_version': 'PCOS-ML v1.2-T2+US-Independent',
+            'model_name': 'Clinical Assessment with Ultrasound Multimodal Fusion (Tier 1 + 2 + 3)',
+            'model_version': 'PCOS-ML v1.2-T2+US-Multimodal',
             'probability': p_fused,
-            'probability_percent': round(p_fused * 100, 1),
+            'probability_percent': round(p_fused * 100, 2),
             'threshold': threshold,
             'risk_category': risk_category,
             'risk_label': risk_label,
@@ -1206,21 +1310,7 @@ class PCOSMLService:
             'original_image_b64': img_res.get('original_image_b64'),
             'ultrasound_explainability': ultrasound_explainability,
             'multimodal_synthesis': multimodal_synthesis,
-            'fusion_details': {
-                'fusion_method': 'Current Tier 2 model-derived screening estimate with independent AI-estimated PCOM morphology',
-                'score_source': 'Current Tier 2 model-derived screening estimate (PCOS-ML v1.2-T2: Extra Trees + Platt Sigmoid Calibration)',
-                'clinical_probability': p_t2,
-                'clinical_score': p_t2,
-                'numerical_score_anchored_to_tier2': True,
-                'multimodal_fusion_applied': False,
-                'exploratory_model_contributes_to_score': False,
-                'ultrasound_pcom_probability': img_res.get('pcom_probability'),
-                'ultrasound_pcom_status': img_res.get('pcom_status'),
-                'exploratory_ultrasound_pcos_probability': img_res.get('exploratory_pcos_probability'),
-                'threshold': threshold,
-                'ultrasound_inference_error': img_res.get('inference_error'),
-                'note': 'Numerical PCOS risk reflects the current Tier 2 model-derived screening estimate anchored in validated endocrine and metabolic biomarkers. Pelvic ultrasound contributes an independent AI-estimated PCOM morphology finding without altering the clinical score, and does not confirm a clinical Rotterdam criterion or medical diagnosis. The exploratory image-to-clinical-PCOS model does not calculate or modify the clinical score.',
-            },
+            'fusion_details': fusion_details,
             'limitations': limitations,
             'next_available_tier': None,
             'disclaimer': MEDICAL_DISCLAIMER,
