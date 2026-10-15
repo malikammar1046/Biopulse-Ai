@@ -22,6 +22,15 @@ export const UltrasoundExplainabilitySection: React.FC<UltrasoundExplainabilityS
     return b64.startsWith('data:') ? b64 : `data:image/png;base64,${b64}`;
   };
 
+  const isValidImage = (b64?: string | null) => {
+    if (!b64) return false;
+    // Guard against 1x1 dummy pixel fallbacks which stretch into solid color blocks
+    if (b64.includes('iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB') || b64.trim().length < 200) {
+      return false;
+    }
+    return true;
+  };
+
   const isPcomDetected = data.pcom_status === 'PCOM Detected';
   const isIndeterminate = data.pcom_status === 'Indeterminate';
   const pcomPercent = data.pcom_percentage ?? data.pcom_confidence_percent ?? (data.pcom_probability != null ? Math.round(data.pcom_probability * 100) : null);
@@ -139,7 +148,7 @@ export const UltrasoundExplainabilitySection: React.FC<UltrasoundExplainabilityS
                 <Layers className="w-3 h-3" />
                 {t('screening.explainability.gradcam_label', 'Grad-CAM Attention Map')}
               </span>
-              {data.gradcam_b64 ? (
+              {isValidImage(data.gradcam_b64) ? (
                 <img
                   src={safeImageSrc(data.gradcam_b64)}
                   alt="Grad-CAM Activation Heatmap"
@@ -164,7 +173,7 @@ export const UltrasoundExplainabilitySection: React.FC<UltrasoundExplainabilityS
               <Layers className="w-3.5 h-3.5" />
               {t('screening.explainability.gradcam_label', 'Grad-CAM Attention Map')}
             </span>
-            {data.gradcam_b64 ? (
+            {isValidImage(data.gradcam_b64) ? (
               <img
                 src={safeImageSrc(data.gradcam_b64)}
                 alt="Grad-CAM Activation Heatmap"

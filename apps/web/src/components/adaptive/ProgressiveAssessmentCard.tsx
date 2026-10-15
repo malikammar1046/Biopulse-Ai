@@ -87,6 +87,11 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
     return `data:image/png;base64,${b64}`;
   };
 
+  const isValidGradcam = (b64?: string | null) => {
+    if (!b64) return false;
+    return !b64.includes('iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB') && b64.trim().length >= 200;
+  };
+
   const isMale =
     assessment?.module === 'male_hypogonadism' ||
     assessment?.model_name?.toLowerCase().includes('logistic') ||
@@ -346,7 +351,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
               </span>
             </div>
 
-            {assessment.gradcam_b64 && (
+            {isValidGradcam(assessment.gradcam_b64) && (
               <div
                 className="relative group cursor-pointer overflow-hidden rounded-xl border border-slate-200"
                 onClick={() => setShowGradCamModal(true)}
@@ -637,7 +642,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
 
       {/* ── Grad-CAM Inspection Modal ──────────────────────────────────────── */}
       <AnimatePresence>
-        {showGradCamModal && assessment.gradcam_b64 && (
+        {showGradCamModal && isValidGradcam(assessment.gradcam_b64) && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}

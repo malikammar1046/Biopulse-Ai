@@ -345,7 +345,7 @@ export const FemaleScreeningCard: React.FC<FemaleScreeningCardProps> = ({
         </div>
 
         {/* Ultrasound Grad-CAM Preview if available */}
-        {isTier3 && gradcamB64 && (
+        {isTier3 && gradcamB64 && !gradcamB64.includes('iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB') && gradcamB64.trim().length >= 200 && (
           <div className="pt-2 border-t border-[#EAECF0]">
             <div className="p-3 rounded-2xl bg-[#FDE6EF]/30 border border-[#FDE6EF] flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">

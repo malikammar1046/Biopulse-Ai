@@ -14,6 +14,7 @@ Thread safety:
 
 from __future__ import annotations
 
+import base64
 import io
 import json
 import logging
@@ -944,6 +945,68 @@ class PCOSMLService:
             'disclaimer': MEDICAL_DISCLAIMER,
         }
 
+    @staticmethod
+    def _render_gradcam_overlay(cam_heatmap: np.ndarray, raw_np: np.ndarray) -> str | None:
+        """
+        Renders Grad-CAM activation heatmap overlaid on the ultrasound scan.
+        Uses OpenCV for high-speed, thread-safe blending, with fallbacks to Matplotlib and NumPy/PIL.
+        Returns a base64 encoded PNG data URI.
+        """
+        import base64
+        import io
+
+        cam_clipped = np.clip(cam_heatmap, 0.0, 1.0).astype(np.float32)
+
+        # Method 1: OpenCV (Fastest, thread-safe, no GUI backend dependency)
+        try:
+            import cv2
+            cam_uint8 = np.uint8(255 * cam_clipped)
+            heatmap_bgr = cv2.applyColorMap(cam_uint8, cv2.COLORMAP_JET)
+            heatmap_rgb = cv2.cvtColor(heatmap_bgr, cv2.COLOR_BGR2RGB)
+            # 60% ultrasound scan anatomy + 40% attention heatmap overlay
+            overlay = cv2.addWeighted(raw_np, 0.60, heatmap_rgb, 0.40, 0)
+            buf = io.BytesIO()
+            Image.fromarray(overlay).save(buf, format='PNG')
+            return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode('utf-8')
+        except Exception as cv_err:
+            logger.debug("OpenCV Grad-CAM overlay notice: %s", cv_err)
+
+        # Method 2: Matplotlib (Standard academic plotting fallback)
+        try:
+            import matplotlib
+            matplotlib.use('Agg')
+            import matplotlib.pyplot as plt
+
+            fig, ax = plt.subplots(figsize=(3.5, 3.5), dpi=100)
+            ax.imshow(raw_np)
+            ax.imshow(cam_clipped, cmap='jet', alpha=0.40, vmin=0.0, vmax=1.0)
+            ax.axis('off')
+            plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+
+            buf = io.BytesIO()
+            fig.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
+            plt.close(fig)
+            buf.seek(0)
+            return "data:image/png;base64," + base64.b64encode(buf.read()).decode('utf-8')
+        except Exception as plt_err:
+            logger.debug("Matplotlib Grad-CAM overlay notice: %s", plt_err)
+
+        # Method 3: Pure NumPy + Pillow (zero external visualization dependencies)
+        try:
+            c = cam_clipped
+            r = np.clip(1.5 - np.abs(4.0 * c - 3.0), 0.0, 1.0)
+            g = np.clip(1.5 - np.abs(4.0 * c - 2.0), 0.0, 1.0)
+            b = np.clip(1.5 - np.abs(4.0 * c - 1.0), 0.0, 1.0)
+            heatmap_rgb = np.stack([r, g, b], axis=-1) * 255.0
+            overlay = np.uint8(0.60 * raw_np.astype(float) + 0.40 * heatmap_rgb)
+            buf = io.BytesIO()
+            Image.fromarray(overlay).save(buf, format='PNG')
+            return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode('utf-8')
+        except Exception as np_err:
+            logger.warning("Pure NumPy Grad-CAM overlay notice: %s", np_err)
+
+        return None
+
     def process_ultrasound_image(
         self,
         pil_image: Image.Image,
@@ -985,7 +1048,7 @@ class PCOSMLService:
                 'pcom_status': "Indeterminate",
                 'pcom_confidence_percent': None,
                 'exploratory_pcos_probability': None,
-                'gradcam_b64': "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+                'gradcam_b64': None,
                 'architecture': 'EfficientNet-B0 Vision Backbone',
                 'inference_error': err_msg,
             }
@@ -1004,45 +1067,29 @@ class PCOSMLService:
             feat_scaled_pcos = self._t3_clinical_pcos_data['scaler'].transform(feat_1280)
             p_pcos_t3 = float(self._t3_clinical_pcos_data['calibrated_model'].predict_proba(feat_scaled_pcos)[:, 1][0])
 
-        # 4. Grad-CAM spatial activation map
-        import base64
+        # 4. Input image base64 representation
+        original_image_b64 = None
+        img_resized_orig = img_rgb.resize((224, 224))
+        raw_np = np.array(img_resized_orig)
+        try:
+            buf_orig = io.BytesIO()
+            img_resized_orig.save(buf_orig, format='PNG')
+            original_image_b64 = "data:image/png;base64," + base64.b64encode(buf_orig.getvalue()).decode('utf-8')
+        except Exception as orig_err:
+            logger.debug("Original ultrasound base64 generation notice: %s", orig_err)
+
+        # 5. Grad-CAM spatial activation map
         gradcam_b64 = None
         if self._gradcam_engine is not None and 'img_tensor' in locals():
             try:
-                import matplotlib
-                matplotlib.use('Agg')
-                import matplotlib.pyplot as plt
-
                 cam_heatmap = self._gradcam_engine.generate_cam(img_tensor)
-                img_resized = img_rgb.resize((224, 224))
-                raw_np = np.array(img_resized)
-
-                fig, ax = plt.subplots(figsize=(3.5, 3.5), dpi=100)
-                ax.imshow(raw_np)
-                ax.imshow(cam_heatmap, cmap='jet', alpha=0.45)
-                ax.axis('off')
-                plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
-
-                buf = io.BytesIO()
-                fig.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
-                plt.close(fig)
-                buf.seek(0)
-                gradcam_b64 = "data:image/png;base64," + base64.b64encode(buf.read()).decode('utf-8')
+                gradcam_b64 = self._render_gradcam_overlay(cam_heatmap, raw_np)
             except Exception as cam_err:
                 logger.warning("Grad-CAM generation failed: %s", cam_err)
 
         if not gradcam_b64:
-            gradcam_b64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
-
-        original_image_b64 = None
-        try:
-            img_resized_orig = img_rgb.resize((224, 224))
-            buf_orig = io.BytesIO()
-            img_resized_orig.save(buf_orig, format='PNG')
-            buf_orig.seek(0)
-            original_image_b64 = "data:image/png;base64," + base64.b64encode(buf_orig.read()).decode('utf-8')
-        except Exception as orig_err:
-            logger.debug("Original ultrasound base64 generation notice: %s", orig_err)
+            # Fallback to original image if heatmap could not be generated; never return 1x1 green dummy
+            gradcam_b64 = original_image_b64
 
         pcom_confidence = round(abs(p_pcom - 0.5) * 200, 1)
 
