@@ -89,6 +89,38 @@ export function validateDateOfBirth(dateOfBirth: string | undefined | null): Dob
   };
 }
 
+/** Validates female onboarding eligibility for ages 13–60 inclusive. */
+export function validateFemaleScreeningAge(
+  dateOfBirth: string | undefined | null,
+): DobValidationResult {
+  const result = validateDateOfBirth(dateOfBirth);
+  if (!result.isValid) return result;
+  if ((result.age ?? 0) > 60) {
+    return {
+      isValid: false,
+      age: result.age,
+      error: 'Women’s onboarding is available for ages 13 to 60.',
+    };
+  }
+  return result;
+}
+
+/** Returns date picker bounds for female onboarding ages 13–60 inclusive. */
+export function getFemaleDobInputBounds(now: Date = new Date()): { min: string; max: string } {
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const day = now.getDate();
+  const maxDate = month === 1 && day === 29
+    ? new Date(year - 13, 1, 28)
+    : new Date(year - 13, month, day);
+  const minDate = month === 1 && day === 29
+    ? new Date(year - 61, 2, 1)
+    : new Date(year - 61, month, day + 1);
+  const format = (date: Date) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  return { min: format(minDate), max: format(maxDate) };
+}
+
 /**
  * Validates male screening age eligibility (ages 19–60 inclusive).
  * Enforces that users below 19 or above 60 cannot enter or complete male onboarding.

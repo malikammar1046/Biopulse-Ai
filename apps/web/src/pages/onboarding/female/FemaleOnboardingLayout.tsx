@@ -36,7 +36,7 @@ export const FemaleOnboardingLayout: React.FC<FemaleOnboardingLayoutProps> = ({
   const { t } = useTranslation(['onboarding', 'common']);
 
   return (
-    <div className="min-h-screen bg-[#F5FBFD] text-[#073B72] flex flex-col justify-between p-2 sm:p-4 lg:p-5 xl:p-6 select-none relative font-sans overflow-x-hidden">
+    <div className="h-dvh bg-[#F5FBFD] text-[#073B72] flex flex-col px-2 pt-2 pb-1 sm:px-4 sm:pt-4 sm:pb-1 lg:px-5 lg:pt-5 lg:pb-1 xl:px-6 xl:pt-6 xl:pb-1 select-none relative font-sans overflow-hidden">
       {/* ── Background Luminous Ambient Glows ── */}
       <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
         <div className="absolute top-10 left-10 w-[450px] h-[450px] bg-[#FDE6EF]/60 rounded-full blur-[140px]" />
@@ -45,11 +45,11 @@ export const FemaleOnboardingLayout: React.FC<FemaleOnboardingLayoutProps> = ({
       </div>
 
       {/* ── Desktop Two-Column Workspace (Wide Card Dominant) ── */}
-      <div className="w-full max-w-[1680px] mx-auto flex-1 flex flex-col lg:flex-row gap-4 lg:gap-5 xl:gap-6 items-stretch justify-center px-1 sm:px-2 lg:px-0">
+      <div className="w-full max-w-[1680px] mx-auto flex-1 min-h-0 flex flex-col lg:flex-row gap-4 lg:gap-5 xl:gap-6 items-stretch justify-center px-1 sm:px-2 lg:px-0">
         {/* ════════════════════════════════════════════════════════════
             LEFT COLUMN: FEMALE IDENTITY & PATHWAY PANEL (Compact 220–250px)
            ════════════════════════════════════════════════════════════ */}
-        <aside className="w-full lg:w-[220px] xl:w-[240px] 2xl:w-[250px] flex flex-col justify-between py-2 sm:py-3 select-none shrink-0">
+        <aside className="w-full lg:w-[220px] xl:w-[240px] 2xl:w-[250px] flex flex-col justify-between py-2 sm:py-3 select-none shrink-0 lg:min-h-0">
           {/* Top Back Action & Identity Header */}
           <div className="space-y-3">
             {isUpdatingProfile && onCancel ? (
@@ -160,9 +160,9 @@ export const FemaleOnboardingLayout: React.FC<FemaleOnboardingLayoutProps> = ({
         {/* ════════════════════════════════════════════════════════════
             RIGHT COLUMN: MAIN ONBOARDING WORKSPACE (Expanded Dominant Card)
            ════════════════════════════════════════════════════════════ */}
-        <main className="w-full flex-1 min-w-0 flex flex-col justify-between">
+        <main className="w-full flex-1 min-w-0 min-h-0 flex flex-col justify-between">
           {/* Main White Card with Generous Desktop Space */}
-          <div className="w-full bg-white rounded-2xl sm:rounded-[24px] xl:rounded-[28px] border border-[#D7EAF2] shadow-[0_8px_30px_rgba(7,59,114,0.05)] px-4 sm:px-6 lg:px-8 xl:px-10 py-4 sm:py-6 lg:py-7 xl:py-8 flex flex-col justify-between">
+          <div className="w-full flex-1 min-h-0 overflow-hidden bg-white rounded-2xl sm:rounded-[24px] xl:rounded-[28px] border border-[#D7EAF2] shadow-[0_8px_30px_rgba(7,59,114,0.05)] px-4 sm:px-6 lg:px-8 xl:px-10 py-4 sm:py-6 lg:py-7 xl:py-8 flex flex-col">
             {/* Top Fixed Area: PCOS Onboarding Bar & Stepper */}
             <div className="shrink-0 mb-2">
               <div className="flex items-center justify-between pb-2.5 border-b border-[#E8F1F5] mb-2">
@@ -185,7 +185,7 @@ export const FemaleOnboardingLayout: React.FC<FemaleOnboardingLayoutProps> = ({
             </div>
 
             {/* Form Content Area with Natural Flow */}
-            <div className="flex-1 w-full min-w-0 py-3 sm:py-4">
+            <div className="flex-1 min-h-0 w-full min-w-0 py-3 sm:py-4 overflow-y-auto overscroll-contain pr-1 sm:pr-2 [scrollbar-gutter:stable]">
               {children}
             </div>
 
@@ -245,7 +245,7 @@ export const FemaleOnboardingLayout: React.FC<FemaleOnboardingLayoutProps> = ({
           </div>
 
           {/* Privacy Note & Footer Step Counter below Main Card */}
-          <div className="w-full py-2.5 flex items-center justify-between text-[13px] sm:text-sm text-[#55718F] font-sans px-3 shrink-0">
+          <div className="w-full py-1.5 flex items-center justify-between text-[13px] sm:text-sm text-[#55718F] font-sans px-3 shrink-0">
             <div className="flex items-center gap-2 mx-auto">
               <Lock01 className="w-4 h-4 text-[#F43F7D]" aria-hidden="true" />
               <span>{t('onboarding:layout.secureNotice', 'Your information is secure and private.')}</span>

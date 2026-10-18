@@ -48,8 +48,8 @@ export const MaleOnboarding: React.FC = () => {
 
   // Editable draft profile state — 100% preserved with safe defaults
   const [draftProfile, setDraftProfile] = useState<UserProfile>(() => {
-    const defaultHeight = userProfile.heightCm || 178;
-    const defaultWeight = userProfile.weightKg || 80;
+    const defaultHeight = userProfile.heightCm ?? null;
+    const defaultWeight = userProfile.weightKg ?? null;
     const defaultWaist = (userProfile.waistCm && userProfile.waistCm > 0) ? userProfile.waistCm : null;
 
     return {
@@ -154,9 +154,9 @@ export const MaleOnboarding: React.FC = () => {
         phone: prev.phone || userProfile.phone || '',
         dateOfBirth: prev.dateOfBirth || userProfile.dateOfBirth || '',
         avatarUrl: prev.avatarUrl || userProfile.avatarUrl || '',
-        heightCm: prev.heightCm || userProfile.heightCm || 178,
-        weightKg: prev.weightKg || userProfile.weightKg || 80,
-        waistCm: prev.waistCm || userProfile.waistCm,
+        heightCm: prev.heightCm ?? userProfile.heightCm ?? null,
+        weightKg: prev.weightKg ?? userProfile.weightKg ?? null,
+        waistCm: prev.waistCm ?? userProfile.waistCm ?? null,
         medical: {
           bloodType: prev.medical?.bloodType || userProfile.medical?.bloodType || '',
           allergies: prev.medical?.allergies?.length ? prev.medical.allergies : (userProfile.medical?.allergies || ['None']),

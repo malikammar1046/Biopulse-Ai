@@ -12,6 +12,7 @@ import { getMaleDobInputBounds } from '../../../utils/profileValidation';
 import { OnboardingWhyModal, OnboardingWhyTrigger } from '../../../components/onboarding/OnboardingWhyModal';
 import { ProfilePictureSelector } from '../../../components/onboarding/ProfilePictureSelector';
 import { MeasurementInput } from '../../../components/common/MeasurementInput';
+import { calculateAgeFromDob } from '../../../utils/tier1InputMappers';
 
 interface MaleStep1Props {
   data: {
@@ -40,12 +41,17 @@ export const MaleStep1BasicInfo: React.FC<MaleStep1Props> = ({
 
   const dobBounds = getMaleDobInputBounds();
   const { feet, inches } = cmToFtIn(data.heightCm);
+  const calculatedAge = calculateAgeFromDob(data.dateOfBirth, null);
 
   // Live BMI calculation
-  const heightM = (data.heightCm || 178) / 100;
-  const bmiValue = data.weightKg
+  const heightM = data.heightCm ? data.heightCm / 100 : null;
+  const bmiValue = data.weightKg && heightM
     ? (data.weightKg / (heightM * heightM)).toFixed(1)
     : null;
+  const bmiNumber = bmiValue ? Number(bmiValue) : null;
+  const bmiStatus = bmiNumber === null
+    ? null
+    : bmiNumber < 18.5 ? 'Underweight' : bmiNumber < 25 ? 'Normal' : bmiNumber < 30 ? 'Overweight' : 'Obesity range';
 
   return (
     <div className="w-full space-y-5 text-left">
@@ -149,6 +155,11 @@ export const MaleStep1BasicInfo: React.FC<MaleStep1Props> = ({
               </div>
               {errors.dateOfBirth ? (
                 <p className="text-xs text-rose-500 font-medium">{errors.dateOfBirth}</p>
+              ) : data.dateOfBirth && calculatedAge !== null ? (
+                <div className="flex items-center gap-1.5 text-xs text-[#073B72] font-medium">
+                  <InfoCircle className="w-3.5 h-3.5 text-[#0288D1] shrink-0" aria-hidden="true" />
+                  <span>Calculated age: {calculatedAge} years</span>
+                </div>
               ) : (
                 <div className="flex items-center gap-1.5 text-xs text-[#55718F]">
                   <InfoCircle className="w-3.5 h-3.5 text-[#0288D1] shrink-0" aria-hidden="true" />
@@ -189,7 +200,7 @@ export const MaleStep1BasicInfo: React.FC<MaleStep1Props> = ({
               </span>
               {bmiValue && (
                 <span className="text-xs font-sans text-[#0288D1] font-bold bg-[#E0F2FE] border border-[#BAE6FD] px-2.5 py-0.5 rounded-md">
-                  Est. BMI: {bmiValue} kg/m²
+                  BMI {bmiValue} · {bmiStatus}
                 </span>
               )}
             </div>
@@ -234,7 +245,7 @@ export const MaleStep1BasicInfo: React.FC<MaleStep1Props> = ({
                       type="number"
                       min={100}
                       max={250}
-                      placeholder="178"
+                      placeholder="e.g. 178"
                       value={data.heightCm || ''}
                       onChange={(e) => onChange('heightCm', Number(e.target.value) || null)}
                       className="w-full h-10 sm:h-11 px-3 pr-9 rounded-xl bg-white border border-[#D7EAF2] text-sm sm:text-base font-medium text-[#073B72] placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0288D1]"
@@ -316,7 +327,7 @@ export const MaleStep1BasicInfo: React.FC<MaleStep1Props> = ({
                   unit={weightUnit}
                   toDisplay={weightUnit === 'lbs' ? kgToLbs : undefined}
                   fromDisplay={weightUnit === 'lbs' ? lbsToKg : undefined}
-                  placeholder={weightUnit === 'kg' ? '80' : '176'}
+                  placeholder={weightUnit === 'kg' ? 'e.g. 80' : 'e.g. 176'}
                   unitLabel={weightUnit}
                   className="w-full h-10 sm:h-11 px-3 pr-9 rounded-xl bg-white border border-[#D7EAF2] text-sm sm:text-base font-medium text-[#073B72] placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#0288D1]"
                 />

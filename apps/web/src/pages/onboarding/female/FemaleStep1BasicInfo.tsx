@@ -8,10 +8,11 @@ import {
   cmToInches,
   inchesToCm,
 } from '../../../utils/unitConversions';
-import { getDobInputBounds } from '../../../utils/profileValidation';
+import { getFemaleDobInputBounds } from '../../../utils/profileValidation';
 import { OnboardingWhyModal, OnboardingWhyTrigger } from '../../../components/onboarding/OnboardingWhyModal';
 import { ProfilePictureSelector } from '../../../components/onboarding/ProfilePictureSelector';
 import { MeasurementInput } from '../../../components/common/MeasurementInput';
+import { calculateAgeFromDob } from '../../../utils/tier1InputMappers';
 
 interface FemaleStep1Props {
   data: {
@@ -38,8 +39,15 @@ export const FemaleStep1BasicInfo: React.FC<FemaleStep1Props> = ({
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg');
   const [waistUnit, setWaistUnit] = useState<'cm' | 'in'>('cm');
 
-  const dobBounds = getDobInputBounds();
+  const dobBounds = getFemaleDobInputBounds();
   const { feet, inches } = cmToFtIn(data.heightCm);
+  const calculatedAge = calculateAgeFromDob(data.dateOfBirth, null);
+  const bmiValue = data.heightCm && data.weightKg
+    ? data.weightKg / ((data.heightCm / 100) ** 2)
+    : null;
+  const bmiStatus = bmiValue === null
+    ? null
+    : bmiValue < 18.5 ? 'Underweight' : bmiValue < 25 ? 'Normal' : bmiValue < 30 ? 'Overweight' : 'Obesity range';
 
   return (
     <div className="w-full space-y-5 text-left font-sans">
@@ -146,12 +154,12 @@ export const FemaleStep1BasicInfo: React.FC<FemaleStep1Props> = ({
               ) : data.dateOfBirth ? (
                 <div className="flex items-center gap-1.5 text-xs text-[#073B72] font-medium">
                   <InfoCircle className="w-3.5 h-3.5 text-[#0E9EAA] shrink-0" aria-hidden="true" />
-                  <span>BioPulse AI welcomes female users aged 13 and older across all life stages.</span>
+                  <span>{calculatedAge !== null ? `Calculated age: ${calculatedAge} years` : 'Women’s onboarding is available for ages 13 to 60.'}</span>
                 </div>
               ) : (
                 <div className="flex items-center gap-1.5 text-xs text-[#55718F]">
                   <InfoCircle className="w-3.5 h-3.5 text-[#F43F7D] shrink-0" aria-hidden="true" />
-                  <span>You must be 13 years or older to continue.</span>
+                  <span>You must be between 13 and 60 years old to continue.</span>
                 </div>
               )}
             </div>
@@ -186,7 +194,13 @@ export const FemaleStep1BasicInfo: React.FC<FemaleStep1Props> = ({
               <span className="text-[14px] sm:text-[15px] font-bold font-sans text-[#073B72] tracking-wide">
                 Physical Measurements
               </span>
-              <span className="text-xs text-[#55718F] font-sans">Toggle units anytime</span>
+              {bmiValue !== null ? (
+                <span className="text-xs text-[#F43F7D] font-bold bg-[#FDE6EF] border border-[#FBCFE8] px-2.5 py-1 rounded-md" role="status">
+                  BMI {bmiValue.toFixed(1)} · {bmiStatus}
+                </span>
+              ) : (
+                <span className="text-xs text-[#55718F] font-sans">Enter height and weight to calculate BMI</span>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

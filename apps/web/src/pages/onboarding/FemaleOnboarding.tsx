@@ -10,7 +10,7 @@ import type {
   WomensHealthProfile,
   LifestyleProfile,
 } from '../../types/onboarding';
-import { validateDateOfBirth, validatePakistaniPhone } from '../../utils/profileValidation';
+import { validateFemaleScreeningAge, validatePakistaniPhone } from '../../utils/profileValidation';
 import { FemaleOnboardingLayout } from './female/FemaleOnboardingLayout';
 import { FemaleStep1BasicInfo } from './female/FemaleStep1BasicInfo';
 import { FemaleStep2MedicalHistory } from './female/FemaleStep2MedicalHistory';
@@ -56,8 +56,8 @@ export const FemaleOnboarding: React.FC = () => {
     phone: userProfile.phone || '',
     dateOfBirth: userProfile.dateOfBirth || '',
     avatarUrl: userProfile.avatarUrl || '',
-    heightCm: userProfile.heightCm || 165,
-    weightKg: userProfile.weightKg || 62,
+    heightCm: userProfile.heightCm ?? null,
+    weightKg: userProfile.weightKg ?? null,
     medical: {
       bloodType: userProfile.medical?.bloodType || '',
       allergies: userProfile.medical?.allergies || ['None'],
@@ -120,9 +120,9 @@ export const FemaleOnboarding: React.FC = () => {
         phone: prev.phone || userProfile.phone || '',
         dateOfBirth: prev.dateOfBirth || userProfile.dateOfBirth || '',
         avatarUrl: prev.avatarUrl || userProfile.avatarUrl || '',
-        heightCm: prev.heightCm || userProfile.heightCm || 165,
-        weightKg: prev.weightKg || userProfile.weightKg || 62,
-        waistCm: prev.waistCm || userProfile.waistCm,
+        heightCm: prev.heightCm ?? userProfile.heightCm ?? null,
+        weightKg: prev.weightKg ?? userProfile.weightKg ?? null,
+        waistCm: prev.waistCm ?? userProfile.waistCm ?? null,
         medical: {
           bloodType: prev.medical?.bloodType || userProfile.medical?.bloodType || '',
           allergies: prev.medical?.allergies?.length ? prev.medical.allergies : (userProfile.medical?.allergies || ['None']),
@@ -199,7 +199,7 @@ export const FemaleOnboarding: React.FC = () => {
     if (stepNum === 1) {
       if (!draftProfile.fullName.trim()) errs.fullName = 'Full Name is required.';
 
-      const dobCheck = validateDateOfBirth(draftProfile.dateOfBirth);
+      const dobCheck = validateFemaleScreeningAge(draftProfile.dateOfBirth);
       if (!dobCheck.isValid) errs.dateOfBirth = dobCheck.error!;
 
       const phoneCheck = validatePakistaniPhone(draftProfile.phone, { optional: true });
@@ -254,6 +254,12 @@ export const FemaleOnboarding: React.FC = () => {
   };
 
   const handleEnterOvaSense = async () => {
+    const dobCheck = validateFemaleScreeningAge(draftProfile.dateOfBirth);
+    if (!dobCheck.isValid) {
+      setErrors({ dateOfBirth: dobCheck.error! });
+      setCurrentStep(1);
+      return;
+    }
     setIsSubmitting(true);
     setIsProcessingScreening(true);
     setSaveError(undefined);
