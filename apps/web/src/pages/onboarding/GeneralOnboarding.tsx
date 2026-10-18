@@ -20,6 +20,7 @@ import type { UserProfile, GeneralHealthProfile, LifestyleProfile } from '../../
 import { Logo } from '../../components/brand/Logo';
 import { OnboardingProgressBar } from '../../components/onboarding/OnboardingProgressBar';
 import { validateDateOfBirth, validatePakistaniPhone, getDobInputBounds } from '../../utils/profileValidation';
+import { calculateAgeFromDob } from '../../utils/tier1InputMappers';
 
 const GENERAL_STEPS = [
   { number: '1', label: 'Basic Info' },
@@ -65,8 +66,8 @@ export const GeneralOnboarding: React.FC = () => {
     email: userProfile.email || '',
     phone: userProfile.phone || '',
     dateOfBirth: userProfile.dateOfBirth || '',
-    heightCm: userProfile.heightCm || 170,
-    weightKg: userProfile.weightKg || 70,
+    heightCm: userProfile.heightCm ?? null,
+    weightKg: userProfile.weightKg ?? null,
     generalHealth: {
       primaryFocus: userProfile.generalHealth?.primaryFocus || ['Metabolic & Energy Balance', 'Deep Sleep & Circadian Rhythm'],
       energyPatterns: userProfile.generalHealth?.energyPatterns || 'Consistent with afternoon dips',
@@ -96,6 +97,13 @@ export const GeneralOnboarding: React.FC = () => {
           },
         ],
   }));
+  const calculatedAge = calculateAgeFromDob(draftProfile.dateOfBirth, null);
+  const bmiValue = draftProfile.heightCm && draftProfile.weightKg
+    ? draftProfile.weightKg / ((draftProfile.heightCm / 100) ** 2)
+    : null;
+  const bmiStatus = bmiValue === null
+    ? null
+    : bmiValue < 18.5 ? 'Underweight' : bmiValue < 25 ? 'Normal' : bmiValue < 30 ? 'Overweight' : 'Obesity range';
 
   // Route protection: If already onboarded or wrong pathway
   if (userProfile.isOnboarded) {
@@ -169,7 +177,7 @@ export const GeneralOnboarding: React.FC = () => {
       const dobCheck = validateDateOfBirth(draftProfile.dateOfBirth);
       if (!dobCheck.isValid) errs.dateOfBirth = dobCheck.error!;
 
-      const phoneCheck = validatePakistaniPhone(draftProfile.phone);
+      const phoneCheck = validatePakistaniPhone(draftProfile.phone, { optional: true });
       if (!phoneCheck.isValid) errs.phone = phoneCheck.error!;
     }
 
@@ -215,9 +223,9 @@ export const GeneralOnboarding: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A1A12] text-white flex flex-col justify-between p-4 sm:p-6 lg:p-8 select-none">
+    <div className="h-dvh overflow-hidden bg-[#0A1A12] text-white flex flex-col p-4 sm:p-6 lg:p-8 select-none">
       {/* Top Header */}
-      <header className="max-w-4xl w-full mx-auto flex items-center justify-between pb-6 border-b border-white/10">
+      <header className="max-w-4xl w-full mx-auto flex items-center justify-between pb-4 sm:pb-6 border-b border-white/10 shrink-0">
         <Link to={ROUTES.HOME} className="flex items-center gap-2 group transition-transform hover:scale-[1.01]">
           <Logo size="sm" theme="dark" />
         </Link>
@@ -230,7 +238,7 @@ export const GeneralOnboarding: React.FC = () => {
       </header>
 
       {/* Main Content Area */}
-      <main className="max-w-3xl w-full mx-auto my-8 flex-1">
+      <main className="max-w-3xl w-full mx-auto my-4 sm:my-6 flex-1 min-h-0 flex flex-col">
         <OnboardingProgressBar
           currentStep={currentStep}
           totalSteps={GENERAL_STEPS.length}
@@ -240,6 +248,7 @@ export const GeneralOnboarding: React.FC = () => {
           }}
         />
 
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain py-4 pr-1 sm:pr-2 [scrollbar-gutter:stable]">
         <AnimatePresence mode="wait">
           {/* ── Step 1: Basic Information ── */}
           {currentStep === 1 && (
@@ -303,11 +312,16 @@ export const GeneralOnboarding: React.FC = () => {
                     {errors.dateOfBirth && (
                       <p className="text-xs text-[#34D399] mt-1">{errors.dateOfBirth}</p>
                     )}
+                    {!errors.dateOfBirth && calculatedAge !== null && (
+                      <p className="text-xs text-[#34D399] mt-1 font-semibold" role="status">
+                        Calculated age: {calculatedAge} years
+                      </p>
+                    )}
                   </div>
 
                   <div>
                     <label className="text-xs font-bold text-[#E6F4EA] uppercase tracking-wider flex items-center justify-between mb-1">
-                      <span>Phone Number <span className="text-[#34D399]">*</span></span>
+                      <span>Phone Number <span className="text-xs text-[#A7F3D0]/70 font-normal capitalize">(Optional)</span></span>
                       <span className="text-[10px] text-[#A7F3D0]/70 font-mono">11 digits (03xx or +92)</span>
                     </label>
                     <div className="relative">
@@ -337,7 +351,7 @@ export const GeneralOnboarding: React.FC = () => {
                       value={draftProfile.heightCm || ''}
                       onChange={(e) => updateDraft('heightCm', Number(e.target.value) || null)}
                       className="w-full px-4 py-2.5 rounded-2xl bg-[#0B1E15] border border-white/15 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#34D399]"
-                      placeholder="170"
+                      placeholder="e.g. 170"
                     />
                   </div>
 
@@ -352,10 +366,16 @@ export const GeneralOnboarding: React.FC = () => {
                       value={draftProfile.weightKg || ''}
                       onChange={(e) => updateDraft('weightKg', Number(e.target.value) || null)}
                       className="w-full px-4 py-2.5 rounded-2xl bg-[#0B1E15] border border-white/15 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#34D399]"
-                      placeholder="70"
+                      placeholder="e.g. 70"
                     />
                   </div>
                 </div>
+                {bmiValue !== null && (
+                  <div className="rounded-2xl border border-[#34D399]/30 bg-[#34D399]/10 px-4 py-3 flex items-center justify-between" role="status">
+                    <span className="text-xs text-[#A7F3D0]">Calculated BMI</span>
+                    <strong className="text-sm text-[#34D399]">{bmiValue.toFixed(1)} · {bmiStatus}</strong>
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
@@ -666,10 +686,11 @@ export const GeneralOnboarding: React.FC = () => {
             </motion.div>
           )}
         </AnimatePresence>
+        </div>
 
         {/* Step Navigation Buttons (Steps 1 to 5) */}
         {currentStep < 6 && (
-          <div className="flex items-center justify-between pt-6 border-t border-white/10 mt-8">
+          <div className="flex items-center justify-between pt-4 sm:pt-6 border-t border-white/10 mt-3 shrink-0">
             <button
               type="button"
               onClick={handleBack}
@@ -695,7 +716,7 @@ export const GeneralOnboarding: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="max-w-4xl w-full mx-auto pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between text-[11px] text-[#A7F3D0]/60 gap-2">
+      <footer className="max-w-4xl w-full mx-auto pt-3 sm:pt-5 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between text-[11px] text-[#A7F3D0]/60 gap-2 shrink-0">
         <div className="flex items-center gap-1.5">
           <ShieldTick className="w-4 h-4 text-[#34D399]" aria-hidden="true" />
           <span>Encrypted HIPAA-grade health data container.</span>

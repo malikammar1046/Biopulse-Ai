@@ -48,7 +48,13 @@ export const WeeklyHealthSummary: React.FC<WeeklyHealthSummaryProps> = ({
       {/* Left Column: Summary Stats */}
       <div className="relative z-10 space-y-4 max-w-xl">
         <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E0F2FE] border border-[#BAE6FD] text-xs font-mono font-bold text-[#0288D1] mb-1">
+          <div
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold mb-1 border ${
+              isFemale
+                ? 'bg-[#FDE6EF] border-[#F43F7D]/20 text-[#E11D48]'
+                : 'bg-[#E0F2FE] border-[#BAE6FD] text-[#0288D1]'
+            }`}
+          >
             <FileCheck01 className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Executive Health Brief</span>
           </div>
@@ -77,14 +83,22 @@ export const WeeklyHealthSummary: React.FC<WeeklyHealthSummaryProps> = ({
 
           <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0]">
             <span className="text-[10px] font-mono text-[#64748B] uppercase block">Logged Symptoms</span>
-            <span className="text-xs font-bold text-[#0288D1] font-mono mt-0.5 block">
+            <span
+              className={`text-xs font-bold font-mono mt-0.5 block ${
+                isFemale ? 'text-[#F43F7D]' : 'text-[#0288D1]'
+              }`}
+            >
               {symptomsCount} {symptomsCount === 1 ? 'Entry' : 'Entries'}
             </span>
           </div>
 
           <div className="p-3 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0]">
             <span className="text-[10px] font-mono text-[#64748B] uppercase block">Hydration Goal</span>
-            <span className="text-xs font-bold text-[#0288D1] font-mono mt-0.5 block">
+            <span
+              className={`text-xs font-bold font-mono mt-0.5 block ${
+                isFemale ? 'text-[#008CA5]' : 'text-[#0288D1]'
+              }`}
+            >
               {((userProfile.lifestyle?.dailyWaterGlasses || 8) * 0.25).toFixed(1)}L / day
             </span>
           </div>
@@ -104,7 +118,11 @@ export const WeeklyHealthSummary: React.FC<WeeklyHealthSummaryProps> = ({
           type="button"
           onClick={handleExportSummary}
           disabled={downloading}
-          className="w-full md:w-auto px-6 py-3.5 rounded-2xl font-sans font-bold text-xs text-white bg-[#0288D1] hover:bg-[#0277BD] shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70"
+          className={`w-full md:w-auto px-6 py-3.5 rounded-2xl font-sans font-bold text-xs text-white shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 ${
+            isFemale
+              ? 'bg-[#F43F7D] hover:bg-[#E11D48]'
+              : 'bg-[#0288D1] hover:bg-[#0277BD]'
+          }`}
         >
           {downloading ? (
             <>

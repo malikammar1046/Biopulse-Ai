@@ -5,6 +5,7 @@ import {
   Pressable,
   StyleSheet,
   ScrollView,
+  TextInput,
   useWindowDimensions,
   Platform,
   Alert,
@@ -72,12 +73,51 @@ export default function FemaleBasicInfoScreen() {
 
   // Local interactive state
   const [dob, setDob] = useState<string>(basicInfo.dateOfBirth || '2002-03-15');
-  const [heightCm, setHeightCm] = useState<number>(basicInfo.heightCm || 162);
-  const [weightKg, setWeightKg] = useState<number>(basicInfo.weightKg || 58);
+  const [heightUnit, setHeightUnit] = useState<'cm' | 'ft'>('cm');
+  const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg');
+  const [heightVal, setHeightVal] = useState<string>(String(basicInfo.heightCm || 162));
+  const [weightVal, setWeightVal] = useState<string>(String(basicInfo.weightKg || 58));
   const [pregnancyStatus, setPregnancyStatus] = useState<PregnancyOption>(
     (basicInfo.pregnancyStatus as PregnancyOption) || 'not_pregnant'
   );
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+
+  const handleSetHeightUnit = useCallback((targetUnit: 'cm' | 'ft') => {
+    if (targetUnit === heightUnit) return;
+    const num = parseFloat(heightVal);
+    if (!isNaN(num) && num > 0) {
+      if (targetUnit === 'ft') {
+        setHeightVal((num / 30.48).toFixed(1));
+      } else {
+        setHeightVal(String(Math.round(num * 30.48)));
+      }
+    }
+    setHeightUnit(targetUnit);
+  }, [heightVal, heightUnit]);
+
+  const handleSetWeightUnit = useCallback((targetUnit: 'kg' | 'lbs') => {
+    if (targetUnit === weightUnit) return;
+    const num = parseFloat(weightVal);
+    if (!isNaN(num) && num > 0) {
+      if (targetUnit === 'lbs') {
+        setWeightVal(String(Math.round(num * 2.20462)));
+      } else {
+        setWeightVal(String(Math.round(num * 0.453592)));
+      }
+    }
+    setWeightUnit(targetUnit);
+  }, [weightVal, weightUnit]);
+
+  // Canonical metric values stored in database
+  const heightCm = useMemo(() => {
+    const raw = parseFloat(heightVal) || 162;
+    return heightUnit === 'cm' ? Math.round(raw) : Math.round(raw * 30.48);
+  }, [heightVal, heightUnit]);
+
+  const weightKg = useMemo(() => {
+    const raw = parseFloat(weightVal) || 58;
+    return weightUnit === 'kg' ? Math.round(raw) : Math.round(raw * 0.453592);
+  }, [weightVal, weightUnit]);
 
   const topPad = Math.max(insets.top, Platform.OS === 'android' ? 16 : 12);
   const bottomPad = Math.max(insets.bottom, 20);
@@ -218,28 +258,66 @@ export default function FemaleBasicInfoScreen() {
 
             {/* Height Row */}
             <View style={styles.metricRow}>
-              <View>
+              <View style={styles.metricLeft}>
                 <Text style={styles.metricLabel}>Height</Text>
-                <Text style={styles.metricValue}>
-                  {heightCm} <Text style={styles.metricUnit}>cm</Text>
-                </Text>
+                <View style={styles.metricInputWrapper}>
+                  <TextInput
+                    style={styles.metricTextInput}
+                    value={heightVal}
+                    onChangeText={setHeightVal}
+                    keyboardType="numeric"
+                    maxLength={5}
+                  />
+                  <Text style={styles.metricUnit}>{heightUnit}</Text>
+                </View>
               </View>
 
-              <View style={styles.adjustButtonsRow}>
-                <Pressable
-                  onPress={() => setHeightCm((h) => Math.max(120, h - 1))}
-                  style={styles.adjustBtn}
-                  hitSlop={8}
-                >
-                  <Ionicons name="remove" size={18} color={BioPulseColors.textPrimary} />
-                </Pressable>
-                <Pressable
-                  onPress={() => setHeightCm((h) => Math.min(220, h + 1))}
-                  style={styles.adjustBtn}
-                  hitSlop={8}
-                >
-                  <Ionicons name="add" size={18} color={BioPulseColors.textPrimary} />
-                </Pressable>
+              <View style={styles.adjustSection}>
+                <View style={styles.unitToggleGroup}>
+                  <Pressable
+                    onPress={() => handleSetHeightUnit('cm')}
+                    style={[styles.unitToggleBtn, heightUnit === 'cm' && styles.unitToggleBtnActive]}
+                  >
+                    <Text style={[styles.unitToggleText, heightUnit === 'cm' && styles.unitToggleTextActive]}>
+                      cm
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => handleSetHeightUnit('ft')}
+                    style={[styles.unitToggleBtn, heightUnit === 'ft' && styles.unitToggleBtnActive]}
+                  >
+                    <Text style={[styles.unitToggleText, heightUnit === 'ft' && styles.unitToggleTextActive]}>
+                      ft
+                    </Text>
+                  </Pressable>
+                </View>
+
+                <View style={styles.adjustButtonsRow}>
+                  <Pressable
+                    onPress={() => {
+                      const cur = parseFloat(heightVal) || 0;
+                      const delta = heightUnit === 'cm' ? 1 : 0.1;
+                      const next = Math.max(heightUnit === 'cm' ? 80 : 2.5, cur - delta);
+                      setHeightVal(heightUnit === 'cm' ? String(Math.round(next)) : next.toFixed(1));
+                    }}
+                    style={styles.adjustBtn}
+                    hitSlop={8}
+                  >
+                    <Ionicons name="remove" size={18} color={BioPulseColors.textPrimary} />
+                  </Pressable>
+                  <Pressable
+                    onPress={() => {
+                      const cur = parseFloat(heightVal) || 0;
+                      const delta = heightUnit === 'cm' ? 1 : 0.1;
+                      const next = Math.min(heightUnit === 'cm' ? 250 : 8.2, cur + delta);
+                      setHeightVal(heightUnit === 'cm' ? String(Math.round(next)) : next.toFixed(1));
+                    }}
+                    style={styles.adjustBtn}
+                    hitSlop={8}
+                  >
+                    <Ionicons name="add" size={18} color={BioPulseColors.textPrimary} />
+                  </Pressable>
+                </View>
               </View>
             </View>
 
@@ -247,28 +325,64 @@ export default function FemaleBasicInfoScreen() {
 
             {/* Weight Row */}
             <View style={styles.metricRow}>
-              <View>
+              <View style={styles.metricLeft}>
                 <Text style={styles.metricLabel}>Weight</Text>
-                <Text style={styles.metricValue}>
-                  {weightKg} <Text style={styles.metricUnit}>kg</Text>
-                </Text>
+                <View style={styles.metricInputWrapper}>
+                  <TextInput
+                    style={styles.metricTextInput}
+                    value={weightVal}
+                    onChangeText={setWeightVal}
+                    keyboardType="numeric"
+                    maxLength={5}
+                  />
+                  <Text style={styles.metricUnit}>{weightUnit}</Text>
+                </View>
               </View>
 
-              <View style={styles.adjustButtonsRow}>
-                <Pressable
-                  onPress={() => setWeightKg((w) => Math.max(35, w - 1))}
-                  style={styles.adjustBtn}
-                  hitSlop={8}
-                >
-                  <Ionicons name="remove" size={18} color={BioPulseColors.textPrimary} />
-                </Pressable>
-                <Pressable
-                  onPress={() => setWeightKg((w) => Math.min(200, w + 1))}
-                  style={styles.adjustBtn}
-                  hitSlop={8}
-                >
-                  <Ionicons name="add" size={18} color={BioPulseColors.textPrimary} />
-                </Pressable>
+              <View style={styles.adjustSection}>
+                <View style={styles.unitToggleGroup}>
+                  <Pressable
+                    onPress={() => handleSetWeightUnit('kg')}
+                    style={[styles.unitToggleBtn, weightUnit === 'kg' && styles.unitToggleBtnActive]}
+                  >
+                    <Text style={[styles.unitToggleText, weightUnit === 'kg' && styles.unitToggleTextActive]}>
+                      kg
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => handleSetWeightUnit('lbs')}
+                    style={[styles.unitToggleBtn, weightUnit === 'lbs' && styles.unitToggleBtnActive]}
+                  >
+                    <Text style={[styles.unitToggleText, weightUnit === 'lbs' && styles.unitToggleTextActive]}>
+                      lbs
+                    </Text>
+                  </Pressable>
+                </View>
+
+                <View style={styles.adjustButtonsRow}>
+                  <Pressable
+                    onPress={() => {
+                      const cur = parseFloat(weightVal) || 0;
+                      const next = Math.max(weightUnit === 'kg' ? 25 : 55, cur - 1);
+                      setWeightVal(String(Math.round(next)));
+                    }}
+                    style={styles.adjustBtn}
+                    hitSlop={8}
+                  >
+                    <Ionicons name="remove" size={18} color={BioPulseColors.textPrimary} />
+                  </Pressable>
+                  <Pressable
+                    onPress={() => {
+                      const cur = parseFloat(weightVal) || 0;
+                      const next = Math.min(weightUnit === 'kg' ? 300 : 660, cur + 1);
+                      setWeightVal(String(Math.round(next)));
+                    }}
+                    style={styles.adjustBtn}
+                    hitSlop={8}
+                  >
+                    <Ionicons name="add" size={18} color={BioPulseColors.textPrimary} />
+                  </Pressable>
+                </View>
               </View>
             </View>
           </View>
@@ -509,10 +623,56 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: BioPulseColors.textSecondary,
   },
+  metricLeft: {
+    flex: 1,
+  },
+  metricInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginTop: 2,
+  },
+  metricTextInput: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: BioPulseColors.textPrimary,
+    minWidth: 46,
+    padding: 0,
+    marginRight: 4,
+  },
+  adjustSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  unitToggleGroup: {
+    flexDirection: 'row',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 10,
+    padding: 2,
+  },
+  unitToggleBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 8,
+    minWidth: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  unitToggleBtnActive: {
+    backgroundColor: '#F43F7D',
+  },
+  unitToggleText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: BioPulseColors.textSecondary,
+  },
+  unitToggleTextActive: {
+    color: '#FFFFFF',
+  },
   adjustButtonsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   adjustBtn: {
     width: 38,

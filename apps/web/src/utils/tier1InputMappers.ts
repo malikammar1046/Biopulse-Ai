@@ -4,22 +4,47 @@ import type { UserProfile } from '../types/onboarding';
  * Calculates patient age safely from an ISO date of birth string.
  * Defaults to medical reference baseline if date is absent or malformed.
  */
-export function calculateAgeFromDob(dob?: string | null, fallbackAge: number = 25): number {
-  if (!dob) return fallbackAge;
+export function calculateAgeFromDob(dob?: string | null, fallbackAge?: number | null): number | null {
+  if (!dob) return fallbackAge !== undefined ? fallbackAge : null;
   try {
-    const bdate = new Date(dob);
-    if (Number.isNaN(bdate.getTime())) return fallbackAge;
+    const trimmed = dob.trim();
+    const match = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (!match) return fallbackAge !== undefined ? fallbackAge : null;
+
+    const birthYear = parseInt(match[1], 10);
+    const birthMonth = parseInt(match[2], 10);
+    const birthDay = parseInt(match[3], 10);
+
+    const testDate = new Date(birthYear, birthMonth - 1, birthDay);
+    if (
+      testDate.getFullYear() !== birthYear ||
+      testDate.getMonth() !== birthMonth - 1 ||
+      testDate.getDate() !== birthDay
+    ) {
+      return fallbackAge !== undefined ? fallbackAge : null;
+    }
+
     const today = new Date();
-    const age =
-      today.getFullYear() -
-      bdate.getFullYear() -
-      ((today.getMonth() < bdate.getMonth() ||
-        (today.getMonth() === bdate.getMonth() && today.getDate() < bdate.getDate()))
-        ? 1
-        : 0);
-    return age > 0 && age < 120 ? age : fallbackAge;
+    const todayYear = today.getFullYear();
+    const todayMonth = today.getMonth() + 1;
+    const todayDay = today.getDate();
+
+    // Check future date
+    if (
+      birthYear > todayYear ||
+      (birthYear === todayYear && birthMonth > todayMonth) ||
+      (birthYear === todayYear && birthMonth === todayMonth && birthDay > todayDay)
+    ) {
+      return fallbackAge !== undefined ? fallbackAge : null;
+    }
+
+    let age = todayYear - birthYear;
+    if (todayMonth < birthMonth || (todayMonth === birthMonth && todayDay < birthDay)) {
+      age--;
+    }
+    return age >= 0 && age < 120 ? age : (fallbackAge !== undefined ? fallbackAge : null);
   } catch {
-    return fallbackAge;
+    return fallbackAge !== undefined ? fallbackAge : null;
   }
 }
 
@@ -60,6 +85,7 @@ export function deriveFemaleTier1InputsFromProfile(
 
   return {
     age,
+    date_of_birth: profile.dateOfBirth,
     height_cm: heightCm,
     weight_kg: weightKg,
     waist_inch: waistInch,
@@ -76,6 +102,10 @@ export function deriveFemaleTier1InputsFromProfile(
     marriage_years: marriageYears,
     pregnancy,
     abortions,
+    has_had_period: profile.womensHealth?.hasHadPeriod,
+    age_at_menarche: profile.womensHealth?.ageAtMenarche,
+    is_menopausal: profile.womensHealth?.isMenopausal,
+    menopausal_status: profile.womensHealth?.menopausalStatus,
   };
 }
 
@@ -88,7 +118,8 @@ export function deriveMaleTier1InputsFromProfile(
 ): Record<string, any> {
   if (!profile) return {};
 
-  const age = calculateAgeFromDob(profile.dateOfBirth, 35);
+  // Age: NEVER fabricate 35. If DOB is absent or invalid, pass null so backend flags as unavailable.
+  const age = calculateAgeFromDob(profile.dateOfBirth, null);
   const heightCm = Number(profile.heightCm) || 178;
   const weightKg = Number(profile.weightKg) || 80;
 
@@ -102,9 +133,34 @@ export function deriveMaleTier1InputsFromProfile(
       ? Number(profile.waistCm)
       : null;
 
-  const conds = (profile.medical?.conditions || []).join(' ').toLowerCase();
-  const isHbp = conds.includes('hypertension') || conds.includes('blood pressure') ? 1 : 0;
-  const isDm = conds.includes('diabetes') || conds.includes('insulin resistance') ? 1 : 0;
+  const rawConds = profile.medical?.conditions;
+  let isHbp: number | null = null;
+  let isDm: number | null = null;
+
+  if (Array.isArray(rawConds) && rawConds.length > 0) {
+    const condsStr = rawConds.join(' ').toLowerCase();
+    if (condsStr.includes('none of these') || condsStr.includes('none')) {
+      isHbp = 0;
+      isDm = 0;
+    } else {
+      if (condsStr.includes('hypertension: unsure') || condsStr.includes('blood pressure: unsure')) {
+        isHbp = null;
+      } else if (condsStr.includes('hypertension') || condsStr.includes('blood pressure')) {
+        isHbp = 1;
+      } else {
+        isHbp = 0;
+      }
+
+      if (condsStr.includes('diabetes: unsure') || condsStr.includes('insulin: unsure') || condsStr.includes('blood sugar: unsure')) {
+        isDm = null;
+      } else if (condsStr.includes('diabetes')) {
+        isDm = 1;
+      } else {
+        isDm = 0;
+      }
+    }
+  }
+  // If conditions were unanswered/empty, isHbp and isDm remain null — never equated to 0 (No).
 
   const adam = profile.mensHealth?.adamResponses || {};
   const lowEnergy =

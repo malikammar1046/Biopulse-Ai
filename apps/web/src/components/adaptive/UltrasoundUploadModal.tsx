@@ -11,6 +11,7 @@ import {
 import { useUserHealth } from '../../context/UserHealthContext';
 import { fetchActiveAssessment } from '../../services/intelligenceService';
 import { ClinicalModalLayout } from './ClinicalModalPrimitives';
+import { calculateAge } from '../../utils/profileCompletion';
 
 interface UltrasoundUploadModalProps {
   isOpen: boolean;
@@ -35,10 +36,10 @@ interface StageMeta {
 
 const STAGES: StageMeta[] = [
   { key: 'uploading', label: 'Uploading', detail: 'Transmitting ultrasound scan to secure clinical inference pipeline' },
-  { key: 'processing_ultrasound', label: 'Processing Ultrasound', detail: 'Detecting polycystic ovarian morphology (PCOM) and follicle distribution' },
-  { key: 'multimodal_reassessment', label: 'Multimodal Reassessment', detail: 'Fusing clinical biomarkers and ultrasound evidence via neural ensemble' },
+  { key: 'processing_ultrasound', label: 'Processing Ultrasound', detail: 'Evaluating AI-estimated polycystic ovarian morphology (PCOM)' },
+  { key: 'multimodal_reassessment', label: 'Multimodal Fusion', detail: 'Calculating 95% clinical + 5% ultrasound weighted probability with independent morphology' },
   { key: 'saving_assessment', label: 'Saving Assessment', detail: 'Persisting updated active assessment with full audit provenance' },
-  { key: 'completed', label: 'Completed', detail: 'Multimodal screening updated and verified' },
+  { key: 'completed', label: 'Completed', detail: 'Multimodal fused assessment updated and verified across all modules' },
 ];
 
 export const UltrasoundUploadModal: React.FC<UltrasoundUploadModalProps> = ({
@@ -195,6 +196,12 @@ export const UltrasoundUploadModal: React.FC<UltrasoundUploadModalProps> = ({
         );
       }
 
+      try {
+        await refreshActiveAssessment();
+      } catch (refErr) {
+        console.warn('Post-ultrasound active assessment refresh notice:', refErr);
+      }
+
       if (onSuccess) onSuccess();
       setTimeout(() => {
         setSuccessNotice(null);
@@ -321,7 +328,7 @@ export const UltrasoundUploadModal: React.FC<UltrasoundUploadModalProps> = ({
             <p>
               <strong className="text-slate-900">Multimodal Fusion Ready: </strong>
               Your active Tier 2 Clinical Labs will be combined with this ultrasound scan using our
-              calibrated clinical + ultrasound weighted multimodal ensemble.
+              calibrated clinical (95%) and ultrasound (5%) weighted multimodal ensemble.
             </p>
           ) : (
             <p>
@@ -335,6 +342,20 @@ export const UltrasoundUploadModal: React.FC<UltrasoundUploadModalProps> = ({
           </p>
         </div>
       </div>
+
+      {/* Adolescent Guidance Advisory */}
+      {(((userProfile?.dateOfBirth && (calculateAge(userProfile.dateOfBirth) ?? 100) < 20)) ||
+        (activeAssessment?.input_features?.age && activeAssessment.input_features.age < 20)) && (
+        <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 flex items-start gap-3 text-xs text-amber-900 leading-relaxed">
+          <InfoCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" aria-hidden="true" />
+          <div className="space-y-0.5">
+            <p className="font-bold text-amber-950">Adolescent Clinical Advisory</p>
+            <p className="text-[11px] text-amber-800">
+              International guidelines advise that pelvic ultrasound should not be used to diagnose PCOS in adolescents (under 20 years old or within 8 years of menarche) due to the frequency of physiological multi-follicular ovaries. Uploaded scans provide informational screening exploration only.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Explicit Processing State Stepper */}
       {isProcessing && (

@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   useWindowDimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,6 +19,7 @@ import { BioPulseColors } from '../../constants/Colors';
 import { BioPulseBackground } from '../../components/common/BioPulseBackground';
 import { useAuth } from '../../features/authentication';
 import { useHealthStore } from '../../store';
+import { companionService } from '../../services/companionService';
 
 interface ChatMessage {
   id: string;
@@ -56,7 +58,7 @@ export default function AiCompanionScreen() {
   const isTablet = width >= 768;
   const scrollViewRef = useRef<ScrollView>(null);
 
-  const { pathway } = useAuth();
+  const { user, pathway } = useAuth();
   const isFemale = pathway !== 'male_hypogonadism' && pathway !== 'male';
   const { screening } = useHealthStore();
 
@@ -75,73 +77,74 @@ export default function AiCompanionScreen() {
         ? "Hello! I'm your BioPulse AI Companion. I can help you understand your results, suggest next steps, and answer your questions about PCOS and hormonal health.\n\nHow can I help you today?"
         : "Hello! I'm your BioPulse AI Companion. I can help you understand your results, suggest next steps, and answer your questions about testosterone and hormonal health.\n\nHow can I help you today?",
     },
-    {
-      id: 'msg-2',
-      sender: 'user',
-      text: isFemale
-        ? 'Why is irregular cycle an important factor in PCOS?'
-        : 'Why is morning vitality an important factor in testosterone health?',
-    },
-    {
-      id: 'msg-3',
-      sender: 'assistant',
-      text: isFemale
-        ? 'Irregular menstrual cycles are an important factor because they often reflect hormonal imbalances, especially related to androgens and ovulation patterns. In PCOS, menstrual irregularity is a common sign and is strongly associated with higher screening risk.'
-        : 'Morning vitality is an important factor because diurnal testosterone levels peak in the early morning hours following restful sleep. Reduced morning vitality often correlates with blunted circadian testosterone pulsatility.',
-    },
   ];
 
   const [messages, setMessages] = useState<ChatMessage[]>(defaultMessages);
   const [inputText, setInputText] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [lastFailedMessage, setLastFailedMessage] = useState<string | null>(null);
 
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
-  }, [messages]);
+  }, [messages, isTyping]);
 
-  const handleSend = (textToSend?: string) => {
+  const handleSend = async (textToSend?: string) => {
     const text = textToSend || inputText;
-    if (!text.trim()) return;
+    if (!text.trim() || isTyping) return;
 
+    setLastFailedMessage(null);
     const userMsg: ChatMessage = {
       id: `msg-${Date.now()}`,
       sender: 'user',
       text: text.trim(),
     };
 
-    setMessages((prev) => [...prev, userMsg]);
+    const nextMessages = [...messages, userMsg];
+    setMessages(nextMessages);
     if (!textToSend) setInputText('');
+    setIsTyping(true);
 
-    setTimeout(() => {
-      let reply = '';
-      const lower = text.toLowerCase();
+    try {
+      const history = messages.map((m) => ({
+        sender: m.sender === 'user' ? ('user' as const) : ('companion' as const),
+        text: m.text,
+      }));
 
-      if (lower.includes('screening') || lower.includes('result')) {
-        reply = isFemale
-          ? `Your screening probability is ${screening.probabilityPercent || 28}% (${screening.riskBand || 'Moderate Risk'}). The model identified cycle patterns and metabolic markers as primary contributors.`
-          : `Your screening probability is ${screening.probabilityPercent || 38}% (${screening.riskBand || 'Intermediate Risk'}). Early morning vitality and recovery time were the primary contributors.`;
-      } else if (lower.includes('next') || lower.includes('do')) {
-        reply = isFemale
-          ? 'Recommended next steps: 1) Schedule clinical lab verification (FSH, LH, Fasting Insulin), 2) Focus on low-glycemic nutrition, and 3) Consult with an endocrinologist or gynecologist.'
-          : 'Recommended next steps: 1) Schedule morning total testosterone testing, 2) Maintain consistent 7-8h sleep, and 3) Schedule an appointment with an andrologist or endocrinologist.';
-      } else if (lower.includes('factor') || lower.includes('important')) {
-        reply = isFemale
-          ? 'Hormonal and lifestyle factors like insulin resistance directly stimulate ovarian androgen production. Addressing these factors early supports ovulatory rhythm.'
-          : 'Metabolic markers and sleep duration strongly modulate endocrine signaling and androgen receptor sensitivity.';
-      } else if (lower.includes('lab')) {
-        reply =
-          'You can upload your lab reports via our OCR tool or enter verified numbers manually under Track > Add Clinical Labs to generate refined clinical risk insights.';
+      const res = await companionService.sendMessage(user?.accessToken || '', {
+        message: text.trim(),
+        pathway: isFemale ? 'female' : 'male',
+        conversation_history: history,
+      });
+
+      if (res.data?.reply || res.data?.message) {
+        const botMsg: ChatMessage = {
+          id: `msg-${Date.now() + 1}`,
+          sender: 'assistant',
+          text: res.data.reply || res.data.message,
+        };
+        setMessages((prev) => [...prev, botMsg]);
       } else {
-        reply =
-          'Thank you for your question. Maintaining consistent nutrition, daily movement, and tracking your symptoms will provide the clearest pathway to optimal hormonal balance.';
+        setLastFailedMessage(text.trim());
+        const botMsg: ChatMessage = {
+          id: `msg-${Date.now() + 1}`,
+          sender: 'assistant',
+          text: res.error
+            ? `Unable to connect to AI service: ${res.error}`
+            : "I'm having trouble processing your question right now. Please check your connection and tap Retry.",
+        };
+        setMessages((prev) => [...prev, botMsg]);
       }
-
+    } catch (err: any) {
+      setLastFailedMessage(text.trim());
       const botMsg: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
         sender: 'assistant',
-        text: reply,
+        text: 'Network error communicating with BioPulse AI Companion. Please check your connection and tap Retry.',
       };
       setMessages((prev) => [...prev, botMsg]);
-    }, 600);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   return (
@@ -240,6 +243,33 @@ export default function AiCompanionScreen() {
               </React.Fragment>
             );
           })}
+
+          {lastFailedMessage && !isTyping && (
+            <View style={styles.retryRow}>
+              <Text style={styles.retryInfoText}>Message delivery interrupted.</Text>
+              <Pressable
+                onPress={() => handleSend(lastFailedMessage)}
+                style={[styles.retryBtn, { backgroundColor: isFemale ? '#E11D48' : '#0284C7' }]}
+              >
+                <Ionicons name="refresh" size={14} color="#FFFFFF" style={{ marginRight: 4 }} />
+                <Text style={styles.retryBtnText}>Retry</Text>
+              </Pressable>
+            </View>
+          )}
+
+          {isTyping && (
+            <View style={[styles.msgRow, styles.msgRowBot, { marginTop: 4, opacity: 0.9 }]}>
+              <View style={styles.botAvatar}>
+                <MaterialCommunityIcons name="robot-outline" size={16} color="#0284C7" />
+              </View>
+              <View style={[styles.bubble, styles.bubbleBot, { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 14 }]}>
+                <ActivityIndicator size="small" color={isFemale ? '#F43F7D' : '#0284C7'} />
+                <Text style={[styles.bubbleText, styles.bubbleTextBot, { fontSize: 13, fontStyle: 'italic', color: '#64748B' }]}>
+                  BioPulse AI is thinking...
+                </Text>
+              </View>
+            </View>
+          )}
         </ScrollView>
 
         {/* Bottom Input Bar */}
@@ -446,5 +476,35 @@ const styles = StyleSheet.create({
   sendBtnPressed: {
     opacity: 0.85,
     transform: [{ scale: 0.96 }],
+  },
+  retryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginVertical: 6,
+    marginHorizontal: 10,
+  },
+  retryInfoText: {
+    fontSize: 12,
+    color: '#991B1B',
+    fontWeight: '500',
+  },
+  retryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  retryBtnText: {
+    fontSize: 11,
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
 });

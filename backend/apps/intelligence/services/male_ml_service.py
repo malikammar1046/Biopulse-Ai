@@ -42,6 +42,16 @@ MALE_TIER1_FEATURE_NAMES = [
     "diabetes",
 ]
 
+MALE_TIER1_7FEAT_FEATURE_NAMES = [
+    "age",
+    "height_cm",
+    "weight_kg",
+    "bmi",
+    "waist_cm",
+    "high_blood_pressure",
+    "diabetes",
+]
+
 MALE_TIER2_FEATURE_NAMES = [
     "age",
     "shbg_nmol_l",
@@ -97,7 +107,39 @@ MALE_TIER2_FEATURE_LABELS = {
 
 # Standard screening thresholds verified from metrics_report.json
 MALE_TIER1_SCREENING_THRESHOLD = 0.1808
+MALE_TIER1_CANDIDATE_SCREENING_THRESHOLD = 0.1799
 MALE_TIER2_SCREENING_THRESHOLD = 0.3379
+MALE_LOWER_RISK_THRESHOLD = 0.10
+
+
+def classify_male_screening_risk(
+    prob: float | None,
+    threshold: float = MALE_TIER1_SCREENING_THRESHOLD,
+    low_cutoff: float = MALE_LOWER_RISK_THRESHOLD,
+) -> tuple[str, str]:
+    """
+    Authoritative classification of Male Hypogonadism screening risk.
+    Returns (category, label).
+    - Lower: prob < low_cutoff (p < 0.10)
+    - Intermediate: low_cutoff <= prob < threshold (0.10 <= p < threshold)
+    - Higher: prob >= threshold (p >= threshold)
+    - Unavailable: prob is None or NaN
+    """
+    if prob is None:
+        return ("unavailable", "Assessment Unavailable")
+    try:
+        fprob = float(prob)
+        if np.isnan(fprob) or np.isneginf(fprob) or np.isposinf(fprob):
+            return ("unavailable", "Assessment Unavailable")
+    except (ValueError, TypeError):
+        return ("unavailable", "Assessment Unavailable")
+
+    if fprob >= threshold:
+        return ("higher", "Higher Screening Risk")
+    elif fprob >= low_cutoff:
+        return ("intermediate", "Intermediate Screening Risk")
+    return ("lower", "Lower Screening Risk")
+
 
 DISCLAIMER_TEXT = (
     "This assessment is an AI-assisted screening estimate and does not diagnose hypogonadism. "
@@ -171,14 +213,31 @@ class MaleMLService:
         """Resolves absolute paths to male Tier 1 and Tier 2 joblib artifacts."""
         configured_dir = getattr(settings, "MALE_ML_ROOT_DIR", None)
         if configured_dir and os.path.isdir(configured_dir):
-            base_dir = configured_dir
+            base_dir = str(configured_dir)
         else:
             base_dir = os.path.abspath(
                 os.path.join(settings.BASE_DIR, "..", "machine-learning", "male-ML")
             )
 
         self._models_dir = base_dir
-        t1_path = os.path.join(base_dir, "male_tier1", "artifacts", "male_low_t_model.joblib")
+
+        # Check server-side feature flag for verified clean 7-feature candidate
+        use_7feat = getattr(settings, "ENABLE_MALE_TIER1_CLEAN_7FEAT", False)
+        if use_7feat:
+            staged_path = os.path.join(base_dir, "male_tier1", "artifacts", "male_tier1_7feat_candidate.joblib")
+            exp_path = os.path.join(
+                base_dir, "experiments", "male_tier1_7feat", "artifacts", "male_tier1_7feat_candidate.joblib"
+            )
+            if os.path.exists(staged_path):
+                t1_path = staged_path
+            elif os.path.exists(exp_path):
+                t1_path = exp_path
+            else:
+                logger.warning("Clean 7-feature candidate requested but not found; falling back to legacy artifact.")
+                t1_path = os.path.join(base_dir, "male_tier1", "artifacts", "male_low_t_model.joblib")
+        else:
+            t1_path = os.path.join(base_dir, "male_tier1", "artifacts", "male_low_t_model.joblib")
+
         t2_path = os.path.join(base_dir, "male_tier2", "artifacts", "male_tier2_model.joblib")
         return t1_path, t2_path
 
@@ -188,15 +247,21 @@ class MaleMLService:
             from apps.intelligence.services.shap_adapter import FoldAwareCalibratedExplainer
 
             if self._tier1_artifact and "model" in self._tier1_artifact:
+                t1_feat_names = self.tier1_feature_names
+                model_ver = (
+                    "Male-ML v2.0-T1-Clean7"
+                    if len(t1_feat_names) == 7
+                    else "Male-ML v1.0-T1"
+                )
                 self._t1_fold_explainer = FoldAwareCalibratedExplainer(
                     calibrated_model=self._tier1_artifact["model"],
                     model_name=self._tier1_artifact.get("model_name", "Logistic Regression (Balanced)"),
-                    model_version="Male-ML v1.0-T1",
+                    model_version=model_ver,
                     pathway="male_hypogonadism",
                     tier="tier_1",
                     explainer_type="LinearExplainer",
                     output_space="log_odds",
-                    raw_feature_names=MALE_TIER1_FEATURE_NAMES,
+                    raw_feature_names=t1_feat_names,
                 )
                 self._t1_fold_explainer.initialize()
 
@@ -219,16 +284,17 @@ class MaleMLService:
             self._t1_fold_explainer = None
             self._t2_fold_explainer = None
 
-    def load(self) -> None:
-        """Loads male Tier 1 and Tier 2 models once into memory."""
-        if self._is_ready:
+    def load(self, force_reload: bool = False) -> None:
+        """Loads male Tier 1 and Tier 2 models into memory."""
+        t1_path, t2_path = self._resolve_paths()
+        if self._is_ready and not force_reload and getattr(self, "_loaded_t1_path", None) == t1_path:
             return
 
         with _service_lock:
-            if self._is_ready:
+            t1_path, t2_path = self._resolve_paths()
+            if self._is_ready and not force_reload and getattr(self, "_loaded_t1_path", None) == t1_path:
                 return
 
-            t1_path, t2_path = self._resolve_paths()
             logger.info("Initializing Male-ML Assessment Engine from %s...", self._models_dir)
 
             if not os.path.exists(t1_path):
@@ -248,6 +314,7 @@ class MaleMLService:
                     self._tier1_artifact = joblib.load(t1_path)
                     self._tier2_artifact = joblib.load(t2_path)
                 
+                self._loaded_t1_path = t1_path
                 self._init_shap_explainers()
                 self._is_ready = True
                 logger.info("Male-ML Assessment Engine initialized successfully.")
@@ -264,6 +331,22 @@ class MaleMLService:
         if self._tier1_artifact is None:
             self.load()
         return self._tier1_artifact.get("model") if self._tier1_artifact else None
+
+    @property
+    def tier1_feature_names(self) -> List[str]:
+        if self._tier1_artifact is None:
+            self.load()
+        if self._tier1_artifact and "feature_names" in self._tier1_artifact:
+            return list(self._tier1_artifact["feature_names"])
+        return list(MALE_TIER1_FEATURE_NAMES)
+
+    @property
+    def tier1_screening_threshold(self) -> float:
+        if self._tier1_artifact is None:
+            self.load()
+        if self._tier1_artifact and "screening_threshold" in self._tier1_artifact:
+            return float(self._tier1_artifact["screening_threshold"])
+        return MALE_TIER1_SCREENING_THRESHOLD
 
     @property
     def tier2_pipeline(self) -> Any:
@@ -311,7 +394,9 @@ class MaleMLService:
             "diabetes",
         }
 
-        for feat in MALE_TIER1_FEATURE_NAMES:
+        active_feats = self.tier1_feature_names
+
+        for feat in active_feats:
             if feat == "bmi":
                 if not np.isnan(bmi_val):
                     row["bmi"] = float(bmi_val)
@@ -339,7 +424,7 @@ class MaleMLService:
                     row[feat] = np.nan
                     missing_features.append(feat)
 
-        df = pd.DataFrame([row])[MALE_TIER1_FEATURE_NAMES]
+        df = pd.DataFrame([row])[active_feats]
         return df, available_features, missing_features
 
     def _generate_tier1_explanations(self, features_dict: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -442,23 +527,82 @@ class MaleMLService:
 
         df, available_feats, missing_feats = self.prepare_tier1_features(raw_inputs)
         model = self._tier1_artifact["model"]
-        threshold = float(self._tier1_artifact.get("screening_threshold", MALE_TIER1_SCREENING_THRESHOLD))
+        threshold = float(self._tier1_artifact.get("screening_threshold", self.tier1_screening_threshold))
         model_name = self._tier1_artifact.get("model_name", "Logistic Regression (Balanced)")
+        is_7feat = len(self.tier1_feature_names) == 7
+        default_ver = "Male-ML v2.0-T1-Clean7" if is_7feat else "Male-ML v1.0-T1"
+        model_version = self._tier1_artifact.get("model_version", default_ver)
+
+        # Check explicit eligibility rejection reason if passed
+        rejection_reason = raw_inputs.get("eligibility_rejection_reason")
+        rejection_summary = raw_inputs.get("eligibility_rejection_summary")
+
+        # Validate age before inference (NHANES cohort 19 to 60)
+        age_val = df.iloc[0].get("age")
+        if rejection_reason or pd.isna(age_val) or age_val < 19.0 or age_val > 60.0:
+            if rejection_reason:
+                unavail_reason = rejection_reason
+                reason_summary = rejection_summary or (
+                    "Submitted age and date of birth conflict or are invalid."
+                    if rejection_reason == "conflicting_age_and_dob"
+                    else "Date of birth cannot be in the future."
+                    if rejection_reason == "future_dob"
+                    else "Please provide a valid date of birth."
+                )
+            elif pd.isna(age_val):
+                reason_summary = "Age is required for male hypogonadism screening. Please provide your date of birth or age in your profile."
+                unavail_reason = "missing_age"
+            elif age_val < 19.0:
+                reason_summary = "BioPulse AI screening models are calibrated for adult men aged 19 to 60. Adolescent androgen physiology requires specialized pediatric clinical evaluation."
+                unavail_reason = "age_under_19"
+            else:
+                reason_summary = "BioPulse AI screening models are calibrated for adult men aged 19 to 60. In men older than 60, age-related endocrine changes require direct clinical evaluation with a physician."
+                unavail_reason = "age_over_60"
+
+            return {
+                "module": "male_hypogonadism",
+                "assessment_level": "tier_1",
+                "tiers_included": [1],
+                "model_name": model_name,
+                "model_version": model_version,
+                "probability": None,
+                "probability_percent": None,
+                "threshold": threshold,
+                "risk_category": "unavailable",
+                "risk_label": "Assessment Unavailable",
+                "summary_text": reason_summary,
+                "unavailable_reason": unavail_reason,
+                "available_features": available_feats,
+                "missing_features": missing_feats,
+                "input_features": {k: (None if pd.isna(v) else v) for k, v in df.iloc[0].to_dict().items()},
+                "explanations": [],
+                "shap_explanation": None,
+                "limitations": [
+                    "This screening model was trained and evaluated on NHANES adult men aged 19 to 60.",
+                    "Predictions cannot be reliably generated without a valid age within the supported 19–60 range.",
+                ],
+                "next_step": "Consult a healthcare provider for an individualized clinical hormone evaluation.",
+                "disclaimer": DISCLAIMER_TEXT,
+            }
 
         # Inference: calibrated probability for positive class (column 1)
         prob_matrix = model.predict_proba(df)
         prob = float(prob_matrix[0, 1])
         prob_percent = round(prob * 100.0, 1)
 
-        # Risk categorization using validated screening threshold
-        if prob >= threshold:
-            risk_category = "higher"
-            risk_label = "Higher Screening Risk"
+        # Risk categorization using validated screening threshold and lower cutoff
+        risk_category, risk_label = classify_male_screening_risk(
+            prob,
+            threshold=threshold,
+            low_cutoff=MALE_LOWER_RISK_THRESHOLD,
+        )
+        if risk_category == "higher":
             summary_text = "Your answers and health profile show factors that are sometimes associated with lower testosterone levels."
             next_step = "Add clinical laboratory evidence (e.g. morning fasting blood draw) to refine this assessment."
+        elif risk_category == "intermediate":
+            summary_text = "Your answers and health profile indicate an intermediate screening risk profile for testosterone deficiency."
+            next_step = "Consider morning hormone testing or discussing clinical symptoms with a specialist."
         else:
-            risk_category = "lower"
-            risk_label = "Lower Screening Risk"
             summary_text = "Your answers and health profile show a lower probability pattern for testosterone deficiency."
             next_step = "You can add clinical laboratory results anytime if symptoms arise."
 
@@ -474,18 +618,42 @@ class MaleMLService:
             "It does not replace a morning laboratory blood draw.",
         ]
 
+        is_missing_waist = is_7feat and ("waist_cm" in missing_feats or pd.isna(df.iloc[0].get("waist_cm")))
+        is_complete = not is_missing_waist
+        assessment_status = "incomplete" if is_missing_waist else "complete"
+        notice = None
+
+        if is_missing_waist:
+            notice = (
+                "Waist circumference was not provided. In the seven-feature model, waist circumference "
+                "is a primary physical marker of visceral adiposity and endocrine balance. While a preliminary "
+                "estimate was generated using baseline reference statistics, this assessment is incomplete. "
+                "Please measure and provide your waist circumference for a fully calibrated assessment."
+            )
+            limitations.append(
+                "Waist circumference was omitted; this assessment is incomplete and should not be relied upon until waist measurement is recorded."
+            )
+
+        if "high_blood_pressure" in missing_feats or "diabetes" in missing_feats:
+            limitations.append(
+                "Doctor-diagnosed hypertension or diabetes status was unknown or unanswered; clinical evaluation is recommended to clarify metabolic risk."
+            )
+
         return {
             "module": "male_hypogonadism",
             "assessment_level": "tier_1",
             "tiers_included": [1],
             "model_name": model_name,
-            "model_version": "Male-ML v1.0-T1",
+            "model_version": model_version,
             "probability": prob,
             "probability_percent": prob_percent,
             "threshold": threshold,
             "risk_category": risk_category,
             "risk_label": risk_label,
             "summary_text": summary_text,
+            "is_complete": is_complete,
+            "assessment_status": assessment_status,
+            "notice": notice,
             "available_features": available_feats,
             "missing_features": missing_feats,
             "input_features": {k: (None if pd.isna(v) else v) for k, v in df.iloc[0].to_dict().items()},
@@ -538,18 +706,37 @@ class MaleMLService:
         available_features: List[str] = []
         missing_features: List[str] = []
 
-        # Age is derived from Tier 1 or lab inputs
-        age_val = (
+        # Age is derived from Tier 1 or lab inputs (never fabricated or defaulted to 35)
+        raw_age = (
             lab_inputs.get("age")
-            or (tier1_inputs.get("age") if tier1_inputs else None)
-            or 35.0
+            if lab_inputs.get("age") is not None
+            else (tier1_inputs.get("age") if tier1_inputs else None)
         )
-        try:
-            row["age"] = float(age_val)
+        age_norm = normalize_continuous_input(raw_age)
+        if age_norm is not None:
+            row["age"] = age_norm
             available_features.append("age")
-        except (ValueError, TypeError):
-            row["age"] = 35.0
+        else:
+            row["age"] = np.nan
             missing_features.append("age")
+
+        TIER2_ALIASES: Dict[str, List[str]] = {
+            "creatinine_mg_dl": ["creatinine", "serum_creatinine"],
+            "total_bilirubin_mg_dl": ["total_bilirubin", "bilirubin", "serum_bilirubin"],
+            "uric_acid_mg_dl": ["uric_acid"],
+            "hdl_mg_dl": ["hdl", "hdl_cholesterol", "hdl_cholesterol_mg_dl"],
+            "bun_mg_dl": ["bun", "blood_urea_nitrogen"],
+            "shbg_nmol_l": ["shbg", "shbg_nmol"],
+            "estradiol_pg_ml": ["estradiol", "e2"],
+            "albumin_g_dl": ["albumin", "serum_albumin"],
+            "glucose_mg_dl": ["glucose", "fasting_glucose", "blood_glucose"],
+            "hba1c_pct": ["hba1c", "a1c"],
+            "hemoglobin_g_dl": ["hemoglobin", "hb"],
+            "hematocrit_pct": ["hematocrit", "hct"],
+            "rbc_count": ["rbc", "rbc_count_m_ul"],
+            "alt_u_l": ["alt", "sgpt"],
+            "ast_u_l": ["ast", "sgot"],
+        }
 
         # Indirect laboratory features
         for feat in MALE_TIER2_FEATURE_NAMES:
@@ -558,11 +745,29 @@ class MaleMLService:
 
             val = lab_inputs.get(feat)
             if val is None or str(val).strip() == "":
+                for alias in TIER2_ALIASES.get(feat, []):
+                    alias_val = lab_inputs.get(alias)
+                    if alias_val is not None and str(alias_val).strip() != "":
+                        val = alias_val
+                        break
+
+            if val is None or str(val).strip() == "":
                 row[feat] = np.nan
                 missing_features.append(feat)
             else:
                 try:
-                    row[feat] = float(val)
+                    fval = float(val)
+                    # Medically grounded unit conversions if provided in µmol/L
+                    if feat == "creatinine_mg_dl":
+                        c_unit = str(lab_inputs.get("creatinine_unit") or "").lower()
+                        if "umol" in c_unit or "µmol" in c_unit or fval > 35.0:
+                            fval = round(fval / 88.4, 2)
+                    elif feat == "total_bilirubin_mg_dl":
+                        b_unit = str(lab_inputs.get("bilirubin_unit") or "").lower()
+                        if "umol" in b_unit or "µmol" in b_unit or fval > 30.0:
+                            fval = round(fval / 17.1, 2)
+
+                    row[feat] = fval
                     available_features.append(feat)
                 except (ValueError, TypeError):
                     row[feat] = np.nan
@@ -595,7 +800,11 @@ class MaleMLService:
             except (ValueError, TypeError):
                 return None
 
-        total_t = _get_float("total_testosterone") or _get_float("total_t")
+        total_t = _get_float("total_testosterone") or _get_float("total_t") or _get_float("testosterone_total")
+        t_unit = str(data.get("testosterone_unit") or data.get("testosteroneUnit") or "").strip().lower()
+        if total_t is not None and t_unit in ("nmol/l", "nmol/l"):
+            total_t = round(total_t * 28.842, 1)
+
         lh = _get_float("lh")
         fsh = _get_float("fsh")
         prolactin = _get_float("prolactin")
@@ -751,33 +960,170 @@ class MaleMLService:
         threshold = float(self._tier2_artifact.get("screening_threshold", MALE_TIER2_SCREENING_THRESHOLD))
         model_name = self._tier2_artifact.get("model_name", "Random Forest")
 
-        # Inference: calibrated probability for positive class (column 1)
-        prob_matrix = model.predict_proba(df)
-        prob = float(prob_matrix[0, 1])
-        prob_percent = round(prob * 100.0, 1)
+        # Check explicit eligibility rejection reason if passed
+        rejection_reason = (tier1_inputs or {}).get("eligibility_rejection_reason") or lab_inputs.get("eligibility_rejection_reason")
+        rejection_summary = (tier1_inputs or {}).get("eligibility_rejection_summary") or lab_inputs.get("eligibility_rejection_summary")
 
-        # Risk categorization using validated screening threshold
-        if prob >= threshold:
-            risk_category = "higher"
-            risk_label = "Higher Screening Risk"
-            summary_text = "Your laboratory and metabolic blood markers show a pattern that is frequently associated with lower testosterone."
-            next_step = "Discuss these laboratory findings and morning fasting hormone levels with your physician."
-        else:
-            risk_category = "lower"
-            risk_label = "Lower Screening Risk"
-            summary_text = "Your laboratory blood markers show a lower probability pattern for biochemical androgen deficiency."
-            next_step = "Continue healthy lifestyle habits and periodic routine monitoring."
+        # Validate age before inference (NHANES cohort 19 to 60)
+        age_val = df.iloc[0].get("age")
+        if rejection_reason or pd.isna(age_val) or age_val < 19.0 or age_val > 60.0:
+            if rejection_reason:
+                unavail_reason = rejection_reason
+                reason_summary = rejection_summary or (
+                    "Submitted age and date of birth conflict or are invalid."
+                    if rejection_reason == "conflicting_age_and_dob"
+                    else "Date of birth cannot be in the future."
+                    if rejection_reason == "future_dob"
+                    else "Please provide a valid date of birth."
+                )
+            elif pd.isna(age_val):
+                reason_summary = "Age is required for male hypogonadism screening. Please provide your date of birth or age."
+                unavail_reason = "missing_age"
+            elif age_val < 19.0:
+                reason_summary = "BioPulse AI screening models are calibrated for adult men aged 19 to 60. Adolescent androgen physiology requires specialized pediatric clinical evaluation."
+                unavail_reason = "age_under_19"
+            else:
+                reason_summary = "BioPulse AI screening models are calibrated for adult men aged 19 to 60. In men older than 60, age-related endocrine changes require direct clinical evaluation with a physician."
+                unavail_reason = "age_over_60"
 
-        # Rule-based hormone pattern evaluation
+            hormone_pattern = self.evaluate_hormone_pattern(lab_inputs)
+
+            # Direct lab interpretations
+            direct_labs: List[Dict[str, Any]] = []
+            for feat in available_feats:
+                if feat == "age":
+                    continue
+                val = df.iloc[0][feat]
+                direct_labs.append({
+                    "analyte_key": feat,
+                    "label": MALE_TIER2_FEATURE_LABELS.get(feat, feat),
+                    "value": float(val),
+                })
+
+            evidence_completeness_pct = round((len(available_feats) / len(MALE_TIER2_FEATURE_NAMES)) * 100.0, 1)
+
+            return {
+                "module": "male_hypogonadism",
+                "assessment_level": "tier_1_2",
+                "tiers_included": [1, 2],
+                "model_name": model_name,
+                "model_version": "Male-ML v1.0-T2",
+                "probability": None,
+                "probability_percent": None,
+                "threshold": threshold,
+                "risk_category": "unavailable",
+                "risk_label": "Assessment Unavailable",
+                "summary_text": reason_summary,
+                "unavailable_reason": unavail_reason,
+                "available_features": available_feats,
+                "missing_features": missing_feats,
+                "tier_2_available_count": len(available_feats),
+                "tier_2_total_count": len(MALE_TIER2_FEATURE_NAMES),
+                "tier_2_available_fields": available_feats,
+                "tier_2_missing_fields": missing_feats,
+                "evidence_completeness_percent": evidence_completeness_pct,
+                "evidence_completeness": {
+                    "total_required": len(MALE_TIER2_FEATURE_NAMES),
+                    "total_available": len(available_feats),
+                    "missing": missing_feats,
+                },
+                "direct_laboratory_values": direct_labs,
+                "hormone_pattern_interpretation": hormone_pattern,
+                "explanations": [],
+                "shap_explanation": None,
+                "limitations": [
+                    "This screening model was trained and evaluated on NHANES adult men aged 19 to 60.",
+                    "Predictions cannot be reliably generated without a valid age within the supported 19–60 range.",
+                ],
+                "next_step": "Discuss your laboratory measurements directly with your physician.",
+                "disclaimer": DISCLAIMER_TEXT,
+            }
+
+        # Check available indirect laboratory features (excluding age)
+        indirect_available_feats = [f for f in available_feats if f != "age"]
+        indirect_count = len(indirect_available_feats)
+        indirect_total = len(MALE_TIER2_FEATURE_NAMES) - 1  # 15 indirect markers
+
+        # Rule-based hormone pattern evaluation runs directly and independently
         hormone_pattern = self.evaluate_hormone_pattern(lab_inputs)
 
-        combined_patient_inputs = {**(tier1_inputs or {}), **lab_inputs}
-        shap_payload = None
-        if self._t2_fold_explainer is not None:
-            shap_payload = self._t2_fold_explainer.explain(df, combined_patient_inputs, final_calibrated_prob=prob)
-            explanations = shap_payload["factors"]
+        is_complete = indirect_count == indirect_total
+        assessment_status = "complete" if is_complete else ("partial" if indirect_count > 0 else "hormone_pattern_only")
+        notice = None
+
+        if indirect_count == 0:
+            # Only direct hormone tests (e.g. Total T, LH, FSH, Prolactin) or vitals were provided.
+            # No indirect metabolic features available for the Random Forest model.
+            prob = None
+            prob_percent = None
+            risk_category = "direct_hormone_evaluation"
+            risk_label = "Direct Hormone Pattern Evaluation"
+            notice = (
+                "Direct pituitary-gonadal hormone evaluation completed. Metabolic laboratory panel was not provided, "
+                "so indirect biochemical model risk estimation was omitted."
+            )
+            shap_payload = None
+            explanations = []
         else:
-            explanations = self._generate_tier2_explanations(df.iloc[0].to_dict())
+            # Inference: calibrated probability for positive class (column 1)
+            prob_matrix = model.predict_proba(df)
+            prob = float(prob_matrix[0, 1])
+            prob_percent = round(prob * 100.0, 1)
+
+            # Risk categorization using validated screening threshold and lower cutoff
+            risk_category, risk_label = classify_male_screening_risk(
+                prob,
+                threshold=threshold,
+                low_cutoff=MALE_LOWER_RISK_THRESHOLD,
+            )
+
+            if not is_complete:
+                notice = (
+                    f"Your laboratory profile contains {len(available_feats)} of {len(MALE_TIER2_FEATURE_NAMES)} model features "
+                    f"({indirect_count} of {indirect_total} indirect metabolic markers). Missing parameters were estimated using "
+                    f"baseline reference statistics for screening context. For a complete assessment, consider completing "
+                    f"the remaining standard laboratory panels."
+                )
+
+            combined_patient_inputs = {**(tier1_inputs or {}), **lab_inputs}
+            shap_payload = None
+            if self._t2_fold_explainer is not None:
+                shap_payload = self._t2_fold_explainer.explain(df, combined_patient_inputs, final_calibrated_prob=prob)
+                explanations = shap_payload["factors"]
+            else:
+                explanations = self._generate_tier2_explanations(df.iloc[0].to_dict())
+
+        # Clinical hormone pattern takes precedence in narrative summary
+        if hormone_pattern.get("total_testosterone_recorded") is not None:
+            tt_val = hormone_pattern["total_testosterone_recorded"]
+            if hormone_pattern.get("is_hypogonadal"):
+                summary_text = (
+                    f"Direct hormone testing indicates lower circulating testosterone ({tt_val:.1f} ng/dL) "
+                    f"with {hormone_pattern.get('pattern_name')}. "
+                    f"{hormone_pattern.get('pattern_description')} "
+                )
+            else:
+                summary_text = (
+                    f"Direct hormone testing indicates total testosterone is within standard reference range "
+                    f"({tt_val:.1f} ng/dL, >= 300 ng/dL). "
+                    f"{hormone_pattern.get('pattern_description')} "
+                )
+            if prob is not None:
+                summary_text += f"Indirect metabolic markers provide auxiliary screening context ({prob_percent}% likelihood profile)."
+            next_step = "Discuss these morning fasting hormone results with your physician."
+        elif prob is not None:
+            if risk_category == "higher":
+                summary_text = "Your laboratory and metabolic blood markers show a pattern that is frequently associated with lower testosterone."
+                next_step = "Discuss these laboratory findings and morning fasting hormone levels with your physician."
+            elif risk_category == "intermediate":
+                summary_text = "Your laboratory and metabolic blood markers indicate an intermediate screening risk profile for androgen deficiency."
+                next_step = "Continue monitoring your metabolic biomarkers and discuss with your physician."
+            else:
+                summary_text = "Your laboratory blood markers show a lower probability pattern for biochemical androgen deficiency."
+                next_step = "Continue healthy lifestyle habits and periodic routine monitoring."
+        else:
+            summary_text = "Direct hormone testing was evaluated. Indirect metabolic markers were not provided."
+            next_step = "Discuss your morning fasting laboratory results with your physician."
 
         # Direct lab interpretations
         direct_labs: List[Dict[str, Any]] = []
@@ -811,6 +1157,9 @@ class MaleMLService:
             "risk_category": risk_category,
             "risk_label": risk_label,
             "summary_text": summary_text,
+            "is_complete": is_complete,
+            "assessment_status": assessment_status,
+            "notice": notice,
             "available_features": available_feats,
             "missing_features": missing_feats,
             "tier_2_available_count": len(available_feats),

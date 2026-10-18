@@ -88,8 +88,14 @@ export const BookedAppointmentCard: React.FC<BookedAppointmentCardProps> = ({
     switch (appointment.status) {
       case 'completed':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD] text-[11px] font-mono font-bold tracking-wide uppercase">
-            <CheckCircle className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
+          <span
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full ${
+              isMale
+                ? 'bg-[#F0F9FF] text-[#0288D1] border-[#BAE6FD]'
+                : 'bg-[#FDE6EF] text-[#F43F7D] border-[#FDE6EF]'
+            } border text-[11px] font-mono font-bold tracking-wide uppercase`}
+          >
+            <CheckCircle className={`w-3.5 h-3.5 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`} aria-hidden="true" />
             <span>Completed</span>
           </span>
         );
@@ -109,8 +115,14 @@ export const BookedAppointmentCard: React.FC<BookedAppointmentCardProps> = ({
         );
       case 'requested':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD] text-[11px] font-mono font-bold tracking-wide uppercase">
-            <Clock className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
+          <span
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full ${
+              isMale
+                ? 'bg-[#F0F9FF] text-[#0288D1] border-[#BAE6FD]'
+                : 'bg-[#FDE6EF] text-[#F43F7D] border-[#FDE6EF]'
+            } border text-[11px] font-mono font-bold tracking-wide uppercase`}
+          >
+            <Clock className={`w-3.5 h-3.5 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`} aria-hidden="true" />
             <span>Visit Requested</span>
           </span>
         );
@@ -142,16 +154,28 @@ export const BookedAppointmentCard: React.FC<BookedAppointmentCardProps> = ({
 
     if (daysInfo.isTomorrow) {
       return (
-        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#E0F2FE] text-[#0369A1] border border-[#BAE6FD] text-xs font-mono font-bold">
-          <Clock className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
+        <span
+          className={`inline-flex items-center gap-1 px-3 py-1 rounded-full ${
+            isMale
+              ? 'bg-[#E0F2FE] text-[#0369A1] border-[#BAE6FD]'
+              : 'bg-[#FDE6EF] text-[#BE185D] border-[#FDE6EF]'
+          } border text-xs font-mono font-bold`}
+        >
+          <Clock className={`w-3.5 h-3.5 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`} aria-hidden="true" />
           <span>Tomorrow</span>
         </span>
       );
     }
 
     return (
-      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#F0F9FF] text-[#0288D1] border border-[#BAE6FD] text-xs font-mono font-bold">
-        <Calendar className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
+      <span
+        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full ${
+          isMale
+            ? 'bg-[#F0F9FF] text-[#0288D1] border-[#BAE6FD]'
+            : 'bg-[#FFF8FA] text-[#F43F7D] border-[#FDE6EF]'
+        } border text-xs font-mono font-bold`}
+      >
+        <Calendar className={`w-3.5 h-3.5 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`} aria-hidden="true" />
         <span>{daysInfo.label}</span>
       </span>
     );
@@ -162,14 +186,16 @@ export const BookedAppointmentCard: React.FC<BookedAppointmentCardProps> = ({
     ? isMale
       ? 'border-[#0288D1] ring-1 ring-[#0288D1]/20'
       : 'border-[#16B8C4] ring-1 ring-[#16B8C4]/20'
-    : 'border-[#E2E8F0] hover:border-[#BAE6FD]';
+    : isMale
+    ? 'border-[#E2E8F0] hover:border-[#BAE6FD]'
+    : 'border-[#E2E8F0] hover:border-[#FDE6EF]';
 
   const avatarFallbackBg = isMale ? 'bg-[#F0F9FF] text-[#0288D1]' : 'bg-[#FDF2F8] text-[#DB2777]';
   const avatarFallbackBorder = isMale ? 'border-[#BAE6FD]' : 'border-[#FBCFE8]';
 
   const actionPrimaryBg = isMale
     ? 'bg-[#0288D1] hover:bg-[#0277BD] text-white'
-    : 'bg-[#16B8C4] hover:bg-[#0EA5E9] text-white';
+    : 'bg-[#16B8C4] hover:bg-[#0E9EAA] text-white';
 
   const pathwayBadgeClass = isMale
     ? 'bg-[#F0F9FF] text-[#0369A1] border-[#BAE6FD]'
@@ -233,7 +259,7 @@ export const BookedAppointmentCard: React.FC<BookedAppointmentCardProps> = ({
             <h3 className="text-xl sm:text-2xl font-bold font-display text-[#0F172A] tracking-tight truncate">
               {appointment.providerName}
             </h3>
-            <p className="text-xs sm:text-sm font-semibold text-[#0288D1] mt-0.5">
+            <p className={`text-xs sm:text-sm font-semibold ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'} mt-0.5`}>
               {displaySpecialty}
             </p>
 
@@ -254,7 +280,7 @@ export const BookedAppointmentCard: React.FC<BookedAppointmentCardProps> = ({
             {/* Date Box */}
             <div className="p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-0.5">
               <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
-                <Calendar className="w-3.5 h-3.5 text-[#0288D1] shrink-0" aria-hidden="true" />
+                <Calendar className={`w-3.5 h-3.5 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'} shrink-0`} aria-hidden="true" />
                 <span>Date</span>
               </div>
               <p className="text-xs font-bold text-[#0F172A] truncate">
@@ -265,7 +291,7 @@ export const BookedAppointmentCard: React.FC<BookedAppointmentCardProps> = ({
             {/* Time Box */}
             <div className="p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-0.5">
               <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
-                <Clock className="w-3.5 h-3.5 text-[#0288D1] shrink-0" aria-hidden="true" />
+                <Clock className={`w-3.5 h-3.5 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'} shrink-0`} aria-hidden="true" />
                 <span>Time & Slot</span>
               </div>
               <p className="text-xs font-bold text-[#0F172A] truncate">
@@ -279,7 +305,7 @@ export const BookedAppointmentCard: React.FC<BookedAppointmentCardProps> = ({
                 {isVideo ? (
                   <VideoRecorder className="w-3.5 h-3.5 text-[#059669] shrink-0" aria-hidden="true" />
                 ) : (
-                  <MarkerPin01 className="w-3.5 h-3.5 text-[#0288D1] shrink-0" aria-hidden="true" />
+                  <MarkerPin01 className={`w-3.5 h-3.5 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'} shrink-0`} aria-hidden="true" />
                 )}
                 <span>Location</span>
               </div>
@@ -306,8 +332,8 @@ export const BookedAppointmentCard: React.FC<BookedAppointmentCardProps> = ({
       <div className="p-3.5 sm:p-4 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
         {/* Pre-Consultation Questions Counter */}
         <div className="flex items-center gap-2 text-[#0F172A]">
-          <div className="w-7 h-7 rounded-lg bg-white border border-[#E2E8F0] flex items-center justify-center text-[#0288D1] shrink-0 shadow-2xs">
-            <HelpCircle className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
+          <div className={`w-7 h-7 rounded-lg bg-white border border-[#E2E8F0] flex items-center justify-center ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'} shrink-0 shadow-2xs`}>
+            <HelpCircle className={`w-4 h-4 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`} aria-hidden="true" />
           </div>
           <span className="font-semibold text-[#334155]">
             {questionCount > 0
@@ -334,7 +360,11 @@ export const BookedAppointmentCard: React.FC<BookedAppointmentCardProps> = ({
             <button
               type="button"
               onClick={() => onViewDetails(appointment)}
-              className="px-3.5 py-2.5 rounded-xl bg-white border border-[#BAE6FD] hover:bg-[#F0F9FF] text-[#0288D1] font-bold text-xs shadow-xs transition-all cursor-pointer flex items-center gap-1 active:scale-[0.98]"
+              className={`px-3.5 py-2.5 rounded-xl bg-white border ${
+                isMale
+                  ? 'border-[#BAE6FD] hover:bg-[#F0F9FF] text-[#0288D1]'
+                  : 'border-[#FDE6EF] hover:bg-[#FFF8FA] text-[#F43F7D]'
+              } font-bold text-xs shadow-xs transition-all cursor-pointer flex items-center gap-1 active:scale-[0.98]`}
             >
               <DotsVertical className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Manage Details</span>

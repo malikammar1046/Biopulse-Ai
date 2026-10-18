@@ -1,0 +1,250 @@
+{
+  "simulation_test_cases": [
+    {
+      "test_case": "Case 1: Standard Male with Valid Waist",
+      "raw_input": {
+        "age": 42,
+        "height_cm": 178,
+        "weight_kg": 86,
+        "waist_cm": 96.0,
+        "diagnosed_hypertension": "no",
+        "diagnosed_diabetes": "no"
+      },
+      "output": {
+        "status": "success",
+        "routing": {
+          "tier": "primary_7feature",
+          "model_version": "male_tier1_7feat_v1.0.0_exp",
+          "model_threshold": 0.1799,
+          "lower_risk_cutoff": 0.1,
+          "waist_circumference_utilized": true
+        },
+        "assessment": {
+          "predicted_probability": 0.1801,
+          "risk_category": "higher",
+          "risk_label": "Higher Screening Risk",
+          "inputs_consumed": {
+            "age": 42.0,
+            "height_cm": 178.0,
+            "weight_kg": 86.0,
+            "bmi": 27.14,
+            "waist_cm": 96.0,
+            "high_blood_pressure": 0.0,
+            "diabetes": 0.0
+          },
+          "warnings": [],
+          "disclaimer": "AI-assisted risk screening estimate only; not a diagnosis of male hypogonadism. Fasting morning testosterone laboratory testing required."
+        }
+      }
+    },
+    {
+      "test_case": "Case 2: Missing Waist (Should Route to 6-Feature Fallback)",
+      "raw_input": {
+        "age": 42,
+        "height_cm": 178,
+        "weight_kg": 86,
+        "waist_cm": null,
+        "diagnosed_hypertension": "no",
+        "diagnosed_diabetes": "no"
+      },
+      "output": {
+        "status": "success",
+        "routing": {
+          "tier": "fallback_6feature_no_waist",
+          "model_version": "male_tier1_6feat_v1.0.0_exp",
+          "model_threshold": 0.1779,
+          "lower_risk_cutoff": 0.1,
+          "waist_circumference_utilized": false
+        },
+        "assessment": {
+          "predicted_probability": 0.1883,
+          "risk_category": "higher",
+          "risk_label": "Higher Screening Risk",
+          "inputs_consumed": {
+            "age": 42.0,
+            "height_cm": 178.0,
+            "weight_kg": 86.0,
+            "bmi": 27.14,
+            "high_blood_pressure": 0.0,
+            "diabetes": 0.0
+          },
+          "warnings": [],
+          "disclaimer": "AI-assisted risk screening estimate only; not a diagnosis of male hypogonadism. Fasting morning testosterone laboratory testing required."
+        }
+      }
+    },
+    {
+      "test_case": "Case 3: Implausible Out-of-Range Waist (Should Ignore Waist & Fallback)",
+      "raw_input": {
+        "age": 35,
+        "height_cm": 172,
+        "weight_kg": 75,
+        "waist_cm": 25.0,
+        "diagnosed_hypertension": "no",
+        "diagnosed_diabetes": "no"
+      },
+      "output": {
+        "status": "success",
+        "routing": {
+          "tier": "fallback_6feature_no_waist",
+          "model_version": "male_tier1_6feat_v1.0.0_exp",
+          "model_threshold": 0.1779,
+          "lower_risk_cutoff": 0.1,
+          "waist_circumference_utilized": false
+        },
+        "assessment": {
+          "predicted_probability": 0.1471,
+          "risk_category": "intermediate",
+          "risk_label": "Intermediate Screening Risk",
+          "inputs_consumed": {
+            "age": 35.0,
+            "height_cm": 172.0,
+            "weight_kg": 75.0,
+            "bmi": 25.35,
+            "high_blood_pressure": 0.0,
+            "diabetes": 0.0
+          },
+          "warnings": [
+            "Waist circumference 25.0 cm outside plausible range (50-200 cm); ignored for routing."
+          ],
+          "disclaimer": "AI-assisted risk screening estimate only; not a diagnosis of male hypogonadism. Fasting morning testosterone laboratory testing required."
+        }
+      }
+    },
+    {
+      "test_case": "Case 4: Severe Contradiction (BMI 42 with Waist 62 cm)",
+      "raw_input": {
+        "age": 38,
+        "height_cm": 165,
+        "weight_kg": 115,
+        "waist_cm": 62.0,
+        "diagnosed_hypertension": "yes",
+        "diagnosed_diabetes": "no"
+      },
+      "output": {
+        "status": "success",
+        "routing": {
+          "tier": "primary_7feature",
+          "model_version": "male_tier1_7feat_v1.0.0_exp",
+          "model_threshold": 0.1799,
+          "lower_risk_cutoff": 0.1,
+          "waist_circumference_utilized": true
+        },
+        "assessment": {
+          "predicted_probability": 0.1111,
+          "risk_category": "intermediate",
+          "risk_label": "Intermediate Screening Risk",
+          "inputs_consumed": {
+            "age": 38.0,
+            "height_cm": 165.0,
+            "weight_kg": 115.0,
+            "bmi": 42.24,
+            "waist_cm": 62.0,
+            "high_blood_pressure": 1.0,
+            "diabetes": 0.0
+          },
+          "warnings": [
+            "Severe adiposity paradox: High BMI (>= 35) with small waist (< 75 cm). Verify measurements."
+          ],
+          "disclaimer": "AI-assisted risk screening estimate only; not a diagnosis of male hypogonadism. Fasting morning testosterone laboratory testing required."
+        }
+      }
+    },
+    {
+      "test_case": "Case 5: Unanswered Medical History (Unsure / Skipped)",
+      "raw_input": {
+        "age": 28,
+        "height_cm": 180,
+        "weight_kg": 78,
+        "waist_cm": 84.0,
+        "diagnosed_hypertension": "unsure",
+        "diagnosed_diabetes": null
+      },
+      "output": {
+        "status": "success",
+        "routing": {
+          "tier": "primary_7feature",
+          "model_version": "male_tier1_7feat_v1.0.0_exp",
+          "model_threshold": 0.1799,
+          "lower_risk_cutoff": 0.1,
+          "waist_circumference_utilized": true
+        },
+        "assessment": {
+          "predicted_probability": 0.1032,
+          "risk_category": "intermediate",
+          "risk_label": "Intermediate Screening Risk",
+          "inputs_consumed": {
+            "age": 28.0,
+            "height_cm": 180.0,
+            "weight_kg": 78.0,
+            "bmi": 24.07,
+            "waist_cm": 84.0,
+            "high_blood_pressure": NaN,
+            "diabetes": NaN
+          },
+          "warnings": [],
+          "disclaimer": "AI-assisted risk screening estimate only; not a diagnosis of male hypogonadism. Fasting morning testosterone laboratory testing required."
+        }
+      }
+    },
+    {
+      "test_case": "Case 6: Ineligible Age (Age 17)",
+      "raw_input": {
+        "age": 17,
+        "height_cm": 175,
+        "weight_kg": 70,
+        "waist_cm": 80.0,
+        "diagnosed_hypertension": "no",
+        "diagnosed_diabetes": "no"
+      },
+      "output": {
+        "status": "ineligible_or_missing_age",
+        "message": "Age must be provided and between 19 and 60 inclusive. Provided: 17",
+        "assessment": null
+      }
+    },
+    {
+      "test_case": "Case 7: Missing Height and Weight (Incomplete Biometrics)",
+      "raw_input": {
+        "age": 30,
+        "height_cm": null,
+        "weight_kg": null,
+        "waist_cm": 88.0,
+        "diagnosed_hypertension": "no",
+        "diagnosed_diabetes": "no"
+      },
+      "output": {
+        "status": "missing_biometrics",
+        "message": "Both height and weight, or valid BMI, must be supplied.",
+        "assessment": null
+      }
+    }
+  ],
+  "waist_missingness_bias": {
+    "age": {
+      "mean_with_waist": 39.24,
+      "mean_without_waist": 40.74,
+      "difference": 1.5
+    },
+    "bmi": {
+      "mean_with_waist": 28.67,
+      "mean_without_waist": 31.58,
+      "difference": 2.91
+    },
+    "weight_kg": {
+      "mean_with_waist": 87.74,
+      "mean_without_waist": 96.01,
+      "difference": 8.27
+    },
+    "height_cm": {
+      "mean_with_waist": 174.65,
+      "mean_without_waist": 174.28,
+      "difference": -0.37
+    },
+    "possible_low_testosterone": {
+      "mean_with_waist": 0.23,
+      "mean_without_waist": 0.35,
+      "difference": 0.11
+    }
+  }
+}

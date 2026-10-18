@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, Droplets01, Edit01, Trash01, Plus, MessageChatCircle } from '@untitledui/icons';
+import { Clock, Droplets01, Edit01, Trash01, Plus, MessageChatCircle, AlertTriangle } from '@untitledui/icons';
 import type { CycleHistoryItem, CycleSummaryStats } from '../../types/cycle';
 
 interface CycleHistorySectionProps {
@@ -61,7 +61,7 @@ export const CycleHistorySection: React.FC<CycleHistorySectionProps> = ({
             </h2>
           </div>
           <p className="text-xs text-[#64748B]">
-            Chronological log of your recorded menstrual periods and calculated cycle lengths.
+            Chronological log of your recorded menstrual periods and calculated consecutive cycle lengths.
           </p>
         </div>
 
@@ -89,13 +89,24 @@ export const CycleHistorySection: React.FC<CycleHistorySectionProps> = ({
           >
             {/* Left Info: Month & Dates */}
             <div className="space-y-1.5 flex-1">
-              <div className="flex items-center gap-2.5">
+              <div className="flex flex-wrap items-center gap-2.5">
                 <span className="text-sm font-bold font-display text-[#0F172A]">
                   {item.monthYear}
                 </span>
                 {item.isLatest && (
                   <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#FDE6EF] text-[#DC326C] border border-[#F43F7D]/20">
                     Current Cycle
+                  </span>
+                )}
+                {item.isProlongedGap && (
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A] flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3 text-[#D97706]" aria-hidden="true" />
+                    <span>Prolonged Gap (&gt;90d)</span>
+                  </span>
+                )}
+                {item.isIrregularInterval && !item.isProlongedGap && (
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A]">
+                    Irregular Interval
                   </span>
                 )}
                 <span className="text-xs text-[#64748B] font-mono">
@@ -112,14 +123,21 @@ export const CycleHistorySection: React.FC<CycleHistorySectionProps> = ({
 
                 {/* Period Duration */}
                 <span className="font-mono font-semibold px-2.5 py-0.5 rounded-full bg-[#FFF1F2] text-[#E11D48] border border-[#FFE4E6]">
-                  Period: {item.periodDurationDays} days
+                  Period: {item.periodDurationDays} day{item.periodDurationDays === 1 ? '' : 's'}
                 </span>
 
                 {/* Flow Badge */}
-                <span className="font-mono font-bold px-2.5 py-0.5 rounded-full bg-[#FDE6EF] text-[#DC326C] border border-[#F43F7D]/20 capitalize flex items-center gap-1">
-                  <Droplets01 className="w-3 h-3 text-[#F43F7D]" aria-hidden="true" />
-                  {item.flow} Flow
-                </span>
+                {item.flow === 'spotting' ? (
+                  <span className="font-mono font-bold px-2.5 py-0.5 rounded-full bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A] flex items-center gap-1">
+                    <Droplets01 className="w-3 h-3 text-[#D97706]" aria-hidden="true" />
+                    Spotting
+                  </span>
+                ) : (
+                  <span className="font-mono font-bold px-2.5 py-0.5 rounded-full bg-[#FDE6EF] text-[#DC326C] border border-[#F43F7D]/20 capitalize flex items-center gap-1">
+                    <Droplets01 className="w-3 h-3 text-[#F43F7D]" aria-hidden="true" />
+                    {item.flow} Flow
+                  </span>
+                )}
               </div>
 
               {/* Symptoms Pills */}

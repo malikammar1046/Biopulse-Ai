@@ -79,7 +79,7 @@ export const PakistaniNutritionSection: React.FC = () => {
           </h2>
 
           <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed font-sans">
-            Generic Western meal plans often ignore local food cultures. BioPulse AI provides evidence-informed 7-day meal plans designed specifically for Pakistani diets to stabilize endocrine and metabolic health.
+            Generic Western meal plans often ignore local food cultures. BioPulse AI provides evidence-informed 3-day meal plans designed specifically for Pakistani diets to stabilize endocrine and metabolic health.
           </p>
         </div>
 

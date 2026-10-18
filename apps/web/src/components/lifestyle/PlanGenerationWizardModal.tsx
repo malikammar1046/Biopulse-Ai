@@ -22,15 +22,16 @@ interface PlanGenerationWizardModalProps {
 }
 
 const COMMON_ALLERGIES = [
+  { id: 'none', label: 'No Known Allergies', isNone: true },
   { id: 'dairy', label: 'Dairy' },
   { id: 'egg', label: 'Eggs' },
   { id: 'fish', label: 'Fish' },
-  { id: 'shellfish', label: 'Shellfish' },
+  { id: 'shellfish', label: 'Shellfish', unsupported: true },
   { id: 'tree_nuts', label: 'Tree Nuts' },
   { id: 'peanuts', label: 'Peanuts' },
-  { id: 'wheat', label: 'Wheat / Gluten' },
-  { id: 'soy', label: 'Soy' },
-  { id: 'sesame', label: 'Sesame' },
+  { id: 'wheat', label: 'Wheat' },
+  { id: 'soy', label: 'Soy', unsupported: true },
+  { id: 'sesame', label: 'Sesame', unsupported: true },
 ];
 
 const COMMON_INTOLERANCES = [
@@ -99,7 +100,9 @@ export const PlanGenerationWizardModal: React.FC<PlanGenerationWizardModalProps>
       .then((prefs) => {
         if (prefs) {
           if (prefs.dietary_pattern) setDietaryPattern(prefs.dietary_pattern);
-          if (prefs.food_allergies) setAllergies(prefs.food_allergies);
+          if (Array.isArray(prefs.food_allergies)) {
+            setAllergies(prefs.food_allergies);
+          }
           if (prefs.food_intolerances) setIntolerances(prefs.food_intolerances);
           if (prefs.favorite_ingredients) setFavoriteIngredients(prefs.favorite_ingredients);
           if (prefs.disliked_ingredients) setDislikedIngredients(prefs.disliked_ingredients);
@@ -118,9 +121,24 @@ export const PlanGenerationWizardModal: React.FC<PlanGenerationWizardModalProps>
   if (!isOpen) return null;
 
   const toggleAllergy = (id: string) => {
-    setAllergies((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
+    setError(null);
+    if (id === 'none') {
+      setAllergies((prev) => (prev.includes('none') ? [] : ['none']));
+      return;
+    }
+    setAllergies((prev) => {
+      const withoutNone = prev.filter((x) => x !== 'none');
+      if (withoutNone.includes(id)) {
+        return withoutNone.filter((x) => x !== id);
+      } else {
+        return [...withoutNone, id];
+      }
+    });
+  };
+
+  const handleNext = () => {
+    setError(null);
+    setStep(step + 1);
   };
 
   const toggleIntolerance = (id: string) => {
@@ -163,10 +181,14 @@ export const PlanGenerationWizardModal: React.FC<PlanGenerationWizardModalProps>
     setError(null);
     setGenerating(true);
     try {
+      const effectiveAllergies = allergies.includes('none')
+        ? ['none']
+        : allergies.filter((x) => x !== 'none');
+
       // 1. Save preferences
       await nutritionService.updatePreferences({
         dietary_pattern: dietaryPattern,
-        food_allergies: allergies,
+        food_allergies: effectiveAllergies,
         food_intolerances: intolerances,
         favorite_ingredients: favoriteIngredients,
         disliked_ingredients: dislikedIngredients,
@@ -210,7 +232,7 @@ export const PlanGenerationWizardModal: React.FC<PlanGenerationWizardModalProps>
                 Step {step} of 5
               </span>
               <h2 className="text-lg sm:text-xl font-bold text-[#073B72]">
-                Personalize Your 7-Day Plan
+                Personalize Your 3-Day Plan
               </h2>
             </div>
           </div>
@@ -294,11 +316,14 @@ export const PlanGenerationWizardModal: React.FC<PlanGenerationWizardModalProps>
               {/* Allergies */}
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-[#55718F] block">
-                  Food Allergies (Strict Zero-Leakage)
+                  Food Allergies (Strict Exclusion Verification)
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {COMMON_ALLERGIES.map((alg) => {
-                    const active = allergies.includes(alg.id);
+                    const isNone = alg.id === 'none';
+                    const active = isNone
+                      ? allergies.includes('none')
+                      : allergies.includes(alg.id);
                     return (
                       <button
                         key={alg.id}
@@ -306,16 +331,33 @@ export const PlanGenerationWizardModal: React.FC<PlanGenerationWizardModalProps>
                         onClick={() => toggleAllergy(alg.id)}
                         className={`p-2.5 rounded-xl border text-xs font-medium text-left transition flex items-center justify-between ${
                           active
-                            ? 'bg-rose-50 border-rose-300 text-rose-800'
+                            ? isNone
+                              ? 'bg-emerald-50 border-emerald-300 text-emerald-800 font-semibold'
+                              : 'bg-rose-50 border-rose-300 text-rose-800'
                             : 'bg-white border-[#D7EAF2] text-slate-700 hover:bg-slate-50'
                         }`}
                       >
                         <span>{alg.label}</span>
-                        {active && <Check className="w-3.5 h-3.5 text-rose-600" />}
+                        {active && (
+                          <Check
+                            className={`w-3.5 h-3.5 ${
+                              isNone ? 'text-emerald-600' : 'text-rose-600'
+                            }`}
+                          />
+                        )}
                       </button>
                     );
                   })}
                 </div>
+                {allergies.some((a) => ['shellfish', 'soy', 'sesame'].includes(a)) && (
+                  <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-start gap-2 mt-2">
+                    <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <span>
+                      Shellfish, soy, or sesame exclusions require clinical dietitian sign-off for
+                      complete exclusion in our validated Pakistani food database.
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Intolerances */}
@@ -483,6 +525,9 @@ export const PlanGenerationWizardModal: React.FC<PlanGenerationWizardModalProps>
                     Add
                   </button>
                 </div>
+                <p className="text-[11px] text-[#55718F] leading-relaxed">
+                  Disliked Pakistani catalog dishes will be excluded from your plan. If an ingredient cannot be matched to our verified database, it will be flagged for your manual review rather than silently ignored.
+                </p>
                 {dislikedIngredients.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 pt-1">
                     {dislikedIngredients.map((item) => (
@@ -681,7 +726,7 @@ export const PlanGenerationWizardModal: React.FC<PlanGenerationWizardModalProps>
                   Review Your Plan Specifications
                 </h3>
                 <p className="text-xs text-[#55718F] mt-1">
-                  Ready to assemble your 7-day personalized meal plan with verified clinical targets.
+                  Ready to assemble your 3-day personalized meal plan with verified clinical targets.
                 </p>
               </div>
 
@@ -708,13 +753,33 @@ export const PlanGenerationWizardModal: React.FC<PlanGenerationWizardModalProps>
                 </div>
 
                 <div className="pt-2 border-t border-[#D7EAF2]">
-                  <span className="text-[#55718F] block font-medium">Allergies (Excluded):</span>
+                  <span className="text-[#55718F] block font-medium">Food Allergies (Excluded):</span>
                   <span className="font-semibold text-rose-700">
-                    {allergies.length > 0
+                    {allergies.includes('none')
+                      ? 'No Known Allergies declared (Standard safety review recommended)'
+                      : allergies.length > 0
                       ? allergies.map((a) => a.replace('_', ' ')).join(', ')
-                      : 'None declared'}
+                      : 'None selected — Provisional guidance (Full ingredient breakdown provided for manual review)'}
                   </span>
                 </div>
+
+                {intolerances.length > 0 && (
+                  <div className="pt-2 border-t border-[#D7EAF2]">
+                    <span className="text-[#55718F] block font-medium">Food Intolerances (Excluded):</span>
+                    <span className="font-semibold text-amber-700">
+                      {intolerances.map((i) => i.replace('_', ' ')).join(', ')}
+                    </span>
+                  </div>
+                )}
+
+                {dislikedIngredients.length > 0 && (
+                  <div className="pt-2 border-t border-[#D7EAF2]">
+                    <span className="text-[#55718F] block font-medium">Disliked Foods:</span>
+                    <span className="font-semibold text-slate-700">
+                      {dislikedIngredients.join(', ')}
+                    </span>
+                  </div>
+                )}
 
                 <div className="pt-2 border-t border-[#D7EAF2]">
                   <span className="text-[#55718F] block font-medium">Cuisines:</span>
@@ -764,7 +829,7 @@ export const PlanGenerationWizardModal: React.FC<PlanGenerationWizardModalProps>
           {step < 5 ? (
             <button
               type="button"
-              onClick={() => setStep(step + 1)}
+              onClick={handleNext}
               className={`inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold transition shadow-xs ${primaryBtnClass}`}
             >
               Continue
@@ -782,12 +847,12 @@ export const PlanGenerationWizardModal: React.FC<PlanGenerationWizardModalProps>
               {generating ? (
                 <>
                   <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Building 7-Day Plan...
+                  Building 3-Day Plan...
                 </>
               ) : (
                 <>
                   <Sparkles className="w-4 h-4" />
-                  Generate My 7-Day Plan
+                  Generate My 3-Day Plan
                 </>
               )}
             </button>

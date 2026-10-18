@@ -25,6 +25,7 @@ import {
   buildFemaleTier1Inputs,
   validateFemaleReviewInputs,
   resolveRiskBand,
+  FEMALE_DEFAULT_THRESHOLD,
 } from '../services/assessmentService';
 
 const SYMPTOM_LABELS: Record<string, string> = {
@@ -156,14 +157,25 @@ export default function FemaleReviewScreen() {
       if (result.error || !result.data) {
         setIsSubmitting(false);
         Alert.alert(
-          'Screening Engine Unavailable',
-          result.error || 'Failed to connect to the BioPulse assessment pipeline. Please check your network connection and retry.'
+          result.statusCode === 401 ? 'Session Expired' : 'Screening Notice',
+          result.error || 'Failed to connect to the BioPulse assessment pipeline. Please check your network connection and retry.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Retry', onPress: () => handleRunScreening() },
+          ]
         );
         return;
       }
 
       const assess = result.data;
-      const band = resolveRiskBand(assess.probability, assess.risk_category, assess.threshold);
+      const band = resolveRiskBand(
+        assess.probability,
+        assess.risk_category,
+        assess.threshold ?? FEMALE_DEFAULT_THRESHOLD,
+        0.18,
+        'female_pcos',
+        assess.summary_text
+      );
 
       setActiveAssessment(assess);
       updateScreeningAssessment({

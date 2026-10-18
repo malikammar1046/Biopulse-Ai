@@ -36,7 +36,7 @@
  * 5. Machine Learning & Clinical Governance:
  *    - Female PCOS progressive assessment endpoint & payload builder
  *    - Male Hypogonadism assessment endpoint & payload builder
- *    - Preserved calibrated 0.35 Tier 1 threshold
+ *    - Preserved calibrated 0.25 Female (v2) and 0.1808 / 0.3379 Male thresholds
  *    - Patient-friendly SHAP explainability normalization
  *    - Assessment history query integration
  *    - Mandatory non-diagnostic clinical disclaimer
@@ -377,21 +377,31 @@ test('Phase 14 [Pillar 5: ML] Female & Male Models, Thresholds, Probability, SHA
     'ML 5.2: Must support Male Hypogonadism assessment endpoint and payload builder'
   );
 
-  // 3. Calibrated Thresholds
+  // 3. Calibrated Authoritative Thresholds
   assert.ok(
-    assessmentService.includes('FEMALE_DEFAULT_THRESHOLD') &&
-      assessmentService.includes('MALE_DEFAULT_THRESHOLD') &&
-      assessmentService.includes('threshold'),
-    'ML 5.3: Must enforce calibrated clinical probability thresholds'
+    assessmentService.includes('FEMALE_DEFAULT_THRESHOLD = 0.25') &&
+      assessmentService.includes('FEMALE_LOWER_CUTOFF = 0.18') &&
+      assessmentService.includes('MALE_DEFAULT_THRESHOLD = 0.1808') &&
+      assessmentService.includes('MALE_TIER1_DEFAULT_THRESHOLD = 0.1808') &&
+      assessmentService.includes('MALE_TIER2_DEFAULT_THRESHOLD = 0.3379'),
+    'ML 5.3: Must enforce authoritative calibrated clinical probability thresholds (0.25 Female, 0.1808 Male T1, 0.3379 Male T2)'
   );
 
-  // 4. Probability & Risk Category Resolution
+  // 3b. Verify No Stale 0.45 Threshold Fallback in Male Result or Review
+  const maleReview = readMobileFile('app/male-review.tsx');
+  assert.ok(
+    !maleResult.includes('|| 0.45') && !maleReview.includes('|| 0.45'),
+    'ML 5.3b: Male screening result and review must not fall back to stale 0.45 cutoff'
+  );
+
+  // 4. Probability & Risk Category Resolution with Pathway Isolation
   assert.ok(
     assessmentService.includes('resolveRiskBand') &&
       assessmentService.includes('lower') &&
       assessmentService.includes('intermediate') &&
-      assessmentService.includes('higher'),
-    'ML 5.4: Must resolve probability and thresholds into canonical clinical risk bands'
+      assessmentService.includes('higher') &&
+      assessmentService.includes('isMale'),
+    'ML 5.4: Must resolve probability and thresholds into canonical clinical risk bands with pathway isolation'
   );
 
   // 5. Patient-Friendly SHAP Factor Normalization

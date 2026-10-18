@@ -56,8 +56,10 @@ export const ReassessmentModal: React.FC<ReassessmentModalProps> = ({
         >
           {/* Header icon */}
           <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-[#E0F2FE] text-[#0288D1]">
-              <ActivityHeart className="w-6 h-6 text-[#0288D1]" aria-hidden="true" />
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
+              isMale ? 'bg-[#E0F2FE] text-[#0288D1]' : 'bg-[#FDE6EF] text-[#F43F7D]'
+            }`}>
+              <ActivityHeart className={`w-6 h-6 ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`} aria-hidden="true" />
             </div>
 
             <button
@@ -112,7 +114,11 @@ export const ReassessmentModal: React.FC<ReassessmentModalProps> = ({
                   type="button"
                   onClick={handleUpdateScreening}
                   disabled={isLoading || assessmentLoading}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white shadow-md transition-all cursor-pointer bg-[#0288D1] hover:bg-[#0277BD] shadow-[#0288D1]/25 disabled:opacity-50"
+                  className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white shadow-md transition-all cursor-pointer ${
+                    isMale
+                      ? 'bg-[#0288D1] hover:bg-[#0277BD] shadow-[#0288D1]/25'
+                      : 'bg-[#F43F7D] hover:bg-[#E11D48] shadow-[#F43F7D]/25'
+                  } disabled:opacity-50`}
                 >
                   <RefreshCw01
                     className={`w-3.5 h-3.5 ${isLoading || assessmentLoading ? 'animate-spin' : ''}`}

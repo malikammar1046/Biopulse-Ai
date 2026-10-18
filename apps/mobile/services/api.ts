@@ -7,7 +7,60 @@
  */
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/supabase';
-import { BACKEND_API_URL } from './assessmentService';
+
+declare const process: {
+  env: Record<string, string | undefined>;
+};
+// ============================================================================
+// DYNAMIC BACKEND URL RESOLUTION & NORMALIZATION
+// ============================================================================
+
+/**
+ * Intelligently resolves and normalizes the Django Backend API URL:
+ * 1. Reads process.env.EXPO_PUBLIC_BACKEND_URL if provided, normalizes trailing slashes,
+ *    and ensures the '/api' suffix is present without duplication.
+ * 2. On physical devices in Expo Go / dev build, extracts the local LAN host IP from
+ *    Expo Constants (e.g. '192.168.1.5:8000/api') so requests reach the dev machine.
+ * 3. On Android emulators without an explicit env variable, routes to '10.0.2.2:8000/api'.
+ * 4. Falls back safely to 'http://127.0.0.1:8000/api' for local web / iOS simulator.
+ */
+export function resolveBackendApiUrl(): string {
+  const envUrl = typeof process !== 'undefined' ? process.env?.EXPO_PUBLIC_BACKEND_URL : undefined;
+  if (envUrl && envUrl.trim().length > 0) {
+    let clean = envUrl.trim().replace(/\/+$/, '');
+    if (!clean.endsWith('/api')) {
+      clean = `${clean}/api`;
+    }
+    return clean;
+  }
+
+  try {
+    // Discover dev machine LAN IP via Expo Constants (physical device / Expo Go)
+    const Constants = require('expo-constants')?.default || require('expo-constants');
+    const hostUri = Constants?.expoConfig?.hostUri || Constants?.manifest2?.extra?.expoGo?.debuggerHost;
+    if (hostUri && typeof hostUri === 'string') {
+      const hostIp = hostUri.split(':')[0];
+      if (hostIp && hostIp !== 'localhost' && hostIp !== '127.0.0.1') {
+        return `http://${hostIp}:8000/api`;
+      }
+    }
+  } catch {
+    // expo-constants not available in this runtime
+  }
+
+  try {
+    const { Platform } = require('react-native');
+    if (Platform?.OS === 'android') {
+      return 'http://10.0.2.2:8000/api';
+    }
+  } catch {
+    // react-native not available
+  }
+
+  return 'http://127.0.0.1:8000/api';
+}
+
+export const BACKEND_API_URL = resolveBackendApiUrl();
 
 // ============================================================================
 // TYPES
@@ -42,7 +95,7 @@ export const API_CONFIG = {
 } as const;
 
 // Re-export URLs for service usage
-export { SUPABASE_URL, SUPABASE_ANON_KEY, BACKEND_API_URL };
+export { SUPABASE_URL, SUPABASE_ANON_KEY };
 
 export function getDjangoBaseUrl(): string {
   return BACKEND_API_URL;

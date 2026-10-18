@@ -368,14 +368,27 @@ class LifestyleRecommendationEngine:
                     "support steady blood sugar levels and sustained daily energy."
                 )
         else:
-            strat_title = "Nutrient-Dense Balanced Nutrition for Men"
-            strat_summary = (
-                "Focuses on wholesome proteins, colorful vegetables, and essential minerals to support "
-                "body composition, metabolic health, and physical vitality."
+            is_male_risk = bool(
+                screening.has_assessment and (
+                    screening.risk_category in ("moderate", "high", "elevated")
+                    or (labs.total_testosterone_ng_dl is not None and labs.total_testosterone_ng_dl < 300.0)
+                )
             )
+            if is_male_risk:
+                strat_title = "Nutrient-Dense Metabolic Vitality & Endocrine Support for Men"
+                strat_summary = (
+                    "Emphasizes zinc-, magnesium-, and antioxidant-rich whole foods, high-quality proteins, and healthy dietary fats "
+                    "to support metabolic health, essential micronutrient cofactors, and sustained physical vitality."
+                )
+            else:
+                strat_title = "Nutrient-Dense Balanced Nutrition for Men"
+                strat_summary = (
+                    "Focuses on wholesome proteins, colorful vegetables, and essential minerals to support "
+                    "body composition, metabolic health, and physical vitality."
+                )
 
         key_guidelines = cls._build_key_guidelines(is_female_pcos, safety, demo)
-        targeted_swaps = cls._build_targeted_swaps(context, safety)
+        targeted_swaps = cls._build_targeted_swaps(context, safety, is_female_pcos)
         meal_concepts = cls._build_personalized_meal_concepts(
             context=context,
             safety=safety,
@@ -815,6 +828,7 @@ class LifestyleRecommendationEngine:
         cls,
         context: ComprehensiveLifestyleContext,
         safety: SafetyEvaluationResult,
+        is_female_pcos: bool = True,
     ) -> List[TargetedFoodSwap]:
         demo = context.demographics
         excluded = safety.excluded_food_categories
@@ -857,10 +871,16 @@ class LifestyleRecommendationEngine:
             )
 
         # Swap 3: Sweetened Beverages
-        if any(c in excluded for c in ("dairy", "milk", "lactose")):
-            tea_alt = "Unsweetened spearmint, green, or cinnamon herbal infusion"
+        if is_female_pcos:
+            if any(c in excluded for c in ("dairy", "milk", "lactose")):
+                tea_alt = "Unsweetened spearmint, green, or cinnamon herbal infusion"
+            else:
+                tea_alt = "Unsweetened spearmint, green, or cinnamon herbal tea with a splash of milk"
         else:
-            tea_alt = "Unsweetened spearmint, green, or cinnamon herbal tea with a splash of milk"
+            if any(c in excluded for c in ("dairy", "milk", "lactose")):
+                tea_alt = "Unsweetened green tea, cardamom tea, or ginger-cinnamon herbal infusion"
+            else:
+                tea_alt = "Unsweetened green tea, cardamom tea, or ginger-cinnamon herbal tea with a splash of milk"
         swaps.append(
             TargetedFoodSwap(
                 trigger_factor="Refined Sugar Intake",
@@ -914,7 +934,189 @@ class LifestyleRecommendationEngine:
         is_vegan = diet == "vegan"
         is_vegetarian = diet in ("vegetarian", "vegan")
         is_pescatarian = diet == "pescatarian"
+        seeds_excluded = any(c in excluded for c in ("seed", "seeds", "sesame"))
 
+        if not is_female_pcos:
+            # -------------------------------------------------------------
+            # DEDICATED MALE PERSONALIZED MEAL CONCEPTS
+            # Grounded in authentic Pakistani & South Asian foods,
+            # condition-aware for male metabolic and endocrine vitality.
+            # STRICT ZERO PCOS REFERENCES.
+            # -------------------------------------------------------------
+            is_male_risk = bool(
+                context.screening.has_assessment and (
+                    context.screening.risk_category in ("moderate", "high", "elevated")
+                    or (context.labs.total_testosterone_ng_dl is not None and context.labs.total_testosterone_ng_dl < 300.0)
+                )
+            )
+
+            # Hypoallergenic Universal Fallbacks for Men
+            fb_m_breakfast = MealConcept(
+                meal_type="Breakfast",
+                title="Savory Moong Daal & Spiced Spinach Chilla",
+                description="Slow-cooked savory lentil crepe griddled with fresh baby spinach, cumin, and cold-pressed oil, served with fresh mint chutney.",
+                key_ingredients=["Moong Daal", "Baby Spinach", "Cumin", "Fresh Mint Chutney"],
+                hormonal_benefit="Clean plant protein and dietary fiber ensure steady glycogen replenishment and sustained morning stamina.",
+                est_calories=420 if has_biometrics else None,
+            )
+            fb_m_lunch = MealConcept(
+                meal_type="Lunch",
+                title="Hearty Daal Chana Bowl with Steamed Brown Basmati & Fresh Kachumber",
+                description="Slow-simmered split Bengal gram (daal chana) served with steamed brown basmati rice, crisp radish-cucumber kachumber salad, and cold-pressed mustard oil.",
+                key_ingredients=["Daal Chana", "Brown Basmati Rice", "Kachumber Salad", "Cold-Pressed Mustard Oil"],
+                hormonal_benefit="Slow-digesting complex pulses supply dietary fiber and plant zinc to sustain metabolic rate and steady post-meal fullness.",
+                est_calories=540 if has_biometrics else None,
+            )
+            fb_m_dinner = MealConcept(
+                meal_type="Dinner",
+                title="Fragrant Palak (Spinach) Chickpea Stew with Brown Basmati",
+                description="Chickpeas and dark leafy greens simmered with ginger, garlic, turmeric, and cumin, served with steamed brown rice.",
+                key_ingredients=["Chickpeas", "Fresh Palak (Spinach)", "Ginger & Garlic", "Brown Basmati Rice"],
+                hormonal_benefit="Magnesium and plant polyphenols support nocturnal relaxation, muscle recovery, and restorative sleep.",
+                est_calories=480 if has_biometrics else None,
+            )
+            fb_m_snack = MealConcept(
+                meal_type="Snack",
+                title="Bhuna Chana (Dry-Roasted Chickpeas) & Cucumber Slices with Green Tea",
+                description="Dry-roasted whole chickpeas tossed with Himalayan pink salt, cumin, and lemon, served with crisp cucumber rounds and unsweetened green tea.",
+                key_ingredients=["Bhuna Chana", "Cucumber Slices", "Himalayan Pink Salt", "Green Tea"],
+                hormonal_benefit="Crunchy low-glycemic plant fuel supports steady afternoon satiety and sustained focus without energy dips.",
+                est_calories=200 if has_biometrics else None,
+            )
+
+            # 1. Male Breakfast Candidate
+            if is_vegan or any(c in excluded for c in ("egg", "eggs")):
+                mb_title = "Golden Spiced Tofu Bhurji with Baby Spinach & Warm Flatbread"
+                mb_desc = "Crumbled organic tofu sautéed with cumin, turmeric, diced tomatoes, and baby spinach, served with a warm whole-wheat or sorghum flatbread."
+                mb_ings = ["Organic Tofu", "Baby Spinach", "Cumin & Turmeric", "Whole-Wheat Flatbread"]
+                mb_benefit = (
+                    "Plant protein enriched with zinc and magnesium cofactors supports cellular metabolic health and sustained morning stamina."
+                    if is_male_risk else
+                    "Clean plant protein and dietary fiber provide sustained morning energy and steady fullness."
+                )
+            else:
+                mb_title = "High-Protein Herb Omelet with Spiced Spinach & Whole Wheat Roti"
+                mb_desc = "2-to-3 egg omelet prepared with baby spinach, diced tomatoes, green chilies, and black pepper, served with a small whole-wheat or barley roti."
+                mb_ings = ["Eggs", "Baby Spinach", "Tomatoes & Green Chilies", "Whole-Wheat / Barley Roti"]
+                mb_benefit = (
+                    "Quality whole egg nutrients, choline, and healthy fats supply essential precursors for healthy endocrine balance and metabolic vitality."
+                    if is_male_risk else
+                    "High-quality egg protein and leafy greens deliver clean amino acids for morning muscle maintenance and sustained physical vitality."
+                )
+
+            raw_mb = MealConcept(
+                meal_type="Breakfast",
+                title=mb_title,
+                description=mb_desc,
+                key_ingredients=mb_ings,
+                hormonal_benefit=mb_benefit,
+                est_calories=420 if has_biometrics else None,
+            )
+            final_breakfast = cls._validate_and_finalize_concept(raw_mb, excluded, fb_m_breakfast)
+
+            # 2. Male Lunch Candidate
+            if not is_vegetarian and not is_pescatarian and not any(c in excluded for c in ("poultry", "chicken")):
+                ml_title = "High-Protein Daal Chana Bowl with Char-Grilled Chicken Tikka & Kachumber"
+                ml_desc = "Hearty split Bengal gram (daal chana) paired with lean spiced chicken tikka strips, crisp kachumber salad (onion, cucumber, tomato, lemon), and a portion of brown basmati rice."
+                ml_ings = ["Daal Chana", "Grilled Chicken Tikka", "Kachumber Salad", "Brown Basmati Rice"]
+                ml_benefit = (
+                    "Zinc-rich legumes and lean poultry supply bioavailable zinc, magnesium, and lean amino acids crucial for male metabolic and endocrine vitality."
+                    if is_male_risk else
+                    "High biological value protein combined with slow-digesting complex pulses supports sustained metabolic rate and lean muscle maintenance."
+                )
+            elif is_pescatarian and not any(c in excluded for c in ("fish", "seafood")):
+                ml_title = "Slow-Simmered Daal Chana with Pan-Seared River Fish & Fresh Kachumber"
+                ml_desc = "Bengal gram daal paired with pan-seared spiced river fish or pomfret in cold-pressed mustard oil, served with fresh kachumber salad and brown basmati rice."
+                ml_ings = ["Daal Chana", "Seared River Fish", "Kachumber Salad", "Cold-Pressed Mustard Oil"]
+                ml_benefit = "Omega-3 fatty acids and zinc from fish support vascular health, endothelial function, and cellular vitality."
+            elif is_vegetarian and not any(c in excluded for c in ("dairy", "milk", "lactose")):
+                ml_title = "Lentil Daal Chana with Pan-Seared Spiced Paneer & Fresh Kachumber"
+                ml_desc = "Split Bengal gram daal paired with griddled spiced paneer cubes, crisp kachumber salad, and a portion of brown basmati rice."
+                ml_ings = ["Daal Chana", "Spiced Paneer", "Kachumber Salad", "Brown Basmati Rice"]
+                ml_benefit = "Quality casein and whey proteins paired with zinc-rich pulses sustain amino acid availability and metabolic vitality."
+            else:
+                ml_title = "Daal Chana & Spiced Organic Tofu Bowl with Fresh Kachumber & Brown Rice"
+                ml_desc = "Slow-cooked Bengal gram daal paired with turmeric-crusted tofu cutlets, crisp kachumber salad, and cold-pressed mustard oil."
+                ml_ings = ["Daal Chana", "Organic Tofu", "Kachumber Salad", "Brown Basmati Rice"]
+                ml_benefit = "Plant-derived zinc, iron, and slow-release complex carbohydrates promote steady postprandial glucose stability and endurance."
+
+            raw_ml = MealConcept(
+                meal_type="Lunch",
+                title=ml_title,
+                description=ml_desc,
+                key_ingredients=ml_ings,
+                hormonal_benefit=ml_benefit,
+                est_calories=540 if has_biometrics else None,
+            )
+            final_lunch = cls._validate_and_finalize_concept(raw_ml, excluded, fb_m_lunch)
+
+            # 3. Male Dinner Candidate
+            if (is_pescatarian or not is_vegetarian) and not any(c in excluded for c in ("fish", "seafood")):
+                md_title = "Steamed Herb Wild Fish or Salmon with Spiced Palak & Brown Basmati"
+                md_desc = "Delicately spiced baked wild fish fillet served over a bed of simmered spinach and garlic, with a portion of brown basmati rice."
+                md_ings = ["Wild Fish", "Fresh Palak (Spinach)", "Garlic & Cumin", "Brown Basmati Rice"]
+                md_benefit = "EPA/DHA omega-3 fatty acids and magnesium promote cardiovascular elasticity, lower systemic inflammation, and enhance sleep quality."
+            elif not is_vegetarian and not any(c in excluded for c in ("poultry", "chicken")):
+                md_title = "Lean Palak Chicken with Steamed Brown Basmati & Low-Starch Salad"
+                md_desc = "Slow-braised chicken breast simmered in iron-rich spiced spinach puree (palak) with garlic and ginger, paired with a portion of brown basmati rice."
+                md_ings = ["Chicken Breast", "Fresh Palak (Spinach)", "Ginger & Garlic", "Brown Basmati Rice"]
+                md_benefit = (
+                    "Magnesium from dark leafy greens combined with lean zinc-rich poultry facilitates healthy nighttime recovery and tissue repair."
+                    if is_male_risk else
+                    "Iron, magnesium, and lean amino acids support nocturnal muscle recovery and physical stamina without heavy digestive burden."
+                )
+            elif is_vegetarian and not any(c in excluded for c in ("dairy", "milk", "lactose")):
+                md_title = "Fragrant Palak Paneer with Light Garlic Tadka & Whole Wheat Roti"
+                md_desc = "Fresh spinach puree with lightly seared paneer cubes tempered with cumin and garlic, served with a single whole-wheat roti."
+                md_ings = ["Fresh Palak", "Paneer", "Garlic Tadka", "Whole-Wheat Roti"]
+                md_benefit = "Natural calcium and magnesium nourish neurological relaxation, muscle recovery, and restorative overnight sleep."
+            else:
+                md_title = "Fragrant Palak Tofu & Chickpea Stew with Brown Rice"
+                md_desc = "Pan-seared tofu and chickpeas folded into garlic-infused spinach curry, served with steamed brown basmati rice."
+                md_ings = ["Fresh Palak", "Organic Tofu", "Chickpeas", "Brown Basmati Rice"]
+                md_benefit = "Plant magnesium and antioxidant polyphenols reduce oxidative stress and encourage deep overnight restorative sleep."
+
+            raw_md = MealConcept(
+                meal_type="Dinner",
+                title=md_title,
+                description=md_desc,
+                key_ingredients=md_ings,
+                hormonal_benefit=md_benefit,
+                est_calories=480 if has_biometrics else None,
+            )
+            final_dinner = cls._validate_and_finalize_concept(raw_md, excluded, fb_m_dinner)
+
+            # 4. Male Snack Candidate
+            if seeds_excluded or any(c in excluded for c in ("tree_nut", "tree_nuts", "peanut", "peanuts", "nuts")):
+                ms_title = "Crisp Bhuna Chana with Cucumber Slices & Green Tea"
+                ms_desc = "Dry-roasted whole chickpeas seasoned with chaat masala and lemon juice, served alongside fresh cucumber rounds and green tea."
+                ms_ings = ["Bhuna Chana", "Cucumber Slices", "Lemon & Chaat Masala", "Green Tea"]
+                ms_benefit = "Hypoallergenic complex plant fuel and polyphenol antioxidants support cellular energy, vascular tone, and midday satiety."
+            else:
+                ms_title = "Roasted Chana (Chickpeas) & Raw Pumpkin Seeds with Green Tea"
+                ms_desc = "Dry-roasted chickpeas (bhuna chana) and zinc-rich raw pumpkin seeds tossed with Himalayan pink salt, accompanied by unsweetened hot steeped green tea."
+                ms_ings = ["Bhuna Chana (Roasted Chickpeas)", "Pumpkin Seeds", "Himalayan Pink Salt", "Green Tea"]
+                ms_benefit = (
+                    "Pumpkin seeds are among the richest dietary sources of zinc and magnesium—vital micronutrients for maintaining healthy endocrine balance and cellular vitality."
+                    if is_male_risk else
+                    "Dense dietary fiber and plant zinc deliver steady afternoon satiety, preventing blood sugar crashes and mid-afternoon fatigue."
+                )
+
+            raw_ms = MealConcept(
+                meal_type="Snack",
+                title=ms_title,
+                description=ms_desc,
+                key_ingredients=ms_ings,
+                hormonal_benefit=ms_benefit,
+                est_calories=200 if has_biometrics else None,
+            )
+            final_snack = cls._validate_and_finalize_concept(raw_ms, excluded, fb_m_snack)
+
+            return [final_breakfast, final_lunch, final_dinner, final_snack]
+
+        # -------------------------------------------------------------
+        # FEMALE PCOS MEAL CONCEPTS (Preserved Completely Intact)
+        # -------------------------------------------------------------
         # Hypoallergenic Universal Fallbacks
         fb_breakfast = MealConcept(
             meal_type="Breakfast",
@@ -940,7 +1142,6 @@ class LifestyleRecommendationEngine:
             hormonal_benefit="Light, nourishing dinner supports restorative sleep and calm overnight digestion.",
             est_calories=440 if has_biometrics else None,
         )
-        seeds_excluded = any(c in excluded for c in ("seed", "seeds", "sesame"))
         if seeds_excluded:
             fb_snack = MealConcept(
                 meal_type="Snack",

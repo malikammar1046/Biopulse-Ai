@@ -832,7 +832,7 @@ export const ClinicalModalLayout: React.FC<ClinicalModalLayoutProps> = ({
                   {isSubmitting ? (
                     <>
                       <Loading01 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
-                      <span>Saving...</span>
+                      <span>{submitButtonText}</span>
                     </>
                   ) : (
                     <span>{submitButtonText}</span>

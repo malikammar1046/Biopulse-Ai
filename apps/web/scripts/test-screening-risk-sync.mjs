@@ -16,6 +16,7 @@ import {
   getAuthoritativeAssessmentForPathway,
   selectAuthoritativeAssessment,
 } from '../src/utils/authoritativeAssessmentSelector.ts';
+import { deriveMaleTier1InputsFromProfile } from '../src/utils/tier1InputMappers.ts';
 
 console.log('🧪 Starting PCOS Screening Policy v2 & Authoritative Selector Tests...\n');
 
@@ -258,7 +259,266 @@ console.log('🧪 Starting PCOS Screening Policy v2 & Authoritative Selector Tes
   assert.strictEqual(maleLow.riskCategory, 'lower');
   assert.strictEqual(maleLow.riskLabel, 'Lower Screening Risk');
 
-  console.log('  ✅ PASSED: Male Hypogonadism pathway operates with unchanged calibrated cutoffs.');
+  // Exact 10.6% test case from user prompt:
+  const male106 = getAuthoritativeAssessmentForPathway({
+    activeAssessment: {
+      id: 'asm_male_106',
+      module: 'male_hypogonadism',
+      assessment_level: 'tier_1',
+      probability: 0.106,
+      has_assessment: true,
+    },
+    pathway: 'male',
+  });
+  assert.strictEqual(male106.riskCategory, 'intermediate');
+  assert.strictEqual(male106.riskLabel, 'Intermediate Screening Risk');
+  assert.strictEqual(male106.probabilityPercent, 10.6);
+
+  // Male Tier 2 threshold check (33.79%)
+  const maleTier2Inter = getAuthoritativeAssessmentForPathway({
+    activeAssessment: {
+      id: 'asm_male_t2_inter',
+      module: 'male_hypogonadism',
+      assessment_level: 'tier_1_2',
+      probability: 0.25,
+      has_assessment: true,
+    },
+    pathway: 'male',
+  });
+  assert.strictEqual(maleTier2Inter.riskCategory, 'intermediate');
+
+  const maleTier2High = getAuthoritativeAssessmentForPathway({
+    activeAssessment: {
+      id: 'asm_male_t2_high',
+      module: 'male_hypogonadism',
+      assessment_level: 'tier_1_2',
+      probability: 0.35,
+      has_assessment: true,
+    },
+    pathway: 'male',
+  });
+  assert.strictEqual(maleTier2High.riskCategory, 'higher');
+
+  console.log('  ✅ PASSED: Male Hypogonadism pathway operates with unchanged calibrated cutoffs, including 10.6% -> intermediate.');
 }
 
-console.log('\n🎉 ALL 5 COMPREHENSIVE SCREENING POLICY V2 TESTS PASSED PERFECTLY!\n');
+// -----------------------------------------------------------------------------
+// Test 6: Legacy & Current PCOM Status Normalization and Fail-Safe Fallback
+// -----------------------------------------------------------------------------
+{
+  console.log('Test 6: PCOM status normalization & safe fallback upon loading saved assessment');
+
+  // Helper simulating the UI badge class resolution in AssessmentPage and ProgressiveAssessmentCard
+  const getPcomBadgeStyle = (status) => {
+    if (status === 'PCOM Detected') return 'detected';
+    if (status === 'PCOM Not Detected') return 'not_detected';
+    return 'indeterminate_or_safe_fallback';
+  };
+
+  // Case 6A: Current canonical detected
+  const currentDetected = getAuthoritativeAssessmentForPathway({
+    activeAssessment: {
+      id: 'asm_curr_det',
+      module: 'female_pcos',
+      assessment_level: 'tier_1_2_3',
+      probability: 0.28,
+      has_assessment: true,
+      pcom_status: 'PCOM Detected',
+      pcom_probability: 0.85,
+    },
+    pathway: 'female',
+  });
+  assert.strictEqual(currentDetected.pcomStatus, 'PCOM Detected');
+  assert.strictEqual(currentDetected.probability, 0.28, 'Historical probability must remain unchanged');
+  assert.strictEqual(getPcomBadgeStyle(currentDetected.pcomStatus), 'detected');
+
+  // Case 6B: Legacy "PCOM Visible" -> normalizes to "PCOM Detected"
+  const legacyVisible = getAuthoritativeAssessmentForPathway({
+    activeAssessment: {
+      id: 'asm_leg_vis',
+      module: 'female_pcos',
+      assessment_level: 'tier_1_2_3',
+      probability: 0.28,
+      has_assessment: true,
+      pcom_status: 'PCOM Visible',
+      pcom_probability: 0.82,
+    },
+    pathway: 'female',
+  });
+  assert.strictEqual(legacyVisible.pcomStatus, 'PCOM Detected', 'Legacy "PCOM Visible" must normalize to "PCOM Detected"');
+  assert.strictEqual(legacyVisible.probability, 0.28, 'Historical probability must remain unchanged');
+  assert.strictEqual(legacyVisible.pcomProbability, 0.82, 'Historical PCOM probability must remain unchanged');
+  assert.strictEqual(getPcomBadgeStyle(legacyVisible.pcomStatus), 'detected');
+
+  // Case 6C: Current canonical not detected
+  const currentNotDetected = getAuthoritativeAssessmentForPathway({
+    activeAssessment: {
+      id: 'asm_curr_not_det',
+      module: 'female_pcos',
+      assessment_level: 'tier_1_2_3',
+      probability: 0.12,
+      has_assessment: true,
+      pcom_status: 'PCOM Not Detected',
+      pcom_probability: 0.15,
+    },
+    pathway: 'female',
+  });
+  assert.strictEqual(currentNotDetected.pcomStatus, 'PCOM Not Detected');
+  assert.strictEqual(getPcomBadgeStyle(currentNotDetected.pcomStatus), 'not_detected');
+
+  // Case 6D: Legacy "PCOM Not Visible" -> normalizes to "PCOM Not Detected"
+  const legacyNotVisible = getAuthoritativeAssessmentForPathway({
+    activeAssessment: {
+      id: 'asm_leg_not_vis',
+      module: 'female_pcos',
+      assessment_level: 'tier_1_2_3',
+      probability: 0.12,
+      has_assessment: true,
+      pcom_status: 'PCOM Not Visible',
+      pcom_probability: 0.14,
+    },
+    pathway: 'female',
+  });
+  assert.strictEqual(legacyNotVisible.pcomStatus, 'PCOM Not Detected', 'Legacy "PCOM Not Visible" must normalize to "PCOM Not Detected"');
+  assert.strictEqual(legacyNotVisible.probability, 0.12, 'Historical probability must remain unchanged');
+  assert.strictEqual(getPcomBadgeStyle(legacyNotVisible.pcomStatus), 'not_detected');
+
+  // Case 6E: Genuine Indeterminate state preserved
+  const genuineIndeterminate = getAuthoritativeAssessmentForPathway({
+    activeAssessment: {
+      id: 'asm_indet',
+      module: 'female_pcos',
+      assessment_level: 'tier_1_2_3',
+      probability: 0.18,
+      has_assessment: true,
+      pcom_status: 'Indeterminate',
+      pcom_probability: 0.50,
+    },
+    pathway: 'female',
+  });
+  assert.strictEqual(genuineIndeterminate.pcomStatus, 'Indeterminate', 'Genuine Indeterminate state must be preserved');
+  assert.strictEqual(getPcomBadgeStyle(genuineIndeterminate.pcomStatus), 'indeterminate_or_safe_fallback');
+
+  // Case 6F: Unexpected / unmapped legacy value fails safely to Indeterminate (NEVER negative)
+  const unexpectedStatuses = ['PCOM Ambiguous', 'Unknown Finding', 'Malformed Status', 'Corrupted_123'];
+  for (const raw of unexpectedStatuses) {
+    const unexpRes = getAuthoritativeAssessmentForPathway({
+      activeAssessment: {
+        id: `asm_unexp_${raw}`,
+        module: 'female_pcos',
+        assessment_level: 'tier_1_2_3',
+        probability: 0.20,
+        has_assessment: true,
+        pcom_status: raw,
+      },
+      pathway: 'female',
+    });
+    assert.strictEqual(
+      unexpRes.pcomStatus,
+      'Indeterminate',
+      `Unexpected status "${raw}" must fail safely to "Indeterminate"`
+    );
+    assert.notStrictEqual(
+      unexpRes.pcomStatus,
+      'PCOM Not Detected',
+      `Unexpected status "${raw}" must NEVER fail to negative (PCOM Not Detected)`
+    );
+    assert.strictEqual(
+      getPcomBadgeStyle(unexpRes.pcomStatus),
+      'indeterminate_or_safe_fallback',
+      `Unexpected status "${raw}" UI display must be amber warning, never emerald negative`
+    );
+  }
+
+  // Case 6G: Missing / null / undefined PCOM status
+  const missingPcom = getAuthoritativeAssessmentForPathway({
+    activeAssessment: {
+      id: 'asm_t1_only',
+      module: 'female_pcos',
+      assessment_level: 'tier_1',
+      probability: 0.15,
+      has_assessment: true,
+      pcom_status: null,
+    },
+    pathway: 'female',
+  });
+  assert.strictEqual(missingPcom.pcomStatus, null, 'Missing PCOM status must remain null');
+
+  console.log('  ✅ PASSED: Current and legacy PCOM statuses normalize correctly; unexpected values fail safely to Indeterminate.');
+}
+
+// -----------------------------------------------------------------------------
+// Test 7: Male Age Null-Safety & Prevention of Stale Historical Resurrection
+// -----------------------------------------------------------------------------
+{
+  console.log('Test 7: Male age null-safety & prevention of stale historical resurrection');
+
+  // Case 7A: deriveMaleTier1InputsFromProfile emits null age when DOB is missing (never fabricates 35)
+  const profileNoDob = {
+    heightCm: 180,
+    weightKg: 80,
+  };
+  const inputsNoDob = deriveMaleTier1InputsFromProfile(profileNoDob);
+  assert.strictEqual(inputsNoDob.age, null, 'deriveMaleTier1InputsFromProfile must NOT default missing DOB to 35');
+
+  // Case 7B: When active assessment is unavailable, older candidates with valid probabilities must NOT overwrite it
+  const activeUnavailable = {
+    id: 'asm_active_unavail',
+    module: 'male_hypogonadism',
+    assessment_level: 'tier_1',
+    probability: null,
+    risk_category: 'unavailable',
+    risk_label: 'Assessment Unavailable',
+    has_assessment: false,
+    summary_text: 'Age is required for male hypogonadism screening.',
+  };
+
+  const olderCandidateWithProb = {
+    id: 'asm_older_candidate',
+    module: 'male_hypogonadism',
+    assessment_level: 'tier_1',
+    probability: 0.22,
+    risk_category: 'higher',
+    risk_label: 'Higher Screening Risk',
+    has_assessment: true,
+    created_at: '2026-01-01T00:00:00Z',
+  };
+
+  const resUnavail = getAuthoritativeAssessmentForPathway({
+    activeAssessment: activeUnavailable,
+    candidateAssessments: [olderCandidateWithProb],
+    pathway: 'male',
+  });
+
+  assert.strictEqual(resUnavail.riskCategory, 'unavailable', 'Active unavailable assessment must not be replaced by older candidate');
+  assert.strictEqual(resUnavail.probability, null, 'Active unavailable probability must remain null');
+  assert.strictEqual(resUnavail.riskLabel, 'Assessment Unavailable');
+  assert.strictEqual(resUnavail.hasAssessment, false);
+
+  // Case 7C: A genuinely new valid assessment CAN become authoritative over an older result
+  const newValidAssessment = {
+    id: 'asm_new_valid',
+    module: 'male_hypogonadism',
+    assessment_level: 'tier_1',
+    probability: 0.145,
+    risk_category: 'intermediate',
+    risk_label: 'Intermediate Screening Risk',
+    has_assessment: true,
+    created_at: '2026-03-01T00:00:00Z',
+  };
+
+  const resNewValid = getAuthoritativeAssessmentForPathway({
+    activeAssessment: newValidAssessment,
+    candidateAssessments: [olderCandidateWithProb],
+    pathway: 'male',
+  });
+
+  assert.strictEqual(resNewValid.riskCategory, 'intermediate', 'Genuinely new valid assessment becomes authoritative');
+  assert.strictEqual(resNewValid.probability, 0.145);
+  assert.strictEqual(resNewValid.assessmentId, 'asm_new_valid');
+  assert.strictEqual(resNewValid.hasAssessment, true);
+
+  console.log('  ✅ PASSED: Male missing age emits null, active unavailable assessments never resurrect stale historical candidates, and genuinely new valid assessments become authoritative.');
+}
+
+console.log('\n🎉 ALL 7 COMPREHENSIVE SCREENING POLICY & STATUS TESTS PASSED PERFECTLY!\n');

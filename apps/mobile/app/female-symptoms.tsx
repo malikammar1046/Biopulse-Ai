@@ -27,7 +27,7 @@ const MODEL_SYMPTOMS: SymptomItem[] = [
   { id: 'weight_gain', title: 'Weight gain', iconName: 'speedometer-outline' },
   { id: 'hirsutism', title: 'Excess hair growth', iconName: 'cut-outline' },
   { id: 'skin_darkening', title: 'Skin darkening', iconName: 'color-palette-outline' },
-  { id: 'hair_loss', title: 'Hair loss', iconName: 'finger-print-outline' },
+  { id: 'hair_loss', title: 'Hair loss', iconName: 'trending-down-outline' },
   { id: 'pimples_acne', title: 'Pimples / Acne', iconName: 'sparkles-outline' },
   { id: 'irregular_periods', title: 'Irregular periods', iconName: 'calendar-outline' },
 ];

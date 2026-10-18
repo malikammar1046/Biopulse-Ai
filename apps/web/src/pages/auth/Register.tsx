@@ -22,7 +22,7 @@ import { useAuth } from '../../context/AuthContext';
 import { ROUTES } from '../../constants/routes';
 import { SmallBotanicalSprig } from '../../components/brand/BotanicalFoliage';
 import { preloadOnboardingRoutes } from '../../utils/routePreloaders';
-import { validateEmail } from '../../utils/profileValidation';
+import { validateEmail, validateRegistrationPassword } from '../../utils/profileValidation';
 
 interface FormErrors {
   fullName?: string;
@@ -48,6 +48,12 @@ export const Register: React.FC = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [emailConfirmReq, setEmailConfirmReq] = useState(false);
 
+  // Live password validation state
+  const hasTypedPassword = password.length > 0;
+  const hasMinLength = password.length >= 8;
+  const hasLetter = /[a-zA-Z]/.test(password);
+  const hasNumber = /\d/.test(password);
+
   // Preload lazy onboarding route chunks
   useEffect(() => {
     preloadOnboardingRoutes();
@@ -65,10 +71,9 @@ export const Register: React.FC = () => {
       nextErrors.email = emailValidation.error;
     }
 
-    if (!password) {
-      nextErrors.password = 'Please create a password.';
-    } else if (password.length < 8) {
-      nextErrors.password = 'Password must be at least 8 characters long.';
+    const pwdValidation = validateRegistrationPassword(password);
+    if (!pwdValidation.isValid) {
+      nextErrors.password = pwdValidation.error;
     }
 
     setErrors(nextErrors);
@@ -392,7 +397,7 @@ export const Register: React.FC = () => {
                 </div>
 
                 {/* Password Input */}
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <div className="relative flex items-center">
                     <Lock01 className="w-4 h-4 text-slate-400 absolute left-4 pointer-events-none" aria-hidden="true" />
                     <input
@@ -421,8 +426,56 @@ export const Register: React.FC = () => {
                       {showPassword ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4" aria-hidden="true" />}
                     </button>
                   </div>
+
+                  {/* Short helper text */}
+                  <p className="text-[12px] text-slate-500 font-normal pl-1">
+                    Use at least one letter and one number.
+                  </p>
+
+                  {/* Compact Password Requirements */}
+                  <div className="pt-0.5 pb-0.5 px-1 space-y-1" aria-label="Password requirements">
+                    <div className="flex items-center gap-2 text-xs">
+                      {hasTypedPassword && hasMinLength ? (
+                        <CheckCircle className="w-3.5 h-3.5 text-[#008CA5] shrink-0" aria-hidden="true" />
+                      ) : (
+                        <span className="w-3.5 h-3.5 flex items-center justify-center shrink-0">
+                          <span className={`w-1.5 h-1.5 rounded-full ${hasTypedPassword ? 'bg-slate-400' : 'bg-slate-300'}`} />
+                        </span>
+                      )}
+                      <span className={hasTypedPassword ? (hasMinLength ? 'text-[#0F254B] font-medium' : 'text-slate-500') : 'text-slate-400'}>
+                        At least 8 characters
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-xs">
+                      {hasTypedPassword && hasLetter ? (
+                        <CheckCircle className="w-3.5 h-3.5 text-[#008CA5] shrink-0" aria-hidden="true" />
+                      ) : (
+                        <span className="w-3.5 h-3.5 flex items-center justify-center shrink-0">
+                          <span className={`w-1.5 h-1.5 rounded-full ${hasTypedPassword ? 'bg-slate-400' : 'bg-slate-300'}`} />
+                        </span>
+                      )}
+                      <span className={hasTypedPassword ? (hasLetter ? 'text-[#0F254B] font-medium' : 'text-slate-500') : 'text-slate-400'}>
+                        At least one letter (a-z, A-Z)
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-xs">
+                      {hasTypedPassword && hasNumber ? (
+                        <CheckCircle className="w-3.5 h-3.5 text-[#008CA5] shrink-0" aria-hidden="true" />
+                      ) : (
+                        <span className="w-3.5 h-3.5 flex items-center justify-center shrink-0">
+                          <span className={`w-1.5 h-1.5 rounded-full ${hasTypedPassword ? 'bg-slate-400' : 'bg-slate-300'}`} />
+                        </span>
+                      )}
+                      <span className={hasTypedPassword ? (hasNumber ? 'text-[#0F254B] font-medium' : 'text-slate-500') : 'text-slate-400'}>
+                        At least one number (0-9)
+                      </span>
+                    </div>
+                  </div>
+
                   {errors.password && (
-                    <p className="text-[11px] font-semibold text-rose-600 pl-2">{errors.password}</p>
+                    <p className="text-[11px] font-semibold text-rose-600 pl-2 pt-0.5">{errors.password}</p>
                   )}
                 </div>
 

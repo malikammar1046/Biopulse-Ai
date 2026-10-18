@@ -12,7 +12,6 @@ import { PathwayRouteGuard } from './components/auth/PathwayRouteGuard';
 import { useUserHealth } from './context/UserHealthContext';
 import { getPathwayDashboardRoute } from './constants/routes';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
-import { BioPulseLoadingScreen } from './components/brand/BioPulseLoadingScreen';
 import { RouteLoadingFallback } from './components/common/RouteLoadingFallback';
 import { LanguageSelectModal } from './components/i18n/LanguageSelectModal';
 
@@ -80,7 +79,6 @@ const SymptomsPage = lazy(() => import('./pages/app/SymptomsPage').then((m) => (
 const LifestyleRecommendationsPage = lazy(() =>
   import('./pages/app/LifestyleRecommendationsPage').then((m) => ({ default: m.LifestyleRecommendationsPage }))
 );
-const FitnessPage = lazy(() => import('./pages/app/FitnessPage').then((m) => ({ default: m.FitnessPage })));
 const ReportsPage = lazy(() => import('./pages/app/ReportsPage').then((m) => ({ default: m.ReportsPage })));
 const MedicationsPage = lazy(() => import('./pages/app/MedicationsPage').then((m) => ({ default: m.MedicationsPage })));
 const CareCirclePage = lazy(() => import('./pages/app/CareCirclePage').then((m) => ({ default: m.CareCirclePage })));
@@ -92,30 +90,20 @@ const AssessmentPage = lazy(() => import('./pages/app/AssessmentPage').then((m) 
 const ProgressPage = lazy(() => import('./pages/app/ProgressPage').then((m) => ({ default: m.ProgressPage })));
 
 import { AIChatProvider } from './context/AIChatContext';
-import { AnimatePresence } from 'framer-motion';
+import { dismissAppSplash } from './utils/splash';
 
 const AppContent: React.FC = () => {
   const { loading: authLoading } = useAuth();
-  const [showInitialSplash, setShowInitialSplash] = React.useState(true);
 
   React.useEffect(() => {
-    // Keep botanical splash smoothly visible on cold start, then gracefully fade out
+    // Seamlessly fade out the single continuous splash overlay once auth session is resolved
     if (!authLoading) {
-      const timer = setTimeout(() => {
-        setShowInitialSplash(false);
-      }, 650);
-      return () => clearTimeout(timer);
+      dismissAppSplash();
     }
   }, [authLoading]);
 
   return (
     <>
-      <AnimatePresence mode="wait">
-        {showInitialSplash && (
-          <BioPulseLoadingScreen message="Preparing your health experience" fullScreen={true} />
-        )}
-      </AnimatePresence>
-
       <LanguageSelectModal />
 
       <Suspense fallback={<PageLoadingFallback />}>
@@ -222,7 +210,7 @@ const AppContent: React.FC = () => {
                   <Route path="nutrition" element={<Navigate to={ROUTES.APP.LIFESTYLE} replace />} />
                   <Route path="diet" element={<Navigate to={ROUTES.APP.LIFESTYLE} replace />} />
                   <Route path="diet/week" element={<Navigate to={ROUTES.APP.LIFESTYLE} replace />} />
-                  <Route path="fitness" element={<FitnessPage />} />
+                  <Route path="fitness" element={<Navigate to="/app/lifestyle?tab=exercise" replace />} />
                   <Route path="reports" element={<ReportsPage />} />
                   <Route path="medications" element={<MedicationsPage />} />
                   <Route path="care-circle" element={<CareCirclePage />} />

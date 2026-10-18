@@ -17,6 +17,8 @@ import { TimelineEmptyState } from '../../components/timeline/TimelineEmptyState
 import { PreConsultationPrepModal } from '../../components/appointments/PreConsultationPrepModal';
 import { HealthJourneyExportModal } from '../../components/healthJourneyReport/HealthJourneyExportModal';
 
+import { resolvePathway } from '../../types/onboarding';
+
 export const TimelinePage: React.FC = () => {
   const {
     userProfile,
@@ -39,6 +41,8 @@ export const TimelinePage: React.FC = () => {
     toggleDoctorQuestion,
     deleteDoctorQuestion,
   } = useUserHealth();
+
+  const isFemale = resolvePathway(userProfile?.gender, userProfile?.pathway) === 'female';
 
   // Filter State
   const [filterState, setFilterState] = useState<TimelineFilterState>({
@@ -144,6 +148,7 @@ export const TimelinePage: React.FC = () => {
       <TimelineHeader
         totalEvents={allEvents.length}
         filteredEventsCount={filteredEvents.length}
+        isFemale={isFemale}
         onOpenAiInsights={() =>
           openAiChatWithPrompt(
             'Analyze my longitudinal health timeline and summarize key connections between my cycle, symptoms, and lifestyle.'
@@ -158,23 +163,26 @@ export const TimelinePage: React.FC = () => {
         currentPhase={cycleStats?.estimatedPhase?.displayName || cycleStats?.estimatedPhase?.name}
         symptomsCount={symptomRecords.length}
         flaggedReportsCount={flaggedReportsCount}
+        isFemale={isFemale}
         onPrepareAppointment={() => setIsPrepModalOpen(true)}
       />
 
       {/* 3. Deterministic Correlations: "Patterns OvaSense Found" */}
       <HealthPatternsCard
         patterns={detectedPatterns}
+        isFemale={isFemale}
         onAskAiPattern={handleAskAiPattern}
       />
 
       {/* 4. Multi-Signal Trajectory Visualization */}
-      <HealthTrajectoryChart trajectory={trajectorySummary} />
+      <HealthTrajectoryChart trajectory={trajectorySummary} isFemale={isFemale} />
 
       {/* 5. Filters Bar */}
       <TimelineFilters
         filterState={filterState}
         onFilterChange={(newFilters) => setFilterState((prev) => ({ ...prev, ...newFilters }))}
         categoryCounts={categoryCounts}
+        isFemale={isFemale}
       />
 
       {/* 6. Chronological Timeline Feed */}
@@ -191,6 +199,7 @@ export const TimelinePage: React.FC = () => {
         {filteredEvents.length === 0 ? (
           <TimelineEmptyState
             isFiltered={allEvents.length > 0}
+            isFemale={isFemale}
             onResetFilters={() =>
               setFilterState({
                 dateRange: 'all',
@@ -208,6 +217,7 @@ export const TimelinePage: React.FC = () => {
                 event={evt}
                 isFirst={idx === 0}
                 isLast={idx === filteredEvents.length - 1}
+                isFemale={isFemale}
                 onClick={() => handleEventClick(evt)}
               />
             ))}
@@ -219,6 +229,7 @@ export const TimelinePage: React.FC = () => {
       <TimelineDetailModal
         event={selectedEvent}
         isOpen={isDetailModalOpen}
+        isFemale={isFemale}
         onClose={() => {
           setIsDetailModalOpen(false);
           setSelectedEvent(null);

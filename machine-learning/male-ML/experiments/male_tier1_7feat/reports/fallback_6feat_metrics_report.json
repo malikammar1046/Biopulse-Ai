@@ -1,0 +1,27 @@
+{
+  "dataset_sha256": "48806ffbddac1999bd646118301dfea102134aebd1eddc96a457b9eae7779953",
+  "train_n": 2860,
+  "test_n": 715,
+  "seed": 42,
+  "python_version": "3.14.5 (tags/v3.14.5:5607950, May 10 2026, 10:43:50) [MSC v.1944 64 bit (AMD64)]",
+  "sklearn_version": "1.9.0",
+  "development_oof_metrics": {
+    "oof_roc_auc": 0.7133,
+    "oof_pr_auc": 0.4583,
+    "oof_brier": 0.1605,
+    "screening_threshold": 0.1779
+  },
+  "exploratory_test_metrics": {
+    "roc_auc": 0.7006,
+    "pr_auc": 0.4203,
+    "brier": 0.1655,
+    "sensitivity": 0.8176,
+    "specificity": 0.4495,
+    "confusion_matrix": {
+      "TP": 139,
+      "FP": 300,
+      "TN": 245,
+      "FN": 31
+    }
+  }
+}

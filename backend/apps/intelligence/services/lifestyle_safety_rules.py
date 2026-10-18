@@ -24,39 +24,85 @@ logger = logging.getLogger(__name__)
 
 def get_pathway_disclaimer(pathway: str = "female_pcos") -> str:
     is_male = str(pathway or "").lower() in ("male_hypogonadism", "male", "androsense")
-    condition = "Male Hypogonadism" if is_male else "PCOS"
+    if is_male:
+        return (
+            "BioPulse AI lifestyle recommendations are non-diagnostic, educational, and personalized "
+            "to support metabolic health, nutritional balance, and physical vitality. They are designed for "
+            "collaborative discussion with your qualified healthcare professional and do not replace professional "
+            "medical advice, clinical diagnosis, or medical treatment. Lifestyle and nutritional habits support "
+            "general wellness but do not treat or cure medical conditions."
+        )
     return (
         "BioPulse AI lifestyle recommendations are non-diagnostic, educational, and personalized "
         "to support metabolic and endocrine balance. They are designed for collaborative discussion "
         "with your qualified healthcare professional and do not replace professional medical advice, "
         "diagnosis, or prescribed medical treatment. Lifestyle interventions support hormonal health "
-        f"but do not cure or reverse {condition}."
+        "but do not cure or reverse PCOS."
     )
 
 CLINICAL_DISCLAIMER = get_pathway_disclaimer("female_pcos")
 
 ALLERGEN_INGREDIENT_MAP: Dict[str, Set[str]] = {
-    "dairy": {"milk", "yogurt", "cheese", "paneer", "butter", "ghee", "cream", "whey", "curd", "dahi", "malai", "lassi"},
-    "milk": {"milk", "yogurt", "cheese", "paneer", "butter", "ghee", "cream", "whey", "curd", "dahi", "malai", "lassi"},
-    "lactose": {"milk", "yogurt", "cheese", "paneer", "butter", "cream", "whey", "curd", "dahi", "malai", "lassi"},
-    "gluten": {"wheat", "barley", "rye", "roti", "paratha", "naan", "bread", "semolina", "sooji", "pasta", "couscous", "maida", "atta"},
-    "wheat": {"wheat", "barley", "rye", "roti", "paratha", "naan", "bread", "semolina", "sooji", "pasta", "couscous", "maida", "atta"},
-    "nuts": {"peanut", "peanuts", "almond", "almonds", "walnut", "walnuts", "cashew", "cashews", "pistachio", "pistachios", "hazelnut", "hazelnuts", "pecan", "pecans", "macadamia", "nut butter", "badam", "akhrot", "kaju", "pista"},
-    "peanuts": {"peanut", "peanuts", "peanut butter", "groundnut", "groundnuts", "mungfali", "moongfali"},
-    "peanut": {"peanut", "peanuts", "peanut butter", "groundnut", "groundnuts", "mungfali", "moongfali"},
-    "tree_nuts": {"almond", "almonds", "walnut", "walnuts", "cashew", "cashews", "pistachio", "pistachios", "hazelnut", "hazelnuts", "pecan", "pecans", "badam", "akhrot", "kaju", "pista", "nut butter", "nuts"},
-    "tree_nut": {"almond", "almonds", "walnut", "walnuts", "cashew", "cashews", "pistachio", "pistachios", "hazelnut", "hazelnuts", "pecan", "pecans", "badam", "akhrot", "kaju", "pista", "nut butter", "nuts"},
+    "dairy": {
+        "milk", "yogurt", "cheese", "paneer", "butter", "ghee", "cream", "whey",
+        "curd", "dahi", "malai", "lassi", "casein", "caseinate", "milk powder",
+        "milkpowder", "condensed milk", "khoya", "mawa", "rabri", "buttermilk",
+    },
+    "milk": {
+        "milk", "yogurt", "cheese", "paneer", "butter", "ghee", "cream", "whey",
+        "curd", "dahi", "malai", "lassi", "casein", "caseinate", "milk powder",
+        "milkpowder", "condensed milk", "khoya", "mawa", "rabri", "buttermilk",
+    },
+    "lactose": {
+        "milk", "yogurt", "cheese", "paneer", "butter", "cream", "whey", "curd",
+        "dahi", "malai", "lassi", "milk powder", "milkpowder", "condensed milk",
+        "khoya", "mawa", "rabri", "buttermilk",
+    },
+    "gluten": {
+        "wheat", "barley", "rye", "roti", "paratha", "naan", "bread", "semolina",
+        "sooji", "suji", "pasta", "couscous", "maida", "atta", "spelt", "bulgur",
+        "dalia", "seitan", "malt", "wheat flour", "flour",
+    },
+    "wheat": {
+        "wheat", "barley", "rye", "roti", "paratha", "naan", "bread", "semolina",
+        "sooji", "suji", "pasta", "couscous", "maida", "atta", "spelt", "bulgur",
+        "dalia", "seitan", "malt", "wheat flour", "flour",
+    },
+    "nuts": {
+        "peanut", "peanuts", "peanut butter", "peanut oil", "groundnut", "groundnut oil",
+        "almond", "almonds", "walnut", "walnuts", "cashew", "cashews", "pistachio",
+        "pistachios", "hazelnut", "hazelnuts", "pecan", "pecans", "macadamia",
+        "nut butter", "badam", "akhrot", "kaju", "pista", "nut", "nuts",
+    },
+    "peanuts": {
+        "peanut", "peanuts", "peanut butter", "peanut oil", "groundnut",
+        "groundnuts", "groundnut oil", "mungfali", "moongfali",
+    },
+    "peanut": {
+        "peanut", "peanuts", "peanut butter", "peanut oil", "groundnut",
+        "groundnuts", "groundnut oil", "mungfali", "moongfali",
+    },
+    "tree_nuts": {
+        "almond", "almonds", "walnut", "walnuts", "cashew", "cashews", "pistachio",
+        "pistachios", "hazelnut", "hazelnuts", "pecan", "pecans", "badam", "akhrot",
+        "kaju", "pista", "nut butter", "nuts", "tree nut", "tree nuts",
+    },
+    "tree_nut": {
+        "almond", "almonds", "walnut", "walnuts", "cashew", "cashews", "pistachio",
+        "pistachios", "hazelnut", "hazelnuts", "pecan", "pecans", "badam", "akhrot",
+        "kaju", "pista", "nut butter", "nuts", "tree nut", "tree nuts",
+    },
     "eggs": {"egg", "eggs", "egg white", "egg whites", "egg yolk", "egg yolks", "omelet", "omelette", "mayonnaise", "anda", "anday"},
     "egg": {"egg", "eggs", "egg white", "egg whites", "egg yolk", "egg yolks", "omelet", "omelette", "mayonnaise", "anda", "anday"},
-    "fish": {"fish", "salmon", "tuna", "cod", "mackerel", "sardine", "sardines", "tilapia", "trout", "machli", "machhli", "rohu"},
-    "shellfish": {"prawn", "prawns", "shrimp", "shrimps", "crab", "crabs", "lobster", "lobsters", "clam", "clams", "mussel", "mussels", "oyster", "oysters", "jhinga"},
-    "soy": {"soy", "tofu", "edamame", "soy sauce", "soy milk", "tempeh", "soya"},
-    "sesame": {"sesame", "til", "tahini"},
+    "fish": {"fish", "salmon", "tuna", "cod", "mackerel", "sardine", "sardines", "tilapia", "trout", "machli", "machhli", "rohu", "fish sauce", "anchovy", "anchovies"},
+    "shellfish": {"prawn", "prawns", "shrimp", "shrimps", "crab", "crabs", "lobster", "lobsters", "clam", "clams", "mussel", "mussels", "oyster", "oysters", "jhinga", "shrimp paste", "crab paste", "oyster sauce"},
+    "soy": {"soy", "tofu", "edamame", "soy sauce", "soy milk", "tempeh", "soya", "tamari", "teriyaki", "miso"},
+    "sesame": {"sesame", "til", "tahini", "sesame oil"},
     "seeds": {"seed", "seeds", "sunflower seed", "sunflower seeds", "pumpkin seed", "pumpkin seeds", "chia seed", "chia seeds", "flaxseed", "flaxseeds", "sesame", "tahini"},
     "seed": {"seed", "seeds", "sunflower seed", "sunflower seeds", "pumpkin seed", "pumpkin seeds", "chia seed", "chia seeds", "flaxseed", "flaxseeds", "sesame", "tahini"},
     "red_meat": {"beef", "mutton", "lamb", "veal", "pork", "steak", "keema", "meat"},
     "poultry": {"chicken", "turkey", "duck"},
-    "seafood": {"fish", "prawn", "prawns", "shrimp", "shrimps", "crab", "crabs", "lobster", "lobsters", "machli", "jhinga", "seafood", "clam", "mussel", "oyster", "salmon", "tuna"},
+    "seafood": {"fish", "prawn", "prawns", "shrimp", "shrimps", "crab", "crabs", "lobster", "lobsters", "machli", "jhinga", "seafood", "clam", "mussel", "oyster", "salmon", "tuna", "fish sauce", "oyster sauce"},
     "pork": {"pork", "bacon", "ham", "lard"},
     "alcohol": {"alcohol", "wine", "beer", "liquor", "cocktail"},
     "gelatin": {"gelatin", "gelatine"},

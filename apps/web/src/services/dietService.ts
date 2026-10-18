@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { nutritionService } from './nutritionService';
 import type { UserProfile } from '../types/onboarding';
 import type {
   MealType,
@@ -45,6 +46,20 @@ class DietService {
     }
   }
 
+  /**
+   * Caches or updates a food log entry in local cache without duplicate backend writes.
+   */
+  cacheFoodLog(userId: string, entry: FoodLogEntry): void {
+    const current = this.getLocalFoodLogs(userId);
+    const existingIndex = current.findIndex((l) => l.id === entry.id);
+    if (existingIndex >= 0) {
+      current[existingIndex] = entry;
+      this.setLocalFoodLogs(userId, [...current]);
+    } else {
+      this.setLocalFoodLogs(userId, [...current, entry]);
+    }
+  }
+
   private getLocalWaterLog(userId: string, date: string): WaterLogEntry {
     try {
       const raw = localStorage.getItem(`${this.getWaterStorageKey(userId)}_${date}`);
@@ -71,7 +86,7 @@ class DietService {
     }
   }
 
-  // --- Food Logs CRUD ---
+  // --- Food Logs CRUD (Single Source of Truth via Django nutritionService) ---
   async fetchFoodLogs(
     userId: string,
     dateIso?: string
@@ -79,6 +94,32 @@ class DietService {
     const today = dateIso || new Date().toISOString().split('T')[0];
     const allLocal = this.getLocalFoodLogs(userId);
     const localFiltered = allLocal.filter((l) => l.loggedAt === today);
+
+    // Primary authoritative source: Django nutrition service API
+    try {
+      const serverLogs = await nutritionService.fetchFoodLogs(today, today);
+      if (Array.isArray(serverLogs)) {
+        const mapped: FoodLogEntry[] = serverLogs.map((row: any) => ({
+          id: row.id,
+          userId: row.user_id || userId,
+          mealType: (row.meal_type as MealType) || 'lunch',
+          foodName: row.food_name || 'Meal',
+          serving: row.serving || '1 serving',
+          calories: Number(row.calories) || 0,
+          proteinG: row.protein_g != null && row.protein_g !== '' ? Number(row.protein_g) : (row.proteinG != null ? Number(row.proteinG) : null),
+          carbsG: row.carbs_g != null && row.carbs_g !== '' ? Number(row.carbs_g) : (row.carbohydrate_g != null ? Number(row.carbohydrate_g) : (row.carbsG != null ? Number(row.carbsG) : null)),
+          fatG: row.fat_g != null && row.fat_g !== '' ? Number(row.fat_g) : (row.fatG != null ? Number(row.fatG) : null),
+          fiberG: row.fiber_g != null && row.fiber_g !== '' ? Number(row.fiber_g) : null,
+          loggedAt: (row.logged_at ? row.logged_at.split('T')[0] : today),
+          notes: row.notes || '',
+          createdAt: row.created_at || new Date().toISOString(),
+        }));
+        this.setLocalFoodLogs(userId, mapped);
+        return { logs: mapped };
+      }
+    } catch {
+      // Backend temporarily unavailable, fallback to Supabase or local storage below
+    }
 
     if (!isSupabaseConfigured()) {
       return { logs: localFiltered };
@@ -105,10 +146,10 @@ class DietService {
           foodName: row.food_name,
           serving: row.serving,
           calories: Number(row.calories) || 0,
-          proteinG: Number(row.protein_g) || 0,
-          carbsG: Number(row.carbs_g) || 0,
-          fatG: Number(row.fat_g) || 0,
-          fiberG: Number(row.fiber_g) || 0,
+          proteinG: row.protein_g != null && row.protein_g !== '' ? Number(row.protein_g) : (row.proteinG != null ? Number(row.proteinG) : null),
+          carbsG: row.carbs_g != null && row.carbs_g !== '' ? Number(row.carbs_g) : (row.carbohydrate_g != null ? Number(row.carbohydrate_g) : (row.carbsG != null ? Number(row.carbsG) : null)),
+          fatG: row.fat_g != null && row.fat_g !== '' ? Number(row.fat_g) : (row.fatG != null ? Number(row.fatG) : null),
+          fiberG: row.fiber_g != null && row.fiber_g !== '' ? Number(row.fiber_g) : null,
           loggedAt: row.logged_at,
           notes: row.notes || '',
           createdAt: row.created_at,
@@ -128,57 +169,133 @@ class DietService {
     input: FoodLogInput
   ): Promise<{ success: boolean; entry?: FoodLogEntry; error?: string }> {
     const today = input.loggedAt || new Date().toISOString().split('T')[0];
-    const newEntry: FoodLogEntry = {
-      id: `flog_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`,
-      userId,
-      mealType: input.mealType,
-      foodName: input.foodName.trim(),
-      serving: input.serving.trim() || '1 serving',
-      calories: Math.round(input.calories) || 0,
-      proteinG: Math.round(input.proteinG * 10) / 10 || 0,
-      carbsG: Math.round(input.carbsG * 10) / 10 || 0,
-      fatG: Math.round(input.fatG * 10) / 10 || 0,
-      fiberG: Math.round(input.fiberG * 10) / 10 || 0,
-      loggedAt: today,
-      notes: input.notes?.trim() || '',
-      createdAt: new Date().toISOString(),
-    };
+    const nowIso = new Date().toISOString();
 
-    // Save locally
-    const current = this.getLocalFoodLogs(userId);
-    this.setLocalFoodLogs(userId, [...current, newEntry]);
+    // Use nutritionService as the single authoritative backend writer
+    try {
+      const serverItem = await nutritionService.logFood({
+        meal_type: input.mealType,
+        food_name: input.foodName.trim(),
+        serving: input.serving.trim() || '1 serving',
+        calories: input.calories ? Math.round(input.calories) : undefined,
+        protein_g: input.proteinG !== undefined && input.proteinG !== null ? Math.round(input.proteinG * 10) / 10 : undefined,
+        carbs_g: input.carbsG !== undefined && input.carbsG !== null ? Math.round(input.carbsG * 10) / 10 : undefined,
+        fat_g: input.fatG !== undefined && input.fatG !== null ? Math.round(input.fatG * 10) / 10 : undefined,
+        fiber_g: input.fiberG !== undefined && input.fiberG !== null ? Math.round(input.fiberG * 10) / 10 : undefined,
+        notes: input.notes?.trim() || '',
+        logged_at: today,
+      });
 
-    if (isSupabaseConfigured()) {
-      try {
-        const { error } = await supabase.from('food_logs').insert({
-          id: newEntry.id,
-          user_id: userId,
-          meal_type: newEntry.mealType,
-          food_name: newEntry.foodName,
-          serving: newEntry.serving,
-          calories: newEntry.calories,
-          protein_g: newEntry.proteinG,
-          carbs_g: newEntry.carbsG,
-          fat_g: newEntry.fatG,
-          fiber_g: newEntry.fiberG,
-          logged_at: newEntry.loggedAt,
-          notes: newEntry.notes,
-          created_at: newEntry.createdAt,
-        });
+      const entry: FoodLogEntry = {
+        id: serverItem.id || `flog_${Date.now().toString(36)}`,
+        userId,
+        mealType: (serverItem.meal_type as MealType) || input.mealType,
+        foodName: serverItem.food_name || input.foodName.trim(),
+        serving: serverItem.serving || input.serving.trim() || '1 serving',
+        calories: Number(serverItem.calories) || Math.round(input.calories) || 0,
+        proteinG: serverItem.protein_g != null
+          ? Number(serverItem.protein_g)
+          : (input.proteinG !== undefined ? input.proteinG : null),
+        carbsG: serverItem.carbs_g != null
+          ? Number(serverItem.carbs_g)
+          : (input.carbsG !== undefined ? input.carbsG : null),
+        fatG: serverItem.fat_g != null
+          ? Number(serverItem.fat_g)
+          : (input.fatG !== undefined ? input.fatG : null),
+        fiberG: serverItem.fiber_g != null
+          ? Number(serverItem.fiber_g)
+          : (input.fiberG !== undefined ? input.fiberG : null),
+        loggedAt: (serverItem.logged_at ? serverItem.logged_at.split('T')[0] : today),
+        notes: serverItem.notes || input.notes?.trim() || '',
+        createdAt: serverItem.created_at || nowIso,
+      };
 
-        if (error) {
-          console.warn('Supabase insert food_logs error:', error);
-        }
-      } catch (err) {
-        console.warn('Supabase logFood error:', err);
+      entry.isCloudPersisted = true;
+      entry.isPendingSync = false;
+      entry.syncStatus = 'synced';
+      this.cacheFoodLog(userId, entry);
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('ovasense_diet_updated'));
+        window.dispatchEvent(new CustomEvent('biopulse_diet_updated'));
       }
-    }
 
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('ovasense_diet_updated'));
-    }
+      return { success: true, entry };
+    } catch (apiErr: any) {
+      console.warn('Backend food log fallback to direct Supabase:', apiErr);
+      const newEntry: FoodLogEntry = {
+        id: `flog_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`,
+        userId,
+        mealType: input.mealType,
+        foodName: input.foodName.trim(),
+        serving: input.serving.trim() || '1 serving',
+        calories: Math.round(input.calories) || 0,
+        proteinG: input.proteinG !== undefined ? input.proteinG : null,
+        carbsG: input.carbsG !== undefined ? input.carbsG : null,
+        fatG: input.fatG !== undefined ? input.fatG : null,
+        fiberG: input.fiberG !== undefined ? input.fiberG : null,
+        loggedAt: today,
+        notes: input.notes?.trim() || '',
+        createdAt: nowIso,
+        isPendingSync: true,
+        isCloudPersisted: false,
+        syncStatus: 'pending',
+      };
 
-    return { success: true, entry: newEntry };
+      let cloudPersisted = false;
+      let cloudError: string | null = null;
+
+      if (isSupabaseConfigured()) {
+        try {
+          const res = await supabase.from('food_logs').insert({
+            id: newEntry.id,
+            user_id: userId,
+            meal_type: newEntry.mealType,
+            food_name: newEntry.foodName,
+            serving: newEntry.serving,
+            calories: newEntry.calories,
+            protein_g: newEntry.proteinG,
+            carbs_g: newEntry.carbsG,
+            fat_g: newEntry.fatG,
+            fiber_g: newEntry.fiberG,
+            logged_at: newEntry.loggedAt,
+            notes: newEntry.notes,
+            created_at: newEntry.createdAt,
+          });
+          if (res.error) {
+            cloudError = res.error.message || 'Supabase food log write error';
+            console.error('Supabase food_logs insert response error:', res.error);
+          } else {
+            cloudPersisted = true;
+          }
+        } catch (err: any) {
+          cloudError = err?.message || 'Exception during Supabase food_logs insert';
+          console.error('Supabase logFood error:', err);
+        }
+      } else {
+        cloudError = 'Cloud database is not configured';
+      }
+
+      newEntry.isCloudPersisted = cloudPersisted;
+      newEntry.isPendingSync = !cloudPersisted;
+      newEntry.syncStatus = cloudPersisted ? 'synced' : 'pending';
+      this.cacheFoodLog(userId, newEntry);
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('ovasense_diet_updated'));
+        window.dispatchEvent(new CustomEvent('biopulse_diet_updated'));
+      }
+
+      if (!cloudPersisted) {
+        return {
+          success: false,
+          entry: newEntry,
+          error: cloudError || (apiErr?.message ? `Failed to persist: ${apiErr.message}` : 'Failed to persist food log to cloud'),
+        };
+      }
+
+      return { success: true, entry: newEntry };
+    }
   }
 
   async deleteFoodLog(
@@ -191,6 +308,13 @@ class DietService {
       current.filter((l) => l.id !== logId)
     );
 
+    // Authoritative delete via Django backend
+    try {
+      await nutritionService.deleteFoodLog(logId);
+    } catch (apiErr) {
+      console.warn('Backend deleteFoodLog notice:', apiErr);
+    }
+
     if (isSupabaseConfigured()) {
       try {
         await supabase.from('food_logs').delete().eq('id', logId).eq('user_id', userId);
@@ -201,6 +325,7 @@ class DietService {
 
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('ovasense_diet_updated'));
+      window.dispatchEvent(new CustomEvent('biopulse_diet_updated'));
     }
 
     return { success: true };
@@ -284,6 +409,7 @@ class DietService {
 
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('ovasense_diet_updated'));
+      window.dispatchEvent(new CustomEvent('biopulse_diet_updated'));
     }
 
     return { success: true, entry: updatedEntry };
@@ -291,8 +417,13 @@ class DietService {
 
   // --- Dynamic Estimated Targets Calculator ---
   calculateNutritionTargets(profile: UserProfile): DailyNutritionTargets {
-    const weight = profile.weightKg || 60;
-    const height = profile.heightCm || 162;
+    const isMale =
+      profile.gender === 'male' ||
+      profile.pathway === 'male' ||
+      (profile as any).pathway === 'androsense';
+
+    const weight = profile.weightKg || (isMale ? 75 : 60);
+    const height = profile.heightCm || (isMale ? 175 : 162);
     let age = 26;
 
     if (profile.dateOfBirth) {
@@ -302,35 +433,38 @@ class DietService {
       }
     }
 
-    // Basal Metabolic Rate (Mifflin-St Jeor equation for women)
-    // BMR = (10 * weight in kg) + (6.25 * height in cm) - (5 * age in years) - 161
-    const bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+    // Basal Metabolic Rate (Mifflin-St Jeor equation)
+    // Men: BMR = (10 * weight in kg) + (6.25 * height in cm) - (5 * age in years) + 5
+    // Women: BMR = (10 * weight in kg) + (6.25 * height in cm) - (5 * age in years) - 161
+    const bmr = isMale
+      ? 10 * weight + 6.25 * height - 5 * age + 5
+      : 10 * weight + 6.25 * height - 5 * age - 161;
 
     // Activity multiplier
     const activityMultipliers: Record<string, number> = {
       sedentary: 1.2,
-      light: 1.375,
+      light: 1.4,
       moderate: 1.55,
       very_active: 1.725,
     };
 
-    const multiplier = activityMultipliers[profile.lifestyle?.activityLevel || 'moderate'] || 1.35;
+    const multiplier = activityMultipliers[profile.lifestyle?.activityLevel || (isMale ? 'light' : 'moderate')] || 1.375;
     const tdee = Math.round(bmr * multiplier);
 
-    // Protein target: approx 1.3g - 1.6g per kg weight for metabolic satiety
-    const proteinG = Math.round(weight * 1.35);
+    // Protein target: approx 1.3g - 1.6g per kg weight for metabolic satiety and endocrine support
+    const proteinG = Math.round(weight * (isMale ? 1.6 : 1.35));
 
-    // Fat target: approx 28% of total calories (9 kcal/g)
-    const fatG = Math.round((tdee * 0.28) / 9);
+    // Fat target: approx 28-30% of total calories (9 kcal/g)
+    const fatG = Math.round((tdee * (isMale ? 0.30 : 0.28)) / 9);
 
-    // Fiber target: approx 28g - 35g for prebiotic hormone clearance
-    const fiberG = 30;
+    // Fiber target: approx 28g - 38g
+    const fiberG = isMale ? 38 : 30;
 
     // Remaining calories allocated to complex carbohydrates (4 kcal/g)
     const carbCalories = Math.max(tdee - (proteinG * 4 + fatG * 9), 500);
     const carbsG = Math.round(carbCalories / 4);
 
-    const waterGlasses = profile.lifestyle?.dailyWaterGlasses || 8;
+    const waterGlasses = profile.lifestyle?.dailyWaterGlasses || (isMale ? 10 : 8);
 
     return {
       calories: tdee,
@@ -340,7 +474,7 @@ class DietService {
       fiberG,
       waterGlasses,
       isCustomOrEstimated: true,
-      calculationRationale: `Estimated for ${profile.fullName || 'Patient'} (${age} yrs, ${weight}kg, ${profile.lifestyle?.activityLevel || 'moderate'} movement).`,
+      calculationRationale: `Estimated for ${profile.fullName || (isMale ? 'Male Patient' : 'Patient')} (${age} yrs, ${weight}kg, ${profile.lifestyle?.activityLevel || 'standard'} movement).`,
     };
   }
 

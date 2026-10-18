@@ -67,7 +67,13 @@
     "reviewProfile": "Review Profile",
     "completeSetup": "Complete Setup",
     "saving": "Saving...",
-    "secureNotice": "Your information is secure and private."
+    "secureNotice": "Your information is secure and private.",
+    "profileUpdate": "PROFILE UPDATE",
+    "updateHealthProfile": "Update Health Profile",
+    "cancelAndReturn": "Cancel & Return to Settings",
+    "updateWomenSubtitle": "Update your biometrics, cycle history, and symptoms while preserving your historical assessments.",
+    "updateMenSubtitle": "Update your health profile, ADAM score, and lifestyle factors while preserving your historical assessments.",
+    "saveProfileChanges": "Save Changes & Re-screen"
   },
   "biometrics": {
     "height": "Height",
@@ -98,7 +104,19 @@
       "hairLoss": "Scalp hair thinning or loss",
       "weightGain": "Difficulty losing weight / Rapid gain",
       "skinDarkening": "Dark patches on neck or skin folds (Acanthosis)"
-    }
+    },
+    "hasHadPeriod": "Have your menstrual periods started?",
+    "periodsStarted": "Yes, periods have begun",
+    "preMenarche": "Not yet (Pre-menarche)",
+    "ageAtMenarche": "Age at first period (menarche)",
+    "preMenarcheNotice": "Pre-Menarche Health Tracking",
+    "preMenarcheDesc": "You are in the normal pre-menarche developmental stage. Cycle predictions will activate when your periods start.",
+    "primaryAmenorrheaNotice": "Primary Amenorrhea Notice",
+    "primaryAmenorrheaDesc": "According to international clinical consensus guidelines, absence of periods by age 15 warrants medical evaluation for primary amenorrhea with an adolescent specialist or endocrinologist.",
+    "menopausalStatus": "Menopause & Life-Stage Status",
+    "premenopausal": "Premenopausal (Regular or active reproductive cycling)",
+    "perimenopausal": "Perimenopausal (Transition phase, fluctuating cycles, age 45+)",
+    "postmenopausal": "Postmenopausal (12+ months without periods, or surgical menopause)"
   },
   "mensQuestions": {
     "energyLevel": "Daily Energy Level",

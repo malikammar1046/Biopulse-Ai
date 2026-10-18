@@ -286,12 +286,13 @@ export const BioPulseLoadingScreen: React.FC<BioPulseLoadingScreenProps> = ({
     <motion.div
       role="status"
       aria-live="polite"
-      initial={{ opacity: 1 }}
+      initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{
         opacity: 0,
-        transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+        transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] },
       }}
+      transition={{ duration: 0.35, ease: 'easeOut' }}
       className={`w-full ${
         fullScreen ? 'fixed inset-0 z-[100] min-h-[100dvh]' : 'min-h-[70vh]'
       } flex items-center justify-center bg-[#F8FAFC] text-[#162A45] relative overflow-hidden select-none px-4 ${className}`}
@@ -308,13 +309,12 @@ export const BioPulseLoadingScreen: React.FC<BioPulseLoadingScreenProps> = ({
 
       {/* ── Left Botanical Decoration (Teal Pathway) ── */}
       <motion.div
-        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, x: -16 }}
+        initial={{ opacity: 0 }}
         animate={
           shouldReduceMotion
             ? { opacity: 1 }
             : {
                 opacity: 1,
-                x: 0,
                 y: [0, -8, 0],
                 rotate: [0, 0.75, 0],
               }
@@ -323,8 +323,7 @@ export const BioPulseLoadingScreen: React.FC<BioPulseLoadingScreenProps> = ({
           shouldReduceMotion
             ? { duration: 0.35 }
             : {
-                opacity: { duration: 0.6, ease: 'easeOut' },
-                x: { duration: 0.6, ease: 'easeOut' },
+                opacity: { duration: 0.5, ease: 'easeOut' },
                 y: { duration: 7, repeat: Infinity, ease: 'easeInOut' },
                 rotate: { duration: 8, repeat: Infinity, ease: 'easeInOut' },
               }
@@ -336,13 +335,12 @@ export const BioPulseLoadingScreen: React.FC<BioPulseLoadingScreenProps> = ({
 
       {/* ── Right Botanical Decoration (Pink Pathway) ── */}
       <motion.div
-        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, x: 16 }}
+        initial={{ opacity: 0 }}
         animate={
           shouldReduceMotion
             ? { opacity: 1 }
             : {
                 opacity: 1,
-                x: 0,
                 y: [0, 8, 0],
                 rotate: [0, -0.75, 0],
               }
@@ -351,8 +349,7 @@ export const BioPulseLoadingScreen: React.FC<BioPulseLoadingScreenProps> = ({
           shouldReduceMotion
             ? { duration: 0.35 }
             : {
-                opacity: { duration: 0.6, ease: 'easeOut' },
-                x: { duration: 0.6, ease: 'easeOut' },
+                opacity: { duration: 0.5, ease: 'easeOut' },
                 y: { duration: 7.5, repeat: Infinity, ease: 'easeInOut' },
                 rotate: { duration: 8.5, repeat: Infinity, ease: 'easeInOut' },
               }
@@ -364,9 +361,9 @@ export const BioPulseLoadingScreen: React.FC<BioPulseLoadingScreenProps> = ({
 
       {/* ── Center: BioPulse Identity & Pulse Rhythm ── */}
       <motion.div
-        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 10, scale: 0.97 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         className="relative z-10 flex flex-col items-center text-center max-w-sm sm:max-w-md mx-auto"
       >
         {/* BioPulse Heart Emblem with Subtle Breathing Micro-Pulse */}

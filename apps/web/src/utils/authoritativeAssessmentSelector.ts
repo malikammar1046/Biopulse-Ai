@@ -19,7 +19,17 @@
  * 5. Deterministic canonical input hashing enables detecting true health data changes.
  */
 
-import type { ProgressiveAssessment } from '../types/intelligence';
+import type { ProgressiveAssessment, PCOMStatus } from '../types/intelligence';
+
+export function normalizePcomStatus(rawStatus?: string | null): PCOMStatus | null {
+  if (!rawStatus) return null;
+  const s = rawStatus.trim();
+  if (s === 'PCOM Detected' || s === 'PCOM Visible') return 'PCOM Detected';
+  if (s === 'PCOM Not Detected' || s === 'PCOM Not Visible') return 'PCOM Not Detected';
+  if (s === 'Indeterminate') return 'Indeterminate';
+  // Fail-safe: unexpected status is treated as Indeterminate, never as negative
+  return 'Indeterminate';
+}
 
 export type Pathway = 'female' | 'male';
 
@@ -42,7 +52,7 @@ export interface AuthoritativeAssessmentResult {
   originalRiskCategory?: string;
   originalThreshold?: number;
   originalProbability?: number | null;
-  pcomStatus?: string | null;
+  pcomStatus?: PCOMStatus | null;
   pcomProbability?: number | null;
   gradcamB64?: string | null;
   hormonePatternInterpretation?: {
@@ -203,13 +213,12 @@ export function getAuthoritativeAssessmentForPathway({
   const expectedModule = isMale ? 'male_hypogonadism' : 'female_pcos';
   const defaultThreshold = isMale ? 0.1808 : 0.25;
 
-  // If candidate assessments provided, pick the highest valid completed cumulative tier
+  // CRITICAL: activeAssessment is the authoritative live assessment from the server.
+  // Candidate assessments (history) must ONLY be used as fallback when activeAssessment is missing.
+  // Historical assessments must NEVER override the active assessment (e.g. after re-onboarding).
   let targetAssessment = activeAssessment;
-  if (candidateAssessments && candidateAssessments.length > 0) {
-    const selected = selectAuthoritativeAssessment(
-      activeAssessment ? [activeAssessment, ...candidateAssessments] : candidateAssessments,
-      pathway
-    );
+  if (!targetAssessment && candidateAssessments && candidateAssessments.length > 0) {
+    const selected = selectAuthoritativeAssessment(candidateAssessments, pathway);
     if (selected) {
       targetAssessment = selected;
     }
@@ -268,13 +277,25 @@ export function getAuthoritativeAssessmentForPathway({
     const rawP = Number(targetAssessment.probability);
     if (!Number.isNaN(rawP)) {
       probability = rawP > 1 ? rawP / 100 : rawP;
-      const displayVal = probability * 100;
-      probabilityPercent = Number(displayVal.toFixed(1));
+      if (targetAssessment.probability_percent !== undefined && targetAssessment.probability_percent !== null) {
+        const rawPct = Number(targetAssessment.probability_percent);
+        if (!Number.isNaN(rawPct)) {
+          probabilityPercent = Number(rawPct.toFixed(2));
+        } else {
+          probabilityPercent = targetAssessment.assessment_level === 'tier_1_2_3'
+            ? Number((probability * 100).toFixed(2))
+            : Number((probability * 100).toFixed(1));
+        }
+      } else {
+        probabilityPercent = targetAssessment.assessment_level === 'tier_1_2_3'
+          ? Number((probability * 100).toFixed(2))
+          : Number((probability * 100).toFixed(1));
+      }
     }
   } else if (targetAssessment.probability_percent !== undefined && targetAssessment.probability_percent !== null) {
     const rawVal = Number(targetAssessment.probability_percent);
     if (!Number.isNaN(rawVal)) {
-      probabilityPercent = Number(rawVal.toFixed(1));
+      probabilityPercent = Number(rawVal.toFixed(2));
       probability = rawVal / 100;
     }
   }
@@ -299,7 +320,7 @@ export function getAuthoritativeAssessmentForPathway({
       originalRiskCategory: targetAssessment.original_risk_category || targetAssessment.risk_category,
       originalThreshold: targetAssessment.original_threshold ?? targetAssessment.threshold,
       originalProbability: targetAssessment.original_probability ?? null,
-      pcomStatus: targetAssessment.pcom_status || null,
+      pcomStatus: normalizePcomStatus(targetAssessment.pcom_status),
       pcomProbability: targetAssessment.pcom_probability !== undefined ? targetAssessment.pcom_probability : null,
       gradcamB64: targetAssessment.gradcam_b64 || null,
       hormonePatternInterpretation: targetAssessment.hormone_pattern_interpretation || null,
@@ -313,7 +334,9 @@ export function getAuthoritativeAssessmentForPathway({
   // Female: 0.25 primary operating threshold, 0.18 lower cutoff
   const threshold = typeof targetAssessment.threshold === 'number'
     ? targetAssessment.threshold
-    : defaultThreshold;
+    : (isMale
+      ? (targetAssessment.assessment_level === 'tier_1_2' ? 0.3379 : 0.1808)
+      : defaultThreshold);
 
   let riskCategory: string;
   let riskLabel: string;
@@ -369,7 +392,7 @@ export function getAuthoritativeAssessmentForPathway({
     originalRiskCategory: targetAssessment.original_risk_category || targetAssessment.risk_category,
     originalThreshold: targetAssessment.original_threshold ?? targetAssessment.threshold,
     originalProbability: targetAssessment.original_probability ?? probability,
-    pcomStatus: targetAssessment.pcom_status || null,
+    pcomStatus: normalizePcomStatus(targetAssessment.pcom_status),
     pcomProbability: targetAssessment.pcom_probability !== undefined ? targetAssessment.pcom_probability : null,
     gradcamB64: targetAssessment.gradcam_b64 || null,
     hormonePatternInterpretation: targetAssessment.hormone_pattern_interpretation || null,

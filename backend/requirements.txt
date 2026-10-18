@@ -6,12 +6,15 @@
 Django>=5.0,<6.0
 djangorestframework>=3.14.0
 django-cors-headers>=4.3.0
+gunicorn>=21.2.0
 python-dotenv>=1.0.0
-PyJWT>=2.8.0
+PyJWT[crypto]>=2.8.0
 requests>=2.31.0
 
 # Supabase & Cloud Database
 supabase>=2.3.0
+dj-database-url>=2.1.0
+psycopg[binary]>=3.1.0
 
 # Machine Learning, Feature Engineering & Ensembles
 pandas>=2.2.0
@@ -22,6 +25,7 @@ joblib>=1.3.0
 openpyxl>=3.1.0
 
 # Deep Learning (PCOS-ML Multimodal Ultrasound EfficientNet-B0 & Grad-CAM)
+--extra-index-url https://download.pytorch.org/whl/cpu
 torch>=2.2.0
 torchvision>=0.17.0
 timm>=0.9.12

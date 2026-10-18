@@ -464,6 +464,9 @@ class GeminiProvider(LLMProvider):
         timeout: int = 30,
         max_retries: int = 2,
         max_output_tokens: int = 2500,
+        groq_api_key: Optional[str] = None,
+        groq_model: Optional[str] = None,
+        groq_provider: Optional[Any] = None,
     ) -> None:
         self.api_key = api_key
         self.model_name = model_name or "gemini-3.8-flash"
@@ -472,13 +475,107 @@ class GeminiProvider(LLMProvider):
         self.max_retries = max_retries
         self.max_output_tokens = max(max_output_tokens, 2048)
 
+        # Groq Automatic Failover configuration
+        try:
+            from django.conf import settings
+        except Exception:
+            settings = None
+
+        raw_groq_key = (
+            groq_api_key
+            or os.environ.get("GROQ_API_KEY", "").strip()
+            or (getattr(settings, "GROQ_API_KEY", "") if settings else "")
+        )
+        self.groq_api_key = raw_groq_key.strip() if isinstance(raw_groq_key, str) and raw_groq_key.strip() else None
+
+        raw_groq_model = (
+            groq_model
+            or os.environ.get("GROQ_FALLBACK_MODEL", "").strip()
+            or os.environ.get("GROQ_MODEL", "").strip()
+            or (getattr(settings, "GROQ_FALLBACK_MODEL", "") if settings else "")
+            or (getattr(settings, "GROQ_MODEL", "") if settings else "")
+            or "openai/gpt-oss-120b"
+        )
+        self.groq_model = raw_groq_model.strip() if isinstance(raw_groq_model, str) and raw_groq_model.strip() else "openai/gpt-oss-120b"
+
+        self.groq_provider = groq_provider
+        if self.groq_provider is None and self.groq_api_key:
+            self.groq_provider = GroqProvider(
+                api_key=self.groq_api_key,
+                model_name=self.groq_model,
+                timeout=self.timeout,
+            )
+
     def _sanitize(self, text: str) -> str:
         """Strips raw API key from any string or exception message."""
         if not text:
             return ""
         if self.api_key and self.api_key in text:
             text = text.replace(self.api_key, "[REDACTED]")
+        if getattr(self, "groq_api_key", None) and self.groq_api_key in text:
+            text = text.replace(self.groq_api_key, "[REDACTED]")
         return text
+
+    def _is_geo_location_error(self, text: str) -> bool:
+        """Identifies Google Gemini unsupported geographic location rejection."""
+        t = (text or "").lower()
+        geo_keywords = (
+            "location is not supported",
+            "user location",
+            "unsupported location",
+            "geographic",
+            "geographically",
+            "region is not supported",
+            "region not supported",
+            "country is not supported",
+            "country not supported",
+            "not supported in your country",
+            "not available in your country",
+            "not available in your region",
+        )
+        return any(k in t for k in geo_keywords)
+
+    def _is_eligible_failover_error(self, err: Exception | str) -> bool:
+        """
+        Determines whether a Gemini failure warrants automatic failover to Groq:
+        1. Unsupported geographic location
+        2. Timeout
+        3. Rate limit / quota
+        4. Provider outage / service unavailable
+        """
+        err_str = str(err).lower()
+        if self._is_geo_location_error(err_str):
+            return True
+        if any(k in err_str for k in ("timeout", "timed out", "time out", "deadline exceeded", "(408)", "(504)")):
+            return True
+        if any(k in err_str for k in ("(429)", "rate limit", "too many requests", "quota", "resource_exhausted", "exhausted")):
+            return True
+        outage_patterns = (
+            "(500)", "(502)", "(503)", "(504)",
+            "service unavailable", "bad gateway", "internal server error",
+            "connection error", "connection refused", "connection reset",
+            "network is unreachable", "network unreachable", "host unreachable",
+            "name or service not known", "temporary failure in name resolution",
+            "outage",
+        )
+        if any(k in err_str for k in outage_patterns):
+            return True
+        return False
+
+    def _classify_gemini_failure(self, err: Exception | str) -> str:
+        err_str = str(err).lower()
+        if self._is_geo_location_error(err_str):
+            return "unsupported geographic location"
+        if any(k in err_str for k in ("timeout", "timed out", "time out", "(408)", "(504)")):
+            return "timeout"
+        if any(k in err_str for k in ("(429)", "rate limit", "quota", "resource_exhausted")):
+            return "rate limit"
+        return "provider outage"
+
+    def _should_failover_to_groq(self, err: Exception) -> bool:
+        if not getattr(self, "groq_provider", None):
+            return False
+        return self._is_eligible_failover_error(err)
 
     def _build_generation_config(self, target_model: str) -> dict[str, Any]:
         """
@@ -590,6 +687,49 @@ class GeminiProvider(LLMProvider):
         raise last_error or LLMProviderError(f"Gemini request to {target_model} failed.")
 
     def generate_chat_response(
+        self,
+        system_instruction: str,
+        user_message: str,
+        health_context: str,
+        conversation_history: Optional[List[dict[str, str]]] = None,
+        **kwargs: Any,
+    ) -> LLMResponse:
+        try:
+            return self._generate_gemini_chat_response(
+                system_instruction=system_instruction,
+                user_message=user_message,
+                health_context=health_context,
+                conversation_history=conversation_history,
+                **kwargs,
+            )
+        except LLMProviderError as gemini_err:
+            if self._should_failover_to_groq(gemini_err):
+                logger.warning(
+                    "Gemini provider failed due to %s. Automatically attempting Groq failover using model '%s'...",
+                    self._classify_gemini_failure(gemini_err),
+                    self.groq_model,
+                )
+                try:
+                    return self.groq_provider.generate_chat_response(
+                        system_instruction=system_instruction,
+                        user_message=user_message,
+                        health_context=health_context,
+                        conversation_history=conversation_history,
+                        **kwargs,
+                    )
+                except Exception as groq_err:
+                    clean_gemini_err = self._sanitize(str(gemini_err))
+                    clean_groq_err = self._sanitize(str(groq_err))
+                    logger.error(
+                        "Groq failover provider also failed: %s",
+                        clean_groq_err,
+                    )
+                    raise LLMProviderError(
+                        f"Both Gemini and Groq providers failed. Gemini: {clean_gemini_err}; Groq: {clean_groq_err}"
+                    ) from groq_err
+            raise
+
+    def _generate_gemini_chat_response(
         self,
         system_instruction: str,
         user_message: str,
@@ -840,6 +980,7 @@ class GeminiProvider(LLMProvider):
         }
 
         streamed_any = False
+        gemini_errors = []
         for model in candidate_models:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:streamGenerateContent?alt=sse"
             req_body: dict[str, Any] = {
@@ -856,13 +997,23 @@ class GeminiProvider(LLMProvider):
             try:
                 resp = requests.post(url, headers=headers, json=req_body, stream=True, timeout=12)
                 if resp.status_code != 200:
-                    logger.warning("Gemini stream request to %s returned HTTP %s", model, resp.status_code)
+                    err_snippet = ""
+                    try:
+                        err_snippet = resp.text[:200]
+                    except Exception:
+                        pass
+                    msg = f"HTTP {resp.status_code}: {self._sanitize(err_snippet)}"
+                    logger.warning("Gemini stream request to %s returned %s", model, msg)
+                    gemini_errors.append(msg)
+                    if self._is_geo_location_error(msg):
+                        logger.warning("Gemini stream rejected due to unsupported geographic location: %s", msg)
+                        break
                     continue
 
                 for line in resp.iter_lines():
                     if not line:
                         continue
-                    decoded = line.decode("utf-8")
+                    decoded = line.decode("utf-8") if isinstance(line, bytes) else line
                     if decoded.startswith("data: "):
                         try:
                             payload = json.loads(decoded[6:])
@@ -878,11 +1029,43 @@ class GeminiProvider(LLMProvider):
                 if streamed_any:
                     return
             except Exception as stream_err:
-                logger.warning("Gemini stream error on model %s: %s", model, stream_err)
+                msg = self._sanitize(str(stream_err))
+                logger.warning("Gemini stream error on model %s: %s", model, msg)
+                gemini_errors.append(msg)
+                if streamed_any:
+                    # CRITICAL: Prevent duplicate or mixed output if streaming fails after partial content has been emitted.
+                    logger.warning("Gemini stream interrupted after partial output emitted. Suppressing failover to prevent duplicate output.")
+                    return
                 continue
 
-        # If streaming attempts failed, fallback to normal non-streaming generation
+        # If partial tokens were emitted, we already returned above.
+        # If streamed_any is False (Gemini produced 0 tokens before failing):
         if not streamed_any:
+            combined_err = "; ".join(gemini_errors)
+            if getattr(self, "groq_provider", None) and (self._is_eligible_failover_error(combined_err) or not gemini_errors):
+                logger.warning(
+                    "Gemini streaming failed before emitting tokens. Attempting Groq fallback stream (%s)...",
+                    self.groq_model,
+                )
+                groq_streamed_any = False
+                try:
+                    for token in self.groq_provider.stream_chat_response(
+                        system_instruction=system_instruction,
+                        user_message=user_message,
+                        conversation_history=conversation_history,
+                        **kwargs,
+                    ):
+                        groq_streamed_any = True
+                        yield token
+                    if groq_streamed_any:
+                        return
+                except Exception as groq_stream_err:
+                    if groq_streamed_any:
+                        logger.warning("Groq stream interrupted after partial output: %s", self._sanitize(str(groq_stream_err)))
+                        return
+                    logger.error("Groq stream fallback failed: %s", self._sanitize(str(groq_stream_err)))
+
+            # If both streaming attempts failed or Groq not available, fallback to generate_chat_response (which also has Groq failover!)
             logger.info("Streaming failed or empty; falling back to non-streaming generate_chat_response")
             fallback_res = self.generate_chat_response(
                 system_instruction=system_instruction,
@@ -897,11 +1080,42 @@ class GeminiProvider(LLMProvider):
 
 
 class GroqProvider(LLMProvider):
-    """Groq Cloud LLM provider (Optional Cloud Fallback)."""
+    """
+    Groq Cloud LLM provider (Secure Automatic Failover & Optional Cloud Provider).
 
-    def __init__(self, api_key: str, model_name: str = "llama-3.3-70b-versatile") -> None:
-        self.api_key = api_key
-        self.model_name = model_name
+    Uses Groq's high-speed inference engine running OpenAI-compatible chat completions.
+    Default fallback model: openai/gpt-oss-120b.
+
+    Safety & Privacy:
+    - Enforces LLMContextSanitizer across all outbound system prompts, user queries,
+      clinical contexts, and conversation history.
+    - Redacts API keys and patient PII from logs and exception messages.
+    - Never replaces failed responses with fake deterministic AI.
+    """
+
+    def __init__(
+        self,
+        api_key: str,
+        model_name: str = "openai/gpt-oss-120b",
+        timeout: int = 30,
+    ) -> None:
+        self.api_key = (api_key or "").strip()
+        self.model_name = (model_name or "").strip() or "openai/gpt-oss-120b"
+        self.timeout = timeout
+
+    def _sanitize(self, text: str) -> str:
+        """Strips API keys and sensitive tokens from error messages and logs."""
+        if not text:
+            return ""
+        if self.api_key and self.api_key in text:
+            text = text.replace(self.api_key, "[REDACTED]")
+        try:
+            from apps.intelligence.services.context_sanitizer import API_KEY_PATTERNS
+            for pattern in API_KEY_PATTERNS:
+                text = pattern.sub("[REDACTED]", text)
+        except Exception:
+            pass
+        return text
 
     def generate_chat_response(
         self,
@@ -911,61 +1125,331 @@ class GroqProvider(LLMProvider):
         conversation_history: Optional[List[dict[str, str]]] = None,
         **kwargs: Any,
     ) -> LLMResponse:
-        url = "https://api.groq.com/openai/v1/chat/completions"
+        from apps.intelligence.services.context_sanitizer import LLMContextSanitizer
+
+        patient_uuid = kwargs.get("patient_uuid")
+        patient_name = kwargs.get("patient_name")
+        patient_email = kwargs.get("patient_email")
+
+        # 1. Enforce deterministic privacy sanitization boundary
+        clean_system_instruction = LLMContextSanitizer.sanitize_system_instruction(
+            system_instruction,
+            patient_uuid=patient_uuid,
+            patient_name=patient_name,
+            patient_email=patient_email,
+        )
+        clean_user_message = LLMContextSanitizer.sanitize_user_message(
+            user_message,
+            patient_uuid=patient_uuid,
+            patient_name=patient_name,
+            patient_email=patient_email,
+        )
+        clean_health_context = LLMContextSanitizer.sanitize_clinical_context(
+            health_context,
+            patient_uuid=patient_uuid,
+            patient_name=patient_name,
+            patient_email=patient_email,
+        )
+        clean_history = LLMContextSanitizer.sanitize_conversation_history(
+            conversation_history,
+            patient_uuid=patient_uuid,
+            patient_name=patient_name,
+            patient_email=patient_email,
+        )
+
+        format_prompt = (
+            f"{clean_system_instruction}\n\n"
+            "CRITICAL OUTPUT REQUIREMENT:\n"
+            "You must respond strictly with a valid JSON object matching this schema:\n"
+            "{\n"
+            '  "answer": "string containing your conversational explanation",\n'
+            '  "confidence": "high" | "moderate" | "limited",\n'
+            '  "used_context": ["profile", "cycle", "symptoms", "reports", "digital_twin", "ml_screening"],\n'
+            '  "needs_clinician": boolean,\n'
+            '  "safety_level": "normal" | "caution" | "urgent"\n'
+            "}"
+        )
 
         messages: List[dict[str, str]] = [
-            {"role": "system", "content": system_instruction + "\nYou must respond strictly with valid JSON conforming to: {\"answer\": string, \"confidence\": \"high\"|\"moderate\"|\"limited\", \"used_context\": string[], \"needs_clinician\": boolean, \"safety_level\": \"normal\"|\"caution\"|\"urgent\"}"}
+            {"role": "system", "content": format_prompt}
         ]
 
-        if conversation_history:
-            for item in conversation_history[-6:]:
-                role = "user" if item.get("sender") == "user" else "assistant"
-                messages.append({"role": role, "content": item.get("text", "")})
+        if clean_history:
+            for item in clean_history[-6:]:
+                role = "user" if item.get("sender") in ("user", "human") else "assistant"
+                text = item.get("text", "")
+                if text:
+                    messages.append({"role": role, "content": text})
 
-        prompt_with_context = (
-            f"--- RELEVANT PATIENT HEALTH CONTEXT ---\n{health_context}\n\n"
-            f"--- PATIENT'S QUESTION ---\n{user_message}"
-        )
+        prompt_with_context = ""
+        if clean_health_context:
+            prompt_with_context = f"--- RELEVANT PATIENT HEALTH CONTEXT ---\n{clean_health_context}\n\n"
+        prompt_with_context += f"--- PATIENT'S QUESTION ---\n{clean_user_message}"
         messages.append({"role": "user", "content": prompt_with_context})
 
+        # Defense-in-depth sanitization pass across all messages
+        for entry in messages:
+            entry["content"] = LLMContextSanitizer.strip_identifiers_and_pii(
+                entry.get("content", ""),
+                patient_uuid=patient_uuid,
+                patient_name=patient_name,
+                patient_email=patient_email,
+            )
+
+        url = "https://api.groq.com/openai/v1/chat/completions"
         request_body = {
             "model": self.model_name,
             "messages": messages,
             "temperature": 0.2,
-            "max_tokens": 2048,
+            "max_tokens": kwargs.get("max_output_tokens", 2048),
             "response_format": {"type": "json_object"},
         }
 
-        try:
-            req_data = json.dumps(request_body).encode("utf-8")
-            req = urllib.request.Request(
-                url,
-                data=req_data,
-                headers={
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {self.api_key}",
-                },
-                method="POST",
-            )
-            with urllib.request.urlopen(req, timeout=15) as resp:
-                resp_json = json.loads(resp.read().decode("utf-8"))
+        req_data = json.dumps(request_body).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            data=req_data,
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.api_key}",
+            },
+            method="POST",
+        )
 
-            choices = resp_json.get("choices", [])
-            if choices:
-                content = choices[0].get("message", {}).get("content", "")
-                parsed = json.loads(content)
-                return LLMResponse(
-                    answer=parsed.get("answer", content),
-                    confidence=parsed.get("confidence", "high"),
-                    used_context=parsed.get("used_context", []),
-                    needs_clinician=bool(parsed.get("needs_clinician", False)),
-                    safety_level=parsed.get("safety_level", "normal"),
-                    model_name=self.model_name,
+        try:
+            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                resp_json = json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as he:
+            status_code = he.code
+            err_body = ""
+            try:
+                err_body = he.read().decode("utf-8")
+            except Exception:
+                pass
+
+            # If model rejects json_object format, retry once without response_format
+            if status_code == 400 and "response_format" in err_body.lower() and "response_format" in request_body:
+                del request_body["response_format"]
+                retry_req = urllib.request.Request(
+                    url,
+                    data=json.dumps(request_body).encode("utf-8"),
+                    headers={
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {self.api_key}",
+                    },
+                    method="POST",
                 )
-            raise LLMProviderError("Empty choices list returned by Groq.")
+                try:
+                    with urllib.request.urlopen(retry_req, timeout=self.timeout) as retry_resp:
+                        resp_json = json.loads(retry_resp.read().decode("utf-8"))
+                except Exception as retry_exc:
+                    clean_msg = self._sanitize(str(retry_exc))
+                    logger.error("Groq LLM call failed after response_format fallback: %s", clean_msg)
+                    raise LLMProviderError(f"Groq LLM provider error ({status_code}): {clean_msg}") from retry_exc
+            else:
+                clean_msg = f"HTTP {status_code}"
+                try:
+                    parsed_err = json.loads(err_body)
+                    if "error" in parsed_err and "message" in parsed_err["error"]:
+                        clean_msg = self._sanitize(parsed_err["error"]["message"])
+                except Exception:
+                    if err_body:
+                        clean_msg = self._sanitize(err_body[:200])
+                logger.error("Groq HTTP error (%s): %s", status_code, clean_msg)
+                raise LLMProviderError(f"Groq LLM provider error ({status_code}): {clean_msg}") from he
+        except urllib.error.URLError as ue:
+            sanitized_reason = self._sanitize(str(ue.reason))
+            logger.error("Groq connection error: %s", sanitized_reason)
+            raise LLMProviderError(f"Groq connection error: {sanitized_reason}") from ue
+        except LLMProviderError:
+            raise
         except Exception as exc:
-            logger.error("Groq LLM call failed: %s", exc)
-            raise LLMProviderError(f"Groq LLM provider error: {exc}") from exc
+            sanitized_exc = self._sanitize(str(exc))
+            logger.error("Unexpected Groq error: %s", sanitized_exc)
+            raise LLMProviderError(f"Groq LLM provider error: {sanitized_exc}") from exc
+
+        choices = resp_json.get("choices", [])
+        if not choices:
+            raise LLMProviderError("Empty choices list returned by Groq.")
+
+        raw_content = choices[0].get("message", {}).get("content", "").strip()
+        if not raw_content:
+            raise LLMProviderError("Empty message content returned by Groq.")
+
+        return self._parse_groq_content(raw_content, user_message)
+
+    def _parse_groq_content(self, raw_content: str, user_message: str) -> LLMResponse:
+        answer = raw_content.strip()
+        confidence = "moderate"
+        used_context: List[str] = []
+        needs_clinician = False
+        safety_level = "normal"
+
+        cleaned = raw_content.strip()
+        if cleaned.startswith("```"):
+            lines = cleaned.splitlines()
+            if lines and lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines and lines[-1].strip() == "```":
+                lines = lines[:-1]
+            cleaned = "\n".join(lines).strip()
+
+        if cleaned.startswith("{") and cleaned.endswith("}"):
+            try:
+                parsed = json.loads(cleaned)
+                if isinstance(parsed, dict) and "answer" in parsed:
+                    answer = str(parsed.get("answer", "")).strip() or raw_content.strip()
+                    if "confidence" in parsed and parsed["confidence"] in ("high", "moderate", "limited"):
+                        confidence = str(parsed["confidence"])
+                    if "used_context" in parsed and isinstance(parsed["used_context"], list):
+                        used_context = [str(x) for x in parsed["used_context"]]
+                    if "needs_clinician" in parsed:
+                        needs_clinician = bool(parsed["needs_clinician"])
+                    if "safety_level" in parsed and parsed["safety_level"] in ("normal", "caution", "urgent"):
+                        safety_level = str(parsed["safety_level"])
+            except (json.JSONDecodeError, ValueError, TypeError):
+                answer = raw_content.strip()
+
+        if answer.count("**") % 2 == 1:
+            answer += "**"
+        elif answer.count("*") % 2 == 1:
+            answer += "*"
+
+        if not needs_clinician:
+            needs_clinician = any(
+                term in user_message.lower()
+                for term in ["doctor", "physician", "prescribe", "medication", "dose", "severe", "pain"]
+            )
+
+        return LLMResponse(
+            answer=answer,
+            confidence=confidence,
+            used_context=used_context,
+            needs_clinician=needs_clinician,
+            safety_level=safety_level,
+            model_name=self.model_name,
+        )
+
+    def stream_chat_response(
+        self,
+        system_instruction: str,
+        user_message: str,
+        conversation_history: Optional[List[dict[str, str]]] = None,
+        **kwargs: Any,
+    ):
+        """
+        Streams response tokens directly from Groq using OpenAI-compatible SSE streaming.
+        Guarantees that no duplicate or mixed output is emitted if stream is interrupted.
+        """
+        import requests
+        from apps.intelligence.services.context_sanitizer import LLMContextSanitizer
+
+        patient_uuid = kwargs.get("patient_uuid")
+        patient_name = kwargs.get("patient_name")
+        patient_email = kwargs.get("patient_email")
+
+        clean_system_instruction = LLMContextSanitizer.sanitize_system_instruction(
+            system_instruction,
+            patient_uuid=patient_uuid,
+            patient_name=patient_name,
+            patient_email=patient_email,
+        )
+        clean_user_message = LLMContextSanitizer.sanitize_user_message(
+            user_message,
+            patient_uuid=patient_uuid,
+            patient_name=patient_name,
+            patient_email=patient_email,
+        )
+        clean_history = LLMContextSanitizer.sanitize_conversation_history(
+            conversation_history,
+            patient_uuid=patient_uuid,
+            patient_name=patient_name,
+            patient_email=patient_email,
+        )
+
+        messages: List[dict[str, str]] = [
+            {"role": "system", "content": clean_system_instruction}
+        ]
+        if clean_history:
+            for item in clean_history[-6:]:
+                role = "user" if item.get("sender") in ("user", "human") else "assistant"
+                text = item.get("text", "")
+                if text:
+                    messages.append({"role": role, "content": text})
+        messages.append({"role": "user", "content": clean_user_message})
+
+        for msg in messages:
+            msg["content"] = LLMContextSanitizer.strip_identifiers_and_pii(
+                msg["content"],
+                patient_uuid=patient_uuid,
+                patient_name=patient_name,
+                patient_email=patient_email,
+            )
+
+        url = "https://api.groq.com/openai/v1/chat/completions"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}",
+        }
+        max_tokens = kwargs.get("max_output_tokens", 500)
+        req_body = {
+            "model": self.model_name,
+            "messages": messages,
+            "temperature": 0.2,
+            "max_tokens": max_tokens,
+            "stream": True,
+        }
+
+        streamed_any = False
+        try:
+            resp = requests.post(url, headers=headers, json=req_body, stream=True, timeout=self.timeout)
+            if resp.status_code != 200:
+                err_text = ""
+                try:
+                    err_text = resp.text[:200]
+                except Exception:
+                    pass
+                raise LLMProviderError(f"Groq stream request returned HTTP {resp.status_code}: {self._sanitize(err_text)}")
+
+            for line in resp.iter_lines():
+                if not line:
+                    continue
+                decoded = line.decode("utf-8") if isinstance(line, bytes) else line
+                if decoded.startswith("data: "):
+                    data_str = decoded[6:].strip()
+                    if data_str == "[DONE]":
+                        break
+                    try:
+                        chunk_obj = json.loads(data_str)
+                        choices = chunk_obj.get("choices", [])
+                        if choices:
+                            delta = choices[0].get("delta", {})
+                            content = delta.get("content", "")
+                            if content:
+                                streamed_any = True
+                                yield content
+                    except Exception:
+                        continue
+            if streamed_any:
+                return
+        except Exception as exc:
+            if streamed_any:
+                logger.warning("Groq stream interrupted after partial output emitted: %s", self._sanitize(str(exc)))
+                return
+            logger.warning("Groq stream error before emitting output: %s", self._sanitize(str(exc)))
+            raise
+
+        if not streamed_any:
+            fallback_res = self.generate_chat_response(
+                system_instruction=system_instruction,
+                user_message=user_message,
+                health_context=kwargs.get("health_context", ""),
+                conversation_history=conversation_history,
+                **kwargs,
+            )
+            words = fallback_res.answer.split(" ")
+            for i, w in enumerate(words):
+                yield w + (" " if i < len(words) - 1 else "")
 
 
 class OpenAIProvider(LLMProvider):
@@ -1194,21 +1678,50 @@ def get_llm_provider() -> LLMProvider:
         tokens_str = os.environ.get("GEMINI_MAX_OUTPUT_TOKENS", "") or getattr(settings, "GEMINI_MAX_OUTPUT_TOKENS", "")
         max_output_tokens = int(tokens_str) if str(tokens_str).isdigit() else 2500
 
+        groq_api_key = (
+            os.environ.get("GROQ_API_KEY", "").strip()
+            or getattr(settings, "GROQ_API_KEY", "")
+        )
+        if isinstance(groq_api_key, str):
+            groq_api_key = groq_api_key.strip()
+
+        groq_model = (
+            os.environ.get("GROQ_FALLBACK_MODEL", "").strip()
+            or os.environ.get("GROQ_MODEL", "").strip()
+            or getattr(settings, "GROQ_FALLBACK_MODEL", "")
+            or getattr(settings, "GROQ_MODEL", "")
+            or "openai/gpt-oss-120b"
+        )
+        if isinstance(groq_model, str):
+            groq_model = groq_model.strip()
+
         return GeminiProvider(
             api_key,
             model_name=gemini_model,
             fallback_model=gemini_fallback,
             timeout=timeout,
             max_output_tokens=max_output_tokens,
+            groq_api_key=groq_api_key or None,
+            groq_model=groq_model or "openai/gpt-oss-120b",
         )
 
     model_name = os.environ.get("LLM_MODEL", "").strip()
 
     if provider_name == "groq":
-        api_key = os.environ.get("LLM_API_KEY") or os.environ.get("GROQ_API_KEY", "").strip()
+        api_key = os.environ.get("GROQ_API_KEY", "").strip() or os.environ.get("LLM_API_KEY", "").strip() or getattr(settings, "GROQ_API_KEY", "")
+        if isinstance(api_key, str):
+            api_key = api_key.strip()
         if not api_key:
             raise LLMProviderError("LLM_PROVIDER is set to 'groq' but no GROQ_API_KEY is configured.")
-        return GroqProvider(api_key, model_name=model_name or "llama-3.3-70b-versatile")
+        groq_model = (
+            os.environ.get("GROQ_FALLBACK_MODEL", "").strip()
+            or os.environ.get("GROQ_MODEL", "").strip()
+            or model_name
+            or getattr(settings, "GROQ_FALLBACK_MODEL", "")
+            or getattr(settings, "GROQ_MODEL", "")
+            or "openai/gpt-oss-120b"
+        )
+        return GroqProvider(api_key, model_name=groq_model)
 
     if provider_name == "openai":
         api_key = os.environ.get("LLM_API_KEY") or os.environ.get("OPENAI_API_KEY", "").strip()

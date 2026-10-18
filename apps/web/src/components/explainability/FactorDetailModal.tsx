@@ -124,7 +124,14 @@ export const FactorDetailModal: React.FC<FactorDetailModalProps> = ({
             : (isLower ? 'bg-gradient-to-r from-emerald-50/60 to-teal-50/40' : 'bg-slate-50')
         }`}>
           <div>
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                factor.is_tier2_clinical || factor.tier === 'Tier 2'
+                  ? 'bg-indigo-50 text-indigo-700 border-indigo-200/70'
+                  : 'bg-slate-100 text-slate-700 border-slate-200'
+              }`}>
+                {factor.tier || (factor.is_tier2_clinical ? 'Tier 2 Clinical Lab' : 'Tier 1 Questionnaire')}
+              </span>
               <span className="text-xs uppercase tracking-wider font-semibold text-slate-500">
                 {factor.category.toUpperCase()} FACTOR
               </span>
@@ -149,11 +156,22 @@ export const FactorDetailModal: React.FC<FactorDetailModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* RECORDED VALUE */}
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block mb-1">
-                Recorded Value
-              </span>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
+                  Recorded Value
+                </span>
+                {factor.is_provided !== undefined && (
+                  <span className={`text-[10px] font-semibold px-1.5 py-0.2 rounded ${
+                    factor.is_provided
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      : 'bg-slate-100 text-slate-500'
+                  }`}>
+                    {factor.is_provided ? 'Recorded' : 'Default / Baseline'}
+                  </span>
+                )}
+              </div>
               <span className="text-lg font-bold text-slate-900">
-                {factor.patient_value || 'Not provided'}
+                {factor.patient_value || 'Not provided'}{factor.unit ? ` ${factor.unit}` : ''}
               </span>
             </div>
 

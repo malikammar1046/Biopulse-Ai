@@ -85,10 +85,18 @@ export const MedicationModuleCard: React.FC<MedicationModuleCardProps> = ({
     >
       <div className="space-y-3.5 py-1">
         {nextDose ? (
-          <div className="p-3 rounded-2xl bg-[#FFF8FA] border border-[#FDE6EF] space-y-2">
+          <div
+            className={`p-3 rounded-2xl space-y-2 border ${
+              isFemale ? 'bg-[#FFF8FA] border-[#FDE6EF]' : 'bg-[#F0F9FF] border-[#BAE6FD]'
+            }`}
+          >
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
-                <div className="w-7 h-7 rounded-lg bg-[#FDE6EF] text-[#E11D48] flex items-center justify-center shrink-0">
+                <div
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                    isFemale ? 'bg-[#FDE6EF] text-[#E11D48]' : 'bg-[#E0F2FE] text-[#0284C7]'
+                  }`}
+                >
                   <Pill className="w-3.5 h-3.5" aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
@@ -105,7 +113,13 @@ export const MedicationModuleCard: React.FC<MedicationModuleCardProps> = ({
               </div>
 
               <div className="flex items-center gap-1.5 shrink-0">
-                <span className="px-2 py-0.5 rounded-full text-[10.5px] font-mono font-medium bg-[#FDE6EF] text-[#E11D48] border border-[#F43F7D]/20">
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[10.5px] font-mono font-medium border ${
+                    isFemale
+                      ? 'bg-[#FDE6EF] text-[#E11D48] border-[#F43F7D]/20'
+                      : 'bg-[#E0F2FE] text-[#0284C7] border-[#BAE6FD]'
+                  }`}
+                >
                   {nextDose.timeDisplay || nextDose.scheduledTime}
                 </span>
 

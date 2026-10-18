@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   AlertCircle,
   RefreshCw01,
@@ -13,21 +13,17 @@ import type {
 } from '../../types/longitudinalHealth';
 import { supabase } from '../../lib/supabase';
 import {
-  getLongitudinalHealth,
   getCachedLongitudinalHealth,
 } from '../../services/intelligenceService';
 import { deriveBaselineFromContext } from '../../utils/longitudinalCalculations';
 
 import { LongitudinalHeader } from './LongitudinalHeader';
 import { CurrentHealthSnapshotCard } from './CurrentHealthSnapshotCard';
-import { ProgressSummaryCards } from './ProgressSummaryCards';
-import { WhatChangedCard } from './WhatChangedCard';
 import { RiskTrendChart } from './RiskTrendChart';
 import { MetricTrendCard } from './MetricTrendCard';
-import { SymptomProgressionCard } from './SymptomProgressionCard';
-import { LabProgressionCard } from './LabProgressionCard';
-import { TierProgressionRoadmap } from './TierProgressionRoadmap';
 import { CurrentVsPreviousTable } from './CurrentVsPreviousTable';
+import { SymptomProgressionCard } from './SymptomProgressionCard';
+import { TierProgressionRoadmap } from './TierProgressionRoadmap';
 import { ChronologicalTimeline } from './ChronologicalTimeline';
 import { EmptyBaselineState } from './EmptyBaselineState';
 
@@ -53,6 +49,9 @@ export const HealthProgressSection: React.FC<HealthProgressSectionProps> = ({
     cycleRecords = [],
     symptomRecords = [],
     reports = [],
+    longitudinalData,
+    fetchLongitudinalHealth,
+    longitudinalLoading,
   } = useUserHealth();
 
   const activePathway = pathwayProp || resolvePathway(userProfile?.gender, userProfile?.pathway);
@@ -60,8 +59,15 @@ export const HealthProgressSection: React.FC<HealthProgressSectionProps> = ({
 
   const [selectedPeriod, setSelectedPeriod] = useState<MonitoringPeriodFilter>('90d');
 
+  // Ref cache for latest context variables without causing re-fetch loops
+  const contextDataRef = useRef({ userProfile, cycleRecords, symptomRecords, reports, activePathway });
+  contextDataRef.current = { userProfile, cycleRecords, symptomRecords, reports, activePathway };
+
   // 1. Initial State: Synchronous Immediate Hydration from Cache or Context (<50ms)
   const initialBaseline = useMemo(() => {
+    if (longitudinalData && longitudinalData.module === moduleName && longitudinalData.period === selectedPeriod) {
+      return longitudinalData;
+    }
     const cached = getCachedLongitudinalHealth(selectedPeriod, moduleName, userProfile?.id);
     if (cached) return cached;
     return deriveBaselineFromContext({
@@ -72,13 +78,20 @@ export const HealthProgressSection: React.FC<HealthProgressSectionProps> = ({
       pathway: activePathway,
       period: selectedPeriod,
     });
-  }, [selectedPeriod, moduleName, userProfile, cycleRecords, symptomRecords, reports, activePathway]);
+  }, [longitudinalData, selectedPeriod, moduleName, userProfile?.id, activePathway]);
 
-  const [data, setData] = useState<LongitudinalHealthResponse | null>(initialBaseline);
+  const [data, setData] = useState<LongitudinalHealthResponse | null>(() => initialBaseline);
   const [isBackgroundFetching, setIsBackgroundFetching] = useState<boolean>(false);
   const [refreshNotice, setRefreshNotice] = useState<string | null>(null);
   const [sessionError, setSessionError] = useState<boolean>(false);
   const [retryTrigger, setRetryTrigger] = useState<number>(0);
+
+  // Sync data when context-level longitudinalData updates
+  useEffect(() => {
+    if (longitudinalData && longitudinalData.module === moduleName && longitudinalData.period === selectedPeriod) {
+      setData(longitudinalData);
+    }
+  }, [longitudinalData, moduleName, selectedPeriod]);
 
   // Listen for global refresh events (e.g. assessment submission, report upload)
   useEffect(() => {
@@ -91,73 +104,79 @@ export const HealthProgressSection: React.FC<HealthProgressSectionProps> = ({
     };
   }, []);
 
-  // 2. Resilient Background Fetching (Stale-While-Revalidate)
-  const loadLongitudinal = useCallback(async (signal?: AbortSignal) => {
-    setIsBackgroundFetching(true);
-    setRefreshNotice(null);
-    setSessionError(false);
+  // 2. Resilient Background Fetching (Stale-While-Revalidate without loop leaks)
+  const loadLongitudinal = useCallback(
+    async (signal?: AbortSignal, force = false) => {
+      setIsBackgroundFetching(true);
+      setRefreshNotice(null);
+      setSessionError(false);
 
-    try {
-      const res = await getLongitudinalHealth(selectedPeriod, moduleName, signal);
-      if (signal?.aborted) return;
+      try {
+        const res = await fetchLongitudinalHealth(selectedPeriod, force, signal);
+        if (signal?.aborted) return;
 
-      if (res) {
-        setData(res);
-        setRefreshNotice(null);
-      } else {
-        // Evaluate failure reason gracefully without crashing the view
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (!sessionData?.session) {
-          setSessionError(true);
-          setRefreshNotice('Your session needs to be renewed.');
-        } else if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        if (res) {
+          setData(res);
+          setRefreshNotice(null);
+        } else {
+          // Evaluate failure reason gracefully without crashing the view
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (!sessionData?.session) {
+            setSessionError(true);
+            setRefreshNotice('Your session needs to be renewed.');
+          } else if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            setRefreshNotice('Working offline. Showing saved health records.');
+          } else {
+            setRefreshNotice('Could not refresh latest records from server. Showing local health snapshot.');
+          }
+
+          // If data is still null, fallback to context baseline
+          setData((prev) => {
+            if (prev) return prev;
+            const ctx = contextDataRef.current;
+            return deriveBaselineFromContext({
+              userProfile: ctx.userProfile,
+              cycleRecords: ctx.cycleRecords,
+              symptomRecords: ctx.symptomRecords,
+              reports: ctx.reports,
+              pathway: ctx.activePathway,
+              period: selectedPeriod,
+            });
+          });
+        }
+      } catch (err: any) {
+        if (signal?.aborted) return;
+        console.warn('[HealthProgressSection] Background refresh notice:', err);
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
           setRefreshNotice('Working offline. Showing saved health records.');
         } else {
-          setRefreshNotice('Could not refresh latest records from server. Showing local health snapshot.');
+          setRefreshNotice('Could not refresh latest records right now. Showing local baseline.');
         }
-
-        // If data is still null, fallback to context baseline
         setData((prev) => {
           if (prev) return prev;
+          const ctx = contextDataRef.current;
           return deriveBaselineFromContext({
-            userProfile,
-            cycleRecords,
-            symptomRecords,
-            reports,
-            pathway: activePathway,
+            userProfile: ctx.userProfile,
+            cycleRecords: ctx.cycleRecords,
+            symptomRecords: ctx.symptomRecords,
+            reports: ctx.reports,
+            pathway: ctx.activePathway,
             period: selectedPeriod,
           });
         });
+      } finally {
+        if (!signal?.aborted) {
+          setIsBackgroundFetching(false);
+        }
       }
-    } catch (err: any) {
-      if (signal?.aborted) return;
-      console.warn('[HealthProgressSection] Background refresh notice:', err);
-      if (typeof navigator !== 'undefined' && !navigator.onLine) {
-        setRefreshNotice('Working offline. Showing saved health records.');
-      } else {
-        setRefreshNotice('Could not refresh latest records right now. Showing local baseline.');
-      }
-      setData((prev) => {
-        if (prev) return prev;
-        return deriveBaselineFromContext({
-          userProfile,
-          cycleRecords,
-          symptomRecords,
-          reports,
-          pathway: activePathway,
-          period: selectedPeriod,
-        });
-      });
-    } finally {
-      if (!signal?.aborted) {
-        setIsBackgroundFetching(false);
-      }
-    }
-  }, [selectedPeriod, moduleName, userProfile, cycleRecords, symptomRecords, reports, activePathway]);
+    },
+    [selectedPeriod, fetchLongitudinalHealth]
+  );
 
   useEffect(() => {
     const controller = new AbortController();
-    loadLongitudinal(controller.signal);
+    const isForce = retryTrigger > 0;
+    loadLongitudinal(controller.signal, isForce);
 
     return () => {
       controller.abort();
@@ -169,13 +188,9 @@ export const HealthProgressSection: React.FC<HealthProgressSectionProps> = ({
   const hasNoAssessments = data?.has_no_assessments ?? (totalAssessments === 0);
   const hasSingleAssessment = data?.has_single_assessment_baseline ?? (totalAssessments === 1);
 
-  // Filter symptom and lab factor comparisons for dedicated cards
+  // Filter symptom factors for pathway deep-dive
   const symptomComparisons = useMemo(() => {
     return (data?.current_vs_previous || []).filter((f) => f.category === 'symptom');
-  }, [data?.current_vs_previous]);
-
-  const labComparisons = useMemo(() => {
-    return (data?.current_vs_previous || []).filter((f) => f.category === 'laboratory');
   }, [data?.current_vs_previous]);
 
   // Session Expired State (Only if no data available at all)
@@ -203,16 +218,60 @@ export const HealthProgressSection: React.FC<HealthProgressSectionProps> = ({
     );
   }
 
+  const isFemale = activePathway === 'female';
+
   return (
-    <div className="space-y-6 text-left select-none max-w-7xl mx-auto">
-      {/* ── 1. Longitudinal Header ── */}
+    <div className="space-y-6 text-left select-none max-w-7xl mx-auto relative">
+      {/* ── Pathway-Specific Ambient Background Wash ── */}
+      <div
+        className="absolute -inset-x-4 sm:-inset-x-6 -top-6 -bottom-10 pointer-events-none -z-10 select-none overflow-hidden rounded-[32px]"
+        aria-hidden="true"
+      >
+        {isFemale ? (
+          <>
+            <div
+              className="absolute -top-10 -left-10 w-[55vw] h-[45vh] max-w-[650px] max-h-[480px] rounded-full blur-3xl pointer-events-none"
+              style={{
+                background:
+                  'radial-gradient(ellipse at center, rgba(254, 226, 237, 0.55) 0%, rgba(253, 242, 248, 0.25) 50%, transparent 75%)',
+              }}
+            />
+            <div
+              className="absolute top-1/3 -right-16 w-[45vw] h-[40vh] max-w-[550px] max-h-[420px] rounded-full blur-3xl pointer-events-none"
+              style={{
+                background:
+                  'radial-gradient(ellipse at center, rgba(251, 207, 232, 0.40) 0%, rgba(254, 240, 245, 0.20) 50%, transparent 75%)',
+              }}
+            />
+          </>
+        ) : (
+          <>
+            <div
+              className="absolute -top-10 -left-10 w-[55vw] h-[45vh] max-w-[650px] max-h-[480px] rounded-full blur-3xl pointer-events-none"
+              style={{
+                background:
+                  'radial-gradient(ellipse at center, rgba(224, 242, 254, 0.65) 0%, rgba(240, 249, 255, 0.30) 50%, transparent 75%)',
+              }}
+            />
+            <div
+              className="absolute top-1/3 -right-16 w-[45vw] h-[40vh] max-w-[550px] max-h-[420px] rounded-full blur-3xl pointer-events-none"
+              style={{
+                background:
+                  'radial-gradient(ellipse at center, rgba(207, 250, 254, 0.45) 0%, rgba(224, 242, 254, 0.20) 50%, transparent 75%)',
+              }}
+            />
+          </>
+        )}
+      </div>
+
+      {/* ── 1. Longitudinal Header with Time Horizon Switcher ── */}
       <LongitudinalHeader
         pathway={activePathway}
         selectedPeriod={selectedPeriod}
         onSelectPeriod={setSelectedPeriod}
         trackingPeriodDisplay={data?.tracking_period_display}
         totalAssessmentsRecorded={totalAssessments}
-        isLoading={isBackgroundFetching && !data}
+        isLoading={(isBackgroundFetching || longitudinalLoading) && !data}
       />
 
       {/* ── 2. Subtle Non-Blocking Refresh Notice (Stale-While-Revalidate) ── */}
@@ -234,7 +293,7 @@ export const HealthProgressSection: React.FC<HealthProgressSectionProps> = ({
         </div>
       )}
 
-      {/* ── 3. Current Health Snapshot (Section 22 & 23 Hero Card) ── */}
+      {/* ── 3. Current Health Snapshot & 4-KPI Deck ── */}
       <CurrentHealthSnapshotCard
         pathway={activePathway}
         currentSummary={data?.current_summary}
@@ -243,20 +302,12 @@ export const HealthProgressSection: React.FC<HealthProgressSectionProps> = ({
         reportCount={reports.length}
         symptomCount={symptomRecords.length}
         trackingPeriodDisplay={data?.tracking_period_display}
-      />
-
-      {/* ── 4. Progress Summary KPI Cards (4 KPI Cards) ── */}
-      <ProgressSummaryCards
-        pathway={activePathway}
-        currentSummary={data?.current_summary}
         comparability={data?.screening_comparability}
-        totalAssessments={totalAssessments}
-        trackingPeriodDisplay={data?.tracking_period_display}
         hasSingleAssessment={hasSingleAssessment}
         hasNoAssessments={hasNoAssessments}
       />
 
-      {/* ── 5. Zero Assessments State: New Account Baseline (Section 4 & 25) ── */}
+      {/* ── 4. Zero Assessments State: New Account Baseline ── */}
       {hasNoAssessments ? (
         <EmptyBaselineState
           pathway={activePathway}
@@ -268,31 +319,32 @@ export const HealthProgressSection: React.FC<HealthProgressSectionProps> = ({
         />
       ) : (
         <>
-          {/* ── 6. What Changed: Deterministic Progression ── */}
-          <WhatChangedCard
+          {/* ── 5. Visual Analytics Studio (Interactive Charts) ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Risk Progression Trajectory Curve */}
+            <RiskTrendChart
+              pathway={activePathway}
+              history={data?.screening_history || []}
+              comparability={data?.screening_comparability}
+              hasSingleAssessment={hasSingleAssessment}
+              hasNoAssessments={hasNoAssessments}
+            />
+
+            {/* Continuous Biometric & Lab Trajectories */}
+            <MetricTrendCard
+              pathway={activePathway}
+              metricSeriesMap={data?.metric_series || {}}
+            />
+          </div>
+
+          {/* ── 6. Master Clinical Factor Matrix Table (Searchable & Filterable) ── */}
+          <CurrentVsPreviousTable
             pathway={activePathway}
-            changes={data?.important_changes || []}
-            comparability={data?.screening_comparability}
+            factors={data?.current_vs_previous || []}
             hasSingleAssessment={hasSingleAssessment}
-            hasNoAssessments={hasNoAssessments}
           />
 
-          {/* ── 7. Screening Risk Progression Curve (Single baseline card if 1, SVG chart if 2+) ── */}
-          <RiskTrendChart
-            pathway={activePathway}
-            history={data?.screening_history || []}
-            comparability={data?.screening_comparability}
-            hasSingleAssessment={hasSingleAssessment}
-            hasNoAssessments={hasNoAssessments}
-          />
-
-          {/* ── 8. Biometric & Lab Trajectories (Single baseline card if 1, SVG chart if 2+) ── */}
-          <MetricTrendCard
-            pathway={activePathway}
-            metricSeriesMap={data?.metric_series || {}}
-          />
-
-          {/* ── 9. Symptom / Vitality Progression ── */}
+          {/* ── 7. Pathway-Specific Deep Dive (Vitality for Male / Ovulatory for Female) ── */}
           <SymptomProgressionCard
             pathway={activePathway}
             maleVitalitySummary={data?.male_vitality_summary}
@@ -300,42 +352,29 @@ export const HealthProgressSection: React.FC<HealthProgressSectionProps> = ({
             hasSingleAssessment={hasSingleAssessment}
           />
 
-          {/* ── 10. Verified Laboratory Progression ── */}
-          <LabProgressionCard
-            pathway={activePathway}
-            labComparisons={labComparisons}
-            hasSingleAssessment={hasSingleAssessment}
-          />
+          {/* ── 8. Assessment Depth Roadmap & Chronological Activity ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <TierProgressionRoadmap
+              pathway={activePathway}
+              tiers={data?.tier_progression || []}
+            />
 
-          {/* ── 11. Assessment Depth Roadmap (Clinical Evidence Progression) ── */}
-          <TierProgressionRoadmap
-            pathway={activePathway}
-            tiers={data?.tier_progression || []}
-          />
-
-          {/* ── 12. Side-by-Side Factor Comparison Matrix ── */}
-          <CurrentVsPreviousTable
-            pathway={activePathway}
-            factors={data?.current_vs_previous || []}
-            hasSingleAssessment={hasSingleAssessment}
-          />
-
-          {/* ── 13. Deduplicated Activity Timeline (Chronological History) ── */}
-          <ChronologicalTimeline
-            pathway={activePathway}
-            events={data?.timeline_events || []}
-          />
+            <ChronologicalTimeline
+              pathway={activePathway}
+              events={data?.timeline_events || []}
+            />
+          </div>
         </>
       )}
 
-      {/* ── 14. Medical Legal Disclaimer ── */}
-      <div className="p-4 rounded-xl bg-[#F8F9FC] border border-[#EAECF0] text-xs text-[#667085] flex items-start gap-2.5">
+      {/* ── 9. Medical Legal Disclaimer ── */}
+      <footer className="p-4 sm:p-5 rounded-2xl bg-[#F8F9FC] border border-[#EAECF0] text-xs text-[#667085] flex items-start gap-3 shadow-2xs">
         <ShieldTick className="w-4 h-4 text-[#16A36A] shrink-0 mt-0.5" aria-hidden="true" />
-        <p className="leading-relaxed">
+        <p className="leading-relaxed font-sans">
           {data?.disclaimer ||
             'BioPulse AI provides longitudinal clinical decision support and health trend visualization. Longitudinal indicators and screening deltas reflect mathematical comparisons between recorded clinical assessments and do not constitute a definitive medical diagnosis. Always consult with a qualified healthcare practitioner.'}
         </p>
-      </div>
+      </footer>
     </div>
   );
 };

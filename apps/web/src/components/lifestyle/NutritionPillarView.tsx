@@ -16,6 +16,7 @@ import {
   Flame,
   ArrowRight,
   ShieldCheck,
+  AlertCircle,
 } from 'lucide-react';
 import type {
   NutritionPillar,
@@ -35,6 +36,7 @@ import { LogMealModal } from './LogMealModal';
 import { MealRemindersModal } from './MealRemindersModal';
 import { MissingDataBanner } from './MissingDataBanner';
 import { getMealImage } from '../../utils/lifestyleImages';
+import { AIPersonalizedRecipeSection } from './AIPersonalizedRecipeSection';
 
 interface NutritionPillarViewProps {
   nutrition?: NutritionPillar;
@@ -56,7 +58,7 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
   onUpdateStatus,
   isMale = false,
 }) => {
-  const { foodLogs: contextFoodLogs } = useUserHealth();
+  const { foodLogs: contextFoodLogs, userProfile } = useUserHealth();
 
   // Active Plan State
   const [currentPlan, setCurrentPlan] = useState<any>(null);
@@ -321,7 +323,7 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
               className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer ${primaryBtnClass}`}
             >
               <Sparkles className="w-4 h-4" />
-              <span>{currentPlan ? 'Customize 7-Day Plan' : 'Generate 7-Day Plan'}</span>
+              <span>{currentPlan ? 'Customize 3-Day Plan' : 'Generate 3-Day Plan'}</span>
             </button>
 
             <button
@@ -413,7 +415,7 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
             </div>
             <div className="w-full bg-slate-200/70 h-1.5 rounded-full overflow-hidden">
               <div
-                className="bg-sky-500 h-full rounded-full transition-all duration-500"
+                className={`${isMale ? 'bg-sky-500' : 'bg-[#F43F7D]'} h-full rounded-full transition-all duration-500`}
                 style={{ width: `${Math.min(100, (loggedTotals.carbs / (targetCarbs || 1)) * 100)}%` }}
               />
             </div>
@@ -442,6 +444,32 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
 
       {/* ── 2. DAILY MEAL SCHEDULE WITH CULINARY VISUALS ── */}
       <section className="space-y-6">
+        {/* Provisional Plan Notice (Allergy status unconfirmed) */}
+        {currentPlan?.provisional_notice && (
+          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-3 animate-fadeIn">
+            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <div className="space-y-0.5">
+              <p className="font-bold">Provisional Meal Guidance</p>
+              <p className="text-[11px] leading-relaxed text-amber-800">
+                {currentPlan.provisional_notice}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Unresolved Dislikes Notice */}
+        {currentPlan?.unresolved_dislikes && currentPlan.unresolved_dislikes.length > 0 && (
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 text-xs flex items-start gap-3 animate-fadeIn">
+            <AlertCircle className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
+            <div className="space-y-0.5">
+              <p className="font-bold">Custom Disliked Foods Notice</p>
+              <p className="text-[11px] leading-relaxed text-slate-600">
+                The following disliked food(s) could not be automatically matched to our verified Pakistani database: {currentPlan.unresolved_dislikes.join(', ')}. Please review meal ingredients below manually.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Day of Week Selector */}
         {currentPlan?.days && currentPlan.days.length > 0 && (
           <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -560,9 +588,19 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
                       </h3>
 
                       {/* Hormonal & Metabolic Benefit Chip */}
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-teal-50 text-[#0E9EAA] border border-teal-100">
+                      <div
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${
+                          isMale
+                            ? 'bg-sky-50 text-[#0868B9] border-sky-200'
+                            : 'bg-teal-50 text-[#0E9EAA] border-teal-100'
+                        }`}
+                      >
                         <ShieldCheck className="w-3.5 h-3.5" />
-                        <span>Low Glycemic Impact • Steady Energy</span>
+                        <span>
+                          {isMale
+                            ? 'Metabolic Vitality • Balanced Nutrition'
+                            : 'Low Glycemic Impact • Steady Energy'}
+                        </span>
                       </div>
 
                       {/* Macro Breakdown Strip */}
@@ -596,7 +634,9 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
                       <button
                         type="button"
                         onClick={() => setExpandedMealRole(isExpanded ? null : meal.role)}
-                        className="text-xs font-semibold text-[#0E9EAA] hover:text-[#0b828c] flex items-center gap-1 pt-2 cursor-pointer"
+                        className={`text-xs font-semibold flex items-center gap-1 pt-2 cursor-pointer ${
+                          isMale ? 'text-[#0868B9] hover:text-[#07599c]' : 'text-[#0E9EAA] hover:text-[#0b828c]'
+                        }`}
                       >
                         <span>Why this meal for your biology?</span>
                         {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -604,8 +644,9 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
 
                       {isExpanded && (
                         <div className="p-3.5 rounded-2xl bg-[#F7FBFC] border border-[#E2EEF4] text-xs text-slate-700 leading-relaxed animate-fadeIn">
-                          Formulated to meet your {Math.round(meal.energy_kcal)} kcal target with complex fiber and
-                          high satiety proteins to support hormone balance and insulin regulation.
+                          {isMale
+                            ? `Formulated to meet your ${Math.round(meal.energy_kcal)} kcal target with quality protein and essential micronutrients supporting metabolic health and vitality.`
+                            : `Formulated to meet your ${Math.round(meal.energy_kcal)} kcal target with complex fiber and high satiety proteins to support hormone balance and insulin regulation.`}
                         </div>
                       )}
                     </div>
@@ -634,7 +675,7 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
                         onClick={() => handleSwapMeal(selectedDay.day_name, meal.role)}
                         className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#E2EEF4] bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer transition shadow-xs"
                       >
-                        <RefreshCw className="w-3.5 h-3.5 text-[#0E9EAA]" />
+                        <RefreshCw className={`w-3.5 h-3.5 ${isMale ? 'text-[#0868B9]' : 'text-[#0E9EAA]'}`} />
                         <span>Swap</span>
                       </button>
                     </div>
@@ -659,11 +700,11 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
           /* Fallback when no plan active: render clinical meal concepts */
           <div className="space-y-6">
             <div className="p-8 rounded-3xl bg-white border border-[#E2EEF4] text-center space-y-4 shadow-sm">
-              <Sparkles className="w-8 h-8 text-[#0E9EAA] mx-auto" />
+              <Sparkles className={`w-8 h-8 mx-auto ${isMale ? 'text-[#0868B9]' : 'text-[#0E9EAA]'}`} />
               <div className="space-y-1 max-w-md mx-auto">
-                <h3 className="text-lg font-bold text-[#073B72]">Personalized 7-Day Protocol Ready to Generate</h3>
+                <h3 className="text-lg font-bold text-[#073B72]">Personalized 3-Day Protocol Ready to Generate</h3>
                 <p className="text-xs text-slate-500 leading-relaxed">
-                  Generate your clinical 7-day culinary roadmap grounded in verified macro floors and blood glucose stability.
+                  Generate your clinical 3-day culinary roadmap grounded in verified macro floors and blood glucose stability.
                 </p>
               </div>
               <button
@@ -672,7 +713,7 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
                 className={`inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-bold shadow-md transition cursor-pointer ${primaryBtnClass}`}
               >
                 <Sparkles className="w-4 h-4" />
-                <span>Generate My 7-Day Plan</span>
+                <span>Generate My 3-Day Plan</span>
               </button>
             </div>
 
@@ -701,7 +742,13 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
                         <div className="p-6 space-y-2.5">
                           <h4 className="text-base font-bold text-[#073B72]">{concept.title}</h4>
                           <p className="text-xs text-slate-600 leading-relaxed">{concept.description}</p>
-                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-teal-50 text-[#0E9EAA] border border-teal-100">
+                          <div
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${
+                              isMale
+                                ? 'bg-sky-50 text-[#0868B9] border-sky-200'
+                                : 'bg-teal-50 text-[#0E9EAA] border-teal-100'
+                            }`}
+                          >
                             <ShieldCheck className="w-3.5 h-3.5" />
                             <span>{concept.hormonal_benefit}</span>
                           </div>
@@ -715,6 +762,15 @@ export const NutritionPillarView: React.FC<NutritionPillarViewProps> = ({
           </div>
         )}
       </section>
+
+      {/* ── 2B. DEDICATED AI PERSONALIZED RECIPE GENERATION ── */}
+      <AIPersonalizedRecipeSection
+        isMale={isMale}
+        pathway={isMale ? 'androsense' : 'ovasense'}
+        userDietaryPreference={userProfile?.lifestyle?.dietaryPreference}
+        userAllergens={userProfile?.medical?.allergies}
+        hasBiometrics={Boolean(userProfile?.heightCm && userProfile?.weightKg)}
+      />
 
       {/* ── 3. SMART FOOD SWAPS ── */}
       {nutrition?.targeted_swaps && nutrition.targeted_swaps.length > 0 && (

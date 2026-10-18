@@ -11,6 +11,8 @@ import {
   CheckCircle,
 } from '@untitledui/icons';
 import type { AppointmentItem } from '../../types/appointment';
+import { useUserHealth } from '../../context/UserHealthContext';
+import { resolvePathway } from '../../types/onboarding';
 
 interface AppointmentDetailModalProps {
   isOpen: boolean;
@@ -33,6 +35,10 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
   onDelete,
   onReschedule,
 }) => {
+  const { userProfile } = useUserHealth();
+  const pathway = resolvePathway(userProfile?.gender, userProfile?.pathway);
+  const isMale = pathway === 'male';
+
   const [isRescheduling, setIsRescheduling] = useState(false);
   const [rescheduleDate, setRescheduleDate] = useState('');
   const [rescheduleTime, setRescheduleTime] = useState('15:30');
@@ -104,14 +110,20 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          className="relative w-full max-w-lg rounded-2xl bg-white border border-[#BAE6FD] shadow-xl overflow-hidden z-10 my-8 text-left select-none"
+          className={`relative w-full max-w-lg rounded-2xl bg-white border ${
+            isMale ? 'border-[#BAE6FD]' : 'border-[#FDE6EF]'
+          } shadow-xl overflow-hidden z-10 my-8 text-left select-none`}
         >
           {/* Header */}
-          <div className="p-6 border-b border-[#BAE6FD] bg-[#01579B] text-white flex items-center justify-between">
+          <div
+            className={`p-6 border-b ${
+              isMale ? 'border-[#BAE6FD] bg-[#01579B]' : 'border-[#FDE6EF] bg-[#BE185D]'
+            } text-white flex items-center justify-between`}
+          >
             <div className="flex items-center gap-3">
-              <MedicalCircle className="w-5 h-5 text-[#E0F2FE] shrink-0" aria-hidden="true" />
+              <MedicalCircle className={`w-5 h-5 ${isMale ? 'text-[#E0F2FE]' : 'text-[#FDE6EF]'} shrink-0`} aria-hidden="true" />
               <div>
-                <span className="text-[10px] font-mono uppercase font-bold text-[#BAE6FD]">
+                <span className={`text-[10px] font-mono uppercase font-bold ${isMale ? 'text-[#BAE6FD]' : 'text-[#FDE6EF]'}`}>
                   {appointment.appointmentType.replace('_', ' ')}
                 </span>
                 <h2 className="text-lg font-bold font-display text-white">
@@ -132,9 +144,15 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
           {/* Body */}
           <div className="p-6 space-y-4 text-xs">
             {/* Status & Provider Banner */}
-            <div className="p-4 rounded-xl bg-[#F0F9FF] border border-[#BAE6FD] flex items-center justify-between">
+            <div
+              className={`p-4 rounded-xl border flex items-center justify-between ${
+                isMale ? 'bg-[#F0F9FF] border-[#BAE6FD]' : 'bg-[#FFF8FA] border-[#FDE6EF]'
+              }`}
+            >
               <div>
-                <span className="text-[10px] font-mono text-[#0369A1] uppercase font-bold block">
+                <span className={`text-[10px] font-mono uppercase font-bold block ${
+                  isMale ? 'text-[#0369A1]' : 'text-[#BE185D]'
+                }`}>
                   Healthcare Professional
                 </span>
                 <span className="text-sm font-bold text-[#0F172A] block">{appointment.providerName}</span>
@@ -157,7 +175,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
             {/* Time & Medium */}
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3.5 rounded-xl bg-white border border-[#E2E8F0] space-y-1">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-[#0288D1]">
+                <div className={`flex items-center gap-1.5 text-xs font-bold ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`}>
                   <Calendar className="w-4 h-4 shrink-0" aria-hidden="true" />
                   <span>Date & Time</span>
                 </div>
@@ -166,7 +184,7 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
               </div>
 
               <div className="p-3.5 rounded-xl bg-white border border-[#E2E8F0] space-y-1">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-[#0288D1]">
+                <div className={`flex items-center gap-1.5 text-xs font-bold ${isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'}`}>
                   {appointment.meetingUrl ? (
                     <VideoRecorder className="w-4 h-4 shrink-0" aria-hidden="true" />
                   ) : (
@@ -180,7 +198,9 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
                     href={appointment.meetingUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-[11px] text-[#0288D1] hover:underline font-bold block truncate"
+                    className={`text-[11px] hover:underline font-bold block truncate ${
+                      isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'
+                    }`}
                   >
                     Open Telehealth Link →
                   </a>
@@ -299,7 +319,11 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
                         setRescheduleTime(appointment.scheduledTime);
                         setIsRescheduling(true);
                       }}
-                      className="px-3 py-1.5 rounded-xl border border-[#BAE6FD] text-[#0288D1] font-bold hover:bg-[#F0F9FF] transition-colors cursor-pointer"
+                      className={`px-3 py-1.5 rounded-xl border font-bold transition-colors cursor-pointer ${
+                        isMale
+                          ? 'border-[#BAE6FD] text-[#0288D1] hover:bg-[#F0F9FF]'
+                          : 'border-[#FDE6EF] text-[#F43F7D] hover:bg-[#FFF8FA]'
+                      }`}
                     >
                       Reschedule
                     </button>
@@ -334,7 +358,9 @@ export const AppointmentDetailModal: React.FC<AppointmentDetailModalProps> = ({
                     onClose();
                     onPrepare(appointment);
                   }}
-                  className="px-4 py-2 rounded-xl bg-[#0288D1] hover:bg-[#0277BD] text-white font-semibold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                  className={`px-4 py-2 rounded-xl text-white font-semibold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer ${
+                    isMale ? 'bg-[#0288D1] hover:bg-[#0277BD]' : 'bg-[#F43F7D] hover:bg-[#BE185D]'
+                  }`}
                 >
                   <File01 className="w-4 h-4 shrink-0" aria-hidden="true" />
                   <span>Prepare Brief</span>

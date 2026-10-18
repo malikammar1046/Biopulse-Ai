@@ -188,6 +188,7 @@ export default function MoreMenuScreen() {
         title: 'DAILY HEALTH',
         items: [
           { id: 'nutrition', label: 'Nutrition & Meals', icon: 'restaurant-outline', route: '/(app)/nutrition' },
+          { id: 'meal_plan', label: 'View Meal Plans', icon: 'book-outline', route: '/(app)/meal-plan' },
           { id: 'fitness', label: 'Fitness & Movement', icon: 'barbell-outline', route: '/(app)/movement' },
           { id: 'water', label: 'Water Log', icon: 'water-outline', route: '/(app)/water-log' },
           { id: 'medications', label: 'Medications', icon: 'medkit-outline', route: '/(app)/medications' },
@@ -217,13 +218,6 @@ export default function MoreMenuScreen() {
           { id: 'notif_prefs', label: 'Notification Preferences', icon: 'options-outline', route: '/(app)/notification-preferences' },
           { id: 'privacy', label: 'Privacy & Security', icon: 'lock-closed-outline', route: '/(app)/settings' },
           { id: 'settings', label: 'Settings', icon: 'settings-outline', route: '/(app)/settings' },
-        ],
-      },
-      {
-        title: 'STATES & DIAGNOSTICS',
-        items: [
-          { id: 'empty_states', label: 'Empty States Showcase', icon: 'grid-outline', route: '/(app)/empty-states' },
-          { id: 'loading_states', label: 'Loading & Error States', icon: 'sync-outline', route: '/(app)/loading-error-states' },
         ],
       },
     ];

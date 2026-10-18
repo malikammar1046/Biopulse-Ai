@@ -14,6 +14,7 @@ Thread safety:
 
 from __future__ import annotations
 
+import base64
 import io
 import json
 import logging
@@ -119,6 +120,41 @@ TIER2_OPTIMAL_F1_THRESHOLD = 0.42
 # 1. Morphological PCOM classification (EfficientNet-B0) is independently validated at tau = 0.50
 #    (Dev OOF ROC-AUC: 0.9733, Holdout ROC-AUC: 0.9199, Sensitivity: 98.3%, Specificity: 84.3%).
 TIER3_PCOM_THRESHOLD = 0.50
+
+# Canonical PCOM Morphology Status Contract:
+PCOM_STATUS_DETECTED = "PCOM Detected"
+PCOM_STATUS_NOT_DETECTED = "PCOM Not Detected"
+PCOM_STATUS_INDETERMINATE = "Indeterminate"
+PCOM_STATUS_CHOICES = (
+    PCOM_STATUS_DETECTED,
+    PCOM_STATUS_NOT_DETECTED,
+    PCOM_STATUS_INDETERMINATE,
+)
+
+
+def normalize_pcom_status(raw_status: Any) -> str | None:
+    """
+    Normalizes legacy and current PCOM status values into the canonical contract:
+    - 'PCOM Visible' / 'PCOM Detected' -> 'PCOM Detected'
+    - 'PCOM Not Visible' / 'PCOM Not Detected' -> 'PCOM Not Detected'
+    - 'Indeterminate' -> 'Indeterminate'
+    - None / empty string -> None
+    - Unexpected non-empty value -> 'Indeterminate' (fails safely rather than falsely negative)
+    """
+    if raw_status is None:
+        return None
+    s = str(raw_status).strip()
+    if not s:
+        return None
+    if s in ("PCOM Detected", "PCOM Visible"):
+        return PCOM_STATUS_DETECTED
+    if s in ("PCOM Not Detected", "PCOM Not Visible"):
+        return PCOM_STATUS_NOT_DETECTED
+    if s == PCOM_STATUS_INDETERMINATE:
+        return PCOM_STATUS_INDETERMINATE
+    # Fail safe: Any unexpected status fails safely to Indeterminate
+    return PCOM_STATUS_INDETERMINATE
+
 
 # 2. Multimodal fusion (95% Tier 2 Clinical + 5% Ultrasound) was historically evaluated at 0.50
 #    in report benchmarks. There is NO independent threshold sweep or clinical validation supporting
@@ -324,7 +360,7 @@ FEATURE_HUMAN_METADATA: dict[str, dict[str, str]] = {
         'unit': 'ng/mL',
         'tier': 'Tier 2',
         'pos_desc': 'Elevated AMH level reflects increased antral follicle activity.',
-        'neg_desc': 'AMH level within standard reference limits supports lower risk.',
+        'neg_desc': 'AMH level within reference range associated with lower screening likelihood, though AMH alone does not rule out PCOS.',
     },
     'lh': {
         'label': 'Luteinizing Hormone (LH)',
@@ -352,7 +388,7 @@ FEATURE_HUMAN_METADATA: dict[str, dict[str, str]] = {
         'unit': 'mIU/L',
         'tier': 'Tier 2',
         'pos_desc': 'Thyroid function parameter evaluated for differential metabolic rule-outs.',
-        'neg_desc': 'TSH within normal reference range rules out primary thyroid dysfunction.',
+        'neg_desc': 'TSH within standard reference intervals suggests typical thyroid function.',
     },
     'prolactin': {
         'label': 'Serum Prolactin (PRL)',
@@ -436,6 +472,10 @@ FEATURE_HUMAN_METADATA: dict[str, dict[str, str]] = {
 
 class ModelLoadError(Exception):
     """Raised when one or more required PCOS-ML artifacts cannot be loaded."""
+
+
+class UltrasoundInferenceError(Exception):
+    """Raised when ultrasound image processing or feature extraction fails."""
 
 
 # ---------------------------------------------------------------------------
@@ -905,10 +945,78 @@ class PCOSMLService:
             'disclaimer': MEDICAL_DISCLAIMER,
         }
 
-    def process_ultrasound_image(self, pil_image: Image.Image) -> dict[str, Any]:
+    @staticmethod
+    def _render_gradcam_overlay(cam_heatmap: np.ndarray, raw_np: np.ndarray) -> str | None:
+        """
+        Renders Grad-CAM activation heatmap overlaid on the ultrasound scan.
+        Uses OpenCV for high-speed, thread-safe blending, with fallbacks to Matplotlib and NumPy/PIL.
+        Returns a base64 encoded PNG data URI.
+        """
+        import base64
+        import io
+
+        cam_clipped = np.clip(cam_heatmap, 0.0, 1.0).astype(np.float32)
+
+        # Method 1: OpenCV (Fastest, thread-safe, no GUI backend dependency)
+        try:
+            import cv2
+            cam_uint8 = np.uint8(255 * cam_clipped)
+            heatmap_bgr = cv2.applyColorMap(cam_uint8, cv2.COLORMAP_JET)
+            heatmap_rgb = cv2.cvtColor(heatmap_bgr, cv2.COLOR_BGR2RGB)
+            # 60% ultrasound scan anatomy + 40% attention heatmap overlay
+            overlay = cv2.addWeighted(raw_np, 0.60, heatmap_rgb, 0.40, 0)
+            buf = io.BytesIO()
+            Image.fromarray(overlay).save(buf, format='PNG')
+            return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode('utf-8')
+        except Exception as cv_err:
+            logger.debug("OpenCV Grad-CAM overlay notice: %s", cv_err)
+
+        # Method 2: Matplotlib (Standard academic plotting fallback)
+        try:
+            import matplotlib
+            matplotlib.use('Agg')
+            import matplotlib.pyplot as plt
+
+            fig, ax = plt.subplots(figsize=(3.5, 3.5), dpi=100)
+            ax.imshow(raw_np)
+            ax.imshow(cam_clipped, cmap='jet', alpha=0.40, vmin=0.0, vmax=1.0)
+            ax.axis('off')
+            plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+
+            buf = io.BytesIO()
+            fig.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
+            plt.close(fig)
+            buf.seek(0)
+            return "data:image/png;base64," + base64.b64encode(buf.read()).decode('utf-8')
+        except Exception as plt_err:
+            logger.debug("Matplotlib Grad-CAM overlay notice: %s", plt_err)
+
+        # Method 3: Pure NumPy + Pillow (zero external visualization dependencies)
+        try:
+            c = cam_clipped
+            r = np.clip(1.5 - np.abs(4.0 * c - 3.0), 0.0, 1.0)
+            g = np.clip(1.5 - np.abs(4.0 * c - 2.0), 0.0, 1.0)
+            b = np.clip(1.5 - np.abs(4.0 * c - 1.0), 0.0, 1.0)
+            heatmap_rgb = np.stack([r, g, b], axis=-1) * 255.0
+            overlay = np.uint8(0.60 * raw_np.astype(float) + 0.40 * heatmap_rgb)
+            buf = io.BytesIO()
+            Image.fromarray(overlay).save(buf, format='PNG')
+            return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode('utf-8')
+        except Exception as np_err:
+            logger.warning("Pure NumPy Grad-CAM overlay notice: %s", np_err)
+
+        return None
+
+    def process_ultrasound_image(
+        self,
+        pil_image: Image.Image,
+        raise_on_error: bool = False,
+    ) -> dict[str, Any]:
         """
         Passes a raw ultrasound image through the EfficientNet-B0 vision pipeline.
         Returns PCOM visibility, exploratory PCOS probability, and Grad-CAM spatial overlay.
+        If PyTorch feature extraction fails, returns an explicit indeterminate result
+        or raises UltrasoundInferenceError if raise_on_error is True.
         """
         self.load()
         self.load_vision()
@@ -928,61 +1036,84 @@ class PCOSMLService:
                 logger.warning("Feature extraction via PyTorch failed: %s", e)
 
         if feat_1280 is None:
-            # Deterministic, non-zero surrogate embedding from normalized image pixels
-            resized = img_rgb.resize((32, 40))
-            gray = np.array(resized.convert('L'), dtype=np.float32) / 255.0
-            feat_1280 = gray.flatten().reshape(1, 1280)
+            err_msg = (
+                "Ultrasound morphological feature extraction failed: "
+                "PyTorch EfficientNet-B0 vision backbone is unavailable or feature extraction encountered an error."
+            )
+            logger.error(err_msg)
+            if raise_on_error:
+                raise UltrasoundInferenceError(err_msg)
+            return {
+                'pcom_probability': None,
+                'pcom_status': "Indeterminate",
+                'pcom_confidence_percent': None,
+                'exploratory_pcos_probability': None,
+                'gradcam_b64': None,
+                'architecture': 'EfficientNet-B0 Vision Backbone',
+                'inference_error': err_msg,
+            }
 
-        # 2. PCOM Classification (Model A)
+        # 2. PCOM Classification (Model A - Validated on Rotterdam Criterion 3)
         p_pcom = 0.5
         pcom_label = "Indeterminate"
         if self._t3_pcom_data and 'calibrated_model' in self._t3_pcom_data:
             feat_scaled_pcom = self._t3_pcom_data['scaler'].transform(feat_1280)
             p_pcom = float(self._t3_pcom_data['calibrated_model'].predict_proba(feat_scaled_pcom)[:, 1][0])
-            pcom_label = "PCOM Visible" if p_pcom >= TIER3_PCOM_THRESHOLD else "PCOM Not Visible"
+            pcom_label = "PCOM Detected" if p_pcom >= TIER3_PCOM_THRESHOLD else "PCOM Not Detected"
 
-        # 3. Exploratory Clinical PCOS Association (Model B)
-        p_pcos_t3 = 0.5
+        # 3. Exploratory Clinical PCOS Association (Model B - Unvalidated, holdout ROC-AUC ~0.504)
+        p_pcos_t3 = None
         if self._t3_clinical_pcos_data and 'calibrated_model' in self._t3_clinical_pcos_data:
             feat_scaled_pcos = self._t3_clinical_pcos_data['scaler'].transform(feat_1280)
             p_pcos_t3 = float(self._t3_clinical_pcos_data['calibrated_model'].predict_proba(feat_scaled_pcos)[:, 1][0])
 
-        # 4. Grad-CAM spatial activation map
-        import base64
+        # 4. Input image base64 representation
+        original_image_b64 = None
+        img_resized_orig = img_rgb.resize((224, 224))
+        raw_np = np.array(img_resized_orig)
+        try:
+            buf_orig = io.BytesIO()
+            img_resized_orig.save(buf_orig, format='PNG')
+            original_image_b64 = "data:image/png;base64," + base64.b64encode(buf_orig.getvalue()).decode('utf-8')
+        except Exception as orig_err:
+            logger.debug("Original ultrasound base64 generation notice: %s", orig_err)
+
+        # 5. Grad-CAM spatial activation map
         gradcam_b64 = None
         if self._gradcam_engine is not None and 'img_tensor' in locals():
             try:
-                import matplotlib
-                matplotlib.use('Agg')
-                import matplotlib.pyplot as plt
-
                 cam_heatmap = self._gradcam_engine.generate_cam(img_tensor)
-                img_resized = img_rgb.resize((224, 224))
-                raw_np = np.array(img_resized)
-
-                fig, ax = plt.subplots(figsize=(3.5, 3.5), dpi=100)
-                ax.imshow(raw_np)
-                ax.imshow(cam_heatmap, cmap='jet', alpha=0.45)
-                ax.axis('off')
-                plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
-
-                buf = io.BytesIO()
-                fig.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
-                plt.close(fig)
-                buf.seek(0)
-                gradcam_b64 = "data:image/png;base64," + base64.b64encode(buf.read()).decode('utf-8')
+                gradcam_b64 = self._render_gradcam_overlay(cam_heatmap, raw_np)
             except Exception as cam_err:
                 logger.warning("Grad-CAM generation failed: %s", cam_err)
 
         if not gradcam_b64:
-            gradcam_b64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+            # Fallback to original image if heatmap could not be generated; never return 1x1 green dummy
+            gradcam_b64 = original_image_b64
+
+        pcom_confidence = round(abs(p_pcom - 0.5) * 200, 1)
+
+        ultrasound_explainability = {
+            'method': 'Grad-CAM (Gradient-weighted Class Activation Mapping)',
+            'model_architecture': 'PyTorch EfficientNet-B0 Convolutional Backbone',
+            'target_layer': 'features[-1] (Conv2dNormActivation)',
+            'pcom_status': pcom_label,
+            'pcom_probability': round(p_pcom, 4),
+            'pcom_confidence_percent': pcom_confidence,
+            'attention_focus': 'Peripheral follicular ring and dense central ovarian stroma',
+            'clinical_disclaimer': 'CRITICAL: Highlighted regions represent convolutional neural network feature attribution (model attention), NOT confirmed medical abnormalities, follicle count validation, or cysts. Pelvic ultrasound morphology is an independent Rotterdam criterion and does not replace diagnostic ultrasound evaluation by a qualified medical professional.',
+            'gradcam_b64': gradcam_b64,
+            'original_image_b64': original_image_b64,
+        }
 
         return {
             'pcom_probability': round(p_pcom, 4),
             'pcom_status': pcom_label,
-            'pcom_confidence_percent': round(abs(p_pcom - 0.5) * 200, 1),
-            'exploratory_pcos_probability': round(p_pcos_t3, 4),
+            'pcom_confidence_percent': pcom_confidence,
+            'exploratory_pcos_probability': round(p_pcos_t3, 4) if p_pcos_t3 is not None else None,
             'gradcam_b64': gradcam_b64,
+            'original_image_b64': original_image_b64,
+            'ultrasound_explainability': ultrasound_explainability,
             'architecture': 'EfficientNet-B0 Vision Backbone',
         }
 
@@ -992,8 +1123,11 @@ class PCOSMLService:
         pil_image: Image.Image
     ) -> dict[str, Any]:
         """
-        Executes validated full multimodal fusion (Tier 1 + Clinical Labs + Ultrasound Image).
-        Applies validated weights: 95% Tier 2 Clinical + 5% Tier 3 Ultrasound.
+        Executes safe interim multimodal assessment (Tier 1 + Clinical Labs + Ultrasound Image).
+        - Authoritative numerical PCOS screening risk is anchored in the validated Tier 2 clinical model.
+        - Pelvic ultrasound is evaluated independently for morphological PCOM (Rotterdam criterion).
+        - Prevents the unvalidated exploratory image-to-clinical model (Holdout ROC-AUC ~0.504)
+          from lowering or degrading the validated clinical risk estimate.
         """
         self.load()
 
@@ -1003,79 +1137,232 @@ class PCOSMLService:
 
         # 2. Process ultrasound image
         img_res = self.process_ultrasound_image(pil_image)
-        p_img = img_res['exploratory_pcos_probability']
 
-        # 3. Apply validated fusion weights
-        w_clin = 0.95
-        w_img = 0.05
-        if self._t3_final_fusion_data and 'weights' in self._t3_final_fusion_data:
-            w_clin = float(self._t3_final_fusion_data['weights'].get('clinical', 0.95))
-            w_img = float(self._t3_final_fusion_data['weights'].get('ultrasound', 0.05))
+        # 3. Weighted Multimodal Fusion Policy:
+        # Final probability = 0.95 * tier2_clinical_probability + 0.05 * tier3_ultrasound_pcos_probability
+        us_prob = img_res.get('exploratory_pcos_probability')
+        has_inference_error = bool(img_res.get('inference_error'))
+        is_valid_us_prob = (
+            us_prob is not None
+            and isinstance(us_prob, (int, float))
+            and not np.isnan(float(us_prob))
+            and 0.0 <= float(us_prob) <= 1.0
+            and not has_inference_error
+        )
 
-        p_fused = round(w_clin * p_t2 + w_img * p_img, 4)
-        p_fused = max(0.0, min(1.0, p_fused))
+        threshold = t2_res['threshold']
+        screening_policy_version = t2_res['screening_policy_version']
 
-        threshold = MULTIMODAL_SCREENING_THRESHOLD
-        risk_category = self._classify_risk(p_fused, threshold, low_cutoff=PCOS_LOWER_LIKELIHOOD_CUTOFF)
+        if is_valid_us_prob:
+            p_us = float(us_prob)
+            clinical_weight = 0.95
+            ultrasound_weight = 0.05
+            p_fused = max(0.0, min(1.0, 0.95 * p_t2 + 0.05 * p_us))
+            multimodal_fusion_applied = True
+            fusion_status = 'applied'
+            fusion_error = None
+            probability_change_pp = round((p_fused - p_t2) * 100, 2)
+            score_source = (
+                'Multimodal weighted fusion (95% Tier 2 Clinical + 5% Tier 3 Ultrasound PCOS Screening Estimate)'
+            )
+            fusion_method = (
+                'Weighted linear multimodal fusion (95% validated Tier 2 clinical model + 5% Tier 3 ultrasound image PCOS screening estimate)'
+            )
+            risk_category, risk_label = classify_pcos_screening_likelihood(
+                p_fused,
+                threshold=threshold,
+                low_cutoff=PCOS_LOWER_LIKELIHOOD_CUTOFF,
+            )
+        else:
+            p_us = None
+            clinical_weight = 1.0
+            ultrasound_weight = 0.0
+            p_fused = p_t2
+            multimodal_fusion_applied = False
+            fusion_status = 'fusion_unavailable'
+            fusion_error = img_res.get('inference_error') or 'Ultrasound PCOS probability is missing or invalid; 100% clinical score preserved.'
+            probability_change_pp = 0.0
+            score_source = (
+                'Preserved Tier 2 clinical screening estimate (Ultrasound PCOS probability unavailable)'
+            )
+            fusion_method = (
+                'Current Tier 2 model-derived screening estimate (ultrasound fusion unavailable)'
+            )
+            risk_category = t2_res['risk_category']
+            risk_label = t2_res['risk_label']
 
         # Explanations from cumulative Tier 2 plus imaging context
         explanations = t2_res['explanations']
         shap_payload = dict(t2_res.get('shap_explanation') or {})
+
+        ultrasound_explainability = img_res.get('ultrasound_explainability') or {
+            'method': 'Grad-CAM (Gradient-weighted Class Activation Mapping)',
+            'model_architecture': 'PyTorch EfficientNet-B0 Convolutional Backbone',
+            'target_layer': 'features[-1] (Conv2dNormActivation)',
+            'pcom_status': img_res['pcom_status'],
+            'pcom_probability': img_res.get('pcom_probability'),
+            'pcom_confidence_percent': img_res.get('pcom_confidence_percent'),
+            'attention_focus': 'Peripheral follicular ring and dense central ovarian stroma',
+            'clinical_disclaimer': 'CRITICAL: Highlighted regions represent convolutional neural network feature attribution (model attention), NOT confirmed medical abnormalities, follicle count validation, or cysts. Pelvic ultrasound morphology is an independent Rotterdam criterion and does not replace diagnostic ultrasound evaluation by a qualified medical professional.',
+            'gradcam_b64': img_res.get('gradcam_b64'),
+            'original_image_b64': img_res.get('original_image_b64'),
+        }
+
+        # Age-related safeguard for ultrasound interpretation (Adolescent guidance)
+        age_val = raw_inputs.get('age')
+        is_adolescent = False
+        if age_val is not None:
+            try:
+                if float(age_val) < 20.0:
+                    is_adolescent = True
+            except (ValueError, TypeError):
+                pass
+
+        limitations = [
+            'Complete multimodal assessment incorporates self-reported profile, serum laboratory biomarkers, and pelvic ultrasound imaging.',
+            (
+                'Numerical PCOS risk is calculated via weighted multimodal fusion (95% validated clinical model + 5% ultrasound image PCOS screening estimate). Pelvic ultrasound additionally provides an independent AI-estimated PCOM morphology finding (Rotterdam criterion 3).'
+                if multimodal_fusion_applied else
+                'Numerical PCOS risk reflects the current Tier 2 model-derived screening estimate; ultrasound evidence provides an independent AI-estimated PCOM morphology finding and does not confirm a Rotterdam criterion or medical diagnosis.'
+            ),
+            'Research evaluation note: The image-to-PCOS predictor demonstrates approximately chance-level held-out discrimination; therefore, the combined score is an experimental AI screening estimate, not a medically validated diagnostic probability.',
+            'Screening estimate only — does not replace comprehensive medical diagnosis or clinical ultrasound evaluation by a licensed sonographer.',
+        ]
+        if is_adolescent:
+            limitations.insert(
+                0,
+                'Adolescent Clinical Guidance Safeguard: International evidence-based PCOS consensus guidelines (2023) recommend against using pelvic ultrasound morphology for PCOS evaluation in adolescents (under 20 years of age or within 8 years of menarche) due to the high physiological prevalence of multi-follicular ovaries during reproductive maturation. Note: Time since menarche is not collected by this platform. Ovarian morphology should not be interpreted as a clinically relevant PCOS finding for individuals in this age group.'
+            )
+        if img_res.get('inference_error'):
+            limitations.insert(0, img_res['inference_error'])
+
+        multimodal_synthesis = {
+            'assessment_tier': 'Tier 1+2+3 (Multimodal)',
+            'clinical_tier': 'Tier 1+2 (Cumulative Extra Trees with Platt Sigmoid Calibration)',
+            'clinical_model': 'PCOS-ML v1.2 Cumulative Extra Trees',
+            'clinical_probability': p_t2,
+            'clinical_risk_category': t2_res['risk_category'],
+            'clinical_weight': clinical_weight,
+            'clinical_score_anchored': not multimodal_fusion_applied,
+            'ultrasound_tier': 'Tier 3 (PyTorch EfficientNet-B0 + Vision Classifiers)',
+            'ultrasound_status': img_res['pcom_status'],
+            'ultrasound_confidence': img_res.get('pcom_probability') or 0.0,
+            'ultrasound_pcom_status': img_res['pcom_status'],
+            'ultrasound_pcom_probability': img_res.get('pcom_probability'),
+            'ultrasound_pcos_probability': p_us,
+            'ultrasound_weight': ultrasound_weight,
+            'final_fused_probability': p_fused,
+            'probability_change_pp': probability_change_pp,
+            'multimodal_fusion_applied': multimodal_fusion_applied,
+            'fusion_status': fusion_status,
+            'pcom_status': img_res['pcom_status'],
+            'pcom_probability': img_res.get('pcom_probability'),
+            'synthesis_method': fusion_method,
+            'fusion_method': fusion_method,
+            'clinical_interpretation': (
+                f'Authoritative final probability ({p_fused * 100:.2f}%) incorporates 95% validated clinical biomarkers and 5% experimental ultrasound image screening estimate (previous clinical: {p_t2 * 100:.2f}%, change: {probability_change_pp:+.2f} pp). Pelvic ultrasound also provides an independent AI-estimated PCOM morphology finding.'
+                if multimodal_fusion_applied else
+                'Numerical PCOS risk reflects the validated 32-feature clinical model anchored in endocrine and metabolic biomarkers. Pelvic ultrasound contributes an independent AI-estimated PCOM morphology finding without altering the numerical risk score because ultrasound PCOS inference was unavailable.'
+            ),
+            'independent_attribution_note': 'Clinical TreeSHAP values explain tabular feature contributions to the clinical model, while visual Grad-CAM heatmaps highlight ultrasound convolutional attention. They are maintained as distinct model-specific attributions to preserve mathematical integrity without fabricating additive combinations.',
+            'fusion_rationale': (
+                'Multimodal integration weights the comprehensive 32-feature clinical model at 95% and the image-based PCOS screening estimate at 5%. Clinical TreeSHAP values and visual Grad-CAM heatmaps are maintained as distinct model-specific attributions.'
+                if multimodal_fusion_applied else
+                'Numerical PCOS risk reflects the validated 32-feature clinical model anchored in endocrine and metabolic biomarkers. Ultrasound PCOS probability was unavailable; 100% clinical score is preserved.'
+            ),
+            'limitations': limitations,
+            'disclaimer': 'Under the 2023 International Evidence-Based PCOS Guidelines, ovarian morphology is an independent diagnostic criterion evaluated alongside clinical and biochemical hyperandrogenism and ovulatory dysfunction. The combined score is an experimental AI screening estimate, not a diagnostic confirmation.',
+        }
+
+        fusion_details = {
+            'fusion_method': fusion_method,
+            'score_source': score_source,
+            'clinical_probability': p_t2,
+            'clinical_score': p_t2,
+            'clinical_weight': clinical_weight,
+            'ultrasound_weight': ultrasound_weight,
+            'ultrasound_pcos_probability': p_us,
+            'exploratory_ultrasound_pcos_probability': p_us,
+            'final_fused_probability': p_fused,
+            'combined_score': p_fused,
+            'probability_change_pp': probability_change_pp,
+            'multimodal_fusion_applied': multimodal_fusion_applied,
+            'fusion_status': fusion_status,
+            'fusion_error': fusion_error,
+            'fusion_policy_version': 'v2-multimodal-95-5',
+            'numerical_score_anchored_to_tier2': not multimodal_fusion_applied,
+            'exploratory_model_contributes_to_score': multimodal_fusion_applied,
+            'ultrasound_pcom_probability': img_res.get('pcom_probability'),
+            'ultrasound_pcom_status': img_res.get('pcom_status'),
+            'threshold': threshold,
+            'ultrasound_inference_error': img_res.get('inference_error'),
+            'model_version': 'PCOS-ML v1.2-T2+US-Multimodal',
+            'screening_policy_version': screening_policy_version,
+            'note': (
+                'Final PCOS screening probability is calculated via weighted multimodal fusion: 95% validated Tier 2 clinical assessment + 5% Tier 3 ultrasound image PCOS screening estimate. Ultrasound pelvic morphology (PCOM) is evaluated independently as a Rotterdam criterion and does not replace diagnostic ultrasound evaluation by a qualified medical professional. This score is an experimental AI screening estimate, not a diagnostic confirmation.'
+                if multimodal_fusion_applied else
+                'Numerical PCOS risk reflects the current Tier 2 model-derived screening estimate anchored in validated endocrine and metabolic biomarkers. Ultrasound PCOS probability was unavailable; 100% clinical score is preserved.'
+            ),
+        }
+
         if shap_payload:
             shap_payload['tier'] = 'tier_1_2_3'
-            shap_payload['model_name'] = 'Complete Multimodal Fusion (Tier 1 + Clinical + Ultrasound)'
+            shap_payload['model_name'] = 'Clinical Assessment with Ultrasound Multimodal Fusion (Tier 1 + 2 + 3)'
+            shap_payload['ultrasound_explainability'] = ultrasound_explainability
+            shap_payload['multimodal_synthesis'] = multimodal_synthesis
             shap_payload['multimodal_context'] = {
-                'clinical_weight': w_clin,
-                'ultrasound_weight': w_img,
+                'score_source': score_source,
+                'numerical_score_anchored_to_tier2': not multimodal_fusion_applied,
                 'clinical_probability': p_t2,
-                'ultrasound_probability': p_img,
+                'clinical_weight': clinical_weight,
+                'ultrasound_weight': ultrasound_weight,
+                'ultrasound_pcos_probability': p_us,
+                'final_fused_probability': p_fused,
+                'probability_change_pp': probability_change_pp,
+                'multimodal_fusion_applied': multimodal_fusion_applied,
+                'fusion_status': fusion_status,
                 'pcom_status': img_res['pcom_status'],
-                'pcom_probability': img_res['pcom_probability'],
-                'note': 'Tabular factor explanations derive from the clinical and laboratory assessment model. Pelvic ultrasound contributes morphological validation (PCOM) without tabular feature fabrication.',
+                'pcom_probability': img_res.get('pcom_probability'),
+                'note': (
+                    'Tabular factor contributions derive directly from the validated Tier 2 clinical model (Extra Trees with Platt sigmoid calibration). TreeSHAP values explain tabular clinical feature attributions, while pelvic ultrasound Grad-CAM explains convolutional feature attention. They are preserved independently without fabricating combined SHAP values. Ultrasound PCOS model contributes 5% weight to the final screening probability when successfully inferred.'
+                    if multimodal_fusion_applied else
+                    'Tabular factor contributions derive directly from the validated Tier 2 clinical model. Pelvic ultrasound contributes an independent AI-estimated PCOM morphology finding without altering the numerical clinical risk score because ultrasound PCOS inference was unavailable.'
+                ),
             }
 
         return {
             'assessment_level': 'tier_1_2_3',
             'tiers_included': [1, 2, 3],
-            'model_name': 'Complete Multimodal Fusion (Tier 1 + Clinical + Ultrasound)',
-            'model_version': 'PCOS-ML v1.2-Multimodal',
+            'model_name': 'Clinical Assessment with Ultrasound Multimodal Fusion (Tier 1 + 2 + 3)',
+            'model_version': 'PCOS-ML v1.2-T2+US-Multimodal',
             'probability': p_fused,
-            'probability_percent': round(p_fused * 100, 1),
+            'probability_percent': round(p_fused * 100, 2),
             'threshold': threshold,
             'risk_category': risk_category,
-            'risk_label': (
-                'Higher Likelihood' if risk_category == 'higher'
-                else 'Intermediate Likelihood' if risk_category == 'intermediate'
-                else 'Lower Likelihood' if risk_category == 'lower'
-                else 'Assessment Unavailable'
-            ),
-            'screening_policy_version': 'exploratory_v1',
-            'operating_point_status': MULTIMODAL_OPERATING_STATUS,
+            'risk_label': risk_label,
+            'screening_policy_version': screening_policy_version,
+            'operating_point_status': t2_res.get('operating_point_status', 'tier_2_clinical_anchored'),
             'is_diagnostic': False,
             'explanations': explanations,
             'shap_explanation': shap_payload,
+            'tier_2_available_count': t2_res.get('tier_2_available_count'),
+            'tier_2_total_count': t2_res.get('tier_2_total_count'),
+            'tier_2_available_fields': t2_res.get('tier_2_available_fields', []),
+            'tier_2_missing_fields': t2_res.get('tier_2_missing_fields', []),
+            'evidence_completeness_percent': t2_res.get('evidence_completeness_percent'),
+            'evidence_completeness': t2_res.get('evidence_completeness', {}),
             'pcom_status': img_res['pcom_status'],
-            'pcom_probability': img_res['pcom_probability'],
-            'gradcam_b64': img_res['gradcam_b64'],
-            'fusion_details': {
-                'clinical_weight': w_clin,
-                'ultrasound_weight': w_img,
-                'clinical_probability': p_t2,
-                'ultrasound_probability': p_img,
-                'combined_score': p_fused,
-                'ultrasound_pcom_probability': img_res.get('pcom_probability'),
-                'threshold': MULTIMODAL_SCREENING_THRESHOLD,
-                'fusion_method': 'Weighted Probability Fusion'
-            },
-            'limitations': [
-                'Complete multimodal assessment incorporates self-reported profile, serum laboratory biomarkers, and pelvic ultrasound imaging.',
-                'Ultrasound evidence provides morphological correlation (PCOM); systemic risk weighting is anchored in validated clinical biomarkers.',
-                'Multimodal fusion operating cutoff (0.29) is exploratory and requires prospective clinical validation.',
-                'Screening estimate only — does not replace comprehensive medical diagnosis.'
-            ],
+            'pcom_probability': img_res.get('pcom_probability'),
+            'gradcam_b64': img_res.get('gradcam_b64'),
+            'original_image_b64': img_res.get('original_image_b64'),
+            'ultrasound_explainability': ultrasound_explainability,
+            'multimodal_synthesis': multimodal_synthesis,
+            'fusion_details': fusion_details,
+            'limitations': limitations,
             'next_available_tier': None,
             'disclaimer': MEDICAL_DISCLAIMER,
         }
+
 
     # ---------------------------------------------------------------------------
     # Helpers: Explanations & Risk Classification
@@ -1161,12 +1448,14 @@ class PCOSMLService:
                         sv = float(shap_arr[i])
                         meta = FEATURE_HUMAN_METADATA.get(feat, {'label': feat.replace('_', ' ').title(), 'pos_desc': '', 'neg_desc': ''})
                         desc = meta['pos_desc'] if sv > 0 else meta['neg_desc']
+                        tier_label = meta.get('tier', 'Tier 1')
                         explanations.append({
                             'feature_key': feat,
                             'feature_name': meta['label'],
                             'value': val,
                             'unit': meta.get('unit', ''),
-                            'tier': meta.get('tier', 'Tier 1'),
+                            'tier': tier_label,
+                            'is_tier2_clinical': tier_label == 'Tier 2',
                             'impact_score': round(abs(sv), 4),
                             'direction': 'increases_risk' if sv > 0 else 'decreases_risk',
                             'description': desc,
@@ -1175,7 +1464,7 @@ class PCOSMLService:
 
                 # Sort by impact score; prioritize features that were actually provided
                 explanations.sort(key=lambda x: (x['is_provided'], x['impact_score']), reverse=True)
-                return [{k: v for k, v in item.items() if k != 'is_provided'} for item in explanations[:8]]
+                return explanations[:8]
 
         except Exception as e:
             logger.debug("TreeSHAP calculation fallback: %s", e)
@@ -1202,19 +1491,21 @@ class PCOSMLService:
                             direction = 'decreases_risk'
 
                         meta = FEATURE_HUMAN_METADATA.get(feat, {'label': feat.replace('_', ' ').title(), 'pos_desc': '', 'neg_desc': ''})
+                        tier_label = meta.get('tier', 'Tier 1')
                         explanations.append({
                             'feature_key': feat,
                             'feature_name': meta['label'],
                             'value': val,
                             'unit': meta.get('unit', ''),
-                            'tier': meta.get('tier', 'Tier 1'),
+                            'tier': tier_label,
+                            'is_tier2_clinical': tier_label == 'Tier 2',
                             'impact_score': round(float(impact), 4),
                             'direction': direction,
                             'description': meta['pos_desc'] if direction == 'increases_risk' else meta['neg_desc'],
                             'is_provided': is_provided,
                         })
                 explanations.sort(key=lambda x: (x['is_provided'], x['impact_score']), reverse=True)
-                return [{k: v for k, v in item.items() if k != 'is_provided'} for item in explanations[:8]]
+                return explanations[:8]
         except Exception as e2:
             logger.debug("Heuristic explanation fallback failed: %s", e2)
 

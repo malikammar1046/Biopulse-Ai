@@ -25,6 +25,7 @@ from apps.health.serializers import (
     ProfileValidationSerializer,
     OnboardingValidationSerializer,
     validate_age_and_dob,
+    validate_male_screening_age,
 )
 from apps.health.services.digital_twin_service import DigitalTwinService
 from apps.health.services.health_pdf_generator import generate_user_health_pdf
@@ -201,7 +202,13 @@ class ProfileValidationView(APIView):
         serializer = ProfileValidationSerializer(data=request.data)
         if serializer.is_valid():
             dob = serializer.validated_data.get("date_of_birth")
-            age = validate_age_and_dob(dob)
+            gender = str(serializer.validated_data.get("gender") or "").strip().lower()
+            pathway = str(serializer.validated_data.get("pathway") or "").strip().lower()
+            is_male = gender in ("male", "m", "man") or pathway in ("male", "male_hypogonadism", "androsense", "hypogonadism")
+            if is_male:
+                age = validate_male_screening_age(dob)
+            else:
+                age = validate_age_and_dob(dob)
             return Response(
                 {
                     "valid": True,

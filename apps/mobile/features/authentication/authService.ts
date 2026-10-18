@@ -333,6 +333,25 @@ export async function sendPasswordResetEmail(
 }
 
 /**
+ * Update user password with recovery token or active session
+ */
+export async function resetUserPassword(
+  newPassword: string,
+  token?: string
+): Promise<{ success: boolean; message: string }> {
+  return mobileSupabaseAuth.updateUserPassword(newPassword, token);
+}
+
+/**
+ * Initiate Google OAuth authentication flow
+ */
+export async function signInWithGoogle(
+  redirectTo?: string
+): Promise<{ success: boolean; error?: string }> {
+  return mobileSupabaseAuth.signInWithGoogle(redirectTo);
+}
+
+/**
  * Log out and invalidate active session
  */
 export async function logoutUser(): Promise<void> {

@@ -45,9 +45,15 @@ SECRET_KEY = os.environ.get(
 
 DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() in ("true", "1", "yes")
 
-_ALLOWED_HOSTS_ENV = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,testserver")
-ALLOWED_HOSTS = [h.strip() for h in _ALLOWED_HOSTS_ENV.split(",") if h.strip()]
-if "testserver" not in ALLOWED_HOSTS:
+_ALLOWED_HOSTS_ENV = os.environ.get("DJANGO_ALLOWED_HOSTS", "")
+if _ALLOWED_HOSTS_ENV:
+    ALLOWED_HOSTS = [h.strip() for h in _ALLOWED_HOSTS_ENV.split(",") if h.strip()]
+elif DEBUG:
+    # Allow local development connections from physical Android/iOS devices and emulators
+    ALLOWED_HOSTS = ["*"]
+else:
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+if "testserver" not in ALLOWED_HOSTS and "*" not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append("testserver")
 
 # ---------------------------------------------------------------------------
@@ -100,15 +106,74 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 # ---------------------------------------------------------------------------
-# Database — SQLite for Django admin/sessions only.
-# Health data lives in Supabase (accessed directly via supabase-py).
+# Database Configuration
+# - Clinical and screening data lives in Supabase (accessed via supabase-py REST).
+# - Django ORM manages Doctors, Django Admin, sessions, and auth.
+# - Azure Container Apps Note: The local filesystem is EPHEMERAL and resets on
+#   scale-to-zero cold starts, restarts, or new revisions. SQLite changes made via
+#   Django Admin will not persist across ACA recreations unless stored on an
+#   attached Azure Files volume (DJANGO_DB_PATH) or backed by PostgreSQL (DATABASE_URL).
 # ---------------------------------------------------------------------------
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
+DJANGO_DB_PATH = os.environ.get("DJANGO_DB_PATH", "").strip()
+
+if DATABASE_URL:
+    try:
+        # Verify PostgreSQL database adapter availability
+        try:
+            import psycopg  # noqa: F401
+        except ImportError:
+            import psycopg2  # noqa: F401
+
+        try:
+            import dj_database_url
+            DATABASES = {
+                "default": dj_database_url.parse(
+                    DATABASE_URL,
+                    conn_max_age=600,
+                    conn_health_checks=True,
+                )
+            }
+        except ImportError:
+            from urllib.parse import unquote, urlparse
+            _parsed = urlparse(DATABASE_URL)
+            _engine = (
+                "django.db.backends.postgresql"
+                if _parsed.scheme in ("postgres", "postgresql")
+                else "django.db.backends.sqlite3"
+            )
+            DATABASES = {
+                "default": {
+                    "ENGINE": _engine,
+                    "NAME": unquote(_parsed.path.lstrip("/")),
+                    "USER": unquote(_parsed.username or ""),
+                    "PASSWORD": unquote(_parsed.password or ""),
+                    "HOST": _parsed.hostname or "",
+                    "PORT": _parsed.port or 5432,
+                    "CONN_MAX_AGE": 600,
+                }
+            }
+    except ImportError:
+        import warnings
+        warnings.warn(
+            "DATABASE_URL is configured but neither psycopg nor psycopg2 is installed. "
+            "Falling back to SQLite.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.sqlite3",
+                "NAME": Path(DJANGO_DB_PATH) if DJANGO_DB_PATH else BASE_DIR / "db.sqlite3",
+            }
+        }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": Path(DJANGO_DB_PATH) if DJANGO_DB_PATH else BASE_DIR / "db.sqlite3",
+        }
     }
-}
 
 # ---------------------------------------------------------------------------
 # Django REST Framework
@@ -174,6 +239,18 @@ GEMINI_TIMEOUT_SECONDS = int(os.environ.get("GEMINI_TIMEOUT_SECONDS", "30"))
 GEMINI_MAX_OUTPUT_TOKENS = int(os.environ.get("GEMINI_MAX_OUTPUT_TOKENS", "2500"))
 
 # ---------------------------------------------------------------------------
+# Groq Cloud LLM Provider & Failover
+# ---------------------------------------------------------------------------
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "").strip()
+GROQ_MODEL = (
+    os.environ.get("GROQ_FALLBACK_MODEL", "").strip()
+    or os.environ.get("GROQ_MODEL", "").strip()
+    or "openai/gpt-oss-120b"
+)
+GROQ_FALLBACK_MODEL = GROQ_MODEL
+GROQ_TIMEOUT_SECONDS = int(os.environ.get("GROQ_TIMEOUT_SECONDS", "30"))
+
+# ---------------------------------------------------------------------------
 # BioPulse Assessment Maintenance Mode (Enforces 503 on writes & suppresses auto-reassess)
 # ---------------------------------------------------------------------------
 BIOPULSE_ASSESSMENT_MAINTENANCE = os.environ.get(
@@ -201,6 +278,12 @@ DISABLE_INTELLIGENCE_PREWARM = os.environ.get(
 
 DISABLE_SUPABASE_NETWORK = os.environ.get(
     "DISABLE_SUPABASE_NETWORK", "false"
+).lower() in ("true", "1", "yes")
+
+# Server-side feature flag for clean 7-feature Male Tier 1 candidate model
+# Default is False (disabled) — preserves existing legacy 11-feature model
+ENABLE_MALE_TIER1_CLEAN_7FEAT = os.environ.get(
+    "ENABLE_MALE_TIER1_CLEAN_7FEAT", "false"
 ).lower() in ("true", "1", "yes")
 
 

@@ -24,6 +24,7 @@ import {
   buildMaleTier1Inputs,
   validateMaleReviewInputs,
   resolveRiskBand,
+  MALE_DEFAULT_THRESHOLD,
 } from '../services/assessmentService';
 
 /**
@@ -152,15 +153,29 @@ export default function MaleReviewScreen() {
       const res = await submitMaleTier1AssessmentWithStatus(payload);
 
       if (res.error || !res.data) {
+        setSubmitting(false);
+        setIsLoadingAssessment(false);
+        setAssessmentError(res.error);
         Alert.alert(
-          'Screening Engine Unavailable',
-          res.error || 'Failed to connect to the BioPulse assessment pipeline. Please check your network connection and retry.'
+          res.statusCode === 401 ? 'Session Expired' : 'Screening Notice',
+          res.error || 'Failed to connect to the BioPulse assessment pipeline. Please check your network connection and retry.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Retry', onPress: () => handleRunScreening() },
+          ]
         );
         return;
       }
 
       const assess = res.data;
-      const band = resolveRiskBand(assess.probability, assess.risk_category, assess.threshold || 0.45);
+      const band = resolveRiskBand(
+        assess.probability,
+        assess.risk_category,
+        assess.threshold ?? MALE_DEFAULT_THRESHOLD,
+        0.1808,
+        'male_hypogonadism',
+        assess.summary_text
+      );
 
       setActiveAssessment(assess);
       updateScreeningAssessment({

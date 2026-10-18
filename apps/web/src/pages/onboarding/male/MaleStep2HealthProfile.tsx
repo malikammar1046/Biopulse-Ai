@@ -24,8 +24,18 @@ const CONDITION_OPTIONS = [
   },
   {
     id: 'diabetes',
-    label: 'Diabetes / Insulin',
-    aliases: ['Diabetes or Insulin Resistance', 'Diabetes / Insulin', 'Diabetes', 'Insulin Resistance'],
+    label: 'Doctor-diagnosed Diabetes',
+    aliases: ['Doctor-diagnosed Diabetes', 'Diabetes (Type 1 or Type 2)', 'Diabetes'],
+  },
+  {
+    id: 'hbp_unsure',
+    label: 'Blood Pressure: Unsure / Need Check',
+    aliases: ['Blood Pressure: Unsure', 'Hypertension: Unsure'],
+  },
+  {
+    id: 'dm_unsure',
+    label: 'Blood Sugar / Diabetes: Unsure',
+    aliases: ['Diabetes: Unsure', 'Blood Sugar: Unsure'],
   },
   {
     id: 'cholesterol',
@@ -91,19 +101,27 @@ export const MaleStep2HealthProfile: React.FC<MaleStep2Props> = ({
   const toggleCondition = (opt: (typeof CONDITION_OPTIONS)[number]) => {
     let updated: string[];
     if (opt.id === 'none') {
-      updated = ['None of these'];
+      const isAlready = currentConditions.some((c) => opt.aliases.includes(c) || c === opt.label);
+      updated = isAlready ? [] : ['None of these'];
     } else {
-      const filtered = currentConditions.filter(
+      let filtered = currentConditions.filter(
         (c) => c !== 'None of these' && c !== 'None of these conditions' && c !== 'None'
       );
+      if (opt.id === 'hbp') {
+        filtered = filtered.filter((c) => !c.toLowerCase().includes('pressure: unsure') && !c.toLowerCase().includes('hypertension: unsure'));
+      } else if (opt.id === 'hbp_unsure') {
+        filtered = filtered.filter((c) => !c.toLowerCase().includes('high blood pressure') && c !== 'Hypertension');
+      } else if (opt.id === 'diabetes') {
+        filtered = filtered.filter((c) => !c.toLowerCase().includes('diabetes: unsure') && !c.toLowerCase().includes('blood sugar: unsure'));
+      } else if (opt.id === 'dm_unsure') {
+        filtered = filtered.filter((c) => !c.toLowerCase().includes('diabetes') && !c.toLowerCase().includes('doctor-diagnosed'));
+      }
+
       const isAlreadySelected = filtered.some((c) => opt.aliases.includes(c) || c === opt.label);
       if (isAlreadySelected) {
         updated = filtered.filter((c) => !opt.aliases.includes(c) && c !== opt.label);
       } else {
         updated = [...filtered, opt.label];
-      }
-      if (updated.length === 0) {
-        updated = ['None of these'];
       }
     }
     onMedicalChange({ ...medical, conditions: updated });
@@ -131,7 +149,7 @@ export const MaleStep2HealthProfile: React.FC<MaleStep2Props> = ({
   };
 
   return (
-    <div className="space-y-5 text-left max-w-4xl mx-auto">
+    <div className="w-full space-y-5 text-left">
       {/* ── Top Header Row with Health Profile badge and "Why we ask this" ── */}
       <div className="flex items-center justify-between gap-3">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EAFBFC] border border-[#B2EBF2] text-xs font-bold text-[#0E9EAA] tracking-wider uppercase font-sans shadow-2xs">

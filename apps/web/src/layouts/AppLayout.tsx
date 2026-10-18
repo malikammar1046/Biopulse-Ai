@@ -29,6 +29,66 @@ export const AppLayout: React.FC = () => {
       {/* ── Route-Aware Ambient Botanical / Biological Atmosphere (Disabled on Dashboards) ── */}
       <PageAtmosphere />
 
+      {/* ── Subtle Pathway-Aware Ambient Background for Dashboards ── */}
+      {isDashboard && (
+        <div
+          className="fixed inset-0 pointer-events-none -z-10 select-none overflow-hidden"
+          aria-hidden="true"
+        >
+          {isFemale ? (
+            <>
+              {/* Soft rose / warm blush ambient wash for OvaSense */}
+              <div
+                className="absolute -top-28 -left-20 w-[65vw] h-[65vh] max-w-[900px] max-h-[650px] rounded-full blur-3xl pointer-events-none"
+                style={{
+                  background:
+                    'radial-gradient(ellipse at center, rgba(253, 230, 239, 0.65) 0%, rgba(254, 242, 247, 0.35) 45%, transparent 70%)',
+                }}
+              />
+              <div
+                className="absolute top-1/4 -right-24 w-[55vw] h-[55vh] max-w-[750px] max-h-[600px] rounded-full blur-3xl pointer-events-none"
+                style={{
+                  background:
+                    'radial-gradient(ellipse at center, rgba(251, 207, 232, 0.45) 0%, rgba(250, 232, 255, 0.22) 45%, transparent 70%)',
+                }}
+              />
+              <div
+                className="absolute -bottom-24 left-1/4 w-[50vw] h-[50vh] max-w-[700px] max-h-[550px] rounded-full blur-3xl pointer-events-none"
+                style={{
+                  background:
+                    'radial-gradient(ellipse at center, rgba(254, 237, 243, 0.40) 0%, transparent 65%)',
+                }}
+              />
+            </>
+          ) : (
+            <>
+              {/* Soft sky / cyan ambient wash for AndroSense */}
+              <div
+                className="absolute -top-28 -left-20 w-[65vw] h-[65vh] max-w-[900px] max-h-[650px] rounded-full blur-3xl pointer-events-none"
+                style={{
+                  background:
+                    'radial-gradient(ellipse at center, rgba(224, 242, 254, 0.75) 0%, rgba(240, 249, 255, 0.40) 45%, transparent 70%)',
+                }}
+              />
+              <div
+                className="absolute top-1/4 -right-24 w-[55vw] h-[55vh] max-w-[750px] max-h-[600px] rounded-full blur-3xl pointer-events-none"
+                style={{
+                  background:
+                    'radial-gradient(ellipse at center, rgba(207, 250, 254, 0.50) 0%, rgba(224, 231, 255, 0.25) 45%, transparent 70%)',
+                }}
+              />
+              <div
+                className="absolute -bottom-24 left-1/4 w-[50vw] h-[50vh] max-w-[700px] max-h-[550px] rounded-full blur-3xl pointer-events-none"
+                style={{
+                  background:
+                    'radial-gradient(ellipse at center, rgba(224, 242, 254, 0.40) 0%, transparent 65%)',
+                }}
+              />
+            </>
+          )}
+        </div>
+      )}
+
       <ScrollToTop />
 
       {/* Desktop Medical Sidebar */}

@@ -65,22 +65,34 @@ export const GoalsTab: React.FC<GoalsTabProps> = ({
                 onClick={() => toggleGoal(goal.title)}
                 className={`p-4 rounded-2xl text-left border transition-all flex items-start justify-between gap-2 cursor-pointer ${
                   isSelected
-                    ? 'bg-[#F0F9FF] border-[#0288D1] ring-1.5 ring-[#0288D1] shadow-xs'
+                    ? isMale
+                      ? 'bg-[#F0F9FF] border-[#0288D1] ring-1.5 ring-[#0288D1] shadow-xs'
+                      : 'bg-[#FDE6EF] border-[#F43F7D] ring-1.5 ring-[#F43F7D] shadow-xs'
                     : 'bg-slate-50/80 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
                 }`}
               >
                 <div>
-                  <span className={`text-xs leading-snug ${isSelected ? 'font-bold text-[#01579B]' : 'font-medium text-slate-800'}`}>
+                  <span className={`text-xs leading-snug ${
+                    isSelected
+                      ? isMale ? 'font-bold text-[#01579B]' : 'font-bold text-[#BE185D]'
+                      : 'font-medium text-slate-800'
+                  }`}>
                     {goal.title}
                   </span>
-                  <p className={`text-[10px] mt-0.5 ${isSelected ? 'text-[#0288D1]' : 'text-slate-500'}`}>
+                  <p className={`text-[10px] mt-0.5 ${
+                    isSelected
+                      ? isMale ? 'text-[#0288D1]' : 'text-[#F43F7D]'
+                      : 'text-slate-500'
+                  }`}>
                     {goal.desc}
                   </p>
                 </div>
                 <div
                   className={`w-4 h-4 rounded-md flex items-center justify-center shrink-0 mt-0.5 border transition-all ${
                     isSelected
-                      ? 'bg-[#0288D1] border-[#0288D1] text-white shadow-xs'
+                      ? isMale
+                        ? 'bg-[#0288D1] border-[#0288D1] text-white shadow-xs'
+                        : 'bg-[#F43F7D] border-[#F43F7D] text-white shadow-xs'
                       : 'border-slate-300 bg-white'
                   }`}
                 >
@@ -138,7 +150,9 @@ export const GoalsTab: React.FC<GoalsTabProps> = ({
                 }
                 className={`p-4 rounded-2xl text-left border transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-[#0288D1] text-white border-[#0288D1] shadow-xs ring-1 ring-[#0288D1]/30'
+                    ? isMale
+                      ? 'bg-[#0288D1] text-white border-[#0288D1] shadow-xs ring-1 ring-[#0288D1]/30'
+                      : 'bg-[#F43F7D] text-white border-[#F43F7D] shadow-xs ring-1 ring-[#F43F7D]/30'
                     : 'bg-slate-50/70 border-slate-200 text-slate-700 hover:bg-slate-100'
                 }`}
               >
@@ -155,7 +169,9 @@ export const GoalsTab: React.FC<GoalsTabProps> = ({
                       isSelected ? 'border-white bg-white' : 'border-slate-300 bg-white'
                     }`}
                   >
-                    {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[#0288D1]" />}
+                    {isSelected && (
+                      <span className={`w-1.5 h-1.5 rounded-full ${isMale ? 'bg-[#0288D1]' : 'bg-[#F43F7D]'}`} />
+                    )}
                   </div>
                 </div>
                 <p className="text-xs font-bold mb-1">{cadence.label}</p>

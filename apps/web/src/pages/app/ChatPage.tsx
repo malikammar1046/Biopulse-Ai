@@ -10,11 +10,11 @@ import {
   XClose,
   ShieldTick,
 } from '@untitledui/icons';
-import { Sparkles } from 'lucide-react';
 import { useAIChat } from '../../context/AIChatContext';
 import { useUserHealth } from '../../context/UserHealthContext';
 import { DigitalTwinService } from '../../services/digitalTwinService';
 import { AIMessageContent } from '../../components/common/AIMessageContent';
+import { PathwayCompanionAvatar } from '../../components/brand/PathwayCompanionAvatar';
 
 export const ChatPage: React.FC = () => {
   const { t } = useTranslation(['chat', 'common']);
@@ -114,8 +114,6 @@ export const ChatPage: React.FC = () => {
     await sendMessage(text.trim());
   };
 
-  const primaryLightBg = isFemale ? 'bg-[#FDE6EF]' : 'bg-[#E1F5FE]';
-  const primaryBorder = isFemale ? 'border-[#F43F7D]/25' : 'border-[#BAE6FD]';
   const primaryText = isFemale ? 'text-[#F43F7D]' : 'text-[#0868B9]';
 
   return (
@@ -123,11 +121,7 @@ export const ChatPage: React.FC = () => {
       {/* ── 1. Dedicated AI Workspace Header ── */}
       <header className="px-5 py-4 border-b border-[#E2E8F0] bg-white flex items-center justify-between shrink-0 z-10">
         <div className="flex items-center gap-3.5 min-w-0">
-          <div
-            className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${primaryLightBg} border ${primaryBorder}`}
-          >
-            <Sparkles className={`w-5 h-5 ${primaryText}`} aria-hidden="true" />
-          </div>
+          <PathwayCompanionAvatar isFemale={isFemale} size="lg" />
 
           <div className="min-w-0">
             <div className="flex items-center gap-2.5 flex-wrap">
@@ -193,11 +187,7 @@ export const ChatPage: React.FC = () => {
                 }`}
               >
                 {!isUser && (
-                  <div
-                    className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-1 ${primaryLightBg} border ${primaryBorder}`}
-                  >
-                    <Sparkles className={`w-4 h-4 ${primaryText}`} aria-hidden="true" />
-                  </div>
+                  <PathwayCompanionAvatar isFemale={isFemale} size="sm" className="mt-1" />
                 )}
 
                 <div
@@ -254,11 +244,7 @@ export const ChatPage: React.FC = () => {
         {/* Loading UX: Typing indicator + animated dots */}
         {isLoading && (
           <div className="flex items-start gap-3 w-fit">
-            <div
-              className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${primaryLightBg} border ${primaryBorder}`}
-            >
-              <Sparkles className={`w-4 h-4 ${primaryText}`} aria-hidden="true" />
-            </div>
+            <PathwayCompanionAvatar isFemale={isFemale} size="sm" className="mt-1" />
 
             <div className="flex items-center gap-2.5 p-4 rounded-2xl bg-white border border-[#E2E8F0] shadow-xs">
               <div className="flex items-center gap-1">

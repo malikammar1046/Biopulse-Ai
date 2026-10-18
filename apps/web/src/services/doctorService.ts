@@ -5,9 +5,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Doctor } from '../types/doctor';
 
-const BACKEND_API_URL =
-  (typeof import.meta !== 'undefined' && (import.meta as any)?.env?.VITE_BACKEND_API_URL) ||
-  'http://127.0.0.1:8000/api';
+import { BACKEND_API_URL } from '../config/apiConfig';
 
 export const DOCTORS_ENDPOINT = `${BACKEND_API_URL}/v1/doctors/`;
 

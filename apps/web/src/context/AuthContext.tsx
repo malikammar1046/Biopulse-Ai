@@ -5,7 +5,11 @@ import { authService, type LoginPayload, type RegisterPayload } from '../service
 import { profileService } from '../services/profileService';
 import type { UserProfile } from '../types/onboarding';
 import { DEFAULT_USER_PROFILE, createEmptyUserProfile } from '../data/mockDashboardData';
-import { clearAllLocalAssessments } from '../services/intelligenceService';
+import {
+  clearAllLocalAssessments,
+  invalidateLongitudinalCache,
+  setLongitudinalAuthUserId,
+} from '../services/intelligenceService';
 import { lifestyleService } from '../services/lifestyleService';
 import { nutritionService } from '../services/nutritionService';
 import { changeLocale } from '../i18n/locale';
@@ -188,7 +192,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!isMounted) return;
         const currentSession = (result as any)?.data?.session ?? null;
         setSession(currentSession);
-        setUser(currentSession?.user ?? null);
+        const currentUser = currentSession?.user ?? null;
+        setUser(currentUser);
+        setLongitudinalAuthUserId(currentUser ? currentUser.id : null);
 
         // Immediately unblock loading as soon as session status is determined
         setLoading(false);
@@ -213,6 +219,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(currentSession);
       const currentUser = currentSession?.user ?? null;
       setUser(currentUser);
+      setLongitudinalAuthUserId(currentUser ? currentUser.id : null);
 
       if (isRegisteringRef.current) {
         // Registration is orchestrating the user and profile state.
@@ -226,6 +233,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         // Logged out
         setUserProfile(createEmptyUserProfile());
+        invalidateLongitudinalCache();
       }
       setLoading(false);
     });
@@ -374,6 +382,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSession(null);
     setUserProfile(createEmptyUserProfile());
     clearAllLocalAssessments();
+    invalidateLongitudinalCache();
+    setLongitudinalAuthUserId(null);
     lifestyleService.clearCache();
     nutritionService.clearCache();
     try {

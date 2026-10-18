@@ -8,9 +8,10 @@ import {
   AlertTriangle,
   MedicalCross,
 } from '@untitledui/icons';
-import { Maximize2, Minus, Sparkles } from 'lucide-react';
+import { Maximize2, Minus } from 'lucide-react';
 import { useAIChat } from '../../context/AIChatContext';
 import { AIMessageContent } from '../common/AIMessageContent';
+import { PathwayCompanionAvatar } from '../brand/PathwayCompanionAvatar';
 import { ROUTES } from '../../constants/routes';
 
 export const FloatingOvaSenseAI: React.FC = () => {
@@ -76,8 +77,6 @@ export const FloatingOvaSenseAI: React.FC = () => {
     return null;
   }
 
-  const primaryLightBg = isFemale ? 'bg-[#FDE6EF]' : 'bg-[#E1F5FE]';
-  const primaryBorder = isFemale ? 'border-[#F43F7D]/30' : 'border-[#BAE6FD]';
   const primaryText = isFemale ? 'text-[#F43F7D]' : 'text-[#0868B9]';
 
   return (
@@ -97,11 +96,7 @@ export const FloatingOvaSenseAI: React.FC = () => {
             {/* Header */}
             <div className="px-4 py-3.5 bg-white border-b border-[#E2E8F0] flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${primaryLightBg} border ${primaryBorder}`}
-                >
-                  <Sparkles className={`w-4 h-4 ${primaryText}`} aria-hidden="true" />
-                </div>
+                <PathwayCompanionAvatar isFemale={isFemale} size="md" />
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <h3 className="text-xs sm:text-sm font-bold font-display text-[#0F172A] truncate">
@@ -167,11 +162,7 @@ export const FloatingOvaSenseAI: React.FC = () => {
                       }`}
                     >
                       {!isUser && (
-                        <div
-                          className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${primaryLightBg} border ${primaryBorder}`}
-                        >
-                          <Sparkles className={`w-3.5 h-3.5 ${primaryText}`} aria-hidden="true" />
-                        </div>
+                        <PathwayCompanionAvatar isFemale={isFemale} size="xs" className="mt-0.5" />
                       )}
 
                       <div
@@ -223,27 +214,30 @@ export const FloatingOvaSenseAI: React.FC = () => {
 
               {/* Typing / Reviewing Context indicator */}
               {isLoading && (
-                <div className="flex items-center gap-2 p-3 rounded-2xl bg-white border border-[#E2E8F0] w-fit shadow-xs">
-                  <div className="flex items-center gap-1">
-                    <div
-                      className={`w-2 h-2 rounded-full animate-bounce ${
-                        isFemale ? 'bg-[#F43F7D]' : 'bg-[#0868B9]'
-                      }`}
-                    />
-                    <div
-                      className={`w-2 h-2 rounded-full animate-bounce delay-150 ${
-                        isFemale ? 'bg-[#0E9EAA]' : 'bg-[#2196E3]'
-                      }`}
-                    />
-                    <div
-                      className={`w-2 h-2 rounded-full animate-bounce delay-300 ${
-                        isFemale ? 'bg-[#16B8C4]' : 'bg-[#0868B9]'
-                      }`}
-                    />
+                <div className="flex items-start gap-2 w-fit">
+                  <PathwayCompanionAvatar isFemale={isFemale} size="xs" className="mt-0.5" />
+                  <div className="flex items-center gap-2 p-2.5 sm:p-3 rounded-2xl bg-white border border-[#E2E8F0] shadow-xs">
+                    <div className="flex items-center gap-1">
+                      <div
+                        className={`w-2 h-2 rounded-full animate-bounce ${
+                          isFemale ? 'bg-[#F43F7D]' : 'bg-[#0868B9]'
+                        }`}
+                      />
+                      <div
+                        className={`w-2 h-2 rounded-full animate-bounce delay-150 ${
+                          isFemale ? 'bg-[#0E9EAA]' : 'bg-[#2196E3]'
+                        }`}
+                      />
+                      <div
+                        className={`w-2 h-2 rounded-full animate-bounce delay-300 ${
+                          isFemale ? 'bg-[#16B8C4]' : 'bg-[#0868B9]'
+                        }`}
+                      />
+                    </div>
+                    <span className="text-[11px] font-medium text-[#64748B]">
+                      BioPulse AI is reviewing your context...
+                    </span>
                   </div>
-                  <span className="text-[11px] font-medium text-[#64748B]">
-                    BioPulse AI is reviewing your context...
-                  </span>
                 </div>
               )}
               <div ref={messagesEndRef} />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { ROUTES } from '../../constants/routes';
@@ -10,7 +10,7 @@ import type {
   WomensHealthProfile,
   LifestyleProfile,
 } from '../../types/onboarding';
-import { validateDateOfBirth, validatePakistaniPhone } from '../../utils/profileValidation';
+import { validateFemaleScreeningAge, validatePakistaniPhone } from '../../utils/profileValidation';
 import { FemaleOnboardingLayout } from './female/FemaleOnboardingLayout';
 import { FemaleStep1BasicInfo } from './female/FemaleStep1BasicInfo';
 import { FemaleStep2MedicalHistory } from './female/FemaleStep2MedicalHistory';
@@ -24,8 +24,12 @@ import { deriveFemaleTier1InputsFromProfile } from '../../utils/tier1InputMapper
 export const FemaleOnboarding: React.FC = () => {
   const { t } = useTranslation(['onboarding', 'common']);
   const navigate = useNavigate();
-  const { userProfile, finalizeOnboardingAndScreen } = useUserHealth();
+  const location = useLocation();
+  const { userProfile, finalizeOnboardingAndScreen, fetchClinicalState } = useUserHealth();
   const shouldReduceMotion = useReducedMotion();
+
+  const isExplicitRelaunch = Boolean((location.state as any)?.allowReonboard);
+  const isUpdatingProfile = Boolean(userProfile.isOnboarded && isExplicitRelaunch);
 
   const femaleSteps = useMemo(() => [
     { number: '1', label: t('onboarding:stepLabels.basicInfo', 'Basic Info') },
@@ -52,8 +56,20 @@ export const FemaleOnboarding: React.FC = () => {
     phone: userProfile.phone || '',
     dateOfBirth: userProfile.dateOfBirth || '',
     avatarUrl: userProfile.avatarUrl || '',
-    heightCm: userProfile.heightCm || 165,
-    weightKg: userProfile.weightKg || 62,
+    heightCm: userProfile.heightCm ?? null,
+    weightKg: userProfile.weightKg ?? null,
+    medical: {
+      bloodType: userProfile.medical?.bloodType || '',
+      allergies: userProfile.medical?.allergies || ['None'],
+      medications: userProfile.medical?.medications || [],
+      conditions: userProfile.medical?.conditions?.length
+        ? userProfile.medical.conditions
+        : [],
+      surgeries: userProfile.medical?.surgeries || [],
+      familyHistory: userProfile.medical?.familyHistory?.length
+        ? userProfile.medical.familyHistory
+        : ['None known'],
+    },
     womensHealth: {
       cycleLength: userProfile.womensHealth?.cycleLength || 28,
       lastPeriodDate: userProfile.womensHealth?.lastPeriodDate || '',
@@ -94,6 +110,74 @@ export const FemaleOnboarding: React.FC = () => {
         ],
   }));
 
+  // Re-sync draft profile when userProfile is loaded or updated
+  useEffect(() => {
+    if (userProfile && (userProfile.fullName || userProfile.dateOfBirth || userProfile.medical || userProfile.womensHealth)) {
+      setDraftProfile((prev) => ({
+        ...prev,
+        fullName: prev.fullName || userProfile.fullName || '',
+        email: prev.email || userProfile.email || '',
+        phone: prev.phone || userProfile.phone || '',
+        dateOfBirth: prev.dateOfBirth || userProfile.dateOfBirth || '',
+        avatarUrl: prev.avatarUrl || userProfile.avatarUrl || '',
+        heightCm: prev.heightCm ?? userProfile.heightCm ?? null,
+        weightKg: prev.weightKg ?? userProfile.weightKg ?? null,
+        waistCm: prev.waistCm ?? userProfile.waistCm ?? null,
+        medical: {
+          bloodType: prev.medical?.bloodType || userProfile.medical?.bloodType || '',
+          allergies: prev.medical?.allergies?.length ? prev.medical.allergies : (userProfile.medical?.allergies || ['None']),
+          medications: prev.medical?.medications?.length ? prev.medical.medications : (userProfile.medical?.medications || []),
+          conditions: prev.medical?.conditions?.length ? prev.medical.conditions : (userProfile.medical?.conditions || []),
+          surgeries: prev.medical?.surgeries?.length ? prev.medical.surgeries : (userProfile.medical?.surgeries || []),
+          familyHistory: prev.medical?.familyHistory?.length ? prev.medical.familyHistory : (userProfile.medical?.familyHistory || ['None known']),
+        },
+        womensHealth: {
+          ...userProfile.womensHealth,
+          ...prev.womensHealth,
+        },
+        lifestyle: {
+          ...userProfile.lifestyle,
+          ...prev.lifestyle,
+        },
+        goals: {
+          ...userProfile.goals,
+          ...prev.goals,
+        },
+      }));
+    }
+  }, [userProfile]);
+
+  // Prepopulate clinical inputs from authoritative backend state
+  useEffect(() => {
+    let active = true;
+    if (fetchClinicalState) {
+      fetchClinicalState('female_pcos').then((state) => {
+        if (!active || !state) return;
+        setDraftProfile((prev) => {
+          const t1 = state.tier_1_inputs || {};
+          const next = { ...prev };
+          if (t1.height_cm && (!prev.heightCm || prev.heightCm === 165)) {
+            next.heightCm = Number(t1.height_cm);
+          }
+          if (t1.weight_kg && (!prev.weightKg || prev.weightKg === 62)) {
+            next.weightKg = Number(t1.weight_kg);
+          }
+          if (t1.waist_inch && !prev.waistCm) {
+            next.waistCm = Math.round(Number(t1.waist_inch) * 2.54);
+          }
+          if (t1.cycle_length_raw && (!prev.womensHealth?.cycleLength || prev.womensHealth.cycleLength === 28)) {
+            next.womensHealth = {
+              ...next.womensHealth,
+              cycleLength: Number(t1.cycle_length_raw),
+            };
+          }
+          return next;
+        });
+      }).catch((e) => console.warn('Female onboarding clinical state notice:', e));
+    }
+    return () => { active = false; };
+  }, [fetchClinicalState]);
+
   // Preload dashboard route chunk when user reaches late onboarding steps
   useEffect(() => {
     if (currentStep >= 4) {
@@ -101,8 +185,8 @@ export const FemaleOnboarding: React.FC = () => {
     }
   }, [currentStep]);
 
-  // Route protection: If already onboarded, go directly to OvaSense app
-  if (userProfile.isOnboarded) {
+  // Route protection: If already onboarded and not explicitly re-onboarding, go directly to OvaSense app
+  if (userProfile.isOnboarded && !isExplicitRelaunch) {
     return <Navigate to={ROUTES.APP.OVASENSE} replace />;
   }
   if (userProfile.pathway === 'male') {
@@ -115,13 +199,33 @@ export const FemaleOnboarding: React.FC = () => {
     if (stepNum === 1) {
       if (!draftProfile.fullName.trim()) errs.fullName = 'Full Name is required.';
 
-      const dobCheck = validateDateOfBirth(draftProfile.dateOfBirth);
+      const dobCheck = validateFemaleScreeningAge(draftProfile.dateOfBirth);
       if (!dobCheck.isValid) errs.dateOfBirth = dobCheck.error!;
 
-      const phoneCheck = validatePakistaniPhone(draftProfile.phone);
+      const phoneCheck = validatePakistaniPhone(draftProfile.phone, { optional: true });
       if (!phoneCheck.isValid) errs.phone = phoneCheck.error!;
 
       if (!draftProfile.email.trim()) errs.email = 'Email address is required.';
+    }
+
+    if (stepNum === 3) {
+      if (draftProfile.womensHealth?.hasHadPeriod !== false && draftProfile.womensHealth?.ageAtMenarche) {
+        const match = (draftProfile.dateOfBirth || '').match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+        if (match) {
+          const birthYear = parseInt(match[1], 10);
+          const birthMonth = parseInt(match[2], 10);
+          const birthDay = parseInt(match[3], 10);
+          const now = new Date();
+          let currentAge = now.getFullYear() - birthYear;
+          if (now.getMonth() + 1 < birthMonth || (now.getMonth() + 1 === birthMonth && now.getDate() < birthDay)) {
+            currentAge--;
+          }
+          const menarche = Number(draftProfile.womensHealth.ageAtMenarche);
+          if (menarche > currentAge) {
+            errs.ageAtMenarche = `Age at first period (${menarche}) cannot exceed current age (${currentAge}).`;
+          }
+        }
+      }
     }
 
     setErrors(errs);
@@ -150,6 +254,12 @@ export const FemaleOnboarding: React.FC = () => {
   };
 
   const handleEnterOvaSense = async () => {
+    const dobCheck = validateFemaleScreeningAge(draftProfile.dateOfBirth);
+    if (!dobCheck.isValid) {
+      setErrors({ dateOfBirth: dobCheck.error! });
+      setCurrentStep(1);
+      return;
+    }
     setIsSubmitting(true);
     setIsProcessingScreening(true);
     setSaveError(undefined);
@@ -205,6 +315,10 @@ export const FemaleOnboarding: React.FC = () => {
     );
   }
 
+  const handleCancel = () => {
+    navigate(ROUTES.APP.SETTINGS);
+  };
+
   return (
     <FemaleOnboardingLayout
       currentStep={currentStep}
@@ -215,6 +329,8 @@ export const FemaleOnboarding: React.FC = () => {
       onBack={handleBack}
       isSubmitting={isSubmitting}
       canGoBack={currentStep > 1}
+      isUpdatingProfile={isUpdatingProfile}
+      onCancel={isUpdatingProfile ? handleCancel : undefined}
     >
       <AnimatePresence mode="wait">
         <motion.div
@@ -257,6 +373,8 @@ export const FemaleOnboarding: React.FC = () => {
               onChange={(wh: WomensHealthProfile) =>
                 setDraftProfile((prev) => ({ ...prev, womensHealth: wh }))
               }
+              userDob={draftProfile.dateOfBirth}
+              errors={errors}
             />
           )}
 

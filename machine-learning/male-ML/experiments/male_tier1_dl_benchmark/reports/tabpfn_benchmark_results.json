@@ -1,0 +1,121 @@
+{
+  "model_architecture": "TabPFN (v2 Foundation Model)",
+  "model_checkpoint": "tabpfn-v2-classifier-finetuned-zk73skhh.ckpt",
+  "license_status": "Proprietary Non-Commercial Research License (Prior Labs GmbH)",
+  "commercial_usage": "Prohibited without Prior Labs Enterprise License",
+  "token_authenticated": true,
+  "dev_oof": {
+    "roc_auc": 0.7206,
+    "roc_auc_std": 0.0293,
+    "pr_auc": 0.4597,
+    "brier_score": 0.1597,
+    "ece": 0.0247,
+    "selected_threshold": 0.1502,
+    "sensitivity": 0.8032,
+    "specificity": 0.4832,
+    "precision": 0.327,
+    "npv": 0.8871,
+    "f1": 0.4647,
+    "confusion_matrix": {
+      "TN": 1053,
+      "FP": 1126,
+      "FN": 134,
+      "TP": 547
+    },
+    "fold_roc_aucs": [
+      0.7444,
+      0.7625,
+      0.677,
+      0.7185,
+      0.7116
+    ],
+    "age_stratified": {
+      "19-30": {
+        "n_total": 851,
+        "n_positive": 141,
+        "tp": 94,
+        "fn": 47,
+        "sensitivity": 0.6667,
+        "specificity": 0.7183
+      },
+      "31-40": {
+        "n_total": 683,
+        "n_positive": 176,
+        "tp": 141,
+        "fn": 35,
+        "sensitivity": 0.8011,
+        "specificity": 0.4714
+      },
+      "41-50": {
+        "n_total": 649,
+        "n_positive": 176,
+        "tp": 143,
+        "fn": 33,
+        "sensitivity": 0.8125,
+        "specificity": 0.3573
+      },
+      "51-60": {
+        "n_total": 677,
+        "n_positive": 188,
+        "tp": 169,
+        "fn": 19,
+        "sensitivity": 0.8989,
+        "specificity": 0.2761
+      }
+    }
+  },
+  "holdout_test": {
+    "roc_auc": 0.7122,
+    "pr_auc": 0.4312,
+    "brier_score": 0.1636,
+    "ece": 0.0427,
+    "threshold": 0.1502,
+    "sensitivity": 0.8353,
+    "specificity": 0.4422,
+    "precision": 0.3184,
+    "npv": 0.8959,
+    "f1": 0.461,
+    "confusion_matrix": {
+      "TN": 241,
+      "FP": 304,
+      "FN": 28,
+      "TP": 142
+    },
+    "latency_ms_per_sample": 168.779,
+    "total_predict_time_seconds": 120.68,
+    "age_stratified": {
+      "19-30": {
+        "n_total": 197,
+        "n_positive": 38,
+        "tp": 29,
+        "fn": 9,
+        "sensitivity": 0.7632,
+        "specificity": 0.7736
+      },
+      "31-40": {
+        "n_total": 170,
+        "n_positive": 44,
+        "tp": 34,
+        "fn": 10,
+        "sensitivity": 0.7727,
+        "specificity": 0.3571
+      },
+      "41-50": {
+        "n_total": 177,
+        "n_positive": 49,
+        "tp": 44,
+        "fn": 5,
+        "sensitivity": 0.898,
+        "specificity": 0.25
+      },
+      "51-60": {
+        "n_total": 171,
+        "n_positive": 39,
+        "tp": 35,
+        "fn": 4,
+        "sensitivity": 0.8974,
+        "specificity": 0.3106
+      }
+    }
+  }
+}

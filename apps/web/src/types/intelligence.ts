@@ -244,7 +244,7 @@ export type AssessmentLevel = 'tier_1' | 'tier_1_2' | 'tier_1_3' | 'tier_1_2_3';
 
 export type ProgressiveRiskCategory = 'lower' | 'intermediate' | 'higher' | 'insufficient_data';
 
-export type PCOMStatus = 'PCOM Detected' | 'PCOM Not Visible' | 'Not Assessed';
+export type PCOMStatus = 'PCOM Detected' | 'PCOM Not Detected' | 'Indeterminate';
 
 export interface AssessmentEvidenceUsed {
   tier_1: boolean;
@@ -260,13 +260,29 @@ export interface AvailableHistoricalEvidence {
 
 export interface FusionDetails {
   clinical_probability: number;
-  ultrasound_pcom_probability?: number;
-  ultrasound_probability?: number;
-  clinical_weight: number;
-  ultrasound_weight: number;
-  combined_score: number;
+  clinical_score?: number;
+  ultrasound_pcom_probability?: number | null;
+  ultrasound_pcom_status?: PCOMStatus | string;
+  ultrasound_probability?: number | null;
+  ultrasound_pcos_probability?: number | null;
+  exploratory_ultrasound_pcos_probability?: number | null;
+  final_fused_probability?: number | null;
+  probability_change_pp?: number | null;
+  clinical_weight?: number;
+  ultrasound_weight?: number;
+  combined_score?: number;
   threshold?: number;
   fusion_method?: string;
+  score_source?: string;
+  numerical_score_anchored_to_tier2?: boolean;
+  multimodal_fusion_applied?: boolean;
+  exploratory_model_contributes_to_score?: boolean;
+  fusion_status?: 'applied' | 'fusion_unavailable' | string;
+  fusion_error?: string | null;
+  fusion_policy_version?: string;
+  model_version?: string;
+  ultrasound_inference_error?: string | null;
+  note?: string;
 }
 
 export interface HormonePatternInterpretation {
@@ -307,6 +323,15 @@ export interface ProgressiveAssessment {
   threshold: number;
   risk_category: ProgressiveRiskCategory | string;
   risk_label?: string;
+  unavailable_reason?: string | null;
+  life_stage?: string | null;
+  badge_label?: string | null;
+  title?: string | null;
+  clinical_recommendations?: string[];
+  guideline_notice?: string | null;
+  gynecological_age_years?: number | null;
+  ultrasound_morphology_valid?: boolean;
+  amh_valid?: boolean;
   screening_policy_version?: string;
   original_risk_category?: string;
   original_threshold?: number;
@@ -322,10 +347,12 @@ export interface ProgressiveAssessment {
   limitations: string[];
   next_step?: string;
   next_available_tier?: number | null;
-  pcom_status?: string | null;
+  pcom_status?: PCOMStatus | null;
   pcom_probability?: number | null;
   gradcam_url?: string | null;
   gradcam_b64?: string | null;
+  ultrasound_explainability?: UltrasoundExplainabilityData | null;
+  multimodal_synthesis?: MultimodalSynthesisData | null;
   fusion_details?: FusionDetails;
   tier_2_available_count?: number;
   tier_2_total_count?: number;
@@ -345,6 +372,8 @@ export interface ProgressiveAssessment {
   authoritative_tier_1_inputs?: Record<string, any>;
   status_code?: string;
   notice?: string;
+  is_complete?: boolean;
+  assessment_status?: string;
   disclaimer: string;
   created_at?: string;
   input_hash?: string;
@@ -365,6 +394,33 @@ export interface ShapFoldAgreement {
   stability: 'consistent' | 'moderate' | 'mixed';
 }
 
+export interface UltrasoundExplainabilityData {
+  method?: string;
+  model_architecture?: string;
+  target_layer?: string;
+  pcom_status: string;
+  pcom_probability?: number | null;
+  pcom_percentage?: number | null;
+  pcom_confidence_percent?: number | null;
+  attention_focus?: string;
+  clinical_disclaimer?: string;
+  gradcam_b64?: string | null;
+  original_image_b64?: string | null;
+}
+
+export interface MultimodalSynthesisData {
+  assessment_tier: string;
+  clinical_model: string;
+  clinical_probability: number;
+  clinical_risk_category: string;
+  ultrasound_status: string;
+  ultrasound_confidence: number;
+  synthesis_method: string;
+  clinical_interpretation: string;
+  independent_attribution_note: string;
+  limitations: string[];
+}
+
 export interface PatientShapFactor {
   feature_key: string;
   patient_label: string;
@@ -378,6 +434,10 @@ export interface PatientShapFactor {
   explanation_share_percent: number;
   influence_level: 'strong' | 'moderate' | 'mild' | 'minimal';
   category: string;
+  tier?: 'Tier 1' | 'Tier 2' | string;
+  is_tier2_clinical?: boolean;
+  is_provided?: boolean;
+  unit?: string;
   modifiable_status: 'modifiable' | 'partially_modifiable' | 'non_modifiable';
   simple_description: string;
   why_model_uses_it: string;
@@ -428,6 +488,15 @@ export interface PatientShapExplanationPayload {
   top_higher_factors: PatientShapFactor[];
   top_lower_factors: PatientShapFactor[];
   top_mixed_factors?: PatientShapFactor[];
+  top_clinical_factors?: PatientShapFactor[];
+  tier2_summary?: {
+    clinical_factors_evaluated: number;
+    clinical_factors_provided: number;
+    clinical_share_percent: number;
+    dominant_clinical_factor?: string | null;
+  };
+  ultrasound_explainability?: UltrasoundExplainabilityData | null;
+  multimodal_synthesis?: MultimodalSynthesisData | null;
   summary: {
     headline: string;
     subheadline: string;

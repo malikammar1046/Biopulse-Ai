@@ -25,6 +25,8 @@ from apps.health.views_nutrition import (
     PlanRegenerateDayView,
     PlanStatusUpdateView,
     PlanSwapMealView,
+    ScheduledMealDetailView,
+    ScheduledMealsView,
     WeeklyPlanGenerateView,
 )
 
@@ -51,6 +53,9 @@ urlpatterns = [
     # Food Logs & Adherence
     path("nutrition/food-logs/", FoodLogsView.as_view(), name="nutrition-food-logs"),
     path("nutrition/food-logs/<uuid:log_id>/", FoodLogDetailView.as_view(), name="nutrition-food-log-detail"),
+    # Scheduled Meals (Server-side meal selection persistence)
+    path("nutrition/scheduled-meals/", ScheduledMealsView.as_view(), name="nutrition-scheduled-meals"),
+    path("nutrition/scheduled-meals/<uuid:meal_id>/", ScheduledMealDetailView.as_view(), name="nutrition-scheduled-meal-detail"),
     # Reminders
     path("nutrition/reminders/", MealRemindersView.as_view(), name="nutrition-meal-reminders"),
 ]

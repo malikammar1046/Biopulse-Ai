@@ -19,6 +19,7 @@ Security Guarantees:
 
 from __future__ import annotations
 
+from datetime import date
 import logging
 from typing import Any, Dict, Optional, Tuple
 
@@ -180,11 +181,17 @@ class WeeklyPlanGenerateView(APIView):
         raw_meta, profile_data, active_module = _extract_user_context(request)
         raw_token = getattr(request.user, "raw_token", None) or getattr(request, "auth", None)
 
+        merged_profile = dict(profile_data)
+        if request.data and isinstance(request.data, dict):
+            for k, v in request.data.items():
+                if v is not None:
+                    merged_profile[k] = v
+
         try:
             plan_dto = meal_plan_service.generate_weekly_plan(
                 user_id=user_id,
                 raw_user_meta_data=raw_meta,
-                profile_data=profile_data,
+                profile_data=merged_profile,
                 active_assessment_module=active_module,
                 auth_token=raw_token,
             )
@@ -282,11 +289,17 @@ class NutritionPlanRegenerateView(APIView):
         raw_meta, profile_data, active_module = _extract_user_context(request)
         raw_token = getattr(request.user, "raw_token", None) or getattr(request, "auth", None)
 
+        merged_profile = dict(profile_data)
+        if request.data and isinstance(request.data, dict):
+            for k, v in request.data.items():
+                if v is not None:
+                    merged_profile[k] = v
+
         try:
             plan_dto = meal_plan_service.generate_weekly_plan(
                 user_id=user_id,
                 raw_user_meta_data=raw_meta,
-                profile_data=profile_data,
+                profile_data=merged_profile,
                 active_assessment_module=active_module,
                 auth_token=raw_token,
             )
@@ -385,8 +398,10 @@ class NutritionPreferencesView(APIView):
         except Exception:
             pass
 
+        allergies_to_save = validated.get("food_allergies", [])
+
         update_fields = {
-            "food_allergies": validated.get("food_allergies", []),
+            "food_allergies": allergies_to_save,
             "food_intolerances": validated.get("food_intolerances", []),
             "dietary_preference": validated.get("dietary_pattern", "halal_omnivore"),
             "favorite_ingredients": validated.get("favorite_ingredients", []),
@@ -645,3 +660,69 @@ class MealRemindersView(APIView):
             auth_token=raw_token,
         )
         return Response(updated, status=status.HTTP_200_OK)
+
+
+class ScheduledMealsView(APIView):
+    """
+    GET  /api/v1/health/nutrition/scheduled-meals/?date=YYYY-MM-DD
+    POST /api/v1/health/nutrition/scheduled-meals/
+    Body: { "date": "YYYY-MM-DD", "meal_type": "breakfast", "meal_name": "...", "meal_data": {...} }
+    """
+    authentication_classes = [SupabaseAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user_id = str(request.user.id)
+        raw_token = getattr(request.user, "raw_token", None) or getattr(request, "auth", None)
+        target_date = request.query_params.get("date")
+        scheduled = meal_plan_service.get_scheduled_meals(user_id=user_id, target_date=target_date, auth_token=raw_token)
+        return Response(scheduled, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        user_id = str(request.user.id)
+        raw_token = getattr(request.user, "raw_token", None) or getattr(request, "auth", None)
+        target_date = request.data.get("date") or date.today().isoformat()
+        meal_type = request.data.get("meal_type")
+        meal_name = request.data.get("meal_name")
+        meal_data = request.data.get("meal_data", {})
+
+        if not meal_type or not meal_name:
+            return Response(
+                {"error": "meal_type and meal_name are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            saved = meal_plan_service.schedule_meal(
+                user_id=user_id,
+                target_date=target_date,
+                meal_type=meal_type,
+                meal_name=meal_name,
+                meal_data=meal_data,
+                auth_token=raw_token,
+            )
+            return Response(saved, status=status.HTTP_201_CREATED)
+        except Exception as exc:
+            logger.error("Error scheduling meal for %s: %s", user_id[:8] + "***", exc)
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ScheduledMealDetailView(APIView):
+    """
+    DELETE /api/v1/health/nutrition/scheduled-meals/<uuid:meal_id>/
+    """
+    authentication_classes = [SupabaseAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, meal_id):
+        user_id = str(request.user.id)
+        raw_token = getattr(request.user, "raw_token", None) or getattr(request, "auth", None)
+        success = meal_plan_service.delete_scheduled_meal(
+            user_id=user_id,
+            meal_id=str(meal_id),
+            auth_token=raw_token,
+        )
+        if success:
+            return Response({"status": "deleted"}, status=status.HTTP_200_OK)
+        return Response({"error": "Failed to delete scheduled meal."}, status=status.HTTP_404_NOT_FOUND)
+

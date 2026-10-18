@@ -22,6 +22,11 @@ interface ScreeningModuleCardProps {
   assessmentLevel?: string;
   lastAssessmentDate?: string | null;
   loading?: boolean;
+  lifeStage?: string | null;
+  unavailableReason?: string | null;
+  badgeLabel?: string | null;
+  title?: string | null;
+  summaryText?: string | null;
   onStartScreening: () => void;
   onViewAssessment: () => void;
 }
@@ -35,61 +40,108 @@ export const ScreeningModuleCard: React.FC<ScreeningModuleCardProps> = ({
   assessmentLevel = 'tier_1',
   lastAssessmentDate,
   loading = false,
+  lifeStage,
+  unavailableReason,
+  badgeLabel,
+  title: clinicalTitle,
+  summaryText: clinicalSummary,
   onStartScreening,
   onViewAssessment,
 }) => {
   const { t } = useTranslation(['dashboard', 'screening']);
   const isFemale = pathway === 'female';
-  const title = isFemale ? t('dashboard:pcosScreeningTitle') : t('dashboard:hypogonadismScreeningTitle');
+  const title = clinicalTitle || (isFemale ? t('dashboard:pcosScreeningTitle') : t('dashboard:hypogonadismScreeningTitle'));
   const subtitle = t('dashboard:screeningSubtitleText');
   const riskTypeLabel = isFemale ? t('dashboard:pcosRiskType') : t('dashboard:maleRiskType');
 
   // Authoritative clinical risk classification matching policy v2 cutoffs
-  const highCutoff = isFemale ? 25 : 18.08;
+  const highCutoff = isFemale ? 25 : (assessmentLevel === 'tier_1_2' ? 33.79 : 18.08);
   const lowCutoff = isFemale ? 18 : 10;
 
   let isHigh = false;
   let isIntermediate = false;
 
-  if (probabilityPercent !== null) {
+  const normRisk = (riskCategory || '').toLowerCase();
+  const isLifeStage = isFemale && (normRisk === 'unavailable' || Boolean(unavailableReason) || (lifeStage && lifeStage !== 'adult_reproductive'));
+  const isDirectHormone = normRisk === 'direct_hormone_evaluation' || normRisk === 'hormone_pattern_only';
+  const isIncomplete = normRisk === 'incomplete';
+
+  if (normRisk === 'higher' || normRisk.includes('elevated') || normRisk === 'high') {
+    isHigh = true;
+  } else if (normRisk === 'intermediate' || normRisk.includes('moderate')) {
+    isIntermediate = true;
+  } else if (normRisk === 'lower' || normRisk === 'low') {
+    isHigh = false;
+    isIntermediate = false;
+  } else if (probabilityPercent !== null) {
     isHigh = probabilityPercent >= highCutoff;
     isIntermediate = !isHigh && probabilityPercent >= lowCutoff;
-  } else {
-    const normRisk = (riskCategory || '').toLowerCase();
-    isHigh = normRisk.includes('elevated') || normRisk.includes('high');
-    isIntermediate = !isHigh && (normRisk.includes('intermediate') || normRisk.includes('moderate'));
   }
 
   // Consistent with Screening Workspace & Design System tokens
-  const riskBadgeColor = isHigh
+  const riskBadgeColor = isLifeStage
+    ? 'bg-[#FDF2F8] text-[#BE185D] border-[#FBCFE8]'
+    : isDirectHormone
+    ? 'bg-[#E0F2FE] text-[#0284C7] border-[#BAE6FD]'
+    : isIncomplete
+    ? 'bg-[#FFFBEB] text-[#D97706] border-[#FDE68A]'
+    : isHigh
     ? (isFemale ? 'bg-[#FDE6EF] text-[#DC326C] border-[#F43F7D]/20' : 'bg-[#FEF3F2] text-[#B42318] border-[#FECDCA]')
     : isIntermediate
     ? 'bg-[#FFFAEB] text-[#B54708] border-[#FEDF89]'
     : 'bg-[#ECFDF3] text-[#027A48] border-[#D1FADF]';
 
-  const riskStrokeColor = isHigh
+  const riskStrokeColor = isLifeStage
+    ? '#DB2777'
+    : isDirectHormone
+    ? '#0284C7'
+    : isIncomplete
+    ? '#D97706'
+    : isHigh
     ? (isFemale ? '#F43F7D' : '#0284C7')
     : isIntermediate
     ? '#F59E0B'
     : '#10B981';
 
-  const riskDisplayName = riskLabel || (isFemale
+  const riskDisplayName = badgeLabel || riskLabel || (isLifeStage
+    ? 'Life-Stage Guidance'
+    : isDirectHormone
+    ? 'Direct Hormone Pattern Evaluation'
+    : isIncomplete
+    ? 'Incomplete Assessment'
+    : isFemale
     ? (isHigh ? t('dashboard:higherLikelihood') : isIntermediate ? t('dashboard:intermediateLikelihood') : t('dashboard:lowerLikelihood'))
     : (isHigh ? t('dashboard:higherScreeningRisk') : isIntermediate ? t('dashboard:intermediateScreeningRisk') : t('dashboard:lowerScreeningRisk')));
 
-  const RiskIcon = isHigh
+  const RiskIcon = isLifeStage
+    ? ShieldCheck
+    : isDirectHormone
+    ? ShieldCheck
+    : isIncomplete
+    ? AlertTriangle
+    : isHigh
     ? AlertCircle
     : isIntermediate
     ? AlertTriangle
     : ShieldCheck;
 
-  // Display probability: formats decimal cleanly (e.g. 46.6%) or integer (e.g. 47%)
+  // Display probability: formats decimal cleanly (e.g. 10.23%) or integer (e.g. 71%)
   const displayScore = probabilityPercent !== null
-    ? (Number.isInteger(probabilityPercent) ? `${probabilityPercent}%` : `${probabilityPercent.toFixed(1)}%`)
-    : '--%';
+    ? (Number.isInteger(probabilityPercent)
+        ? `${probabilityPercent}%`
+        : Number.isInteger(Number(probabilityPercent.toFixed(2)))
+        ? `${Number(probabilityPercent.toFixed(2))}%`
+        : `${probabilityPercent.toFixed(2)}%`)
+    : isLifeStage ? 'Guide' : isDirectHormone ? 'Labs' : '--%';
 
   // Friendly clinical summary
-  const summaryText = isFemale
+  const summaryText = clinicalSummary || (isLifeStage
+    ? 'Evaluated under 2023 International PCOS Guidelines for your life stage.'
+    : isDirectHormone
+    ? 'Direct pituitary-gonadal hormone evaluation based on morning serum draw.'
+    : isIncomplete
+    ? 'Assessment is incomplete. Provide missing measurements to complete screening.'
+    : isFemale
     ? isHigh
       ? t('dashboard:femaleHighSummary')
       : isIntermediate
@@ -99,7 +151,7 @@ export const ScreeningModuleCard: React.FC<ScreeningModuleCardProps> = ({
     ? t('dashboard:maleHighSummary')
     : isIntermediate
     ? t('dashboard:maleIntermediateSummary')
-    : t('dashboard:maleLowerSummary');
+    : t('dashboard:maleLowerSummary'));
 
   const menuItems = [
     {
@@ -114,7 +166,7 @@ export const ScreeningModuleCard: React.FC<ScreeningModuleCardProps> = ({
     },
   ];
 
-  if (!hasAssessment || probabilityPercent === null) {
+  if (!hasAssessment) {
     return (
       <DashboardModuleCard
         title={title}
@@ -137,7 +189,7 @@ export const ScreeningModuleCard: React.FC<ScreeningModuleCardProps> = ({
     );
   }
 
-  const safePercent = Math.min(100, Math.max(0, probabilityPercent));
+  const safePercent = probabilityPercent !== null ? Math.min(100, Math.max(0, probabilityPercent)) : 0;
   const radius = 46;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (safePercent / 100) * circumference;

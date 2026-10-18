@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   ScrollView,
   Pressable,
   Alert,
+  Modal,
   useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -14,24 +15,22 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { BioPulseColors } from '../../constants/Colors';
 import { BioPulseBackground } from '../../components/common/BioPulseBackground';
+import { BioPulseBottomNav, BOTTOM_NAV_HEIGHT } from '../../components/navigation/BioPulseBottomNav';
 import { useAuth } from '../../features/authentication';
-import { BioPulseBottomNav, BOTTOM_NAV_HEIGHT } from '../../components/navigation';
+import {
+  UnitPreferences,
+  HeightUnit,
+  WeightUnit,
+  loadSavedUnitPreferences,
+  saveUnitPreferences,
+  DEFAULT_UNIT_PREFERENCES,
+} from '../../utils/units';
 
 /**
- * SCREEN 45: SETTINGS
+ * SCREEN 42: SETTINGS
  *
- * Strict visual match to Screenshot 45:
- * - Top Header: Back chevron (<), centered "Settings"
- * - Settings Items List:
- *   1. Notifications (Blue bell icon, "Appointment reminders, medication alerts", chevron >)
- *   2. Units (Blue icon, "Metric (kg, cm)", chevron >)
- *   3. Privacy (Teal shield icon, "Control your data and visibility", chevron >)
- *   4. Data Sharing (Blue nodes icon, "Manage how your data is shared", chevron >)
- *   5. Security (Blue lock icon, "Change password, login methods", chevron >)
- *   6. Help & Support (Blue question icon, "FAQs, contact support", chevron >)
- *   7. About BioPulse AI (Pink icon, "App version 1.0.0", chevron >)
- *   8. Logout (Red exit icon, "Logout")
- * - Permanent Fixed Bottom Navigation with [ More ] active
+ * Full parity unit preference management, notifications, privacy,
+ * care circle, security, support, and logout.
  */
 export default function SettingsScreen() {
   const router = useRouter();
@@ -40,11 +39,25 @@ export default function SettingsScreen() {
   const isTablet = width >= 768;
 
   const { logout } = useAuth();
-  const [unitsMetric, setUnitsMetric] = useState(true);
+  const [unitPrefs, setUnitPrefs] = useState<UnitPreferences>(DEFAULT_UNIT_PREFERENCES);
+  const [showUnitModal, setShowUnitModal] = useState(false);
 
-  const handleToggleUnits = () => {
-    setUnitsMetric(!unitsMetric);
-    Alert.alert('Units Updated', `Switched display units to ${!unitsMetric ? 'Metric (kg, cm)' : 'Imperial (lb, in)'}.`);
+  useEffect(() => {
+    loadSavedUnitPreferences().then((prefs) => {
+      setUnitPrefs(prefs);
+    });
+  }, []);
+
+  const handleSelectHeightUnit = async (unit: HeightUnit) => {
+    const updated = { ...unitPrefs, heightUnit: unit };
+    setUnitPrefs(updated);
+    await saveUnitPreferences(updated);
+  };
+
+  const handleSelectWeightUnit = async (unit: WeightUnit) => {
+    const updated = { ...unitPrefs, weightUnit: unit };
+    setUnitPrefs(updated);
+    await saveUnitPreferences(updated);
   };
 
   const handleLogout = () => {
@@ -112,7 +125,7 @@ export default function SettingsScreen() {
 
           {/* 2. Units */}
           <Pressable
-            onPress={handleToggleUnits}
+            onPress={() => setShowUnitModal(true)}
             style={({ pressed }) => [styles.itemRow, pressed && styles.rowPressed]}
           >
             <View style={[styles.iconBox, { backgroundColor: '#E0F2FE' }]}>
@@ -120,9 +133,10 @@ export default function SettingsScreen() {
             </View>
             <View style={styles.itemMeta}>
               <Text style={styles.itemTitle}>Units</Text>
+              <Text style={styles.itemSub}>Measurement display preferences</Text>
             </View>
             <Text style={styles.unitsValueText}>
-              {unitsMetric ? 'Metric (kg, cm)' : 'Imperial (lb, in)'}
+              {unitPrefs.heightUnit.toUpperCase()} / {unitPrefs.weightUnit.toUpperCase()}
             </Text>
             <Ionicons name="chevron-forward" size={16} color="#94A3B8" style={{ marginLeft: 6 }} />
           </Pressable>
@@ -159,11 +173,11 @@ export default function SettingsScreen() {
 
           {/* 5. Security */}
           <Pressable
-            onPress={() => router.push('/(auth)/forgot-password')}
+            onPress={() => router.push('/(app)/security')}
             style={({ pressed }) => [styles.itemRow, pressed && styles.rowPressed]}
           >
-            <View style={[styles.iconBox, { backgroundColor: '#E0F2FE' }]}>
-              <Ionicons name="lock-closed" size={18} color="#0284C7" />
+            <View style={[styles.iconBox, { backgroundColor: '#E0E7FF' }]}>
+              <Ionicons name="lock-closed" size={18} color="#4F46E5" />
             </View>
             <View style={styles.itemMeta}>
               <Text style={styles.itemTitle}>Security</Text>
@@ -174,7 +188,7 @@ export default function SettingsScreen() {
 
           {/* 6. Help & Support */}
           <Pressable
-            onPress={() => Alert.alert('Help & Support', 'Reach our clinical team at support@biopulse.health or chat with BioPulse AI.')}
+            onPress={() => router.push('/(app)/support')}
             style={({ pressed }) => [styles.itemRow, pressed && styles.rowPressed]}
           >
             <View style={[styles.iconBox, { backgroundColor: '#E0F2FE' }]}>
@@ -189,11 +203,11 @@ export default function SettingsScreen() {
 
           {/* 7. About BioPulse AI */}
           <Pressable
-            onPress={() => Alert.alert('BioPulse AI', 'BioPulse AI Health Platform v1.0.0.\nDual-pathway diagnostic intelligence for endocrine health.')}
+            onPress={() => router.push('/(app)/about')}
             style={({ pressed }) => [styles.itemRow, pressed && styles.rowPressed]}
           >
-            <View style={[styles.iconBox, { backgroundColor: '#FFE4E6' }]}>
-              <Ionicons name="heart" size={18} color="#E11D48" />
+            <View style={[styles.iconBox, { backgroundColor: '#FCE7F3' }]}>
+              <Ionicons name="information-circle" size={18} color="#E11D48" />
             </View>
             <View style={styles.itemMeta}>
               <Text style={styles.itemTitle}>About BioPulse AI</Text>
@@ -216,6 +230,80 @@ export default function SettingsScreen() {
           </Pressable>
         </View>
       </ScrollView>
+
+      {/* Unit Preferences Modal */}
+      <Modal
+        visible={showUnitModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowUnitModal(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowUnitModal(false)}
+        >
+          <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Measurement Units</Text>
+              <Pressable onPress={() => setShowUnitModal(false)} hitSlop={8}>
+                <Ionicons name="close" size={22} color="#0F172A" />
+              </Pressable>
+            </View>
+
+            <Text style={styles.unitSectionLabel}>Height Unit</Text>
+            <View style={styles.unitPillsRow}>
+              {(['cm', 'm', 'ft'] as HeightUnit[]).map((u) => {
+                const isSelected = unitPrefs.heightUnit === u;
+                const label = u === 'cm' ? 'Centimeters (cm)' : u === 'm' ? 'Meters (m)' : 'Feet & Inches (ft)';
+                return (
+                  <Pressable
+                    key={u}
+                    onPress={() => handleSelectHeightUnit(u)}
+                    style={[styles.unitPill, isSelected && styles.unitPillActive]}
+                  >
+                    <Text style={[styles.unitPillText, isSelected && styles.unitPillTextActive]}>
+                      {label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <Text style={styles.unitSectionLabel}>Weight Unit</Text>
+            <View style={styles.unitPillsRow}>
+              {(['kg', 'lb'] as WeightUnit[]).map((u) => {
+                const isSelected = unitPrefs.weightUnit === u;
+                const label = u === 'kg' ? 'Kilograms (kg)' : 'Pounds (lb)';
+                return (
+                  <Pressable
+                    key={u}
+                    onPress={() => handleSelectWeightUnit(u)}
+                    style={[styles.unitPill, isSelected && styles.unitPillActive]}
+                  >
+                    <Text style={[styles.unitPillText, isSelected && styles.unitPillTextActive]}>
+                      {label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <View style={styles.unitNoteBox}>
+              <Ionicons name="shield-checkmark-outline" size={16} color="#0284C7" />
+              <Text style={styles.unitNoteText}>
+                Measurements are stored canonically in database standards (cm and kg) and converted dynamically for your display.
+              </Text>
+            </View>
+
+            <Pressable
+              onPress={() => setShowUnitModal(false)}
+              style={styles.doneBtn}
+            >
+              <Text style={styles.doneBtnText}>Save Preferences</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       {/* Permanent Fixed Bottom Navigation with More Active */}
       <BioPulseBottomNav activeTab="more" />
@@ -304,8 +392,12 @@ const styles = StyleSheet.create({
   },
   unitsValueText: {
     fontSize: 12,
-    color: '#64748B',
-    fontWeight: '500',
+    color: '#0284C7',
+    fontWeight: '700',
+    backgroundColor: '#F0F9FF',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
   logoutText: {
     fontSize: 14,
@@ -315,5 +407,94 @@ const styles = StyleSheet.create({
 
   rowPressed: {
     backgroundColor: '#F8FAFC',
+  },
+
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    justifyContent: 'flex-end',
+  },
+  modalCard: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    paddingBottom: 36,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  unitSectionLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginTop: 10,
+    marginBottom: 8,
+  },
+  unitPillsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 14,
+  },
+  unitPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  unitPillActive: {
+    backgroundColor: '#0284C7',
+    borderColor: '#0284C7',
+  },
+  unitPillText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  unitPillTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  unitNoteBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#F0F9FF',
+    borderRadius: 12,
+    padding: 12,
+    gap: 8,
+    marginVertical: 14,
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+  },
+  unitNoteText: {
+    flex: 1,
+    fontSize: 11,
+    color: '#0369A1',
+    lineHeight: 16,
+  },
+  doneBtn: {
+    backgroundColor: '#0284C7',
+    borderRadius: 14,
+    height: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+  doneBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

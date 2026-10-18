@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Heart, Sparkles, PlusCircle } from 'lucide-react';
+import { Heart, Sparkles, PlusCircle, Flower2 } from 'lucide-react';
 import { DashboardModuleCard } from '../DashboardModuleCard';
 import { DashboardEmptyState } from '../DashboardEmptyState';
 import type { SymptomRecord, SymptomSummaryStats } from '../../../../types/symptom';
@@ -8,20 +8,24 @@ import type { SymptomRecord, SymptomSummaryStats } from '../../../../types/sympt
 interface SymptomsModuleCardProps {
   symptomRecords: SymptomRecord[];
   symptomStats: SymptomSummaryStats;
+  todayStressStats?: { completedSessionsToday: number; totalMinutesToday: number };
   pathway?: 'female' | 'male';
   loading?: boolean;
   onOpenSymptoms: () => void;
   onLogSymptom: () => void;
+  onOpenStress?: () => void;
   updatedAt?: string | null;
 }
 
 export const SymptomsModuleCard: React.FC<SymptomsModuleCardProps> = ({
   symptomRecords,
   symptomStats,
+  todayStressStats,
   pathway = 'female',
   loading = false,
   onOpenSymptoms,
   onLogSymptom,
+  onOpenStress,
   updatedAt = '1 hr ago',
 }) => {
   const { t } = useTranslation(['dashboard', 'symptoms', 'common']);
@@ -49,22 +53,59 @@ export const SymptomsModuleCard: React.FC<SymptomsModuleCardProps> = ({
         subtitle={t('dashboard:symptomsSubtitle', { defaultValue: "Today's wellness snapshot" })}
         icon={Heart}
         accentColor={isFemale ? 'pink' : 'blue'}
-        isLive={false}
+        isLive={Boolean(todayStressStats && todayStressStats.completedSessionsToday > 0)}
+        syncedModule={todayStressStats && todayStressStats.completedSessionsToday > 0 ? 'Lifestyle Stress' : undefined}
+        updatedAt={updatedAt}
         menuItems={menuItems}
         loading={loading}
       >
-        <DashboardEmptyState
-          title={t('dashboard:noSymptomsToday', { defaultValue: 'No symptoms logged today' })}
-          description={t('dashboard:noSymptomsDesc', {
-            defaultValue: isFemale
-              ? 'Check in on pelvic comfort, mood, energy, or skin changes to build your cycle pattern timeline.'
-              : 'Check in on morning vitality, stamina, mood, or sleep quality to track hormonal patterns.',
-          })}
-          actionLabel={t('dashboard:logSymptomsCTA', { defaultValue: 'Log Symptoms' })}
-          onAction={onLogSymptom}
-          icon={Heart}
-          accentColor={isFemale ? 'pink' : 'blue'}
-        />
+        <div className="space-y-3 py-1">
+          {todayStressStats && todayStressStats.completedSessionsToday > 0 && (
+            <div className={`p-3 rounded-2xl border flex items-center justify-between gap-3 ${
+              isFemale ? 'bg-pink-50/70 border-pink-100 text-slate-800' : 'bg-sky-50/70 border-sky-100 text-slate-800'
+            }`}>
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                  isFemale ? 'bg-pink-100 text-[#BE185D]' : 'bg-sky-100 text-[#0284C7]'
+                }`}>
+                  <Flower2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold block leading-tight">
+                    Relaxation: {todayStressStats.completedSessionsToday} session{todayStressStats.completedSessionsToday > 1 ? 's' : ''} ({todayStressStats.totalMinutesToday} mins)
+                  </span>
+                  <span className="text-[10px] text-slate-500 block leading-tight mt-0.5">
+                    Parasympathetic recovery logged today
+                  </span>
+                </div>
+              </div>
+              {onOpenStress && (
+                <button
+                  type="button"
+                  onClick={onOpenStress}
+                  className={`text-xs font-bold underline shrink-0 cursor-pointer ${
+                    isFemale ? 'text-[#BE185D]' : 'text-[#0284C7]'
+                  }`}
+                >
+                  View
+                </button>
+              )}
+            </div>
+          )}
+
+          <DashboardEmptyState
+            title={t('dashboard:noSymptomsToday', { defaultValue: 'No symptoms logged today' })}
+            description={t('dashboard:noSymptomsDesc', {
+              defaultValue: isFemale
+                ? 'Check in on pelvic comfort, mood, energy, or skin changes to build your cycle pattern timeline.'
+                : 'Check in on morning vitality, stamina, mood, or sleep quality to track hormonal patterns.',
+            })}
+            actionLabel={t('dashboard:logSymptomsCTA', { defaultValue: 'Log Symptoms' })}
+            onAction={onLogSymptom}
+            icon={Heart}
+            accentColor={isFemale ? 'pink' : 'blue'}
+          />
+        </div>
       </DashboardModuleCard>
     );
   }
@@ -121,6 +162,31 @@ export const SymptomsModuleCard: React.FC<SymptomsModuleCardProps> = ({
             );
           })}
         </div>
+
+        {/* Relaxation & Stress Badge if completed today */}
+        {todayStressStats && todayStressStats.completedSessionsToday > 0 && (
+          <div className={`p-2.5 rounded-xl border flex items-center justify-between gap-2.5 ${
+            isFemale ? 'bg-pink-50/60 border-pink-100 text-slate-800' : 'bg-sky-50/60 border-sky-100 text-slate-800'
+          }`}>
+            <div className="flex items-center gap-2 min-w-0">
+              <Flower2 className={`w-4 h-4 shrink-0 ${isFemale ? 'text-[#BE185D]' : 'text-[#0284C7]'}`} />
+              <span className="text-xs font-semibold truncate">
+                Relaxation: {todayStressStats.completedSessionsToday} session{todayStressStats.completedSessionsToday > 1 ? 's' : ''} ({todayStressStats.totalMinutesToday}m) logged today
+              </span>
+            </div>
+            {onOpenStress && (
+              <button
+                type="button"
+                onClick={onOpenStress}
+                className={`text-[11px] font-bold underline shrink-0 cursor-pointer ${
+                  isFemale ? 'text-[#BE185D]' : 'text-[#0284C7]'
+                }`}
+              >
+                View
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Real Longitudinal Observation or Summary (only if real calculation exists) */}
         {realPattern ? (

@@ -20,6 +20,7 @@ import {
   formatShapFactorForPatient,
   formatAssessmentDate,
   getFeatureIconName,
+  MALE_DEFAULT_THRESHOLD,
 } from '../services/assessmentService';
 import { BioPulseBottomNav, BOTTOM_NAV_HEIGHT } from '../components/navigation';
 
@@ -41,7 +42,14 @@ export default function MaleScreeningResultScreen() {
   const probPercent = activeAssessment?.probability_percent ??
     (activeAssessment ? Math.round((activeAssessment.probability ?? 0) * 100) : screening.probabilityPercent);
 
-  const band = resolveRiskBand(probability, activeAssessment?.risk_category || screening.riskCategory, activeAssessment?.threshold || 0.45);
+  const band = resolveRiskBand(
+    probability,
+    activeAssessment?.risk_category || screening.riskCategory,
+    activeAssessment?.threshold ?? MALE_DEFAULT_THRESHOLD,
+    0.1808,
+    'male_hypogonadism',
+    activeAssessment?.summary_text
+  );
   const riskCategory = band.category;
   const assessmentDate = formatAssessmentDate(activeAssessment?.created_at || screening.createdAt);
   const assessmentId = activeAssessment?.assessment_id || activeAssessment?.id || screening.assessmentId;

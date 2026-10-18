@@ -47,6 +47,7 @@ export const MaleDashboardOverview: React.FC = () => {
     symptomRecords,
     symptomStats,
     symptomsLoading,
+    todayStressStats,
     openAiChatWithPrompt,
     refreshActiveAssessment,
   } = useUserHealth();
@@ -207,13 +208,14 @@ export const MaleDashboardOverview: React.FC = () => {
           todayMinutes={todayFitnessMinutes}
           pathway="male"
           loading={fitnessLoading}
-          onOpenFitness={() => navigate(ROUTES.APP.FITNESS)}
-          onLogActivity={() => navigate(ROUTES.APP.FITNESS)}
+          onOpenFitness={() => navigate('/app/lifestyle?tab=exercise')}
+          onLogActivity={() => navigate('/app/lifestyle?tab=exercise')}
         />
 
         {/* Card 5: Water Log */}
         <WaterModuleCard
           waterLog={waterLog}
+          pathway="male"
           loading={dietLoading}
           onIncrement={incrementWater}
           onDecrement={decrementWater}
@@ -240,14 +242,16 @@ export const MaleDashboardOverview: React.FC = () => {
           onAddMember={() => navigate(ROUTES.APP.CARE_CIRCLE)}
         />
 
-        {/* Card 8: Symptom Check-in */}
+        {/* Card 8: Symptom Check-in & Wellness */}
         <SymptomsModuleCard
           symptomRecords={symptomRecords}
           symptomStats={symptomStats}
+          todayStressStats={todayStressStats}
           pathway="male"
           loading={symptomsLoading}
           onOpenSymptoms={() => navigate(ROUTES.APP.SYMPTOMS)}
           onLogSymptom={() => navigate(ROUTES.APP.SYMPTOMS)}
+          onOpenStress={() => navigate('/app/lifestyle?tab=stress')}
         />
 
         {/* Card 9: Next Best Action */}

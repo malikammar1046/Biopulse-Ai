@@ -128,7 +128,11 @@ export const SpecialistCareModuleCard: React.FC<SpecialistCareModuleCardProps> =
                     )}
 
                     <div className="min-w-0 flex-1">
-                      <h4 className="text-xs font-bold text-[#111318] truncate group-hover:text-[#0288D1] transition-colors">
+                      <h4
+                        className={`text-xs font-bold text-[#111318] truncate transition-colors ${
+                          isFemale ? 'group-hover:text-[#F43F7D]' : 'group-hover:text-[#0288D1]'
+                        }`}
+                      >
                         {doc.name}
                       </h4>
                       <p className="text-[11px] text-[#667085] truncate">

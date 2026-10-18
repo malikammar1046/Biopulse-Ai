@@ -124,7 +124,22 @@ export const CyclePage: React.FC = () => {
         </div>
       )}
 
-      {/* ── 5. Responsible Clinical Boundary Notice ── */}
+      {/* ── 5. Dynamic Clinical & Irregularity Notices ── */}
+      {cycleStats.hasData && cycleStats.clinicalNotices && cycleStats.clinicalNotices.length > 0 && (
+        <div className="space-y-2 max-w-3xl mx-auto">
+          {cycleStats.clinicalNotices.map((notice: string, idx: number) => (
+            <div
+              key={idx}
+              className="p-3.5 rounded-xl bg-[#FEF3C7]/40 border border-[#FDE68A] text-xs text-[#92400E] leading-relaxed flex items-start gap-2.5"
+            >
+              <span className="font-bold shrink-0 text-[#D97706]">Notice:</span>
+              <span>{notice}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── 6. Responsible Clinical Boundary Notice ── */}
       <div className="p-4 rounded-xl bg-[#FDE6EF]/30 border border-[#FDE6EF] text-center max-w-3xl mx-auto text-xs text-[#667085] space-y-1">
         <p className="font-semibold text-[#DC326C]">
           {t('cycle:responsibleBoundaryTitle', { defaultValue: 'Responsible Health & Non-Diagnostic Framing' })}

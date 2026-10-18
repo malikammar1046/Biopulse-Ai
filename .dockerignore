@@ -1,0 +1,63 @@
+# ==============================================================================
+# BioPulse AI - Docker Ignore Rules
+# Keeps backend container image compact, secure, and fast to build on Azure
+# ==============================================================================
+
+# Git & GitHub
+.git
+.gitignore
+.gitattributes
+.github
+
+# Frontend & Web App (Deployed separately to Azure Static Web Apps)
+apps/
+node_modules
+Meal/
+
+# Python virtual environments & bytecode
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.venv
+venv/
+backend/venv
+*/venv
+.pytest_cache
+.coverage
+htmlcov/
+
+# Local databases & test persistence
+*.sqlite3
+*.sqlite3-journal
+*.sqlite3-wal
+*.sqlite3-shm
+test_fallback.sqlite3
+backend/db.sqlite3
+backend/test_fallback.sqlite3
+
+# Environment files & secrets (injected via Azure Container Apps secrets)
+.env*
+!.env.example
+backend/.env*
+!backend/.env.example
+
+# Machine Learning raw training image datasets, notebooks & scratch artifacts
+machine-learning/**/Ultrasound_Images
+machine-learning/**/notebooks
+machine-learning/**/scratch
+machine-learning/**/experiments
+machine-learning/**/reports
+machine-learning/**/data/raw
+machine-learning/**/data/processed
+machine-learning/**/*.pdf
+machine-learning/**/*.xlsx
+
+# IDE & Editor caches
+.idea
+.vscode
+.gemini
+.agent
+*.log
+Thumbs.db
+.DS_Store

@@ -15,6 +15,8 @@ interface FemaleOnboardingLayoutProps {
   onBack: () => void;
   isSubmitting?: boolean;
   canGoBack?: boolean;
+  isUpdatingProfile?: boolean;
+  onCancel?: () => void;
   children: React.ReactNode;
 }
 
@@ -27,46 +29,69 @@ export const FemaleOnboardingLayout: React.FC<FemaleOnboardingLayoutProps> = ({
   onBack,
   isSubmitting = false,
   canGoBack = true,
+  isUpdatingProfile = false,
+  onCancel,
   children,
 }) => {
   const { t } = useTranslation(['onboarding', 'common']);
 
   return (
-    <div className="min-h-screen bg-[#F5FBFD] text-[#073B72] flex flex-col justify-between p-2 sm:p-4 lg:p-5 xl:p-6 select-none relative font-sans overflow-x-hidden">
+    <div className="h-dvh bg-[#F5FBFD] text-[#073B72] flex flex-col px-2 pt-2 pb-1 sm:px-4 sm:pt-4 sm:pb-1 lg:px-5 lg:pt-5 lg:pb-1 xl:px-6 xl:pt-6 xl:pb-1 select-none relative font-sans overflow-hidden">
       {/* ── Background Luminous Ambient Glows ── */}
       <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-        <div className="absolute top-10 left-10 w-[450px] h-[450px] bg-[#E0F2FE]/60 rounded-full blur-[140px]" />
+        <div className="absolute top-10 left-10 w-[450px] h-[450px] bg-[#FDE6EF]/60 rounded-full blur-[140px]" />
         <div className="absolute bottom-10 right-10 w-[550px] h-[550px] bg-[#DDF7F7]/50 rounded-full blur-[160px]" />
-        <div className="absolute top-1/2 left-1/3 w-[400px] h-[400px] bg-[#F0F9FF]/70 rounded-full blur-[120px]" />
+        <div className="absolute top-1/2 left-1/3 w-[400px] h-[400px] bg-[#FFF8FA]/70 rounded-full blur-[120px]" />
       </div>
 
-      {/* ── Desktop Two-Column Workspace (Wide Card Dominant, max-w-[1520px]) ── */}
-      <div className="max-w-[1520px] 2xl:max-w-[1640px] w-full mx-auto flex-1 flex flex-col lg:flex-row gap-5 lg:gap-10 xl:gap-14 items-stretch justify-center px-1 sm:px-6 lg:px-8 xl:px-10">
+      {/* ── Desktop Two-Column Workspace (Wide Card Dominant) ── */}
+      <div className="w-full max-w-[1680px] mx-auto flex-1 min-h-0 flex flex-col lg:flex-row gap-4 lg:gap-5 xl:gap-6 items-stretch justify-center px-1 sm:px-2 lg:px-0">
         {/* ════════════════════════════════════════════════════════════
-            LEFT COLUMN: FEMALE IDENTITY & PATHWAY PANEL
+            LEFT COLUMN: FEMALE IDENTITY & PATHWAY PANEL (Compact 220–250px)
            ════════════════════════════════════════════════════════════ */}
-        <aside className="w-full lg:w-[260px] xl:w-[290px] 2xl:w-[310px] flex flex-col justify-between py-2 sm:py-3 select-none shrink-0">
+        <aside className="w-full lg:w-[220px] xl:w-[240px] 2xl:w-[250px] flex flex-col justify-between py-2 sm:py-3 select-none shrink-0 lg:min-h-0">
           {/* Top Back Action & Identity Header */}
-          <div className="space-y-3.5">
-            <Link
-              to={ROUTES.HOME}
-              className="inline-flex items-center gap-2 text-sm font-semibold text-[#55718F] hover:text-[#073B72] transition-colors group cursor-pointer"
-            >
-              <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1 text-[#55718F] group-hover:text-[#073B72]" aria-hidden="true" />
-              <span>{t('common:actions.backToHome', 'Back to Home')}</span>
-            </Link>
+          <div className="space-y-3">
+            {isUpdatingProfile && onCancel ? (
+              <button
+                type="button"
+                onClick={onCancel}
+                className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-[#55718F] hover:text-[#073B72] transition-colors group cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1 text-[#55718F] group-hover:text-[#073B72]" aria-hidden="true" />
+                <span>{t('onboarding:layout.cancelAndReturn', 'Cancel & Return to Settings')}</span>
+              </button>
+            ) : (
+              <Link
+                to={ROUTES.HOME}
+                className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-[#55718F] hover:text-[#073B72] transition-colors group cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1 text-[#55718F] group-hover:text-[#073B72]" aria-hidden="true" />
+                <span>{t('common:actions.backToHome', 'Back to Home')}</span>
+              </Link>
+            )}
 
-            <div className="space-y-2 pt-0.5">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E0F2FE] border border-[#BAE6FD] text-[12px] font-bold text-[#0288D1] tracking-wider uppercase shadow-2xs font-sans">
-                <span>{t('onboarding:layout.forWomen', 'FOR WOMEN')}</span>
+            <div className="space-y-1.5 pt-0.5">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FDE6EF] border border-[#FDE6EF] text-[11px] font-bold text-[#F43F7D] tracking-wider uppercase shadow-2xs font-sans">
+                <span>
+                  {isUpdatingProfile
+                    ? t('onboarding:layout.profileUpdate', 'PROFILE UPDATE')
+                    : t('onboarding:layout.forWomen', 'FOR WOMEN')}
+                </span>
               </div>
 
-              <h1 className="text-2xl sm:text-3xl xl:text-[2.1rem] font-bold font-display leading-[1.14] tracking-tight">
-                <span className="text-[#073B72] block">{t('onboarding:layout.womenTitle', 'Your Health, Your Future')}</span>
+              <h1 className="text-xl sm:text-2xl xl:text-[1.65rem] font-bold font-display leading-[1.18] tracking-tight">
+                <span className="text-[#073B72] block">
+                  {isUpdatingProfile
+                    ? t('onboarding:layout.updateHealthProfile', 'Update Health Profile')
+                    : t('onboarding:layout.womenTitle', 'Your Health, Your Future')}
+                </span>
               </h1>
 
-              <p className="text-[14px] sm:text-[15px] text-[#55718F] font-sans leading-relaxed">
-                {t('onboarding:layout.womenSubtitle', 'A few simple steps help us understand your health and personalize your PCOS screening and guidance.')}
+              <p className="text-[13px] sm:text-[13.5px] text-[#55718F] font-sans leading-relaxed">
+                {isUpdatingProfile
+                  ? t('onboarding:layout.updateWomenSubtitle', 'Update your biometrics, cycle history, and symptoms while preserving your historical assessments.')
+                  : t('onboarding:layout.womenSubtitle', 'A few simple steps help us understand your health and personalize your PCOS screening and guidance.')}
               </p>
             </div>
           </div>
@@ -74,16 +99,16 @@ export const FemaleOnboardingLayout: React.FC<FemaleOnboardingLayoutProps> = ({
           {/* Lower Pathway Visual & Decorative Accents */}
           <div className="relative pt-4 pb-2 mt-auto hidden lg:block">
             {/* Soft circular shape background */}
-            <div className="relative w-40 h-40 xl:w-44 xl:h-44 mx-auto flex items-center justify-center">
+            <div className="relative w-32 h-32 xl:w-36 xl:h-36 mx-auto flex items-center justify-center">
               {/* Circular Halo */}
               <div
-                className="absolute inset-0 rounded-full bg-gradient-to-br from-[#E0F2FE] via-[#BAE6FD]/40 to-[#E0F2FE] -z-0 shadow-inner"
+                className="absolute inset-0 rounded-full bg-gradient-to-br from-[#FDE6EF] via-[#FCE7F3]/40 to-[#FDE6EF] -z-0 shadow-inner"
                 aria-hidden="true"
               />
 
               {/* Foliage / Delicate Leaves SVG decoration */}
               <svg
-                className="absolute -top-1.5 -right-1 w-14 h-14 text-[#0288D1]/30 pointer-events-none"
+                className="absolute -top-1.5 -right-1 w-12 h-12 text-[#F43F7D]/30 pointer-events-none"
                 viewBox="0 0 100 100"
                 fill="currentColor"
                 aria-hidden="true"
@@ -93,7 +118,7 @@ export const FemaleOnboardingLayout: React.FC<FemaleOnboardingLayoutProps> = ({
               </svg>
 
               {/* Model Portrait Image */}
-              <div className="relative z-10 w-32 xl:w-36 h-32 xl:h-36 rounded-full overflow-hidden border-2.5 border-white shadow-md">
+              <div className="relative z-10 w-26 xl:w-30 h-26 xl:h-30 rounded-full overflow-hidden border-2 border-white shadow-md">
                 <img
                   src="/assets/images/female-pathway.jpg"
                   alt="BioPulse AI - For Women"
@@ -103,9 +128,9 @@ export const FemaleOnboardingLayout: React.FC<FemaleOnboardingLayoutProps> = ({
               </div>
 
               {/* Cursive Handwritten Script Accent */}
-              <div className="absolute -top-2 -right-2 rotate-[-8deg] select-none pointer-events-none z-20">
+              <div className="absolute -top-2 -right-1 rotate-[-8deg] select-none pointer-events-none z-20">
                 <span
-                  className="text-lg sm:text-xl font-bold text-[#0288D1] block leading-tight text-right drop-shadow-2xs"
+                  className="text-base xl:text-lg font-bold text-[#F43F7D] block leading-tight text-right drop-shadow-2xs"
                   style={{ fontFamily: "'Caveat', cursive" }}
                 >
                   Same care
@@ -115,15 +140,15 @@ export const FemaleOnboardingLayout: React.FC<FemaleOnboardingLayoutProps> = ({
               </div>
 
               {/* Floating Badge Card Over Lower Left */}
-              <div className="absolute -bottom-1 -left-2 z-20 bg-white/95 backdrop-blur-md rounded-xl p-2.5 border border-[#D7EAF2] shadow-sm flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-[#E0F2FE] flex items-center justify-center text-[#0288D1] shrink-0">
-                  <ActivityHeart className="w-3.5 h-3.5 text-[#0288D1]" aria-hidden="true" />
+              <div className="absolute -bottom-1 -left-1 z-20 bg-white/95 backdrop-blur-md rounded-xl p-2 border border-[#D7EAF2] shadow-sm flex items-center gap-1.5 max-w-[180px]">
+                <div className="w-6 h-6 rounded-lg bg-[#FDE6EF] flex items-center justify-center text-[#F43F7D] shrink-0">
+                  <ActivityHeart className="w-3 h-3 text-[#F43F7D]" aria-hidden="true" />
                 </div>
                 <div>
-                  <span className="text-[11px] font-bold text-[#073B72] block leading-tight">
+                  <span className="text-[10px] font-bold text-[#073B72] block leading-tight">
                     Knowledge today
                   </span>
-                  <span className="text-[10px] text-[#55718F] block leading-tight">
+                  <span className="text-[9px] text-[#55718F] block leading-tight">
                     A healthier tomorrow
                   </span>
                 </div>
@@ -135,14 +160,16 @@ export const FemaleOnboardingLayout: React.FC<FemaleOnboardingLayoutProps> = ({
         {/* ════════════════════════════════════════════════════════════
             RIGHT COLUMN: MAIN ONBOARDING WORKSPACE (Expanded Dominant Card)
            ════════════════════════════════════════════════════════════ */}
-        <main className="w-full flex-1 md:w-[calc(100%-1.25rem)] md:ml-auto lg:w-auto lg:ml-2 xl:ml-4 lg:max-w-[1040px] xl:max-w-[1180px] 2xl:max-w-[1260px] flex flex-col justify-between">
+        <main className="w-full flex-1 min-w-0 min-h-0 flex flex-col justify-between">
           {/* Main White Card with Generous Desktop Space */}
-          <div className="w-full bg-white rounded-2xl sm:rounded-[24px] xl:rounded-[28px] border border-[#D7EAF2] shadow-[0_8px_30px_rgba(7,59,114,0.05)] p-3.5 sm:p-7 lg:p-8 xl:p-9 flex flex-col justify-between">
+          <div className="w-full flex-1 min-h-0 overflow-hidden bg-white rounded-2xl sm:rounded-[24px] xl:rounded-[28px] border border-[#D7EAF2] shadow-[0_8px_30px_rgba(7,59,114,0.05)] px-4 sm:px-6 lg:px-8 xl:px-10 py-4 sm:py-6 lg:py-7 xl:py-8 flex flex-col">
             {/* Top Fixed Area: PCOS Onboarding Bar & Stepper */}
             <div className="shrink-0 mb-2">
               <div className="flex items-center justify-between pb-2.5 border-b border-[#E8F1F5] mb-2">
-                <span className="text-[13px] sm:text-sm font-bold font-sans text-[#0288D1] uppercase tracking-wider">
-                  {t('onboarding:layout.pcosOnboarding', 'PCOS ONBOARDING')}
+                <span className="text-[13px] sm:text-sm font-bold font-sans text-[#F43F7D] uppercase tracking-wider">
+                  {isUpdatingProfile
+                    ? t('onboarding:layout.profileUpdate', 'PROFILE UPDATE')
+                    : t('onboarding:layout.pcosOnboarding', 'PCOS ONBOARDING')}
                 </span>
                 <span className="text-[13px] sm:text-sm font-semibold font-sans text-[#55718F]">
                   {t('onboarding:layout.stepProgress', 'Step {{current}} of {{total}}', { current: currentStep, total: totalSteps })}
@@ -158,13 +185,23 @@ export const FemaleOnboardingLayout: React.FC<FemaleOnboardingLayoutProps> = ({
             </div>
 
             {/* Form Content Area with Natural Flow */}
-            <div className="flex-1 py-3 sm:py-4">
+            <div className="flex-1 min-h-0 w-full min-w-0 py-3 sm:py-4 overflow-y-auto overscroll-contain pr-1 sm:pr-2 [scrollbar-gutter:stable]">
               {children}
             </div>
 
             {/* Bottom Navigation Row with Responsive Touch-Friendly Buttons */}
-            <div className={`mt-6 pt-4 sm:pt-5 border-t border-[#E8F1F5] flex items-center ${currentStep === 1 ? 'justify-end' : 'justify-between'} gap-2 sm:gap-4 shrink-0`}>
-              {/* Back Button */}
+            <div className={`mt-6 pt-4 sm:pt-5 border-t border-[#E8F1F5] flex items-center ${currentStep === 1 && !(isUpdatingProfile && onCancel) ? 'justify-end' : 'justify-between'} gap-2 sm:gap-4 shrink-0`}>
+              {/* Back or Cancel Button on step 1 */}
+              {isUpdatingProfile && onCancel && currentStep === 1 && (
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  className="min-h-[44px] sm:min-h-[50px] px-4 sm:px-6 py-2.5 sm:py-3 rounded-full text-xs sm:text-[14px] font-semibold font-sans uppercase tracking-wider flex items-center gap-1.5 sm:gap-2 transition-all cursor-pointer bg-[#F5FBFD] hover:bg-[#E8F4F8] border border-[#D7EAF2] text-[#55718F] hover:text-[#073B72]"
+                >
+                  <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+                  <span>{t('onboarding:layout.cancelAndReturn', 'Cancel & Return to Settings')}</span>
+                </button>
+              )}
               {currentStep > 1 && (
                 <button
                   type="button"
@@ -182,7 +219,7 @@ export const FemaleOnboardingLayout: React.FC<FemaleOnboardingLayoutProps> = ({
                 type="button"
                 onClick={onNext}
                 disabled={isSubmitting}
-                className={`min-h-[44px] sm:min-h-[50px] px-5 sm:px-10 py-2.5 sm:py-3 rounded-full font-sans font-semibold text-xs sm:text-base uppercase tracking-wider text-white bg-[#0288D1] hover:bg-[#01579B] shadow-md shadow-sky-500/20 transition-all flex items-center justify-center gap-2 sm:gap-2.5 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed transform hover:scale-[1.01] active:scale-[0.99] ${currentStep === 1 ? 'w-full sm:w-auto' : ''}`}
+                className={`min-h-[44px] sm:min-h-[50px] px-5 sm:px-10 py-2.5 sm:py-3 rounded-full font-sans font-semibold text-xs sm:text-base uppercase tracking-wider text-white bg-[#F43F7D] hover:bg-[#BE185D] shadow-md shadow-pink-500/20 transition-all flex items-center justify-center gap-2 sm:gap-2.5 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed transform hover:scale-[1.01] active:scale-[0.99] ${currentStep === 1 && !(isUpdatingProfile && onCancel) ? 'w-full sm:w-auto' : ''}`}
               >
                 {isSubmitting ? (
                   <>
@@ -193,7 +230,9 @@ export const FemaleOnboardingLayout: React.FC<FemaleOnboardingLayoutProps> = ({
                   <>
                     <span>
                       {currentStep === totalSteps
-                        ? t('onboarding:layout.completeSetup', 'Complete Setup')
+                        ? isUpdatingProfile
+                          ? t('onboarding:layout.saveProfileChanges', 'Save Changes & Re-screen')
+                          : t('onboarding:layout.completeSetup', 'Complete Setup')
                         : currentStep === totalSteps - 1
                         ? t('onboarding:layout.reviewProfile', 'Review Profile')
                         : t('onboarding:layout.continue', 'Continue')}
@@ -206,9 +245,9 @@ export const FemaleOnboardingLayout: React.FC<FemaleOnboardingLayoutProps> = ({
           </div>
 
           {/* Privacy Note & Footer Step Counter below Main Card */}
-          <div className="w-full py-2.5 flex items-center justify-between text-[13px] sm:text-sm text-[#55718F] font-sans px-3 shrink-0">
+          <div className="w-full py-1.5 flex items-center justify-between text-[13px] sm:text-sm text-[#55718F] font-sans px-3 shrink-0">
             <div className="flex items-center gap-2 mx-auto">
-              <Lock01 className="w-4 h-4 text-[#0288D1]" aria-hidden="true" />
+              <Lock01 className="w-4 h-4 text-[#F43F7D]" aria-hidden="true" />
               <span>{t('onboarding:layout.secureNotice', 'Your information is secure and private.')}</span>
             </div>
             <span className="hidden sm:block text-[13px] font-sans text-[#8FA3B8]">

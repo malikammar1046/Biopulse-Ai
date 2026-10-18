@@ -22,6 +22,7 @@ import {
   lbsToKg,
 } from '../../../../utils/unitConversions';
 import { getDobInputBounds } from '../../../../utils/profileValidation';
+import { MeasurementInput } from '../../../../components/common/MeasurementInput';
 
 interface PersonalTabProps {
   draft: UserProfile;
@@ -43,7 +44,7 @@ export const PersonalTab: React.FC<PersonalTabProps> = ({
   const [weightUnit, setWeightUnit] = React.useState<'kg' | 'lbs'>('kg');
   const [waistUnit, setWaistUnit] = React.useState<'cm' | 'in'>('cm');
 
-  // Separate editing states (string buffers) to prevent keystroke conversions and cursor jumps
+  // Separate editing states for height
   const [heightCmInput, setHeightCmInput] = React.useState<string>(
     draft.heightCm != null ? String(draft.heightCm) : ''
   );
@@ -55,27 +56,9 @@ export const PersonalTab: React.FC<PersonalTabProps> = ({
     initialFtIn.inches != null ? String(initialFtIn.inches) : ''
   );
 
-  const [weightKgInput, setWeightKgInput] = React.useState<string>(
-    draft.weightKg != null ? String(draft.weightKg) : ''
-  );
-  const [weightLbsInput, setWeightLbsInput] = React.useState<string>(() => {
-    const lbs = kgToLbs(draft.weightKg);
-    return lbs != null ? String(lbs) : '';
-  });
-
-  const [waistCmInput, setWaistCmInput] = React.useState<string>(
-    draft.waistCm != null ? String(draft.waistCm) : ''
-  );
-  const [waistInchesInput, setWaistInchesInput] = React.useState<string>(() => {
-    const inches = cmToInches(draft.waistCm);
-    return inches != null ? String(inches) : '';
-  });
-
   // Track last committed canonical values to avoid overwriting active user typing
   const lastCanonicalRef = React.useRef({
     heightCm: draft.heightCm,
-    weightKg: draft.weightKg,
-    waistCm: draft.waistCm,
   });
 
   React.useEffect(() => {
@@ -86,19 +69,7 @@ export const PersonalTab: React.FC<PersonalTabProps> = ({
       setHeightFeetInput(ftIn.feet != null ? String(ftIn.feet) : '');
       setHeightInchesInput(ftIn.inches != null ? String(ftIn.inches) : '');
     }
-    if (draft.weightKg !== lastCanonicalRef.current.weightKg) {
-      lastCanonicalRef.current.weightKg = draft.weightKg;
-      setWeightKgInput(draft.weightKg != null ? String(draft.weightKg) : '');
-      const lbs = kgToLbs(draft.weightKg);
-      setWeightLbsInput(lbs != null ? String(lbs) : '');
-    }
-    if (draft.waistCm !== lastCanonicalRef.current.waistCm) {
-      lastCanonicalRef.current.waistCm = draft.waistCm;
-      setWaistCmInput(draft.waistCm != null ? String(draft.waistCm) : '');
-      const inches = cmToInches(draft.waistCm);
-      setWaistInchesInput(inches != null ? String(inches) : '');
-    }
-  }, [draft.heightCm, draft.weightKg, draft.waistCm]);
+  }, [draft.heightCm]);
 
   // Height handlers
   const handleHeightCmChange = (val: string) => {
@@ -156,93 +127,11 @@ export const PersonalTab: React.FC<PersonalTabProps> = ({
     setHeightUnit(newUnit);
   };
 
-  // Weight handlers
-  const handleWeightKgChange = (val: string) => {
-    setWeightKgInput(val);
-    const trimmed = val.trim();
-    if (!trimmed) {
-      lastCanonicalRef.current.weightKg = null;
-      setDraft((p) => ({ ...p, weightKg: null }));
-      return;
-    }
-    const num = parseFloat(trimmed);
-    if (!isNaN(num) && num > 0) {
-      lastCanonicalRef.current.weightKg = num;
-      setDraft((p) => ({ ...p, weightKg: num }));
-    }
-  };
-
-  const handleWeightLbsChange = (val: string) => {
-    setWeightLbsInput(val);
-    const trimmed = val.trim();
-    if (!trimmed) {
-      lastCanonicalRef.current.weightKg = null;
-      setDraft((p) => ({ ...p, weightKg: null }));
-      return;
-    }
-    const num = parseFloat(trimmed);
-    if (!isNaN(num) && num > 0) {
-      const kg = lbsToKg(num);
-      lastCanonicalRef.current.weightKg = kg;
-      setDraft((p) => ({ ...p, weightKg: kg }));
-    }
-  };
-
   const handleSwitchWeightUnit = (newUnit: 'kg' | 'lbs') => {
-    if (newUnit === weightUnit) return;
-    if (newUnit === 'kg') {
-      setWeightKgInput(
-        draft.weightKg != null ? String(Math.round(draft.weightKg * 10) / 10) : ''
-      );
-    } else {
-      const lbs = kgToLbs(draft.weightKg);
-      setWeightLbsInput(lbs != null ? String(lbs) : '');
-    }
     setWeightUnit(newUnit);
   };
 
-  // Waist handlers
-  const handleWaistCmChange = (val: string) => {
-    setWaistCmInput(val);
-    const trimmed = val.trim();
-    if (!trimmed) {
-      lastCanonicalRef.current.waistCm = null;
-      setDraft((p) => ({ ...p, waistCm: null }));
-      return;
-    }
-    const num = parseFloat(trimmed);
-    if (!isNaN(num) && num > 0) {
-      lastCanonicalRef.current.waistCm = num;
-      setDraft((p) => ({ ...p, waistCm: num }));
-    }
-  };
-
-  const handleWaistInchesChange = (val: string) => {
-    setWaistInchesInput(val);
-    const trimmed = val.trim();
-    if (!trimmed) {
-      lastCanonicalRef.current.waistCm = null;
-      setDraft((p) => ({ ...p, waistCm: null }));
-      return;
-    }
-    const num = parseFloat(trimmed);
-    if (!isNaN(num) && num > 0) {
-      const cm = inchesToCm(num);
-      lastCanonicalRef.current.waistCm = cm;
-      setDraft((p) => ({ ...p, waistCm: cm }));
-    }
-  };
-
   const handleSwitchWaistUnit = (newUnit: 'cm' | 'in') => {
-    if (newUnit === waistUnit) return;
-    if (newUnit === 'cm') {
-      setWaistCmInput(
-        draft.waistCm != null ? String(Math.round(draft.waistCm * 10) / 10) : ''
-      );
-    } else {
-      const inches = cmToInches(draft.waistCm);
-      setWaistInchesInput(inches != null ? String(inches) : '');
-    }
     setWaistUnit(newUnit);
   };
 
@@ -748,31 +637,16 @@ export const PersonalTab: React.FC<PersonalTabProps> = ({
               </div>
             </div>
 
-            {weightUnit === 'kg' ? (
-              <div className="relative">
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={weightKgInput}
-                  onChange={(e) => handleWeightKgChange(e.target.value)}
-                  placeholder="e.g. 64.5"
-                  className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0E9EAA]/20 focus:border-[#0E9EAA]"
-                />
-                <span className="absolute right-3.5 top-2.5 text-xs text-slate-400 font-medium">kg</span>
-              </div>
-            ) : (
-              <div className="relative">
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={weightLbsInput}
-                  onChange={(e) => handleWeightLbsChange(e.target.value)}
-                  placeholder="e.g. 142"
-                  className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0E9EAA]/20 focus:border-[#0E9EAA]"
-                />
-                <span className="absolute right-3.5 top-2.5 text-xs text-slate-400 font-medium">lbs</span>
-              </div>
-            )}
+            <MeasurementInput
+              value={draft.weightKg}
+              onChange={(val) => setDraft((p) => ({ ...p, weightKg: val }))}
+              unit={weightUnit}
+              toDisplay={weightUnit === 'lbs' ? kgToLbs : undefined}
+              fromDisplay={weightUnit === 'lbs' ? lbsToKg : undefined}
+              placeholder={weightUnit === 'kg' ? 'e.g. 64.5' : 'e.g. 142'}
+              unitLabel={weightUnit}
+              className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0E9EAA]/20 focus:border-[#0E9EAA]"
+            />
           </div>
 
           {/* Waist Circumference (Required/highlighted for male, optional for female) */}
@@ -816,31 +690,16 @@ export const PersonalTab: React.FC<PersonalTabProps> = ({
               </div>
             </div>
 
-            {waistUnit === 'cm' ? (
-              <div className="relative">
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={waistCmInput}
-                  onChange={(e) => handleWaistCmChange(e.target.value)}
-                  placeholder="e.g. 84"
-                  className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0E9EAA]/20 focus:border-[#0E9EAA]"
-                />
-                <span className="absolute right-3.5 top-2.5 text-xs text-slate-400 font-medium">cm</span>
-              </div>
-            ) : (
-              <div className="relative">
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={waistInchesInput}
-                  onChange={(e) => handleWaistInchesChange(e.target.value)}
-                  placeholder="e.g. 33"
-                  className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0E9EAA]/20 focus:border-[#0E9EAA]"
-                />
-                <span className="absolute right-3.5 top-2.5 text-xs text-slate-400 font-medium">in</span>
-              </div>
-            )}
+            <MeasurementInput
+              value={draft.waistCm}
+              onChange={(val) => setDraft((p) => ({ ...p, waistCm: val }))}
+              unit={waistUnit}
+              toDisplay={waistUnit === 'in' ? cmToInches : undefined}
+              fromDisplay={waistUnit === 'in' ? inchesToCm : undefined}
+              placeholder={waistUnit === 'cm' ? 'e.g. 84' : 'e.g. 33'}
+              unitLabel={waistUnit}
+              className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#0E9EAA]/20 focus:border-[#0E9EAA]"
+            />
             {isMale && (
               <p className="text-[10px] text-slate-500 mt-1">
                 Waist circumference assesses visceral adiposity and endocrine health.

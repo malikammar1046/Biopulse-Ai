@@ -87,6 +87,11 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
     return `data:image/png;base64,${b64}`;
   };
 
+  const isValidGradcam = (b64?: string | null) => {
+    if (!b64) return false;
+    return !b64.includes('iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB') && b64.trim().length >= 200;
+  };
+
   const isMale =
     assessment?.module === 'male_hypogonadism' ||
     assessment?.model_name?.toLowerCase().includes('logistic') ||
@@ -155,7 +160,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
       if (isTier2) return isPartialTier2 ? 'Tier 1 + Available Clinical Evidence' : 'Tier 1 + Complete Clinical Assessment';
       return 'Tier 1 Biometric Assessment';
     }
-    if (isTier3Multimodal) return 'Complete Tier 1 + Clinical + Ultrasound Assessment';
+    if (isTier3Multimodal) return 'Tier 1 + Clinical Assessment with Independent Ultrasound Morphology';
     if (isTier2) return isPartialTier2 ? 'Tier 1 + Available Clinical Evidence' : 'Tier 1 + Clinical Assessment';
     if (hasUltrasoundOnly) return 'Tier 1 + Ultrasound Assessment';
     return 'Tier 1 Assessment';
@@ -172,7 +177,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
       return 'Screening model utilizing 11 non-invasive features (demographics, body composition, sleep, and energy indicators).';
     }
     if (isTier3Multimodal) {
-      return 'Comprehensive multimodal screening combining 32 cumulative lifestyle & clinical biomarkers with deep ultrasound vision analysis.';
+      return 'Current Tier 2 model-derived screening estimate anchored in 32 validated lifestyle and laboratory biomarkers, accompanied by independent ultrasound PCOM morphology.';
     }
     if (isTier2) {
       if (isPartialTier2) {
@@ -186,9 +191,17 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
     return 'Screening model utilizing 16 non-invasive features (cycle regularity, biometrics, symptoms, and lifestyle indicators).';
   };
 
+  const formatProbabilityPct = (pct: number | undefined | null, prob: number): string => {
+    const val = pct ?? (prob > 1 ? prob : prob * 100);
+    if (val == null || Number.isNaN(val)) return '--%';
+    if (Number.isInteger(val)) return `${val}%`;
+    const rounded = Number(val.toFixed(2));
+    return Number.isInteger(rounded) ? `${rounded}%` : `${val.toFixed(2)}%`;
+  };
+
   const currentCategory = assessment.risk_category || 'lower';
   const patternDisplay = getRiskPatternDisplay(currentCategory);
-  const probPct = `${assessment.probability_percent?.toFixed(1) ?? (assessment.probability * 100).toFixed(1)}%`;
+  const probPct = formatProbabilityPct(assessment.probability_percent, assessment.probability);
 
   const badgeClass = isMale
     ? 'bg-sky-50 border-sky-200/80 text-[#0288D1]'
@@ -329,14 +342,16 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
                 className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
                   assessment.pcom_status === 'PCOM Detected'
                     ? 'bg-rose-50 text-rose-700 border-rose-200'
-                    : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : assessment.pcom_status === 'PCOM Not Detected'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-amber-50 text-amber-700 border-amber-200'
                 }`}
               >
                 {assessment.pcom_status}
               </span>
             </div>
 
-            {assessment.gradcam_b64 && (
+            {isValidGradcam(assessment.gradcam_b64) && (
               <div
                 className="relative group cursor-pointer overflow-hidden rounded-xl border border-slate-200"
                 onClick={() => setShowGradCamModal(true)}
@@ -355,19 +370,57 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
             )}
 
             {isTier3Multimodal && assessment.fusion_details && (
-              <div className="text-[11px] font-mono text-slate-600 space-y-1 pt-1 border-t border-slate-200">
+              <div className="text-[11px] font-mono text-slate-600 space-y-1.5 pt-1.5 border-t border-slate-200">
                 <div className="flex justify-between">
-                  <span>Clinical Weight (95%):</span>
+                  <span>Clinical Risk (Tier 2 - 95%):</span>
                   <strong className="text-slate-900">
-                    {(assessment.fusion_details.clinical_probability * 100).toFixed(1)}%
+                    {formatProbabilityPct(assessment.fusion_details.clinical_probability * 100, assessment.fusion_details.clinical_probability)}
                   </strong>
                 </div>
                 <div className="flex justify-between">
-                  <span>Ultrasound Weight (5%):</span>
+                  <span>Ultrasound PCOS Model (5%):</span>
                   <strong className="text-slate-900">
-                    {(((assessment.fusion_details.ultrasound_pcom_probability ?? assessment.fusion_details.ultrasound_probability ?? 0)) * 100).toFixed(1)}%
+                    {assessment.fusion_details.ultrasound_pcos_probability != null
+                      ? formatProbabilityPct(assessment.fusion_details.ultrasound_pcos_probability * 100, assessment.fusion_details.ultrasound_pcos_probability)
+                      : assessment.fusion_details.exploratory_ultrasound_pcos_probability != null
+                      ? formatProbabilityPct(assessment.fusion_details.exploratory_ultrasound_pcos_probability * 100, assessment.fusion_details.exploratory_ultrasound_pcos_probability)
+                      : 'Unavailable'}
                   </strong>
                 </div>
+                <div className="flex justify-between">
+                  <span>Final Multimodal Probability:</span>
+                  <strong className="text-slate-900 font-bold">
+                    {formatProbabilityPct(
+                      (assessment.fusion_details.final_fused_probability ?? assessment.probability) * 100,
+                      assessment.fusion_details.final_fused_probability ?? assessment.probability
+                    )}
+                  </strong>
+                </div>
+                {assessment.fusion_details.probability_change_pp !== undefined &&
+                  assessment.fusion_details.probability_change_pp !== null && (
+                    <div className="flex justify-between text-[10px] text-slate-500">
+                      <span>Fusion Score Delta:</span>
+                      <span className="font-semibold text-slate-700">
+                        {assessment.fusion_details.probability_change_pp > 0 ? '+' : ''}
+                        {Number.isInteger(Number(assessment.fusion_details.probability_change_pp.toFixed(2)))
+                          ? Number(assessment.fusion_details.probability_change_pp.toFixed(2))
+                          : assessment.fusion_details.probability_change_pp.toFixed(2)}{' '}
+                        pp
+                      </span>
+                    </div>
+                  )}
+                <div className="flex justify-between pt-1 border-t border-dashed border-slate-200">
+                  <span className="text-slate-500">PCOM Morphology Finding:</span>
+                  <strong className="text-slate-700">
+                    {assessment.fusion_details.ultrasound_pcom_status || assessment.pcom_status || 'Evaluated Independently'}
+                    {assessment.fusion_details.ultrasound_pcom_probability !== undefined &&
+                      assessment.fusion_details.ultrasound_pcom_probability !== null &&
+                      ` (${(assessment.fusion_details.ultrasound_pcom_probability * 100).toFixed(1)}%)`}
+                  </strong>
+                </div>
+                <p className="text-[10px] text-slate-500 font-sans leading-normal pt-0.5">
+                  Combined 95% clinical + 5% ultrasound experimental AI screening estimate. Morphology findings are evaluated independently and do not constitute a confirmed Rotterdam criterion or medical diagnosis.
+                </p>
               </div>
             )}
           </div>
@@ -589,7 +642,7 @@ export const ProgressiveAssessmentCard: React.FC<ProgressiveAssessmentCardProps>
 
       {/* ── Grad-CAM Inspection Modal ──────────────────────────────────────── */}
       <AnimatePresence>
-        {showGradCamModal && assessment.gradcam_b64 && (
+        {showGradCamModal && isValidGradcam(assessment.gradcam_b64) && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}

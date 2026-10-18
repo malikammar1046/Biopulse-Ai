@@ -11,9 +11,7 @@
  *  4. Graceful degradation: Seamless fallback to non-streaming POST if streaming is interrupted.
  */
 
-const BACKEND_API_URL =
-  (typeof import.meta !== 'undefined' && (import.meta as any)?.env?.VITE_BACKEND_API_URL) ||
-  'http://127.0.0.1:8000/api';
+import { BACKEND_API_URL } from '../config/apiConfig';
 
 const PUBLIC_CHAT_ENDPOINT = `${BACKEND_API_URL}/v1/intelligence/public/chat/`;
 
@@ -153,7 +151,7 @@ export async function streamPublicChatMessage(options: StreamPublicChatOptions):
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Accept: 'text/event-stream',
+        Accept: '*/*',
         'Accept-Language': locale,
       },
       body: JSON.stringify(payload),

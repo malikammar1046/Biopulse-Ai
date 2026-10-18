@@ -234,11 +234,12 @@ export const PeriodLogModal: React.FC<PeriodLogModalProps> = ({
               <label className="text-xs font-bold text-[#0F172A] block">
                 Period Flow Intensity <span className="text-[#DC2626]">*</span>
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">
                 {[
-                  { value: 'light', label: 'Light', desc: 'Minimal bleeding / Spotting', iconCount: 1 },
+                  { value: 'spotting', label: 'Spotting', desc: 'Traces / spotting', iconCount: 1 },
+                  { value: 'light', label: 'Light', desc: 'Light menstrual flow', iconCount: 1 },
                   { value: 'medium', label: 'Medium', desc: 'Standard regular flow', iconCount: 2 },
-                  { value: 'heavy', label: 'Heavy', desc: 'Heavy flow requiring frequent changes', iconCount: 3 },
+                  { value: 'heavy', label: 'Heavy', desc: 'Heavy / frequent pads', iconCount: 3 },
                 ].map((option) => {
                   const isSelected = flow === option.value;
                   return (
@@ -246,7 +247,7 @@ export const PeriodLogModal: React.FC<PeriodLogModalProps> = ({
                       key={option.value}
                       type="button"
                       onClick={() => setFlow(option.value as MenstrualFlow)}
-                      className={`p-3 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-between gap-1.5 ${
+                      className={`p-2.5 sm:p-3 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-between gap-1.5 ${
                         isSelected
                           ? 'border-[#F43F7D] ring-2 ring-[#F43F7D]/20 bg-[#FDE6EF]/30'
                           : 'border-[#EAECF0] bg-[#F8FAFC] hover:bg-white hover:border-[#F43F7D]/30'
