@@ -1466,18 +1466,41 @@ class MealPlanService:
             if not getattr(settings, "ALLOW_LOCAL_SQLITE_FALLBACK", False):
                 raise RuntimeError(f"Supabase client unavailable for food log persistence: {client_err}")
 
+        nutrition_record = {
+            "id": log_id,
+            "user_id": user_id,
+            "meal_type": clean_meal_type,
+            "food_name": food_name.strip(),
+            "portion_description": serving.strip() or "1 serving",
+            "calories": calories_val,
+            "protein_g": protein_val,
+            "carbs_g": carbs_val,
+            "fat_g": fat_val,
+            "logged_at": today_iso if "T" in today_iso else f"{today_iso}T12:00:00Z",
+            "notes": clean_notes,
+            "created_at": now_iso,
+        }
+
         if client is not None:
             try:
-                res = client.table("food_logs").insert(record).execute()
+                res = client.table("nutrition_food_logs").insert(nutrition_record).execute()
                 if hasattr(res, "error") and res.error:
-                    raise RuntimeError(f"Supabase food_logs insert error: {res.error}")
+                    raise RuntimeError(f"Supabase nutrition_food_logs insert error: {res.error}")
                 if res.data and len(res.data) > 0:
                     return res.data[0]
             except Exception as exc:
-                logger.error("Supabase food_logs insert failed: %s", exc)
-                if not getattr(settings, "ALLOW_LOCAL_SQLITE_FALLBACK", False):
-                    raise RuntimeError(f"Authoritative food log could not be persisted to Supabase: {exc}")
-                self._memory_food_logs.append(record)
+                logger.warning("Supabase nutrition_food_logs insert failed, attempting legacy food_logs: %s", exc)
+                try:
+                    res_leg = client.table("food_logs").insert(record).execute()
+                    if hasattr(res_leg, "error") and res_leg.error:
+                        raise RuntimeError(f"Supabase food_logs insert error: {res_leg.error}")
+                    if res_leg.data and len(res_leg.data) > 0:
+                        return res_leg.data[0]
+                except Exception as leg_exc:
+                    logger.error("Supabase food_logs insert failed: %s", leg_exc)
+                    if not getattr(settings, "ALLOW_LOCAL_SQLITE_FALLBACK", False):
+                        raise RuntimeError(f"Authoritative food log could not be persisted to Supabase: {leg_exc}")
+                    self._memory_food_logs.append(record)
         else:
             self._memory_food_logs.append(record)
 
@@ -1623,22 +1646,63 @@ class MealPlanService:
             pass
 
         if client is not None:
+            merged: Dict[str, Dict[str, Any]] = {}
+
+            # 1. Authoritative: public.nutrition_food_logs
             try:
-                query = client.table("food_logs").select("*").eq("user_id", user_id)
+                q1 = client.table("nutrition_food_logs").select("*").eq("user_id", user_id)
                 if date_iso:
-                    query = query.eq("logged_at", date_iso)
+                    q1 = q1.gte("logged_at", f"{date_iso}T00:00:00Z").lte("logged_at", f"{date_iso}T23:59:59Z")
                 elif start_date and end_date:
-                    query = query.gte("logged_at", start_date).lte("logged_at", end_date)
+                    q1 = q1.gte("logged_at", start_date).lte("logged_at", end_date)
                 elif start_date:
-                    query = query.gte("logged_at", start_date)
+                    q1 = q1.gte("logged_at", start_date)
                 else:
                     cutoff = (date.today() - timedelta(days=days)).isoformat()
-                    query = query.gte("logged_at", cutoff)
-                res = query.order("logged_at", desc=True).order("created_at", desc=True).execute()
-                if res.data:
-                    return res.data
+                    q1 = q1.gte("logged_at", cutoff)
+                res1 = q1.order("logged_at", desc=True).order("created_at", desc=True).execute()
+                for r in (res1.data or []):
+                    rec_id = str(r.get("id"))
+                    dt = str(r.get("logged_at", ""))[:10]
+                    dedup = f"{str(r.get('meal_type', '')).lower()}_{str(r.get('food_name', '')).strip().lower()}_{dt}"
+                    merged[rec_id] = r
+                    merged[dedup] = r
+            except Exception as exc:
+                logger.warning("Supabase nutrition_food_logs select failed: %s", exc)
+
+            # 2. Legacy fallback: public.food_logs
+            try:
+                q2 = client.table("food_logs").select("*").eq("user_id", user_id)
+                if date_iso:
+                    q2 = q2.eq("logged_at", date_iso)
+                elif start_date and end_date:
+                    q2 = q2.gte("logged_at", start_date).lte("logged_at", end_date)
+                elif start_date:
+                    q2 = q2.gte("logged_at", start_date)
+                else:
+                    cutoff = (date.today() - timedelta(days=days)).isoformat()
+                    q2 = q2.gte("logged_at", cutoff)
+                res2 = q2.order("logged_at", desc=True).order("created_at", desc=True).execute()
+                for r in (res2.data or []):
+                    rec_id = str(r.get("id"))
+                    dt = str(r.get("logged_at", ""))[:10]
+                    dedup = f"{str(r.get('meal_type', '')).lower()}_{str(r.get('food_name', '')).strip().lower()}_{dt}"
+                    if rec_id not in merged and dedup not in merged:
+                        merged[rec_id] = r
+                        merged[dedup] = r
             except Exception as exc:
                 logger.warning("Supabase food_logs select failed: %s", exc)
+
+            if merged:
+                seen_ids = set()
+                final_res = []
+                for val in merged.values():
+                    v_id = str(val.get("id"))
+                    if v_id not in seen_ids:
+                        seen_ids.add(v_id)
+                        final_res.append(val)
+                final_res.sort(key=lambda x: (str(x.get("logged_at", "")), str(x.get("created_at", ""))), reverse=True)
+                return final_res
 
         # In-memory fallback
         def _matches(l: Dict[str, Any]) -> bool:

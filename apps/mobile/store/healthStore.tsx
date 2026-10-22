@@ -1313,14 +1313,13 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
   const updateCycle = useCallback((partial: Partial<CycleTrackingState>) => {
     setCycle((prev) => {
       const updated = { ...prev, ...partial };
-      if (user?.id && user?.accessToken) {
-        trackingService.logCycle(user.id, user.accessToken, {
-          periodStartDate: updated.lastPeriodStartDate || new Date().toISOString().split('T')[0],
-          cycleLength: updated.cycleLength,
-          flow: updated.flow?.toLowerCase(),
-          notes: updated.notes,
-        }).catch((err) => {
-          console.warn('[BioPulse HealthStore] Error syncing cycle update to DB:', err);
+      // Sync cycleLength or lastPeriodStartDate to profiles table if modified
+      if (user?.id && user?.accessToken && (partial.cycleLength !== undefined || partial.lastPeriodStartDate !== undefined)) {
+        const patch: Record<string, any> = {};
+        if (partial.cycleLength !== undefined) patch.cycle_length = String(partial.cycleLength);
+        if (partial.lastPeriodStartDate !== undefined) patch.last_period_date = partial.lastPeriodStartDate;
+        updateUserProfileInDb(user.id, user.accessToken, patch).catch((err) => {
+          console.warn('[BioPulse HealthStore] Error syncing cycle params to profile:', err);
         });
       }
       return updated;
@@ -1339,7 +1338,7 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
     if (user?.id && user?.accessToken) {
       trackingService.logCycle(user.id, user.accessToken, {
         periodStartDate: dateString,
-        flow: flow.toLowerCase(),
+        flow,
         cycleLength: cycle.cycleLength || 28,
       }).then((res) => {
         if (res.data) {
@@ -1372,7 +1371,7 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
         const startMs = new Date(res.data.periodStartDate).getTime();
         const todayMs = new Date().setHours(0, 0, 0, 0);
         const diffDays = Math.max(1, Math.floor((todayMs - startMs) / (1000 * 60 * 60 * 24)) + 1);
-        const cycleLen = res.data.cycleLength || 28;
+        const cycleLen = res.data.cycleLength || input.cycleLength || 28;
 
         setCycle((prev) => ({
           ...prev,
@@ -1383,6 +1382,20 @@ export const RealtimeHealthStoreProvider: React.FC<{ children: ReactNode }> = ({
           nextPeriodDaysRemaining: Math.max(0, cycleLen - diffDays),
           notes: res.data!.notes || prev.notes,
         }));
+
+        // Persist cycle length and period start date to profiles table (the canonical data model for cycle length)
+        if (user.id && user.accessToken) {
+          const profilePatch: Record<string, any> = {
+            last_period_date: res.data.periodStartDate,
+          };
+          if (input.cycleLength !== undefined) {
+            profilePatch.cycle_length = String(input.cycleLength);
+          }
+          updateUserProfileInDb(user.id, user.accessToken, profilePatch).catch((err) => {
+            console.warn('[BioPulse HealthStore] Error updating profile cycle length/date:', err);
+          });
+        }
+
         return true;
       }
       return false;

@@ -100,6 +100,34 @@ export interface LogFitnessInput {
 }
 
 // ============================================================================
+// CYCLE FLOW NORMALIZATION HELPERS
+// ============================================================================
+
+/**
+ * Normalizes UI flow selection to Supabase public.cycle_records check constraint:
+ * CHECK (flow IN ('light', 'medium', 'heavy'))
+ */
+export function normalizeFlowToDb(flow?: string | null): 'light' | 'medium' | 'heavy' {
+  if (!flow) return 'medium';
+  const lower = String(flow).trim().toLowerCase();
+  if (lower === 'heavy') return 'heavy';
+  if (lower === 'light') return 'light';
+  if (lower === 'moderate' || lower === 'medium') return 'medium';
+  return 'medium';
+}
+
+/**
+ * Normalizes Supabase public.cycle_records flow string to UI representation ('Light' | 'Moderate' | 'Heavy')
+ */
+export function normalizeFlowFromDb(flow?: string | null): 'Light' | 'Moderate' | 'Heavy' {
+  if (!flow) return 'Moderate';
+  const lower = String(flow).trim().toLowerCase();
+  if (lower === 'heavy') return 'Heavy';
+  if (lower === 'light') return 'Light';
+  return 'Moderate';
+}
+
+// ============================================================================
 // TRACKING SERVICE CLASS
 // ============================================================================
 
@@ -107,6 +135,9 @@ export class TrackingService {
   // --------------------------------------------------------------------------
   // CYCLE RECORDS
   // --------------------------------------------------------------------------
+
+  static normalizeFlowToDb = normalizeFlowToDb;
+  static normalizeFlowFromDb = normalizeFlowFromDb;
 
   static async getLatestCycle(
     userId: string,
@@ -135,7 +166,7 @@ export class TrackingService {
         periodStartDate: row.period_start_date,
         periodEndDate: row.period_end_date,
         cycleLength: Number(row.cycle_length) || 28,
-        flow: row.flow === 'heavy' ? 'Heavy' : row.flow === 'light' ? 'Light' : 'Moderate',
+        flow: normalizeFlowFromDb(row.flow),
         notes: row.notes || '',
         createdAt: row.created_at,
       },
@@ -167,7 +198,7 @@ export class TrackingService {
       periodStartDate: row.period_start_date,
       periodEndDate: row.period_end_date,
       cycleLength: Number(row.cycle_length) || 28,
-      flow: row.flow === 'heavy' ? 'Heavy' : row.flow === 'light' ? 'Light' : 'Moderate',
+      flow: normalizeFlowFromDb(row.flow),
       notes: row.notes || '',
       createdAt: row.created_at,
     }));
@@ -184,13 +215,15 @@ export class TrackingService {
       return { data: null, error: 'User is not authenticated.', status: 401 };
     }
 
+    // Supported columns on public.cycle_records:
+    // user_id, period_start_date, period_end_date, flow, notes
+    // Note: cycle_length is maintained in profiles.cycle_length, not on cycle_records
     const payload = {
       user_id: userId,
       period_start_date: input.periodStartDate,
-      period_end_date: input.periodEndDate || null,
-      cycle_length: input.cycleLength || 28,
-      flow: (input.flow || 'moderate').toLowerCase(),
-      notes: input.notes || null,
+      period_end_date: input.periodEndDate || input.periodStartDate,
+      flow: normalizeFlowToDb(input.flow),
+      notes: input.notes || '',
     };
 
     const url = `${SUPABASE_URL}/rest/v1/cycle_records`;
@@ -212,8 +245,8 @@ export class TrackingService {
         userId,
         periodStartDate: row.period_start_date,
         periodEndDate: row.period_end_date,
-        cycleLength: Number(row.cycle_length) || 28,
-        flow: row.flow === 'heavy' ? 'Heavy' : row.flow === 'light' ? 'Light' : 'Moderate',
+        cycleLength: input.cycleLength || 28,
+        flow: normalizeFlowFromDb(row.flow),
         notes: row.notes || '',
       },
       error: null,
@@ -251,9 +284,11 @@ export class TrackingService {
       updated_at: new Date().toISOString(),
     };
     if (input.periodStartDate) payload.period_start_date = input.periodStartDate;
-    if (input.periodEndDate !== undefined) payload.period_end_date = input.periodEndDate;
-    if (input.cycleLength !== undefined) payload.cycle_length = input.cycleLength;
-    if (input.flow) payload.flow = input.flow.toLowerCase();
+    if (input.periodEndDate !== undefined) {
+      payload.period_end_date = input.periodEndDate || input.periodStartDate || null;
+    }
+    // cycle_length belongs to profiles table, not cycle_records
+    if (input.flow) payload.flow = normalizeFlowToDb(input.flow);
     if (input.notes !== undefined) payload.notes = input.notes;
 
     const url = `${SUPABASE_URL}/rest/v1/cycle_records?id=eq.${recordId}`;

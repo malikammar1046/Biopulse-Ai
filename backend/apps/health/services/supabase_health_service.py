@@ -273,14 +273,16 @@ class SupabaseHealthService:
             "daily_water_glasses,dietary_preference,conditions,medications,"
             "waist_cm,hip_cm,allergies,food_allergies,food_intolerances,"
             "marital_status,marriage_years,is_pregnant,abortions_count,"
-            "fast_food_intake,regular_exercise,lifestyle,updated_at,created_at"
+            "fast_food_intake,regular_exercise,exercise_preferences,work_lifestyle,"
+            "selected_goals,support_preference,updated_at,created_at"
         )
         base_select = (
-            "id,gender,pathway,height_cm,weight_kg,date_of_birth,cycle_length,"
+            "id,full_name,gender,pathway,height_cm,weight_kg,date_of_birth,cycle_length,"
             "period_duration,last_period_date,period_regularity,"
             "common_symptoms,activity_level,sleep_hours,"
             "daily_water_glasses,dietary_preference,conditions,medications,"
-            "updated_at,created_at"
+            "waist_cm,hip_cm,marital_status,marriage_years,is_pregnant,abortions_count,"
+            "fast_food_intake,regular_exercise,updated_at,created_at"
         )
 
         try:
@@ -347,6 +349,19 @@ class SupabaseHealthService:
             except (ValueError, TypeError):
                 return None
 
+        # Synthesize lifestyle dictionary from authoritative flat columns
+        lifestyle_dict = {
+            "activityLevel": row.get("activity_level"),
+            "sleepHours": _safe_float(row.get("sleep_hours")),
+            "stressLevel": row.get("stress_level"),
+            "regularExercise": row.get("regular_exercise"),
+            "fastFoodIntake": row.get("fast_food_intake"),
+            "dietaryPreference": row.get("dietary_preference"),
+            "dailyWaterGlasses": row.get("daily_water_glasses"),
+            "exercisePreferences": _safe_list(row.get("exercise_preferences")),
+            "workLifestyle": row.get("work_lifestyle", ""),
+        }
+
         return PatientProfile(
             user_id=patient_uuid,
             id=patient_uuid,
@@ -378,8 +393,8 @@ class SupabaseHealthService:
             abortions_count=row.get("abortions_count"),
             fast_food_intake=row.get("fast_food_intake"),
             regular_exercise=row.get("regular_exercise"),
-            stress_level=row.get("stress_level") or (row.get("lifestyle", {}).get("stressLevel") if isinstance(row.get("lifestyle"), dict) else None),
-            lifestyle=row.get("lifestyle") if isinstance(row.get("lifestyle"), dict) else {},
+            stress_level=row.get("stress_level"),
+            lifestyle=lifestyle_dict,
             updated_at=row.get("updated_at"),
             created_at=row.get("created_at"),
         )
@@ -456,33 +471,85 @@ class SupabaseHealthService:
     def fetch_food_logs(self, patient_uuid: str, days: int = 90, auth_token: str | None = None) -> list[FoodLogData]:
         try:
             client = self._client_or_raise(auth_token)
-            res = (
-                client.table("food_logs")
+        except Exception as exc:
+            logger.warning("food_logs client init failed: %s", exc)
+            return []
+
+        cutoff = _cutoff_date(days)
+        merged_by_key: dict[str, FoodLogData] = {}
+
+        # 1. Authoritative: public.nutrition_food_logs (active table written by React Native mobile app)
+        try:
+            res_nutr = (
+                client.table("nutrition_food_logs")
                 .select("id,meal_type,food_name,calories,protein_g,carbs_g,fat_g,logged_at")
                 .eq("user_id", patient_uuid)
-                .gte("logged_at", _cutoff_date(days))
+                .gte("logged_at", cutoff)
                 .order("logged_at", desc=True)
                 .limit(500)
                 .execute()
             )
-            rows = getattr(res, "data", None) or []
+            nutr_rows = getattr(res_nutr, "data", None) or []
+            for r in nutr_rows:
+                rec_id = str(r.get("id"))
+                date_str = str(r.get("logged_at", ""))[:10]
+                dedup_key = f"{str(r.get('meal_type', '')).lower()}_{str(r.get('food_name', '')).strip().lower()}_{date_str}"
+                item = FoodLogData(
+                    id=rec_id,
+                    meal_type=r.get("meal_type", ""),
+                    food_name=r.get("food_name", ""),
+                    calories=r.get("calories"),
+                    protein_g=r.get("protein_g"),
+                    carbs_g=r.get("carbs_g"),
+                    fat_g=r.get("fat_g"),
+                    logged_at=r.get("logged_at", ""),
+                )
+                merged_by_key[rec_id] = item
+                merged_by_key[dedup_key] = item
         except Exception as exc:
-            logger.warning("food_logs fetch failed: %s", exc)
-            return []
+            logger.warning("nutrition_food_logs fetch failed or table absent: %s", exc)
 
-        return [
-            FoodLogData(
-                id=r["id"],
-                meal_type=r.get("meal_type", ""),
-                food_name=r.get("food_name", ""),
-                calories=r.get("calories"),
-                protein_g=r.get("protein_g"),
-                carbs_g=r.get("carbs_g"),
-                fat_g=r.get("fat_g"),
-                logged_at=r.get("logged_at", ""),
+        # 2. Legacy fallback: public.food_logs (preserve compatibility with legacy entries without duplicate counting)
+        try:
+            res_legacy = (
+                client.table("food_logs")
+                .select("id,meal_type,food_name,calories,protein_g,carbs_g,fat_g,logged_at")
+                .eq("user_id", patient_uuid)
+                .gte("logged_at", cutoff)
+                .order("logged_at", desc=True)
+                .limit(500)
+                .execute()
             )
-            for r in rows
-        ]
+            legacy_rows = getattr(res_legacy, "data", None) or []
+            for r in legacy_rows:
+                rec_id = str(r.get("id"))
+                date_str = str(r.get("logged_at", ""))[:10]
+                dedup_key = f"{str(r.get('meal_type', '')).lower()}_{str(r.get('food_name', '')).strip().lower()}_{date_str}"
+                if rec_id not in merged_by_key and dedup_key not in merged_by_key:
+                    item = FoodLogData(
+                        id=rec_id,
+                        meal_type=r.get("meal_type", ""),
+                        food_name=r.get("food_name", ""),
+                        calories=r.get("calories"),
+                        protein_g=r.get("protein_g"),
+                        carbs_g=r.get("carbs_g"),
+                        fat_g=r.get("fat_g"),
+                        logged_at=r.get("logged_at", ""),
+                    )
+                    merged_by_key[rec_id] = item
+                    merged_by_key[dedup_key] = item
+        except Exception as exc:
+            logger.warning("legacy food_logs fetch failed: %s", exc)
+
+        seen_ids = set()
+        final_list = []
+        for item in merged_by_key.values():
+            if item.id not in seen_ids:
+                seen_ids.add(item.id)
+                final_list.append(item)
+
+        final_list.sort(key=lambda x: x.logged_at or "", reverse=True)
+        return final_list
 
     # ------------------------------------------------------------------
     # Water logs
